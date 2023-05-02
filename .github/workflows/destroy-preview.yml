@@ -8,6 +8,10 @@ defaults:
   run:
     working-directory: ./infrastructure
 
+concurrency:
+  group: destroy-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
 jobs:
   terraform:
     name: Clean up Terraform

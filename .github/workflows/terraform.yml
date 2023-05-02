@@ -91,7 +91,7 @@ jobs:
             <details><summary>Show Plan</summary>
 
             ```terraform
-            ${process.env.PLAN}
+            ${{ env.PLAN }}
             ```
 
             </details>

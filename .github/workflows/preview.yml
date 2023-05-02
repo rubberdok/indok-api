@@ -7,6 +7,10 @@ defaults:
   run:
     working-directory: ./infrastructure
 
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
 jobs:
   terraform:
     name: Preview Environment
