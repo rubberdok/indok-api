@@ -67,6 +67,7 @@ jobs:
 
       - name: Find Existing Comment
         uses: peter-evans/find-comment@v2
+        if: github.event_name == 'pull_request'
         id: find-comment
         with:
           issue-number: ${{ github.event.pull_request.number }}
