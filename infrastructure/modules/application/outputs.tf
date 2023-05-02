@@ -10,7 +10,3 @@ output "application_id" {
   value = data.azuread_application.application.application_id
 }
 
-output "password" {
-  value     = azuread_application_password.application_password.value
-  sensitive = true
-}

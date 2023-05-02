@@ -32,10 +32,3 @@ resource "github_actions_environment_secret" "azure_tenant_id" {
   environment     = github_repository_environment.environment.environment
   plaintext_value = var.tenant_id
 }
-
-resource "github_actions_environment_secret" "azure_client_secret" {
-  repository      = var.repository_name
-  secret_name     = "AZURE_CLIENT_SECRET"
-  environment     = github_repository_environment.environment.environment
-  plaintext_value = var.tenant_id
-}
