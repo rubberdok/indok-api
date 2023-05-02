@@ -17,10 +17,11 @@ resource "random_password" "password" {
 }
 
 resource "azurerm_key_vault_secret" "postgres_password" {
-  depends_on   = [azurerm_key_vault_access_policy.current_principal, azurerm_key_vault_access_policy.principal]
   name         = "postgres-password"
   value        = random_password.password.result
   key_vault_id = azurerm_key_vault.key_vault.id
+
+  depends_on = [azurerm_key_vault_access_policy.current_principal, azurerm_key_vault_access_policy.principal]
 }
 
 resource "azurerm_key_vault_access_policy" "principal" {
@@ -29,9 +30,9 @@ resource "azurerm_key_vault_access_policy" "principal" {
   object_id    = var.principal_id
 
   key_permissions = [
-    "Get", "List", "Create"
+    "Get", "List"
   ]
-  secret_permissions = ["Get", "List", "Set"]
+  secret_permissions = ["Get", "List"]
 }
 
 resource "azurerm_key_vault_access_policy" "current_principal" {
