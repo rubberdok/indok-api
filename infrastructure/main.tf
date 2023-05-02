@@ -4,10 +4,6 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "=3.54.0"
     }
-    azuread = {
-      source  = "hashicorp/azuread"
-      version = "=2.38.0"
-    }
     github = {
       source  = "integrations/github"
       version = "=5.24.0"
@@ -25,10 +21,6 @@ terraform {
 provider "azurerm" {
   use_oidc = true
   features {}
-}
-
-provider "azuread" {
-  use_oidc = true
 }
 
 provider "github" {
