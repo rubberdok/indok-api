@@ -28,7 +28,8 @@ provider "azurerm" {
 }
 
 provider "github" {
-  owner = "rubberdok"
+  owner        = "rubberdok"
+  organization = "rubberdok"
 }
 
 data "azurerm_client_config" "current" {}
