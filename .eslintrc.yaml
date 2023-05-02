@@ -30,7 +30,7 @@ settings:
       - .tsx
   import/resolver:
     typescript:
-      project: api/tsconfig.json
+      project: tsconfig.json
 
 overrides:
   - files:
