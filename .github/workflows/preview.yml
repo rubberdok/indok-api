@@ -1,4 +1,4 @@
-name: "Preview"
+name: "Preview Environment"
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ defaults:
 
 jobs:
   terraform:
-    name: Terraform
+    name: Preview Environment
     runs-on: ubuntu-latest
 
     env:
@@ -48,7 +48,7 @@ jobs:
         id: validate
         run: terraform validate -no-color
 
-      - name: New Terraform Workspace
+      - name: Select Terraform Workspace
         id: workspace
         run: terraform workspace select preview-pr-${{ github.event.pull_request.number }} || terraform workspace new preview-pr-${{ github.event.pull_request.number }}
 
