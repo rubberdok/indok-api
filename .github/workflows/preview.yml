@@ -52,5 +52,10 @@ jobs:
         id: workspace
         run: terraform workspace select ${{ github.event.pull_request.number }} || terraform workspace new ${{ github.event.pull_request.number }}
 
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -input=false
+        continue-on-error: false
+
       - name: Terraform Apply
         run: terraform apply -auto-approve -input=false -var-file="test.tfvars"
