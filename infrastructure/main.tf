@@ -27,6 +27,10 @@ provider "azurerm" {
   features {}
 }
 
+provider "azuread" {
+  use_oidc = true
+}
+
 provider "github" {
   owner = "rubberdok"
 }
