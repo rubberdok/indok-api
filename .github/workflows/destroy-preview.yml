@@ -50,3 +50,6 @@ jobs:
 
       - name: Terraform Destroy
         run: terraform apply -auto-approve -destroy -var-file="test.tfvars"
+
+      - name: Destoy Workspace
+        run: terraform workspace delete ${{ github.event.pull_request.number }}
