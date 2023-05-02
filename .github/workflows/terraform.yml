@@ -81,7 +81,7 @@ jobs:
         with:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          edit-mode: replace
           body: |
             #### Terraform Format and Style 🖌 `${{ steps.fmt.outcome }}`
             #### Terraform Initialization ⚙️ `${{ steps.init.outcome }}`
