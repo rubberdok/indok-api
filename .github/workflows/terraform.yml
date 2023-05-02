@@ -6,9 +6,11 @@ on:
       - main
     paths:
       - infrastructure/**
+      - .github/workflows/terraform.yml
   pull_request:
     paths:
       - infrastructure/**
+      - .github/workflows/terraform.yml
 
 defaults:
   run:
