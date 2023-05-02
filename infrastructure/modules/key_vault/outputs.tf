@@ -6,7 +6,7 @@ resource "time_sleep" "postgres_password" {
 
 data "azurerm_key_vault_secret" "postgres_password" {
   depends_on   = [time_sleep.postgres_password]
-  name         = "postgres_password"
+  name         = "postgres-password"
   key_vault_id = azurerm_key_vault.key_vault.id
 }
 
