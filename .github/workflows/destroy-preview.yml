@@ -46,7 +46,7 @@ jobs:
 
       - name: Select Terraform Workspace
         id: workspace
-        run: terraform workspace select ${{ github.event.pull_request.number }}
+        run: terraform workspace select preview-pr-${{ github.event.pull_request.number }}
 
       - name: Terraform Destroy
         run: terraform apply -auto-approve -destroy -var-file="test.tfvars"
@@ -54,4 +54,4 @@ jobs:
       - name: Destoy Workspace
         run: |
           terraform workspace select default
-          terraform workspace delete ${{ github.event.pull_request.number }}
+          terraform workspace delete preview-pr-${{ github.event.pull_request.number }}

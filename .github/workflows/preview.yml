@@ -50,7 +50,7 @@ jobs:
 
       - name: New Terraform Workspace
         id: workspace
-        run: terraform workspace select ${{ github.event.pull_request.number }} || terraform workspace new ${{ github.event.pull_request.number }}
+        run: terraform workspace select preview-pr-${{ github.event.pull_request.number }} || terraform workspace new preview-pr-${{ github.event.pull_request.number }}
 
       - name: Terraform Plan
         id: plan
