@@ -4,7 +4,11 @@ on:
   push:
     branches:
       - main
+    paths:
+      - infrastructure/**
   pull_request:
+    paths:
+      - infrastructure/**
 
 defaults:
   run:
