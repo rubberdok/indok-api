@@ -12,3 +12,6 @@ variable "tenant_id" {
   description = "The Azure Active Directory tenant ID that should be used for authenticating requests to the key vault."
 }
 
+variable "principal_id" {
+  type = string
+}

@@ -9,7 +9,7 @@ defaults:
     working-directory: ./infrastructure
 
 concurrency:
-  group: destroy-preview-${{ github.event.pull_request.number }}
+  group: preview-${{ github.event.pull_request.number }}
   cancel-in-progress: false
 
 jobs:
