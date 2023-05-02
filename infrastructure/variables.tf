@@ -3,3 +3,10 @@ variable "environment" {
   default     = "test"
   description = "The environment to deploy to"
 }
+
+variable "postgres" {
+  type = object({
+    sku_name   = string
+    storage_mb = number
+  })
+}
