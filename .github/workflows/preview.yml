@@ -36,10 +36,6 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
 
-      - name: New Terraform Workspace
-        id: workspace
-        run: terraform workspace new ${{ github.event.pull_request.number }}
-
       - name: Terraform Format
         id: fmt
         run: terraform fmt -check
@@ -51,6 +47,10 @@ jobs:
       - name: Terraform Validate
         id: validate
         run: terraform validate -no-color
+
+      - name: New Terraform Workspace
+        id: workspace
+        run: terraform workspace new ${{ github.event.pull_request.number }}
 
       - name: Terraform Plan
         id: plan
