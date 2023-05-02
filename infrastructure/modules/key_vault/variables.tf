@@ -20,3 +20,10 @@ variable "name" {
   type        = string
   description = "The name of the key vault."
 }
+
+variable "current_service_principal" {
+  type = object({
+    tenant_id = string
+    object_id = string
+  })
+}

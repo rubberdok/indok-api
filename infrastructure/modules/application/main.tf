@@ -1,16 +1,14 @@
-resource "azuread_application" "github_oidc" {
-  display_name = var.display_name
+
+data "azuread_application" "application" {
+  display_name = "indok-web"
 }
 
-resource "azuread_service_principal" "github_oidc" {
-  application_id = azuread_application.github_oidc.application_id
+
+data "azuread_service_principal" "service_principal" {
+  application_id = data.azuread_application.application.application_id
 }
 
-resource "azuread_application_federated_identity_credential" "github_oidc" {
-  application_object_id = azuread_application.github_oidc.object_id
-  display_name          = "github-oidc"
-  description           = "Deployments from indok-web"
-  audiences             = ["api://AzureADTokenExchange"]
-  issuer                = "https://token.actions.githubusercontent.com"
-  subject               = "repo:${var.repository}:ref:refs/heads/${var.branch}"
+
+resource "azuread_application_password" "application_password" {
+  application_object_id = data.azuread_application.application.object_id
 }

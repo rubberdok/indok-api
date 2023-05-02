@@ -2,9 +2,14 @@ module "key_vault" {
   source = "./modules/key_vault"
 
   resource_group_name = module.resource_group.name
-  tenant_id           = data.azurerm_client_config.current.tenant_id
+  tenant_id           = module.application.tenant_id
   principal_id        = module.application.principal_id
   name                = local.environment_name
+
+  current_service_principal = {
+    tenant_id = data.azurerm_client_config.current.tenant_id
+    object_id = data.azurerm_client_config.current.object_id
+  }
 
   tags = {
     workspace   = terraform.workspace

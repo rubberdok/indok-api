@@ -6,10 +6,6 @@ terraform {
   }
 }
 
-provider "github" {
-  owner        = "rubberdok"
-  organization = "rubberdok"
-}
 
 resource "github_repository_environment" "environment" {
   environment = var.environment_name
@@ -33,6 +29,13 @@ resource "github_actions_environment_secret" "azure_subscription_id" {
 resource "github_actions_environment_secret" "azure_tenant_id" {
   repository      = var.repository_name
   secret_name     = "AZURE_TENANT_ID"
+  environment     = github_repository_environment.environment.environment
+  plaintext_value = var.tenant_id
+}
+
+resource "github_actions_environment_secret" "azure_client_secret" {
+  repository      = var.repository_name
+  secret_name     = "AZURE_CLIENT_SECRET"
   environment     = github_repository_environment.environment.environment
   plaintext_value = var.tenant_id
 }
