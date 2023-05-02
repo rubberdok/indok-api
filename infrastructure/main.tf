@@ -10,3 +10,13 @@ terraform {
 provider "azurerm" {
   features {}
 }
+
+module "resource_group" {
+  source = "./modules/resource-group"
+
+  name = "indok-web-${var.environment}"
+
+  tags = {
+    environment = var.environment
+  }
+}
