@@ -12,17 +12,21 @@ resource "azurerm_key_vault" "key_vault" {
 
   access_policy = [
     {
-      tenant_id = var.tenant_id
-      object_id = var.principal_id
+      application_id = var.application_id
+      tenant_id      = var.tenant_id
+      object_id      = var.principal_id
 
       key_permissions = [
         "Get", "List",
       ]
-      secret_permissions = ["Get", "List", ]
+      secret_permissions      = ["Get", "List", ]
+      storage_permissions     = []
+      certificate_permissions = []
     },
     {
-      tenant_id = var.current_service_principal.tenant_id
-      object_id = var.current_service_principal.object_id
+      application_id = var.application_id
+      tenant_id      = var.current_service_principal.tenant_id
+      object_id      = var.current_service_principal.object_id
 
       key_permissions = [
         "Backup", "Create", "Decrypt", "Delete", "Encrypt", "Get", "Import", "List", "Purge", "Recover", "Restore", "Sign", "UnwrapKey", "Update", "Verify", "WrapKey", "Release", "Rotate", "GetRotationPolicy", "SetRotationPolicy",
@@ -30,6 +34,8 @@ resource "azurerm_key_vault" "key_vault" {
       secret_permissions = [
         "Backup", "Delete", "Get", "List", "Purge", "Recover", "Restore", "Set", "Backup", "Delete", "Get", "List", "Purge", "Recover", "Restore", "Set",
       ]
+      storage_permissions     = []
+      certificate_permissions = []
     },
   ]
 }
