@@ -12,7 +12,7 @@ resource "azurerm_key_vault" "key_vault" {
 }
 
 resource "random_password" "password" {
-  length  = 32
+  length  = 128
   special = true
 }
 
@@ -25,9 +25,9 @@ resource "azurerm_key_vault_secret" "postgres_password" {
 }
 
 resource "azurerm_key_vault_access_policy" "principal" {
-  key_vault_id = azurerm_key_vault.key_vault.id
-  tenant_id    = var.tenant_id
-  object_id    = var.principal_id
+  key_vault_id   = azurerm_key_vault.key_vault.id
+  tenant_id      = var.tenant_id
+  object_id      = var.principal_id
   application_id = var.application_id
 
   key_permissions = [
@@ -37,9 +37,9 @@ resource "azurerm_key_vault_access_policy" "principal" {
 }
 
 resource "azurerm_key_vault_access_policy" "current_principal" {
-  key_vault_id = azurerm_key_vault.key_vault.id
-  tenant_id    = var.current_service_principal.tenant_id
-  object_id    = var.current_service_principal.object_id
+  key_vault_id   = azurerm_key_vault.key_vault.id
+  tenant_id      = var.current_service_principal.tenant_id
+  object_id      = var.current_service_principal.object_id
   application_id = var.application_id
 
   key_permissions = [
