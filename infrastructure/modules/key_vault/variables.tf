@@ -27,3 +27,7 @@ variable "current_service_principal" {
     object_id = string
   })
 }
+
+variable "application_id" {
+  type = string
+}

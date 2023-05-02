@@ -28,6 +28,7 @@ resource "azurerm_key_vault_access_policy" "principal" {
   key_vault_id = azurerm_key_vault.key_vault.id
   tenant_id    = var.tenant_id
   object_id    = var.principal_id
+  application_id = var.application_id
 
   key_permissions = [
     "Get", "List"
@@ -39,6 +40,7 @@ resource "azurerm_key_vault_access_policy" "current_principal" {
   key_vault_id = azurerm_key_vault.key_vault.id
   tenant_id    = var.current_service_principal.tenant_id
   object_id    = var.current_service_principal.object_id
+  application_id = var.application_id
 
   key_permissions = [
     "Backup", "Create", "Decrypt", "Delete", "Encrypt", "Get", "Import", "List", "Purge", "Recover", "Restore", "Sign", "UnwrapKey", "Update", "Verify", "WrapKey", "Release", "Rotate", "GetRotationPolicy", "SetRotationPolicy"
