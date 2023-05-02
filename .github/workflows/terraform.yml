@@ -65,35 +65,38 @@ jobs:
         run: terraform plan -no-color -input=false -var-file="production.tfvars"
         continue-on-error: true
 
+      - name: Find Existing Comment
+        uses: peter-evans/find-comment@v2
+        id: find-comment
+        with:
+          issue_number: ${{ github.event.pull_request.number }}
+          comment-author: "github-actions[bot]"
+          body-includes: "### Terraform Format and Style"
+
       - name: Update Pull Request
-        uses: actions/github-script@v6
+        uses: peter-evans/create-or-update-comment@v3
         if: github.event_name == 'pull_request'
         env:
           PLAN: "${{ steps.plan.outputs.stdout }}"
         with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
-            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+          body: |
+            #### Terraform Format and Style 🖌 `${{ steps.fmt.outcome }}`
+            #### Terraform Initialization ⚙️ `${{ steps.init.outcome }}`
+            #### Terraform Plan 📖 `${{ steps.plan.outcome }}`
+            #### Terraform Validation 🤖 `${{ steps.validate.outcome }}`
 
             <details><summary>Show Plan</summary>
 
-            \`\`\`terraform\n
+            ```terraform
             ${process.env.PLAN}
-            \`\`\`
+            ```
 
             </details>
 
-            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
+            *Pushed by: @${{ github.actor }}, Action: `${{ github.event_name }}`*
 
       - name: Terraform Plan Status
         if: steps.plan.outcome == 'failure'
