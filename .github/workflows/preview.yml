@@ -1,0 +1,65 @@
+name: "Preview Environment"
+
+on:
+  pull_request:
+
+defaults:
+  run:
+    working-directory: ./infrastructure
+
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  terraform:
+    name: Preview Environment
+    runs-on: ubuntu-latest
+
+    env:
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: Azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Terraform Format
+        id: fmt
+        run: terraform fmt -check
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Select Terraform Workspace
+        id: workspace
+        run: terraform workspace select preview-pr-${{ github.event.pull_request.number }} || terraform workspace new preview-pr-${{ github.event.pull_request.number }}
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -input=false
+        continue-on-error: false
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve -input=false -var-file="test.tfvars"

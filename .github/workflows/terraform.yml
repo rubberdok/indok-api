@@ -1,0 +1,107 @@
+name: "Terraform"
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - infrastructure/**
+  pull_request:
+    paths:
+      - infrastructure/**
+
+defaults:
+  run:
+    working-directory: ./infrastructure
+
+jobs:
+  terraform:
+    name: Terraform
+    runs-on: ubuntu-latest
+
+    env:
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: Azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Terraform Format
+        id: fmt
+        run: terraform fmt -check
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Select Terraform Workspace
+        id: workspace
+        run: terraform workspace select production
+
+      - name: Terraform Plan
+        id: plan
+        if: github.event_name == 'pull_request'
+        run: terraform plan -no-color -input=false -var-file="production.tfvars"
+        continue-on-error: true
+
+      - name: Find Existing Comment
+        uses: peter-evans/find-comment@v2
+        id: find-comment
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: "github-actions[bot]"
+          body-includes: "### Terraform Format and Style"
+
+      - name: Update Pull Request
+        uses: peter-evans/create-or-update-comment@v3
+        if: github.event_name == 'pull_request'
+        env:
+          PLAN: "${{ steps.plan.outputs.stdout }}"
+        with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          edit-mode: replace
+          body: |
+            #### Terraform Format and Style 🖌 `${{ steps.fmt.outcome }}`
+            #### Terraform Initialization ⚙️ `${{ steps.init.outcome }}`
+            #### Terraform Plan 📖 `${{ steps.plan.outcome }}`
+            #### Terraform Validation 🤖 `${{ steps.validate.outcome }}`
+
+            <details><summary>Show Plan</summary>
+
+            ```terraform
+            ${{ env.PLAN }}
+            ```
+
+            </details>
+
+            *Pushed by: @${{ github.actor }}, Action: `${{ github.event_name }}`*
+
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve -input=false -var-file="production.tfvars"
