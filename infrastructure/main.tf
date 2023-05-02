@@ -22,7 +22,7 @@ provider "azurerm" {
 module "resource_group" {
   source = "./modules/resource-group"
 
-  name = "indok-web-${var.environment}"
+  name = "indok-web-${var.environment}:${workspace.name}"
 
   tags = {
     environment = var.environment
