@@ -64,7 +64,7 @@ jobs:
       - name: Terraform Plan
         id: plan
         if: github.event_name == 'pull_request'
-        run: terraform plan -no-color -input=false -var-file="production.tfvars"
+        run: TF_LOG=debug terraform plan -no-color -input=false -var-file="production.tfvars"
         continue-on-error: true
 
       - name: Find Existing Comment
