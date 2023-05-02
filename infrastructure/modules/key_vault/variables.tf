@@ -15,3 +15,8 @@ variable "tenant_id" {
 variable "principal_id" {
   type = string
 }
+
+variable "name" {
+  type        = string
+  description = "The name of the key vault."
+}

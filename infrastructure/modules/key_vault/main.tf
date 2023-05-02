@@ -1,5 +1,5 @@
 resource "azurerm_key_vault" "key_vault" {
-  name     = "rubberdok-key-vault"
+  name     = var.name
   location = "Norway East"
   sku_name = "standard"
 
