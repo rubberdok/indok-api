@@ -1,4 +1,3 @@
-
 data "azuread_application" "application" {
   display_name = "indok-web"
 }

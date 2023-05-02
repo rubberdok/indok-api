@@ -29,7 +29,7 @@ resource "azurerm_key_vault_access_policy" "principal" {
   object_id    = var.principal_id
 
   key_permissions = [
-    "Get", "List", "Encrypt", "Decrypt"
+    "Get", "List", "Create"
   ]
   secret_permissions = ["Get", "List", "Set"]
 }
@@ -40,7 +40,7 @@ resource "azurerm_key_vault_access_policy" "current_principal" {
   object_id    = var.current_service_principal.object_id
 
   key_permissions = [
-    "Get", "List", "Encrypt", "Decrypt"
+    "Get", "List", "Create"
   ]
   secret_permissions = ["Get", "List", "Set"]
 }
