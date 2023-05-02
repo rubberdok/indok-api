@@ -52,4 +52,6 @@ jobs:
         run: terraform apply -auto-approve -destroy -var-file="test.tfvars"
 
       - name: Destoy Workspace
-        run: terraform workspace delete ${{ github.event.pull_request.number }}
+        run: |
+          terraform workspace select default
+          terraform workspace delete ${{ github.event.pull_request.number }}
