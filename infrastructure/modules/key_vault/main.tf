@@ -42,5 +42,5 @@ resource "azurerm_key_vault_access_policy" "current_principal" {
   key_permissions = [
     "Get", "List", "Create"
   ]
-  secret_permissions = ["Get", "List", "Set"]
+  secret_permissions = ["Get", "List", "Set", "Delete", "Purge", "Recover"]
 }
