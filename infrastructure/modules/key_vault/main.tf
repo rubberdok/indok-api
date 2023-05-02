@@ -41,7 +41,7 @@ resource "azurerm_key_vault_access_policy" "current_principal" {
   object_id    = var.current_service_principal.object_id
 
   key_permissions = [
-    "Get", "List", "Create"
+    "Backup", "Create", "Decrypt", "Delete", "Encrypt", "Get", "Import", "List", "Purge", "Recover", "Restore", "Sign", "UnwrapKey", "Update", "Verify", "WrapKey", "Release", "Rotate", "GetRotationPolicy", "SetRotationPolicy"
   ]
-  secret_permissions = ["Get", "List", "Set", "Delete", "Purge", "Recover"]
+  secret_permissions = ["Backup", "Delete", "Get", "List", "Purge", "Recover", "Restore", "Set"]
 }

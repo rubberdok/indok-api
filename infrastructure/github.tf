@@ -4,9 +4,9 @@ module "github" {
   environment_name = local.environment_name
   repository_name  = "serverless"
 
-  tenant_id       = data.azurerm_client_config.current.tenant_id
+  tenant_id       = module.managed_identity.tenant_id
   subscription_id = data.azurerm_client_config.current.subscription_id
-  application_id  = module.application.application_id
+  application_id  = module.managed_identity.client_id
 
   providers = {
     github = github
