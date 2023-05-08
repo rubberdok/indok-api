@@ -12,9 +12,8 @@ resource "azurerm_key_vault" "key_vault" {
 
   access_policy = [
     {
-      application_id = var.application_id
-      tenant_id      = var.tenant_id
-      object_id      = var.principal_id
+      tenant_id = var.tenant_id
+      object_id = var.principal_id
 
       key_permissions = [
         "Get", "List",
@@ -24,9 +23,8 @@ resource "azurerm_key_vault" "key_vault" {
       certificate_permissions = []
     },
     {
-      tenant_id      = var.tenant_id
-      application_id = var.current_service_principal.application_id
-      object_id      = var.current_service_principal.object_id
+      tenant_id = var.tenant_id
+      object_id = var.current_service_principal.object_id
 
       key_permissions = [
         "Backup",
