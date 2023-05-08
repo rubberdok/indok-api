@@ -10,3 +10,10 @@ variable "postgres" {
     storage_mb = number
   })
 }
+
+variable "function" {
+  type = object({
+    sku_name = string
+  })
+}
+

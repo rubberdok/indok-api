@@ -3,8 +3,5 @@ module "resource_group" {
 
   name = local.environment_name
 
-  tags = {
-    workspace   = terraform.workspace
-    environment = var.environment
-  }
+  tags = local.tags
 }

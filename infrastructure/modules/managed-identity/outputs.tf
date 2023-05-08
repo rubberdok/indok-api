@@ -9,3 +9,7 @@ output "tenant_id" {
 output "client_id" {
   value = azurerm_user_assigned_identity.managed_identity.client_id
 }
+
+output "id" {
+  value = azurerm_user_assigned_identity.managed_identity.id
+}
