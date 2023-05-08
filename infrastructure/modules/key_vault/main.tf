@@ -25,7 +25,7 @@ resource "azurerm_key_vault" "key_vault" {
     },
     {
       application_id = var.application_id
-      tenant_id      = var.current_service_principal.tenant_id
+      tenant_id      = var.tenant_id
       object_id      = var.current_service_principal.object_id
 
       key_permissions = [
