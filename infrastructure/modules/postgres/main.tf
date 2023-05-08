@@ -1,5 +1,5 @@
 resource "azurerm_postgresql_server" "database" {
-  name     = "indok-web"
+  name     = var.name
   location = "Norway East"
 
   sku_name   = var.sku_name

@@ -26,3 +26,8 @@ variable "storage_mb" {
   type        = number
   description = "The amount of storage allocated to this PostgreSQL Server."
 }
+
+variable "name" {
+  type        = string
+  description = "The name of the PostgreSQL Server."
+}
