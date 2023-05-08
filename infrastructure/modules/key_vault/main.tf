@@ -17,9 +17,7 @@ resource "azurerm_key_vault" "key_vault" {
     key_permissions = [
       "Get", "List",
     ]
-    secret_permissions      = ["Get", "List", ]
-    storage_permissions     = []
-    certificate_permissions = []
+    secret_permissions = ["Get", "List", ]
   }
 
   access_policy {
@@ -27,37 +25,16 @@ resource "azurerm_key_vault" "key_vault" {
     object_id = var.current_service_principal.object_id
 
     key_permissions = [
-      "Backup",
       "Create",
-      "Decrypt",
       "Delete",
-      "Encrypt",
       "Get",
-      "Import",
       "List",
       "Purge",
       "Recover",
       "Restore",
-      "Sign",
-      "UnwrapKey",
       "Update",
-      "Verify",
-      "WrapKey",
-      "Release",
-      "Rotate",
-      "GetRotationPolicy",
-      "SetRotationPolicy",
     ]
     secret_permissions = [
-      "Backup",
-      "Delete",
-      "Get",
-      "List",
-      "Purge",
-      "Recover",
-      "Restore",
-      "Set",
-      "Backup",
       "Delete",
       "Get",
       "List",
@@ -66,8 +43,6 @@ resource "azurerm_key_vault" "key_vault" {
       "Restore",
       "Set",
     ]
-    storage_permissions     = ["Backup", "Delete", "Get", "List", "Purge", "Recover", "Restore", "Set"]
-    certificate_permissions = []
   }
 
 }
