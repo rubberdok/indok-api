@@ -31,6 +31,7 @@ jobs:
       contents: read
       id-token: write
       pull-requests: write
+      actions: write
 
     steps:
       - name: Checkout
