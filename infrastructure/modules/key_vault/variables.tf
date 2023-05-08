@@ -23,8 +23,9 @@ variable "name" {
 
 variable "current_service_principal" {
   type = object({
-    tenant_id = string
-    object_id = string
+    tenant_id      = string
+    application_id = string
+    object_id      = string
   })
 }
 

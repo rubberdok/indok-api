@@ -9,8 +9,9 @@ module "key_vault" {
   name           = local.environment_name
 
   current_service_principal = {
-    tenant_id = data.azurerm_client_config.current.tenant_id
-    object_id = data.azurerm_client_config.current.object_id
+    tenant_id      = data.azurerm_client_config.current.tenant_id
+    object_id      = data.azurerm_client_config.current.object_id
+    application_id = data.azurerm_client_config.current.client_id
   }
 
   tags = {
