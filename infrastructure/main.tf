@@ -4,6 +4,10 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "=3.54.0"
     }
+    github = {
+      source  = "integrations/github"
+      version = "=5.24.0"
+    }
   }
   backend "azurerm" {
     resource_group_name  = "tfstate"
@@ -19,13 +23,13 @@ provider "azurerm" {
   features {}
 }
 
-module "resource_group" {
-  source = "./modules/resource-group"
-
-  name = "indok-web-${terraform.workspace}"
-
-  tags = {
-    workspace   = terraform.workspace
-    environment = var.environment
-  }
+provider "github" {
+  owner = "rubberdok"
 }
+
+data "azurerm_client_config" "current" {}
+
+locals {
+  environment_name = "indok-web-${terraform.workspace}"
+}
+
