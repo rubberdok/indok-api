@@ -34,12 +34,7 @@ jobs:
       # Needed for the `github` provider to have the necessary permissions to create GH environments.
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    permissions:
-      # `id-token: write` permission is needed for OIDC authentication to Azure.
-      id-token: write
-      # `actions: write` permission is needed to create new environments in GH and add environment variables.
-      actions: write
-      contents: read
+    permissions: write-all
 
     steps:
       - name: Checkout
