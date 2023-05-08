@@ -10,6 +10,8 @@ defaults:
   run:
     working-directory: ./infrastructure
 
+permissions: write-all
+
 # Ensure that only one workflow related to provisioning infrastructure for a given PR is running at a time.
 # Otherwise, we might encounter locks on the state files imposed by Terraform, and it is generally a bad idea to
 # try to create a database while we're simultaneously trying to delete it. :)
@@ -33,8 +35,6 @@ jobs:
 
       # Needed for the `github` provider to have the necessary permissions to create GH environments.
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    permissions: write-all
 
     steps:
       - name: Checkout
