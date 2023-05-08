@@ -59,10 +59,5 @@ jobs:
         id: workspace
         run: terraform workspace select -or-create preview-pr-${{ github.event.pull_request.number }}
 
-      - name: Terraform Plan
-        id: plan
-        run: terraform plan -no-color -input=false -var-file="test.tfvars"
-        continue-on-error: false
-
       - name: Terraform Apply
         run: terraform apply -auto-approve -input=false -var-file="test.tfvars"
