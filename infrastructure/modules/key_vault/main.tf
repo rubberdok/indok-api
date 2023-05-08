@@ -14,9 +14,7 @@ resource "azurerm_key_vault" "key_vault" {
     tenant_id = var.tenant_id
     object_id = var.principal_id
 
-    key_permissions = [
-      "Get", "List",
-    ]
+    key_permissions    = ["Get", "List", ]
     secret_permissions = ["Get", "List", ]
   }
 
