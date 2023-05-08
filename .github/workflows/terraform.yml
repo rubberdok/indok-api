@@ -1,3 +1,8 @@
+# Provision and deploy production infrastructure.
+# Runs `terraform plan` on every PR and `terraform apply` on every push to `main`.
+# Only runs if the changes are in the `infrastructure/` directory, or if the workflow itself is changed.
+# Based on https://developer.hashicorp.com/terraform/tutorials/automation/github-actions
+
 name: "Terraform"
 
 on:
@@ -16,38 +21,47 @@ defaults:
   run:
     working-directory: ./infrastructure
 
+# Ensure that we run the workflows in succession to avoid any race conditions related to infrastructure.
+concurrency:
+  group: terraform
+  cancel-in-progress: false
+
 jobs:
   terraform:
     name: Terraform
     runs-on: ubuntu-latest
 
     env:
-      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      # We authenticate to Azure using service principal with Open ID Connect (OIDC)
+      # as outlined in https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_oidc
+      # `ARM_CLIENT_ID`, `ARM_SUBSCRIPTION_ID`, and `ARM_TENANT_ID` are all required for this authentication method.
+      # They belong to the `indok_web` app registration in Azure AD.
+      ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+
+      # Needed for the `github` provider to have the necessary permissions to create GH environments.
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     permissions:
-      contents: read
+      # `id-token: write` permission is needed for OIDC authentication to Azure.
       id-token: write
+      # `actions: write` permission is needed to create new environments in GH and add environment variables.
+      actions: write
+      contents: read
+      # `pull-requests: write` permission is needed to post the output of `terraform plan` as a comment on the PR.
       pull-requests: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Azure Login
-        uses: Azure/login@v1
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
 
       - name: Terraform Format
         id: fmt
-        run: terraform fmt -check
+        run: terraform fmt -recursive -check
 
       - name: Terraform Init
         id: init

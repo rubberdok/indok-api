@@ -1,3 +1,6 @@
+# Provisions a preview environment for each pull request identical to the production environnment.
+# All resources that are created here are removed when the PR is closed by the `destroy-preview.yml` workflow.
+
 name: "Preview Environment"
 
 on:
@@ -7,6 +10,11 @@ defaults:
   run:
     working-directory: ./infrastructure
 
+permissions: write-all
+
+# Ensure that only one workflow related to provisioning infrastructure for a given PR is running at a time.
+# Otherwise, we might encounter locks on the state files imposed by Terraform, and it is generally a bad idea to
+# try to create a database while we're simultaneously trying to delete it. :)
 concurrency:
   group: preview-${{ github.event.pull_request.number }}
   cancel-in-progress: false
@@ -17,32 +25,23 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      # We authenticate to Azure using service principal with Open ID Connect (OIDC)
+      # as outlined in https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_oidc
+      # `ARM_CLIENT_ID`, `ARM_SUBSCRIPTION_ID`, and `ARM_TENANT_ID` are all required for this authentication method.
+      # They belong to the `indok_web` app registration in Azure AD.
+      ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
 
-    permissions:
-      contents: read
-      id-token: write
-      pull-requests: write
+      # Needed for the `github` provider to have the necessary permissions to create GH environments.
+      GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Azure Login
-        uses: Azure/login@v1
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
-
-      - name: Terraform Format
-        id: fmt
-        run: terraform fmt -check
 
       - name: Terraform Init
         id: init
@@ -54,12 +53,7 @@ jobs:
 
       - name: Select Terraform Workspace
         id: workspace
-        run: terraform workspace select preview-pr-${{ github.event.pull_request.number }} || terraform workspace new preview-pr-${{ github.event.pull_request.number }}
-
-      - name: Terraform Plan
-        id: plan
-        run: terraform plan -no-color -input=false
-        continue-on-error: false
+        run: terraform workspace select -or-create preview-pr-${{ github.event.pull_request.number }}
 
       - name: Terraform Apply
         run: terraform apply -auto-approve -input=false -var-file="test.tfvars"
