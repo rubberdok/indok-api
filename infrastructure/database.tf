@@ -9,8 +9,5 @@ module "database" {
   administrator_login          = "postgres"
   administrator_login_password = module.key_vault.secrets.postgres_password
 
-  tags = {
-    workspace   = terraform.workspace
-    environment = var.environment
-  }
+  tags = local.tags
 }
