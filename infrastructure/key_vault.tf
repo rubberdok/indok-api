@@ -10,7 +10,7 @@ module "key_vault" {
 
   current_service_principal = {
     tenant_id      = data.azurerm_client_config.current.tenant_id
-    object_id      = data.azurerm_client_config.current.service_principal_object_id
+    object_id      = "b449a1f3-328d-4548-8ab1-6e1dc048edff"
     application_id = data.azurerm_client_config.current.client_id
   }
 
