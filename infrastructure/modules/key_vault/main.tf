@@ -10,68 +10,66 @@ resource "azurerm_key_vault" "key_vault" {
   tags                = var.tags
   tenant_id           = var.tenant_id
 
-  access_policy = [
-    {
-      application_id = var.application_id
-      tenant_id      = var.tenant_id
-      object_id      = var.principal_id
+  access_policy {
+    tenant_id = var.tenant_id
+    object_id = var.principal_id
 
-      key_permissions = [
-        "Get", "List",
-      ]
-      secret_permissions      = ["Get", "List", ]
-      storage_permissions     = []
-      certificate_permissions = []
-    },
-    {
-      tenant_id      = var.tenant_id
-      application_id = var.application_id
-      object_id      = var.current_service_principal.object_id
+    key_permissions = [
+      "Get", "List",
+    ]
+    secret_permissions      = ["Get", "List", ]
+    storage_permissions     = []
+    certificate_permissions = []
+  }
 
-      key_permissions = [
-        "Backup",
-        "Create",
-        "Decrypt",
-        "Delete",
-        "Encrypt",
-        "Get",
-        "Import",
-        "List",
-        "Purge",
-        "Recover",
-        "Restore",
-        "Sign",
-        "UnwrapKey",
-        "Update",
-        "Verify",
-        "WrapKey",
-        "Release",
-        "Rotate",
-        "GetRotationPolicy",
-        "SetRotationPolicy",
-      ]
-      secret_permissions = [
-        "Backup",
-        "Delete",
-        "Get",
-        "List",
-        "Purge",
-        "Recover",
-        "Restore",
-        "Set",
-        "Backup",
-        "Delete",
-        "Get",
-        "List",
-        "Purge",
-        "Recover",
-        "Restore",
-        "Set",
-      ]
-      storage_permissions     = ["Backup", "Delete", "Get", "List", "Purge", "Recover", "Restore", "Set"]
-      certificate_permissions = []
-    },
-  ]
+  access_policy {
+    tenant_id = var.tenant_id
+    object_id = var.current_service_principal.object_id
+
+    key_permissions = [
+      "Backup",
+      "Create",
+      "Decrypt",
+      "Delete",
+      "Encrypt",
+      "Get",
+      "Import",
+      "List",
+      "Purge",
+      "Recover",
+      "Restore",
+      "Sign",
+      "UnwrapKey",
+      "Update",
+      "Verify",
+      "WrapKey",
+      "Release",
+      "Rotate",
+      "GetRotationPolicy",
+      "SetRotationPolicy",
+    ]
+    secret_permissions = [
+      "Backup",
+      "Delete",
+      "Get",
+      "List",
+      "Purge",
+      "Recover",
+      "Restore",
+      "Set",
+      "Backup",
+      "Delete",
+      "Get",
+      "List",
+      "Purge",
+      "Recover",
+      "Restore",
+      "Set",
+    ]
+    storage_permissions     = ["Backup", "Delete", "Get", "List", "Purge", "Recover", "Restore", "Set"]
+    certificate_permissions = []
+  }
+
 }
 
 resource "random_password" "password" {
