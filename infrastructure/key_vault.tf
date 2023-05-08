@@ -14,8 +14,5 @@ module "key_vault" {
     application_id = data.azurerm_client_config.current.client_id
   }
 
-  tags = {
-    workspace   = terraform.workspace
-    environment = var.environment
-  }
+  tags = local.tags
 }
