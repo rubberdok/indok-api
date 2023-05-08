@@ -1,3 +1,6 @@
+# Removes all resources that were created for the preview environment through the `preview.yml` workflow.
+# Runs whenever a PR is closed, i.e. when the PR is merged or closed without merging.
+
 name: "Destroy Preview"
 
 on:
@@ -8,6 +11,9 @@ defaults:
   run:
     working-directory: ./infrastructure
 
+# Ensure that only one workflow related to provisioning infrastructure for a given PR is running at a time.
+# Otherwise, we might encounter locks on the state files imposed by Terraform, and it is generally a bad idea to
+# try to create a database while we're simultaneously trying to delete it. :)
 concurrency:
   group: preview-${{ github.event.pull_request.number }}
   cancel-in-progress: false
@@ -18,14 +24,21 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      # We authenticate to Azure using service principal with Open ID Connect (OIDC)
+      # as outlined in https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_oidc
+      # `ARM_CLIENT_ID`, `ARM_SUBSCRIPTION_ID`, and `ARM_TENANT_ID` are all required for this authentication method.
+      # They belong to the `indok_web` app registration in Azure AD.
       ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
       ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+
+      # Needed for the `github` provider to have the necessary permissions to create GH environments.
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     permissions:
-      contents: read
+      # `id-token: write` permission is needed for OIDC authentication to Azure.
       id-token: write
+      # `actions: write` permission is needed to create new environments in GH and add environment variables.
       actions: write
 
     steps:
