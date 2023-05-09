@@ -1,19 +1,7 @@
-
-resource "time_sleep" "postgres_password" {
-  depends_on      = [azurerm_key_vault_secret.postgres_password]
-  create_duration = "10s"
+output "name" {
+  value = azurerm_key_vault.key_vault.name
 }
 
-data "azurerm_key_vault_secret" "postgres_password" {
-  depends_on   = [time_sleep.postgres_password]
-  name         = "postgres-password"
-  key_vault_id = azurerm_key_vault.key_vault.id
+output "id" {
+  value = azurerm_key_vault.key_vault.id
 }
-
-output "secrets" {
-  value = {
-    "postgres_password" = data.azurerm_key_vault_secret.postgres_password.value
-  }
-  sensitive = true
-}
-

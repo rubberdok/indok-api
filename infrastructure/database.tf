@@ -7,7 +7,7 @@ module "database" {
   storage_mb          = var.postgres.storage_mb
 
   administrator_login          = "postgres"
-  administrator_login_password = module.key_vault.secrets.postgres_password
+  administrator_login_password = module.secret.postgres_password.plaintext_value
 
   tags = local.tags
 }

@@ -38,3 +38,16 @@ variable "always_on" {
   type        = bool
   default     = false
 }
+
+variable "key_vault_name" {
+  description = "The name of the key vault to use for secrets."
+  type        = string
+}
+
+variable "secrets" {
+  description = "The keys of the secrets to retrieve from the key vault."
+  type        = list(object({
+    key = string
+    name = string
+  }))
+}

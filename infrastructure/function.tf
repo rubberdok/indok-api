@@ -20,5 +20,8 @@ module "function" {
   sku_name = var.function.sku_name
   always_on = var.function.always_on
 
+  secrets = [{key = module.secret.postgres_password.name, name = "POSTGRES_PASSWORD"}]
+  key_vault_name = module.key_vault.name
+
   tags = merge(local.tags, { "use-case" = "function" })
 }
