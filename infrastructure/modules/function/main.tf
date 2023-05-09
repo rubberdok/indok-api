@@ -1,5 +1,3 @@
-# https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/linux_function_app
-
 # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_account
 resource "azurerm_storage_account" "function" {
   name                = var.resource_name
@@ -24,19 +22,51 @@ resource "azurerm_service_plan" "function" {
   tags = var.tags
 }
 
+resource "azurerm_log_analytics_workspace" "function" {
+  name                = "${var.name}-workspace"
+  location            = var.resource_group.location
+  resource_group_name = var.resource_group.name
+
+  sku               = "PerGB2018"
+  retention_in_days = 30
+}
+
+# https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/application_insights
+resource "azurerm_application_insights" "function" {
+  name                = "${var.name}-insights"
+  location            = var.resource_group.location
+  resource_group_name = var.resource_group.name
+  application_type    = "Node.JS"
+  workspace_id        = azurerm_log_analytics_workspace.function.id
+}
+
+# https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/linux_function_app#storage_uses_managed_identity
 resource "azurerm_linux_function_app" "function" {
   name                = var.name
   resource_group_name = var.resource_group.name
   location            = var.resource_group.location
 
-  storage_account_name = azurerm_storage_account.function.name
-  service_plan_id      = azurerm_service_plan.function.id
+  storage_account_name       = azurerm_storage_account.function.name
+  storage_account_access_key = azurerm_storage_account.function.primary_access_key
+  service_plan_id            = azurerm_service_plan.function.id
 
-  storage_uses_managed_identity = true
 
   key_vault_reference_identity_id = var.identity_id
 
-  site_config {}
+  app_settings = {
+    "WEBSITE_RUN_FROM_PACKAGE" = "",
+    "FUNCTIONS_WORKER_RUNTIME" = "node"
+  }
+
+
+  site_config {
+    always_on = var.always_on
+    application_stack {
+      node_version = "18"
+    }
+
+    application_insights_key = azurerm_application_insights.function.instrumentation_key
+  }
 
   identity {
     type         = "UserAssigned"
@@ -44,4 +74,10 @@ resource "azurerm_linux_function_app" "function" {
   }
 
   tags = var.tags
+
+  lifecycle {
+    ignore_changes = [
+      app_settings["WEBSITE_RUN_FROM_PACKAGE"],
+    ]
+  }
 }

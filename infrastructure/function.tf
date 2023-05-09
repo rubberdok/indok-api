@@ -18,6 +18,7 @@ module "function" {
   }
 
   sku_name = var.function.sku_name
+  always_on = var.function.always_on
 
   tags = merge(local.tags, { "use-case" = "function" })
 }

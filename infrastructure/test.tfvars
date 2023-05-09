@@ -7,4 +7,5 @@ postgres = {
 
 function = {
   sku_name = "B1"
+  always_on = false
 }
