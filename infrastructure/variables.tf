@@ -11,10 +11,3 @@ variable "postgres" {
   })
 }
 
-variable "function" {
-  type = object({
-    sku_name = string
-    always_on = bool
-  })
-}
-

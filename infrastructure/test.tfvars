@@ -5,7 +5,3 @@ postgres = {
   storage_mb = 5120
 }
 
-function = {
-  sku_name = "B1"
-  always_on = false
-}
