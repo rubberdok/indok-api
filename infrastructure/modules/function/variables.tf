@@ -32,3 +32,9 @@ variable "resource_name" {
   description = "A unqiue name for the supporting resources in this module."
   type        = string
 }
+
+variable "always_on" {
+  description = "Should the function app be always on to improve cold start times?"
+  type        = bool
+  default     = false
+}
