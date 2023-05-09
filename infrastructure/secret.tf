@@ -1,5 +1,5 @@
 module "secret" {
-    source = "./modules/secret"
+  source = "./modules/secret"
 
-    key_vault_id = module.key_vault.id   
+  key_vault_id = module.key_vault.id
 }
