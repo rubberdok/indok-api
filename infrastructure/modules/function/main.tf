@@ -40,6 +40,11 @@ resource "azurerm_application_insights" "function" {
   workspace_id        = azurerm_log_analytics_workspace.function.id
 }
 
+
+locals {
+  function_app_settings = {for secret in var.secrets : secret.name => "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=${secret.key})"}
+}
+
 # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/linux_function_app#storage_uses_managed_identity
 resource "azurerm_linux_function_app" "function" {
   name                = var.name
@@ -53,10 +58,10 @@ resource "azurerm_linux_function_app" "function" {
 
   key_vault_reference_identity_id = var.identity_id
 
-  app_settings = {
+  app_settings = merge({
     "WEBSITE_RUN_FROM_PACKAGE" = "",
-    "FUNCTIONS_WORKER_RUNTIME" = "node"
-  }
+    "FUNCTIONS_WORKER_RUNTIME" = "node" 
+  }, local.function_app_settings)
 
 
   site_config {

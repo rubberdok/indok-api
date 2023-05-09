@@ -44,26 +44,3 @@ resource "azurerm_key_vault" "key_vault" {
   }
 
 }
-
-resource "random_password" "password" {
-  length      = 128
-  special     = true
-  min_lower   = 1
-  min_numeric = 1
-  min_upper   = 1
-  min_special = 1
-}
-
-
-resource "time_sleep" "vault" {
-  depends_on      = [azurerm_key_vault.key_vault]
-  create_duration = "10s"
-}
-
-
-resource "azurerm_key_vault_secret" "postgres_password" {
-  depends_on   = [time_sleep.vault]
-  name         = "postgres-password"
-  value        = random_password.password.result
-  key_vault_id = azurerm_key_vault.key_vault.id
-}

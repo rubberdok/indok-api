@@ -11,7 +11,8 @@ const typeDefs = `#graphql
 // A map of functions which return data for the schema.
 const resolvers = {
   Query: {
-    hello: () => "world",
+    hello: () =>
+      typeof process.env["POSTGRES_PASSWORD"] !== "undefined" ? "Hello world!" : "Hello world! (But no password...)",
   },
 };
 
