@@ -5,7 +5,6 @@ postgres = {
   storage_mb = 5120
 }
 
-function = {
+app_service = {
   sku_name = "B1"
-  always_on = false
 }

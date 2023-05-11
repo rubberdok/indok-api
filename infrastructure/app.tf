@@ -4,10 +4,10 @@ resource "random_string" "resource_code" {
   upper   = false
 }
 
-module "function" {
-  source = "./modules/function"
+module "app_service" {
+  source = "./modules/app"
 
-  resource_name = "function${random_string.resource_code.result}"
+  resource_name = "app-service${random_string.resource_code.result}"
   name          = local.environment_name
 
   identity_id = module.managed_identity.id
@@ -17,11 +17,10 @@ module "function" {
     location = module.resource_group.location
   }
 
-  sku_name = var.function.sku_name
-  always_on = var.function.always_on
+  sku_name = var.app_service.sku_name
 
   secrets = [{key = module.secret.postgres_password.name, name = "POSTGRES_PASSWORD"}]
   key_vault_name = module.key_vault.name
 
-  tags = merge(local.tags, { "use-case" = "function" })
+  tags = merge(local.tags, { "use-case" = "app-service" })
 }

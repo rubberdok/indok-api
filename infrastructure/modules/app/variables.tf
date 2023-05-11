@@ -7,19 +7,19 @@ variable "resource_group" {
 }
 
 variable "name" {
-  description = "The name of the function app."
+  description = "The name of the web app."
   type        = string
 }
 
 variable "sku_name" {
-  description = "The SKU name of the function app. https://azure.microsoft.com/en-gb/pricing/details/app-service/linux/"
+  description = "The SKU name of the web app. https://azure.microsoft.com/en-gb/pricing/details/app-service/linux/"
   type        = string
   default     = "F1"
 }
 
 
 variable "identity_id" {
-  description = "The identity id of the function app."
+  description = "The identity id of the web app."
   type        = string
 }
 
@@ -33,11 +33,6 @@ variable "resource_name" {
   type        = string
 }
 
-variable "always_on" {
-  description = "Should the function app be always on to improve cold start times?"
-  type        = bool
-  default     = false
-}
 
 variable "key_vault_name" {
   description = "The name of the key vault to use for secrets."
