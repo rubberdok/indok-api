@@ -11,7 +11,7 @@ variable "postgres" {
   })
 }
 
-variable "app_service" {
+variable "web_app" {
   type = object({
     sku_name = string
   })

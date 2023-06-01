@@ -5,6 +5,6 @@ postgres = {
   storage_mb = 5120
 }
 
-app_service = {
+web_app = {
   sku_name = "B1"
 }

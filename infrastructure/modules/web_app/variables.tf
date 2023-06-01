@@ -41,8 +41,14 @@ variable "key_vault_name" {
 
 variable "secrets" {
   description = "The keys of the secrets to retrieve from the key vault."
-  type        = list(object({
-    key = string
+  type = list(object({
+    key  = string
     name = string
   }))
+}
+
+variable "docker_image" {
+  description = "The Docker image reference, including repository host as needed."
+  type        = string
+  default     = "ghcr.io/rubberdok/server"
 }
