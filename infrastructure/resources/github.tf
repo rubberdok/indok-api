@@ -28,3 +28,11 @@ resource "github_actions_environment_variable" "azure_tenant_id" {
   environment   = github_repository_environment.this.environment
   value         = module.managed_identity.tenant_id
 }
+
+# Used to determine which app to deploy to during the Github Action deployment
+resource "github_actions_environment_variable" "app_name" {
+  repository    = local.repository_name
+  variable_name = "APP_NAME"
+  environment   = github_repository_environment.this.environment
+  value         = module.web_app.name
+}
