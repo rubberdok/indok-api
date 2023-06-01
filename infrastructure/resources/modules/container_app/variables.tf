@@ -45,9 +45,9 @@ variable "docker_registry_username" {
 
 variable "envs" {
   type = list(object({
-    name = string
+    name        = string
     secret_name = optional(string)
-    value = optional(string)
+    value       = optional(string)
   }))
   default = []
 }
