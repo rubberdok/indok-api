@@ -4,7 +4,8 @@
 name: "Preview Environment"
 
 on:
-  pull_request:
+  issue_comment:
+    types: [created]
 
 defaults:
   run:
@@ -16,11 +17,13 @@ permissions: write-all
 # Otherwise, we might encounter locks on the state files imposed by Terraform, and it is generally a bad idea to
 # try to create a database while we're simultaneously trying to delete it. :)
 concurrency:
-  group: preview-${{ github.event.pull_request.number }}
+  group: preview-${{ github.event.issue.number }}
   cancel-in-progress: false
 
 jobs:
   terraform:
+    if: ${{ github.event.issue.pull_request }} && contains(github.event.comment.body, '/preview')
+
     name: Preview Environment
     runs-on: ubuntu-latest
 
@@ -37,8 +40,39 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
     steps:
-      - name: Checkout
+      - name: Checkout pull request 🏁
         uses: actions/checkout@v3
+        with:
+          ref: refs/pull/${{ github.event.issue.number }}/head
+
+      - name: Find Existing Comment
+        uses: peter-evans/find-comment@v2
+        id: find-comment
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          comment-author: "github-actions[bot]"
+          body-includes: "### Deploying Preview Environment"
+
+      - name: Update Pull Request
+        uses: peter-evans/create-or-update-comment@v3
+        id: update-comment
+        with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          issue-number: ${{ github.event.issue.number }}
+          edit-mode: replace
+          body: |
+            #### Deploying Preview Environment
+
+            Preview environment is being deployed.
+
+            *Pushed by: @${{ github.actor }}, Action: `${{ github.event_name }}`*
+
+      - name: Thumbs Up
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          comment-id: ${{ github.event.issue.comment.id }}
+          reactions: |
+            +1
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
@@ -53,7 +87,32 @@ jobs:
 
       - name: Select Terraform Workspace
         id: workspace
-        run: terraform workspace select -or-create preview-pr-${{ github.event.pull_request.number }}
+        run: terraform workspace select -or-create preview-pr-${{ github.event.issue.number }}
 
       - name: Terraform Apply
         run: terraform apply -auto-approve -input=false -var-file="test.tfvars"
+
+      - name: Update Pull Request
+        uses: peter-evans/create-or-update-comment@v3
+        id: update-comment
+        with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          issue-number: ${{ github.event.issue.number }}
+          edit-mode: replace
+          body: |
+            #### Preview Environment
+
+            Preview Environment is deployed at .... 
+
+            *Pushed by: @${{ github.actor }}, Action: `${{ github.event_name }}`*
+
+      - name: Add Preview Label
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ["preview"]
+            })
