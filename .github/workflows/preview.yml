@@ -55,7 +55,6 @@ jobs:
 
       - name: Update Pull Request
         uses: peter-evans/create-or-update-comment@v3
-        id: update-comment
         with:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           issue-number: ${{ github.event.issue.number }}
@@ -94,7 +93,6 @@ jobs:
 
       - name: Update Pull Request
         uses: peter-evans/create-or-update-comment@v3
-        id: update-comment
         with:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           issue-number: ${{ github.event.issue.number }}
