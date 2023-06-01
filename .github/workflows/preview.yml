@@ -69,7 +69,7 @@ jobs:
       - name: Thumbs Up
         uses: peter-evans/create-or-update-comment@v3
         with:
-          comment-id: ${{ github.event.issue.comment.id }}
+          comment-id: ${{ github.event.comment.id }}
           reactions: |
             +1
 
