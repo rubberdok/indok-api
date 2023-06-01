@@ -1,4 +1,4 @@
-resource "azurerm_key_vault" "key_vault" {
+resource "azurerm_key_vault" "this" {
   name     = var.name
   location = "Norway East"
   sku_name = "standard"

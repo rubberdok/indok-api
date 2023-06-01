@@ -51,13 +51,6 @@ resource "azurerm_linux_web_app" "this" {
 }
 
 
-resource "azurerm_linux_web_app_slot" "green" {
-  name           = "green"
-  app_service_id = azurerm_linux_web_app.this.id
-
-  site_config {}
-  tags = var.tags
-}
 
 resource "azurerm_linux_web_app_slot" "blue" {
   name           = "blue"

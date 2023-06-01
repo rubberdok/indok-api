@@ -1,5 +1,5 @@
 postgres = {
-  sku_name   = "B_Gen5_1"
+  sku_name   = "B1ms"
   storage_mb = 5120
 }
 

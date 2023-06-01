@@ -1,4 +1,4 @@
-resource "azurerm_postgresql_server" "database" {
+resource "azurerm_postgresql_server" "this" {
   name     = var.name
   location = "Norway East"
 
