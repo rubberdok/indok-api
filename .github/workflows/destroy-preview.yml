@@ -3,23 +3,47 @@
 
 name: "Destroy Preview"
 
+# Run every 5 minutes
 on:
-  pull_request:
-    types: [closed]
+  schedule:
+    - cron: "*/5 * * * *"
 
 defaults:
   run:
     working-directory: ./infrastructure
 
-# Ensure that only one workflow related to provisioning infrastructure for a given PR is running at a time.
-# Otherwise, we might encounter locks on the state files imposed by Terraform, and it is generally a bad idea to
-# try to create a database while we're simultaneously trying to delete it. :)
-concurrency:
-  group: preview-${{ github.event.pull_request.number }}
-  cancel-in-progress: false
-
 jobs:
+  identify-issues:
+    name: Identify Issues
+    runs-on: ubuntu-latest
+    outputs:
+      issues: ${{ steps.issues.outputs.issues }}
+
+    steps:
+      - uses: actions/github-script@v6
+        id: find-pr-previews
+        with:
+          result-encoding: string
+          retries: 3
+          script: |
+            github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: preview
+            })
+
+      - name: Set output
+        id: issues
+        run: |
+          echo "::set-output name=issues::${{ steps.find-pr-previews.outputs.result }}"
+
   terraform:
+    needs: [identify-issues]
+
+    strategy:
+      matrix:
+        pr-number: ${{ fromJSON(needs.identify-issues.outputs.issues) }}
+
     name: Clean up Terraform
     runs-on: ubuntu-latest
 
@@ -44,6 +68,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          ref: refs/pull/${{ matrix.pr-number }}/head
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
@@ -54,12 +80,23 @@ jobs:
 
       - name: Select Terraform Workspace
         id: workspace
-        run: terraform workspace select preview-pr-${{ github.event.pull_request.number }}
+        run: terraform workspace select preview-pr-${{ matrix.pr-number }}
 
       - name: Terraform Destroy
-        run: terraform apply -auto-approve -destroy -var-file="test.tfvars"
+        run: terraform destroy -auto-approve -var-file="test.tfvars"
 
-      - name: Destoy Workspace
+      - name: Destroy Workspace
         run: |
           terraform workspace select default
-          terraform workspace delete preview-pr-${{ github.event.pull_request.number }}
+          terraform workspace delete preview-pr-${{ matrix.pr-number }}
+
+      - name: Remove Label
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.removeLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ matrix.pr-number }},
+              name: preview
+            })
