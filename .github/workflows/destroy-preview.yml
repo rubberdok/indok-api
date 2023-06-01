@@ -83,7 +83,7 @@ jobs:
         run: terraform workspace select preview-pr-${{ matrix.pr-number }}
 
       - name: Terraform Destroy
-        run: terraform destroy -auto-approve -var-file="test.tfvars"
+        run: terraform destroy -auto-approve -var-file="vars/test.tfvars"
 
       - name: Destroy Workspace
         run: |

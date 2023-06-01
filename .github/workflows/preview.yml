@@ -89,7 +89,7 @@ jobs:
         run: terraform workspace select -or-create preview-pr-${{ github.event.issue.number }}
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve -input=false -var-file="test.tfvars"
+        run: terraform apply -auto-approve -input=false -var-file="vars/default.tfvars" -var-file="vars/test.tfvars"
 
       - name: Update Pull Request
         uses: peter-evans/create-or-update-comment@v3
