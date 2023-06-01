@@ -17,3 +17,7 @@ variable "web_app" {
   })
 }
 
+variable "docker_registry_password" {
+  type = string
+  sensitive = true
+}

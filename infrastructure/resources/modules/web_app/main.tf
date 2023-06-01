@@ -20,7 +20,7 @@ resource "azurerm_log_analytics_workspace" "this" {
 }
 
 locals {
-  web_app_settings = { for secret in var.secrets : secret.name => "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=${secret.key})" }
+  secret_references = { for secret in var.secrets : secret.name => "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=${secret.key})" }
 }
 
 # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/linux_web_app#storage_uses_managed_identity
@@ -33,7 +33,11 @@ resource "azurerm_linux_web_app" "this" {
 
   key_vault_reference_identity_id = var.identity_id
 
-  app_settings = merge({}, local.web_app_settings)
+  app_settings = merge({
+    DOCKER_REGISTRY_SERVER_URL      = var.docker_registry_server_url
+    DOCKER_REGISTRY_SERVER_USERNAME = var.docker_registry_username
+    DOCKER_REGISTRY_SERVER_PASSWORD = var.docker_registry_password
+  }, local.secret_references)
 
   https_only = true
   site_config {}

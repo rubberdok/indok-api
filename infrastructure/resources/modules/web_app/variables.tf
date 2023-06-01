@@ -52,3 +52,16 @@ variable "docker_image" {
   type        = string
   default     = "ghcr.io/rubberdok/server"
 }
+
+variable "docker_registry_server_url" {
+  type = string
+}
+
+variable "docker_registry_username" {
+  type = string
+}
+
+variable "docker_registry_password" {
+  type      = string
+  sensitive = true
+}

@@ -23,4 +23,8 @@ module "web_app" {
   key_vault_name = module.key_vault.name
 
   tags = merge(local.tags, { "use-case" = "web-app" })
+
+  docker_registry_password   = var.docker_registry_password
+  docker_registry_username   = "rubberdok-ci"
+  docker_registry_server_url = "ghcr.io/rubberdok"
 }
