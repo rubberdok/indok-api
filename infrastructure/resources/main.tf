@@ -8,6 +8,10 @@ terraform {
       source  = "integrations/github"
       version = "=5.24.0"
     }
+    time = {
+      source  = "hashicorp/time"
+      version = "0.9.1"
+    }
   }
   backend "azurerm" {
     resource_group_name  = "tfstate"
