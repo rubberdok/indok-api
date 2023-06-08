@@ -10,7 +10,7 @@ on:
 
 defaults:
   run:
-    working-directory: ./infrastructure
+    working-directory: ./infrastructure/resources
 
 jobs:
   identify-issues:
@@ -83,7 +83,7 @@ jobs:
         run: terraform workspace select preview-pr-${{ matrix.pr-number }}
 
       - name: Terraform Destroy
-        run: terraform destroy -auto-approve -var-file="vars/test.tfvars"
+        run: terraform destroy -auto-approve -input=false -var-file="vars/default.tfvars" -var-file="vars/vars/test.tfvars" -var docker_registry_password="${{ env.GITHUB_TOKEN }}"
 
       - name: Destroy Workspace
         run: |
