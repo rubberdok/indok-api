@@ -9,7 +9,7 @@ module "container_app" {
     location = module.resource_group.location
   }
 
-  docker_registry_server_url = "ghcr.io/rubberdok"
+  docker_registry_server_url = "ghcr.io"
   docker_registry_username   = "USERNAME"
   docker_registry_password   = var.docker_registry_password
 
