@@ -11,12 +11,6 @@ variable "postgres" {
   })
 }
 
-variable "web_app" {
-  type = object({
-    sku_name = string
-  })
-}
-
 variable "docker_registry_password" {
   type      = string
   sensitive = true

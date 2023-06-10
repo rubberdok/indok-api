@@ -6,8 +6,8 @@ module "database" {
   sku_name            = var.postgres.sku_name
   storage_mb          = var.postgres.storage_mb
 
-  administrator_login          = "postgres"
-  administrator_login_password = azurerm_key_vault_secret.postgres_password.value
+  administrator_login    = "postgres"
+  administrator_password = azurerm_key_vault_secret.postgres_password.value
 
   tags = local.tags
 }

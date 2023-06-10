@@ -11,7 +11,7 @@ variable "tags" {
   type = map(string)
 }
 
-variable "administrator_login_password" {
+variable "administrator_password" {
   type        = string
   description = "The password for the PostgreSQL Server administrator."
   sensitive   = true
