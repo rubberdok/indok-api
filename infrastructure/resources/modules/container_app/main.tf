@@ -49,6 +49,7 @@ resource "azurerm_container_app" "this" {
   }
 
   template {
+    min_replicas = 1
     container {
       cpu    = var.container.cpu
       memory = var.container.memory
