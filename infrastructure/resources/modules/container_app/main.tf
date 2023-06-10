@@ -58,6 +58,15 @@ resource "azurerm_container_app" "this" {
     }
   }
 
+  ingress {
+    external_enabled = true
+    target_port      = 4000
+    traffic_weight {
+      latest_revision = true
+      percentage      = 100
+    }
+  }
+
 
   tags = var.tags
 
