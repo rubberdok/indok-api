@@ -34,6 +34,14 @@ resource "azurerm_container_app" "this" {
     value = var.docker_registry_password
   }
 
+  dynamic "secret" {
+    for_each = var.secrets
+    content {
+      name  = secret.value.name
+      value = secret.value.value
+    }
+  }
+
   registry {
     username             = var.docker_registry_username
     password_secret_name = "docker-registry-password"

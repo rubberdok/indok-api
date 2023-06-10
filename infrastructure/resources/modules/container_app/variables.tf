@@ -51,3 +51,11 @@ variable "envs" {
   }))
   default = []
 }
+
+variable "secrets" {
+  type = list(object({
+    name  = string
+    value = string
+  }))
+  default = []
+}

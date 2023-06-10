@@ -13,6 +13,17 @@ module "container_app" {
   docker_registry_username   = "USERNAME"
   docker_registry_password   = var.docker_registry_password
 
+  secrets = [
+    {
+      name  = "redis-connection-string"
+      value = "@Microsoft.KeyVault(VaultName=${module.key_vault.name};SecretName=${azurerm_key_vault_secret.redis_connection_string.name}})"
+    },
+    {
+      name  = "database-connection-string"
+      value = "@Microsoft.KeyVault(VaultName=${module.key_vault.name};SecretName=${azurerm_key_vault_secret.db_connection_string.name}})"
+    },
+  ]
+
   envs = [
     {
       name  = "CORS_ORIGINS"
@@ -31,8 +42,8 @@ module "container_app" {
       value = "no-reply@indokntnu.no"
     },
     {
-      name  = "DATABASE_URL"
-      value = ""
+      name        = "DATABASE_URL"
+      secret_name = "database-connection-string"
     },
     {
       name  = "PORT"
@@ -83,8 +94,8 @@ module "container_app" {
       value = "abc"
     },
     {
-      name  = "REDIS_URL"
-      value = "abc"
+      name        = "REDIS_URL"
+      secret_name = "redis-connection-string"
     },
   ]
 }
