@@ -12,7 +12,8 @@ resource "azurerm_postgresql_server" "this" {
   administrator_login          = var.administrator_login
   administrator_login_password = var.administrator_login_password
 
-  ssl_enforcement_enabled = true
+  ssl_enforcement_enabled       = true
+  public_network_access_enabled = false
 }
 
 
