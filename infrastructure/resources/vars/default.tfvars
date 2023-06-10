@@ -1,8 +1,5 @@
 postgres = {
-  sku_name   = "B1ms"
-  storage_mb = 5120
+  sku_name   = "B_Standards_B1ms"
+  storage_mb = 32768
 }
 
-web_app = {
-  sku_name = "B1"
-}
