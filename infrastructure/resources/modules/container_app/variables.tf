@@ -27,7 +27,7 @@ variable "tags" {
 
 variable "docker_image_tag" {
   type    = string
-  default = "ghcr.io/rubberdok/server:a57847c994f11897287cbd54b3ac7edb897bb8ed"
+  default = "ghcr.io/rubberdok/server:1159fe47b6b4c83a5a41f3eae07cda3736394d3a"
 }
 
 variable "docker_registry_server_url" {
