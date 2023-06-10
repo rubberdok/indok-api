@@ -16,11 +16,11 @@ module "container_app" {
   secrets = [
     {
       name  = "redis-connection-string"
-      value = "@Microsoft.KeyVault(VaultName=${module.key_vault.name};SecretName=${azurerm_key_vault_secret.redis_connection_string.name}})"
+      value = azurerm_key_vault_secret.redis_connection_string.value
     },
     {
       name  = "database-connection-string"
-      value = "@Microsoft.KeyVault(VaultName=${module.key_vault.name};SecretName=${azurerm_key_vault_secret.db_connection_string.name}})"
+      value = azurerm_key_vault_secret.db_connection_string.value
     },
   ]
 
