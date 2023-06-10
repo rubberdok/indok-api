@@ -12,7 +12,15 @@ resource "azurerm_postgresql_flexible_server" "this" {
   administrator_login    = var.administrator_login
   administrator_password = var.administrator_password
 
+
 }
 
 
 
+
+resource "azurerm_postgresql_flexible_server_database" "example" {
+  name      = var.name
+  server_id = azurerm_postgresql_flexible_server.this.id
+  collation = "en_US.utf8"
+  charset   = "utf8"
+}
