@@ -19,6 +19,7 @@ resource "azurerm_container_app_environment" "this" {
 }
 
 
+# https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/container_app
 resource "azurerm_container_app" "this" {
   name = var.name
 
@@ -57,13 +58,6 @@ resource "azurerm_container_app" "this" {
     }
   }
 
-  ingress {
-    external_enabled = true
-    target_port      = 4000
-    traffic_weight {
-      percentage = 100
-    }
-  }
 
   tags = var.tags
 
