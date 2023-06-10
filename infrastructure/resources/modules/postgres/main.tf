@@ -12,7 +12,7 @@ resource "azurerm_postgresql_flexible_server" "this" {
   administrator_login    = var.administrator_login
   administrator_password = var.administrator_password
 
-
+  zone = "2"
 }
 
 
