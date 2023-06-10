@@ -20,6 +20,7 @@
     "outDir": "dist",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
+    "noEmit": true,
     "paths": {
       "@/*": ["src/*"]
     },
