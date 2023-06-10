@@ -1,8 +1,8 @@
 FROM public.ecr.aws/docker/library/node:lts-alpine3.16 as deps
 
-LABEL org.opencontainers.image.source=https://github.com/rubberdok/indok-api
-LABEL org.opencontainers.image.description="Container image for the Indøk API."
-LABEL org.opencontainers.image.licenses=MIT
+LABEL org.opencontainers.image.source https://github.com/rubberdok/indok-api
+LABEL org.opencontainers.image.description Container image for the Indøk API.
+LABEL org.opencontainers.image.licenses MIT
 
 RUN apk add --no-cache libc6-compat
 WORKDIR /usr/src/app
