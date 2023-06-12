@@ -74,7 +74,7 @@ jobs:
       - name: Terraform Plan
         id: plan
         if: github.event_name == 'pull_request'
-        run: terraform plan -no-color -input=false -var-file="vars/default.tfvars"  -var-file="vars/production.tfvars" -var docker_registry_password="${{ env.GITHUB_TOKEN }}"
+        run: terraform plan -no-color -input=false -var docker_registry_password="${{ env.GITHUB_TOKEN }}"
         continue-on-error: true
 
       - name: Find Existing Comment
@@ -117,4 +117,4 @@ jobs:
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform apply -auto-approve -input=false -var-file="vars/default.tfvars"  -var-file="vars/production.tfvars" -var docker_registry_password="${{ env.GITHUB_TOKEN }}"
+        run: terraform apply -auto-approve -input=false -var docker_registry_password="${{ env.GITHUB_TOKEN }}"
