@@ -19,7 +19,7 @@ on:
 
 defaults:
   run:
-    working-directory: ./infrastructure/resources
+    working-directory: ./infrastructure/server/environments/production
 
 # Ensure that we run the workflows in succession to avoid any race conditions related to infrastructure.
 concurrency:
