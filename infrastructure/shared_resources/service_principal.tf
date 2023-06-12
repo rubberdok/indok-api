@@ -85,3 +85,9 @@ resource "azuread_app_role_assignment" "github_users_read_all" {
   principal_object_id = azuread_service_principal.github.object_id
   resource_object_id  = azuread_service_principal.msgraph.object_id
 }
+
+resource "azurerm_role_assignment" "github_subscription_contributor" {
+  scope                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}"
+  role_definition_name = "Contributor"
+  principal_id         = azuread_service_principal.github.object_id
+}
