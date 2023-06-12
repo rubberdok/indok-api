@@ -71,10 +71,6 @@ jobs:
         id: validate
         run: terraform validate -no-color
 
-      - name: Select Terraform Workspace
-        id: workspace
-        run: terraform workspace select production
-
       - name: Terraform Plan
         id: plan
         if: github.event_name == 'pull_request'
