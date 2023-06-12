@@ -1,5 +1,5 @@
 module "redis" {
-  source = "./modules/redis"
+  source = "../modules/redis"
 
   name           = local.environment_name
   resource_group = module.resource_group

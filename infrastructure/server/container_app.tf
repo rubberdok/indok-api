@@ -1,5 +1,5 @@
 module "container_app" {
-  source = "./modules/container_app"
+  source = "../modules/container_app"
 
   name = local.environment_name
   tags = local.tags

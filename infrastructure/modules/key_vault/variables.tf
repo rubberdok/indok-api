@@ -1,6 +1,9 @@
-variable "resource_group_name" {
-  type        = string
-  description = "The name of the resource group in which to create the key vault."
+variable "resource_group" {
+  type = object({
+    name     = string
+    location = string
+  })
+  description = "The resource group in which to create the key vault."
 }
 
 variable "tags" {
@@ -23,12 +26,7 @@ variable "name" {
 
 variable "current_service_principal" {
   type = object({
-    tenant_id      = string
-    application_id = string
-    object_id      = string
+    object_id = string
   })
 }
 
-variable "application_id" {
-  type = string
-}
