@@ -3,27 +3,27 @@
 # Only runs if the changes are in the `infrastructure/` directory, or if the workflow itself is changed.
 # Based on https://developer.hashicorp.com/terraform/tutorials/automation/github-actions
 
-name: "Terraform"
+name: "Terraform - Shared Infrastructure"
 
 on:
   push:
     branches:
       - main
     paths:
-      - infrastructure/**
-      - .github/workflows/terraform.yml
+      - infrastructure/shared/**
+      - .github/workflows/tf-shared-infrastructure.yml
   pull_request:
     paths:
-      - infrastructure/**
-      - .github/workflows/terraform.yml
+      - infrastructure/shared/**
+      - .github/workflows/tf-shared-infrastructure.yml
 
 defaults:
   run:
-    working-directory: ./infrastructure/server/environments/production
+    working-directory: ./infrastructure/shared_resources
 
 # Ensure that we run the workflows in succession to avoid any race conditions related to infrastructure.
 concurrency:
-  group: terraform
+  group: terraform-shared-infrastructure
   cancel-in-progress: false
 
 jobs:
@@ -74,7 +74,7 @@ jobs:
       - name: Terraform Plan
         id: plan
         if: github.event_name == 'pull_request'
-        run: terraform plan -no-color -input=false -var docker_registry_password="${{ env.GITHUB_TOKEN }}"
+        run: terraform plan -no-color -input=false
         continue-on-error: true
 
       - name: Find Existing Comment
@@ -84,7 +84,7 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: "github-actions[bot]"
-          body-includes: "### Planned Changes to Server Infrastructure"
+          body-includes: "### Planned Changes to Shared Infrastructure"
 
       - name: Update Pull Request
         uses: peter-evans/create-or-update-comment@v3
@@ -96,7 +96,7 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           edit-mode: replace
           body: |
-            ### Planned Changes to Server Infrastructure
+            ### Planned Changes to Shared Infrastructure
             #### Terraform Format and Style 🖌 `${{ steps.fmt.outcome }}`
             #### Terraform Initialization ⚙️ `${{ steps.init.outcome }}`
             #### Terraform Plan 📖 `${{ steps.plan.outcome }}`
@@ -118,4 +118,4 @@ jobs:
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform apply -auto-approve -input=false -var docker_registry_password="${{ env.GITHUB_TOKEN }}"
+        run: terraform apply -auto-approve -input=false

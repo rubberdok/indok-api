@@ -2,6 +2,8 @@ locals {
   azure_admin_id = "aebaf770-f990-4042-ba63-0bad65e6a23e"
 }
 
+data "azurerm_subscription" "current" {}
+
 resource "azuread_application" "github" {
   display_name = "github-cli"
   owners       = [local.azure_admin_id]
@@ -86,8 +88,31 @@ resource "azuread_app_role_assignment" "github_users_read_all" {
   resource_object_id  = azuread_service_principal.msgraph.object_id
 }
 
+resource "azurerm_role_definition" "custom_contributor" {
+  name              = "Contributor with RBAC Management"
+  scope             = data.azurerm_subscription.current.id
+  description       = "Grants full access to manage all resources, allow you to assign and delete roles in Azure RBAC but does not allow you to manage assignments in Azure Blueprints, or share image galleries."
+  assignable_scopes = [data.azurerm_subscription.current.id]
+  permissions {
+    actions = ["*"]
+    not_actions = [
+      "Microsoft.Authorization/elevateAccess/Action",
+      "Microsoft.Blueprint/blueprintAssignments/write",
+      "Microsoft.Blueprint/blueprintAssignments/delete",
+      "Microsoft.Compute/galleries/share/action"
+    ]
+
+  }
+}
+
 resource "azurerm_role_assignment" "github_subscription_contributor" {
-  scope                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}"
-  role_definition_name = "Contributor"
+  scope                = data.azurerm_subscription.current.id
+  role_definition_name = azurerm_role_definition.custom_contributor.name
+  principal_id         = azuread_service_principal.github.object_id
+}
+
+resource "azurerm_role_assignment" "key_vault_officer" {
+  scope                = data.azurerm_subscription.current.id
+  role_definition_name = "Key Vault Secrets Officer"
   principal_id         = azuread_service_principal.github.object_id
 }
