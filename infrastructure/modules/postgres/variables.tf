@@ -1,33 +1,37 @@
-variable "resource_group_name" {
-  type        = string
-  description = "The name of the resource group in which to create the PostgreSQL Server."
+variable "resource_group" {
+  type = object({
+    name     = string
+    location = string
+  })
 }
 
-variable "sku_name" {
-  type = string
+variable "postgres" {
+  type = object({
+    sku_name   = string
+    storage_mb = number
+  })
+}
+
+variable "authentication" {
+  type = object({
+    administrator_login    = string
+    administrator_password = string
+  })
+  sensitive = true
+}
+
+variable "network" {
+  type = object({
+    virtual_network_name = string
+  })
 }
 
 variable "tags" {
   type = map(string)
 }
 
-variable "administrator_password" {
-  type        = string
-  description = "The password for the PostgreSQL Server administrator."
-  sensitive   = true
-}
 
-variable "administrator_login" {
+variable "suffix" {
   type        = string
-  description = "The administrator login name for the PostgreSQL Server."
-}
-
-variable "storage_mb" {
-  type        = number
-  description = "The amount of storage allocated to this PostgreSQL Server."
-}
-
-variable "name" {
-  type        = string
-  description = "The name of the PostgreSQL Server."
+  description = "The suffix to append to the resources."
 }
