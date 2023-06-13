@@ -7,6 +7,6 @@ import { env } from "@/config";
 export const RedisStore = _RedisStore(session);
 export const redisClient = createClient({
   legacyMode: true,
-  url: env.REDIS_URL,
+  url: env.REDIS_CONNECTION_STRING,
 });
 redisClient.connect().catch(console.error);

@@ -116,7 +116,7 @@ jobs:
         run: npm ci
 
       - name: Run Integration Tests
-        run: DATABASE_URL=postgresql://postgres:postgres@localhost:5432/tests npm run test:integration:headless -- --collect-coverage
+        run: DATABASE_CONNECTION_STRING=postgresql://postgres:postgres@localhost:5432/tests npm run test:integration:headless -- --collect-coverage
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v3
