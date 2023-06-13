@@ -19,7 +19,7 @@ on:
 
 defaults:
   run:
-    working-directory: ./infrastructure/shared
+    working-directory: ./infrastructure/shared_resources
 
 # Ensure that we run the workflows in succession to avoid any race conditions related to infrastructure.
 concurrency:
