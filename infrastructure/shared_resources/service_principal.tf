@@ -34,7 +34,7 @@ resource "azuread_application_federated_identity_credential" "github_branch_main
   description           = "GitHub Actions Service Principal"
   audiences             = ["api://AzureADTokenExchange"]
   issuer                = "https://token.actions.githubusercontent.com"
-  subject               = "repo:rubberdok/${var.repository_name}:branch:main"
+  subject               = "repo:rubberdok/${var.repository_name}:ref:refs/heads/main"
 }
 
 resource "azuread_application_federated_identity_credential" "github_pull_request" {
