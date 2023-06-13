@@ -4,6 +4,7 @@ locals {
 
 data "azurerm_subscription" "current" {}
 
+# Application registration for Github Actions
 resource "azuread_application" "github" {
   display_name = "github-cli"
   owners       = [local.azure_admin_id]
@@ -23,6 +24,7 @@ resource "azuread_application" "github" {
   }
 }
 
+# Service Principal, used by Github Actions to authenticate with Azure
 resource "azuread_service_principal" "github" {
   application_id               = azuread_application.github.application_id
   app_role_assignment_required = false
@@ -30,6 +32,10 @@ resource "azuread_service_principal" "github" {
   description                  = "Service principal for GitHub actions"
 }
 
+/*
+  Add federated identity credentials for Github to enable OIDC authentication,
+  as described in https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_oidc
+*/
 resource "azuread_application_federated_identity_credential" "github_branch_main" {
   application_object_id = azuread_application.github.object_id
   display_name          = "github-branch-main"
@@ -88,6 +94,11 @@ resource "azuread_app_role_assignment" "github_users_read_all" {
   resource_object_id  = azuread_service_principal.msgraph.object_id
 }
 
+
+/*
+  Extends the built-in Contributor role with the ability to to manage RBAC, which
+  is required to assign roles to key vaults.
+*/
 resource "azurerm_role_definition" "custom_contributor" {
   name              = "Contributor with RBAC Management"
   scope             = data.azurerm_subscription.current.id
@@ -105,12 +116,15 @@ resource "azurerm_role_definition" "custom_contributor" {
   }
 }
 
+# Assign the custom role to the Github service principal
 resource "azurerm_role_assignment" "github_subscription_contributor" {
   scope                = data.azurerm_subscription.current.id
   role_definition_name = azurerm_role_definition.custom_contributor.name
   principal_id         = azuread_service_principal.github.object_id
 }
 
+# Assign the Key Vault Secrets Officer role to the Github service principal so that
+# it can read and write secrets that are stored in the shared key vault.
 resource "azurerm_role_assignment" "key_vault_officer" {
   scope                = data.azurerm_subscription.current.id
   role_definition_name = "Key Vault Secrets Officer"
