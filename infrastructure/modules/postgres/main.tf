@@ -15,9 +15,6 @@ resource "azurerm_postgresql_flexible_server" "this" {
   zone = "2"
 }
 
-
-
-
 resource "azurerm_postgresql_flexible_server_database" "this" {
   name      = var.name
   server_id = azurerm_postgresql_flexible_server.this.id
