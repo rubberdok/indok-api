@@ -18,7 +18,7 @@ resource "azurerm_postgresql_flexible_server" "this" {
 
 
 
-resource "azurerm_postgresql_flexible_server_database" "example" {
+resource "azurerm_postgresql_flexible_server_database" "this" {
   name      = var.name
   server_id = azurerm_postgresql_flexible_server.this.id
   collation = "en_US.utf8"
