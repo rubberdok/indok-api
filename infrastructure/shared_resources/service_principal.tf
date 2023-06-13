@@ -89,11 +89,10 @@ resource "azuread_app_role_assignment" "github_users_read_all" {
 }
 
 resource "azurerm_role_definition" "custom_contributor" {
-  display_name = "Custom Contributor"
-  scope        = data.azurerm_subscription.current.id
-  description  = "Grants full access to manage all resources, allow you to assign and delete roles in Azure RBAC but does not allow you to manage assignments in Azure Blueprints, or share image galleries."
-  enabled      = true
-
+  name              = "Contributor with RBAC Management"
+  scope             = data.azurerm_subscription.current.id
+  description       = "Grants full access to manage all resources, allow you to assign and delete roles in Azure RBAC but does not allow you to manage assignments in Azure Blueprints, or share image galleries."
+  assignable_scopes = [data.azurerm_subscription.current.id]
   permissions {
     actions = ["*"]
     not_actions = [
@@ -107,13 +106,13 @@ resource "azurerm_role_definition" "custom_contributor" {
 }
 
 resource "azurerm_role_assignment" "github_subscription_contributor" {
-  scope              = data.azurerm_client_config.current.id
-  role_definition_id = azurerm_role_definition.custom_contributor.id
-  principal_id       = azuread_service_principal.github.object_id
+  scope                = data.azurerm_subscription.current.id
+  role_definition_name = azurerm_role_definition.custom_contributor.name
+  principal_id         = azuread_service_principal.github.object_id
 }
 
 resource "azurerm_role_assignment" "key_vault_officer" {
-  scope                = data.azurerm_client_config.current.id
+  scope                = data.azurerm_subscription.current.id
   role_definition_name = "Key Vault Secrets Officer"
   principal_id         = azuread_service_principal.github.object_id
 }
