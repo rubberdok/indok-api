@@ -27,10 +27,12 @@ terraform {
 }
 
 provider "azurerm" {
+  use_oidc = true
   features {}
 }
 
 provider "azuread" {
+  use_oidc  = true
   tenant_id = data.azurerm_client_config.current.tenant_id
 }
 
