@@ -22,7 +22,7 @@ resource "azurerm_key_vault" "shared" {
 }
 
 resource "azurerm_role_assignment" "key_vault_officer" {
-  for_each             = toset([azuread_service_principal.github.object_id, data.azurerm_client_config.current.object_id])
+  for_each             = toset([azuread_service_principal.github.object_id, data.azurerm_client_config.current.object_id, "aebaf770-f990-4042-ba63-0bad65e6a23e"])
   scope                = azurerm_key_vault.shared.id
   role_definition_name = "Key Vault Secrets Officer"
   principal_id         = each.key
