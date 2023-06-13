@@ -9,7 +9,7 @@ const envVarsSchema = z.object({
   CORS_CREDENTIALS: z.string().transform((v) => v === "true"),
   NODE_ENV: z.string(),
   NO_REPLY_EMAIL: z.string().email(),
-  DATABASE_URL: z.string(),
+  DATABASE_CONNECTION_STRING: z.string(),
   PORT: z
     .string()
     .transform((val) => Number.parseInt(val))
@@ -30,7 +30,7 @@ const envVarsSchema = z.object({
   SESSION_COOKIE_DOMAIN: z.string(),
   SESSION_COOKIE_HTTP_ONLY: z.string().transform((val) => val === "true"),
   SESSION_COOKIE_SECURE: z.string().transform((val) => val === "true"),
-  REDIS_URL: z.string(),
+  REDIS_CONNECTION_STRING: z.string(),
 });
 
 export const env = envVarsSchema.parse(process.env);
