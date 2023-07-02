@@ -3,6 +3,7 @@ variable "resource_group" {
     name     = string
     location = string
   })
+  description = "The resource group to deploy the resources."
 }
 
 variable "postgres" {
@@ -10,6 +11,7 @@ variable "postgres" {
     sku_name   = string
     storage_mb = number
   })
+  description = "The configuration of the PostgreSQL server."
 }
 
 variable "authentication" {
@@ -17,13 +19,16 @@ variable "authentication" {
     administrator_login    = string
     administrator_password = string
   })
-  sensitive = true
+  sensitive   = true
+  description = "The authentication configuration of the PostgreSQL server."
 }
 
 variable "network" {
   type = object({
     virtual_network_name = string
+    virtual_network_id   = string
   })
+  description = "The network configuration of the PostgreSQL server."
 }
 
 variable "tags" {
@@ -34,4 +39,8 @@ variable "tags" {
 variable "suffix" {
   type        = string
   description = "The suffix to append to the resources."
+}
+
+variable "environment" {
+  type = string
 }

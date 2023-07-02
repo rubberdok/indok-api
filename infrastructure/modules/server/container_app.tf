@@ -1,8 +1,8 @@
 module "container_app" {
   source = "../container_app"
 
-  name = "container-app-${var.suffix}"
-  tags = local.tags
+  suffix = var.suffix
+  tags   = local.tags
 
   resource_group = {
     name     = module.resource_group.name
@@ -12,6 +12,10 @@ module "container_app" {
   docker_registry_server_url = "ghcr.io"
   docker_registry_username   = "USERNAME"
   docker_registry_password   = var.docker_registry_password
+
+  network = {
+    virtual_network_name = module.vnet.name
+  }
 
   secrets = concat([
     {
