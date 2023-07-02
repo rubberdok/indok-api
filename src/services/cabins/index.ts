@@ -1,21 +1,14 @@
 import { Booking, BookingStatus, Cabin } from "@prisma/client";
-import { inject, injectable } from "tsyringe";
 
 import { ValidationError } from "@/core/errors";
-import { ICabinRepository, Types as RepositoryTypes } from "@/repositories";
+import { ICabinRepository } from "@/repositories";
 import { IMailService, TemplateAliasEnum } from "@/services/mail/interfaces";
-import { Types } from "@/services/types";
 
 import { BookingData, ICabinService } from "./interfaces";
 import { bookingSchema } from "./validation";
 
-@injectable()
 export class CabinService implements ICabinService {
-  constructor(
-    @inject(RepositoryTypes.CabinRepsitory)
-    private cabinRepository: ICabinRepository,
-    @inject(Types.MailService) private mailService: IMailService
-  ) {}
+  constructor(private cabinRepository: ICabinRepository, private mailService: IMailService) {}
 
   getCabin(id: string): Promise<Cabin> {
     return this.cabinRepository.getCabinById(id);

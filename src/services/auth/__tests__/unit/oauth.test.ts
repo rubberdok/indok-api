@@ -5,12 +5,10 @@ import crypto from "crypto";
 import { User } from "@prisma/client";
 import { DeepMockProxy, mockDeep } from "jest-mock-extended";
 import fetch, { Response as _Response } from "node-fetch";
-import { container as _container } from "tsyringe";
 
 import { FeideService } from "@/services/auth";
 import { setupMocks } from "@/services/auth/__tests__/__mocks__/feide";
 import { IAuthService, IUserService } from "@/services/interfaces";
-import { Types } from "@/services/types";
 
 import { OAuthCase } from "./interfaces";
 
@@ -22,26 +20,23 @@ jest.mock("node-fetch");
 
 const dummyUser = mockDeep<User>();
 
-const container = _container.createChildContainer();
+let mockUserService: DeepMockProxy<IUserService>;
+let authService: IAuthService;
 
 describe("OAuth", () => {
   beforeAll(() => {
-    const userService = mockDeep<IUserService>();
-
-    container.register<DeepMockProxy<IUserService>>(Types.UserService, { useValue: userService });
-    container.register<IAuthService>(Types.AuthService, { useClass: FeideService });
+    mockUserService = mockDeep<IUserService>();
+    authService = new FeideService(mockUserService);
   });
 
   it("should generate a login url with PKCE params", () => {
-    const auth = container.resolve<IAuthService>(Types.AuthService);
-    const { url, codeChallenge } = auth.ssoUrl();
+    const { url, codeChallenge } = authService.ssoUrl();
     expect(url).toContain(`code_challenge=${codeChallenge}`);
     expect(url).toContain("code_challenge_method=S256");
   });
 
   it("should generate a valid code challenge", () => {
-    const auth = container.resolve<IAuthService>(Types.AuthService);
-    const { codeChallenge, codeVerifier } = auth.ssoUrl();
+    const { codeChallenge, codeVerifier } = authService.ssoUrl();
     const expected = crypto.createHash("sha256").update(codeVerifier).digest("base64url");
     expect(expected).toStrictEqual(codeChallenge);
   });
@@ -91,13 +86,10 @@ describe("OAuth", () => {
       return Promise.resolve(res);
     });
 
-    const mockUserService = container.resolve<DeepMockProxy<IUserService>>(Types.UserService);
-
     mockUserService.getByFeideID.mockReturnValueOnce(Promise.resolve(expected));
     mockUserService.login.mockReturnValueOnce(Promise.resolve(expected));
 
-    const auth = container.resolve<IAuthService>(Types.AuthService);
-    const user = await auth.getUser({
+    const user = await authService.getUser({
       code: "code",
       codeVerifier: "verifier",
     });
@@ -157,13 +149,10 @@ describe("OAuth", () => {
       return Promise.resolve(res);
     });
 
-    const mockUserService = container.resolve<DeepMockProxy<IUserService>>(Types.UserService);
-
     mockUserService.getByFeideID.mockReturnValueOnce(Promise.resolve(null));
     mockUserService.create.mockReturnValueOnce(Promise.resolve(expected));
 
-    const auth = container.resolve<IAuthService>(Types.AuthService);
-    const user = await auth.getUser({
+    const user = await authService.getUser({
       code: "code",
       codeVerifier: "verifier",
     });
