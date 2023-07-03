@@ -6,6 +6,7 @@ import fetch, { Response as _Response } from "node-fetch";
 
 import { FeideService } from "@/services/auth";
 import { IAuthService, IUserService } from "@/services/interfaces";
+
 import { setupMocks } from "../__mocks__/feide";
 
 import { OAuthCase } from "./interfaces";

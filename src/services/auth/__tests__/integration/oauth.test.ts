@@ -1,5 +1,6 @@
 import fetch, { Response as _Response } from "node-fetch";
 
+import { Database } from "@/core";
 import prisma from "@/lib/prisma";
 import { UserRepository } from "@/repositories/users";
 import { FeideService } from "@/services/auth";
@@ -8,7 +9,6 @@ import { UserService } from "@/services/users";
 
 import { setupMocks } from "../__mocks__/feide";
 
-import { Database } from "@/core";
 import { OAuthCase } from "./interfaces";
 
 const { Response: ActualResponse } = jest.requireActual<{
