@@ -1,13 +1,11 @@
 import { Prisma, User } from "@prisma/client";
-import { inject, injectable } from "tsyringe";
 
-import { CoreTypes, Database } from "@/core";
+import { Database } from "@/core";
 
 import { IUserRepository } from "./interfaces";
 
-@injectable()
 export class UserRepository implements IUserRepository {
-  constructor(@inject(CoreTypes.Prisma) private db: Database) {}
+  constructor(private db: Database) {}
 
   update(id: string, data: Prisma.UserUpdateInput): Promise<User> {
     return this.db.user.update({

@@ -1,25 +1,20 @@
-import "reflect-metadata";
-
 import { PrismaClient } from "@prisma/client";
-import { container as _container } from "tsyringe";
 
-import { CoreTypes } from "@//core";
 import prisma from "@/lib/prisma";
-import { Types } from "@/repositories";
 import { IUserRepository } from "@/repositories/interfaces";
 import { UserRepository } from "@/repositories/users";
 
 import { CreateUserCase } from "./interfaces";
 
-const container = _container.createChildContainer();
+let db: PrismaClient;
+let userRepository: IUserRepository;
 
 beforeAll(() => {
-  container.register<PrismaClient>(CoreTypes.Prisma, { useValue: prisma });
-  container.register<IUserRepository>(Types.UserRepository, { useClass: UserRepository });
+  db = prisma;
+  userRepository = new UserRepository(db);
 });
 
 beforeEach(async () => {
-  const db = container.resolve<PrismaClient>(CoreTypes.Prisma);
   const user = await db.user.findFirst({
     where: {
       feideId: "test-1",
@@ -54,8 +49,7 @@ const usersTable: CreateUserCase[] = [
 ];
 
 test.each(usersTable)("createUser($input)", async ({ input, expected }) => {
-  const repo = container.resolve<IUserRepository>(Types.UserRepository);
-  const got = await repo.create(input);
+  const got = await userRepository.create(input);
   const { username, email, feideId, firstName, lastName } = got;
   expect({ username, email, feideId, firstName, lastName }).toMatchObject(expected);
   expect(got.id).toBeTruthy();

@@ -1,4 +1,4 @@
-FROM public.ecr.aws/docker/library/node:lts-alpine3.16 as deps
+FROM public.ecr.aws/docker/library/node:lts-alpine3.16 AS deps
 
 LABEL org.opencontainers.image.source https://github.com/rubberdok/indok-api
 LABEL org.opencontainers.image.description Container image for the Indøk API.
@@ -10,7 +10,7 @@ WORKDIR /usr/src/app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-FROM public.ecr.aws/docker/library/node:lts-alpine3.16 as builder
+FROM public.ecr.aws/docker/library/node:lts-alpine3.16 AS builder
 WORKDIR /usr/src/app
 
 COPY --from=deps /usr/src/app/node_modules ./node_modules
@@ -21,7 +21,7 @@ RUN npm run generate
 RUN npm run build
 RUN npm install --omit=dev
 
-FROM public.ecr.aws/docker/library/node:lts-alpine3.16 as runner
+FROM public.ecr.aws/docker/library/node:lts-alpine3.16 AS runner
 WORKDIR /usr/src/app
 
 COPY --from=builder /usr/src/app/prisma ./prisma

@@ -1,18 +1,13 @@
 import { Prisma, User } from "@prisma/client";
 import dayjs from "dayjs";
-import { inject, injectable } from "tsyringe";
 
-import { IUserRepository, Types } from "@/repositories";
+import { IUserRepository } from "@/repositories";
 import { IUserService } from "@/services/interfaces";
 
 import { createUserSchema, updateUserSchema } from "./validation";
 
-@injectable()
 export class UserService implements IUserService {
-  constructor(
-    @inject(Types.UserRepository)
-    private usersRepository: IUserRepository
-  ) {}
+  constructor(private usersRepository: IUserRepository) {}
 
   async update(id: string, data: Prisma.UserUpdateInput): Promise<User> {
     updateUserSchema.parse(data);

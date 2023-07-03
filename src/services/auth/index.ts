@@ -2,11 +2,9 @@ import crypto from "crypto";
 
 import { User } from "@prisma/client";
 import fetch from "node-fetch";
-import { inject, injectable } from "tsyringe";
 
 import { env } from "@/config";
 import { GetUserParams, IAuthService, IUserService } from "@/services/interfaces";
-import { Types } from "@/services/types";
 
 import { UserInfo } from "./interfaces";
 
@@ -18,9 +16,8 @@ const FeideProvider = {
   userInfo: env.FEIDE_BASE_URL + "/openid/userinfo",
 };
 
-@injectable()
 export class FeideService implements IAuthService {
-  constructor(@inject(Types.UserService) private userService: IUserService) {}
+  constructor(private userService: IUserService) {}
 
   private scope = ["openid", "userid", "userid-feide", "userinfo-name", "userinfo-photo", "email", "groups-edu"].join(
     " "
