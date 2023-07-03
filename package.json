@@ -1,7 +1,7 @@
 {
   "name": "indok-api",
   "version": "1.0.0",
-  "main": "dist/index.js",
+  "main": "./dist/index.js",
   "description": "api for indok-web",
   "repository": "https://github.com/rubberdok/indok-web",
   "author": "Rubberdøk NTNU",
@@ -90,8 +90,6 @@
     "node-fetch": "^2.6.7",
     "postmark": "^3.0.15",
     "redis": "^4.6.6",
-    "reflect-metadata": "^0.1.13",
-    "tsyringe": "^4.7.0",
     "zod": "^3.21.4"
   }
 }

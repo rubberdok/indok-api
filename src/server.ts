@@ -1,6 +1,5 @@
 import { randomUUID } from "crypto";
 import http from "http";
-import "reflect-metadata";
 
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";

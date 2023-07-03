@@ -1,5 +1,3 @@
-import "reflect-metadata";
-
 import crypto from "crypto";
 
 import { User } from "@prisma/client";
@@ -7,8 +5,8 @@ import { DeepMockProxy, mockDeep } from "jest-mock-extended";
 import fetch, { Response as _Response } from "node-fetch";
 
 import { FeideService } from "@/services/auth";
-import { setupMocks } from "@/services/auth/__tests__/__mocks__/feide";
 import { IAuthService, IUserService } from "@/services/interfaces";
+import { setupMocks } from "../__mocks__/feide";
 
 import { OAuthCase } from "./interfaces";
 
