@@ -4,12 +4,12 @@ import { User } from "@prisma/client";
 import { DeepMockProxy, mockDeep } from "jest-mock-extended";
 import fetch, { Response as _Response } from "node-fetch";
 
-import { FeideService } from "@/services/auth";
-import { IAuthService, IUserService } from "@/services/interfaces";
+import { FeideService } from "@/services/auth/index.js";
+import { IAuthService, IUserService } from "@/services/interfaces.js";
 
-import { setupMocks } from "../__mocks__/feide";
+import { setupMocks } from "../__mocks__/feide.js";
 
-import { OAuthCase } from "./interfaces";
+import { OAuthCase } from "./interfaces.js";
 
 const { Response: ActualResponse } = jest.requireActual<{
   Response: typeof _Response;

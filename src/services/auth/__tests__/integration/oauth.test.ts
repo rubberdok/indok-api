@@ -1,15 +1,15 @@
 import fetch, { Response as _Response } from "node-fetch";
 
-import { Database } from "@/core";
-import prisma from "@/lib/prisma";
-import { UserRepository } from "@/repositories/users";
-import { FeideService } from "@/services/auth";
-import { IAuthService } from "@/services/interfaces";
-import { UserService } from "@/services/users";
+import { Database } from "@/core/index.js";
+import prisma from "@/lib/prisma.js";
+import { UserRepository } from "@/repositories/users/index.js";
+import { FeideService } from "@/services/auth/index.js";
+import { IAuthService } from "@/services/interfaces.js";
+import { UserService } from "@/services/users/index.js";
 
-import { setupMocks } from "../__mocks__/feide";
+import { setupMocks } from "../__mocks__/feide.js";
 
-import { OAuthCase } from "./interfaces";
+import { OAuthCase } from "./interfaces.js";
 
 const { Response: ActualResponse } = jest.requireActual<{
   Response: typeof _Response;

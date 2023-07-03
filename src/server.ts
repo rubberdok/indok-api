@@ -11,19 +11,19 @@ import cors from "cors";
 import express from "express";
 import session from "express-session";
 
-import { env } from "@/config";
-import { resolvers, typeDefs } from "@/graphql";
-import { IContext, IContextProvider } from "@/graphql/context";
-import { formatError } from "@/lib/apolloServer";
-import postmarkClient from "@/lib/postmark";
-import prismaClient from "@/lib/prisma";
-import { RedisStore, redisClient } from "@/lib/redis";
-import { CabinRepository } from "@/repositories/cabins";
-import { UserRepository } from "@/repositories/users";
-import { FeideService } from "@/services/auth";
-import { CabinService } from "@/services/cabins";
-import { MailService } from "@/services/mail";
-import { UserService } from "@/services/users";
+import { env } from "@/config.js";
+import { resolvers, typeDefs } from "@/graphql/index.js";
+import { IContext, IContextProvider } from "@/graphql/context.js";
+import { formatError } from "@/lib/apolloServer.js";
+import postmarkClient from "@/lib/postmark.js";
+import prismaClient from "@/lib/prisma.js";
+import { RedisStore, redisClient } from "@/lib/redis.js";
+import { CabinRepository } from "@/repositories/cabins/index.js";
+import { UserRepository } from "@/repositories/users/index.js";
+import { FeideService } from "@/services/auth/index.js";
+import { CabinService } from "@/services/cabins/index.js";
+import { MailService } from "@/services/mail/index.js";
+import { UserService } from "@/services/users/index.js";
 
 Sentry.init({
   dsn: env.SENTRY_DSN,

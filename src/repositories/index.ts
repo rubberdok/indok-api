@@ -1,4 +1,3 @@
-import { ICabinRepository, IUserRepository } from "./interfaces";
-import { Types } from "./types";
+import { ICabinRepository, IUserRepository } from "./interfaces.js";
 
-export { ICabinRepository, IUserRepository, Types };
+export { ICabinRepository, IUserRepository };

@@ -1,12 +1,11 @@
 import crypto from "crypto";
 
 import { User } from "@prisma/client";
-import fetch from "node-fetch";
 
-import { env } from "@/config";
-import { GetUserParams, IAuthService, IUserService } from "@/services/interfaces";
+import { env } from "@/config.js";
+import { GetUserParams, IAuthService, IUserService } from "@/services/interfaces.js";
 
-import { UserInfo } from "./interfaces";
+import { UserInfo } from "./interfaces.js";
 
 const FeideProvider = {
   token: env.FEIDE_BASE_URL + "/oauth/token",

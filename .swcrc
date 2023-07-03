@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/swcrc",
   "module": {
-    "type": "commonjs"
+    "type": "es6"
   },
   "jsc": {
     "target": "es2022",
@@ -9,10 +9,6 @@
     "parser": {
       "syntax": "typescript",
       "decorators": true
-    },
-
-    "transform": {
-      "decoratorMetadata": true
     },
 
     "paths": {

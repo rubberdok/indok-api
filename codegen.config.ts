@@ -3,6 +3,7 @@ import { CodegenConfig } from "@graphql-codegen/cli";
 const config: CodegenConfig = {
   overwrite: true,
   schema: "src/graphql/type-defs.ts",
+  emitLegacyCommonJSImports: false,
   generates: {
     "src/graphql/generated/types.ts": {
       config: {
