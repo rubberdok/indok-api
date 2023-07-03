@@ -1,23 +1,17 @@
-import "reflect-metadata";
-
 import { Prisma, PrismaClient, User } from "@prisma/client";
 import { DeepMockProxy, mockDeep } from "jest-mock-extended";
-import { container as _container } from "tsyringe";
 
-import { CoreTypes } from "@/core";
-import { Types } from "@/repositories";
 import { IUserRepository } from "@/repositories/interfaces";
 import { UserRepository } from "@/repositories/users";
 
-const container = _container.createChildContainer();
-
 const dummyUser = mockDeep<User>();
+let userRepo: IUserRepository;
+let mockDb: DeepMockProxy<PrismaClient>;
 
 describe("UsersRepository", () => {
   beforeAll(() => {
-    container.register<IUserRepository>(Types.UserRepository, { useClass: UserRepository });
-    const mockDb = mockDeep<PrismaClient>();
-    container.register<DeepMockProxy<PrismaClient>>(CoreTypes.Prisma, { useValue: mockDeep<PrismaClient>(mockDb) });
+    mockDb = mockDeep<PrismaClient>();
+    userRepo = new UserRepository(mockDb);
   });
 
   const usersTable: {
@@ -48,11 +42,9 @@ describe("UsersRepository", () => {
   ];
 
   test.each(usersTable)("createUser($input)", async ({ input, expected }) => {
-    const db = container.resolve<DeepMockProxy<PrismaClient>>(CoreTypes.Prisma);
-    db.user.create.mockResolvedValueOnce(expected);
+    mockDb.user.create.mockResolvedValueOnce(expected);
 
-    const repo = container.resolve<IUserRepository>(Types.UserRepository);
-    const got = await repo.create(input);
+    const got = await userRepo.create(input);
     expect(got).toMatchObject(expected);
   });
 });

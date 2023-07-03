@@ -1,16 +1,10 @@
-import "reflect-metadata";
-
-import { PrismaClient } from "@prisma/client";
 import fetch, { Response as _Response } from "node-fetch";
-import { container as _container } from "tsyringe";
 
-import { CoreTypes } from "@/core";
+import { Database } from "@/core";
 import prisma from "@/lib/prisma";
-import { IUserRepository, Types as RepositoryTypes } from "@/repositories";
 import { UserRepository } from "@/repositories/users";
-import { Types as ServiceTypes } from "@/services";
 import { FeideService } from "@/services/auth";
-import { IAuthService, IUserService } from "@/services/interfaces";
+import { IAuthService } from "@/services/interfaces";
 import { UserService } from "@/services/users";
 
 import { setupMocks } from "../__mocks__/feide";
@@ -23,18 +17,18 @@ const { Response: ActualResponse } = jest.requireActual<{
 
 jest.mock("node-fetch");
 
-const container = _container.createChildContainer();
+let authService: IAuthService;
+let db: Database;
 
 describe("OAuth", () => {
   beforeAll(() => {
-    container.register<IUserService>(ServiceTypes.UserService, { useClass: UserService });
-    container.register<IUserRepository>(RepositoryTypes.UserRepository, { useClass: UserRepository });
-    container.register<IAuthService>(ServiceTypes.AuthService, { useClass: FeideService });
-    container.register<PrismaClient>(CoreTypes.Prisma, { useValue: prisma });
+    db = prisma;
+    const userRepository = new UserRepository(db);
+    const userService = new UserService(userRepository);
+    authService = new FeideService(userService);
   });
 
   beforeEach(() => {
-    const db = container.resolve<PrismaClient>(CoreTypes.Prisma);
     db.user.delete({
       where: {
         id: "new_id",
@@ -130,8 +124,7 @@ describe("OAuth", () => {
       return Promise.resolve(res);
     });
 
-    const auth = container.resolve<IAuthService>(ServiceTypes.AuthService);
-    const { username, feideId, firstName, lastName, email } = await auth.getUser({
+    const { username, feideId, firstName, lastName, email } = await authService.getUser({
       code: "code",
       codeVerifier: "verifier",
     });

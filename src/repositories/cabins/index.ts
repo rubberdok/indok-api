@@ -1,13 +1,11 @@
 import { Booking, Cabin, Prisma } from "@prisma/client";
-import { inject, injectable } from "tsyringe";
 
-import { CoreTypes, Database } from "@/core";
+import { Database } from "@/core";
 
 import { ICabinRepository, OverlappingBookingsData } from "./interfaces";
 
-@injectable()
 export class CabinRepository implements ICabinRepository {
-  constructor(@inject(CoreTypes.Prisma) private db: Database) {}
+  constructor(private db: Database) {}
 
   getBookingById(id: string): Promise<Booking> {
     return this.db.booking.findFirstOrThrow({

@@ -16,7 +16,7 @@
     "lib": ["ES2022"],
     "strict": true,
     "rootDir": ".",
-    "types": ["reflect-metadata", "./node_modules/.prisma/client"],
+    "types": ["./node_modules/.prisma/client"],
     "outDir": "dist",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,

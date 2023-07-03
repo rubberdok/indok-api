@@ -1,6 +1,5 @@
 import { randomUUID } from "crypto";
 import http from "http";
-import "reflect-metadata";
 
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
@@ -11,14 +10,20 @@ import { json } from "body-parser";
 import cors from "cors";
 import express from "express";
 import session from "express-session";
-import { container } from "tsyringe";
 
 import { env } from "@/config";
-import { initializeContainer } from "@/container";
 import { resolvers, typeDefs } from "@/graphql";
-import { IContext, IContextProvider, Type as ContextProviderType } from "@/graphql/context";
+import { IContext, IContextProvider } from "@/graphql/context";
 import { formatError } from "@/lib/apolloServer";
-import { redisClient, RedisStore } from "@/lib/redis";
+import postmarkClient from "@/lib/postmark";
+import prismaClient from "@/lib/prisma";
+import { RedisStore, redisClient } from "@/lib/redis";
+import { CabinRepository } from "@/repositories/cabins";
+import { UserRepository } from "@/repositories/users";
+import { FeideService } from "@/services/auth";
+import { CabinService } from "@/services/cabins";
+import { MailService } from "@/services/mail";
+import { UserService } from "@/services/users";
 
 Sentry.init({
   dsn: env.SENTRY_DSN,
@@ -28,8 +33,6 @@ Sentry.init({
 async function initializeServer() {
   const app = express();
   const httpServer = http.createServer(app);
-
-  initializeContainer();
 
   app.use(Sentry.Handlers.requestHandler());
   app.use(
@@ -61,13 +64,26 @@ async function initializeServer() {
 
   await server.start();
 
+  const userRepository = new UserRepository(prismaClient);
+  const userService = new UserService(userRepository);
+
+  const cabinRepository = new CabinRepository(prismaClient);
+  const mailService = new MailService(postmarkClient);
+  const cabinService = new CabinService(cabinRepository, mailService);
+
+  const authService = new FeideService(userService);
+
   app.use(
     "/graphql",
     cors<cors.CorsRequest>({ origin: env.CORS_ORIGINS, credentials: env.CORS_CREDENTIALS }),
     json(),
     expressMiddleware(server, {
       context: async ({ req, res }) => {
-        const info = container.resolve<IContextProvider>(ContextProviderType);
+        const info: IContextProvider = {
+          userService,
+          cabinService,
+          authService,
+        };
         return Object.assign(info, { req, res });
       },
     })

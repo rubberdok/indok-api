@@ -1,5 +1,3 @@
-import "reflect-metadata";
-
 import * as Sentry from "@sentry/node";
 
 import { env } from "@/config";

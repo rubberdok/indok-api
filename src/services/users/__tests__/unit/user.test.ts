@@ -1,13 +1,8 @@
-import "reflect-metadata";
-
 import { User } from "@prisma/client";
 import dayjs from "dayjs";
 import { DeepMockProxy, mockDeep } from "jest-mock-extended";
-import { container as _container } from "tsyringe";
 
-import { IUserRepository, Types as RepositoryTypes } from "@/repositories";
-import { Types as ServiceTypes } from "@/services";
-import { IUserService } from "@/services/interfaces";
+import { IUserRepository } from "@/repositories";
 import { UserService } from "@/services/users";
 
 import { TestCase } from "./interfaces";
@@ -15,12 +10,14 @@ import { TestCase } from "./interfaces";
 const dummyUser = mockDeep<User>();
 
 const time = new Date(`${dayjs().year() + 1}-01-01`);
-const container = _container.createChildContainer();
+
+let service: UserService;
+let repo: DeepMockProxy<IUserRepository>;
 
 beforeAll(() => {
-  const mockUserService = mockDeep<IUserRepository>();
-  container.register<DeepMockProxy<IUserRepository>>(RepositoryTypes.UserRepository, { useValue: mockUserService });
-  container.register<IUserService>(ServiceTypes.UserService, { useClass: UserService });
+  repo = mockDeep<IUserRepository>();
+  service = new UserService(repo);
+
   jest.useFakeTimers().setSystemTime(time);
 });
 
@@ -134,8 +131,6 @@ describe("UserService", () => {
   ];
 
   test.each(testCases)("should $name", async ({ existing, expected, input, updateInput }) => {
-    const repo = container.resolve<DeepMockProxy<IUserRepository>>(RepositoryTypes.UserRepository);
-    const service = container.resolve<IUserService>(ServiceTypes.UserService);
     repo.get.mockReturnValueOnce(Promise.resolve(existing));
     repo.update.mockReturnValueOnce(Promise.resolve(expected));
 
@@ -146,8 +141,6 @@ describe("UserService", () => {
   });
 
   it("logging in should set lastLogin", async () => {
-    const repo = container.resolve<DeepMockProxy<IUserRepository>>(RepositoryTypes.UserRepository);
-    const service = container.resolve<IUserService>(ServiceTypes.UserService);
     repo.update.mockReturnValueOnce(Promise.resolve(dummyUser));
 
     await service.login(dummyUser.id);
