@@ -22,6 +22,8 @@ export default {
 
   modulePathIgnorePatterns: ["<rootDir>/dist/"],
 
+  extensionsToTreatAsEsm: [".ts"],
+
   // A map from regular expressions to paths to transformers
   transform: {
     "^.+\\.(t|j)sx?$": ["@swc/jest"],

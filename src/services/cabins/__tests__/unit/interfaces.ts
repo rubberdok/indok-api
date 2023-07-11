@@ -1,5 +1,5 @@
-import { BookingData } from "@/services/cabins/interfaces";
-import { CabinBookingReceipt } from "@/services/mail/interfaces";
+import { BookingData } from "@/services/cabins/interfaces.js";
+import { CabinBookingReceipt } from "@/services/mail/interfaces.js";
 
 export interface NegativeValidationTestCase {
   name: string;
