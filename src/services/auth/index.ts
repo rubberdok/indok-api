@@ -1,6 +1,7 @@
 import crypto from "crypto";
 
 import { User } from "@prisma/client";
+import fetch from "node-fetch";
 
 import { env } from "@/config.js";
 import { GetUserParams, IAuthService, IUserService } from "@/services/interfaces.js";

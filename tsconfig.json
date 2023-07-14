@@ -9,18 +9,16 @@
 
   "compilerOptions": {
     "target": "ES2022",
-    "module": "Node16",
-    "moduleResolution": "Node16",
+    "module": "ESNext",
+    "moduleResolution": "Node",
     "sourceMap": true,
     "esModuleInterop": true,
     "noUncheckedIndexedAccess": true,
     "lib": ["ES2022"],
     "strict": true,
     "rootDir": ".",
-    "types": ["./node_modules/.prisma/client"],
+    "types": ["./node_modules/.prisma/client", "node"],
     "outDir": "dist",
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
     "noEmit": true,
     "paths": {
       "@/*": ["src/*"]
@@ -28,6 +26,5 @@
     "baseUrl": "."
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules"],
-  "files": ["src/index.ts"]
+  "exclude": ["node_modules"]
 }

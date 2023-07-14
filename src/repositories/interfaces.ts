@@ -1,4 +1,4 @@
-import { ICabinRepository } from "./cabins/interfaces";
-import { IUserRepository } from "./users/interfaces";
+import { ICabinRepository } from "./cabins/interfaces.js";
+import { IUserRepository } from "./users/interfaces.js";
 
 export { ICabinRepository, IUserRepository };

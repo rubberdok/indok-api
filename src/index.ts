@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/node";
 
-import { env } from "@/config.js";
+import { env } from "./config.js";
 
 import { initializeServer } from "./server.js";
 

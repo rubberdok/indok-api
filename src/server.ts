@@ -6,7 +6,9 @@ import { expressMiddleware } from "@apollo/server/express4";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
 import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
 import * as Sentry from "@sentry/node";
-import { json } from "body-parser";
+import bodyParser from "body-parser";
+const { json } = bodyParser;
+
 import cors from "cors";
 import express from "express";
 import session from "express-session";
