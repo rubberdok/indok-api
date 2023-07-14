@@ -1,3 +1,4 @@
+# Key Vault for secrets required to run the application.
 resource "azurerm_key_vault" "this" {
   name     = var.name
   location = var.resource_group.location

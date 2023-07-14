@@ -1,6 +1,6 @@
-variable "name" {
+variable "suffix" {
   type        = string
-  description = "The name of the container app."
+  description = "The suffix of the resources"
 }
 
 variable "resource_group" {
@@ -19,6 +19,12 @@ variable "container" {
     cpu    = 0.25
     memory = "0.5Gi"
   }
+}
+
+variable "network" {
+  type = object({
+    virtual_network_name = string
+  })
 }
 
 variable "tags" {

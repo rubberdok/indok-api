@@ -8,5 +8,12 @@ module "redis" {
   family   = var.redis.family
   capacity = var.redis.capacity
 
+  network = {
+    virtual_network_name = module.vnet.name
+    virtual_network_id   = module.vnet.id
+  }
+
+  suffix = var.suffix
+
   tags = local.tags
 }
