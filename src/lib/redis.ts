@@ -8,5 +8,12 @@ export const RedisStore = _RedisStore(session);
 export const redisClient = createClient({
   legacyMode: true,
   url: env.REDIS_CONNECTION_STRING,
+  socket: {
+    tls: true,
+  },
 });
-redisClient.connect().catch(console.error);
+
+redisClient.connect().catch((err) => {
+  console.error("Redis connection failed with error", err);
+});
+redisClient.ping();
