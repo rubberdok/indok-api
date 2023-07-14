@@ -31,6 +31,7 @@ const envVarsSchema = z.object({
   SESSION_COOKIE_HTTP_ONLY: z.string().transform((val) => val === "true"),
   SESSION_COOKIE_SECURE: z.string().transform((val) => val === "true"),
   REDIS_CONNECTION_STRING: z.string(),
+  REDIS_CERT_PATH: z.string().optional(),
 });
 
 export const env = envVarsSchema.parse(process.env);

@@ -21,6 +21,9 @@ RUN npm run build:production
 RUN npm install --omit=dev
 
 FROM public.ecr.aws/docker/library/node:lts-alpine3.16 AS runner
+
+COPY --from=builder /usr/src/app/certs /etc/ssl/certs
+
 WORKDIR /usr/src/app
 
 COPY --from=builder /usr/src/app/prisma ./prisma
