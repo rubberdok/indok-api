@@ -17,15 +17,6 @@ resource "azurerm_subnet" "this" {
   resource_group_name  = var.resource_group.name
   virtual_network_name = var.network.virtual_network_name
   address_prefixes     = ["10.0.0.0/21"]
-  delegation {
-    name = "ca"
-    service_delegation {
-      name = "Microsoft."
-      actions = [
-        "Microsoft.Network/virtualNetworks/subnets/join/action",
-      ]
-    }
-  }
 }
 
 # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/container_app_environment

@@ -23,12 +23,12 @@ resource "azurerm_subnet" "this" {
 
 # We will also need to create a Private DNS Zone to resolve our PostgreSQL Flexible Server.
 resource "azurerm_private_dns_zone" "this" {
-  name                = "${var.environment}.${var.suffix}.postgres.database.azure.com"
+  name                = "${var.environment}-${var.suffix}.postgres.database.azure.com"
   resource_group_name = var.resource_group.name
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "this" {
-  name                  = "vnet-link-${var.suffix}"
+  name                  = "pg-${var.suffix}.com"
   resource_group_name   = var.resource_group.name
   private_dns_zone_name = azurerm_private_dns_zone.this.name
   virtual_network_id    = var.network.virtual_network_id
