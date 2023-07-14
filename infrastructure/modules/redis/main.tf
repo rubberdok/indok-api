@@ -20,7 +20,7 @@ resource "azurerm_subnet" "this" {
   virtual_network_name = var.network.virtual_network_name
   address_prefixes     = ["10.0.129.0/24"]
 
-  private_endpoint_network_policies_enabled = false
+  private_link_service_network_policies_enabled = true
 }
 
 resource "azurerm_private_endpoint" "this" {
@@ -30,10 +30,21 @@ resource "azurerm_private_endpoint" "this" {
   subnet_id           = azurerm_subnet.this.id
 
   private_service_connection {
-    name                           = "redis-pe-connection-${var.suffix}"
+    name                           = "redis-${var.suffix}-private-link"
     private_connection_resource_id = azurerm_redis_cache.this.id
     is_manual_connection           = false
     subresource_names              = ["redisCache"]
   }
+}
 
+resource "azurerm_private_dns_zone" "this" {
+  name                = "privatelink.redis.cache.windows.net"
+  resource_group_name = var.resource_group.name
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "this" {
+  name                  = "vnet-private-zone-link"
+  resource_group_name   = var.resource_group.name
+  private_dns_zone_name = azurerm_private_dns_zone.this.name
+  virtual_network_id    = var.network.virtual_network_id
 }
