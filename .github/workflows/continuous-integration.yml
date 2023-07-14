@@ -1,11 +1,6 @@
 name: Continuous Integration
 
 on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - infrastructure/**
   pull_request:
     paths-ignore:
       - infrastructure/**
@@ -83,12 +78,6 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: api
-          path: dist
-
   integration-test:
     name: Integration Test
     runs-on: ubuntu-latest
@@ -147,7 +136,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Build and push
+      - name: Build Image
         uses: docker/build-push-action@v4
         with:
           file: Dockerfile.prod
@@ -156,18 +145,4 @@ jobs:
             ghcr.io/rubberdok/server:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          push: ${{ github.ref == 'refs/heads/main' }}
-
-  deploy:
-    needs: build-image
-    if: github.ref == 'refs/heads/main'
-
-    name: Deploy
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Login
-        uses: azure/login@v1
+          push: false

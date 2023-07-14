@@ -6,12 +6,6 @@
 name: "Terraform"
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - infrastructure/**
-      - .github/workflows/terraform.yml
   pull_request:
     paths:
       - infrastructure/**
