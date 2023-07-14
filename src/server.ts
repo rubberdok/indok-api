@@ -34,6 +34,10 @@ async function initializeServer() {
   const app = express();
   const httpServer = http.createServer(app);
 
+  await redisClient.connect().catch((err) => {
+    console.error("Redis connection failed with error", err);
+  });
+
   app.use(Sentry.Handlers.requestHandler());
   app.use(
     session({
