@@ -6,37 +6,39 @@ export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
+export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
+export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 export type RequireFields<T, K extends keyof T> = Omit<T, K> & { [P in K]-?: NonNullable<T[P]> };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: string;
-  String: string;
-  Boolean: boolean;
-  Int: number;
-  Float: number;
-  DateTime: Date;
+  ID: { input: string; output: string; }
+  String: { input: string; output: string; }
+  Boolean: { input: boolean; output: boolean; }
+  Int: { input: number; output: number; }
+  Float: { input: number; output: number; }
+  DateTime: { input: Date; output: Date; }
 };
 
 export type Booking = {
   readonly __typename?: 'Booking';
   readonly cabin: Cabin;
-  readonly email: Scalars['String'];
-  readonly endDate: Scalars['DateTime'];
-  readonly firstName: Scalars['String'];
-  readonly id: Scalars['ID'];
-  readonly lastName: Scalars['String'];
-  readonly phoneNumber: Scalars['String'];
-  readonly startDate: Scalars['DateTime'];
+  readonly email: Scalars['String']['output'];
+  readonly endDate: Scalars['DateTime']['output'];
+  readonly firstName: Scalars['String']['output'];
+  readonly id: Scalars['ID']['output'];
+  readonly lastName: Scalars['String']['output'];
+  readonly phoneNumber: Scalars['String']['output'];
+  readonly startDate: Scalars['DateTime']['output'];
   readonly status: Status;
 };
 
 export type Cabin = {
   readonly __typename?: 'Cabin';
-  readonly externalPrice: Scalars['String'];
-  readonly id: Scalars['ID'];
-  readonly internalPrice: Scalars['String'];
-  readonly name: Scalars['String'];
+  readonly externalPrice: Scalars['String']['output'];
+  readonly id: Scalars['ID']['output'];
+  readonly internalPrice: Scalars['String']['output'];
+  readonly name: Scalars['String']['output'];
 };
 
 export type LogoutResponse = {
@@ -62,12 +64,12 @@ export type Mutation = {
 
 
 export type MutationAuthenticateArgs = {
-  code: Scalars['String'];
+  code: Scalars['String']['input'];
 };
 
 
 export type MutationCreateUserArgs = {
-  firstName: Scalars['String'];
+  firstName: Scalars['String']['input'];
 };
 
 
@@ -77,29 +79,29 @@ export type MutationNewBookingArgs = {
 
 
 export type MutationRedirectUrlArgs = {
-  state?: InputMaybe<Scalars['String']>;
+  state?: InputMaybe<Scalars['String']['input']>;
 };
 
 
 export type MutationUpdateBookingStatusArgs = {
-  id: Scalars['ID'];
+  id: Scalars['ID']['input'];
   status: Status;
 };
 
 
 export type MutationUpdateUserArgs = {
   data: UpdateUserInput;
-  id: Scalars['ID'];
+  id: Scalars['ID']['input'];
 };
 
 export type NewBookingInput = {
-  readonly cabinId: Scalars['ID'];
-  readonly email: Scalars['String'];
-  readonly endDate: Scalars['DateTime'];
-  readonly firstName: Scalars['String'];
-  readonly lastName: Scalars['String'];
-  readonly phoneNumber: Scalars['String'];
-  readonly startDate: Scalars['DateTime'];
+  readonly cabinId: Scalars['ID']['input'];
+  readonly email: Scalars['String']['input'];
+  readonly endDate: Scalars['DateTime']['input'];
+  readonly firstName: Scalars['String']['input'];
+  readonly lastName: Scalars['String']['input'];
+  readonly phoneNumber: Scalars['String']['input'];
+  readonly startDate: Scalars['DateTime']['input'];
 };
 
 export type Query = {
@@ -110,7 +112,7 @@ export type Query = {
 
 export type RedirectUrlResponse = {
   readonly __typename?: 'RedirectUrlResponse';
-  readonly url: Scalars['String'];
+  readonly url: Scalars['String']['output'];
 };
 
 export enum Status {
@@ -121,26 +123,26 @@ export enum Status {
 }
 
 export type UpdateUserInput = {
-  readonly allergies?: InputMaybe<Scalars['String']>;
-  readonly firstName: Scalars['String'];
-  readonly graduationYear?: InputMaybe<Scalars['Int']>;
-  readonly lastName: Scalars['String'];
-  readonly phoneNumber?: InputMaybe<Scalars['String']>;
+  readonly allergies?: InputMaybe<Scalars['String']['input']>;
+  readonly firstName: Scalars['String']['input'];
+  readonly graduationYear?: InputMaybe<Scalars['Int']['input']>;
+  readonly lastName: Scalars['String']['input'];
+  readonly phoneNumber?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type User = {
   readonly __typename?: 'User';
-  readonly allergies?: Maybe<Scalars['String']>;
-  readonly canUpdateYear: Scalars['Boolean'];
-  readonly createdAt: Scalars['String'];
-  readonly firstLogin: Scalars['Boolean'];
-  readonly firstName: Scalars['String'];
-  readonly graduationYear?: Maybe<Scalars['Int']>;
-  readonly graduationYearUpdatedAt?: Maybe<Scalars['DateTime']>;
-  readonly id: Scalars['ID'];
-  readonly lastName: Scalars['String'];
-  readonly phoneNumber?: Maybe<Scalars['String']>;
-  readonly username: Scalars['String'];
+  readonly allergies?: Maybe<Scalars['String']['output']>;
+  readonly canUpdateYear: Scalars['Boolean']['output'];
+  readonly createdAt: Scalars['String']['output'];
+  readonly firstLogin: Scalars['Boolean']['output'];
+  readonly firstName: Scalars['String']['output'];
+  readonly graduationYear?: Maybe<Scalars['Int']['output']>;
+  readonly graduationYearUpdatedAt?: Maybe<Scalars['DateTime']['output']>;
+  readonly id: Scalars['ID']['output'];
+  readonly lastName: Scalars['String']['output'];
+  readonly phoneNumber?: Maybe<Scalars['String']['output']>;
+  readonly username: Scalars['String']['output'];
 };
 
 export type UserResponse = {
@@ -150,7 +152,7 @@ export type UserResponse = {
 
 export type UsersResponse = {
   readonly __typename?: 'UsersResponse';
-  readonly total: Scalars['Int'];
+  readonly total: Scalars['Int']['output'];
   readonly users: ReadonlyArray<User>;
 };
 
@@ -222,14 +224,16 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
   info: GraphQLResolveInfo
 ) => TResult | Promise<TResult>;
 
+
+
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = ResolversObject<{
   Booking: ResolverTypeWrapper<BookingModel>;
-  Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
+  Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   Cabin: ResolverTypeWrapper<CabinModel>;
-  DateTime: ResolverTypeWrapper<Scalars['DateTime']>;
-  ID: ResolverTypeWrapper<Scalars['ID']>;
-  Int: ResolverTypeWrapper<Scalars['Int']>;
+  DateTime: ResolverTypeWrapper<Scalars['DateTime']['output']>;
+  ID: ResolverTypeWrapper<Scalars['ID']['output']>;
+  Int: ResolverTypeWrapper<Scalars['Int']['output']>;
   LogoutResponse: ResolverTypeWrapper<LogoutResponse>;
   LogoutStatus: LogoutStatus;
   Mutation: ResolverTypeWrapper<{}>;
@@ -237,7 +241,7 @@ export type ResolversTypes = ResolversObject<{
   Query: ResolverTypeWrapper<{}>;
   RedirectUrlResponse: ResolverTypeWrapper<RedirectUrlResponse>;
   Status: Status;
-  String: ResolverTypeWrapper<Scalars['String']>;
+  String: ResolverTypeWrapper<Scalars['String']['output']>;
   UpdateUserInput: UpdateUserInput;
   User: ResolverTypeWrapper<UserModel>;
   UserResponse: ResolverTypeWrapper<Omit<UserResponse, 'user'> & { user?: Maybe<ResolversTypes['User']> }>;
@@ -247,17 +251,17 @@ export type ResolversTypes = ResolversObject<{
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = ResolversObject<{
   Booking: BookingModel;
-  Boolean: Scalars['Boolean'];
+  Boolean: Scalars['Boolean']['output'];
   Cabin: CabinModel;
-  DateTime: Scalars['DateTime'];
-  ID: Scalars['ID'];
-  Int: Scalars['Int'];
+  DateTime: Scalars['DateTime']['output'];
+  ID: Scalars['ID']['output'];
+  Int: Scalars['Int']['output'];
   LogoutResponse: LogoutResponse;
   Mutation: {};
   NewBookingInput: NewBookingInput;
   Query: {};
   RedirectUrlResponse: RedirectUrlResponse;
-  String: Scalars['String'];
+  String: Scalars['String']['output'];
   UpdateUserInput: UpdateUserInput;
   User: UserModel;
   UserResponse: Omit<UserResponse, 'user'> & { user?: Maybe<ResolversParentTypes['User']> };

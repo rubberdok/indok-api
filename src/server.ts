@@ -7,7 +7,6 @@ import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHt
 import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
 import * as Sentry from "@sentry/node";
 import bodyParser from "body-parser";
-const { json } = bodyParser;
 
 import cors from "cors";
 import express from "express";
@@ -88,7 +87,7 @@ async function initializeServer() {
   app.use(
     "/graphql",
     cors<cors.CorsRequest>({ origin: env.CORS_ORIGINS, credentials: env.CORS_CREDENTIALS }),
-    json(),
+    bodyParser.json(),
     expressMiddleware(server, {
       context: async ({ req, res }) => {
         const info: IContextProvider = {

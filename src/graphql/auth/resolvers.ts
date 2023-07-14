@@ -1,7 +1,7 @@
 import { ApolloServerErrorCode } from "@apollo/server/errors";
 import { GraphQLError } from "graphql";
 
-import { Resolvers, LogoutStatus } from "../generated/types.js";
+import { Resolvers, LogoutStatus } from "../__types__.js";
 
 export const resolvers: Resolvers = {
   Mutation: {

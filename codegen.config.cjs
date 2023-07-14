@@ -1,11 +1,12 @@
-import { CodegenConfig } from "@graphql-codegen/cli";
+// @ts-check
 
-const config: CodegenConfig = {
+/** @type {import("@graphql-codegen/cli").CodegenConfig} */
+const config = {
   overwrite: true,
-  schema: "src/graphql/type-defs.ts",
+  schema: "./src/graphql/type-defs.ts",
   emitLegacyCommonJSImports: false,
   generates: {
-    "src/graphql/generated/types.ts": {
+    "src/graphql/__types__.ts": {
       config: {
         useIndexSignature: true,
         showUnusedMappers: true,
@@ -28,10 +29,10 @@ const config: CodegenConfig = {
       },
       plugins: ["typescript", "typescript-resolvers"],
     },
-    "src/graphql/generated/schema.graphql": {
+    "schema.graphql": {
       plugins: ["schema-ast"],
     },
   },
 };
 
-export default config;
+module.exports = config;
