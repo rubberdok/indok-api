@@ -2,8 +2,6 @@ import { ExpressContextFunctionArgument } from "@apollo/server/express4";
 
 import { IAuthService, ICabinService, IUserService } from "@/services/index.js";
 
-export const Type = Symbol.for("ContextProvider");
-
 export interface IContextProvider {
   userService: IUserService;
   cabinService: ICabinService;

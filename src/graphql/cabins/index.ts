@@ -1,2 +1,2 @@
-export { typeDefs } from "./type-defs";
-export { resolvers } from "./resolvers";
+export { typeDefs } from "./type-defs.js";
+export { resolvers } from "./resolvers.js";

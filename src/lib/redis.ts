@@ -3,7 +3,7 @@ import session from "express-session";
 import { createClient } from "redis";
 import fs from "fs";
 
-import { env } from "@/config";
+import { env } from "@/config.js";
 
 const cert = env.REDIS_CERT_PATH ? fs.readFileSync(env.REDIS_CERT_PATH) : "";
 
