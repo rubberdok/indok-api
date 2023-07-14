@@ -12,8 +12,3 @@ export const redisClient = createClient({
     tls: true,
   },
 });
-
-redisClient.connect().catch((err) => {
-  console.error("Redis connection failed with error", err);
-});
-redisClient.ping();
