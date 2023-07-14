@@ -1,3 +1,7 @@
+/*
+  Resources to manage and store the Terraform state remotely.
+*/
+
 resource "random_string" "resource_code" {
   length  = 5
   special = false

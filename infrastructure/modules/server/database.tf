@@ -1,5 +1,5 @@
 resource "random_password" "password" {
-  length           = 128
+  length           = 32
   special          = true
   min_lower        = 1
   min_numeric      = 1
@@ -11,13 +11,22 @@ resource "random_password" "password" {
 module "database" {
   source = "../postgres"
 
-  name                = "postgres-${var.suffix}"
-  resource_group_name = module.resource_group.name
-  sku_name            = var.postgres.sku_name
-  storage_mb          = var.postgres.storage_mb
+  suffix         = var.suffix
+  resource_group = module.resource_group
 
-  administrator_login    = "postgres"
-  administrator_password = random_password.password.result
+  postgres = var.postgres
+
+  network = {
+    virtual_network_name = module.vnet.name
+    virtual_network_id   = module.vnet.id
+  }
+
+  authentication = {
+    administrator_login    = "postgres"
+    administrator_password = random_password.password.result
+  }
+
+  environment = var.environment
 
   tags = local.tags
 }

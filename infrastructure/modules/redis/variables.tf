@@ -25,3 +25,15 @@ variable "resource_group" {
 variable "tags" {
   type = map(string)
 }
+
+variable "network" {
+  type = object({
+    virtual_network_name = string
+    virtual_network_id   = string
+  })
+  description = "The network configuration of the PostgreSQL server."
+}
+
+variable "suffix" {
+  type = string
+}
