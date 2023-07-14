@@ -79,7 +79,7 @@ resource "azurerm_container_app" "this" {
         interval_seconds = 10
         path             = "/graphql?query=%7B__typename%7D"
         port             = 4000
-        transport        = "HTTPS"
+        transport        = "HTTP"
         initial_delay    = 5
       }
 
