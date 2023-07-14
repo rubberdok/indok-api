@@ -63,6 +63,10 @@ environment_variables = [
     name  = "SESSION_COOKIE_SECURE"
     value = "abc"
   },
+  {
+    name = "REDIS_CERT_PATH"
+    value = "/etc/ssl/certs/DigiCertGlobalRootCA.crt.pem"
+  }
 ]
 
 
