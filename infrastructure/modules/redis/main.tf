@@ -24,10 +24,16 @@ resource "azurerm_subnet" "this" {
 }
 
 resource "azurerm_private_endpoint" "this" {
-  name                = "redis-pe-${var.suffix}"
+  name                = "endpoint-${var.suffix}"
   resource_group_name = var.resource_group.name
   location            = var.resource_group.location
   subnet_id           = azurerm_subnet.this.id
+
+  private_dns_zone_group {
+    name                 = "redis-${var.suffix}-zg"
+    private_dns_zone_ids = [azurerm_private_dns_zone.this.id]
+  }
+
 
   private_service_connection {
     name                           = "redis-${var.suffix}-private-link"
