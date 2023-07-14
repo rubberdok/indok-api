@@ -50,6 +50,7 @@ jobs:
     needs: [build]
     name: Deploy Image
     runs-on: ubuntu-latest
+    environment: production
     defaults:
       run:
         working-directory: ./infrastructure/server/environments/production
