@@ -18,7 +18,7 @@ resource "azurerm_subnet" "this" {
   name                 = "redis-subnet-${var.suffix}"
   resource_group_name  = var.resource_group.name
   virtual_network_name = var.network.virtual_network_name
-  address_prefixes     = ["10.0.196.0/24"]
+  address_prefixes     = ["10.0.129.0/24"]
 }
 
 resource "azurerm_private_endpoint" "this" {
