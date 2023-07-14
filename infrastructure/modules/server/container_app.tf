@@ -17,6 +17,8 @@ module "container_app" {
     virtual_network_name = module.vnet.name
   }
 
+  docker_image_tag = var.image_tag
+
   secrets = concat([
     {
       name  = "redis-connection-string"
@@ -27,6 +29,7 @@ module "container_app" {
       value = azurerm_key_vault_secret.db_connection_string.value
     },
   ], var.secrets)
+
   envs = concat([
     {
       name        = "REDIS_CONNECTION_STRING"

@@ -105,12 +105,4 @@ resource "azurerm_container_app" "this" {
 
 
   tags = var.tags
-
-  # We will manage the lifecycle of the images ourselves, so we ignore changes to the image.
-  lifecycle {
-    ignore_changes = [
-      template[0].container[0].image,
-    ]
-  }
-
 }
