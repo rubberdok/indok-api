@@ -45,6 +45,15 @@ resource "azuread_application_federated_identity_credential" "github_branch_main
   subject               = "repo:rubberdok/${var.repository_name}:ref:refs/heads/main"
 }
 
+resource "azuread_application_federated_identity_credential" "github_environment_production" {
+  application_object_id = azuread_application.github.object_id
+  display_name          = "github-environment-production"
+  description           = "GitHub Actions Service Principal"
+  audiences             = ["api://AzureADTokenExchange"]
+  issuer                = "https://token.actions.githubusercontent.com"
+  subject               = "repo:rubberdok/indok-api:environment:production"
+}
+
 resource "azuread_application_federated_identity_credential" "github_pull_request" {
   application_object_id = azuread_application.github.object_id
   display_name          = "github-pull-request"
