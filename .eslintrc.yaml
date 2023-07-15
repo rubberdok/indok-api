@@ -4,6 +4,7 @@ env:
 
 ignorePatterns:
   - "src/graphql/__types__.ts"
+  - "schema.graphql"
   - dist
 
 plugins:

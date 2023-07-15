@@ -9,7 +9,8 @@ import { env } from "@/config.js";
 const cert = env.REDIS_CERT_PATH ? fs.readFileSync(env.REDIS_CERT_PATH) : "";
 
 export const RedisStore = _RedisStore(session);
-export const redisClient = createClient({
+
+const redisClient = createClient({
   legacyMode: true,
   url: env.REDIS_CONNECTION_STRING,
   socket: {
@@ -17,3 +18,9 @@ export const redisClient = createClient({
     cert,
   },
 });
+
+await redisClient.connect().catch((err) => {
+  console.error("Redis connection failed with error", err);
+});
+
+export { redisClient };
