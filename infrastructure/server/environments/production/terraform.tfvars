@@ -64,8 +64,12 @@ environment_variables = [
     value = "abc"
   },
   {
-    name = "REDIS_CERT_PATH"
+    name  = "REDIS_CERT_PATH"
     value = "/etc/ssl/certs/DigiCertGlobalRootCA.crt.pem"
+  },
+  {
+    name  = "SENTRY_DSN"
+    value = "https://3e8801d618184101b5d2c6b7b4da6f0b@o514678.ingest.sentry.io/6553834"
   }
 ]
 
