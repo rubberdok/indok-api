@@ -1,8 +1,8 @@
 import { Booking, Cabin, Prisma } from "@prisma/client";
 
-import { Database } from "@/core";
+import { Database } from "@/core/index.js";
 
-import { ICabinRepository, OverlappingBookingsData } from "./interfaces";
+import { ICabinRepository, OverlappingBookingsData } from "./interfaces.js";
 
 export class CabinRepository implements ICabinRepository {
   constructor(private db: Database) {}

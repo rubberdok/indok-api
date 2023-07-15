@@ -4,13 +4,13 @@ import { BookingStatus } from "@prisma/client";
 import dayjs from "dayjs";
 import { DeepMockProxy, mockDeep } from "jest-mock-extended";
 
-import { ICabinRepository } from "@/repositories";
-import { ICabinService, IMailService } from "@/services";
-import { CabinService } from "@/services/cabins";
-import { BookingData } from "@/services/cabins/interfaces";
-import { TemplateAliasEnum } from "@/services/mail/interfaces";
+import { ICabinRepository } from "@/repositories/index.js";
+import { CabinService } from "@/services/cabins/index.js";
+import { BookingData } from "@/services/cabins/interfaces.js";
+import { ICabinService, IMailService } from "@/services/index.js";
+import { TemplateAliasEnum } from "@/services/mail/interfaces.js";
 
-import { NegativeValidationTestCase, PositiveValidationTestCase } from "./interfaces";
+import { NegativeValidationTestCase, PositiveValidationTestCase } from "./interfaces.js";
 
 const validBooking: BookingData = {
   cabinId: randomUUID(),

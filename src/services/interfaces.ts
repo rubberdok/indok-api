@@ -1,7 +1,7 @@
 import { Prisma, User } from "@prisma/client";
 
-export { ICabinService } from "./cabins/interfaces";
-export { IMailService } from "./mail/interfaces";
+export { ICabinService } from "./cabins/interfaces.js";
+export { IMailService } from "./mail/interfaces.js";
 
 export interface IUserService {
   update(id: string, data: Prisma.UserUpdateInput): Promise<User>;

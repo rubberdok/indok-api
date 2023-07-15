@@ -6,24 +6,26 @@ import { expressMiddleware } from "@apollo/server/express4";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
 import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
 import * as Sentry from "@sentry/node";
-import { json } from "body-parser";
+import bodyParser from "body-parser";
 import cors from "cors";
 import express from "express";
 import session from "express-session";
 
-import { env } from "@/config";
-import { resolvers, typeDefs } from "@/graphql";
-import { IContext, IContextProvider } from "@/graphql/context";
-import { formatError } from "@/lib/apolloServer";
-import postmarkClient from "@/lib/postmark";
-import prismaClient from "@/lib/prisma";
-import { RedisStore, redisClient } from "@/lib/redis";
-import { CabinRepository } from "@/repositories/cabins";
-import { UserRepository } from "@/repositories/users";
-import { FeideService } from "@/services/auth";
-import { CabinService } from "@/services/cabins";
-import { MailService } from "@/services/mail";
-import { UserService } from "@/services/users";
+import { env } from "@/config.js";
+import { IContext, IContextProvider } from "@/graphql/context.js";
+import { resolvers, typeDefs } from "@/graphql/index.js";
+import { formatError } from "@/lib/apolloServer.js";
+import postmarkClient from "@/lib/postmark.js";
+import prismaClient from "@/lib/prisma.js";
+import { RedisStore, redisClient } from "@/lib/redis.js";
+import { CabinRepository } from "@/repositories/cabins/index.js";
+import { UserRepository } from "@/repositories/users/index.js";
+import { FeideService } from "@/services/auth/index.js";
+import { CabinService } from "@/services/cabins/index.js";
+import { MailService } from "@/services/mail/index.js";
+import { UserService } from "@/services/users/index.js";
+
+import { feideClient } from "./services/auth/clients";
 
 Sentry.init({
   dsn: env.SENTRY_DSN,
@@ -81,12 +83,12 @@ async function initializeServer() {
   const mailService = new MailService(postmarkClient);
   const cabinService = new CabinService(cabinRepository, mailService);
 
-  const authService = new FeideService(userService);
+  const authService = new FeideService(userService, feideClient);
 
   app.use(
     "/graphql",
     cors<cors.CorsRequest>({ origin: env.CORS_ORIGINS, credentials: env.CORS_CREDENTIALS }),
-    json(),
+    bodyParser.json(),
     expressMiddleware(server, {
       context: async ({ req, res }) => {
         const info: IContextProvider = {

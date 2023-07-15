@@ -1,11 +1,11 @@
 import { Booking, BookingStatus, Cabin } from "@prisma/client";
 
-import { ValidationError } from "@/core/errors";
-import { ICabinRepository } from "@/repositories";
-import { IMailService, TemplateAliasEnum } from "@/services/mail/interfaces";
+import { ValidationError } from "@/core/errors.js";
+import { ICabinRepository } from "@/repositories/index.js";
+import { IMailService, TemplateAliasEnum } from "@/services/mail/interfaces.js";
 
-import { BookingData, ICabinService } from "./interfaces";
-import { bookingSchema } from "./validation";
+import { BookingData, ICabinService } from "./interfaces.js";
+import { bookingSchema } from "./validation.js";
 
 export class CabinService implements ICabinService {
   constructor(private cabinRepository: ICabinRepository, private mailService: IMailService) {}

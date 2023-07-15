@@ -1,8 +1,8 @@
 import { Prisma, User } from "@prisma/client";
 
-import { Database } from "@/core";
+import { Database } from "@/core/index.js";
 
-import { IUserRepository } from "./interfaces";
+import { IUserRepository } from "./interfaces.js";
 
 export class UserRepository implements IUserRepository {
   constructor(private db: Database) {}

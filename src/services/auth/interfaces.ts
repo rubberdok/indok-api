@@ -4,3 +4,8 @@ export interface UserInfo {
   "dataporten-userid_sec": string[];
   email: string;
 }
+
+export interface OAuthClient {
+  fetchUserInfo(params: { url: string; accessToken: string }): Promise<UserInfo>;
+  fetchAccessToken(params: { url: string; body: URLSearchParams; authorization: string }): Promise<string>;
+}
