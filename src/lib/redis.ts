@@ -1,7 +1,8 @@
+import fs from "fs";
+
 import { default as _RedisStore } from "connect-redis";
 import session from "express-session";
 import { createClient } from "redis";
-import fs from "fs";
 
 import { env } from "@/config.js";
 
