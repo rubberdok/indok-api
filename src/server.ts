@@ -20,12 +20,11 @@ import prismaClient from "@/lib/prisma.js";
 import { RedisStore, redisClient } from "@/lib/redis.js";
 import { CabinRepository } from "@/repositories/cabins/index.js";
 import { UserRepository } from "@/repositories/users/index.js";
+import { feideClient } from "@/services/auth/clients.js";
 import { FeideService } from "@/services/auth/index.js";
 import { CabinService } from "@/services/cabins/index.js";
 import { MailService } from "@/services/mail/index.js";
 import { UserService } from "@/services/users/index.js";
-
-import { feideClient } from "./services/auth/clients.js";
 
 Sentry.init({
   dsn: env.SENTRY_DSN,

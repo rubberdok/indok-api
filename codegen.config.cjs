@@ -17,7 +17,7 @@ const config = {
           DateTime: "Date",
         },
 
-        contextType: "@/graphql/context#IContext",
+        contextType: "@/graphql/context.js#IContext",
 
         mapperTypeSuffix: "Model",
 
