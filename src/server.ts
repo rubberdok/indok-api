@@ -25,6 +25,7 @@ import { FeideService } from "@/services/auth/index.js";
 import { CabinService } from "@/services/cabins/index.js";
 import { MailService } from "@/services/mail/index.js";
 import { UserService } from "@/services/users/index.js";
+import { feideClient } from "./services/auth/clients";
 
 Sentry.init({
   dsn: env.SENTRY_DSN,
@@ -82,7 +83,7 @@ async function initializeServer() {
   const mailService = new MailService(postmarkClient);
   const cabinService = new CabinService(cabinRepository, mailService);
 
-  const authService = new FeideService(userService);
+  const authService = new FeideService(userService, feideClient);
 
   app.use(
     "/graphql",

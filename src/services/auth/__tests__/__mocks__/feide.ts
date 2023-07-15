@@ -1,6 +1,4 @@
-import { RequestInfo } from "node-fetch";
-
-import { UserInfo } from "@/services/auth/interfaces";
+import { OAuthClient, UserInfo } from "../../interfaces.js";
 
 export interface FeideResponses {
   token: {
@@ -16,19 +14,25 @@ export interface FeideResponses {
   };
 }
 
-export const setupMocks = (url: URL | RequestInfo, responses: FeideResponses) => {
-  switch (url) {
-    case "https://auth.dataporten.no/oauth/token":
-      return {
-        json: () => Promise.resolve(responses.token.data),
-        status: responses.token.status,
-      };
-    case "https://auth.dataporten.no/openid/userinfo":
-      return {
-        json: () => Promise.resolve(responses.userInfo.data),
-        status: responses.userInfo.status,
-      };
-    default:
-      return { json: () => Promise.resolve(null), status: 200 };
-  }
-};
+export function setupMockFeideClient({ responses }: { responses?: FeideResponses }): OAuthClient {
+  return {
+    async fetchUserInfo() {
+      const userInfo = responses?.userInfo;
+      if (!userInfo) return Promise.reject(new Error("undefined respones"));
+
+      if (userInfo.status === 200) {
+        return Promise.resolve(userInfo.data);
+      }
+      return Promise.reject(new Error("error"));
+    },
+    async fetchAccessToken() {
+      const token = responses?.token;
+      if (!token) return Promise.reject(new Error("undefined respones"));
+
+      if (token.status === 200) {
+        return Promise.resolve(token.data.access_token);
+      }
+      return Promise.reject(new Error("error"));
+    },
+  };
+}

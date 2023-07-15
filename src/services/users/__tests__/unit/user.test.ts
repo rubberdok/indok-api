@@ -1,6 +1,7 @@
 import { User } from "@prisma/client";
 import dayjs from "dayjs";
 import { DeepMockProxy, mockDeep } from "jest-mock-extended";
+import { jest } from "@jest/globals";
 
 import { IUserRepository } from "@/repositories/index.js";
 import { UserService } from "@/services/users/index.js";

@@ -16,14 +16,14 @@
     "noUncheckedIndexedAccess": true,
     "lib": ["ES2022"],
     "strict": true,
-    "rootDir": ".",
+    "rootDir": "./",
     "types": ["./node_modules/.prisma/client", "node"],
     "outDir": "dist",
     "noEmit": true,
     "paths": {
       "@/*": ["src/*"]
     },
-    "baseUrl": "."
+    "baseUrl": "./"
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]

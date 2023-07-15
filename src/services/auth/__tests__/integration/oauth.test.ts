@@ -1,31 +1,23 @@
-import fetch, { Response as _Response } from "node-fetch";
-
 import { Database } from "@/core/index.js";
 import prisma from "@/lib/prisma.js";
 import { UserRepository } from "@/repositories/users/index.js";
 import { FeideService } from "@/services/auth/index.js";
-import { IAuthService } from "@/services/interfaces.js";
+import { IAuthService, IUserService } from "@/services/interfaces.js";
 import { UserService } from "@/services/users/index.js";
 
-import { setupMocks } from "../__mocks__/feide.js";
+import { setupMockFeideClient } from "../__mocks__/feide.js";
 
 import { OAuthCase } from "./interfaces.js";
 
-const { Response: ActualResponse } = jest.requireActual<{
-  Response: typeof _Response;
-}>("node-fetch");
-
-jest.mock("node-fetch");
-
 let authService: IAuthService;
+let userService: IUserService;
 let db: Database;
 
 describe("OAuth", () => {
   beforeAll(() => {
     db = prisma;
     const userRepository = new UserRepository(db);
-    const userService = new UserService(userRepository);
-    authService = new FeideService(userService);
+    userService = new UserService(userRepository);
   });
 
   beforeEach(() => {
@@ -115,14 +107,7 @@ describe("OAuth", () => {
     },
   ];
   test.each(cases)("authentication - $name", async ({ responses, expected }) => {
-    const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
-
-    mockFetch.mockImplementation((url) => {
-      const { json, status } = setupMocks(url, responses);
-      const res = new ActualResponse(undefined, { status });
-      res.json = json;
-      return Promise.resolve(res);
-    });
+    authService = new FeideService(userService, setupMockFeideClient({ responses }));
 
     const { username, feideId, firstName, lastName, email } = await authService.getUser({
       code: "code",

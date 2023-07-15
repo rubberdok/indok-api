@@ -1,12 +1,11 @@
 import crypto from "crypto";
 
 import { User } from "@prisma/client";
-import fetch from "node-fetch";
 
 import { env } from "@/config.js";
 import { GetUserParams, IAuthService, IUserService } from "@/services/interfaces.js";
 
-import { UserInfo } from "./interfaces.js";
+import { OAuthClient, UserInfo } from "./interfaces.js";
 
 const FeideProvider = {
   token: env.FEIDE_BASE_URL + "/oauth/token",
@@ -17,7 +16,7 @@ const FeideProvider = {
 };
 
 export class FeideService implements IAuthService {
-  constructor(private userService: IUserService) {}
+  constructor(private userService: IUserService, private oauthClient: OAuthClient) {}
 
   private scope = ["openid", "userid", "userid-feide", "userinfo-name", "userinfo-photo", "email", "groups-edu"].join(
     " "
@@ -63,22 +62,8 @@ export class FeideService implements IAuthService {
 
   private async getUserInfo(accessToken: string): Promise<UserInfo> {
     const url = FeideProvider.userInfo;
-    const authorization = `Bearer ${accessToken}`;
 
-    const res = await fetch(url, {
-      method: "GET",
-      headers: {
-        authorization,
-      },
-    });
-
-    if (res.ok) {
-      const json: UserInfo = await res.json();
-      return json;
-    } else {
-      const reason = await res.text();
-      throw new Error(reason);
-    }
+    return await this.oauthClient.fetchUserInfo({ url, accessToken });
   }
 
   private async getAccessToken(code: string, codeVerifier: string): Promise<string> {
@@ -96,24 +81,9 @@ export class FeideService implements IAuthService {
       client_id: FeideProvider.clientID,
     };
 
-    const params = new URLSearchParams(data);
+    const body = new URLSearchParams(data);
 
-    const res = await fetch(url, {
-      method: "POST",
-      body: params,
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        authorization,
-      },
-    });
-
-    if (res.ok) {
-      const json: { access_token: string; id_token: string } = await res.json();
-      return json.access_token;
-    } else {
-      const reason = await res.text();
-      throw new Error(reason);
-    }
+    return await this.oauthClient.fetchAccessToken({ url, body, authorization });
   }
 
   private pkce(): { codeVerifier: string; codeChallenge: string } {

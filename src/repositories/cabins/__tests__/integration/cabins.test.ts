@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { jest } from "@jest/globals";
 
 import { faker } from "@faker-js/faker";
 import { BookingStatus, Cabin } from "@prisma/client";
