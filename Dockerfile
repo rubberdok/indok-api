@@ -6,7 +6,7 @@ WORKDIR /usr/src/app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-FROM public.ecr.aws/docker/library/node:lts-alpine3.16 AS runner
+FROM public.ecr.aws/docker/library/node:lts-alpine AS runner
 WORKDIR /usr/src/app
 
 COPY --from=deps /usr/src/app/node_modules ./node_modules
