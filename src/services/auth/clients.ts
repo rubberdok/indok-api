@@ -1,7 +1,7 @@
 import fetch from "node-fetch";
 import { z } from "zod";
 
-import { OAuthClient } from "./interfaces";
+import { OAuthClient } from "./interfaces.js";
 
 export const feideClient: OAuthClient = {
   async fetchUserInfo({ url, accessToken }) {
