@@ -1,4 +1,4 @@
-import { Resolvers } from "../generated/types";
+import { Resolvers } from "../__types__.js";
 
 export const resolvers: Resolvers = {
   Mutation: {

@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 
-import * as Users from "./users/seed";
+import * as Users from "./users/seed.js";
 
 const db = new PrismaClient();
 

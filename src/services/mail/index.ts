@@ -1,6 +1,6 @@
-import { env } from "@/config";
+import { env } from "@/config.js";
 
-import { EmailContent, IMailClient, IMailService } from "./interfaces";
+import { EmailContent, IMailClient, IMailService } from "./interfaces.js";
 
 export class MailService implements IMailService {
   constructor(private client: IMailClient) {}

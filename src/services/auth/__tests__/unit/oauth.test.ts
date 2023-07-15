@@ -2,39 +2,32 @@ import crypto from "crypto";
 
 import { User } from "@prisma/client";
 import { DeepMockProxy, mockDeep } from "jest-mock-extended";
-import fetch, { Response as _Response } from "node-fetch";
 
-import { FeideService } from "@/services/auth";
-import { IAuthService, IUserService } from "@/services/interfaces";
+import { FeideService } from "@/services/auth/index.js";
+import { IUserService } from "@/services/interfaces.js";
 
-import { setupMocks } from "../__mocks__/feide";
+import { setupMockFeideClient } from "../__mocks__/feide.js";
 
-import { OAuthCase } from "./interfaces";
-
-const { Response: ActualResponse } = jest.requireActual<{
-  Response: typeof _Response;
-}>("node-fetch");
-
-jest.mock("node-fetch");
+import { OAuthCase } from "./interfaces.js";
 
 const dummyUser = mockDeep<User>();
 
 let mockUserService: DeepMockProxy<IUserService>;
-let authService: IAuthService;
 
 describe("OAuth", () => {
   beforeAll(() => {
     mockUserService = mockDeep<IUserService>();
-    authService = new FeideService(mockUserService);
   });
 
   it("should generate a login url with PKCE params", () => {
+    const authService = new FeideService(mockUserService, setupMockFeideClient({}));
     const { url, codeChallenge } = authService.ssoUrl();
     expect(url).toContain(`code_challenge=${codeChallenge}`);
     expect(url).toContain("code_challenge_method=S256");
   });
 
   it("should generate a valid code challenge", () => {
+    const authService = new FeideService(mockUserService, setupMockFeideClient({}));
     const { codeChallenge, codeVerifier } = authService.ssoUrl();
     const expected = crypto.createHash("sha256").update(codeVerifier).digest("base64url");
     expect(expected).toStrictEqual(codeChallenge);
@@ -76,14 +69,7 @@ describe("OAuth", () => {
     },
   ];
   test.each(newUserCases)("authentication - $name", async ({ responses, expected }) => {
-    const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
-
-    mockFetch.mockImplementation((url) => {
-      const { json, status } = setupMocks(url, responses);
-      const res = new ActualResponse(undefined, { status });
-      res.json = json;
-      return Promise.resolve(res);
-    });
+    const authService = new FeideService(mockUserService, setupMockFeideClient({ responses }));
 
     mockUserService.getByFeideID.mockReturnValueOnce(Promise.resolve(expected));
     mockUserService.login.mockReturnValueOnce(Promise.resolve(expected));
@@ -94,7 +80,7 @@ describe("OAuth", () => {
     });
 
     expect(user).toEqual(expected);
-    expect(mockUserService.getByFeideID).toHaveBeenCalledWith((await expected).feideId);
+    expect(mockUserService.getByFeideID).toHaveBeenCalledWith(expected.feideId);
     expect(mockUserService.create).not.toHaveBeenCalled();
   });
 
@@ -139,14 +125,7 @@ describe("OAuth", () => {
     },
   ];
   test.each(existingUserCases)("authentication - $name", async ({ responses, expected }) => {
-    const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
-
-    mockFetch.mockImplementation((url) => {
-      const { json, status } = setupMocks(url, responses);
-      const res = new ActualResponse(undefined, { status });
-      res.json = json;
-      return Promise.resolve(res);
-    });
+    const authService = new FeideService(mockUserService, setupMockFeideClient({ responses }));
 
     mockUserService.getByFeideID.mockReturnValueOnce(Promise.resolve(null));
     mockUserService.create.mockReturnValueOnce(Promise.resolve(expected));

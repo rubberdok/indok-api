@@ -3,8 +3,7 @@
  * https://jestjs.io/docs/configuration
  */
 
-export default {
-  preset: "ts-jest",
+module.exports = {
   // Automatically clear mock calls, instances, contexts and results before every test
   clearMocks: true,
 
@@ -22,8 +21,17 @@ export default {
 
   modulePathIgnorePatterns: ["<rootDir>/dist/"],
 
+  extensionsToTreatAsEsm: [".ts"],
+
+  // https://github.com/swc-project/jest/issues/64
+  // imports with .js extension fails
+  // this is a workaround
+  moduleNameMapper: {
+    "^(\\.{1,2}/.*)\\.js$": "$1",
+  },
+
   // A map from regular expressions to paths to transformers
   transform: {
-    "^.+\\.(t|j)sx?$": ["@swc/jest"],
+    "^.+\\.(t|j)sx?$": "@swc/jest",
   },
 };

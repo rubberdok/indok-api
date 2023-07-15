@@ -1,10 +1,10 @@
 import { Prisma, User } from "@prisma/client";
 import dayjs from "dayjs";
 
-import { IUserRepository } from "@/repositories";
-import { IUserService } from "@/services/interfaces";
+import { IUserRepository } from "@/repositories/index.js";
+import { IUserService } from "@/services/interfaces.js";
 
-import { createUserSchema, updateUserSchema } from "./validation";
+import { createUserSchema, updateUserSchema } from "./validation.js";
 
 export class UserService implements IUserService {
   constructor(private usersRepository: IUserRepository) {}

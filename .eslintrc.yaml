@@ -3,7 +3,7 @@ env:
   node: true
 
 ignorePatterns:
-  - "src/graphql/generated"
+  - "src/graphql/__types__.ts"
   - dist
 
 plugins:
@@ -45,7 +45,7 @@ overrides:
     rules:
       "@graphql-eslint/known-type-names": error
     parserOptions:
-      schema: src/graphql/generated/schema.graphql
+      schema: schema.graphql
 
 rules:
   import/no-extraneous-dependencies:

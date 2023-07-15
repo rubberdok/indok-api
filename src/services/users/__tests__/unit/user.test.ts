@@ -1,11 +1,12 @@
+import { jest } from "@jest/globals";
 import { User } from "@prisma/client";
 import dayjs from "dayjs";
 import { DeepMockProxy, mockDeep } from "jest-mock-extended";
 
-import { IUserRepository } from "@/repositories";
-import { UserService } from "@/services/users";
+import { IUserRepository } from "@/repositories/index.js";
+import { UserService } from "@/services/users/index.js";
 
-import { TestCase } from "./interfaces";
+import { TestCase } from "./interfaces.js";
 
 const dummyUser = mockDeep<User>();
 
