@@ -1,6 +1,6 @@
 import fetch from "node-fetch";
-
 import { z } from "zod";
+
 import { OAuthClient } from "./interfaces";
 
 export const feideClient: OAuthClient = {
