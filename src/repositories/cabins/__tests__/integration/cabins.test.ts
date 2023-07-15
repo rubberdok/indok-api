@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
-import { jest } from "@jest/globals";
 
 import { faker } from "@faker-js/faker";
+import { jest } from "@jest/globals";
 import { BookingStatus, Cabin } from "@prisma/client";
 import dayjs from "dayjs";
 

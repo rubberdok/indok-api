@@ -7,14 +7,13 @@ import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHt
 import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
 import * as Sentry from "@sentry/node";
 import bodyParser from "body-parser";
-
 import cors from "cors";
 import express from "express";
 import session from "express-session";
 
 import { env } from "@/config.js";
-import { resolvers, typeDefs } from "@/graphql/index.js";
 import { IContext, IContextProvider } from "@/graphql/context.js";
+import { resolvers, typeDefs } from "@/graphql/index.js";
 import { formatError } from "@/lib/apolloServer.js";
 import postmarkClient from "@/lib/postmark.js";
 import prismaClient from "@/lib/prisma.js";
@@ -25,6 +24,7 @@ import { FeideService } from "@/services/auth/index.js";
 import { CabinService } from "@/services/cabins/index.js";
 import { MailService } from "@/services/mail/index.js";
 import { UserService } from "@/services/users/index.js";
+
 import { feideClient } from "./services/auth/clients";
 
 Sentry.init({

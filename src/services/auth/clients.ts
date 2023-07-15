@@ -1,4 +1,5 @@
 import fetch from "node-fetch";
+
 import { OAuthClient, UserInfo } from "./interfaces";
 
 export const feideClient: OAuthClient = {

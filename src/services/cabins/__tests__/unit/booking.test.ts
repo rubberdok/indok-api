@@ -5,9 +5,9 @@ import dayjs from "dayjs";
 import { DeepMockProxy, mockDeep } from "jest-mock-extended";
 
 import { ICabinRepository } from "@/repositories/index.js";
-import { ICabinService, IMailService } from "@/services/index.js";
 import { CabinService } from "@/services/cabins/index.js";
 import { BookingData } from "@/services/cabins/interfaces.js";
+import { ICabinService, IMailService } from "@/services/index.js";
 import { TemplateAliasEnum } from "@/services/mail/interfaces.js";
 
 import { NegativeValidationTestCase, PositiveValidationTestCase } from "./interfaces.js";
