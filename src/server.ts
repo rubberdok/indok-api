@@ -26,20 +26,9 @@ import { CabinService } from "@/services/cabins/index.js";
 import { MailService } from "@/services/mail/index.js";
 import { UserService } from "@/services/users/index.js";
 
-Sentry.init({
-  dsn: env.SENTRY_DSN,
-  tracesSampleRate: env.SENTRY_TRACES_SAMPLE_RATE,
-});
-
 async function initializeServer() {
-  console.debug("initializing server");
   const app = express();
   const httpServer = http.createServer(app);
-
-  await redisClient.connect().catch((err) => {
-    console.error("Redis connection failed with error", err);
-  });
-  console.debug("connected to redis client");
 
   app.use(Sentry.Handlers.requestHandler());
   app.use(
@@ -60,8 +49,6 @@ async function initializeServer() {
     })
   );
 
-  console.debug("added sentry and session middleware");
-
   const server = new ApolloServer<IContext>({
     csrfPrevention: true,
     introspection: true,
@@ -70,10 +57,8 @@ async function initializeServer() {
     formatError,
     plugins: [ApolloServerPluginDrainHttpServer({ httpServer }), ApolloServerPluginLandingPageLocalDefault()],
   });
-  console.debug("created apollo server");
 
   await server.start();
-  console.debug("started apollo server");
 
   const userRepository = new UserRepository(prismaClient);
   const userService = new UserService(userRepository);
@@ -99,7 +84,6 @@ async function initializeServer() {
       },
     })
   );
-  console.debug("added graphql route");
 
   await new Promise<void>((resolve) => httpServer.listen({ port: env.PORT }, resolve));
 
