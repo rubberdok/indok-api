@@ -16,7 +16,7 @@ services:
     restart: always
     image: redis:7.0.4-alpine
     ports:
-      - 6380:6380
+      - 6380:6379
     environment:
       - REDIS_PASSWORD=redis
     command: redis-server --loglevel warning --requirepass redis
