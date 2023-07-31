@@ -11,6 +11,7 @@ resource "random_password" "password" {
 module "database" {
   source = "../postgres"
 
+  prefix         = "server"
   suffix         = var.suffix
   resource_group = module.resource_group
 
@@ -19,6 +20,7 @@ module "database" {
   network = {
     virtual_network_name = module.vnet.name
     virtual_network_id   = module.vnet.id
+    address_prefixes     = ["10.0.128.0/24"]
   }
 
   authentication = {

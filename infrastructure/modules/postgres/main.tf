@@ -3,10 +3,10 @@
 # and delegate it to our PostgreSQL Flexible Server. This allows for private connections from our app
 # to the database.
 resource "azurerm_subnet" "this" {
-  name                 = "pg-subnet-${var.suffix}"
+  name                 = "${var.prefix}-pgsn-${var.suffix}"
   resource_group_name  = var.resource_group.name
   virtual_network_name = var.network.virtual_network_name
-  address_prefixes     = ["10.0.128.0/24"]
+  address_prefixes     = var.network.address_prefixes
 
   service_endpoints = ["Microsoft.Storage"]
   delegation {
@@ -23,12 +23,12 @@ resource "azurerm_subnet" "this" {
 
 # We will also need to create a Private DNS Zone to resolve our PostgreSQL Flexible Server.
 resource "azurerm_private_dns_zone" "this" {
-  name                = "${var.environment}-${var.suffix}.postgres.database.azure.com"
+  name                = "${var.environment}.${var.prefix}${var.suffix}.postgres.database.azure.com"
   resource_group_name = var.resource_group.name
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "this" {
-  name                  = "pg-${var.suffix}.com"
+  name                  = "${var.prefix}-pglink-${var.suffix}.com"
   resource_group_name   = var.resource_group.name
   private_dns_zone_name = azurerm_private_dns_zone.this.name
   virtual_network_id    = var.network.virtual_network_id
@@ -38,7 +38,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "this" {
 # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/postgresql_flexible_server
 # Sets up a PostgreSQL Flexible Server.
 resource "azurerm_postgresql_flexible_server" "this" {
-  name                = "pg-fs-${var.suffix}"
+  name                = "${var.prefix}-pgfs-${var.suffix}"
   location            = var.resource_group.location
   resource_group_name = var.resource_group.name
 
@@ -62,7 +62,7 @@ resource "azurerm_postgresql_flexible_server" "this" {
 # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/postgresql_flexible_server_database
 # Creates a database on our PostgreSQL Flexible Server.
 resource "azurerm_postgresql_flexible_server_database" "this" {
-  name      = "pg-fs-db-${var.suffix}"
+  name      = "${var.prefix}-pgdb-${var.suffix}"
   server_id = azurerm_postgresql_flexible_server.this.id
   collation = "en_US.utf8"
   charset   = "utf8"

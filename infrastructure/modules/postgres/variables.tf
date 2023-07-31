@@ -27,6 +27,7 @@ variable "network" {
   type = object({
     virtual_network_name = string
     virtual_network_id   = string
+    address_prefixes     = list(string)
   })
   description = "The network configuration of the PostgreSQL server."
 }
@@ -39,6 +40,10 @@ variable "tags" {
 variable "suffix" {
   type        = string
   description = "The suffix to append to the resources."
+}
+
+variable "prefix" {
+  type = string
 }
 
 variable "environment" {
