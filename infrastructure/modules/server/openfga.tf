@@ -35,7 +35,7 @@ module "openfga_database" {
 
 resource "azurerm_key_vault_secret" "openfga_db_connection_string" {
   name         = "openfga-db-connection-string"
-  value        = module.openfga_database.connection_string
+  value        = "${module.openfga_database.connection_string}&sslrootcert=/etc/ssl/certs/DigiCertGlobalRootCA.crt.pem"
   key_vault_id = module.key_vault.id
 }
 
@@ -53,14 +53,25 @@ resource "azurerm_container_app" "openfga" {
     value = azurerm_key_vault_secret.openfga_db_connection_string.value
   }
 
+  secret {
+    name  = "docker-registry-password"
+    value = var.docker_registry_password
+  }
+
+  registry {
+    username             = "USERNAME"
+    password_secret_name = "docker-registry-password"
+    server               = "ghcr.io"
+  }
+
   template {
     min_replicas = 1
     container {
       cpu     = 0.25
       memory  = "0.5Gi"
       name    = "main"
-      image   = "openfga/openfga:v1.2.0"
-      command = ["/openfga", "run"]
+      image   = "ghcr.io/rubberdok/openfga:latest"
+      command = ["/openfga", "run", "--log-format", "json", "--log-level", "info"]
 
       env {
         name        = "OPENFGA_DATASTORE_URI"
@@ -76,7 +87,7 @@ resource "azurerm_container_app" "openfga" {
 
   ingress {
     external_enabled = false
-    target_port      = 8081
+    target_port      = 8080
     traffic_weight {
       latest_revision = true
       percentage      = 100
@@ -97,6 +108,17 @@ resource "azurerm_container_app" "openfga_migrate" {
   revision_mode       = "Single"
 
   secret {
+    name  = "docker-registry-password"
+    value = var.docker_registry_password
+  }
+
+  registry {
+    username             = "USERNAME"
+    password_secret_name = "docker-registry-password"
+    server               = "ghcr.io"
+  }
+
+  secret {
     name  = "database-connection-string"
     value = azurerm_key_vault_secret.openfga_db_connection_string.value
   }
@@ -106,8 +128,8 @@ resource "azurerm_container_app" "openfga_migrate" {
       cpu     = 0.25
       memory  = "0.5Gi"
       name    = "main"
-      image   = "openfga/openfga:v1.2.0"
-      command = ["/openfga", "migrate"]
+      image   = "ghcr.io/rubberdok/openfga:latest"
+      command = ["/openfga", "migrate", "--verbose"]
 
       env {
         name        = "OPENFGA_DATASTORE_URI"

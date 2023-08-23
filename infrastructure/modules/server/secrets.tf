@@ -1,6 +1,6 @@
 resource "azurerm_key_vault_secret" "db_connection_string" {
   name         = "db-connection-string"
-  value        = module.database.connection_string
+  value        = "${module.database.connection_string}&sslcert=/etc/ssl/certs/DigiCertGlobalRootCA.crt.pem"
   key_vault_id = module.key_vault.id
 }
 

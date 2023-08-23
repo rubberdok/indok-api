@@ -1,0 +1,8 @@
+FROM --platform=amd64 openfga/openfga
+
+COPY certs /etc/ssl/certs
+
+EXPOSE 8080
+EXPOSE 8081
+
+CMD ["/openfga", "run"]
