@@ -81,6 +81,11 @@ resource "azurerm_container_app" "server" {
         name        = "DATABASE_CONNECTION_STRING"
         secret_name = "database-connection-string"
       }
+
+      env {
+        name        = "FEIDE_CLIENT_SECRET"
+        secret_name = "feide-client-secret"
+      }
     }
   }
 
