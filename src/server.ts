@@ -6,6 +6,7 @@ import {
 import fastifyApollo, { ApolloFastifyContextFunction, fastifyApolloDrainPlugin } from "@as-integrations/fastify";
 import fastifyCookie from "@fastify/cookie";
 import fastifyCors from "@fastify/cors";
+import fastifyHelmet from "@fastify/helmet";
 import fastifySession from "@fastify/session";
 import { PrismaClient } from "@prisma/client";
 import RedisStore from "connect-redis";
@@ -25,7 +26,6 @@ import { FeideService } from "./services/auth/index.js";
 import { CabinService } from "./services/cabins/index.js";
 import { MailService } from "./services/mail/index.js";
 import { UserService } from "./services/users/index.js";
-import fastifyHelmet from "@fastify/helmet";
 
 export async function initServer() {
   // Set up and inject dependencies
