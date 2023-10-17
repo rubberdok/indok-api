@@ -10,14 +10,14 @@ resource "azurerm_key_vault_secret" "redis_connection_string" {
   key_vault_id = module.key_vault.id
 }
 
-resource "random_password" "password" {
+resource "random_password" "session_secret_value" {
   length  = 32
   special = true
 }
 
 resource "azurerm_key_vault_secret" "session_secret" {
   name         = "session-secret"
-  value        = random_password.password.result
+  value        = random_password.session_secret_value.result
   key_vault_id = module.key_vault.id
 }
 
