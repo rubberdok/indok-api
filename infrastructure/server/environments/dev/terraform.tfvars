@@ -9,7 +9,7 @@ environment_variables = [
   },
   {
     name  = "NODE_ENV"
-    value = "production"
+    value = "development"
   },
   {
     name  = "NO_REPLY_EMAIL"
@@ -21,11 +21,7 @@ environment_variables = [
   },
   {
     name  = "FEIDE_CLIENT_ID"
-    value = "abc"
-  },
-  {
-    name  = "FEIDE_CLIENT_SECRET"
-    value = "abc"
+    value = "fcaa9e30-a6d3-4809-8fea-cdd7b3de1c98"
   },
   {
     name  = "FEIDE_REDIRECT_URI"
@@ -36,34 +32,26 @@ environment_variables = [
     value = "https://auth.dataporten.no"
   },
   {
-    name  = "FEIDE_VERIFIER_SECRET"
-    value = "abc"
-  },
-  {
-    name  = "POSTMARK_API_TOKEN"
-    value = "abc"
-  },
-  {
-    name  = "SESSION_SECRET"
-    value = "abc"
-  },
-  {
     name  = "SESSION_COOKIE_NAME"
-    value = "abc"
+    value = "sessionid"
   },
   {
     name  = "SESSION_COOKIE_DOMAIN"
-    value = "abc"
+    value = "thankfulpebble-c9bfb320.norwayeast.azurecontainerapps.io"
   },
   {
     name  = "SESSION_COOKIE_HTTP_ONLY"
-    value = "abc"
+    value = "true"
   },
   {
     name  = "SESSION_COOKIE_SECURE"
-    value = "abc"
+    value = "true"
   },
+  {
+    name  = "SENTRY_DSN"
+    value = "https://3e8801d618184101b5d2c6b7b4da6f0b@o514678.ingest.sentry.io/6553834"
+  }
 ]
 
 
-environment = "dev"
+environment = "development"
