@@ -44,8 +44,8 @@ environment_variables = [
     value = "abc"
   },
   {
-    name  = "SESSION_SECRET"
-    value = "abc"
+    name  = "32_CHAR_SESSION_SECRET"
+    value = "a really long and really secret session secret"
   },
   {
     name  = "SESSION_COOKIE_NAME"
