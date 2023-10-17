@@ -25,3 +25,8 @@ data "azurerm_key_vault_secret" "feide_client_secret" {
   key_vault_id = "https://shared-key-vault-altht.vault.azure.net/"
   name         = "feide-client-secret"
 }
+
+data "azurerm_key_vault_secret" "postman_api_token" {
+  key_vault_id = "https://shared-key-vault-altht.vault.azure.net/"
+  name         = "postman-api-token"
+}

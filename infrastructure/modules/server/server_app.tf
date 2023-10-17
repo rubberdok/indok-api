@@ -35,6 +35,16 @@ resource "azurerm_container_app" "server" {
     value = azurerm_key_vault_secret.db_connection_string.value
   }
 
+  secret {
+    name  = "session-secret"
+    value = azurerm_key_vault_secret.session_secret.value
+  }
+
+  secret {
+    name  = "postman-api-token"
+    value = azurerm_key_vault_secret.postman_api_token.value
+  }
+
   registry {
     username             = "USERNAME"
     password_secret_name = "docker-registry-password"
@@ -85,6 +95,16 @@ resource "azurerm_container_app" "server" {
       env {
         name        = "FEIDE_CLIENT_SECRET"
         secret_name = "feide-client-secret"
+      }
+
+      env {
+        name        = "SESSION_SECRET"
+        secret_name = "session-secret"
+      }
+
+      env {
+        name        = "POSTMARK_API_TOKEN"
+        secret_name = "postmark-api-token"
       }
     }
   }
