@@ -12,6 +12,7 @@ export const typeDefs = gql`
   type UsersResponse {
     users: [User!]!
     total: Int!
+    totae: Int
   }
 
   type UserResponse {

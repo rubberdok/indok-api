@@ -1,15 +1,11 @@
-import * as Sentry from "@sentry/node";
+import { initServer } from "./server.js";
 
-import { env } from "./config.js";
-import { initializeServer } from "./server.js";
+await initServer();
 
-/**
- * Initialize Sentry as early as possible
- * to catch as many errors as possible
- */
-Sentry.init({
-  dsn: env.SENTRY_DSN,
-  tracesSampleRate: env.SENTRY_TRACES_SAMPLE_RATE,
-});
-
-initializeServer();
+declare module "fastify" {
+  interface Session {
+    codeVerifier?: string;
+    userId?: string;
+    authenticated: boolean;
+  }
+}
