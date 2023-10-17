@@ -10,7 +10,7 @@
   "type": "module",
   "scripts": {
     "build:production": "run-p generate:prisma swc",
-    "build": "run-p tsc swc",
+    "build": "run-p generate:prisma swc",
     "generate": "run-p generate:*",
     "generate:prisma": "prisma generate",
     "generate:gql": "NODE_OPTIONS=\"--loader ts-node/esm\" graphql-codegen-esm --config codegen.config.cjs",
@@ -28,7 +28,7 @@
     "pretest:integration": "run-s docker:up && wait-on tcp:5433 -t 20000",
     "test:integration": "npm run integration-test --",
     "test:integration:headless": "npm run integration-test --",
-    "tsc": "tsc",
+    "tsc": "npm run generate && tsc",
     "swc": "swc src -d dist"
   },
   "optionalDependencies": {
