@@ -36,10 +36,6 @@ environment_variables = [
     value = "https://auth.dataporten.no"
   },
   {
-    name  = "FEIDE_VERIFIER_SECRET"
-    value = "abc"
-  },
-  {
     name  = "POSTMARK_API_TOKEN"
     value = "abc"
   },

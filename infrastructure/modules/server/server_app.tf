@@ -16,6 +16,11 @@ resource "azurerm_container_app" "server" {
   }
 
   secret {
+    name  = "feide-client-secret"
+    value = data.azurerm_key_vault_secret.feide_client_secret.value
+  }
+
+  secret {
     name  = "docker-registry-password"
     value = var.docker_registry_password
   }

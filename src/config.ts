@@ -23,7 +23,6 @@ const envVarsSchema = z.object({
   FEIDE_CLIENT_SECRET: z.string(),
   FEIDE_REDIRECT_URI: z.string(),
   FEIDE_BASE_URL: z.string().url(),
-  FEIDE_VERIFIER_SECRET: z.string(),
   POSTMARK_API_TOKEN: z.string(),
   SESSION_SECRET: z.string(),
   SESSION_COOKIE_NAME: z.string(),
@@ -31,7 +30,6 @@ const envVarsSchema = z.object({
   SESSION_COOKIE_HTTP_ONLY: z.string().transform((val) => val === "true"),
   SESSION_COOKIE_SECURE: z.string().transform((val) => val === "true"),
   REDIS_CONNECTION_STRING: z.string(),
-  REDIS_CERT_PATH: z.string().optional(),
 });
 
 export const env = envVarsSchema.parse(process.env);

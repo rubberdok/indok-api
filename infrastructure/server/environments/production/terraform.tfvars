@@ -36,10 +36,6 @@ environment_variables = [
     value = "https://auth.dataporten.no"
   },
   {
-    name  = "FEIDE_VERIFIER_SECRET"
-    value = "abc"
-  },
-  {
     name  = "POSTMARK_API_TOKEN"
     value = "abc"
   },
@@ -62,10 +58,6 @@ environment_variables = [
   {
     name  = "SESSION_COOKIE_SECURE"
     value = "abc"
-  },
-  {
-    name  = "REDIS_CERT_PATH"
-    value = "/etc/ssl/certs/DigiCertGlobalRootCA.crt.pem"
   },
   {
     name  = "SENTRY_DSN"
