@@ -11,6 +11,7 @@ import { PrismaClient } from "@prisma/client";
 import RedisStore from "connect-redis";
 import fastify from "fastify";
 import { createClient } from "redis";
+
 import { env } from "./config.js";
 import { IContext } from "./graphql/context.js";
 import { resolvers } from "./graphql/resolvers.js";
