@@ -41,8 +41,8 @@ resource "azurerm_container_app" "server" {
   }
 
   secret {
-    name  = "postman-api-token"
-    value = data.azurerm_key_vault_secret.postman_api_token.value
+    name  = "postmark-api-token"
+    value = data.azurerm_key_vault_secret.postmark_api_token.value
   }
 
   registry {
