@@ -16,7 +16,10 @@ const FeideProvider = {
 };
 
 export class FeideService implements IAuthService {
-  constructor(private userService: IUserService, private oauthClient: OAuthClient) {}
+  constructor(
+    private userService: IUserService,
+    private oauthClient: OAuthClient
+  ) {}
 
   private scope = ["openid", "userid", "userid-feide", "userinfo-name", "userinfo-photo", "email", "groups-edu"].join(
     " "
