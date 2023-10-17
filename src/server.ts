@@ -8,6 +8,7 @@ import fastifyCookie from "@fastify/cookie";
 import fastifyCors from "@fastify/cors";
 import fastifyHelmet from "@fastify/helmet";
 import fastifySession from "@fastify/session";
+import fastifySentry from "@immobiliarelabs/fastify-sentry";
 import { PrismaClient } from "@prisma/client";
 import RedisStore from "connect-redis";
 import fastify from "fastify";
@@ -42,8 +43,38 @@ export async function initServer() {
 
   const app = fastify({ logger: true });
 
+  /**
+   * Set up Sentry
+   */
+  app.register(fastifySentry, {
+    dsn: env.SENTRY_DSN,
+    environment: env.NODE_ENV,
+    tracesSampleRate: env.SENTRY_TRACES_SAMPLE_RATE,
+  });
+
   // Security headers
-  app.register(fastifyHelmet);
+  app.register(fastifyHelmet, {
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: [
+          "'self'",
+          /** @by-us - adds graphiql support over helmet's default CSP */
+          "'unsafe-inline'",
+          /** add support for apollo sandbox */
+          "https://sandbox.embed.apollographql.com/",
+        ],
+        scriptSrc: [
+          "'self'",
+          /** @by-us - adds graphiql support over helmet's default CSP */
+          "'unsafe-inline'",
+          /** @by-us - adds graphiql support over helmet's default CSP */
+          "'unsafe-eval'",
+          /** add support for apollo sandbox */
+          "https://embeddable-sandbox.cdn.apollographql.com/",
+        ],
+      },
+    },
+  });
 
   /**
    * Register plugins
@@ -103,7 +134,7 @@ export async function initServer() {
       fastifyApolloDrainPlugin(app),
       env.NODE_ENV === "production"
         ? ApolloServerPluginLandingPageProductionDefault({ footer: false })
-        : ApolloServerPluginLandingPageLocalDefault({ footer: false, includeCookies: true }),
+        : ApolloServerPluginLandingPageLocalDefault({ footer: false, includeCookies: true, embed: true }),
     ],
   });
 
