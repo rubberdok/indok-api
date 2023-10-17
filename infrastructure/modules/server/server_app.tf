@@ -42,7 +42,7 @@ resource "azurerm_container_app" "server" {
 
   secret {
     name  = "postman-api-token"
-    value = azurerm_key_vault_secret.postman_api_token.value
+    value = data.azurerm_key_vault_secret.postman_api_token.value
   }
 
   registry {
