@@ -16,6 +16,11 @@ resource "azurerm_container_app" "server" {
   }
 
   secret {
+    name  = "feide-client-secret"
+    value = data.azurerm_key_vault_secret.feide_client_secret.value
+  }
+
+  secret {
     name  = "docker-registry-password"
     value = var.docker_registry_password
   }
@@ -28,6 +33,16 @@ resource "azurerm_container_app" "server" {
   secret {
     name  = "database-connection-string"
     value = azurerm_key_vault_secret.db_connection_string.value
+  }
+
+  secret {
+    name  = "session-secret"
+    value = azurerm_key_vault_secret.session_secret.value
+  }
+
+  secret {
+    name  = "postmark-api-token"
+    value = data.azurerm_key_vault_secret.postmark_api_token.value
   }
 
   registry {
@@ -75,6 +90,21 @@ resource "azurerm_container_app" "server" {
       env {
         name        = "DATABASE_CONNECTION_STRING"
         secret_name = "database-connection-string"
+      }
+
+      env {
+        name        = "FEIDE_CLIENT_SECRET"
+        secret_name = "feide-client-secret"
+      }
+
+      env {
+        name        = "SESSION_SECRET"
+        secret_name = "session-secret"
+      }
+
+      env {
+        name        = "POSTMARK_API_TOKEN"
+        secret_name = "postmark-api-token"
       }
     }
   }
