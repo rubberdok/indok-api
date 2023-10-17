@@ -5,7 +5,7 @@ import {
 } from "@apollo/server/plugin/landingPage/default";
 import fastifyApollo, { ApolloFastifyContextFunction, fastifyApolloDrainPlugin } from "@as-integrations/fastify";
 import fastifyCookie from "@fastify/cookie";
-import cors from "@fastify/cors";
+import fastifyCors from "@fastify/cors";
 import fastifySession from "@fastify/session";
 import { PrismaClient } from "@prisma/client";
 import RedisStore from "connect-redis";
@@ -25,6 +25,7 @@ import { FeideService } from "./services/auth/index.js";
 import { CabinService } from "./services/cabins/index.js";
 import { MailService } from "./services/mail/index.js";
 import { UserService } from "./services/users/index.js";
+import fastifyHelmet from "@fastify/helmet";
 
 export async function initServer() {
   // Set up and inject dependencies
@@ -41,6 +42,9 @@ export async function initServer() {
 
   const app = fastify({ logger: true });
 
+  // Security headers
+  app.register(fastifyHelmet);
+
   /**
    * Register plugins
    *
@@ -48,7 +52,7 @@ export async function initServer() {
    *   - credentials: allow cookies to be sent to the server
    *   - origin: allow requests from the specified origins
    */
-  await app.register(cors, {
+  await app.register(fastifyCors, {
     credentials: env.CORS_CREDENTIALS,
     origin: env.CORS_ORIGINS,
   });
