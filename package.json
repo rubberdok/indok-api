@@ -12,8 +12,10 @@
     "build:production": "run-p generate:prisma swc",
     "build": "run-p generate:prisma swc",
     "generate": "run-p generate:*",
+    "generate:nowatch": "run-p generate:gql:nowatch generate:prisma",
     "generate:prisma": "prisma generate",
     "generate:gql": "NODE_OPTIONS=\"--loader ts-node/esm\" graphql-codegen-esm --config codegen.config.cjs",
+    "generate:gql:nowatch": "npm run generate:gql -- --watch false",
     "lint": "eslint .",
     "lint:fix": "npm run lint -- --fix",
     "dev": "concurrently --restart-tries 3 -n server,transpile,graphql,prisma -k -c cyan.bold,black.dim,magenta.dim,black.dim \"dotenv -e .env.development -- nodemon --delay 250ms --watch .env --watch dist\" \"npm:swc -- --watch\" \"npm:generate:gql -- --watch \"src/graphql/**/type-defs.ts\"\" \"npm:generate:prisma -- --watch\"",
@@ -28,7 +30,7 @@
     "pretest:integration": "run-s docker:up && wait-on tcp:5433 -t 20000",
     "test:integration": "npm run integration-test --",
     "test:integration:headless": "npm run integration-test --",
-    "tsc": "npm run generate && tsc",
+    "tsc": "npm run generate:nowatch && tsc",
     "swc": "swc src -d dist"
   },
   "optionalDependencies": {
