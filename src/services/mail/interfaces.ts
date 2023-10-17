@@ -26,23 +26,22 @@ export enum MessageStream {
   BROADCAST = "broadcast",
 }
 
-export type EmailContent =
-  | Modify<
-      TemplatedMessage,
-      {
-        From?: string;
+export type EmailContent = Modify<
+  TemplatedMessage,
+  {
+    From?: string;
+  }
+> &
+  (
+    | {
+        TemplateAlias: TemplateAliasEnum.EVENT_WAIT_LIST;
+        TemplateModel: Model[TemplateAliasEnum.EVENT_WAIT_LIST];
       }
-    > &
-      (
-        | {
-            TemplateAlias: TemplateAliasEnum.EVENT_WAIT_LIST;
-            TemplateModel: Model[TemplateAliasEnum.EVENT_WAIT_LIST];
-          }
-        | {
-            TemplateAlias: TemplateAliasEnum.CABIN_BOOKING_RECEIPT;
-            TemplateModel: Model[TemplateAliasEnum.CABIN_BOOKING_RECEIPT];
-          }
-      );
+    | {
+        TemplateAlias: TemplateAliasEnum.CABIN_BOOKING_RECEIPT;
+        TemplateModel: Model[TemplateAliasEnum.CABIN_BOOKING_RECEIPT];
+      }
+  );
 
 export interface IMailService {
   send(template: EmailContent): Promise<MessageSendingResponse>;

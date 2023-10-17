@@ -8,7 +8,10 @@ import { BookingData, ICabinService } from "./interfaces.js";
 import { bookingSchema } from "./validation.js";
 
 export class CabinService implements ICabinService {
-  constructor(private cabinRepository: ICabinRepository, private mailService: IMailService) {}
+  constructor(
+    private cabinRepository: ICabinRepository,
+    private mailService: IMailService
+  ) {}
 
   getCabin(id: string): Promise<Cabin> {
     return this.cabinRepository.getCabinById(id);

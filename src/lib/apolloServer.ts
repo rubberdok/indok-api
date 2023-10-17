@@ -14,6 +14,5 @@ export const formatError = (formattedError: GraphQLFormattedError, error: unknow
     };
   }
 
-  console.error(error);
   return formattedError;
 };
