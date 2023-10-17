@@ -34,6 +34,7 @@ export const resolvers: Resolvers = {
       // Find the code verifier from the session that was used
       // to generate the code challenge for the authentication flow
       // in `redirectUrl`
+      ctx.req.log.info("Authenticating user");
       const codeVerifier = ctx.req.session.get("codeVerifier");
 
       if (!codeVerifier) {
@@ -53,12 +54,13 @@ export const resolvers: Resolvers = {
 
         // Regenerate the session to prevent session fixation attacks
         ctx.req.session.regenerate(["userId", "authenticated"]);
-
+        ctx.req.log.info("User authenticated");
         return {
           user,
         };
       } catch (err) {
         ctx.req.session.codeVerifier = undefined;
+        ctx.req.log.error("Failed to authenticate user", err);
         throw err;
       }
     },

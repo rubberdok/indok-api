@@ -91,6 +91,7 @@ type UserResponse {
 }
 
 type UsersResponse {
+  totae: Int
   total: Int!
   users: [User!]!
 }
