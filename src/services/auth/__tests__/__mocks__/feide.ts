@@ -1,4 +1,4 @@
-import { OAuthClient, UserInfo } from "../../interfaces.js";
+import { OAuthClient, UserInfo } from "../../clients.js";
 
 export interface FeideResponses {
   token: {
