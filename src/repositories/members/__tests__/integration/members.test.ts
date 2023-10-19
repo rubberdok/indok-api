@@ -1,7 +1,9 @@
-import prisma from "@/lib/prisma.js";
 import { faker } from "@faker-js/faker";
-import { MemberRepository } from "../../index.js";
 import { Role } from "@prisma/client";
+
+import prisma from "@/lib/prisma.js";
+
+import { MemberRepository } from "../../index.js";
 
 let repo: MemberRepository;
 

@@ -1,6 +1,7 @@
-import { Database } from "@/core/interfaces.js";
 import { Organization } from "@prisma/client";
 import z from "zod";
+
+import { Database } from "@/core/interfaces.js";
 
 export class OrganizationRepository {
   constructor(private db: Database) {}

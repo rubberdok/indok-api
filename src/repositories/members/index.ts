@@ -1,5 +1,6 @@
-import { Database } from "@/core/interfaces.js";
 import { Member, Role } from "@prisma/client";
+
+import { Database } from "@/core/interfaces.js";
 
 export class MemberRepository {
   constructor(private db: Database) {}

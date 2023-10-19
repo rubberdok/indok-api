@@ -1,8 +1,10 @@
 import { faker } from "@faker-js/faker";
-import { OrganizationRepository } from "../../index.js";
-import { DeepMockProxy, mockDeep } from "jest-mock-extended";
-import { Database } from "@/core/interfaces.js";
 import { Member, Event } from "@prisma/client";
+import { DeepMockProxy, mockDeep } from "jest-mock-extended";
+
+import { Database } from "@/core/interfaces.js";
+
+import { OrganizationRepository } from "../../index.js";
 
 let repo: OrganizationRepository;
 let db: DeepMockProxy<Database>;
