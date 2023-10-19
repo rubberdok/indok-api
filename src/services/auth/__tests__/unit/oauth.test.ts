@@ -119,7 +119,7 @@ describe("OAuth", () => {
         graduationYear: null,
         firstLogin: false,
         graduationYearUpdatedAt: null,
-        allergies: null,
+        allergies: "",
         phoneNumber: "40000000",
       },
     },

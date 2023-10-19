@@ -4,6 +4,11 @@ on:
   pull_request:
     paths-ignore:
       - infrastructure/**
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - infrastructure/**
 
 permissions:
   contents: read
@@ -35,6 +40,7 @@ jobs:
       - name: Upload Coverage
         uses: codecov/codecov-action@v3
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           directory: coverage/unit
           flags: unittests,node
 
@@ -139,6 +145,7 @@ jobs:
       - name: Upload Coverage
         uses: codecov/codecov-action@v3
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           directory: coverage/integration
           flags: integrationtests,node
 

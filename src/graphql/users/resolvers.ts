@@ -26,7 +26,13 @@ export const resolvers: Resolvers = {
 
   Mutation: {
     updateUser(_root, { id, data }, ctx) {
-      return ctx.userService.update(id, data);
+      return ctx.userService.update(id, {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        allergies: data.allergies ?? undefined,
+        phoneNumber: data.phoneNumber ?? undefined,
+        graduationYear: data.graduationYear,
+      });
     },
   },
 
