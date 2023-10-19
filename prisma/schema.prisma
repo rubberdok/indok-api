@@ -30,15 +30,19 @@ model User {
   username                String    @unique
   graduationYear          Int?
   graduationYearUpdatedAt DateTime?
-  allergies               String?
-  phoneNumber             String?
+  allergies               String    @default("")
+  phoneNumber             String    @default("")
   isSuperUser             Boolean   @default(false)
+  memberships             Member[]
 }
 
 model Organization {
-  id    String  @id @default(uuid())
-  name  String  @unique
-  Event Event[]
+  id          String @id @default(uuid())
+  name        String @unique
+  description String @default("")
+
+  events  Event[]
+  members Member[]
 }
 
 model Event {
@@ -46,19 +50,12 @@ model Event {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   name           String
-  description    String?
+  description    String       @default("")
   startAt        DateTime
   endAt          DateTime
-  location       String?
+  location       String       @default("")
   organization   Organization @relation(fields: [organizationId], references: [id])
   organizationId String
-}
-
-model Role {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  name      String   @unique
-  userId    String?
 }
 
 // Cabins
@@ -89,4 +86,20 @@ model Booking {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   status      BookingStatus @default(PENDING)
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+model Member {
+  id             String       @id @default(uuid())
+  user           User         @relation(fields: [userId], references: [id])
+  userId         String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
+  role           Role         @default(MEMBER)
+
+  @@unique([userId, organizationId])
 }
