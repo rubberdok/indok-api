@@ -188,7 +188,7 @@ describe("OrganizationsRepository", () => {
         },
       },
     ];
-    test.each(testCases)("$name, $data", async ({ data, expected }) => {
+    test.concurrent.each(testCases)("$name, $data", async ({ data, expected }) => {
       /**
        * Arrange
        *
