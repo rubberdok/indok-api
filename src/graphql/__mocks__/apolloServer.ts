@@ -1,8 +1,10 @@
-import { formatError } from "@/lib/apolloServer.js";
 import { ApolloServer } from "@apollo/server";
 import { FastifySessionObject } from "@fastify/session";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { mock, mockDeep } from "jest-mock-extended";
+
+import { formatError } from "@/lib/apolloServer.js";
+
 import { IContext } from "../context.js";
 import { resolvers } from "../resolvers.js";
 import typeDefs from "../type-defs.js";

@@ -1,7 +1,9 @@
+import assert from "assert";
+
+import { gql } from "graphql-tag";
+
 import { codes } from "@/core/errors.js";
 import { createMockApolloServer } from "@/graphql/__mocks__/apolloServer.js";
-import assert from "assert";
-import { gql } from "graphql-tag";
 
 describe("OrganizationResolvers", () => {
   describe("Mutation", () => {

@@ -1,8 +1,8 @@
+import { unwrapResolverError } from "@apollo/server/errors";
 import { GraphQLFormattedError } from "graphql";
 import { ZodError } from "zod";
 
 import { BaseError, codes, InternalServerError, ValidationError } from "@/core/errors.js";
-import { unwrapResolverError } from "@apollo/server/errors";
 
 export const formatError = (formattedError: GraphQLFormattedError, error: unknown): GraphQLFormattedError => {
   if (error instanceof ValidationError || error instanceof ZodError) {
