@@ -18,7 +18,7 @@ const config = {
           DateTime: "Date",
         },
 
-        contextType: "@/graphql/context.js#IContext",
+        contextType: "@/lib/apolloServer.js#IContext",
 
         mapperTypeSuffix: "Model",
 

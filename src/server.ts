@@ -15,7 +15,7 @@ import fastify from "fastify";
 import { createClient } from "redis";
 
 import { env } from "./config.js";
-import { IContext } from "./graphql/context.js";
+import { IContext } from "./lib/apolloServer.js";
 import { resolvers } from "./graphql/resolvers.js";
 import { typeDefs } from "./graphql/type-defs.js";
 import { formatError } from "./lib/apolloServer.js";

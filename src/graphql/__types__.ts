@@ -1,6 +1,6 @@
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
 import { User as UserModel, Cabin as CabinModel, Booking as BookingModel, Organization as OrganizationModel, Member as MemberModel } from '@prisma/client';
-import { IContext } from '@/graphql/context.js';
+import { IContext } from '@/lib/apolloServer.js';
 
 /* eslint-disable */
 /* prettier-ignore */
