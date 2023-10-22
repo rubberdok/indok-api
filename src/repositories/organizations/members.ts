@@ -63,9 +63,8 @@ export class MemberRepository {
         if (err.code === "P2002") {
           throw new InvalidArgumentError("The user is already a member of the organization.");
         }
-        throw new InvalidArgumentError(err.message);
       }
-      throw new InternalServerError(err.message);
+      throw err;
     });
   }
 
