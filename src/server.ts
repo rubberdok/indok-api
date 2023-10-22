@@ -102,7 +102,7 @@ export async function initServer() {
   const redisClient = createClient({
     url: env.REDIS_CONNECTION_STRING,
   });
-  redisClient.connect().catch(console.error);
+  await redisClient.connect();
   // Regsiter session plugin
   await app.register(fastifySession, {
     secret: env.SESSION_SECRET,
@@ -127,6 +127,13 @@ export async function initServer() {
       request.session.set("authenticated", false);
     }
     next();
+  });
+
+  /**
+   * Close Redis connection when the server closes
+   */
+  app.addHook("onClose", async () => {
+    await redisClient.quit();
   });
 
   // Initialize Apollo Server
