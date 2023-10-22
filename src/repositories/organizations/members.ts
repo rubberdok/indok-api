@@ -1,7 +1,7 @@
 import { Member, Role } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 
-import { InternalServerError, InvalidArgumentError, NotFoundError } from "@/core/errors.js";
+import { InvalidArgumentError, NotFoundError } from "@/core/errors.js";
 import { Database } from "@/core/interfaces.js";
 
 export class MemberRepository {
