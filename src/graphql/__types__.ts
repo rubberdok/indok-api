@@ -106,11 +106,7 @@ export type Mutation = {
   readonly logout: LogoutResponse;
   readonly newBooking: Booking;
   readonly redirectUrl: RedirectUrlResponse;
-  /**
-   * Remove a member from the organization
-   * If the data.id is given, the membership will be removed by ID.
-   * If the data.userId and data.organizationId is given, the membership will be removed by the user and organization IDs.
-   */
+  /** Remove a member from the organization by the ID of the membership. */
   readonly removeMember: RemoveMemberResponse;
   readonly updateBookingStatus: Booking;
   /**
@@ -202,16 +198,9 @@ export type RedirectUrlResponse = {
   readonly url: Scalars['String']['output'];
 };
 
-export type RemoveMemberByIdInput = {
+export type RemoveMemberInput = {
   readonly id: Scalars['ID']['input'];
 };
-
-export type RemoveMemberByUserIdAndOrganizationIdInput = {
-  readonly organizationId: Scalars['ID']['input'];
-  readonly userId: Scalars['ID']['input'];
-};
-
-export type RemoveMemberInput = RemoveMemberByIdInput | RemoveMemberByUserIdAndOrganizationIdInput;
 
 export type RemoveMemberResponse = {
   readonly __typename?: 'RemoveMemberResponse';
@@ -362,10 +351,6 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
   info: GraphQLResolveInfo
 ) => TResult | Promise<TResult>;
 
-/** Mapping of union types */
-export type ResolversUnionTypes<RefType extends Record<string, unknown>> = ResolversObject<{
-  RemoveMemberInput: ( RemoveMemberByIdInput ) | ( RemoveMemberByUserIdAndOrganizationIdInput );
-}>;
 
 
 /** Mapping between all available schema types and the resolvers types */
@@ -388,9 +373,7 @@ export type ResolversTypes = ResolversObject<{
   Organization: ResolverTypeWrapper<OrganizationModel>;
   Query: ResolverTypeWrapper<{}>;
   RedirectUrlResponse: ResolverTypeWrapper<RedirectUrlResponse>;
-  RemoveMemberByIdInput: RemoveMemberByIdInput;
-  RemoveMemberByUserIdAndOrganizationIdInput: RemoveMemberByUserIdAndOrganizationIdInput;
-  RemoveMemberInput: ResolverTypeWrapper<ResolversUnionTypes<ResolversTypes>['RemoveMemberInput']>;
+  RemoveMemberInput: RemoveMemberInput;
   RemoveMemberResponse: ResolverTypeWrapper<Omit<RemoveMemberResponse, 'member'> & { member: ResolversTypes['Member'] }>;
   Role: Role;
   Status: Status;
@@ -422,9 +405,7 @@ export type ResolversParentTypes = ResolversObject<{
   Organization: OrganizationModel;
   Query: {};
   RedirectUrlResponse: RedirectUrlResponse;
-  RemoveMemberByIdInput: RemoveMemberByIdInput;
-  RemoveMemberByUserIdAndOrganizationIdInput: RemoveMemberByUserIdAndOrganizationIdInput;
-  RemoveMemberInput: ResolversUnionTypes<ResolversParentTypes>['RemoveMemberInput'];
+  RemoveMemberInput: RemoveMemberInput;
   RemoveMemberResponse: Omit<RemoveMemberResponse, 'member'> & { member: ResolversParentTypes['Member'] };
   String: Scalars['String']['output'];
   UpdateOrganizationInput: UpdateOrganizationInput;
@@ -515,10 +496,6 @@ export type RedirectUrlResponseResolvers<ContextType = IContext, ParentType exte
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
-export type RemoveMemberInputResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['RemoveMemberInput'] = ResolversParentTypes['RemoveMemberInput']> = ResolversObject<{
-  __resolveType: TypeResolveFn<'RemoveMemberByIdInput' | 'RemoveMemberByUserIdAndOrganizationIdInput', ParentType, ContextType>;
-}>;
-
 export type RemoveMemberResponseResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['RemoveMemberResponse'] = ResolversParentTypes['RemoveMemberResponse']> = ResolversObject<{
   member?: Resolver<ResolversTypes['Member'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -567,7 +544,6 @@ export type Resolvers<ContextType = IContext> = ResolversObject<{
   Organization?: OrganizationResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   RedirectUrlResponse?: RedirectUrlResponseResolvers<ContextType>;
-  RemoveMemberInput?: RemoveMemberInputResolvers<ContextType>;
   RemoveMemberResponse?: RemoveMemberResponseResolvers<ContextType>;
   UpdateOrganizationResponse?: UpdateOrganizationResponseResolvers<ContextType>;
   User?: UserResolvers<ContextType>;

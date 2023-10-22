@@ -1,9 +1,8 @@
 import { Organization, Role } from "@prisma/client";
-import z from "zod";
-
-import { Database } from "@/core/interfaces.js";
-import { InternalServerError, NotFoundError } from "@/core/errors.js";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
+
+import { InternalServerError, NotFoundError } from "@/core/errors.js";
+import { Database } from "@/core/interfaces.js";
 
 export class OrganizationRepository {
   constructor(private db: Database) {}

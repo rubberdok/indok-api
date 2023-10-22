@@ -83,16 +83,9 @@ export const typeDefs = gql`
     member: Member!
   }
 
-  input RemoveMemberByIdInput {
+  input RemoveMemberInput {
     id: ID!
   }
-
-  input RemoveMemberByUserIdAndOrganizationIdInput {
-    userId: ID!
-    organizationId: ID!
-  }
-
-  union RemoveMemberInput = RemoveMemberByIdInput | RemoveMemberByUserIdAndOrganizationIdInput
 
   type RemoveMemberResponse {
     member: Member!
@@ -116,9 +109,7 @@ export const typeDefs = gql`
     addMember(data: AddMemberInput!): AddMemberResponse!
 
     """
-    Remove a member from the organization
-    If the data.id is given, the membership will be removed by ID.
-    If the data.userId and data.organizationId is given, the membership will be removed by the user and organization IDs.
+    Remove a member from the organization by the ID of the membership.
     """
     removeMember(data: RemoveMemberInput!): RemoveMemberResponse!
   }

@@ -1,7 +1,7 @@
+import { Member, Organization, Role } from "@prisma/client";
 import { FastifyReply, FastifyRequest } from "fastify";
 
 import { IAuthService, ICabinService, IUserService } from "@/services/index.js";
-import { Member, Organization, Role } from "@prisma/client";
 
 interface OrganizationService {
   hasRole(data: { userId: string; organizationId: string; role: Role }): Promise<boolean>;

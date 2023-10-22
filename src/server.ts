@@ -21,15 +21,15 @@ import { typeDefs } from "./graphql/type-defs.js";
 import { formatError } from "./lib/apolloServer.js";
 import postmark from "./lib/postmark.js";
 import { CabinRepository } from "./repositories/cabins/index.js";
+import { MemberRepository } from "./repositories/organizations/members.js";
+import { OrganizationRepository } from "./repositories/organizations/organizations.js";
 import { UserRepository } from "./repositories/users/index.js";
 import { feideClient } from "./services/auth/clients.js";
 import { FeideService } from "./services/auth/index.js";
 import { CabinService } from "./services/cabins/index.js";
 import { MailService } from "./services/mail/index.js";
-import { UserService } from "./services/users/index.js";
 import { OrganizationService } from "./services/organizations/service.js";
-import { OrganizationRepository } from "./repositories/organizations/organizations.js";
-import { MemberRepository } from "./repositories/organizations/members.js";
+import { UserService } from "./services/users/index.js";
 
 export async function initServer() {
   // Set up and inject dependencies

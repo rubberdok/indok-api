@@ -83,11 +83,7 @@ type Mutation {
   newBooking(data: NewBookingInput!): Booking!
   redirectUrl(state: String): RedirectUrlResponse!
 
-  """
-  Remove a member from the organization
-  If the data.id is given, the membership will be removed by ID.
-  If the data.userId and data.organizationId is given, the membership will be removed by the user and organization IDs.
-  """
+  """Remove a member from the organization by the ID of the membership."""
   removeMember(data: RemoveMemberInput!): RemoveMemberResponse!
   updateBookingStatus(id: ID!, status: Status!): Booking!
 
@@ -125,16 +121,9 @@ type RedirectUrlResponse {
   url: String!
 }
 
-input RemoveMemberByIdInput {
+input RemoveMemberInput {
   id: ID!
 }
-
-input RemoveMemberByUserIdAndOrganizationIdInput {
-  organizationId: ID!
-  userId: ID!
-}
-
-union RemoveMemberInput = RemoveMemberByIdInput | RemoveMemberByUserIdAndOrganizationIdInput
 
 type RemoveMemberResponse {
   member: Member!

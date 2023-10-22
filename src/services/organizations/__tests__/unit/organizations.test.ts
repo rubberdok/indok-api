@@ -1,8 +1,11 @@
-import { BaseError, InvalidArgumentError, PermissionDeniedError } from "@/core/errors.js";
 import { faker } from "@faker-js/faker";
 import { Member, Organization, Role, User } from "@prisma/client";
 import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
+
+import { BaseError, InvalidArgumentError, PermissionDeniedError } from "@/core/errors.js";
+
 import { MemberRepository, OrganizationRepository, OrganizationService, UserService } from "../../service.js";
+
 import { getMockGetImplementation, getMockHasRoleImplementation } from "./mocks.js";
 
 let organizationService: OrganizationService;
@@ -600,7 +603,7 @@ describe("OrganizationService", () => {
         },
       ];
 
-      test.each(testCases)("$expectedError.name $name", async ({ name, state, input, expectedError }) => {
+      test.each(testCases)("$expectedError.name $name", async ({ state, input, expectedError }) => {
         /**
          * Arrange.
          *
@@ -691,7 +694,7 @@ describe("OrganizationService", () => {
         },
       ];
 
-      test.each(testCases)("$name", async ({ name, state, input }) => {
+      test.each(testCases)("$name", async ({ state, input }) => {
         /**
          * Arrange.
          *

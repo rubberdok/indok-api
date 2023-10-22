@@ -1,8 +1,8 @@
 import { Member, Role } from "@prisma/client";
-
-import { Database } from "@/core/interfaces.js";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
+
 import { InternalServerError, InvalidArgumentError, NotFoundError } from "@/core/errors.js";
+import { Database } from "@/core/interfaces.js";
 
 export class MemberRepository {
   constructor(private db: Database) {}

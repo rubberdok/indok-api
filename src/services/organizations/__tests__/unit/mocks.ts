@@ -1,5 +1,5 @@
 import { Member, Role } from "@prisma/client";
-import { MemberRepository } from "../../service.js";
+
 import { NotFoundError } from "@/core/errors.js";
 
 /**
