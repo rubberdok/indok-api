@@ -1,5 +1,5 @@
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
-import { User as UserModel, Cabin as CabinModel, Booking as BookingModel } from '@prisma/client';
+import { User as UserModel, Cabin as CabinModel, Booking as BookingModel, Organization as OrganizationModel, Member as MemberModel } from '@prisma/client';
 import { IContext } from '@/graphql/context.js';
 
 /* eslint-disable */
@@ -29,6 +29,17 @@ export type Scalars = {
   DateTime: { input: Date; output: Date; }
 };
 
+export type AddMemberInput = {
+  readonly organizationId: Scalars['ID']['input'];
+  readonly role?: InputMaybe<Role>;
+  readonly userId: Scalars['ID']['input'];
+};
+
+export type AddMemberResponse = {
+  readonly __typename?: 'AddMemberResponse';
+  readonly member: Member;
+};
+
 export type Booking = {
   readonly __typename?: 'Booking';
   readonly cabin: Cabin;
@@ -50,30 +61,63 @@ export type Cabin = {
   readonly name: Scalars['String']['output'];
 };
 
+export type CreateOrganizationInput = {
+  readonly description?: InputMaybe<Scalars['String']['input']>;
+  readonly name: Scalars['String']['input'];
+};
+
+export type CreateOrganizationResponse = {
+  readonly __typename?: 'CreateOrganizationResponse';
+  readonly organization: Organization;
+};
+
 export type LogoutResponse = {
   readonly __typename?: 'LogoutResponse';
   readonly status: LogoutStatus;
 };
 
-export enum LogoutStatus {
-  Error = 'ERROR',
-  Success = 'SUCCESS'
-}
+export const LogoutStatus = {
+  Error: 'ERROR',
+  Success: 'SUCCESS'
+} as const;
+
+export type LogoutStatus = typeof LogoutStatus[keyof typeof LogoutStatus];
+export type Member = {
+  readonly __typename?: 'Member';
+  readonly id: Scalars['ID']['output'];
+  readonly organization: Organization;
+  readonly role: Role;
+  readonly user: User;
+};
 
 export type Mutation = {
   readonly __typename?: 'Mutation';
+  readonly addMember: AddMemberResponse;
   readonly authenticate: UserResponse;
+  readonly createOrganization: CreateOrganizationResponse;
   readonly createUser?: Maybe<User>;
   readonly logout: LogoutResponse;
   readonly newBooking: Booking;
   readonly redirectUrl: RedirectUrlResponse;
+  readonly removeMember: RemoveMemberResponse;
   readonly updateBookingStatus: Booking;
+  readonly updateOrganization: UpdateOrganizationResponse;
   readonly updateUser: User;
+};
+
+
+export type MutationAddMemberArgs = {
+  data: AddMemberInput;
 };
 
 
 export type MutationAuthenticateArgs = {
   code: Scalars['String']['input'];
+};
+
+
+export type MutationCreateOrganizationArgs = {
+  data: CreateOrganizationInput;
 };
 
 
@@ -92,9 +136,19 @@ export type MutationRedirectUrlArgs = {
 };
 
 
+export type MutationRemoveMemberArgs = {
+  data: RemoveMemberInput;
+};
+
+
 export type MutationUpdateBookingStatusArgs = {
   id: Scalars['ID']['input'];
   status: Status;
+};
+
+
+export type MutationUpdateOrganizationArgs = {
+  data: UpdateOrganizationInput;
 };
 
 
@@ -113,6 +167,14 @@ export type NewBookingInput = {
   readonly startDate: Scalars['DateTime']['input'];
 };
 
+export type Organization = {
+  readonly __typename?: 'Organization';
+  readonly description: Scalars['String']['output'];
+  readonly id: Scalars['ID']['output'];
+  readonly members: ReadonlyArray<Member>;
+  readonly name: Scalars['String']['output'];
+};
+
 export type Query = {
   readonly __typename?: 'Query';
   readonly user: UserResponse;
@@ -124,12 +186,46 @@ export type RedirectUrlResponse = {
   readonly url: Scalars['String']['output'];
 };
 
-export enum Status {
-  Cancelled = 'CANCELLED',
-  Confirmed = 'CONFIRMED',
-  Pending = 'PENDING',
-  Rejected = 'REJECTED'
-}
+export type RemoveMemberByIdInput = {
+  readonly id: Scalars['ID']['input'];
+};
+
+export type RemoveMemberByUserIdAndOrganizationIdInput = {
+  readonly organizationId: Scalars['ID']['input'];
+  readonly userId: Scalars['ID']['input'];
+};
+
+export type RemoveMemberInput = RemoveMemberByIdInput | RemoveMemberByUserIdAndOrganizationIdInput;
+
+export type RemoveMemberResponse = {
+  readonly __typename?: 'RemoveMemberResponse';
+  readonly member: Member;
+};
+
+export const Role = {
+  Admin: 'ADMIN',
+  Member: 'MEMBER'
+} as const;
+
+export type Role = typeof Role[keyof typeof Role];
+export const Status = {
+  Cancelled: 'CANCELLED',
+  Confirmed: 'CONFIRMED',
+  Pending: 'PENDING',
+  Rejected: 'REJECTED'
+} as const;
+
+export type Status = typeof Status[keyof typeof Status];
+export type UpdateOrganizationInput = {
+  readonly description?: InputMaybe<Scalars['String']['input']>;
+  readonly id: Scalars['ID']['input'];
+  readonly name?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateOrganizationResponse = {
+  readonly __typename?: 'UpdateOrganizationResponse';
+  readonly organization: Organization;
+};
 
 export type UpdateUserInput = {
   readonly allergies?: InputMaybe<Scalars['String']['input']>;
@@ -233,24 +329,41 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
   info: GraphQLResolveInfo
 ) => TResult | Promise<TResult>;
 
+/** Mapping of union types */
+export type ResolversUnionTypes<RefType extends Record<string, unknown>> = ResolversObject<{
+  RemoveMemberInput: ( RemoveMemberByIdInput ) | ( RemoveMemberByUserIdAndOrganizationIdInput );
+}>;
 
 
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = ResolversObject<{
+  AddMemberInput: AddMemberInput;
+  AddMemberResponse: ResolverTypeWrapper<Omit<AddMemberResponse, 'member'> & { member: ResolversTypes['Member'] }>;
   Booking: ResolverTypeWrapper<BookingModel>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   Cabin: ResolverTypeWrapper<CabinModel>;
+  CreateOrganizationInput: CreateOrganizationInput;
+  CreateOrganizationResponse: ResolverTypeWrapper<Omit<CreateOrganizationResponse, 'organization'> & { organization: ResolversTypes['Organization'] }>;
   DateTime: ResolverTypeWrapper<Scalars['DateTime']['output']>;
   ID: ResolverTypeWrapper<Scalars['ID']['output']>;
   Int: ResolverTypeWrapper<Scalars['Int']['output']>;
   LogoutResponse: ResolverTypeWrapper<LogoutResponse>;
   LogoutStatus: LogoutStatus;
+  Member: ResolverTypeWrapper<MemberModel>;
   Mutation: ResolverTypeWrapper<{}>;
   NewBookingInput: NewBookingInput;
+  Organization: ResolverTypeWrapper<OrganizationModel>;
   Query: ResolverTypeWrapper<{}>;
   RedirectUrlResponse: ResolverTypeWrapper<RedirectUrlResponse>;
+  RemoveMemberByIdInput: RemoveMemberByIdInput;
+  RemoveMemberByUserIdAndOrganizationIdInput: RemoveMemberByUserIdAndOrganizationIdInput;
+  RemoveMemberInput: ResolverTypeWrapper<ResolversUnionTypes<ResolversTypes>['RemoveMemberInput']>;
+  RemoveMemberResponse: ResolverTypeWrapper<Omit<RemoveMemberResponse, 'member'> & { member: ResolversTypes['Member'] }>;
+  Role: Role;
   Status: Status;
   String: ResolverTypeWrapper<Scalars['String']['output']>;
+  UpdateOrganizationInput: UpdateOrganizationInput;
+  UpdateOrganizationResponse: ResolverTypeWrapper<Omit<UpdateOrganizationResponse, 'organization'> & { organization: ResolversTypes['Organization'] }>;
   UpdateUserInput: UpdateUserInput;
   User: ResolverTypeWrapper<UserModel>;
   UserResponse: ResolverTypeWrapper<Omit<UserResponse, 'user'> & { user?: Maybe<ResolversTypes['User']> }>;
@@ -259,22 +372,39 @@ export type ResolversTypes = ResolversObject<{
 
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = ResolversObject<{
+  AddMemberInput: AddMemberInput;
+  AddMemberResponse: Omit<AddMemberResponse, 'member'> & { member: ResolversParentTypes['Member'] };
   Booking: BookingModel;
   Boolean: Scalars['Boolean']['output'];
   Cabin: CabinModel;
+  CreateOrganizationInput: CreateOrganizationInput;
+  CreateOrganizationResponse: Omit<CreateOrganizationResponse, 'organization'> & { organization: ResolversParentTypes['Organization'] };
   DateTime: Scalars['DateTime']['output'];
   ID: Scalars['ID']['output'];
   Int: Scalars['Int']['output'];
   LogoutResponse: LogoutResponse;
+  Member: MemberModel;
   Mutation: {};
   NewBookingInput: NewBookingInput;
+  Organization: OrganizationModel;
   Query: {};
   RedirectUrlResponse: RedirectUrlResponse;
+  RemoveMemberByIdInput: RemoveMemberByIdInput;
+  RemoveMemberByUserIdAndOrganizationIdInput: RemoveMemberByUserIdAndOrganizationIdInput;
+  RemoveMemberInput: ResolversUnionTypes<ResolversParentTypes>['RemoveMemberInput'];
+  RemoveMemberResponse: Omit<RemoveMemberResponse, 'member'> & { member: ResolversParentTypes['Member'] };
   String: Scalars['String']['output'];
+  UpdateOrganizationInput: UpdateOrganizationInput;
+  UpdateOrganizationResponse: Omit<UpdateOrganizationResponse, 'organization'> & { organization: ResolversParentTypes['Organization'] };
   UpdateUserInput: UpdateUserInput;
   User: UserModel;
   UserResponse: Omit<UserResponse, 'user'> & { user?: Maybe<ResolversParentTypes['User']> };
   UsersResponse: Omit<UsersResponse, 'users'> & { users: ReadonlyArray<ResolversParentTypes['User']> };
+}>;
+
+export type AddMemberResponseResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['AddMemberResponse'] = ResolversParentTypes['AddMemberResponse']> = ResolversObject<{
+  member?: Resolver<ResolversTypes['Member'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
 export type BookingResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['Booking'] = ResolversParentTypes['Booking']> = ResolversObject<{
@@ -298,6 +428,11 @@ export type CabinResolvers<ContextType = IContext, ParentType extends ResolversP
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
+export type CreateOrganizationResponseResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['CreateOrganizationResponse'] = ResolversParentTypes['CreateOrganizationResponse']> = ResolversObject<{
+  organization?: Resolver<ResolversTypes['Organization'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
+
 export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['DateTime'], any> {
   name: 'DateTime';
 }
@@ -307,14 +442,34 @@ export type LogoutResponseResolvers<ContextType = IContext, ParentType extends R
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
+export type MemberResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['Member'] = ResolversParentTypes['Member']> = ResolversObject<{
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  organization?: Resolver<ResolversTypes['Organization'], ParentType, ContextType>;
+  role?: Resolver<ResolversTypes['Role'], ParentType, ContextType>;
+  user?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
+
 export type MutationResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = ResolversObject<{
+  addMember?: Resolver<ResolversTypes['AddMemberResponse'], ParentType, ContextType, RequireFields<MutationAddMemberArgs, 'data'>>;
   authenticate?: Resolver<ResolversTypes['UserResponse'], ParentType, ContextType, RequireFields<MutationAuthenticateArgs, 'code'>>;
+  createOrganization?: Resolver<ResolversTypes['CreateOrganizationResponse'], ParentType, ContextType, RequireFields<MutationCreateOrganizationArgs, 'data'>>;
   createUser?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType, RequireFields<MutationCreateUserArgs, 'firstName'>>;
   logout?: Resolver<ResolversTypes['LogoutResponse'], ParentType, ContextType>;
   newBooking?: Resolver<ResolversTypes['Booking'], ParentType, ContextType, RequireFields<MutationNewBookingArgs, 'data'>>;
   redirectUrl?: Resolver<ResolversTypes['RedirectUrlResponse'], ParentType, ContextType, Partial<MutationRedirectUrlArgs>>;
+  removeMember?: Resolver<ResolversTypes['RemoveMemberResponse'], ParentType, ContextType, RequireFields<MutationRemoveMemberArgs, 'data'>>;
   updateBookingStatus?: Resolver<ResolversTypes['Booking'], ParentType, ContextType, RequireFields<MutationUpdateBookingStatusArgs, 'id' | 'status'>>;
+  updateOrganization?: Resolver<ResolversTypes['UpdateOrganizationResponse'], ParentType, ContextType, RequireFields<MutationUpdateOrganizationArgs, 'data'>>;
   updateUser?: Resolver<ResolversTypes['User'], ParentType, ContextType, RequireFields<MutationUpdateUserArgs, 'data' | 'id'>>;
+}>;
+
+export type OrganizationResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['Organization'] = ResolversParentTypes['Organization']> = ResolversObject<{
+  description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  members?: Resolver<ReadonlyArray<ResolversTypes['Member']>, ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
 export type QueryResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = ResolversObject<{
@@ -324,6 +479,20 @@ export type QueryResolvers<ContextType = IContext, ParentType extends ResolversP
 
 export type RedirectUrlResponseResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['RedirectUrlResponse'] = ResolversParentTypes['RedirectUrlResponse']> = ResolversObject<{
   url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
+
+export type RemoveMemberInputResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['RemoveMemberInput'] = ResolversParentTypes['RemoveMemberInput']> = ResolversObject<{
+  __resolveType: TypeResolveFn<'RemoveMemberByIdInput' | 'RemoveMemberByUserIdAndOrganizationIdInput', ParentType, ContextType>;
+}>;
+
+export type RemoveMemberResponseResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['RemoveMemberResponse'] = ResolversParentTypes['RemoveMemberResponse']> = ResolversObject<{
+  member?: Resolver<ResolversTypes['Member'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
+
+export type UpdateOrganizationResponseResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['UpdateOrganizationResponse'] = ResolversParentTypes['UpdateOrganizationResponse']> = ResolversObject<{
+  organization?: Resolver<ResolversTypes['Organization'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
@@ -354,13 +523,20 @@ export type UsersResponseResolvers<ContextType = IContext, ParentType extends Re
 }>;
 
 export type Resolvers<ContextType = IContext> = ResolversObject<{
+  AddMemberResponse?: AddMemberResponseResolvers<ContextType>;
   Booking?: BookingResolvers<ContextType>;
   Cabin?: CabinResolvers<ContextType>;
+  CreateOrganizationResponse?: CreateOrganizationResponseResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
   LogoutResponse?: LogoutResponseResolvers<ContextType>;
+  Member?: MemberResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
+  Organization?: OrganizationResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   RedirectUrlResponse?: RedirectUrlResponseResolvers<ContextType>;
+  RemoveMemberInput?: RemoveMemberInputResolvers<ContextType>;
+  RemoveMemberResponse?: RemoveMemberResponseResolvers<ContextType>;
+  UpdateOrganizationResponse?: UpdateOrganizationResponseResolvers<ContextType>;
   User?: UserResolvers<ContextType>;
   UserResponse?: UserResponseResolvers<ContextType>;
   UsersResponse?: UsersResponseResolvers<ContextType>;

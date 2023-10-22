@@ -2,16 +2,14 @@ import { Organization, Role } from "@prisma/client";
 import z from "zod";
 
 import { Database } from "@/core/interfaces.js";
+import { InternalServerError, NotFoundError } from "@/core/errors.js";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 
 export class OrganizationRepository {
   constructor(private db: Database) {}
 
   async findMany(): Promise<Organization[]> {
     return this.db.organization.findMany();
-  }
-
-  async get(id: string): Promise<Organization | null> {
-    return this.db.organization.findUnique({ where: { id } });
   }
 
   /**
@@ -51,6 +49,25 @@ export class OrganizationRepository {
         name,
         description,
       },
+    });
+  }
+
+  /**
+   * Find an organization by ID, or throw an error if the organization does not exist.
+   *
+   * @throws {NotFoundError} - If the organization does not exist
+   * @param id - The ID of the organization to fetch
+   * @returns Organization
+   */
+  async get(id: string): Promise<Organization> {
+    return this.db.organization.findUniqueOrThrow({ where: { id } }).catch((err) => {
+      if (err instanceof PrismaClientKnownRequestError) {
+        if (err.code === "P2001") {
+          throw new NotFoundError("The organization does not exist.");
+        }
+        throw err;
+      }
+      throw new InternalServerError(err.message);
     });
   }
 }

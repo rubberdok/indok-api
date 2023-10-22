@@ -5,12 +5,13 @@ import { z } from "zod";
 export interface OrganizationRepository {
   create(data: { name: string; description?: string; userId: string }): Promise<Organization>;
   update(id: string, data: { name?: string; description?: string }): Promise<Organization>;
+  get(id: string): Promise<Organization>;
 }
 
 export interface MemberRepository {
   create(data: { userId: string; organizationId: string; role?: string }): Promise<Member>;
   remove(data: { id: string } | { userId: string; organizationId: string }): Promise<Member>;
-  findMany(data: { organizationId: string; role: Role }): Promise<Member[]>;
+  findMany(data: { organizationId: string; role?: Role }): Promise<Member[]>;
   hasRole(data: { userId: string; organizationId: string; role: Role }): Promise<boolean>;
   get(data: { userId: string; organizationId: string } | { id: string }): Promise<Member | null>;
 }
@@ -103,10 +104,11 @@ export class OrganizationService {
    * @returns The updated organization
    */
   async update(
-    data: { organizationId: string; name?: string; description?: string },
-    userId: string
+    userId: string,
+    organizationId: string,
+    data: { name?: string; description?: string }
   ): Promise<Organization> {
-    const isMember = await this.hasRole({ userId, organizationId: data.organizationId, role: Role.MEMBER });
+    const isMember = await this.hasRole({ userId, organizationId, role: Role.MEMBER });
     if (isMember === true) {
       const schema = z.object({
         name: z.string().min(1).max(100).optional(),
@@ -117,7 +119,7 @@ export class OrganizationService {
 
       const { name, description } = parsed.data;
 
-      const organization = await this.organizationRepository.update(data.organizationId, {
+      const organization = await this.organizationRepository.update(organizationId, {
         name,
         description,
       });
@@ -232,5 +234,29 @@ export class OrganizationService {
     } else {
       throw new PermissionDeniedError("You must be an admin of the organization to remove a member.");
     }
+  }
+
+  /**
+   * Get members for an organization
+   *
+   * @requires The user must be a member of the organization
+   * @param organizationId - The ID of the organization
+   * @param userId - The ID of the user making the request
+   * @returns
+   */
+  async getMembers(userId: string, organizationId: string): Promise<Member[]> {
+    const isMember = await this.hasRole({ userId, organizationId, role: Role.MEMBER });
+    if (isMember === true) {
+      return await this.memberRepository.findMany({ organizationId });
+    } else {
+      throw new PermissionDeniedError("You must be a member of the organization to get its members.");
+    }
+  }
+
+  /**
+   * Get an organization by ID
+   */
+  async get(id: string): Promise<Organization> {
+    return await this.organizationRepository.get(id);
   }
 }

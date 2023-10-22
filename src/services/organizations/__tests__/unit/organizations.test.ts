@@ -1,6 +1,6 @@
 import { BaseError, InvalidArgumentError, PermissionDeniedError } from "@/core/errors.js";
 import { faker } from "@faker-js/faker";
-import { Member, Role, User } from "@prisma/client";
+import { Member, Organization, Role, User } from "@prisma/client";
 import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { MemberRepository, OrganizationRepository, OrganizationService, UserService } from "../../service.js";
 import { getMockGetImplementation, getMockHasRoleImplementation } from "./mocks.js";
@@ -34,7 +34,7 @@ describe("OrganizationService", () => {
           role: null,
         },
         requiredRole: Role.ADMIN,
-        organizationId: "1",
+        organizationId: "o1",
         expected: true,
       },
       {
@@ -43,7 +43,7 @@ describe("OrganizationService", () => {
           role: null,
         },
         requiredRole: Role.MEMBER,
-        organizationId: "1",
+        organizationId: "o1",
         expected: false,
       },
       {
@@ -52,7 +52,7 @@ describe("OrganizationService", () => {
           role: Role.MEMBER,
         },
         requiredRole: Role.MEMBER,
-        organizationId: "1",
+        organizationId: "o1",
         expected: true,
       },
       {
@@ -61,7 +61,7 @@ describe("OrganizationService", () => {
           role: Role.ADMIN,
         },
         requiredRole: Role.MEMBER,
-        organizationId: "1",
+        organizationId: "o1",
         expected: true,
       },
       {
@@ -70,7 +70,7 @@ describe("OrganizationService", () => {
           role: Role.MEMBER,
         },
         requiredRole: Role.ADMIN,
-        organizationId: "1",
+        organizationId: "o1",
         expected: false,
       },
       {
@@ -79,7 +79,7 @@ describe("OrganizationService", () => {
           role: Role.ADMIN,
         },
         requiredRole: Role.ADMIN,
-        organizationId: "1",
+        organizationId: "o1",
         expected: true,
       },
     ];
@@ -136,7 +136,7 @@ describe("OrganizationService", () => {
             role: null,
           },
           input: {
-            organizationId: "1",
+            organizationId: "o1",
             name: faker.company.name(),
           },
           expectedError: PermissionDeniedError,
@@ -148,7 +148,7 @@ describe("OrganizationService", () => {
             role: Role.MEMBER,
           },
           input: {
-            organizationId: "1",
+            organizationId: "o1",
             description: faker.string.sample(10001),
           },
           expectedError: InvalidArgumentError,
@@ -160,7 +160,7 @@ describe("OrganizationService", () => {
             role: Role.MEMBER,
           },
           input: {
-            organizationId: "1",
+            organizationId: "o1",
             name: faker.string.sample(101),
           },
           expectedError: InvalidArgumentError,
@@ -177,7 +177,7 @@ describe("OrganizationService", () => {
         memberRepository.hasRole.mockImplementation(
           getMockHasRoleImplementation({
             userId: state.user.id,
-            organizationId: "1",
+            organizationId: "o1",
             role: state.role,
           })
         );
@@ -188,7 +188,10 @@ describe("OrganizationService", () => {
          * We call the update method with the user ID, organization ID, and the
          * new organization name.
          */
-        await expect(organizationService.update(input, state.user.id)).rejects.toThrow(expectedError);
+        const { organizationId, name, description } = input;
+        await expect(organizationService.update(state.user.id, organizationId, { name, description })).rejects.toThrow(
+          expectedError
+        );
       });
     });
 
@@ -210,7 +213,7 @@ describe("OrganizationService", () => {
             role: Role.ADMIN,
           },
           input: {
-            organizationId: "1",
+            organizationId: "o1",
             name: faker.company.name(),
             description: faker.company.catchPhrase(),
           },
@@ -221,7 +224,7 @@ describe("OrganizationService", () => {
             role: Role.MEMBER,
           },
           input: {
-            organizationId: "1",
+            organizationId: "o1",
             name: faker.company.name(),
             description: faker.company.catchPhrase(),
           },
@@ -232,7 +235,7 @@ describe("OrganizationService", () => {
             role: null,
           },
           input: {
-            organizationId: "1",
+            organizationId: "o1",
             name: faker.company.name(),
             description: faker.company.catchPhrase(),
           },
@@ -251,7 +254,7 @@ describe("OrganizationService", () => {
           memberRepository.hasRole.mockImplementation(
             getMockHasRoleImplementation({
               userId: state.user.id,
-              organizationId: "1",
+              organizationId: "o1",
               role: state.role,
             })
           );
@@ -262,7 +265,8 @@ describe("OrganizationService", () => {
            * We call the update method with the user ID, organization ID, and the
            * new organization name.
            */
-          const actual = organizationService.update(input, state.user.id);
+          const { organizationId, name, description } = input;
+          const actual = organizationService.update(state.user.id, organizationId, { name, description });
 
           /**
            * Assert
@@ -434,14 +438,14 @@ describe("OrganizationService", () => {
       memberRepository.hasRole.mockImplementation(
         getMockHasRoleImplementation({
           userId: "1",
-          organizationId: "1",
+          organizationId: "o1",
           role: Role.ADMIN,
         })
       );
 
       const actual = organizationService.addMember("1", {
         userId: "2",
-        organizationId: "1",
+        organizationId: "o1",
         role: Role.MEMBER,
       });
 
@@ -449,7 +453,7 @@ describe("OrganizationService", () => {
       await expect(actual).resolves.not.toThrow();
       expect(memberRepository.create).toHaveBeenCalledWith({
         userId: "2",
-        organizationId: "1",
+        organizationId: "o1",
         role: Role.MEMBER,
       });
     });
@@ -476,7 +480,7 @@ describe("OrganizationService", () => {
             role: null,
           },
           input: {
-            organizationId: "1",
+            organizationId: "o1",
             userId: "2",
             role: Role.MEMBER,
           },
@@ -489,7 +493,7 @@ describe("OrganizationService", () => {
             role: Role.MEMBER,
           },
           input: {
-            organizationId: "1",
+            organizationId: "o1",
             userId: "2",
             role: Role.MEMBER,
           },
@@ -507,7 +511,7 @@ describe("OrganizationService", () => {
         memberRepository.hasRole.mockImplementation(
           getMockHasRoleImplementation({
             userId: state.user.id,
-            organizationId: "1",
+            organizationId: "o1",
             role: state.role,
           })
         );
@@ -547,7 +551,7 @@ describe("OrganizationService", () => {
             members: [],
           },
           input: {
-            organizationId: "1",
+            organizationId: "o1",
             userId: "1",
           },
           expectedError: PermissionDeniedError,
@@ -560,7 +564,7 @@ describe("OrganizationService", () => {
             members: [],
           },
           input: {
-            organizationId: "1",
+            organizationId: "o1",
             userId: "2",
           },
           expectedError: PermissionDeniedError,
@@ -570,10 +574,10 @@ describe("OrganizationService", () => {
           state: {
             user: mock<User>({ id: "1", isSuperUser: false }),
             role: Role.ADMIN,
-            members: [mock<Member>({ id: "1", userId: "1", organizationId: "1", role: Role.ADMIN })],
+            members: [mock<Member>({ id: "1", userId: "1", organizationId: "o1", role: Role.ADMIN })],
           },
           input: {
-            organizationId: "1",
+            organizationId: "o1",
             userId: "1",
           },
           expectedError: InvalidArgumentError,
@@ -584,12 +588,12 @@ describe("OrganizationService", () => {
             user: mock<User>({ id: "1", isSuperUser: false }),
             role: Role.ADMIN,
             members: [
-              mock<Member>({ id: "1", userId: "1", organizationId: "1", role: Role.ADMIN }),
-              mock<Member>({ id: "2", userId: "3", organizationId: "1", role: Role.MEMBER }),
+              mock<Member>({ id: "1", userId: "1", organizationId: "o1", role: Role.ADMIN }),
+              mock<Member>({ id: "2", userId: "3", organizationId: "o1", role: Role.MEMBER }),
             ],
           },
           input: {
-            organizationId: "1",
+            organizationId: "o1",
             userId: "1",
           },
           expectedError: InvalidArgumentError,
@@ -606,7 +610,7 @@ describe("OrganizationService", () => {
         memberRepository.hasRole.mockImplementation(
           getMockHasRoleImplementation({
             userId: state.user.id,
-            organizationId: "1",
+            organizationId: "o1",
             role: state.role,
           })
         );
@@ -646,12 +650,12 @@ describe("OrganizationService", () => {
             user: mock<User>({ id: "1", isSuperUser: false }),
             role: Role.MEMBER,
             members: [
-              mock<Member>({ id: "1", userId: "1", organizationId: "1", role: Role.MEMBER }),
-              mock<Member>({ id: "2", userId: "2", organizationId: "1", role: Role.ADMIN }),
+              mock<Member>({ id: "1", userId: "1", organizationId: "o1", role: Role.MEMBER }),
+              mock<Member>({ id: "2", userId: "2", organizationId: "o1", role: Role.ADMIN }),
             ],
           },
           input: {
-            organizationId: "1",
+            organizationId: "o1",
             userId: "1",
           },
         },
@@ -661,12 +665,12 @@ describe("OrganizationService", () => {
             user: mock<User>({ id: "1", isSuperUser: false }),
             role: Role.ADMIN,
             members: [
-              mock<Member>({ id: "1", userId: "1", organizationId: "1", role: Role.ADMIN }),
-              mock<Member>({ id: "2", userId: "2", organizationId: "1", role: Role.ADMIN }),
+              mock<Member>({ id: "1", userId: "1", organizationId: "o1", role: Role.ADMIN }),
+              mock<Member>({ id: "2", userId: "2", organizationId: "o1", role: Role.ADMIN }),
             ],
           },
           input: {
-            organizationId: "1",
+            organizationId: "o1",
             userId: "2",
           },
         },
@@ -676,12 +680,12 @@ describe("OrganizationService", () => {
             user: mock<User>({ id: "1", isSuperUser: false }),
             role: Role.ADMIN,
             members: [
-              mock<Member>({ id: "1", userId: "1", organizationId: "1", role: Role.ADMIN }),
-              mock<Member>({ id: "2", userId: "2", organizationId: "1", role: Role.MEMBER }),
+              mock<Member>({ id: "1", userId: "1", organizationId: "o1", role: Role.ADMIN }),
+              mock<Member>({ id: "2", userId: "2", organizationId: "o1", role: Role.MEMBER }),
             ],
           },
           input: {
-            organizationId: "1",
+            organizationId: "o1",
             userId: "2",
           },
         },
@@ -697,7 +701,7 @@ describe("OrganizationService", () => {
         memberRepository.hasRole.mockImplementation(
           getMockHasRoleImplementation({
             userId: state.user.id,
-            organizationId: "1",
+            organizationId: "o1",
             role: state.role,
           })
         );
@@ -716,6 +720,62 @@ describe("OrganizationService", () => {
         await expect(organizationService.removeMember(state.user.id, input)).resolves.not.toThrow();
         expect(memberRepository.remove).toHaveBeenCalledWith(input);
       });
+    });
+  });
+
+  describe("getMembers", () => {
+    it("should get members of the organization", async () => {
+      /**
+       * Arrange.
+       *
+       * Set up the mock user and hasRole implementation.
+       */
+      userService.get.mockResolvedValueOnce(mock<User>({ id: "1", isSuperUser: false }));
+      memberRepository.hasRole.mockImplementation(
+        getMockHasRoleImplementation({
+          userId: "1",
+          organizationId: "2",
+          role: Role.MEMBER,
+        })
+      );
+
+      const actual = organizationService.getMembers("1", "2");
+
+      // Asser that we don't throw, and that the memberRepository.get method was called with the correct arguments.
+      await expect(actual).resolves.not.toThrow();
+      expect(memberRepository.findMany).toHaveBeenCalledWith({
+        organizationId: "2",
+      });
+    });
+
+    it("should raise PermissionDeniedError if not a member", async () => {
+      /**
+       * Arrange.
+       *
+       * Set up the mock user and hasRole implementation.
+       */
+      userService.get.mockResolvedValueOnce(mock<User>({ id: "1", isSuperUser: false }));
+      memberRepository.hasRole.mockImplementation(
+        getMockHasRoleImplementation({
+          userId: "1",
+          organizationId: "o1",
+          role: null,
+        })
+      );
+
+      const actual = organizationService.getMembers("1", "1");
+
+      // Assert that we throw a PermissionDeniedError
+      await expect(actual).rejects.toThrow(PermissionDeniedError);
+    });
+  });
+
+  describe("get", () => {
+    it("should get the organization", async () => {
+      organizationRepository.get.mockResolvedValueOnce(mock<Organization>({ id: "1" }));
+
+      const actual = organizationService.get("1");
+      await expect(actual).resolves.not.toThrow();
     });
   });
 });

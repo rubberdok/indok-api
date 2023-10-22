@@ -43,7 +43,24 @@ export class PermissionDeniedError extends BaseError {
   }
 }
 
+export class AuthenticationError extends BaseError {
+  constructor(description: string) {
+    super("AuthenticationError", description, codes.ERR_PERMISSION_DENIED);
+  }
+}
+
+export class NotFoundError extends BaseError {
+  constructor(description: string) {
+    super("NotFoundError", description, codes.ERR_BAD_USER_INPUT);
+  }
+}
+
 export const codes = {
+  /**
+   * ERR_NOT_FOUND should be used for errors that arise as a result of a resource not being found,
+   * e.g. trying to get an organization that doesn't exist, trying to get a user that doesn't exist.
+   */
+  ERR_NOT_FOUND: "NOT_FOUND",
   /**
    * ERR_BAD_USER_INPUT should be used for errors that arise as a result of user input
    * that is invalid, e.g. an invalid email address, duplicate username, trying to delete
