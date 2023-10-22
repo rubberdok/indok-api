@@ -12,6 +12,7 @@ const config = {
         showUnusedMappers: true,
         immutableTypes: true,
         strictScalars: true,
+        enumsAsConst: true,
 
         scalars: {
           DateTime: "Date",
@@ -25,6 +26,8 @@ const config = {
           User: "@prisma/client#User",
           Cabin: "@prisma/client#Cabin",
           Booking: "@prisma/client#Booking",
+          Organization: "@prisma/client#Organization",
+          Member: "@prisma/client#Member",
         },
       },
       plugins: [

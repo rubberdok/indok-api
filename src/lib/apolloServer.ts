@@ -9,10 +9,16 @@ export const formatError = (formattedError: GraphQLFormattedError, error: unknow
       ...formattedError,
       message: error.message,
       extensions: {
-        code: codes.BAD_USER_INPUT,
+        code: codes.ERR_BAD_USER_INPUT,
       },
     };
   }
 
-  return formattedError;
+  return {
+    ...formattedError,
+    message: "Internal server error",
+    extensions: {
+      code: codes.ERR_INTERNAL_SERVER_ERROR,
+    },
+  };
 };

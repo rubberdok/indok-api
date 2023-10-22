@@ -21,11 +21,14 @@ import { typeDefs } from "./graphql/type-defs.js";
 import { formatError } from "./lib/apolloServer.js";
 import postmark from "./lib/postmark.js";
 import { CabinRepository } from "./repositories/cabins/index.js";
+import { MemberRepository } from "./repositories/organizations/members.js";
+import { OrganizationRepository } from "./repositories/organizations/organizations.js";
 import { UserRepository } from "./repositories/users/index.js";
 import { feideClient } from "./services/auth/clients.js";
 import { FeideService } from "./services/auth/index.js";
 import { CabinService } from "./services/cabins/index.js";
 import { MailService } from "./services/mail/index.js";
+import { OrganizationService } from "./services/organizations/service.js";
 import { UserService } from "./services/users/index.js";
 
 export async function initServer() {
@@ -34,6 +37,10 @@ export async function initServer() {
 
   const userRepository = new UserRepository(prisma);
   const userService = new UserService(userRepository);
+
+  const memberRepository = new MemberRepository(prisma);
+  const organizationRepository = new OrganizationRepository(prisma);
+  const organizationService = new OrganizationService(organizationRepository, memberRepository, userService);
 
   const cabinRepository = new CabinRepository(prisma);
   const mailService = new MailService(postmark);
@@ -44,7 +51,7 @@ export async function initServer() {
   const app = fastify({ logger: true });
 
   /**
-   * Set up Sentry
+   * Set up Sentry monitoring
    */
   app.register(fastifySentry, {
     dsn: env.SENTRY_DSN,
@@ -109,7 +116,7 @@ export async function initServer() {
       secure: env.SESSION_COOKIE_SECURE,
       domain: env.SESSION_COOKIE_DOMAIN,
       sameSite: "none",
-      maxAge: 1000 * 60 * 60 * 24 * 7,
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     },
   });
 
@@ -144,6 +151,7 @@ export async function initServer() {
       cabinService,
       userService,
       authService,
+      organizationService,
       req,
       res,
     };
