@@ -33,7 +33,6 @@ export class EventService {
     private eventRepository: EventRepository,
     private organizationService: OrganizationService
   ) {}
-
   /**
    * Create a new event
    * @throws {InvalidArgumentError} - If any values are invalid

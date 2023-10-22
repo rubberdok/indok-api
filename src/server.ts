@@ -162,6 +162,14 @@ export async function initServer() {
     context: contextFunction,
   });
 
+  app.route({
+    url: "/-/health",
+    method: "GET",
+    handler: async () => {
+      return { status: "ok" };
+    },
+  });
+
   try {
     await app.listen({
       port: env.PORT,
