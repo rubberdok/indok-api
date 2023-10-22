@@ -8,8 +8,8 @@ import { NotFoundError } from "@/core/errors.js";
 
 let repo: MemberRepository;
 
-describe("Organizations Repository", () => {
-  beforeAll(() => {
+describe("MembersRepository", () => {
+  beforeAll(async () => {
     repo = new MemberRepository(prisma);
   });
 

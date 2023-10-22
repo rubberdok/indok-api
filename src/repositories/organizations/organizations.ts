@@ -1,7 +1,7 @@
 import { Organization, Role } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 
-import { InternalServerError, NotFoundError } from "@/core/errors.js";
+import { InternalServerError, InvalidArgumentError, NotFoundError } from "@/core/errors.js";
 import { Database } from "@/core/interfaces.js";
 
 export class OrganizationRepository {
@@ -13,22 +13,42 @@ export class OrganizationRepository {
 
   /**
    * Create a new organization, and add the given users as admins of the organization.
+   *
+   * @throws {InvalidArgumentError} - If the organization name is already taken
+   * @throws {InvalidArgumentError} - If the userId is the empty string
+   * @param data.name - The name of the organization
+   * @param data.description - The description of the organization
+   * @param data.userId - The ID of the user to add as an admin of the organization
+   * @returns The created organization
    */
   async create(data: { name: string; description?: string; userId: string }): Promise<Organization> {
     const { name, description, userId } = data;
-    if (userId === "") throw new Error("userId cannot be empty");
-    return this.db.organization.create({
-      data: {
-        name,
-        description,
-        members: {
-          create: {
-            userId,
-            role: Role.ADMIN,
+    if (userId === "") throw new InvalidArgumentError("userId cannot be empty");
+    return this.db.organization
+      .create({
+        data: {
+          name,
+          description,
+          members: {
+            create: {
+              userId,
+              role: Role.ADMIN,
+            },
           },
         },
-      },
-    });
+      })
+      .catch((err) => {
+        if (err instanceof PrismaClientKnownRequestError) {
+          /**
+           * "Unique constraint failed on the {constraint}"
+           * https://www.prisma.io/docs/reference/api-reference/error-reference#p2002
+           */
+          if (err.code === "P2002") {
+            throw new InvalidArgumentError("The organization name is already taken.");
+          }
+        }
+        throw err;
+      });
   }
 
   /**
@@ -61,7 +81,11 @@ export class OrganizationRepository {
   async get(id: string): Promise<Organization> {
     return this.db.organization.findUniqueOrThrow({ where: { id } }).catch((err) => {
       if (err instanceof PrismaClientKnownRequestError) {
-        if (err.code === "P2001") {
+        /**
+         * "An operation failed because it depends on one or more records that were required but not found. {cause}"
+         * https://www.prisma.io/docs/reference/api-reference/error-reference#p2025
+         */
+        if (err.code === "P2025") {
           throw new NotFoundError("The organization does not exist.");
         }
         throw err;
