@@ -4,8 +4,13 @@
 # To update this file, run `npm run generate:gql`
 
 input AddMemberInput {
+  """The ID of the organization to add the user to"""
   organizationId: ID!
+
+  """The role of the user in the organization, defaults to Role.MEMBER"""
   role: Role
+
+  """The ID of the user to add to the organization"""
   userId: ID!
 }
 
@@ -33,7 +38,12 @@ type Cabin {
 }
 
 input CreateOrganizationInput {
+  """The description of the organization, cannot exceed 10 000 characters"""
   description: String
+
+  """
+  The name of the organization, must be unique and between 1 and 100 characters
+  """
   name: String!
 }
 
@@ -60,15 +70,31 @@ type Member {
 }
 
 type Mutation {
+  """Add a member to the organization"""
   addMember(data: AddMemberInput!): AddMemberResponse!
   authenticate(code: String!): UserResponse!
+
+  """
+  Create a new organization, and add the current user as an admin of the organization.
+  """
   createOrganization(data: CreateOrganizationInput!): CreateOrganizationResponse!
   createUser(firstName: String!): User
   logout: LogoutResponse!
   newBooking(data: NewBookingInput!): Booking!
   redirectUrl(state: String): RedirectUrlResponse!
+
+  """
+  Remove a member from the organization
+  If the data.id is given, the membership will be removed by ID.
+  If the data.userId and data.organizationId is given, the membership will be removed by the user and organization IDs.
+  """
   removeMember(data: RemoveMemberInput!): RemoveMemberResponse!
   updateBookingStatus(id: ID!, status: Status!): Booking!
+
+  """
+  Update an organization with the given name and description.
+  Passing null or omitting a value will leave the value unchanged.
+  """
   updateOrganization(data: UpdateOrganizationInput!): UpdateOrganizationResponse!
   updateUser(data: UpdateUserInput!, id: ID!): User!
 }
@@ -115,7 +141,16 @@ type RemoveMemberResponse {
 }
 
 enum Role {
+  """
+  An admin of the organization, can do everything a member can,
+  # and can also manage members in the organization and delete the organization.
+  """
   ADMIN
+
+  """
+  A member of the organization, can do everything except
+  manage members in the organization and delete the organization.
+  """
   MEMBER
 }
 
@@ -127,8 +162,19 @@ enum Status {
 }
 
 input UpdateOrganizationInput {
+  """
+  The new description of the organization, cannot exceed 10 000 characters
+  Omitting the value or passing null will leave the description unchanged
+  """
   description: String
+
+  """The ID of the organization to update"""
   id: ID!
+
+  """
+  The new name of the organization
+  Omitting the value or passing null will leave the name unchanged
+  """
   name: String
 }
 

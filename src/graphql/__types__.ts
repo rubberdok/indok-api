@@ -30,8 +30,11 @@ export type Scalars = {
 };
 
 export type AddMemberInput = {
+  /** The ID of the organization to add the user to */
   readonly organizationId: Scalars['ID']['input'];
+  /** The role of the user in the organization, defaults to Role.MEMBER */
   readonly role?: InputMaybe<Role>;
+  /** The ID of the user to add to the organization */
   readonly userId: Scalars['ID']['input'];
 };
 
@@ -62,7 +65,9 @@ export type Cabin = {
 };
 
 export type CreateOrganizationInput = {
+  /** The description of the organization, cannot exceed 10 000 characters */
   readonly description?: InputMaybe<Scalars['String']['input']>;
+  /** The name of the organization, must be unique and between 1 and 100 characters */
   readonly name: Scalars['String']['input'];
 };
 
@@ -92,15 +97,26 @@ export type Member = {
 
 export type Mutation = {
   readonly __typename?: 'Mutation';
+  /** Add a member to the organization */
   readonly addMember: AddMemberResponse;
   readonly authenticate: UserResponse;
+  /** Create a new organization, and add the current user as an admin of the organization. */
   readonly createOrganization: CreateOrganizationResponse;
   readonly createUser?: Maybe<User>;
   readonly logout: LogoutResponse;
   readonly newBooking: Booking;
   readonly redirectUrl: RedirectUrlResponse;
+  /**
+   * Remove a member from the organization
+   * If the data.id is given, the membership will be removed by ID.
+   * If the data.userId and data.organizationId is given, the membership will be removed by the user and organization IDs.
+   */
   readonly removeMember: RemoveMemberResponse;
   readonly updateBookingStatus: Booking;
+  /**
+   * Update an organization with the given name and description.
+   * Passing null or omitting a value will leave the value unchanged.
+   */
   readonly updateOrganization: UpdateOrganizationResponse;
   readonly updateUser: User;
 };
@@ -203,7 +219,15 @@ export type RemoveMemberResponse = {
 };
 
 export const Role = {
+  /**
+   * An admin of the organization, can do everything a member can,
+   * # and can also manage members in the organization and delete the organization.
+   */
   Admin: 'ADMIN',
+  /**
+   * A member of the organization, can do everything except
+   * manage members in the organization and delete the organization.
+   */
   Member: 'MEMBER'
 } as const;
 
@@ -217,8 +241,17 @@ export const Status = {
 
 export type Status = typeof Status[keyof typeof Status];
 export type UpdateOrganizationInput = {
+  /**
+   * The new description of the organization, cannot exceed 10 000 characters
+   * Omitting the value or passing null will leave the description unchanged
+   */
   readonly description?: InputMaybe<Scalars['String']['input']>;
+  /** The ID of the organization to update */
   readonly id: Scalars['ID']['input'];
+  /**
+   * The new name of the organization
+   * Omitting the value or passing null will leave the name unchanged
+   */
   readonly name?: InputMaybe<Scalars['String']['input']>;
 };
 
