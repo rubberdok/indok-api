@@ -1,12 +1,12 @@
-import { AuthenticationError } from "@/core/errors.js";
 import { Role } from "@prisma/client";
 import { Resolvers } from "../__types__.js";
+import { assertIsAuthenticated } from "../auth.js";
 
 export const resolvers: Resolvers = {
   Mutation: {
     async createOrganization(_root, { data }, ctx) {
+      assertIsAuthenticated(ctx);
       const { userId } = ctx.req.session;
-      if (!userId) throw new AuthenticationError("You must be logged in to perform this action.");
 
       let organization;
       const { name, description } = data;
@@ -28,8 +28,8 @@ export const resolvers: Resolvers = {
     },
 
     async updateOrganization(_root, { data }, ctx) {
+      assertIsAuthenticated(ctx);
       const { userId } = ctx.req.session;
-      if (!userId) throw new AuthenticationError("You must be logged in to perform this action.");
 
       const { id, name, description } = data;
       const newName = name === null ? undefined : name;
@@ -42,8 +42,8 @@ export const resolvers: Resolvers = {
     },
 
     async addMember(_root, { data }, ctx) {
+      assertIsAuthenticated(ctx);
       const { userId } = ctx.req.session;
-      if (!userId) throw new AuthenticationError("You must be logged in to perform this action.");
 
       const { userId: memberId, organizationId, role } = data;
       const member = await ctx.organizationService.addMember(userId, {
@@ -55,8 +55,8 @@ export const resolvers: Resolvers = {
     },
 
     async removeMember(_root, { data }, ctx) {
+      assertIsAuthenticated(ctx);
       const { userId } = ctx.req.session;
-      if (!userId) throw new AuthenticationError("You must be logged in to perform this action.");
 
       const member = await ctx.organizationService.removeMember(userId, data);
       return { member };
@@ -65,8 +65,8 @@ export const resolvers: Resolvers = {
 
   Organization: {
     async members(organization, _args, ctx) {
+      assertIsAuthenticated(ctx);
       const { userId } = ctx.req.session;
-      if (!userId) throw new AuthenticationError("You must be logged in to perform this action.");
 
       const members = await ctx.organizationService.getMembers(userId, organization.id);
       return members;
