@@ -4,12 +4,12 @@ import { z } from "zod";
 
 export interface OrganizationRepository {
   create(data: { name: string; description?: string; userId: string }): Promise<Organization>;
-  update(organizationId: string, data: { name?: string; description?: string }): Promise<Organization>;
+  update(id: string, data: { name?: string; description?: string }): Promise<Organization>;
 }
 
 export interface MemberRepository {
   create(data: { userId: string; organizationId: string; role?: string }): Promise<Member>;
-  delete(data: { userId: string; organizationId: string }): Promise<boolean>;
+  remove(data: { id: string } | { userId: string; organizationId: string }): Promise<Member>;
   findMany(data: { organizationId: string; role: Role }): Promise<Member[]>;
   hasRole(data: { userId: string; organizationId: string; role: Role }): Promise<boolean>;
   get(data: { userId: string; organizationId: string } | { id: string }): Promise<Member | null>;
@@ -171,7 +171,7 @@ export class OrganizationService {
    * @param data.organizationId - The ID of the organization to remove the user from
    * @returns
    */
-  async removeMember(userId: string, data: { userId: string; organizationId: string }): Promise<boolean> {
+  async removeMember(userId: string, data: { userId: string; organizationId: string }): Promise<Member> {
     let requiredRole: Role = Role.ADMIN;
     /* Removing yourself from an organization, i.e. leaving, does not require you to be an admin. */
     if (userId === data.userId) {
@@ -202,7 +202,7 @@ export class OrganizationService {
          * If we're not removing an admin, we're safe to go ahead, as
          * a member cannot be the last remaining admin of an organization.
          */
-        return await this.memberRepository.delete(data);
+        return await this.memberRepository.remove(data);
       }
 
       // Find all admins in the organization
@@ -228,7 +228,7 @@ export class OrganizationService {
 
       // If we've reached this point, we have more than one admin left, and
       // we can safely remove this admin.
-      return await this.memberRepository.delete(data);
+      return await this.memberRepository.remove(data);
     } else {
       throw new PermissionDeniedError("You must be an admin of the organization to remove a member.");
     }

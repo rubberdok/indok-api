@@ -27,6 +27,9 @@ import { FeideService } from "./services/auth/index.js";
 import { CabinService } from "./services/cabins/index.js";
 import { MailService } from "./services/mail/index.js";
 import { UserService } from "./services/users/index.js";
+import { OrganizationService } from "./services/organizations/service.js";
+import { OrganizationRepository } from "./repositories/organizations/organizations.js";
+import { MemberRepository } from "./repositories/organizations/members.js";
 
 export async function initServer() {
   // Set up and inject dependencies
@@ -34,6 +37,10 @@ export async function initServer() {
 
   const userRepository = new UserRepository(prisma);
   const userService = new UserService(userRepository);
+
+  const memberRepository = new MemberRepository(prisma);
+  const organizationRepository = new OrganizationRepository(prisma);
+  const organizationService = new OrganizationService(organizationRepository, memberRepository, userService);
 
   const cabinRepository = new CabinRepository(prisma);
   const mailService = new MailService(postmark);
@@ -144,6 +151,7 @@ export async function initServer() {
       cabinService,
       userService,
       authService,
+      organizationService,
       req,
       res,
     };

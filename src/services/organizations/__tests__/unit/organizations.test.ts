@@ -714,7 +714,7 @@ describe("OrganizationService", () => {
          * new member's user ID and role.
          */
         await expect(organizationService.removeMember(state.user.id, input)).resolves.not.toThrow();
-        expect(memberRepository.delete).toHaveBeenCalledWith(input);
+        expect(memberRepository.remove).toHaveBeenCalledWith(input);
       });
     });
   });
