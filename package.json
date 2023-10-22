@@ -22,7 +22,6 @@
     "db:migrate:dev": "dotenv -e .env.development -- prisma migrate dev",
     "db:seed": "dotenv -e .env.development -- ts-node --transpile-only src/repositories/seed.ts",
     "test": "dotenv -e .env.test -- node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
-    "test:coverage": "jest --collect-coverage",
     "docker:up": "docker compose up postgres redis -d",
     "integration-test": "dotenv -e .env.test -- npm run db:push && dotenv -e .env.test -- jest --config jest.integration.config.cjs",
     "pretest:integration": "run-s docker:up && wait-on tcp:5433 -t 20000",

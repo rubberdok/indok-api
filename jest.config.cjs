@@ -10,6 +10,16 @@ module.exports = {
   // Indicates whether the coverage information should be collected while executing the test
   collectCoverage: false,
 
+  collectCoverageFrom: [
+    "src/**/*.{ts,js}",
+    "!**/__tests__/**",
+    "!**/__mocks__/**",
+    "!**/__types__.ts",
+    "!**/interfaces.ts",
+    "!**/seed.ts",
+    "!**/type-defs.ts",
+  ],
+
   // The directory where Jest should output its coverage files
   coverageDirectory: "coverage/unit",
 
