@@ -14,11 +14,15 @@ export class MemberRepository {
   }
 
   async hasRole(data: { userId: string; organizationId: string; role: Role }): Promise<boolean> {
-    return (
-      this.db.member.findFirst({
-        where: data,
-      }) !== null
-    );
+    const { userId, organizationId, role } = data;
+    const result = await this.db.member.findFirst({
+      where: {
+        userId,
+        organizationId,
+        role,
+      },
+    });
+    return result !== null;
   }
 
   /**
@@ -41,9 +45,14 @@ export class MemberRepository {
     }
     return promise.catch((err) => {
       if (err instanceof PrismaClientKnownRequestError) {
-        if (err.code === "P2001") {
+        /**
+         * "An operation failed because it depends on one or more records that were required but not found. {cause}"
+         * https://www.prisma.io/docs/reference/api-reference/error-reference#p2025
+         */
+        if (err.code === "P2025") {
           throw new NotFoundError("The membership does not exist.");
         }
+        console.log(err.code);
       }
       throw err;
     });
