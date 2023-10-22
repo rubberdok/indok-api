@@ -109,7 +109,7 @@ export async function initServer() {
       secure: env.SESSION_COOKIE_SECURE,
       domain: env.SESSION_COOKIE_DOMAIN,
       sameSite: "none",
-      maxAge: 1000 * 60 * 60 * 24 * 7,
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     },
   });
 
