@@ -30,7 +30,7 @@ export class MemberRepository {
    * @param data.organizationId - The ID of the organization to fetch the membership for
    * @returns Membership
    */
-  async get(data: { id: string } | { userId: string; organizationId: string }): Promise<Member | null> {
+  async get(data: { id: string } | { userId: string; organizationId: string }): Promise<Member> {
     let promise: Promise<Member>;
     if ("id" in data) {
       promise = this.db.member.findUniqueOrThrow({ where: { id: data.id } });
