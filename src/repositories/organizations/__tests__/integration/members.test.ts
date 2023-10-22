@@ -1,10 +1,10 @@
 import { faker } from "@faker-js/faker";
 import { Role } from "@prisma/client";
 
+import { NotFoundError } from "@/core/errors.js";
 import prisma from "@/lib/prisma.js";
 
 import { MemberRepository } from "../../members.js";
-import { NotFoundError } from "@/core/errors.js";
 
 let repo: MemberRepository;
 

@@ -1,7 +1,9 @@
-import { InvalidArgumentError, NotFoundError } from "@/core/errors.js";
-import prisma from "@/lib/prisma.js";
 import { faker } from "@faker-js/faker";
 import { Organization, Role } from "@prisma/client";
+
+import { InvalidArgumentError, NotFoundError } from "@/core/errors.js";
+import prisma from "@/lib/prisma.js";
+
 import { OrganizationRepository } from "../../organizations.js";
 
 let organizationRepository: OrganizationRepository;
@@ -76,7 +78,7 @@ describe("OrganizationsRepository", () => {
         },
       });
       const duplicateName = faker.company.name();
-      const organization = await prisma.organization.create({
+      await prisma.organization.create({
         data: {
           name: duplicateName,
         },
