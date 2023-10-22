@@ -15,10 +15,9 @@ import fastify from "fastify";
 import { createClient } from "redis";
 
 import { env } from "./config.js";
-import { IContext } from "./lib/apolloServer.js";
 import { resolvers } from "./graphql/resolvers.js";
 import { typeDefs } from "./graphql/type-defs.js";
-import { formatError } from "./lib/apolloServer.js";
+import { IContext, formatError } from "./lib/apolloServer.js";
 import postmark from "./lib/postmark.js";
 import { CabinRepository } from "./repositories/cabins/index.js";
 import { MemberRepository } from "./repositories/organizations/members.js";

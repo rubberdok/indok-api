@@ -1,8 +1,11 @@
 import { unwrapResolverError } from "@apollo/server/errors";
+import { Member, Organization, Role } from "@prisma/client";
+import { FastifyReply, FastifyRequest } from "fastify";
 import { GraphQLFormattedError } from "graphql";
 import { ZodError } from "zod";
 
 import { BaseError, codes, InternalServerError, ValidationError } from "@/core/errors.js";
+import { IAuthService, ICabinService, IUserService } from "@/services/index.js";
 
 export const formatError = (formattedError: GraphQLFormattedError, error: unknown): GraphQLFormattedError => {
   if (error instanceof ValidationError || error instanceof ZodError) {
@@ -30,11 +33,6 @@ export const formatError = (formattedError: GraphQLFormattedError, error: unknow
     },
   };
 };
-
-import { Member, Organization, Role } from "@prisma/client";
-import { FastifyReply, FastifyRequest } from "fastify";
-
-import { IAuthService, ICabinService, IUserService } from "@/services/index.js";
 
 interface OrganizationService {
   hasRole(data: { userId: string; organizationId: string; role: Role }): Promise<boolean>;

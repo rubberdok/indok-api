@@ -1,4 +1,5 @@
 import fetch from "node-fetch";
+
 import { initServer } from "../../server.js";
 
 describe("Server", () => {
