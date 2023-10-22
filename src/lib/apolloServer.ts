@@ -1,7 +1,8 @@
 import { GraphQLFormattedError } from "graphql";
 import { ZodError } from "zod";
 
-import { codes, ValidationError } from "@/core/errors.js";
+import { BaseError, codes, InternalServerError, ValidationError } from "@/core/errors.js";
+import { unwrapResolverError } from "@apollo/server/errors";
 
 export const formatError = (formattedError: GraphQLFormattedError, error: unknown): GraphQLFormattedError => {
   if (error instanceof ValidationError || error instanceof ZodError) {
@@ -13,12 +14,19 @@ export const formatError = (formattedError: GraphQLFormattedError, error: unknow
       },
     };
   }
+  const originalError = unwrapResolverError(error);
+  let baseError: BaseError;
+  if (originalError instanceof BaseError) {
+    baseError = originalError;
+  } else {
+    baseError = new InternalServerError("Internal Server Error");
+  }
 
   return {
     ...formattedError,
-    message: "Internal server error",
+    message: baseError.message,
     extensions: {
-      code: codes.ERR_INTERNAL_SERVER_ERROR,
+      code: baseError.code,
     },
   };
 };
