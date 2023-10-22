@@ -2,7 +2,7 @@ import { Member, Role } from "@prisma/client";
 
 import { Database } from "@/core/interfaces.js";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
-import { InternalServerError, InvalidArgumentError } from "@/core/errors.js";
+import { InternalServerError, InvalidArgumentError, NotFoundError } from "@/core/errors.js";
 
 export class MemberRepository {
   constructor(private db: Database) {}
@@ -31,11 +31,21 @@ export class MemberRepository {
    * @returns Membership
    */
   async get(data: { id: string } | { userId: string; organizationId: string }): Promise<Member | null> {
+    let promise: Promise<Member>;
     if ("id" in data) {
-      return this.db.member.findUnique({ where: { id: data.id } });
+      promise = this.db.member.findUniqueOrThrow({ where: { id: data.id } });
+    } else {
+      promise = this.db.member.findUniqueOrThrow({
+        where: { userId_organizationId: { userId: data.userId, organizationId: data.organizationId } },
+      });
     }
-    return this.db.member.findUnique({
-      where: { userId_organizationId: { userId: data.userId, organizationId: data.organizationId } },
+    return promise.catch((err) => {
+      if (err instanceof PrismaClientKnownRequestError) {
+        if (err.code === "P2001") {
+          throw new NotFoundError("The membership does not exist.");
+        }
+      }
+      throw err;
     });
   }
 

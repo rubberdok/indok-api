@@ -13,7 +13,7 @@ export interface MemberRepository {
   remove(data: { id: string } | { userId: string; organizationId: string }): Promise<Member>;
   findMany(data: { organizationId: string; role?: Role }): Promise<Member[]>;
   hasRole(data: { userId: string; organizationId: string; role: Role }): Promise<boolean>;
-  get(data: { userId: string; organizationId: string } | { id: string }): Promise<Member | null>;
+  get(data: { userId: string; organizationId: string } | { id: string }): Promise<Member>;
 }
 
 export interface UserService {
@@ -190,9 +190,6 @@ export class OrganizationService {
         userId: data.userId,
         organizationId: data.organizationId,
       });
-      if (memberToRemove === null) {
-        throw new InvalidArgumentError("The user is not a member of the organization.");
-      }
 
       /**
        * We have to take extra care when removing admins, as we

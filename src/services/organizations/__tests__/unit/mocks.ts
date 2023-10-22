@@ -1,5 +1,6 @@
 import { Member, Role } from "@prisma/client";
 import { MemberRepository } from "../../service.js";
+import { NotFoundError } from "@/core/errors.js";
 
 /**
  * Create a mock implementation of the hasRole method on the MemberRepository.
@@ -24,16 +25,18 @@ export function getMockHasRoleImplementation(state: {
 }
 
 export function getMockGetImplementation(state: { members: Member[] }) {
-  function get(data: { id: string } | { userId: string; organizationId: string }) {
-    let result: Member | null;
+  function get(data: { id: string } | { userId: string; organizationId: string }): Promise<Member> {
+    let result: Member | undefined;
     if ("id" in data) {
-      result = state.members.find((member) => member.id === data.id) ?? null;
+      result = state.members.find((member) => member.id === data.id);
     } else {
-      result =
-        state.members.find(
-          (member) => member.userId === data.userId && member.organizationId === data.organizationId
-        ) ?? null;
+      result = state.members.find(
+        (member) => member.userId === data.userId && member.organizationId === data.organizationId
+      );
     }
+
+    if (typeof result === "undefined") throw new NotFoundError("Member not found");
+
     return Promise.resolve(result);
   }
   return get;
