@@ -1,5 +1,6 @@
-import { Database } from "@/core/interfaces.js";
 import { Event } from "@prisma/client";
+
+import { Database } from "@/core/interfaces.js";
 
 export class EventRepository {
   constructor(private db: Database) {}

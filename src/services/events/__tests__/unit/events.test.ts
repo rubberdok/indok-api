@@ -1,8 +1,10 @@
-import { BaseError, InvalidArgumentError } from "@/core/errors.js";
 import { faker } from "@faker-js/faker";
-import { mockDeep } from "jest-mock-extended";
-import { EventRepository, EventService, OrganizationService } from "../../service.js";
 import { Event } from "@prisma/client";
+import { mockDeep } from "jest-mock-extended";
+
+import { BaseError, InvalidArgumentError } from "@/core/errors.js";
+
+import { EventRepository, EventService, OrganizationService } from "../../service.js";
 
 function setup() {
   const organizationService = mockDeep<OrganizationService>();

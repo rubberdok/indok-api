@@ -1,7 +1,8 @@
-import { InvalidArgumentError, PermissionDeniedError } from "@/core/errors.js";
 import { Event, Role } from "@prisma/client";
 import { merge } from "lodash-es";
 import { z } from "zod";
+
+import { InvalidArgumentError, PermissionDeniedError } from "@/core/errors.js";
 
 export interface EventRepository {
   create(data: {
