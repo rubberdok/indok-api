@@ -1,4 +1,4 @@
-import { Organization } from "@prisma/client";
+import { Organization, Role } from "@prisma/client";
 import z from "zod";
 
 import { Database } from "@/core/interfaces.js";
@@ -22,8 +22,24 @@ export class OrganizationRepository {
     schema.parse(data);
   }
 
-  async create(data: { name: string; description?: string }): Promise<Organization> {
+  /**
+   * Create a new organization, and add the given users as admins of the organization.
+   */
+  async create(data: { name: string; description?: string; userId: string }): Promise<Organization> {
+    const { name, description, userId } = data;
     this.validateOrganization(data);
-    return this.db.organization.create({ data });
+    if (userId === "") throw new Error("userId cannot be empty");
+    return this.db.organization.create({
+      data: {
+        name,
+        description,
+        members: {
+          create: {
+            userId,
+            role: Role.ADMIN,
+          },
+        },
+      },
+    });
   }
 }

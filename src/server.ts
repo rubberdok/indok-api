@@ -44,7 +44,7 @@ export async function initServer() {
   const app = fastify({ logger: true });
 
   /**
-   * Set up Sentry
+   * Set up Sentry monitoring
    */
   app.register(fastifySentry, {
     dsn: env.SENTRY_DSN,

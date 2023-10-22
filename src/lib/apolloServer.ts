@@ -14,5 +14,11 @@ export const formatError = (formattedError: GraphQLFormattedError, error: unknow
     };
   }
 
-  return formattedError;
+  return {
+    ...formattedError,
+    message: "Internal server error",
+    extensions: {
+      code: codes.INTERNAL_SERVER_ERROR,
+    },
+  };
 };

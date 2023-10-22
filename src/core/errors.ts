@@ -11,4 +11,5 @@ export class ValidationError implements Error {
 export const codes = {
   BAD_USER_INPUT: "BAD_USER_INPUT",
   PERMISSION_DENIED: "PERMISSION_DENIED",
-};
+  INTERNAL_SERVER_ERROR: "INTERNAL_SERVER_ERROR",
+} as const;

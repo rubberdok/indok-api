@@ -3,7 +3,7 @@ import { Role } from "@prisma/client";
 
 import prisma from "@/lib/prisma.js";
 
-import { MemberRepository } from "../../index.js";
+import { MemberRepository } from "../../members.js";
 
 let repo: MemberRepository;
 
