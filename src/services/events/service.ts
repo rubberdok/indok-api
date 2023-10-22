@@ -1,4 +1,6 @@
-import { InvalidArgumentError } from "@/core/errors.js";
+import { InvalidArgumentError, PermissionDeniedError } from "@/core/errors.js";
+import { Event, Role } from "@prisma/client";
+import { merge } from "lodash-es";
 import { z } from "zod";
 
 export interface EventRepository {
@@ -11,10 +13,25 @@ export interface EventRepository {
     organizerId: string;
     location?: string;
   }): Promise<Event>;
+  update(data: {
+    name?: string;
+    description?: string;
+    startAt?: Date;
+    endAt?: Date;
+    location?: string;
+  }): Promise<Event>;
+  get(id: string): Promise<Event>;
+}
+
+export interface OrganizationService {
+  hasRole(userId: string, organizationId: string, role: Role): Promise<boolean>;
 }
 
 export class EventService {
-  constructor(private eventRepository: EventRepository) {}
+  constructor(
+    private eventRepository: EventRepository,
+    private organizationService: OrganizationService
+  ) {}
 
   /**
    * Create a new event
@@ -64,5 +81,62 @@ export class EventService {
       location,
       organizerId: userId,
     });
+  }
+
+  async update(
+    userId: string,
+    eventId: string,
+    data: {
+      name?: string;
+      description?: string;
+      startAt?: Date;
+      endAt?: Date;
+      location?: string;
+    }
+  ): Promise<Event> {
+    const event = await this.eventRepository.get(eventId);
+    if (!event.organizationId) {
+      throw new InvalidArgumentError("Events that belong to deleted organizations cannot be updated.");
+    }
+
+    const isMember = await this.organizationService.hasRole(userId, event.organizationId, Role.MEMBER);
+
+    if (isMember === true) {
+      const changingStartAt = typeof data.startAt !== "undefined";
+      const changingEndAt = typeof data.endAt !== "undefined";
+
+      if (changingStartAt || changingEndAt) {
+        const timeSchema = z
+          .object({
+            startAt: z.date().min(new Date()),
+            endAt: z.date().min(new Date()),
+          })
+          .refine((data) => data.endAt > data.startAt, {
+            message: "End date must be after start date",
+            path: ["endAt"],
+          });
+
+        const parsedTime = timeSchema.safeParse(merge({}, event, data));
+
+        if (!parsedTime.success) {
+          throw new InvalidArgumentError(parsedTime.error.message);
+        }
+      }
+
+      const schema = z.object({
+        name: z.string().min(1).max(100).optional(),
+        description: z.string().max(500).optional(),
+        location: z.string().max(100).optional(),
+      });
+
+      const parsed = schema.safeParse(data);
+      if (!parsed.success) {
+        throw new InvalidArgumentError(parsed.error.message);
+      }
+
+      return await this.eventRepository.update(data);
+    } else {
+      throw new PermissionDeniedError("You do not have permission to update this event.");
+    }
   }
 }
