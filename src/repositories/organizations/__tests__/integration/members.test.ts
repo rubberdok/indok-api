@@ -65,6 +65,8 @@ describe("MembersRepository", () => {
         userId: "user1",
         organizationId: "org1",
         role: Role.MEMBER,
+        updatedAt: expect.any(Date),
+        createdAt: expect.any(Date),
       };
       const actual = repo.create({ userId: "user1", organizationId: "org1" });
       expect(actual).resolves.toEqual(expected);
@@ -94,6 +96,8 @@ describe("MembersRepository", () => {
         userId: "user2",
         organizationId: "org1",
         role: Role.ADMIN,
+        updatedAt: expect.any(Date),
+        createdAt: expect.any(Date),
       };
 
       const actual = repo.create({ userId: "user2", organizationId: "org1", role: Role.ADMIN });
@@ -281,12 +285,16 @@ describe("MembersRepository", () => {
             userId: expect.any(String),
             organizationId: expect.any(String),
             role: Role.MEMBER,
+            updatedAt: expect.any(Date),
+            createdAt: expect.any(Date),
           },
           {
             id: id2,
             userId: expect.any(String),
             organizationId: expect.any(String),
             role: Role.MEMBER,
+            updatedAt: expect.any(Date),
+            createdAt: expect.any(Date),
           },
         ],
       },
@@ -301,12 +309,16 @@ describe("MembersRepository", () => {
             userId: expect.any(String),
             organizationId: expect.any(String),
             role: Role.MEMBER,
+            updatedAt: expect.any(Date),
+            createdAt: expect.any(Date),
           },
           {
             id: id3,
             userId: expect.any(String),
             organizationId: expect.any(String),
             role: Role.ADMIN,
+            updatedAt: expect.any(Date),
+            createdAt: expect.any(Date),
           },
         ],
       },

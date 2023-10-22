@@ -36,6 +36,7 @@ model User {
   phoneNumber             String    @default("")
   isSuperUser             Boolean   @default(false)
   memberships             Member[]
+  Event                   Event[]
 }
 
 model Organization {
@@ -58,8 +59,12 @@ model Event {
   startAt        DateTime
   endAt          DateTime
   location       String        @default("")
+  // If an organization is deleted, we keep the event and set the organizationId to null
+  // as it could be related to payments and other stuff.
   organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   organizationId String?
+  organizer      User?         @relation(fields: [organizerId], references: [id], onDelete: SetNull)
+  organizerId    String?
 }
 
 // Cabins
