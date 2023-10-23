@@ -136,6 +136,7 @@ export async function initServer() {
     url: env.REDIS_CONNECTION_STRING,
   });
   await redisClient.connect();
+  app.log.info("Connected to Redis client.");
   // Regsiter session plugin
   await app.register(fastifySession, {
     secret: env.SESSION_SECRET,
