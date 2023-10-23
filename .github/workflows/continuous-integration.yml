@@ -155,7 +155,7 @@ jobs:
         run: npm ci
 
       - name: Run Integration Tests
-        run: npm run test:integration:headless -- --collect-coverage --shard ${{ matrix.shard }} / 4
+        run: npm run test:integration:headless -- --collect-coverage --shard ${{ matrix.shard }}/4
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v3
