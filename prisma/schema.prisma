@@ -17,6 +17,7 @@ model GoogleDocument {
   favorite  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  test      String
 }
 
 model User {
