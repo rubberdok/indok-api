@@ -410,6 +410,8 @@ describe("OrganizationsService", () => {
           id: userToRemove.id,
           organizationId: organization.id,
           userId: userToRemove.userId,
+          createdAt: expect.any(Date),
+          updatedAt: expect.any(Date),
           ...expected,
         });
       });

@@ -58,6 +58,8 @@ describe("OrganizationsRepository", () => {
         role: Role.ADMIN,
         userId: user.id,
         organizationId: organization.id,
+        updatedAt: expect.any(Date),
+        createdAt: expect.any(Date),
       });
     });
 
@@ -133,6 +135,8 @@ describe("OrganizationsRepository", () => {
         id: expect.any(String),
         name,
         description,
+        updatedAt: expect.any(Date),
+        createdAt: expect.any(Date),
       });
     });
 
@@ -166,6 +170,8 @@ describe("OrganizationsRepository", () => {
         expected: {
           id: expect.any(String),
           description: expect.any(String),
+          updatedAt: expect.any(Date),
+          createdAt: expect.any(Date),
         },
       },
       {
@@ -176,6 +182,8 @@ describe("OrganizationsRepository", () => {
         expected: {
           id: expect.any(String),
           name: expect.any(String),
+          updatedAt: expect.any(Date),
+          createdAt: expect.any(Date),
         },
       },
       {
@@ -185,6 +193,8 @@ describe("OrganizationsRepository", () => {
           id: expect.any(String),
           name: expect.any(String),
           description: expect.any(String),
+          updatedAt: expect.any(Date),
+          createdAt: expect.any(Date),
         },
       },
     ];
@@ -270,9 +280,27 @@ describe("OrganizationsRepository", () => {
   describe("findMany", () => {
     it("should return all organizations", async () => {
       const expected = [
-        { id: expect.any(String), name: faker.company.name(), description: expect.any(String) },
-        { id: expect.any(String), name: faker.company.name(), description: expect.any(String) },
-        { id: expect.any(String), name: faker.company.name(), description: expect.any(String) },
+        {
+          id: expect.any(String),
+          name: faker.company.name(),
+          description: expect.any(String),
+          updatedAt: expect.any(Date),
+          createdAt: expect.any(Date),
+        },
+        {
+          id: expect.any(String),
+          name: faker.company.name(),
+          description: expect.any(String),
+          updatedAt: expect.any(Date),
+          createdAt: expect.any(Date),
+        },
+        {
+          id: expect.any(String),
+          name: faker.company.name(),
+          description: expect.any(String),
+          updatedAt: expect.any(Date),
+          createdAt: expect.any(Date),
+        },
       ];
       /**
        * Arrange

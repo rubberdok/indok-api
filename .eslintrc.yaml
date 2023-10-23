@@ -54,6 +54,7 @@ rules:
     - devDependencies:
         - "*.config.ts"
         - "**/__tests__/**"
+        - "**/__mocks__/**"
 
   linebreak-style:
     - error

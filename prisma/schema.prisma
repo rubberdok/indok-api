@@ -12,9 +12,11 @@ datasource db {
 }
 
 model GoogleDocument {
-  id        String  @id @default(uuid())
-  identifer String  @unique
-  favorite  Boolean @default(false)
+  id        String   @id @default(uuid())
+  identifer String   @unique
+  favorite  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model User {
@@ -34,28 +36,35 @@ model User {
   phoneNumber             String    @default("")
   isSuperUser             Boolean   @default(false)
   memberships             Member[]
+  Event                   Event[]
 }
 
 model Organization {
-  id          String @id @default(uuid())
-  name        String @unique
-  description String @default("")
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   events  Event[]
   members Member[]
 }
 
 model Event {
-  id             String       @id @default(uuid())
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  id             String        @id @default(uuid())
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
   name           String
-  description    String       @default("")
+  description    String        @default("")
   startAt        DateTime
   endAt          DateTime
-  location       String       @default("")
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  organizationId String
+  location       String        @default("")
+  // If an organization is deleted, we keep the event and set the organizationId to null
+  // as it could be related to payments and other stuff.
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  organizationId String?
+  organizer      User?         @relation(fields: [organizerId], references: [id], onDelete: SetNull)
+  organizerId    String?
 }
 
 // Cabins
@@ -67,11 +76,13 @@ enum BookingStatus {
 }
 
 model Cabin {
-  id            String @id @default(uuid())
-  name          String @unique
+  id            String   @id @default(uuid())
+  name          String   @unique
   internalPrice Int
   externalPrice Int
   capacity      Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Booking {
@@ -100,6 +111,8 @@ model Member {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId String
   role           Role         @default(MEMBER)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   @@unique([userId, organizationId])
 }
