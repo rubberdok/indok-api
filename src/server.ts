@@ -17,6 +17,7 @@ import { createClient } from "redis";
 import { env } from "./config.js";
 import { resolvers } from "./graphql/resolvers.js";
 import { typeDefs } from "./graphql/type-defs.js";
+import { migrationHealthCheck } from "./health.js";
 import { IContext, formatError } from "./lib/apolloServer.js";
 import { envToLogger } from "./lib/fastify.js";
 import postmark from "./lib/postmark.js";
@@ -31,7 +32,6 @@ import { CabinService } from "./services/cabins/index.js";
 import { MailService } from "./services/mail/index.js";
 import { OrganizationService } from "./services/organizations/service.js";
 import { UserService } from "./services/users/index.js";
-import { migrationHealthCheck } from "./health.js";
 
 /**
  * Initialize the Fastify server with an Apollo Server instance.

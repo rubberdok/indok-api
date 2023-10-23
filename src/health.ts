@@ -1,4 +1,5 @@
 import { execSync } from "child_process";
+
 import { FastifyInstance } from "fastify";
 
 interface MigrationHealthCheckReturnType {
