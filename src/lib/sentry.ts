@@ -7,6 +7,14 @@ import { IContext } from "./apolloServer.js";
  * Plugin for Apollo Server that reports errors to Sentry.
  * Adds additional details to the request to easily identify the failing operation.
  *
+ * Adds the following details to the Sentry report:
+ * - The kind of operation (query, mutation, or subscription)
+ * - The user ID of the user making the request
+ * - The query and variables
+ * - The path of the failing operation
+ * @todo: Filter out user-facing errors
+ * @todo: Add transaction ID
+ *
  * Inspired by
  * https://blog.sentry.io/handling-graphql-errors-using-sentry/
  *

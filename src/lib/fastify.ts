@@ -1,4 +1,6 @@
-export const envToLogger = {
+import { FastifyServerOptions } from "fastify";
+
+export const envToLogger: Record<"development" | "production" | "test", FastifyServerOptions["logger"]> = {
   development: {
     transport: {
       target: "pino-pretty",
@@ -9,6 +11,9 @@ export const envToLogger = {
       },
     },
   },
-  production: true,
+  production: {
+    enabled: true,
+    redact: ["*.firstName", "*.lastName", "*.email", "*.username", "*.allergies", "*.user"],
+  },
   test: false,
-} as const;
+};
