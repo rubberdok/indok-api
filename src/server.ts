@@ -78,7 +78,7 @@ export async function initServer() {
   const organizationService = new OrganizationService(organizationRepository, memberRepository, userService);
 
   const cabinRepository = new CabinRepository(prisma);
-  const mailService = new MailService(postmark);
+  const mailService = new MailService(postmark, env.NO_REPLY_EMAIL);
   const cabinService = new CabinService(cabinRepository, mailService);
 
   const authService = new FeideService(userService, feideClient);
