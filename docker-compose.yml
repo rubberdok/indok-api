@@ -19,8 +19,7 @@ services:
     ports:
       - 6380:6379
     volumes:
-      - ./data:/data/
-    command: redis-server --loglevel debug
+      - redis_data:/data/
     tty: true
 
   server:
@@ -40,9 +39,9 @@ services:
       - redis
 
 volumes:
-  postgres_data:
+  redis_data:
     driver: local
-  next_node_modules:
+  postgres_data:
     driver: local
   api_node_modules:
     driver: local
