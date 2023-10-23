@@ -78,7 +78,7 @@ export async function initServer() {
   const organizationService = new OrganizationService(organizationRepository, memberRepository, userService);
 
   const cabinRepository = new CabinRepository(prisma);
-  const mailService = new MailService(postmark);
+  const mailService = new MailService(postmark, env.NO_REPLY_EMAIL);
   const cabinService = new CabinService(cabinRepository, mailService);
 
   const authService = new FeideService(userService, feideClient);
@@ -155,8 +155,10 @@ export async function initServer() {
   });
 
   redisClient.on("error", (err) => {
-    app.Sentry.captureException(err);
-    app.log.error(err);
+    app.Sentry.captureException(err, {
+      level: "fatal",
+    });
+    app.log.fatal(err);
     process.exit(1);
   });
 
@@ -231,6 +233,15 @@ export async function initServer() {
     url: "/-/health",
     method: "GET",
     handler: async (req, reply) => {
+      reply.statusCode = 200;
+      return reply.send({ status: "ok" });
+    },
+  });
+
+  app.route({
+    url: "/-/migration-health",
+    method: "GET",
+    handler: async (req, reply) => {
       req.log.info("Health check");
       const { status, message } = migrationHealthCheck(app);
       if (!status) {
@@ -251,7 +262,13 @@ export async function initServer() {
       host: "0.0.0.0",
     });
   } catch (err) {
-    app.log.error(err);
+    app.log.fatal(err);
+    app.Sentry.captureException(err, {
+      level: "fatal",
+      tags: {
+        kind: "server",
+      },
+    });
     process.exit(1);
   }
 
