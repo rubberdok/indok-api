@@ -155,8 +155,10 @@ export async function initServer() {
   });
 
   redisClient.on("error", (err) => {
-    app.Sentry.captureException(err);
-    app.log.error(err);
+    app.Sentry.captureException(err, {
+      level: "fatal",
+    });
+    app.log.fatal(err);
     process.exit(1);
   });
 
@@ -260,7 +262,13 @@ export async function initServer() {
       host: "0.0.0.0",
     });
   } catch (err) {
-    app.log.error(err);
+    app.log.fatal(err);
+    app.Sentry.captureException(err, {
+      level: "fatal",
+      tags: {
+        kind: "server",
+      },
+    });
     process.exit(1);
   }
 
