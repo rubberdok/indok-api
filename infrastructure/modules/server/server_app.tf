@@ -59,16 +59,15 @@ resource "azurerm_container_app" "server" {
       name   = "server"
       image  = var.image_tag
 
-      readiness_probe {
+      startup_probe {
         failure_count_threshold = 10
-
         interval_seconds        = 10
         path                    = "/-/migration-health"
         port                    = 4000
         transport               = "HTTP"
-        success_count_threshold = 1
         timeout                 = 30
       }
+
 
       liveness_probe {
         failure_count_threshold = 3
