@@ -1,5 +1,6 @@
-import { env } from "@/config.js";
 import { FastifyServerOptions } from "fastify";
+
+import { env } from "@/config.js";
 
 export const envToLogger: Record<"development" | "production" | "test", FastifyServerOptions["logger"]> = {
   development: {
