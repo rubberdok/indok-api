@@ -67,7 +67,7 @@ resource "azurerm_container_app" "server" {
         port                    = 4000
         transport               = "HTTP"
         success_count_threshold = 1
-        timeout                 = 5
+        timeout                 = 30
       }
 
       liveness_probe {
