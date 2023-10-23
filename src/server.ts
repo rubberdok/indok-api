@@ -31,6 +31,7 @@ import { CabinService } from "./services/cabins/index.js";
 import { MailService } from "./services/mail/index.js";
 import { OrganizationService } from "./services/organizations/service.js";
 import { UserService } from "./services/users/index.js";
+import { migrationHealthCheck } from "./health.js";
 
 /**
  * Initialize the Fastify server with an Apollo Server instance.
@@ -229,8 +230,18 @@ export async function initServer() {
   app.route({
     url: "/-/health",
     method: "GET",
-    handler: async () => {
-      return { status: "ok" };
+    handler: async (req, reply) => {
+      req.log.info("Health check");
+      const { status, message } = migrationHealthCheck(app);
+      if (!status) {
+        req.log.info("Health check failed");
+        reply.statusCode = 503;
+        return reply.send({ message, status: "error" });
+      } else {
+        req.log.info("Health check succeeded");
+        reply.statusCode = 200;
+        return reply.send({ statusCode: 200, status: "ok" });
+      }
     },
   });
 
