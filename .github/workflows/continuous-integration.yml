@@ -123,7 +123,7 @@ jobs:
           - 6380:6379
         env:
           REDIS_PASSWORD: redis
-      command: redis-server --loglevel warning --requirepass redis
+      command: redis-server --requirepass redis
 
       postgres:
         image: postgres
