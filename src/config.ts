@@ -7,7 +7,7 @@ dotenv.config();
 const envVarsSchema = z.object({
   CORS_ORIGINS: z.string().transform((v) => v.split(",")),
   CORS_CREDENTIALS: z.string().transform((v) => v === "true"),
-  NODE_ENV: z.string(),
+  NODE_ENV: z.enum(["development", "production", "test"]),
   NO_REPLY_EMAIL: z.string().email(),
   DATABASE_CONNECTION_STRING: z.string(),
   PORT: z

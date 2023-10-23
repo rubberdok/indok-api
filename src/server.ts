@@ -29,6 +29,7 @@ import { CabinService } from "./services/cabins/index.js";
 import { MailService } from "./services/mail/index.js";
 import { OrganizationService } from "./services/organizations/service.js";
 import { UserService } from "./services/users/index.js";
+import { envToLogger } from "./lib/fastify.js";
 
 /**
  * Initialize the Fastify server with an Apollo Server instance.
@@ -80,7 +81,7 @@ export async function initServer() {
 
   const authService = new FeideService(userService, feideClient);
 
-  const app = fastify({ logger: true });
+  const app = fastify({ logger: envToLogger[env.NODE_ENV] });
 
   /**
    * Set up Sentry monitoring
@@ -141,8 +142,9 @@ export async function initServer() {
    */
   const redisClient = createClient({
     url: env.REDIS_CONNECTION_STRING,
+    pingInterval: 1_000,
     socket: {
-      keepAliveInitialDelay: 1000 * 60 * 5,
+      keepAlive: 10_000, // 10 seconds
     },
   });
 
@@ -151,7 +153,9 @@ export async function initServer() {
   });
 
   redisClient.on("error", (err) => {
+    app.Sentry.captureException(err);
     app.log.error(err);
+    process.exit(1);
   });
 
   await redisClient.connect();
@@ -233,7 +237,6 @@ export async function initServer() {
       port: env.PORT,
       host: "0.0.0.0",
     });
-    console.log(`🚀 Server ready at http://localhost:4000/graphql`);
   } catch (err) {
     app.log.error(err);
     process.exit(1);
