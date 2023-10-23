@@ -110,6 +110,10 @@ jobs:
   integration-test:
     name: Integration Test
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     services:
       redis:
         image: redis
@@ -134,7 +138,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
         ports:
-          - 5432:5432
+          - 5433:5432
 
     steps:
       - name: Checkout
@@ -151,7 +155,7 @@ jobs:
         run: npm ci
 
       - name: Run Integration Tests
-        run: DATABASE_CONNECTION_STRING=postgresql://postgres:postgres@localhost:5432/tests npm run test:integration:headless -- --collect-coverage
+        run: npm run test:integration:headless -- --collect-coverage --shard ${{ matrix.shard }}/4
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v3
