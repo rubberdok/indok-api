@@ -134,6 +134,9 @@ export async function initServer() {
    */
   const redisClient = createClient({
     url: env.REDIS_CONNECTION_STRING,
+    socket: {
+      keepAlive: 5 * 60 * 1000,
+    },
   });
   await redisClient.connect();
   app.log.info("Connected to Redis client.");
