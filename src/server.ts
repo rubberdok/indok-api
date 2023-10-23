@@ -30,6 +30,39 @@ import { MailService } from "./services/mail/index.js";
 import { OrganizationService } from "./services/organizations/service.js";
 import { UserService } from "./services/users/index.js";
 
+/**
+ * Initialize the Fastify server with an Apollo Server instance.
+ *
+ * This function is typically called from `src/index.ts` and is the entrypoint to the application.
+ * Roughly speaking, this function performs the following steps:
+ * 1. Set up and inject dependencies
+ *    - PrismaClient (database client)
+ *    - Services and Repositories (business logic, data access, and external services)
+ *
+ * 2. Set up a Fastify server instance
+ *    - Set up Sentry monitoring, which we use to monitor the server for errors and performance issues
+ *    - Set up security headers, which we use to prevent some common attacks
+ *    - Set up CORS, which we use to allow requests from the client
+ *    - Set up cookies, which we use to store the session ID on the client
+ *    - Set up sessions, which we use for authentication so that we can identify the user making the request
+ *
+ * 3. Set up and connect to Redis, which is a key-value store that we use to store session data
+ *
+ * 4. Add some lifecycle hooks to the Fastify server, for instance to close the Redis connection when the server closes
+ *
+ * 5. Set up Apollo Server
+ *    - Set up the Apollo Server instance
+ *    - Set up the Apollo Server context function, which is used to inject dependencies into the Apollo Server context
+ *    - Set up the Apollo Server plugin, which is used to drain the Fastify request and response objects from the Apollo Server context
+ *    - Set up the Apollo Server landing page plugin, which is used to display the Apollo Server landing page
+ *
+ * 6. Set up a health check route, which is currently only used for testing
+ *
+ * 7. Start the Fastify server
+ *
+ * @todo Configure security headers
+ * @returns The Fastify server instance
+ */
 export async function initServer() {
   // Set up and inject dependencies
   const prisma = new PrismaClient();
