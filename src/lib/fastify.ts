@@ -1,6 +1,20 @@
 import { FastifyServerOptions } from "fastify";
 
 import { env } from "@/config.js";
+import { PinoLoggerOptions } from "fastify/types/logger.js";
+
+/**
+ * Redact personally identifiable information (PII) from logs
+ * to try to be GDPR compliant, and avoid storing sensitive data in logs.
+ */
+const redact: PinoLoggerOptions["redact"] = [
+  "*.firstName",
+  "*.lastName",
+  "*.email",
+  "*.username",
+  "*.allergies",
+  "*.user",
+];
 
 export const envToLogger: Record<"development" | "production" | "test", FastifyServerOptions["logger"]> = {
   development: {
@@ -13,10 +27,22 @@ export const envToLogger: Record<"development" | "production" | "test", FastifyS
         ignore: "pid,hostname",
       },
     },
+    redact,
   },
   production: {
     enabled: true,
-    redact: ["*.firstName", "*.lastName", "*.email", "*.username", "*.allergies", "*.user"],
+    redact,
   },
   test: env.LOG_ENABLED,
 };
+
+/**
+ * Extend the Fastify session interface to include our custom properties.
+ */
+declare module "fastify" {
+  interface Session {
+    codeVerifier?: string;
+    userId?: string;
+    authenticated: boolean;
+  }
+}
