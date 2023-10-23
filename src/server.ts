@@ -142,9 +142,9 @@ export async function initServer() {
    */
   const redisClient = createClient({
     url: env.REDIS_CONNECTION_STRING,
-    pingInterval: 1_000,
+    pingInterval: 1_000 * 60 * 3, // 3 minutes
     socket: {
-      keepAlive: 10_000, // 10 seconds
+      keepAlive: 1_000 * 60 * 3, // 3 minutes
     },
   });
 
