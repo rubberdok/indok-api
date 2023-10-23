@@ -20,6 +20,7 @@ import { typeDefs } from "./graphql/type-defs.js";
 import { IContext, formatError } from "./lib/apolloServer.js";
 import { envToLogger } from "./lib/fastify.js";
 import postmark from "./lib/postmark.js";
+import { fastifyApolloSentryPlugin } from "./lib/sentry.js";
 import { CabinRepository } from "./repositories/cabins/index.js";
 import { MemberRepository } from "./repositories/organizations/members.js";
 import { OrganizationRepository } from "./repositories/organizations/organizations.js";
@@ -201,6 +202,7 @@ export async function initServer() {
     formatError: formatError,
     plugins: [
       fastifyApolloDrainPlugin(app),
+      fastifyApolloSentryPlugin(app),
       env.NODE_ENV === "production"
         ? ApolloServerPluginLandingPageProductionDefault({ footer: false })
         : ApolloServerPluginLandingPageLocalDefault({ footer: false, includeCookies: true, embed: true }),
