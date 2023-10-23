@@ -1,7 +1,9 @@
+import { env } from "@/config.js";
 import { FastifyServerOptions } from "fastify";
 
 export const envToLogger: Record<"development" | "production" | "test", FastifyServerOptions["logger"]> = {
   development: {
+    enabled: env.LOG_ENABLED,
     transport: {
       target: "pino-pretty",
       options: {
@@ -15,5 +17,5 @@ export const envToLogger: Record<"development" | "production" | "test", FastifyS
     enabled: true,
     redact: ["*.firstName", "*.lastName", "*.email", "*.username", "*.allergies", "*.user"],
   },
-  test: false,
+  test: env.LOG_ENABLED,
 };
