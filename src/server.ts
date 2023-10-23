@@ -131,15 +131,30 @@ export async function initServer() {
   await app.register(fastifyCookie);
   /**
    * Configure session plugin with Redis as session store
+   *
+   * Azure Redis Cache is used as the production session store,
+   * and importantly, it closes connections after 10 minutes of inactivity.
+   * As such, we need to keep the connection alive.
+   * https://learn.microsoft.com/en-us/azure/azure-cache-for-redis/cache-best-practices-connection#idle-timeout
+   *
+   * @todo figure out if we have some way of using tcp.keepalive, otherwise use ping
    */
   const redisClient = createClient({
     url: env.REDIS_CONNECTION_STRING,
     socket: {
-      keepAlive: 5 * 60 * 1000,
+      keepAliveInitialDelay: 1000 * 60 * 5,
     },
   });
+
+  redisClient.on("connect", () => {
+    app.log.info("Connected to Redis client.");
+  });
+
+  redisClient.on("error", (err) => {
+    app.log.error(err);
+  });
+
   await redisClient.connect();
-  app.log.info("Connected to Redis client.");
   // Regsiter session plugin
   await app.register(fastifySession, {
     secret: env.SESSION_SECRET,
