@@ -18,6 +18,7 @@ import { env } from "./config.js";
 import { resolvers } from "./graphql/resolvers.js";
 import { typeDefs } from "./graphql/type-defs.js";
 import { IContext, formatError } from "./lib/apolloServer.js";
+import { envToLogger } from "./lib/fastify.js";
 import postmark from "./lib/postmark.js";
 import { CabinRepository } from "./repositories/cabins/index.js";
 import { MemberRepository } from "./repositories/organizations/members.js";
@@ -29,7 +30,6 @@ import { CabinService } from "./services/cabins/index.js";
 import { MailService } from "./services/mail/index.js";
 import { OrganizationService } from "./services/organizations/service.js";
 import { UserService } from "./services/users/index.js";
-import { envToLogger } from "./lib/fastify.js";
 
 /**
  * Initialize the Fastify server with an Apollo Server instance.
