@@ -231,6 +231,15 @@ export async function initServer() {
     url: "/-/health",
     method: "GET",
     handler: async (req, reply) => {
+      reply.statusCode = 200;
+      return reply.send({ status: "ok" });
+    },
+  });
+
+  app.route({
+    url: "/-/migration-health",
+    method: "GET",
+    handler: async (req, reply) => {
       req.log.info("Health check");
       const { status, message } = migrationHealthCheck(app);
       if (!status) {
