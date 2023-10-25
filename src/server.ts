@@ -164,7 +164,12 @@ export async function initServer() {
   redisClient.on("connect", () => {
     app.log.info("Connected to Redis client.");
   });
-
+  redisClient.on("reconnecting", () => {
+    app.log.info("Reconnecting to Redis client.");
+  });
+  redisClient.on("close", () => {
+    app.log.info("Redis client connection closed.");
+  });
   redisClient.on("error", (err) => {
     app.Sentry.captureException(err, {
       level: "fatal",
@@ -240,6 +245,9 @@ export async function initServer() {
     context: contextFunction,
   });
 
+  /**
+   * Straight forward health check, currently just used for testing.
+   */
   app.route({
     url: "/-/health",
     method: "GET",
@@ -249,6 +257,11 @@ export async function initServer() {
     },
   });
 
+  /**
+   * Migration health check, used by the StartupProbe for the server container to check if the server is ready to
+   * receive connections. See `infrastructure/modules/server/server_app.tf` for infrastructure details.
+   * @returns `200: {"status": "ok"}` if the Prisma migrations in `prisma/migrations` are applied, `503: { "status": "error", "message": "Missing migrations" }` otherwise.
+   */
   app.route({
     url: "/-/migration-health",
     method: "GET",
@@ -267,13 +280,18 @@ export async function initServer() {
     },
   });
 
+  /**
+   * Start the Fastify server
+   */
   try {
     await app.listen({
       port: env.PORT,
       host: "0.0.0.0",
     });
   } catch (err) {
+    // Log the error
     app.log.fatal(err);
+    // Capture the error with Sentry and exit the process
     app.Sentry.captureException(err, {
       level: "fatal",
       tags: {

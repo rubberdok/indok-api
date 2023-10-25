@@ -1,6 +1,8 @@
-import { Event } from "@prisma/client";
+import { ParticipationStatus, Event, EventSignUp, EventSlot } from "@prisma/client";
 
 import { Database } from "@/core/interfaces.js";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
+import { NotFoundError } from "@/core/errors.js";
 
 export class EventRepository {
   constructor(private db: Database) {}
@@ -69,5 +71,115 @@ export class EventRepository {
         id,
       },
     });
+  }
+
+  /**
+   * Create a new sign up for an event slot on an event.
+   *
+   * Uses version numbers for slot and event to ensure that the slot and event has not been updated since we last saw it.
+   * If the slot or event has been updated, a NotFoundError is thrown, and the sign up is not created.
+   * If this happens, it is recommended to refetch the event and the slot, and, unless they now have no spots left, call this method again
+   * with the new version numbers.
+   *
+   * @throws {NotFoundError} If an event or event slot with the given ID and version does not exist, or if the event or event slot does not have any spots left.
+   * @param userId - The ID of the user to sign up for the event
+   * @param event.version - The version of the event to sign up for, used for optimistic concurrency control to ensure that the event has not been updated since we last saw it.
+   * @param event.id - The ID of the event to sign up for
+   * @param slot.version - The version of the event slot to sign up for, used for optimistic concurrency control to ensure that the event slot has not been updated since we last saw it.
+   * @param slot.id - The ID of the event slot to sign up for
+   * @returns The created event sign up, the updated event slot and the updated event
+   */
+  async createConfirmedSignUp(
+    userId: string,
+    event: { id: string; version: number },
+    slot: { id: string; version: number }
+  ): Promise<{ signUp: EventSignUp; eventSlot: EventSlot; event: Event }> {
+    try {
+      const [signUp, updatedSlot, updatedEvent] = await this.db.$transaction([
+        this.db.eventSignUp.create({
+          data: {
+            userId,
+            participationStatus: ParticipationStatus.CONFIRMED,
+            slotId: slot.id,
+            eventId: event.id,
+          },
+        }),
+
+        this.db.eventSlot.update({
+          where: {
+            id: slot.id,
+            version: slot.version,
+            spots: {
+              gt: 0,
+            },
+          },
+          data: {
+            version: {
+              increment: 1,
+            },
+            spots: {
+              decrement: 1,
+            },
+          },
+        }),
+
+        this.db.event.update({
+          where: {
+            id: event.id,
+            version: event.version,
+            spots: {
+              gt: 0,
+            },
+          },
+          data: {
+            version: {
+              increment: 1,
+            },
+            spots: {
+              decrement: 1,
+            },
+          },
+        }),
+      ]);
+      return { signUp, eventSlot: updatedSlot, event: updatedEvent };
+    } catch (err) {
+      if (err instanceof PrismaClientKnownRequestError) {
+        const notFoundError = new NotFoundError(
+          `Event{ id: ${event.id}, version: ${event.version} }, or EventSlot{ id: ${slot.id}, version: ${slot.version} } not found`
+        );
+        notFoundError.cause = err;
+        console.log(err.message);
+        throw notFoundError;
+      }
+      throw err;
+    }
+  }
+
+  /**
+   * Create a waitlist sign up for an event.
+   *
+   * Unlike createConfirmedSignUp, this method does not rely on version numbers for optimistic concurrency control
+   * as wait list sign ups are not affected by the number of spots left.
+   *
+   * @param userId - The ID of the user to sign up for the event
+   * @param event.id - The ID of the event to sign up for
+   * @returns the event sign up
+   */
+  async createOnWaitlistSignUp(userId: string, event: { id: string }): Promise<EventSignUp> {
+    try {
+      const signUp = this.db.eventSignUp.create({
+        data: {
+          eventId: event.id,
+          userId,
+          participationStatus: ParticipationStatus.ON_WAITLIST,
+        },
+      });
+      return signUp;
+    } catch (err) {
+      if (err instanceof PrismaClientKnownRequestError) {
+        throw new NotFoundError(`Event{ id: ${event.id} not found`);
+      }
+      throw err;
+    }
   }
 }
