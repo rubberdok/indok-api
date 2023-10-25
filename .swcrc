@@ -1,7 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/swcrc",
   "module": {
-    "type": "es6"
+    "type": "es6",
+    "resolveFully": true
   },
   "jsc": {
     "target": "es2022",
