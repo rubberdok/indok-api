@@ -136,17 +136,18 @@ describe("EventsService", () => {
        */
       const userId = faker.string.uuid();
       const organizationId = faker.string.uuid();
+      const startAt = faker.date.soon();
       const data = {
         name: faker.commerce.productName(),
         description: faker.lorem.paragraph(),
-        startAt: faker.date.soon(),
-        endAt: faker.date.future(),
+        startAt,
+        endAt: faker.date.soon({ refDate: startAt }),
         location: faker.location.streetAddress(),
       };
       const result = service.create(userId, organizationId, data);
 
       /**
-       * Assert that the expected error is thrown
+       * Assert that the event is created
        */
       await expect(result).resolves.not.toThrow();
       expect(eventsRepository.create).toHaveBeenCalledWith({
