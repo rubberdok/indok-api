@@ -9,12 +9,12 @@ const main = async () => {
   Users.load(db);
 };
 
-main()
-  .catch((err) => {
-    console.error(err);
-    process.exit(1);
-  })
-  .finally(async () => {
-    console.log("Finished");
-    await db.$disconnect();
-  });
+try {
+  await main();
+} catch (err) {
+  console.error(err);
+  process.exit(1);
+} finally {
+  console.log("Finished");
+  await db.$disconnect();
+}
