@@ -216,7 +216,7 @@ describe("EventsService", () => {
       const startAt = faker.date.soon();
       const endAt = faker.date.future({ refDate: startAt });
 
-      const mockEvent = () => ({
+      const mockEvent = (): Event => ({
         id: faker.string.uuid(),
         name: faker.commerce.productName(),
         description: faker.lorem.paragraph(),
@@ -227,7 +227,10 @@ describe("EventsService", () => {
         createdAt: faker.date.past(),
         updatedAt: faker.date.past(),
         location: faker.location.streetAddress(),
+        version: 0,
+        spots: 0,
       });
+
       const testCases: TestCase[] = [
         {
           name: "update name to empty string",
@@ -404,7 +407,7 @@ describe("EventsService", () => {
       const startAt = faker.date.soon();
       const endAt = faker.date.future({ refDate: startAt });
 
-      const mockEvent = () => ({
+      const mockEvent = (): Event => ({
         id: faker.string.uuid(),
         name: faker.commerce.productName(),
         description: faker.lorem.paragraph(),
@@ -415,7 +418,10 @@ describe("EventsService", () => {
         createdAt: faker.date.past(),
         updatedAt: faker.date.past(),
         location: faker.location.streetAddress(),
+        version: 0,
+        spots: 0,
       });
+
       const testCases: TestCase[] = [
         {
           name: "update name",

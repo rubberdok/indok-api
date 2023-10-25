@@ -59,6 +59,8 @@ describe("EventsRepository", () => {
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
         location: expect.any(String),
+        spots: null,
+        version: 0,
       });
     });
   });

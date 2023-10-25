@@ -1,10 +1,9 @@
-import { PrismaClient } from "@prisma/client";
-
-export default new PrismaClient();
-
 import { execSync } from "child_process";
 
+import { PrismaClient } from "@prisma/client";
 import { FastifyInstance } from "fastify";
+
+export default new PrismaClient();
 
 interface MigrationHealthCheckReturnType {
   status: boolean;

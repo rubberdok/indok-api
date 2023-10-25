@@ -1,8 +1,10 @@
-import prisma from "@/lib/prisma.js";
-import { EventRepository } from "../../repository.js";
 import { faker } from "@faker-js/faker";
 import { Organization, ParticipationStatus, User } from "@prisma/client";
+
 import { BaseError, NotFoundError } from "@/core/errors.js";
+import prisma from "@/lib/prisma.js";
+
+import { EventRepository } from "../../repository.js";
 
 let eventsRepository: EventRepository;
 
