@@ -148,7 +148,6 @@ export class EventRepository {
           `Event{ id: ${event.id}, version: ${event.version} }, or EventSlot{ id: ${slot.id}, version: ${slot.version} } not found`
         );
         notFoundError.cause = err;
-        console.log(err.message);
         throw notFoundError;
       }
       throw err;
