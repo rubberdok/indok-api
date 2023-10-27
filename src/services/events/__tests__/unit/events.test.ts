@@ -256,7 +256,7 @@ describe("EventsService", () => {
           name: "Date.now() < endAt < startAt, changing endAt",
           arrange: {
             hasRole: true,
-            event: mockEvent(),
+            event: mockEvent({ startAt, endAt }),
           },
           act: {
             data: {
@@ -271,7 +271,7 @@ describe("EventsService", () => {
           name: "Date.now() < endAt < startAt, changing endAt and startAt",
           arrange: {
             hasRole: true,
-            event: mockEvent(),
+            event: mockEvent({ startAt, endAt }),
           },
           act: {
             data: {
@@ -287,7 +287,7 @@ describe("EventsService", () => {
           name: "Date.now() < endAt < startAt, changing startAt",
           arrange: {
             hasRole: true,
-            event: mockEvent(),
+            event: mockEvent({ startAt, endAt }),
           },
           act: {
             data: {
@@ -302,7 +302,7 @@ describe("EventsService", () => {
           name: "startAt < Date.now() < endAt",
           arrange: {
             hasRole: true,
-            event: mockEvent(),
+            event: mockEvent({ startAt, endAt }),
           },
           act: {
             data: {
@@ -317,7 +317,7 @@ describe("EventsService", () => {
           name: "startAt < endAt < Date.now()",
           arrange: {
             hasRole: true,
-            event: mockEvent({ startAt }),
+            event: mockEvent({ startAt, endAt }),
           },
           act: {
             data: {
@@ -332,7 +332,7 @@ describe("EventsService", () => {
           name: "startAt < endAt < Date.now(), changing endAt",
           arrange: {
             hasRole: true,
-            event: mockEvent({ startAt }),
+            event: mockEvent({ startAt, endAt }),
           },
           act: {
             data: {
@@ -347,7 +347,7 @@ describe("EventsService", () => {
           name: "endAt < startAt < Date.now(), changing endAt and startAt",
           arrange: {
             hasRole: true,
-            event: mockEvent(),
+            event: mockEvent({ startAt, endAt }),
           },
           act: {
             data: {
