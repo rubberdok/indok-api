@@ -26,7 +26,7 @@ import { OrganizationService } from "@/services/organizations/service.js";
 import { UserService } from "@/services/users/index.js";
 
 class MockFeideClient implements AuthClient {
-  fetchUserInfo(params: { url: string; accessToken: string }): Promise<UserInfo> {
+  fetchUserInfo(): Promise<UserInfo> {
     return Promise.resolve({
       sub: faker.string.uuid(),
       name: faker.person.fullName(),
@@ -34,7 +34,7 @@ class MockFeideClient implements AuthClient {
       email: faker.internet.email(),
     });
   }
-  fetchAccessToken(params: { url: string; body: URLSearchParams; authorization: string }): Promise<string> {
+  fetchAccessToken(): Promise<string> {
     return Promise.resolve(faker.string.uuid());
   }
 }
@@ -77,7 +77,6 @@ class GraphQLTestClient {
     });
 
     let errors: GraphQLError[] | undefined;
-    let data: ResultOf<T> | undefined;
 
     const parsedBody = JSON.parse(response.body);
     if ("errors" in parsedBody) {
@@ -87,7 +86,7 @@ class GraphQLTestClient {
       );
     }
 
-    ({ data } = response.json());
+    const { data } = response.json<{ data: ResultOf<T> }>();
     return { errors, data, response };
   }
 }
