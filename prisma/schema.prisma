@@ -17,27 +17,27 @@ model GoogleDocument {
   favorite  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  test      String
 }
 
 model User {
-  id                      String    @id @default(uuid())
-  feideId                 String    @unique
-  createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @updatedAt
-  lastLogin               DateTime  @default(now())
-  firstLogin              Boolean   @default(true)
+  id                      String        @id @default(uuid())
+  feideId                 String        @unique
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+  lastLogin               DateTime      @default(now())
+  firstLogin              Boolean       @default(true)
   firstName               String
   lastName                String
-  email                   String    @unique
-  username                String    @unique
+  email                   String        @unique
+  username                String        @unique
   graduationYear          Int?
   graduationYearUpdatedAt DateTime?
-  allergies               String    @default("")
-  phoneNumber             String    @default("")
-  isSuperUser             Boolean   @default(false)
+  allergies               String        @default("")
+  phoneNumber             String        @default("")
+  isSuperUser             Boolean       @default(false)
   memberships             Member[]
   Event                   Event[]
+  EventSignUp             EventSignUp[]
 }
 
 model Organization {
@@ -66,6 +66,50 @@ model Event {
   organizationId String?
   organizer      User?         @relation(fields: [organizerId], references: [id], onDelete: SetNull)
   organizerId    String?
+
+  // Versioning for optimistic concurrency control
+  version Int  @default(0)
+  // Total spots for the event
+  spots   Int?
+
+  slots       EventSlot[]
+  EventSignUp EventSignUp[]
+}
+
+model EventSlot {
+  id        String        @id @default(uuid())
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  version   Int           @default(0)
+  spots     Int
+  eventId   String
+  event     Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  signUps   EventSignUp[]
+}
+
+enum ParticipationStatus {
+  // The user is attending the event
+  CONFIRMED
+  // The user is on the waitlist
+  ON_WAITLIST
+  // The user has retracted their sign up and is no longer attending
+  RETRACTED
+  // The user has been removed from the event by an admin or by some other external force
+  REMOVED
+}
+
+model EventSignUp {
+  id                  String              @id @default(uuid())
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  version             Int                 @default(0)
+  userId              String
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slot                EventSlot?          @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  slotId              String?
+  event               Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId             String
+  participationStatus ParticipationStatus @default(CONFIRMED)
 }
 
 // Cabins

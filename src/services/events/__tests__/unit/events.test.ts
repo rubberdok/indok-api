@@ -13,6 +13,26 @@ function setup() {
   return { organizationService, eventsRepository, service };
 }
 
+function mockEvent(data: Partial<Event> = {}): Event {
+  const startAt = faker.date.soon();
+  const endAt = faker.date.future({ refDate: startAt });
+  return {
+    id: faker.string.uuid(),
+    name: faker.commerce.productName(),
+    description: faker.lorem.paragraph(),
+    startAt,
+    endAt,
+    organizationId: faker.string.uuid(),
+    organizerId: faker.string.uuid(),
+    createdAt: faker.date.past(),
+    updatedAt: faker.date.past(),
+    location: faker.location.streetAddress(),
+    version: 0,
+    spots: 0,
+    ...data,
+  };
+}
+
 describe("EventsService", () => {
   describe("create", () => {
     describe("should raise", () => {
@@ -136,17 +156,18 @@ describe("EventsService", () => {
        */
       const userId = faker.string.uuid();
       const organizationId = faker.string.uuid();
+      const startAt = faker.date.soon();
       const data = {
         name: faker.commerce.productName(),
         description: faker.lorem.paragraph(),
-        startAt: faker.date.soon(),
-        endAt: faker.date.future(),
+        startAt,
+        endAt: faker.date.soon({ refDate: startAt }),
         location: faker.location.streetAddress(),
       };
       const result = service.create(userId, organizationId, data);
 
       /**
-       * Assert that the expected error is thrown
+       * Assert that the event is created
        */
       await expect(result).resolves.not.toThrow();
       expect(eventsRepository.create).toHaveBeenCalledWith({
@@ -215,18 +236,6 @@ describe("EventsService", () => {
       const startAt = faker.date.soon();
       const endAt = faker.date.future({ refDate: startAt });
 
-      const mockEvent = () => ({
-        id: faker.string.uuid(),
-        name: faker.commerce.productName(),
-        description: faker.lorem.paragraph(),
-        startAt: startAt,
-        endAt: endAt,
-        organizationId: faker.string.uuid(),
-        organizerId: faker.string.uuid(),
-        createdAt: faker.date.past(),
-        updatedAt: faker.date.past(),
-        location: faker.location.streetAddress(),
-      });
       const testCases: TestCase[] = [
         {
           name: "update name to empty string",
@@ -247,7 +256,7 @@ describe("EventsService", () => {
           name: "Date.now() < endAt < startAt, changing endAt",
           arrange: {
             hasRole: true,
-            event: mockEvent(),
+            event: mockEvent({ startAt, endAt }),
           },
           act: {
             data: {
@@ -262,7 +271,7 @@ describe("EventsService", () => {
           name: "Date.now() < endAt < startAt, changing endAt and startAt",
           arrange: {
             hasRole: true,
-            event: mockEvent(),
+            event: mockEvent({ startAt, endAt }),
           },
           act: {
             data: {
@@ -278,7 +287,7 @@ describe("EventsService", () => {
           name: "Date.now() < endAt < startAt, changing startAt",
           arrange: {
             hasRole: true,
-            event: mockEvent(),
+            event: mockEvent({ startAt, endAt }),
           },
           act: {
             data: {
@@ -293,7 +302,7 @@ describe("EventsService", () => {
           name: "startAt < Date.now() < endAt",
           arrange: {
             hasRole: true,
-            event: mockEvent(),
+            event: mockEvent({ startAt, endAt }),
           },
           act: {
             data: {
@@ -308,10 +317,7 @@ describe("EventsService", () => {
           name: "startAt < endAt < Date.now()",
           arrange: {
             hasRole: true,
-            event: {
-              ...mockEvent(),
-              startAt: faker.date.past(),
-            },
+            event: mockEvent({ startAt, endAt }),
           },
           act: {
             data: {
@@ -326,10 +332,7 @@ describe("EventsService", () => {
           name: "startAt < endAt < Date.now(), changing endAt",
           arrange: {
             hasRole: true,
-            event: {
-              ...mockEvent(),
-              startAt: faker.date.past(),
-            },
+            event: mockEvent({ startAt, endAt }),
           },
           act: {
             data: {
@@ -344,7 +347,7 @@ describe("EventsService", () => {
           name: "endAt < startAt < Date.now(), changing endAt and startAt",
           arrange: {
             hasRole: true,
-            event: mockEvent(),
+            event: mockEvent({ startAt, endAt }),
           },
           act: {
             data: {
@@ -403,18 +406,6 @@ describe("EventsService", () => {
       const startAt = faker.date.soon();
       const endAt = faker.date.future({ refDate: startAt });
 
-      const mockEvent = () => ({
-        id: faker.string.uuid(),
-        name: faker.commerce.productName(),
-        description: faker.lorem.paragraph(),
-        startAt: startAt,
-        endAt: endAt,
-        organizationId: faker.string.uuid(),
-        organizerId: faker.string.uuid(),
-        createdAt: faker.date.past(),
-        updatedAt: faker.date.past(),
-        location: faker.location.streetAddress(),
-      });
       const testCases: TestCase[] = [
         {
           name: "update name",
@@ -430,7 +421,7 @@ describe("EventsService", () => {
         {
           name: "all defined fields are updated",
           arrange: {
-            event: mockEvent(),
+            event: mockEvent({ startAt, endAt }),
           },
           act: {
             data: {
@@ -445,7 +436,7 @@ describe("EventsService", () => {
         {
           name: "undefined fields are not updated",
           arrange: {
-            event: mockEvent(),
+            event: mockEvent({ startAt, endAt }),
           },
           act: {
             data: {
@@ -459,7 +450,7 @@ describe("EventsService", () => {
         {
           name: "update `startAt` to be in the future, before `endAt`",
           arrange: {
-            event: mockEvent(),
+            event: mockEvent({ startAt, endAt }),
           },
           act: {
             data: {
@@ -470,7 +461,7 @@ describe("EventsService", () => {
         {
           name: "update `endAt` to be in the future, after `startAt`",
           arrange: {
-            event: mockEvent(),
+            event: mockEvent({ startAt, endAt }),
           },
           act: {
             data: {
@@ -481,7 +472,7 @@ describe("EventsService", () => {
         {
           name: "update `startAt` and `endAt`, with `previousEndAt` < `startAt` < `endAt`",
           arrange: {
-            event: mockEvent(),
+            event: mockEvent({ startAt, endAt }),
           },
           act: {
             data: {

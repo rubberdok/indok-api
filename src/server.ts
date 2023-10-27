@@ -17,10 +17,10 @@ import { createClient } from "redis";
 import { env } from "./config.js";
 import { resolvers } from "./graphql/resolvers.js";
 import { typeDefs } from "./graphql/type-defs.js";
-import { migrationHealthCheck } from "./health.js";
 import { IContext, formatError } from "./lib/apolloServer.js";
 import { envToLogger } from "./lib/fastify.js";
 import postmark from "./lib/postmark.js";
+import { migrationHealthCheck } from "./lib/prisma.js";
 import { fastifyApolloSentryPlugin } from "./lib/sentry.js";
 import { CabinRepository } from "./repositories/cabins/index.js";
 import { MemberRepository } from "./repositories/organizations/members.js";
@@ -59,7 +59,18 @@ import { UserService } from "./services/users/index.js";
  *    - Set up the Apollo Server plugin, which is used to drain the Fastify request and response objects from the Apollo Server context
  *    - Set up the Apollo Server landing page plugin, which is used to display the Apollo Server landing page
  *
- * 6. Set up a health check route, which is currently only used for testing
+ * 6. Set up two health check routes:
+ *    - `/-/health` - returns `200: {"status": "ok"}` if the server is running.
+ *    - `/-/migration-health` - returns `200: {"status": "ok"}` if the Prisma migrations in `prisma/migrations`
+ *      are reflected in the database, `503: { "status": "error", "message": "Missing migrations" }` otherwise.
+ *      This health check is used by the StartupProbe for the server container to check if the server is ready to
+ *      receive connections. See `infrastructure/modules/server/server_app.tf` for details.
+ *
+ *      The deployment flow is as follows:
+ *      1. The server container is started, but the StartupProbe fails because the migrations are not reflected in the database.
+ *      2. A separate, but identical, container is started, with `command: ["npm", "run", "db:migrate"]`
+ *      3. The migration container runs the migrations, and then exits.
+ *      4. The migrations are now reflected in the database, and the StartupProbe succeeds, allowing the server container to receive connections.
  *
  * 7. Start the Fastify server
  *
@@ -153,7 +164,12 @@ export async function initServer() {
   redisClient.on("connect", () => {
     app.log.info("Connected to Redis client.");
   });
-
+  redisClient.on("reconnecting", () => {
+    app.log.info("Reconnecting to Redis client.");
+  });
+  redisClient.on("close", () => {
+    app.log.info("Redis client connection closed.");
+  });
   redisClient.on("error", (err) => {
     app.Sentry.captureException(err, {
       level: "fatal",
@@ -229,6 +245,9 @@ export async function initServer() {
     context: contextFunction,
   });
 
+  /**
+   * Straight forward health check, currently just used for testing.
+   */
   app.route({
     url: "/-/health",
     method: "GET",
@@ -238,6 +257,11 @@ export async function initServer() {
     },
   });
 
+  /**
+   * Migration health check, used by the StartupProbe for the server container to check if the server is ready to
+   * receive connections. See `infrastructure/modules/server/server_app.tf` for infrastructure details.
+   * @returns `200: {"status": "ok"}` if the Prisma migrations in `prisma/migrations` are applied, `503: { "status": "error", "message": "Missing migrations" }` otherwise.
+   */
   app.route({
     url: "/-/migration-health",
     method: "GET",
@@ -256,13 +280,18 @@ export async function initServer() {
     },
   });
 
+  /**
+   * Start the Fastify server
+   */
   try {
     await app.listen({
       port: env.PORT,
       host: "0.0.0.0",
     });
   } catch (err) {
+    // Log the error
     app.log.fatal(err);
+    // Capture the error with Sentry and exit the process
     app.Sentry.captureException(err, {
       level: "fatal",
       tags: {

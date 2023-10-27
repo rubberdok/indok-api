@@ -12,12 +12,12 @@ import { IContext } from "./apolloServer.js";
  * - The user ID of the user making the request
  * - The query and variables
  * - The path of the failing operation
- * @todo: Filter out user-facing errors
- * @todo: Add transaction ID
  *
  * Inspired by
  * https://blog.sentry.io/handling-graphql-errors-using-sentry/
  *
+ * @todo Filter out user-facing errors
+ * @todo Add transaction ID
  * @param app - The fastify app instance
  * @returns The Apollo Server plugin
  */
