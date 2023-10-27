@@ -1,12 +1,13 @@
 import { Database } from "@/core/index.js";
 import prisma from "@/lib/prisma.js";
 import { UserRepository } from "@/repositories/users/index.js";
-import { FeideService } from "@/services/auth/index.js";
+import { AuthService } from "@/services/auth/service.js";
 import { IAuthService, IUserService } from "@/services/interfaces.js";
 import { UserService } from "@/services/users/index.js";
 
 import { setupMockFeideClient } from "../__mocks__/feide.js";
 
+import { FeideProvider } from "../../providers.js";
 import { OAuthCase } from "./interfaces.js";
 
 let authService: IAuthService;
@@ -107,7 +108,7 @@ describe("OAuth", () => {
     },
   ];
   test.each(cases)("authentication - $name", async ({ responses, expected }) => {
-    authService = new FeideService(userService, setupMockFeideClient({ responses }));
+    authService = new AuthService(userService, setupMockFeideClient({ responses }), FeideProvider);
 
     const { username, feideId, firstName, lastName, email } = await authService.getUser({
       code: "code",

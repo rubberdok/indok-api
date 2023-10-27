@@ -55,6 +55,12 @@ export class NotFoundError extends BaseError {
   }
 }
 
+export class BadRequestError extends BaseError {
+  constructor(description: string) {
+    super("BadRequestError", description, codes.ERR_BAD_REQUEST);
+  }
+}
+
 export const codes = {
   /**
    * ERR_NOT_FOUND should be used for errors that arise as a result of a resource not being found,
@@ -70,6 +76,7 @@ export const codes = {
    * as closely as other errors, i.e., not sent to Sentry.
    */
   ERR_BAD_USER_INPUT: "BAD_USER_INPUT",
+  ERR_BAD_REQUEST: "BAD_REQUEST",
   /**
    * ERR_PERMISSION_DENIED should be used for errors that arise as a result of a user trying
    * to access a resource that they do not have permission to access, e.g. trying to delete

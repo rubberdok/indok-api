@@ -1,4 +1,4 @@
-import { OAuthClient, UserInfo } from "../../clients.js";
+import { AuthClient, UserInfo } from "../../clients.js";
 
 export interface FeideResponses {
   token: {
@@ -14,7 +14,7 @@ export interface FeideResponses {
   };
 }
 
-export function setupMockFeideClient({ responses }: { responses?: FeideResponses }): OAuthClient {
+export function setupMockFeideClient({ responses }: { responses?: FeideResponses }): AuthClient {
   return {
     async fetchUserInfo() {
       const userInfo = responses?.userInfo;

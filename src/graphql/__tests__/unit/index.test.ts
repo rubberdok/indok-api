@@ -1,10 +1,11 @@
 import assert from "assert";
 
 import { faker } from "@faker-js/faker";
-import { gql } from "graphql-tag";
 
 import { createMockApolloServer } from "@/graphql/__mocks__/apolloServer.js";
-import { UsersResponse } from "@/graphql/__types__.js";
+import { graphql } from "@/graphql/test-utilities/unit/gql.js";
+import { GetUsersDocument } from "@/graphql/test-utilities/unit/graphql.js";
+import { ResultOf } from "@graphql-typed-document-node/core";
 
 describe("GraphQL", () => {
   it("server should be correctly defined", async () => {
@@ -12,10 +13,10 @@ describe("GraphQL", () => {
 
     userService.getAll.mockResolvedValue([]);
 
-    const res = await server.executeOperation<{ users: UsersResponse }>(
+    const res = await server.executeOperation<ResultOf<typeof GetUsersDocument>>(
       {
-        query: gql`
-          query {
+        query: graphql(`
+          query getUsers {
             users {
               users {
                 id
@@ -23,7 +24,7 @@ describe("GraphQL", () => {
               total
             }
           }
-        `,
+        `),
       },
       {
         contextValue: createMockContext({ userId: faker.string.uuid() }),

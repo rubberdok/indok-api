@@ -3,7 +3,7 @@ import { FastifySessionObject } from "@fastify/session";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { mock, mockDeep } from "jest-mock-extended";
 
-import { formatError, IContext } from "@/lib/apolloServer.js";
+import { getFormatErrorHandler, IContext } from "@/lib/apolloServer.js";
 
 import { resolvers } from "../resolvers.js";
 import typeDefs from "../type-defs.js";
@@ -12,7 +12,7 @@ export const createMockApolloServer = () => {
   const server = new ApolloServer<IContext>({
     typeDefs: typeDefs,
     resolvers: resolvers,
-    formatError: formatError,
+    formatError: getFormatErrorHandler(),
   });
 
   const userService = mockDeep<IContext["userService"]>();

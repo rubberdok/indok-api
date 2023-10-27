@@ -1,4 +1,4 @@
-import { FastifyServerOptions } from "fastify";
+import fastify, { FastifyServerOptions } from "fastify";
 import { PinoLoggerOptions } from "fastify/types/logger.js";
 
 import { env } from "@/config.js";
@@ -33,7 +33,17 @@ export const envToLogger: Record<"development" | "production" | "test", FastifyS
     enabled: true,
     redact,
   },
-  test: env.LOG_ENABLED,
+  test: {
+    enabled: env.LOG_ENABLED,
+    transport: {
+      target: "pino-pretty",
+      options: {
+        colorize: true,
+        translateTime: "HH:MM:ss Z",
+        ignore: "pid,hostname",
+      },
+    },
+  },
 };
 
 /**

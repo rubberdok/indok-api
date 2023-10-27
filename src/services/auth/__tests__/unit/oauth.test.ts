@@ -3,11 +3,12 @@ import crypto from "crypto";
 import { User } from "@prisma/client";
 import { DeepMockProxy, mockDeep } from "jest-mock-extended";
 
-import { FeideService } from "@/services/auth/index.js";
+import { AuthService } from "@/services/auth/service.js";
 import { IUserService } from "@/services/interfaces.js";
 
 import { setupMockFeideClient } from "../__mocks__/feide.js";
 
+import { FeideProvider } from "../../providers.js";
 import { OAuthCase } from "./interfaces.js";
 
 const dummyUser = mockDeep<User>();
@@ -20,14 +21,14 @@ describe("OAuth", () => {
   });
 
   it("should generate a login url with PKCE params", () => {
-    const authService = new FeideService(mockUserService, setupMockFeideClient({}));
+    const authService = new AuthService(mockUserService, setupMockFeideClient({}), FeideProvider);
     const { url, codeChallenge } = authService.ssoUrl();
     expect(url).toContain(`code_challenge=${codeChallenge}`);
     expect(url).toContain("code_challenge_method=S256");
   });
 
   it("should generate a valid code challenge", () => {
-    const authService = new FeideService(mockUserService, setupMockFeideClient({}));
+    const authService = new AuthService(mockUserService, setupMockFeideClient({}), FeideProvider);
     const { codeChallenge, codeVerifier } = authService.ssoUrl();
     const expected = crypto.createHash("sha256").update(codeVerifier).digest("base64url");
     expect(expected).toStrictEqual(codeChallenge);
@@ -69,7 +70,7 @@ describe("OAuth", () => {
     },
   ];
   test.each(newUserCases)("authentication - $name", async ({ responses, expected }) => {
-    const authService = new FeideService(mockUserService, setupMockFeideClient({ responses }));
+    const authService = new AuthService(mockUserService, setupMockFeideClient({ responses }), FeideProvider);
 
     mockUserService.getByFeideID.mockReturnValueOnce(Promise.resolve(expected));
     mockUserService.login.mockReturnValueOnce(Promise.resolve(expected));
@@ -125,7 +126,7 @@ describe("OAuth", () => {
     },
   ];
   test.each(existingUserCases)("authentication - $name", async ({ responses, expected }) => {
-    const authService = new FeideService(mockUserService, setupMockFeideClient({ responses }));
+    const authService = new AuthService(mockUserService, setupMockFeideClient({ responses }), FeideProvider);
 
     mockUserService.getByFeideID.mockReturnValueOnce(Promise.resolve(null));
     mockUserService.create.mockReturnValueOnce(Promise.resolve(expected));
