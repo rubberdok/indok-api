@@ -5,9 +5,9 @@ import { AuthService } from "@/services/auth/service.js";
 import { IAuthService, IUserService } from "@/services/interfaces.js";
 import { UserService } from "@/services/users/index.js";
 
+import { FeideProvider } from "../../providers.js";
 import { setupMockFeideClient } from "../__mocks__/feide.js";
 
-import { FeideProvider } from "../../providers.js";
 import { OAuthCase } from "./interfaces.js";
 
 let authService: IAuthService;

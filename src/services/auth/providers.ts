@@ -1,4 +1,5 @@
 import { env } from "@/config.js";
+
 import { AuthProvider } from "./service.js";
 
 export const FeideProvider: AuthProvider = {

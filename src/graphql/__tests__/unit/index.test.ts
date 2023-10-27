@@ -1,11 +1,11 @@
 import assert from "assert";
 
 import { faker } from "@faker-js/faker";
+import { ResultOf } from "@graphql-typed-document-node/core";
 
 import { createMockApolloServer } from "@/graphql/__mocks__/apolloServer.js";
 import { graphql } from "@/graphql/test-utilities/unit/gql.js";
 import { GetUsersDocument } from "@/graphql/test-utilities/unit/graphql.js";
-import { ResultOf } from "@graphql-typed-document-node/core";
 
 describe("GraphQL", () => {
   it("server should be correctly defined", async () => {

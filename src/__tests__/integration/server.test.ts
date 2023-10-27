@@ -1,19 +1,20 @@
-import { CabinRepository } from "@/repositories/cabins/index.js";
-import { initServer } from "../../server.js";
-import { UserRepository } from "@/repositories/users/index.js";
-import { MemberRepository } from "@/repositories/organizations/members.js";
-import { OrganizationRepository } from "@/repositories/organizations/organizations.js";
-import { MailService } from "@/services/mail/index.js";
-import postmark from "@/lib/postmark.js";
 import { env } from "@/config.js";
-import { CabinService } from "@/services/cabins/index.js";
-import { UserService } from "@/services/users/index.js";
-import { AuthService } from "@/services/auth/service.js";
-import { feideClient } from "@/services/auth/clients.js";
+import postmark from "@/lib/postmark.js";
 import { FeideProvider } from "@/services/auth/providers.js";
 import { OrganizationService } from "@/services/organizations/service.js";
 import prisma from "@/lib/prisma.js";
 import { createRedisClient } from "@/lib/redis.js";
+import { CabinRepository } from "@/repositories/cabins/index.js";
+import { MemberRepository } from "@/repositories/organizations/members.js";
+import { OrganizationRepository } from "@/repositories/organizations/organizations.js";
+import { UserRepository } from "@/repositories/users/index.js";
+import { feideClient } from "@/services/auth/clients.js";
+import { AuthService } from "@/services/auth/service.js";
+import { CabinService } from "@/services/cabins/index.js";
+import { MailService } from "@/services/mail/index.js";
+import { UserService } from "@/services/users/index.js";
+
+import { initServer } from "../../server.js";
 
 describe("Server", () => {
   let server: Awaited<ReturnType<typeof initServer>> | void;

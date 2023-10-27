@@ -6,9 +6,9 @@ import { DeepMockProxy, mockDeep } from "jest-mock-extended";
 import { AuthService } from "@/services/auth/service.js";
 import { IUserService } from "@/services/interfaces.js";
 
+import { FeideProvider } from "../../providers.js";
 import { setupMockFeideClient } from "../__mocks__/feide.js";
 
-import { FeideProvider } from "../../providers.js";
 import { OAuthCase } from "./interfaces.js";
 
 const dummyUser = mockDeep<User>();

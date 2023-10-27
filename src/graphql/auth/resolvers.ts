@@ -1,4 +1,5 @@
 import { BadRequestError, InternalServerError, InvalidArgumentError } from "@/core/errors.js";
+
 import { LogoutStatus, Resolvers } from "../__types__.js";
 
 export const resolvers: Resolvers = {

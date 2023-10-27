@@ -1,6 +1,7 @@
-import { env } from "@/config.js";
 import { FastifyInstance } from "fastify";
 import { createClient } from "redis";
+
+import { env } from "@/config.js";
 
 export function createRedisClient(app: FastifyInstance): ReturnType<typeof createClient> {
   /**

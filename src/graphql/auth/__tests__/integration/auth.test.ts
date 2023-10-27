@@ -1,3 +1,10 @@
+import assert from "assert";
+
+import { faker } from "@faker-js/faker";
+import { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
+import { FastifyInstance, InjectOptions, LightMyRequestResponse } from "fastify";
+import { GraphQLError } from "graphql";
+
 import { env } from "@/config.js";
 import { codes } from "@/core/errors.js";
 import { LogoutStatus } from "@/graphql/__types__.js";
@@ -17,14 +24,8 @@ import { CabinService } from "@/services/cabins/index.js";
 import { MailService } from "@/services/mail/index.js";
 import { OrganizationService } from "@/services/organizations/service.js";
 import { UserService } from "@/services/users/index.js";
-import { faker } from "@faker-js/faker";
 
-import { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
-import assert from "assert";
-import { FastifyInstance, InjectOptions, LightMyRequestResponse } from "fastify";
-import { GraphQLError } from "graphql";
-
-class mockFeideClient implements AuthClient {
+class MockFeideClient implements AuthClient {
   fetchUserInfo(params: { url: string; accessToken: string }): Promise<UserInfo> {
     return Promise.resolve({
       sub: faker.string.uuid(),
@@ -104,7 +105,7 @@ describe("Auth GraphQL", () => {
     const mailService = new MailService(postmark, env.NO_REPLY_EMAIL);
     const cabinService = new CabinService(cabinRepository, mailService);
     const userService = new UserService(userRepository);
-    const authService = new AuthService(userService, new mockFeideClient(), FeideProvider);
+    const authService = new AuthService(userService, new MockFeideClient(), FeideProvider);
     const organizationService = new OrganizationService(organizationRepository, memberRepository, userService);
 
     const dependencies = {
