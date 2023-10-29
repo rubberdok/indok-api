@@ -9,29 +9,34 @@ import fastifyCors from "@fastify/cors";
 import fastifyHelmet from "@fastify/helmet";
 import fastifySession from "@fastify/session";
 import fastifySentry from "@immobiliarelabs/fastify-sentry";
-import { PrismaClient } from "@prisma/client";
 import RedisStore from "connect-redis";
-import fastify from "fastify";
+import fastify, { FastifyInstance } from "fastify";
 import { createClient } from "redis";
 
 import { env } from "./config.js";
 import { resolvers } from "./graphql/resolvers.js";
 import { typeDefs } from "./graphql/type-defs.js";
-import { IContext, formatError } from "./lib/apolloServer.js";
+import { IContext, getFormatErrorHandler } from "./lib/apolloServer.js";
 import { envToLogger } from "./lib/fastify.js";
-import postmark from "./lib/postmark.js";
 import { migrationHealthCheck } from "./lib/prisma.js";
 import { fastifyApolloSentryPlugin } from "./lib/sentry.js";
-import { CabinRepository } from "./repositories/cabins/index.js";
-import { MemberRepository } from "./repositories/organizations/members.js";
-import { OrganizationRepository } from "./repositories/organizations/organizations.js";
-import { UserRepository } from "./repositories/users/index.js";
-import { feideClient } from "./services/auth/clients.js";
-import { FeideService } from "./services/auth/index.js";
+import { AuthService } from "./services/auth/service.js";
 import { CabinService } from "./services/cabins/index.js";
-import { MailService } from "./services/mail/index.js";
 import { OrganizationService } from "./services/organizations/service.js";
 import { UserService } from "./services/users/index.js";
+
+interface Dependencies {
+  cabinService: CabinService;
+  userService: UserService;
+  authService: AuthService;
+  organizationService: OrganizationService;
+  createRedisClient: (app: FastifyInstance) => ReturnType<typeof createClient>;
+}
+
+interface Options {
+  port: number;
+  host: string;
+}
 
 /**
  * Initialize the Fastify server with an Apollo Server instance.
@@ -77,24 +82,13 @@ import { UserService } from "./services/users/index.js";
  * @todo Configure security headers
  * @returns The Fastify server instance
  */
-export async function initServer() {
-  // Set up and inject dependencies
-  const prisma = new PrismaClient();
-
-  const userRepository = new UserRepository(prisma);
-  const userService = new UserService(userRepository);
-
-  const memberRepository = new MemberRepository(prisma);
-  const organizationRepository = new OrganizationRepository(prisma);
-  const organizationService = new OrganizationService(organizationRepository, memberRepository, userService);
-
-  const cabinRepository = new CabinRepository(prisma);
-  const mailService = new MailService(postmark, env.NO_REPLY_EMAIL);
-  const cabinService = new CabinService(cabinRepository, mailService);
-
-  const authService = new FeideService(userService, feideClient);
+export async function initServer(dependencies: Dependencies, opts: Options): Promise<FastifyInstance> {
+  const { authService, cabinService, organizationService, userService, createRedisClient } = dependencies;
 
   const app = fastify({ logger: envToLogger[env.NODE_ENV] });
+
+  const redisClient = createRedisClient(app);
+  await redisClient.connect();
 
   /**
    * Set up Sentry monitoring
@@ -143,42 +137,7 @@ export async function initServer() {
 
   // Cookie parser, dependency of fastifySession
   await app.register(fastifyCookie);
-  /**
-   * Configure session plugin with Redis as session store
-   *
-   * Azure Redis Cache is used as the production session store,
-   * and importantly, it closes connections after 10 minutes of inactivity.
-   * As such, we need to keep the connection alive.
-   * https://learn.microsoft.com/en-us/azure/azure-cache-for-redis/cache-best-practices-connection#idle-timeout
-   *
-   * @todo figure out if we have some way of using tcp.keepalive, otherwise use ping
-   */
-  const redisClient = createClient({
-    url: env.REDIS_CONNECTION_STRING,
-    pingInterval: 1_000 * 60 * 3, // 3 minutes
-    socket: {
-      keepAlive: 1_000 * 60 * 3, // 3 minutes
-    },
-  });
 
-  redisClient.on("connect", () => {
-    app.log.info("Connected to Redis client.");
-  });
-  redisClient.on("reconnecting", () => {
-    app.log.info("Reconnecting to Redis client.");
-  });
-  redisClient.on("close", () => {
-    app.log.info("Redis client connection closed.");
-  });
-  redisClient.on("error", (err) => {
-    app.Sentry.captureException(err, {
-      level: "fatal",
-    });
-    app.log.fatal(err);
-    process.exit(1);
-  });
-
-  await redisClient.connect();
   // Regsiter session plugin
   await app.register(fastifySession, {
     secret: env.SESSION_SECRET,
@@ -198,11 +157,10 @@ export async function initServer() {
   /**
    * Default `authenticated` session variable to false if it is undefined
    */
-  app.addHook("preHandler", (request, reply, next) => {
+  app.addHook("preHandler", async (request) => {
     if (typeof request.session.get("authenticated") === "undefined") {
       request.session.set("authenticated", false);
     }
-    next();
   });
 
   /**
@@ -218,7 +176,7 @@ export async function initServer() {
     csrfPrevention: true,
     introspection: true,
     resolvers: resolvers,
-    formatError: formatError,
+    formatError: getFormatErrorHandler(app),
     plugins: [
       fastifyApolloDrainPlugin(app),
       fastifyApolloSentryPlugin(app),
@@ -279,14 +237,15 @@ export async function initServer() {
       }
     },
   });
+  const { port, host } = opts;
 
   /**
    * Start the Fastify server
    */
   try {
     await app.listen({
-      port: env.PORT,
-      host: "0.0.0.0",
+      port,
+      host,
     });
   } catch (err) {
     // Log the error

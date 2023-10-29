@@ -4,6 +4,8 @@ env:
 
 ignorePatterns:
   - "src/graphql/__types__.ts"
+  - "src/graphql/test-clients/integration/**/*.ts"
+  - "src/graphql/test-clients/unit/**/*.ts"
   - "schema.graphql"
   - dist
 
@@ -55,6 +57,7 @@ rules:
         - "*.config.ts"
         - "**/__tests__/**"
         - "**/__mocks__/**"
+        - "src/graphql/test-clients/**"
 
   linebreak-style:
     - error

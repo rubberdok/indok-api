@@ -1,5 +1,4 @@
-import { ApolloServerErrorCode } from "@apollo/server/errors";
-import { GraphQLError } from "graphql";
+import { BadRequestError, InternalServerError, InvalidArgumentError } from "@/core/errors.js";
 
 import { LogoutStatus, Resolvers } from "../__types__.js";
 
@@ -14,16 +13,16 @@ export const resolvers: Resolvers = {
       return { url };
     },
 
-    logout(_root, _args, ctx) {
+    async logout(_root, _args, ctx) {
       if (!ctx.req.session.authenticated) {
-        throw new GraphQLError("not authenticated", {
-          extensions: { code: ApolloServerErrorCode.BAD_REQUEST },
-        });
+        throw new BadRequestError("User is not authenticated");
       }
-
-      ctx.req.session.destroy((err) => {
-        throw new Error(err);
-      });
+      try {
+        await ctx.req.session.destroy();
+      } catch (err) {
+        ctx.req.log.error(err, "Failed to destroy session");
+        throw new InternalServerError("Failed to destroy session");
+      }
 
       return {
         status: LogoutStatus.Success,
@@ -38,9 +37,7 @@ export const resolvers: Resolvers = {
       const codeVerifier = ctx.req.session.get("codeVerifier");
 
       if (!codeVerifier) {
-        throw new GraphQLError("code verifier is required in session", {
-          extensions: { code: ApolloServerErrorCode.BAD_REQUEST },
-        });
+        throw new InvalidArgumentError("Code verifier not found");
       }
 
       try {
@@ -53,7 +50,7 @@ export const resolvers: Resolvers = {
         ctx.req.session.authenticated = true;
 
         // Regenerate the session to prevent session fixation attacks
-        ctx.req.session.regenerate(["userId", "authenticated"]);
+        await ctx.req.session.regenerate(["userId", "authenticated"]);
         ctx.req.log.info("User authenticated");
         return {
           user,

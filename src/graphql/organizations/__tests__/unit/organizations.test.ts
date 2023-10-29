@@ -3,7 +3,7 @@ import assert from "assert";
 import { gql } from "graphql-tag";
 
 import { codes } from "@/core/errors.js";
-import { createMockApolloServer } from "@/graphql/__mocks__/apolloServer.js";
+import { createMockApolloServer } from "@/graphql/test-clients/mockApolloServer.js";
 
 describe("OrganizationResolvers", () => {
   describe("Mutation", () => {

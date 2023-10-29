@@ -8,12 +8,12 @@ export interface UserInfo {
   email: string;
 }
 
-export interface OAuthClient {
+export interface AuthClient {
   fetchUserInfo(params: { url: string; accessToken: string }): Promise<UserInfo>;
   fetchAccessToken(params: { url: string; body: URLSearchParams; authorization: string }): Promise<string>;
 }
 
-export const feideClient: OAuthClient = {
+export const feideClient: AuthClient = {
   async fetchUserInfo({ url, accessToken }) {
     const res = await fetch(url, {
       method: "GET",
