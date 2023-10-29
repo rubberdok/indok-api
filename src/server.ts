@@ -20,10 +20,10 @@ import { IContext, getFormatErrorHandler } from "./lib/apolloServer.js";
 import { envToLogger } from "./lib/fastify.js";
 import { migrationHealthCheck } from "./lib/prisma.js";
 import { fastifyApolloSentryPlugin } from "./lib/sentry.js";
-import { AuthService } from "./services/auth/service.js";
-import { CabinService } from "./services/cabins/service.js";
-import { OrganizationService } from "./services/organizations/service.js";
-import { UserService } from "./services/users/service.js";
+import { AuthService } from "./services/auth/index.js";
+import { CabinService } from "./services/cabins/index.js";
+import { OrganizationService } from "./services/organizations/index.js";
+import { UserService } from "./services/users/index.js";
 
 interface Dependencies {
   cabinService: CabinService;

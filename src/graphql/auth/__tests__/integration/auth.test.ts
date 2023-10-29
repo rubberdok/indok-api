@@ -15,12 +15,12 @@ import { OrganizationRepository } from "@/repositories/organizations/organizatio
 import { UserRepository } from "@/repositories/users/index.js";
 import { initServer } from "@/server.js";
 import { AuthClient, UserInfo } from "@/services/auth/clients.js";
+import { AuthService } from "@/services/auth/index.js";
 import { FeideProvider } from "@/services/auth/providers.js";
-import { AuthService } from "@/services/auth/service.js";
-import { CabinService } from "@/services/cabins/service.js";
+import { CabinService } from "@/services/cabins/index.js";
 import { MailService } from "@/services/mail/index.js";
-import { OrganizationService } from "@/services/organizations/service.js";
-import { UserService } from "@/services/users/service.js";
+import { OrganizationService } from "@/services/organizations/index.js";
+import { UserService } from "@/services/users/index.js";
 
 class MockFeideClient implements AuthClient {
   fetchUserInfo(): Promise<UserInfo> {

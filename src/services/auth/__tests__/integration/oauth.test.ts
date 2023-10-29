@@ -2,7 +2,7 @@ import { Database } from "@/core/index.js";
 import prisma from "@/lib/prisma.js";
 import { UserRepository } from "@/repositories/users/index.js";
 import { IAuthService } from "@/services/interfaces.js";
-import { UserService } from "@/services/users/service.js";
+import { UserService } from "@/services/users/index.js";
 
 import { FeideProvider } from "../../providers.js";
 import { AuthService, UserService as IUserService } from "../../service.js";
