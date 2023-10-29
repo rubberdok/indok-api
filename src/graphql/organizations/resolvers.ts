@@ -80,4 +80,4 @@ export const resolvers: Resolvers = {
       return organization;
     },
   },
-};
+} as const;
