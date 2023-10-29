@@ -2,8 +2,6 @@ import { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
 import { FastifyInstance, InjectOptions, LightMyRequestResponse } from "fastify";
 import { GraphQLError } from "graphql";
 
-import { TypedDocumentString } from "./integration/graphql.js";
-
 /**
  * A test client for integration testing GraphQL resolvers.
  *
@@ -13,7 +11,7 @@ import { TypedDocumentString } from "./integration/graphql.js";
  *
  * ```ts
  * import { GraphQLTestClient } from "@/graphql/test-clients/graphqlTestClient.js";
- * import { graphql } from "@/graphql/test-clients/gql.js"
+ * import { graphql } from "@/graphql/test-clients/gql.js"
  * import { initServer } from "@/server.js";
  *
  * describe("GraphQL", () => {
@@ -59,13 +57,17 @@ export class GraphQLTestClient {
    * @param options.varaibles - The variables to pass to the mutation
    * @param request.request - The request options to pass to Fastify
    */
-  public async mutate<T extends TypedDocumentString<TResult, TVars>, TResult = any, TVars = any>(
+  public async mutate<T>(
     options: {
       mutation: T;
       variables?: VariablesOf<T>;
     },
     request?: InjectOptions
-  ): Promise<{ data?: ResultOf<T>; errors?: GraphQLError[]; response: LightMyRequestResponse }> {
+  ): Promise<{
+    data?: ResultOf<T>;
+    errors?: GraphQLError[];
+    response: LightMyRequestResponse;
+  }> {
     return this.query(
       {
         query: options.mutation,
@@ -94,7 +96,11 @@ export class GraphQLTestClient {
       variables?: VariablesOf<T>;
     },
     request?: InjectOptions
-  ): Promise<{ data?: ResultOf<T>; errors?: GraphQLError[]; response: LightMyRequestResponse }> {
+  ): Promise<{
+    data?: ResultOf<T>;
+    errors?: GraphQLError[];
+    response: LightMyRequestResponse;
+  }> {
     const { query, variables } = options;
     const response = await this.app.inject({
       method: "POST",
