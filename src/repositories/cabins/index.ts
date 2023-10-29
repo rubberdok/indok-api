@@ -1,10 +1,15 @@
-import { Booking, Cabin, Prisma } from "@prisma/client";
+import { Booking, BookingStatus, Cabin, Prisma } from "@prisma/client";
 
 import { Database } from "@/core/index.js";
 
-import { ICabinRepository, OverlappingBookingsData } from "./interfaces.js";
+export type OverlappingBookingsData = {
+  bookingId: string;
+  startDate: Date;
+  endDate: Date;
+  status?: BookingStatus;
+};
 
-export class CabinRepository implements ICabinRepository {
+export class CabinRepository {
   constructor(private db: Database) {}
 
   getBookingById(id: string): Promise<Booking> {

@@ -10,10 +10,10 @@ import { initServer } from "./server.js";
 import { feideClient } from "./services/auth/clients.js";
 import { FeideProvider } from "./services/auth/providers.js";
 import { AuthService } from "./services/auth/service.js";
-import { CabinService } from "./services/cabins/index.js";
+import { CabinService } from "./services/cabins/service.js";
 import { MailService } from "./services/mail/index.js";
 import { OrganizationService } from "./services/organizations/service.js";
-import { UserService } from "./services/users/index.js";
+import { UserService } from "./services/users/service.js";
 
 const cabinRepository = new CabinRepository(prisma);
 const userRepository = new UserRepository(prisma);

@@ -3,21 +3,19 @@ import crypto from "crypto";
 import { User } from "@prisma/client";
 import { DeepMockProxy, mockDeep } from "jest-mock-extended";
 
-import { AuthService } from "@/services/auth/service.js";
-import { IUserService } from "@/services/interfaces.js";
-
 import { FeideProvider } from "../../providers.js";
+import { AuthService, UserService } from "../../service.js";
 import { setupMockFeideClient } from "../__mocks__/feide.js";
 
 import { OAuthCase } from "./interfaces.js";
 
 const dummyUser = mockDeep<User>();
 
-let mockUserService: DeepMockProxy<IUserService>;
+let mockUserService: DeepMockProxy<UserService>;
 
 describe("OAuth", () => {
   beforeAll(() => {
-    mockUserService = mockDeep<IUserService>();
+    mockUserService = mockDeep<UserService>();
   });
 
   it("should generate a login url with PKCE params", () => {

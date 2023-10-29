@@ -1,13 +1,13 @@
 import { PrismaClient } from "@prisma/client";
 
 import prisma from "@/lib/prisma.js";
-import { IUserRepository } from "@/repositories/interfaces.js";
-import { UserRepository } from "@/repositories/users/index.js";
+
+import { UserRepository } from "../../index.js";
 
 import { CreateUserCase } from "./interfaces.js";
 
 let db: PrismaClient;
-let userRepository: IUserRepository;
+let userRepository: UserRepository;
 
 beforeAll(() => {
   db = prisma;

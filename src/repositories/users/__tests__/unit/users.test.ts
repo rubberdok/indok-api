@@ -1,11 +1,10 @@
 import { Prisma, PrismaClient, User } from "@prisma/client";
 import { DeepMockProxy, mockDeep } from "jest-mock-extended";
 
-import { IUserRepository } from "@/repositories/interfaces.js";
-import { UserRepository } from "@/repositories/users/index.js";
+import { UserRepository } from "../../index.js";
 
 const dummyUser = mockDeep<User>();
-let userRepo: IUserRepository;
+let userRepo: UserRepository;
 let mockDb: DeepMockProxy<PrismaClient>;
 
 describe("UsersRepository", () => {

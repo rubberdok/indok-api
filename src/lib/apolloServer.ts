@@ -1,11 +1,11 @@
 import { unwrapResolverError } from "@apollo/server/errors";
-import { Member, Organization, Role } from "@prisma/client";
+import { Member, Organization, Prisma, Role, User } from "@prisma/client";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { GraphQLFormattedError } from "graphql";
 import { ZodError } from "zod";
 
 import { BaseError, codes, InternalServerError, ValidationError } from "@/core/errors.js";
-import { IAuthService, ICabinService, IUserService } from "@/services/index.js";
+import { IAuthService, ICabinService } from "@/services/index.js";
 
 export function getFormatErrorHandler(app?: FastifyInstance) {
   const formatError = (formattedError: GraphQLFormattedError, error: unknown): GraphQLFormattedError => {
@@ -49,10 +49,20 @@ export interface OrganizationService {
   get(id: string): Promise<Organization>;
 }
 
+interface UserService {
+  get(id: string): Promise<User>;
+  getAll(): Promise<User[]>;
+  getByFeideID(feideId: string): Promise<User | null>;
+  update(id: string, data: Prisma.UserUpdateInput): Promise<User>;
+  login(id: string): Promise<User>;
+  create(data: Prisma.UserCreateInput): Promise<User>;
+  canUpdateYear(user: User): boolean;
+}
+
 export interface IContext {
   res: FastifyReply;
   req: FastifyRequest;
-  userService: IUserService;
+  userService: UserService;
   cabinService: ICabinService;
   authService: IAuthService;
   organizationService: OrganizationService;

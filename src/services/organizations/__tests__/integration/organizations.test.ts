@@ -9,7 +9,7 @@ import prisma from "@/lib/prisma.js";
 import { MemberRepository } from "@/repositories/organizations/members.js";
 import { OrganizationRepository } from "@/repositories/organizations/organizations.js";
 import { UserRepository } from "@/repositories/users/index.js";
-import { UserService } from "@/services/users/index.js";
+import { UserService } from "@/services/users/service.js";
 
 import { OrganizationService } from "../../service.js";
 

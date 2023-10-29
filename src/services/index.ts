@@ -1,3 +1,3 @@
-import { IAuthService, ICabinService, IMailService, IUserService } from "./interfaces.js";
+import { IAuthService, ICabinService, IMailService } from "./interfaces.js";
 
-export { IAuthService, ICabinService, IMailService, IUserService };
+export { IAuthService, ICabinService, IMailService };

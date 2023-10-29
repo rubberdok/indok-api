@@ -117,7 +117,7 @@ export class GraphQLTestClient {
     const parsedBody = JSON.parse(response.body);
     if ("errors" in parsedBody) {
       errors = parsedBody.errors.map(
-        (err: { message: string; path?: string[]; extensions?: { code?: string } }) =>
+        (err: { message: string; path?: string[]; extensions?: { code: string } }) =>
           new GraphQLError(err.message, { ...err })
       );
     }

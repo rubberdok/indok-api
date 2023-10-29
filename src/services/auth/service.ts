@@ -14,7 +14,7 @@ export interface AuthProvider {
   userInfo: string;
 }
 
-interface UserService {
+export interface UserService {
   create(data: {
     email: string;
     firstName: string;

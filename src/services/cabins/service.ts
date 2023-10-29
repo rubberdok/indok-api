@@ -1,16 +1,27 @@
-import { Booking, Cabin } from "@prisma/client";
+import { Booking, BookingStatus, Cabin } from "@prisma/client";
 
 import { ValidationError } from "@/core/errors.js";
-import { BookingStatus } from "@/domain/cabins.js";
-import { ICabinRepository } from "@/repositories/index.js";
 import { IMailService, TemplateAliasEnum } from "@/services/mail/interfaces.js";
 
 import { BookingData, ICabinService } from "./interfaces.js";
 import { bookingSchema } from "./validation.js";
 
+export interface CabinRepository {
+  getCabinById(id: string): Promise<Cabin>;
+  createBooking(data: BookingData): Promise<Booking>;
+  updateBooking(id: string, data: Partial<Booking>): Promise<Booking>;
+  getBookingById(id: string): Promise<Booking>;
+  getOverlappingBookings(data: {
+    bookingId: string;
+    startDate: Date;
+    endDate: Date;
+    status: BookingStatus;
+  }): Promise<Booking[]>;
+}
+
 export class CabinService implements ICabinService {
   constructor(
-    private cabinRepository: ICabinRepository,
+    private cabinRepository: CabinRepository,
     private mailService: IMailService
   ) {}
 
@@ -55,4 +66,3 @@ export class CabinService implements ICabinService {
     return this.cabinRepository.updateBooking(id, { status });
   }
 }
-export { CabinService } from "./service.js";
