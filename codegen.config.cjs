@@ -48,6 +48,13 @@ const config = {
         /* Fragment masking is only useful for actual clients, and it's not relevant for testing */
         fragmentMasking: false,
       },
+      plugins: [
+        {
+          add: {
+            content: generatedPrefix,
+          },
+        },
+      ],
     },
     /**
      * Generate typed document nodes for operations that are used for unit tests.
@@ -61,6 +68,13 @@ const config = {
         /* Fragment masking is only useful for actual clients, and it's not relevant for testing */
         fragmentMasking: false,
       },
+      plugins: [
+        {
+          add: {
+            content: generatedPrefix,
+          },
+        },
+      ],
     },
     "src/graphql/__types__.ts": {
       config: {
