@@ -25,20 +25,40 @@ const config = {
   schema: "src/graphql/type-defs.ts",
   emitLegacyCommonJSImports: false,
   generates: {
-    "src/graphql/test-utilities/integration/": {
+    /**
+     * Generate typed document nodes for operations that are used for
+     * integration tests. Unfortunately, we can't use the same preset as
+     * for the unit tests because the integration tests require the queries to
+     * be passed as strings.
+     */
+    "src/graphql/test-clients/integration/": {
+      /* Only generate documents for integration tests */
       documents: "src/graphql/**/__tests__/integration/*.ts",
+      /* Client preset is a sensible default, see https://the-guild.dev/graphql/codegen/plugins/presets/preset-client */
       preset: "client-preset",
       config: {
+        /**
+         * By default, the return value of the `graphql(...)` function is a JavaScript object,
+         * but for integration tests, we need to pass a string instead.
+         * See https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#documentmode
+         */
         documentMode: "string",
       },
       presetConfig: {
+        /* Fragment masking is only useful for actual clients, and it's not relevant for testing */
         fragmentMasking: false,
       },
     },
-    "src/graphql/test-utilities/unit/": {
+    /**
+     * Generate typed document nodes for operations that are used for unit tests.
+     */
+    "src/graphql/test-clients/unit/": {
+      /* Only generate documents for unit tests */
       documents: "src/graphql/**/__tests__/unit/*.ts",
+      /* Client preset is a sensible default, see https://the-guild.dev/graphql/codegen/plugins/presets/preset-client */
       preset: "client-preset",
       presetConfig: {
+        /* Fragment masking is only useful for actual clients, and it's not relevant for testing */
         fragmentMasking: false,
       },
     },

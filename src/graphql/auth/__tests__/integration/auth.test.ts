@@ -1,14 +1,12 @@
 import assert from "assert";
 
 import { faker } from "@faker-js/faker";
-import { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
-import { FastifyInstance, InjectOptions, LightMyRequestResponse } from "fastify";
-import { GraphQLError } from "graphql";
 
 import { env } from "@/config.js";
 import { codes } from "@/core/errors.js";
 import { LogoutStatus } from "@/graphql/__types__.js";
-import { graphql } from "@/graphql/test-utilities/integration/gql.js";
+import { GraphQLTestClient } from "@/graphql/test-clients/graphqlTestClient.js";
+import { graphql } from "@/graphql/test-clients/integration/gql.js";
 import postmark from "@/lib/postmark.js";
 import prisma from "@/lib/prisma.js";
 import { createRedisClient } from "@/lib/redis.js";
@@ -36,58 +34,6 @@ class MockFeideClient implements AuthClient {
   }
   fetchAccessToken(): Promise<string> {
     return Promise.resolve(faker.string.uuid());
-  }
-}
-
-class GraphQLTestClient {
-  constructor(public app: FastifyInstance) {}
-
-  public async mutate<T>(
-    options: {
-      mutation: T;
-      variables?: VariablesOf<T>;
-    },
-    request?: InjectOptions
-  ): Promise<{ data?: ResultOf<T>; errors?: GraphQLError[]; response: LightMyRequestResponse }> {
-    return this.query(
-      {
-        query: options.mutation,
-        variables: options.variables,
-      },
-      request
-    );
-  }
-
-  public async query<T>(
-    options: {
-      query: T;
-      variables?: VariablesOf<T>;
-    },
-    request?: InjectOptions
-  ): Promise<{ data?: ResultOf<T>; errors?: GraphQLError[]; response: LightMyRequestResponse }> {
-    const { query, variables } = options;
-    const response = await this.app.inject({
-      method: "POST",
-      url: "/graphql",
-      payload: {
-        query,
-        variables,
-      },
-      ...request,
-    });
-
-    let errors: GraphQLError[] | undefined;
-
-    const parsedBody = JSON.parse(response.body);
-    if ("errors" in parsedBody) {
-      errors = parsedBody.errors.map(
-        (err: { message: string; path?: string[]; extensions?: { code?: string } }) =>
-          new GraphQLError(err.message, { ...err })
-      );
-    }
-
-    const { data } = response.json<{ data: ResultOf<T> }>();
-    return { errors, data, response };
   }
 }
 
