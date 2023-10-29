@@ -1,1 +1,3 @@
 src/graphql/__types__.ts
+src/graphql/test-clients/integration/**/*.ts
+src/graphql/test-clients/unit/**/*.ts
