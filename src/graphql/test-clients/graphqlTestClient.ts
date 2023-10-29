@@ -1,6 +1,7 @@
 import { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
 import { FastifyInstance, InjectOptions, LightMyRequestResponse } from "fastify";
 import { GraphQLError } from "graphql";
+
 import { TypedDocumentString } from "./integration/graphql.js";
 
 /**

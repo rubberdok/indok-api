@@ -55,6 +55,7 @@ rules:
         - "*.config.ts"
         - "**/__tests__/**"
         - "**/__mocks__/**"
+        - "src/graphql/test-clients/**"
 
   linebreak-style:
     - error
