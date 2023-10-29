@@ -91,8 +91,11 @@ export type LogoutStatus = typeof LogoutStatus[keyof typeof LogoutStatus];
 export type Member = {
   readonly __typename?: 'Member';
   readonly id: Scalars['ID']['output'];
+  /** The organization the member is a member of */
   readonly organization: Organization;
+  /** The role of the member in the organization */
   readonly role: Role;
+  /** The user that is a member of the organization */
   readonly user: User;
 };
 
@@ -184,6 +187,7 @@ export type Organization = {
   readonly __typename?: 'Organization';
   readonly description: Scalars['String']['output'];
   readonly id: Scalars['ID']['output'];
+  /** The members of the organization */
   readonly members: ReadonlyArray<Member>;
   readonly name: Scalars['String']['output'];
 };

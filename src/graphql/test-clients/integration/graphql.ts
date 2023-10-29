@@ -87,8 +87,11 @@ export enum LogoutStatus {
 export type Member = {
   __typename?: 'Member';
   id: Scalars['ID']['output'];
+  /** The organization the member is a member of */
   organization: Organization;
+  /** The role of the member in the organization */
   role: Role;
+  /** The user that is a member of the organization */
   user: User;
 };
 
@@ -180,6 +183,7 @@ export type Organization = {
   __typename?: 'Organization';
   description: Scalars['String']['output'];
   id: Scalars['ID']['output'];
+  /** The members of the organization */
   members: Array<Member>;
   name: Scalars['String']['output'];
 };
