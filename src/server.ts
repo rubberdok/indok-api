@@ -87,9 +87,6 @@ export async function initServer(dependencies: Dependencies, opts: Options): Pro
 
   const app = fastify({ logger: envToLogger[env.NODE_ENV] });
 
-  const redisClient = createRedisClient(app);
-  await redisClient.connect();
-
   /**
    * Set up Sentry monitoring
    */
@@ -137,6 +134,10 @@ export async function initServer(dependencies: Dependencies, opts: Options): Pro
 
   // Cookie parser, dependency of fastifySession
   await app.register(fastifyCookie);
+
+  // Must be called after `Sentry` is registered
+  const redisClient = createRedisClient(app);
+  await redisClient.connect();
 
   // Regsiter session plugin
   await app.register(fastifySession, {
