@@ -14,6 +14,14 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  */
 const documents = {
     "\n          query getUsers {\n            users {\n              users {\n                id\n              }\n              total\n            }\n          }\n        ": types.GetUsersDocument,
+    "\n              mutation createOrganization1 {\n                createOrganization(data: { name: \"test\" }) {\n                  organization {\n                    id\n                  }\n                }\n              }\n            ": types.CreateOrganization1Document,
+    "\n              mutation createOrganization {\n                createOrganization(data: { name: \"test\" }) {\n                  organization {\n                    id\n                    name\n                  }\n                }\n              }\n            ": types.CreateOrganizationDocument,
+    "\n              mutation updateOrganization1 {\n                updateOrganization(data: { name: \"test\", id: \"id\" }) {\n                  organization {\n                    id\n                  }\n                }\n              }\n            ": types.UpdateOrganization1Document,
+    "\n              mutation updateOrganization2 {\n                updateOrganization(data: { name: \"test\", id: \"id\" }) {\n                  organization {\n                    id\n                    name\n                  }\n                }\n              }\n            ": types.UpdateOrganization2Document,
+    "\n              mutation addMember1 {\n                addMember(data: { userId: \"user\", organizationId: \"org\" }) {\n                  member {\n                    id\n                    organization {\n                      members {\n                        id\n                      }\n                    }\n                  }\n                }\n              }\n            ": types.AddMember1Document,
+    "\n              mutation addMember2 {\n                addMember(data: { userId: \"user\", organizationId: \"org\" }) {\n                  member {\n                    id\n                    organization {\n                      id\n                      members {\n                        id\n                      }\n                    }\n                  }\n                }\n              }\n            ": types.AddMember2Document,
+    "\n              mutation removeMember1 {\n                removeMember(data: { id: \"id\" }) {\n                  member {\n                    id\n                    organization {\n                      members {\n                        id\n                      }\n                    }\n                  }\n                }\n              }\n            ": types.RemoveMember1Document,
+    "\n              mutation removeMember2 {\n                removeMember(data: { id: \"id\" }) {\n                  member {\n                    id\n                    organization {\n                      id\n                      members {\n                        id\n                      }\n                    }\n                  }\n                }\n              }\n            ": types.RemoveMember2Document,
 };
 
 /**
@@ -34,6 +42,38 @@ export function graphql(source: string): unknown;
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n          query getUsers {\n            users {\n              users {\n                id\n              }\n              total\n            }\n          }\n        "): (typeof documents)["\n          query getUsers {\n            users {\n              users {\n                id\n              }\n              total\n            }\n          }\n        "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n              mutation createOrganization1 {\n                createOrganization(data: { name: \"test\" }) {\n                  organization {\n                    id\n                  }\n                }\n              }\n            "): (typeof documents)["\n              mutation createOrganization1 {\n                createOrganization(data: { name: \"test\" }) {\n                  organization {\n                    id\n                  }\n                }\n              }\n            "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n              mutation createOrganization {\n                createOrganization(data: { name: \"test\" }) {\n                  organization {\n                    id\n                    name\n                  }\n                }\n              }\n            "): (typeof documents)["\n              mutation createOrganization {\n                createOrganization(data: { name: \"test\" }) {\n                  organization {\n                    id\n                    name\n                  }\n                }\n              }\n            "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n              mutation updateOrganization1 {\n                updateOrganization(data: { name: \"test\", id: \"id\" }) {\n                  organization {\n                    id\n                  }\n                }\n              }\n            "): (typeof documents)["\n              mutation updateOrganization1 {\n                updateOrganization(data: { name: \"test\", id: \"id\" }) {\n                  organization {\n                    id\n                  }\n                }\n              }\n            "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n              mutation updateOrganization2 {\n                updateOrganization(data: { name: \"test\", id: \"id\" }) {\n                  organization {\n                    id\n                    name\n                  }\n                }\n              }\n            "): (typeof documents)["\n              mutation updateOrganization2 {\n                updateOrganization(data: { name: \"test\", id: \"id\" }) {\n                  organization {\n                    id\n                    name\n                  }\n                }\n              }\n            "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n              mutation addMember1 {\n                addMember(data: { userId: \"user\", organizationId: \"org\" }) {\n                  member {\n                    id\n                    organization {\n                      members {\n                        id\n                      }\n                    }\n                  }\n                }\n              }\n            "): (typeof documents)["\n              mutation addMember1 {\n                addMember(data: { userId: \"user\", organizationId: \"org\" }) {\n                  member {\n                    id\n                    organization {\n                      members {\n                        id\n                      }\n                    }\n                  }\n                }\n              }\n            "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n              mutation addMember2 {\n                addMember(data: { userId: \"user\", organizationId: \"org\" }) {\n                  member {\n                    id\n                    organization {\n                      id\n                      members {\n                        id\n                      }\n                    }\n                  }\n                }\n              }\n            "): (typeof documents)["\n              mutation addMember2 {\n                addMember(data: { userId: \"user\", organizationId: \"org\" }) {\n                  member {\n                    id\n                    organization {\n                      id\n                      members {\n                        id\n                      }\n                    }\n                  }\n                }\n              }\n            "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n              mutation removeMember1 {\n                removeMember(data: { id: \"id\" }) {\n                  member {\n                    id\n                    organization {\n                      members {\n                        id\n                      }\n                    }\n                  }\n                }\n              }\n            "): (typeof documents)["\n              mutation removeMember1 {\n                removeMember(data: { id: \"id\" }) {\n                  member {\n                    id\n                    organization {\n                      members {\n                        id\n                      }\n                    }\n                  }\n                }\n              }\n            "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n              mutation removeMember2 {\n                removeMember(data: { id: \"id\" }) {\n                  member {\n                    id\n                    organization {\n                      id\n                      members {\n                        id\n                      }\n                    }\n                  }\n                }\n              }\n            "): (typeof documents)["\n              mutation removeMember2 {\n                removeMember(data: { id: \"id\" }) {\n                  member {\n                    id\n                    organization {\n                      id\n                      members {\n                        id\n                      }\n                    }\n                  }\n                }\n              }\n            "];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};

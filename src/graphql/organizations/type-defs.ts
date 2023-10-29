@@ -5,13 +5,29 @@ export const typeDefs = gql`
     id: ID!
     name: String!
     description: String!
+
+    """
+    The members of the organization
+    """
     members: [Member!]!
   }
 
   type Member {
     id: ID!
+
+    """
+    The user that is a member of the organization
+    """
     user: User!
+
+    """
+    The organization the member is a member of
+    """
     organization: Organization!
+
+    """
+    The role of the member in the organization
+    """
     role: Role!
   }
 

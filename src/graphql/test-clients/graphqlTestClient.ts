@@ -7,7 +7,7 @@ import { GraphQLError } from "graphql";
  *
  * This class can be used to test GraphQL resolvers by using the `query` and `mutate` methods.
  *
- * Example
+ * ### Example
  *
  * ```ts
  * import { GraphQLTestClient } from "@/graphql/test-clients/graphqlTestClient.js";

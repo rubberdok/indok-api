@@ -66,8 +66,14 @@ enum LogoutStatus {
 
 type Member {
   id: ID!
+
+  """The organization the member is a member of"""
   organization: Organization!
+
+  """The role of the member in the organization"""
   role: Role!
+
+  """The user that is a member of the organization"""
   user: User!
 }
 
@@ -110,6 +116,8 @@ input NewBookingInput {
 type Organization {
   description: String!
   id: ID!
+
+  """The members of the organization"""
   members: [Member!]!
   name: String!
 }
