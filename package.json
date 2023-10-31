@@ -50,7 +50,7 @@
     "@swc/helpers": "^0.5.3",
     "@swc/jest": "^0.2.29",
     "@types/connect-redis": "^0.0.22",
-    "@types/jest": "^29.5.6",
+    "@types/jest": "^29.5.7",
     "@types/lodash-es": "^4.17.10",
     "@types/node": "18",
     "@typescript-eslint/eslint-plugin": "^6.9.0",
