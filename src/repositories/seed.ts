@@ -6,7 +6,8 @@ const db = new PrismaClient();
 
 const main = async () => {
   console.log("Seeding...");
-  Users.load(db);
+  const users = await Users.load(db);
+  console.table(users);
 };
 
 try {

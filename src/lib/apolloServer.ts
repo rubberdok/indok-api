@@ -6,6 +6,7 @@ import { ZodError } from "zod";
 
 import { BaseError, codes, InternalServerError, ValidationError } from "@/core/errors.js";
 import { IAuthService, ICabinService } from "@/services/index.js";
+import { DomainUser } from "@/services/users/service.js";
 
 export function getFormatErrorHandler(app?: FastifyInstance) {
   const formatError = (formattedError: GraphQLFormattedError, error: unknown): GraphQLFormattedError => {
@@ -50,12 +51,12 @@ export interface OrganizationService {
 }
 
 interface UserService {
-  get(id: string): Promise<User>;
-  getAll(): Promise<User[]>;
-  getByFeideID(feideId: string): Promise<User | null>;
-  update(id: string, data: Prisma.UserUpdateInput): Promise<User>;
-  login(id: string): Promise<User>;
-  create(data: Prisma.UserCreateInput): Promise<User>;
+  get(id: string): Promise<DomainUser>;
+  getAll(): Promise<DomainUser[]>;
+  getByFeideID(feideId: string): Promise<DomainUser | null>;
+  update(id: string, data: Prisma.UserUpdateInput): Promise<DomainUser>;
+  login(id: string): Promise<DomainUser>;
+  create(data: Prisma.UserCreateInput): Promise<DomainUser>;
   canUpdateYear(user: User): boolean;
 }
 
