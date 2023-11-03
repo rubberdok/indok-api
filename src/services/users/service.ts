@@ -1,7 +1,7 @@
 import { Prisma, User as PrismaUser, User } from "@prisma/client";
 import dayjs from "dayjs";
-
 import { merge } from "lodash-es";
+
 import { createUserSchema, updateUserSchema } from "./validation.js";
 
 export interface UserRepository {
@@ -89,7 +89,7 @@ export class UserService {
      * from the start of august.
      *
      * Example:
-     * | Current Date | Graduation Year | Grade Year |
+     * | Current Date | Graduation Year | Grade Year |
      * -----------------------------------------------
      * | 2021-01-01   | 2021            | 5          |
      * | 2021-08-01   | 2021            | 6          |

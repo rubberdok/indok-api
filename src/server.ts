@@ -14,6 +14,7 @@ import fastify, { FastifyInstance } from "fastify";
 import { createClient } from "redis";
 
 import { env } from "./config.js";
+import { BadRequestError } from "./core/errors.js";
 import { resolvers } from "./graphql/resolvers.generated.js";
 import { typeDefs } from "./graphql/typeDefs.generated.js";
 import { IContext, getFormatErrorHandler } from "./lib/apolloServer.js";
@@ -24,7 +25,6 @@ import { AuthService } from "./services/auth/index.js";
 import { CabinService } from "./services/cabins/index.js";
 import { OrganizationService } from "./services/organizations/index.js";
 import { UserService } from "./services/users/index.js";
-import { BadRequestError } from "./core/errors.js";
 
 interface Dependencies {
   cabinService: CabinService;
