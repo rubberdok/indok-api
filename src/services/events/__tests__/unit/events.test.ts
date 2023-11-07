@@ -275,8 +275,8 @@ describe("EventsService", () => {
           },
           act: {
             data: {
-              endAt: faker.date.soon(),
-              startAt: faker.date.future(),
+              endAt: faker.date.between({ from: startAt, to: endAt }),
+              startAt: faker.date.soon({ refDate: endAt, days: 2 }),
             },
           },
           assert: {
