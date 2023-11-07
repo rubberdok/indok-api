@@ -37,10 +37,10 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install Dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Run Unit Tests
-        run: npm run test -- --collect-coverage
+        run: pnpm test -- --collect-coverage
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v3
@@ -69,10 +69,10 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install Dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Run Lint
-        run: npm run lint
+        run: pnpm lint
 
   typescript:
     name: Typescript
@@ -94,10 +94,10 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install Dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Run tsc
-        run: npm run tsc
+        run: pnpm tsc
 
   build:
     name: Build
@@ -119,10 +119,10 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install Dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Build
-        run: npm run build
+        run: pnpm build
 
   integration-test:
     name: Integration Test
@@ -174,10 +174,10 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install Dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Run Integration Tests
-        run: npm run test:integration:headless -- --collect-coverage --shard ${{ matrix.shard }}/4
+        run: pnpm test:integration:headless -- --collect-coverage --shard ${{ matrix.shard }}/4
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v3
