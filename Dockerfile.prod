@@ -1,34 +1,40 @@
-FROM public.ecr.aws/docker/library/node:lts-alpine AS deps
+FROM public.ecr.aws/docker/library/node:lts-alpine AS base
+WORKDIR /usr/src/app
 
 LABEL org.opencontainers.image.source https://github.com/rubberdok/indok-api
 LABEL org.opencontainers.image.description Container image for the Indøk API.
 LABEL org.opencontainers.image.licenses MIT
 
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+
+COPY . ./
+
+FROM base AS prod-deps
+
+WORKDIR /usr/src/app
+
 RUN apk add --no-cache libc6-compat
-WORKDIR /usr/src/app
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --frozen-lockfile
 
-COPY package.json package-lock.json ./
-RUN npm ci
-
-FROM public.ecr.aws/docker/library/node:lts-alpine AS builder
-WORKDIR /usr/src/app
-
-COPY --from=deps /usr/src/app/node_modules ./node_modules
-
-COPY . .
-
-RUN npm run build:production
-RUN npm install --omit=dev
-
-FROM public.ecr.aws/docker/library/node:lts-alpine AS runner
-
-COPY --from=builder /usr/src/app/certs /etc/ssl/certs
+FROM base AS build
 
 WORKDIR /usr/src/app
 
-COPY --from=builder /usr/src/app/prisma ./prisma
-COPY --from=builder /usr/src/app/package.json ./package.json
-COPY --from=builder /usr/src/app/node_modules ./node_modules
-COPY --from=builder /usr/src/app/dist ./dist
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+RUN pnpm run build:production
 
-CMD ["node", "./dist/index.js"]
+FROM base
+
+WORKDIR /usr/src/app
+
+COPY --from=build /usr/src/app/certs /etc/ssl/certs
+COPY --from=build /usr/src/app/package.json ./package.json
+COPY --from=prod-deps /usr/src/app/node_modules ./node_modules
+COPY --from=build /usr/src/app/prisma ./prisma
+COPY --from=build /usr/src/app/dist ./dist
+
+EXPOSE 4000
+
+CMD [ "node", "./dist/index.js" ]

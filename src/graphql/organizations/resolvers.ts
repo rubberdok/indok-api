@@ -1,4 +1,4 @@
-import { Role } from "@prisma/client";
+import { Role } from "@/domain/organizations.js";
 
 import { Resolvers } from "../__types__.js";
 import { assertIsAuthenticated } from "../auth.js";

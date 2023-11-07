@@ -1,13 +1,14 @@
-FROM public.ecr.aws/docker/library/node:lts AS deps
-
+FROM public.ecr.aws/docker/library/node:lts
 WORKDIR /usr/src/app
 
-COPY package.json package-lock.json ./
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
 
-RUN npm i
+COPY . ./
 
-COPY . .
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
-RUN npm run generate:prisma
+RUN pnpm run generate:prisma
 
 CMD ["npm", "run", "dev"]

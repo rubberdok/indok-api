@@ -1,8 +1,9 @@
 import { execSync } from "child_process";
 
-import { PrismaClient } from "@prisma/client";
+import prisma from "@prisma/client";
 import { FastifyInstance } from "fastify";
 
+const { PrismaClient } = prisma;
 export default new PrismaClient();
 
 interface MigrationHealthCheckReturnType {

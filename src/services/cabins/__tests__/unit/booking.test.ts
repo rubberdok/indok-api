@@ -1,9 +1,9 @@
 import { randomUUID } from "crypto";
 
-import { BookingStatus } from "@prisma/client";
 import dayjs from "dayjs";
 import { DeepMockProxy, mockDeep } from "jest-mock-extended";
 
+import { BookingStatus } from "@/domain/cabins.js";
 import { ICabinRepository } from "@/repositories/index.js";
 import { CabinService } from "@/services/cabins/index.js";
 import { BookingData } from "@/services/cabins/interfaces.js";
