@@ -1,6 +1,5 @@
 import { randomUUID } from "crypto";
 
-import { BookingStatus } from "@prisma/client";
 import dayjs from "dayjs";
 import { DeepMockProxy, mockDeep } from "jest-mock-extended";
 
@@ -11,6 +10,7 @@ import { ICabinService, IMailService } from "@/services/index.js";
 import { TemplateAliasEnum } from "@/services/mail/interfaces.js";
 
 import { NegativeValidationTestCase, PositiveValidationTestCase } from "./interfaces.js";
+import { BookingStatus } from "@/domain/cabins.js";
 
 const validBooking: BookingData = {
   cabinId: randomUUID(),

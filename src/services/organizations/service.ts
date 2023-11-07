@@ -1,7 +1,8 @@
-import { Member, Organization, Role, User } from "@prisma/client";
+import type { Member, Organization, User } from "@prisma/client";
 import { z } from "zod";
 
 import { InvalidArgumentError, PermissionDeniedError } from "@/core/errors.js";
+import { Role } from "@/domain/organizations.js";
 
 export interface OrganizationRepository {
   create(data: { name: string; description?: string; userId: string }): Promise<Organization>;

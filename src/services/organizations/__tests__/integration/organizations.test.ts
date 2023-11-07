@@ -1,9 +1,10 @@
 import assert from "assert";
 
 import { faker } from "@faker-js/faker";
-import { Prisma, Role } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 import { BaseError, InvalidArgumentError, PermissionDeniedError } from "@/core/errors.js";
+import { Role } from "@/domain/organizations.js";
 import prisma from "@/lib/prisma.js";
 import { MemberRepository } from "@/repositories/organizations/members.js";
 import { OrganizationRepository } from "@/repositories/organizations/organizations.js";

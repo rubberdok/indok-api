@@ -1,4 +1,4 @@
-import { Member, Role } from "@prisma/client";
+import type { Member, Role } from "@prisma/client";
 
 import { NotFoundError } from "@/core/errors.js";
 

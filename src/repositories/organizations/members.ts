@@ -1,4 +1,4 @@
-import { Member, Role } from "@prisma/client";
+import type { Member, Role } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 
 import { InvalidArgumentError, NotFoundError } from "@/core/errors.js";
