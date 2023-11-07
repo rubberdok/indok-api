@@ -25,7 +25,7 @@ interface MigrationHealthCheckReturnType {
 export function migrationHealthCheck(app: FastifyInstance): MigrationHealthCheckReturnType {
   try {
     app.log.info("Running migration health check");
-    execSync("npm run db:migrate:status");
+    execSync("pnpm exec prisma migrate status");
     app.log.info("Migration health check passed");
     return { status: true };
   } catch (err) {
