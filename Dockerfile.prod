@@ -27,7 +27,7 @@ WORKDIR /usr/src/app
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 RUN pnpm build:production
 
-FROM base
+FROM public.ecr.aws/docker/library/node:lts-alpine AS runner
 ENV NODE_ENV production
 
 WORKDIR /usr/src/app
