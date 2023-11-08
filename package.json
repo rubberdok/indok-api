@@ -9,7 +9,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build:production": "run-p generate:prisma swc",
+    "build:production": "pnpm swc",
     "build": "run-p generate:prisma swc",
     "db:migrate:dev": "dotenv -e .env.development -- prisma migrate dev",
     "db:migrate:status": "prisma migrate status",
