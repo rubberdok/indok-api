@@ -130,8 +130,8 @@ devDependencies:
     specifier: ^0.2.29
     version: 0.2.29(@swc/core@1.3.95)
   '@types/connect-redis':
-    specifier: ^0.0.22
-    version: 0.0.22
+    specifier: ^0.0.23
+    version: 0.0.23
   '@types/jest':
     specifier: ^29.5.6
     version: 29.5.8
@@ -2941,8 +2941,8 @@ packages:
       '@types/responselike': 1.0.3
     dev: true
 
-  /@types/connect-redis@0.0.22:
-    resolution: {integrity: sha512-NZYbwgAfzhx8Ju6Bv3W+w5mUW2W3KMC5IOMqa6WXvHg7/Jyhv6jWdpHTm0M6B7ZvbUnmqA3ko00TN+8OrsPPLA==}
+  /@types/connect-redis@0.0.23:
+    resolution: {integrity: sha512-+yKa9EQJ7YZIWjTKbCdXhqYSpirGf7Cc0o5QTFrkWORneFHVu3QOopRUi6E/ye41QGMom+cj1/kvWFHamHTADA==}
     dependencies:
       '@types/express': 4.17.21
       '@types/express-session': 1.17.10
