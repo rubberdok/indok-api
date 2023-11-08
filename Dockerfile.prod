@@ -17,13 +17,14 @@ WORKDIR /usr/src/app
 
 RUN apk add --no-cache libc6-compat
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --frozen-lockfile
+RUN pnpm generate:prisma
 
 FROM base AS build
 
 WORKDIR /usr/src/app
 
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
-RUN pnpm run build:production
+RUN pnpm build
 
 FROM base
 
