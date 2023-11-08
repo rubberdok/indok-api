@@ -29,7 +29,7 @@ export function migrationHealthCheck(app: FastifyInstance): MigrationHealthCheck
     app.log.info("Migration health check passed");
     return { status: true };
   } catch (err) {
-    app.log.info("Migration health check failed", err);
+    app.log.error(err, "Migration health check failed", err);
     if (err instanceof Error) {
       return { status: false, message: "Missing migrations" };
     }
