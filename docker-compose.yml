@@ -31,10 +31,13 @@ services:
     environment:
       - REDIS_CONNECTION_STRING=redis://redis:6379
       - DATABASE_CONNECTION_STRING=postgresql://postgres:postgres@postgres:5432?schema=public
+    env_file:
+      - .env.development
     volumes:
-      - ./:/usr/src/app
+      - .:/usr/src/app
       - ./node_modules/.prisma:/usr/src/app/node_modules/.prisma
-      - api_node_modules:/usr/src/app/node_modules/
+      - node_modules:/usr/src/app/node_modules/
+      - /usr/src/app/dist
     ports:
       - 4000:4000
     depends_on:
@@ -46,5 +49,4 @@ volumes:
     driver: local
   postgres_data:
     driver: local
-  api_node_modules:
-    driver: local
+  node_modules:
