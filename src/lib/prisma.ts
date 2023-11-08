@@ -1,6 +1,5 @@
-import { execSync } from "child_process";
-
 import prisma from "@prisma/client";
+import { execa } from "execa";
 import { FastifyInstance } from "fastify";
 
 const { PrismaClient } = prisma;
@@ -22,10 +21,10 @@ interface MigrationHealthCheckReturnType {
  * @returns status - `true` if the migrations are reflected in the database, `false` otherwise
  * @returns message - The error message if the migrations are not reflected in the database
  */
-export function migrationHealthCheck(app: FastifyInstance): MigrationHealthCheckReturnType {
+export async function migrationHealthCheck(app: FastifyInstance): Promise<MigrationHealthCheckReturnType> {
   try {
     app.log.info("Running migration health check");
-    execSync("pnpm exec prisma migrate status");
+    await execa("prisma", ["migrate", "status"]);
     app.log.info("Migration health check passed");
     return { status: true };
   } catch (err) {

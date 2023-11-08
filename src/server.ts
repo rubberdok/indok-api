@@ -225,7 +225,7 @@ export async function initServer(dependencies: Dependencies, opts: Options): Pro
     method: "GET",
     handler: async (req, reply) => {
       req.log.info("Health check");
-      const { status, message } = migrationHealthCheck(app);
+      const { status, message } = await migrationHealthCheck(app);
       if (!status) {
         req.log.info("Health check failed");
         reply.statusCode = 503;
