@@ -82,7 +82,7 @@
     "@graphql-tools/merge": "^9.0.0",
     "@immobiliarelabs/fastify-sentry": "^7.1.1",
     "@prisma/client": "^5.5.2",
-    "@sentry/node": "^7.78.0",
+    "@sentry/node": "^7.79.0",
     "body-parser": "^1.20.2",
     "connect-redis": "^7.1.0",
     "dayjs": "^1.11.10",
