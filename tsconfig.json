@@ -1,11 +1,8 @@
 {
-  "extends": "ts-node/node20/tsconfig.json",
-
   "ts-node": {
     "swc": true,
     "esm": true,
-    "require": ["tsconfig-paths/register"],
-    "transpileOnly": true
+    "require": ["tsconfig-paths/register"]
   },
 
   "compilerOptions": {
@@ -15,6 +12,7 @@
     "sourceMap": true,
     "esModuleInterop": true,
     "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
     "lib": ["ES2022"],
     "strict": true,
     "rootDir": "./",

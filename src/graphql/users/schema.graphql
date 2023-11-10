@@ -1,0 +1,39 @@
+input UpdateUserInput {
+  firstName: String!
+  lastName: String!
+  phoneNumber: String
+  allergies: String
+  graduationYear: Int
+}
+
+type UsersResponse {
+  users: [User!]!
+  total: Int!
+}
+
+type UserResponse {
+  user: User
+}
+
+type Query {
+  user: UserResponse!
+  users: UsersResponse!
+}
+
+type Mutation {
+  updateUser(id: ID!, data: UpdateUserInput!): User!
+}
+
+type User {
+  id: ID!
+  lastName: String!
+  firstName: String!
+  username: String!
+  createdAt: DateTime!
+  firstLogin: Boolean!
+  canUpdateYear: Boolean!
+  graduationYear: Int
+  phoneNumber: String
+  allergies: String
+  graduationYearUpdatedAt: DateTime
+}
