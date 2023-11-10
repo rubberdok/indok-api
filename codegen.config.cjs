@@ -25,6 +25,9 @@ const config = {
   overwrite: true,
   schema: "src/graphql/**/schema.graphql",
   emitLegacyCommonJSImports: false,
+  hooks: {
+    afterAllFileWrite: ["prettier --write"],
+  },
   generates: {
     /**
      * Generate typed document nodes for operations that are used for
