@@ -1,7 +1,7 @@
 import { jest } from "@jest/globals";
 import { Prisma, User } from "@prisma/client";
 import dayjs from "dayjs";
-import { DeepMockProxy, mockDeep } from "jest-mock-extended";
+import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 
 import { UserRepository, UserService } from "../../service.js";
 
@@ -142,15 +142,15 @@ describe("UserService", () => {
 
     await service.update(existing.id, input);
 
-    expect(repo.get).toBeCalledWith(existing.id);
-    expect(repo.update).toBeCalledWith(existing.id, updateInput);
+    expect(repo.get).toHaveBeenCalledWith(existing.id);
+    expect(repo.update).toHaveBeenCalledWith(existing.id, updateInput);
   });
 
   it("logging in should set lastLogin", async () => {
-    repo.update.mockReturnValueOnce(Promise.resolve(dummyUser));
+    repo.update.mockReturnValueOnce(Promise.resolve(mock<User>({ graduationYearUpdatedAt: null })));
 
     await service.login(dummyUser.id);
 
-    expect(repo.update).toBeCalledWith(dummyUser.id, { lastLogin: time });
+    expect(repo.update).toHaveBeenCalledWith(dummyUser.id, { lastLogin: time });
   });
 });
