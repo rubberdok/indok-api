@@ -21,7 +21,6 @@ type Query {
 }
 
 type Mutation {
-  createUser(firstName: String!): User
   updateUser(id: ID!, data: UpdateUserInput!): User!
 }
 

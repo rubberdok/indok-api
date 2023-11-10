@@ -102,7 +102,6 @@ export type Mutation = {
   authenticate: UserResponse;
   /** Create a new organization, and add the current user as an admin of the organization. */
   createOrganization: CreateOrganizationResponse;
-  createUser?: Maybe<User>;
   logout: LogoutResponse;
   newBooking: Booking;
   redirectUrl: RedirectUrlResponse;
@@ -130,11 +129,6 @@ export type MutationAuthenticateArgs = {
 
 export type MutationCreateOrganizationArgs = {
   data: CreateOrganizationInput;
-};
-
-
-export type MutationCreateUserArgs = {
-  firstName: Scalars['String']['input'];
 };
 
 

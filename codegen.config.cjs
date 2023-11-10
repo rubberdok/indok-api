@@ -94,6 +94,9 @@ const config = {
       {
         mode: "modules",
         emitLegacyCommonJSImports: false,
+        add: {
+          "./types.generated.ts": { content: generatedPrefix },
+        },
         typesPluginsConfig: {
           contextType: "@/lib/apolloServer.js#IContext",
         },

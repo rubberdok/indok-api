@@ -100,7 +100,6 @@ type Mutation {
   Create a new organization, and add the current user as an admin of the organization.
   """
   createOrganization(data: CreateOrganizationInput!): CreateOrganizationResponse!
-  createUser(firstName: String!): User
   logout: LogoutResponse!
   newBooking(data: NewBookingInput!): Booking!
   redirectUrl(state: String): RedirectUrlResponse!
