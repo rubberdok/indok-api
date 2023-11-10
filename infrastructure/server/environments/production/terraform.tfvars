@@ -1,3 +1,13 @@
+/*
+--- IMPORTANT ---
+This file MUST NOT contain any secrets.
+It is checked into version control and is therefore public.
+
+Secrets should be stored in the Azure Key Vault and inject into the containers at runtime.
+See `infrastucture/modules/server/server_app.tf` and `infrastucture/modules/server/secrets.tf`
+on how to do this.
+*/
+
 environment_variables = [
   {
     name  = "CORS_ORIGINS"

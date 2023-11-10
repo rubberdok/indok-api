@@ -1,11 +1,11 @@
 import { Database } from "@/core/index.js";
 import prisma from "@/lib/prisma.js";
 import { UserRepository } from "@/repositories/users/index.js";
-import { AuthService } from "@/services/auth/service.js";
-import { IAuthService, IUserService } from "@/services/interfaces.js";
+import { IAuthService } from "@/services/interfaces.js";
 import { UserService } from "@/services/users/index.js";
 
 import { FeideProvider } from "../../providers.js";
+import { AuthService, UserService as IUserService } from "../../service.js";
 import { setupMockFeideClient } from "../__mocks__/feide.js";
 
 import { OAuthCase } from "./interfaces.js";

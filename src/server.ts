@@ -14,15 +14,16 @@ import fastify, { FastifyInstance } from "fastify";
 import { createClient } from "redis";
 
 import { env } from "./config.js";
+import { BadRequestError } from "./core/errors.js";
 import { resolvers } from "./graphql/resolvers.generated.js";
 import { typeDefs } from "./graphql/typeDefs.generated.js";
 import { IContext, getFormatErrorHandler } from "./lib/apolloServer.js";
 import { envToLogger } from "./lib/fastify.js";
 import { migrationHealthCheck } from "./lib/prisma.js";
 import { fastifyApolloSentryPlugin } from "./lib/sentry.js";
-import { AuthService } from "./services/auth/service.js";
-import { CabinService } from "./services/cabins/index.js";
-import { OrganizationService } from "./services/organizations/service.js";
+import { AuthService } from "./services/auth/index.js";
+import { CabinService } from "./services/cabins/service.js";
+import { OrganizationService } from "./services/organizations/index.js";
 import { UserService } from "./services/users/index.js";
 
 interface Dependencies {
@@ -85,10 +86,7 @@ interface Options {
 export async function initServer(dependencies: Dependencies, opts: Options): Promise<FastifyInstance> {
   const { authService, cabinService, organizationService, userService, createRedisClient } = dependencies;
 
-  const app = fastify({ logger: envToLogger[env.NODE_ENV] });
-
-  const redisClient = createRedisClient(app);
-  await redisClient.connect();
+  const app = fastify({ logger: envToLogger[env.NODE_ENV], ignoreTrailingSlash: true });
 
   /**
    * Set up Sentry monitoring
@@ -137,6 +135,10 @@ export async function initServer(dependencies: Dependencies, opts: Options): Pro
 
   // Cookie parser, dependency of fastifySession
   await app.register(fastifyCookie);
+
+  // Must be called after `Sentry` is registered
+  const redisClient = createRedisClient(app);
+  await redisClient.connect();
 
   // Regsiter session plugin
   await app.register(fastifySession, {
@@ -237,6 +239,62 @@ export async function initServer(dependencies: Dependencies, opts: Options): Pro
       }
     },
   });
+
+  app.route<{
+    Querystring: {
+      state: string;
+    };
+  }>({
+    url: "/login",
+    method: "GET",
+    schema: {
+      querystring: {
+        state: { type: "string" },
+      },
+    },
+    handler: async (req, reply) => {
+      const { state } = req.query;
+      const { codeVerifier, url } = authService.ssoUrl(state);
+      req.session.set("codeVerifier", codeVerifier);
+
+      return reply.redirect(303, url);
+    },
+  });
+
+  app.route<{
+    Querystring: {
+      code: string;
+      state: string;
+    };
+  }>({
+    url: "/authenticate",
+    method: "GET",
+    schema: {
+      querystring: {
+        code: { type: "string" },
+        state: { type: "string" },
+      },
+    },
+    handler: async (req, reply) => {
+      const { code, state } = req.query;
+      const codeVerifier = req.session.get("codeVerifier");
+
+      req.log.info("Authenticating user", { code, state, codeVerifier });
+
+      if (!codeVerifier) {
+        throw new BadRequestError("Missing code verifier");
+      }
+
+      const user = await authService.getUser({ code, codeVerifier });
+
+      req.session.set("authenticated", true);
+      req.session.set("userId", user.id);
+      req.log.info("User authenticated", { userId: user.id });
+
+      return reply.redirect(303, state);
+    },
+  });
+
   const { port, host } = opts;
 
   /**

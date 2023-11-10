@@ -2,9 +2,7 @@ import { Prisma, User } from "@prisma/client";
 
 import { Database } from "@/core/index.js";
 
-import { IUserRepository } from "./interfaces.js";
-
-export class UserRepository implements IUserRepository {
+export class UserRepository {
   constructor(private db: Database) {}
 
   update(id: string, data: Prisma.UserUpdateInput): Promise<User> {

@@ -1,7 +1,20 @@
 import { ApolloServerPlugin } from "@apollo/server";
 import { FastifyInstance } from "fastify";
+import { GraphQLError } from "graphql";
+
+import { codes } from "@/core/errors.js";
 
 import { IContext } from "./apolloServer.js";
+
+const USER_FACING_ERRORS = new Set<string>([
+  codes.ERR_BAD_REQUEST,
+  codes.ERR_BAD_USER_INPUT,
+  codes.ERR_PERMISSION_DENIED,
+]);
+
+function isUserFacingError(error: GraphQLError): boolean {
+  return USER_FACING_ERRORS.has(error.extensions.code);
+}
 
 /**
  * Plugin for Apollo Server that reports errors to Sentry.
@@ -34,9 +47,11 @@ export const fastifyApolloSentryPlugin = (app: FastifyInstance): ApolloServerPlu
           for (const err of ctx.errors) {
             // Only report internal server errors,
             // all errors extending ApolloError should be user-facing
-            /**
-             * @todo filter out user-facing errors
-             */
+
+            // Filter out user-facing errors, we're not really interested in logging those to Sentry
+            if (isUserFacingError(err)) {
+              continue;
+            }
 
             // Add scoped report details and send to Sentry
             app.Sentry.withScope((scope) => {
@@ -69,3 +84,9 @@ export const fastifyApolloSentryPlugin = (app: FastifyInstance): ApolloServerPlu
     },
   };
 };
+
+declare module "graphql" {
+  interface GraphQLErrorExtensions {
+    code: string;
+  }
+}

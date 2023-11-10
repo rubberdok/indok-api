@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient, User } from "@prisma/client";
 import dayjs from "dayjs";
 
 export const userData: Prisma.UserCreateInput[] = [
@@ -20,7 +20,7 @@ export const userData: Prisma.UserCreateInput[] = [
   },
 ];
 
-export const load = async (db: PrismaClient) => {
+export const load = async (db: PrismaClient): Promise<User[]> => {
   console.log("Seeding users");
   for (const user of userData) {
     await db.user.upsert({
@@ -31,4 +31,5 @@ export const load = async (db: PrismaClient) => {
       create: user,
     });
   }
+  return db.user.findMany();
 };

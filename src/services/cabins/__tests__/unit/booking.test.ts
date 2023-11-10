@@ -4,11 +4,11 @@ import dayjs from "dayjs";
 import { DeepMockProxy, mockDeep } from "jest-mock-extended";
 
 import { BookingStatus } from "@/domain/cabins.js";
-import { ICabinRepository } from "@/repositories/index.js";
-import { CabinService } from "@/services/cabins/index.js";
 import { BookingData } from "@/services/cabins/interfaces.js";
 import { ICabinService, IMailService } from "@/services/index.js";
 import { TemplateAliasEnum } from "@/services/mail/interfaces.js";
+
+import { CabinRepository, CabinService } from "../../service.js";
 
 import { NegativeValidationTestCase, PositiveValidationTestCase } from "./interfaces.js";
 
@@ -22,12 +22,12 @@ const validBooking: BookingData = {
   lastName: "test",
 };
 
-let repo: DeepMockProxy<ICabinRepository>;
+let repo: DeepMockProxy<CabinRepository>;
 let mockMailService: DeepMockProxy<IMailService>;
 let cabinService: ICabinService;
 
 beforeAll(() => {
-  repo = mockDeep<ICabinRepository>();
+  repo = mockDeep<CabinRepository>();
   mockMailService = mockDeep<IMailService>();
   cabinService = new CabinService(repo, mockMailService);
 });

@@ -8,8 +8,8 @@ import dayjs from "dayjs";
 import { Database } from "@/core/index.js";
 import { BookingStatus } from "@/domain/cabins.js";
 import prisma from "@/lib/prisma.js";
-import { CabinRepository } from "@/repositories/cabins/index.js";
-import { ICabinRepository } from "@/repositories/cabins/interfaces.js";
+
+import { CabinRepository } from "../../index.js";
 
 const systemTime = dayjs().add(50, "years").toDate();
 
@@ -17,7 +17,7 @@ const cabins: Record<string, Cabin> = {};
 const id = randomUUID();
 
 let db: Database;
-let cabinRepository: ICabinRepository;
+let cabinRepository: CabinRepository;
 
 beforeAll(() => {
   db = prisma;

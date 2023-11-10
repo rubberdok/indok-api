@@ -76,6 +76,9 @@ export const codes = {
    * as closely as other errors, i.e., not sent to Sentry.
    */
   ERR_BAD_USER_INPUT: "BAD_USER_INPUT",
+  /**
+   * ERR_BAD_REQUEST should be used for errors that arise as a result of a malformed request,
+   */
   ERR_BAD_REQUEST: "BAD_REQUEST",
   /**
    * ERR_PERMISSION_DENIED should be used for errors that arise as a result of a user trying

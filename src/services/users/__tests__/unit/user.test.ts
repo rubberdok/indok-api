@@ -1,28 +1,33 @@
 import { jest } from "@jest/globals";
-import { User } from "@prisma/client";
+import { Prisma, User } from "@prisma/client";
 import dayjs from "dayjs";
-import { DeepMockProxy, mockDeep } from "jest-mock-extended";
+import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 
-import { IUserRepository } from "@/repositories/index.js";
-import { UserService } from "@/services/users/index.js";
-
-import { TestCase } from "./interfaces.js";
+import { UserRepository, UserService } from "../../service.js";
 
 const dummyUser = mockDeep<User>();
 
 const time = new Date(`${dayjs().year() + 1}-01-01`);
 
 let service: UserService;
-let repo: DeepMockProxy<IUserRepository>;
+let repo: DeepMockProxy<UserRepository>;
 
 beforeAll(() => {
-  repo = mockDeep<IUserRepository>();
+  repo = mockDeep<UserRepository>();
   service = new UserService(repo);
 
   jest.useFakeTimers().setSystemTime(time);
 });
 
 describe("UserService", () => {
+  interface TestCase {
+    name: string;
+    input: Partial<Prisma.UserUpdateInput>;
+    updateInput: Partial<Prisma.UserUpdateInput>;
+    existing: User;
+    expected: User;
+  }
+
   const testCases: TestCase[] = [
     {
       name: "set firstLogin to false",
@@ -137,15 +142,15 @@ describe("UserService", () => {
 
     await service.update(existing.id, input);
 
-    expect(repo.get).toBeCalledWith(existing.id);
-    expect(repo.update).toBeCalledWith(existing.id, updateInput);
+    expect(repo.get).toHaveBeenCalledWith(existing.id);
+    expect(repo.update).toHaveBeenCalledWith(existing.id, updateInput);
   });
 
   it("logging in should set lastLogin", async () => {
-    repo.update.mockReturnValueOnce(Promise.resolve(dummyUser));
+    repo.update.mockReturnValueOnce(Promise.resolve(mock<User>({ graduationYearUpdatedAt: null })));
 
     await service.login(dummyUser.id);
 
-    expect(repo.update).toBeCalledWith(dummyUser.id, { lastLogin: time });
+    expect(repo.update).toHaveBeenCalledWith(dummyUser.id, { lastLogin: time });
   });
 });
