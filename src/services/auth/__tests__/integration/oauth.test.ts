@@ -1,3 +1,5 @@
+import { PrismaClient } from "@prisma/client";
+
 import prisma from "@/lib/prisma.js";
 import { UserRepository } from "@/repositories/users/index.js";
 import { IAuthService } from "@/services/interfaces.js";
@@ -7,7 +9,6 @@ import { FeideProvider } from "../../providers.js";
 import { AuthService, UserService as IUserService } from "../../service.js";
 import { setupMockFeideClient } from "../__mocks__/feide.js";
 
-import { PrismaClient } from "@prisma/client";
 import { OAuthCase } from "./interfaces.js";
 
 let authService: IAuthService;
