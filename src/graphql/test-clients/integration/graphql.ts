@@ -56,9 +56,9 @@ export type Booking = {
 
 export type Cabin = {
   __typename?: 'Cabin';
-  externalPrice: Scalars['String']['output'];
+  externalPrice: Scalars['Int']['output'];
   id: Scalars['ID']['output'];
-  internalPrice: Scalars['String']['output'];
+  internalPrice: Scalars['Int']['output'];
   name: Scalars['String']['output'];
 };
 
@@ -154,8 +154,7 @@ export type MutationRemoveMemberArgs = {
 
 
 export type MutationUpdateBookingStatusArgs = {
-  id: Scalars['ID']['input'];
-  status: Status;
+  data: UpdateBookingStatusInput;
 };
 
 
@@ -228,6 +227,11 @@ export enum Status {
   Rejected = 'REJECTED'
 }
 
+export type UpdateBookingStatusInput = {
+  id: Scalars['ID']['input'];
+  status: Status;
+};
+
 export type UpdateOrganizationInput = {
   /**
    * The new description of the organization, cannot exceed 10 000 characters
@@ -260,7 +264,7 @@ export type User = {
   __typename?: 'User';
   allergies?: Maybe<Scalars['String']['output']>;
   canUpdateYear: Scalars['Boolean']['output'];
-  createdAt: Scalars['String']['output'];
+  createdAt: Scalars['DateTime']['output'];
   firstLogin: Scalars['Boolean']['output'];
   firstName: Scalars['String']['output'];
   graduationYear?: Maybe<Scalars['Int']['output']>;

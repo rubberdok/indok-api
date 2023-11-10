@@ -9,8 +9,8 @@ import { mock, mockDeep } from "jest-mock-extended";
 
 import { getFormatErrorHandler, IContext } from "@/lib/apolloServer.js";
 
-import { resolvers } from "../resolvers.js";
-import typeDefs from "../type-defs.js";
+import { resolvers } from "../resolvers.generated.js";
+import { typeDefs } from "../typeDefs.generated.js";
 
 interface QueryResult<T extends TypedDocumentNode<ResultOf<T>, VariablesOf<T>>> {
   data?: ResultOf<T>;

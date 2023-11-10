@@ -14,8 +14,8 @@ import fastify, { FastifyInstance } from "fastify";
 import { createClient } from "redis";
 
 import { env } from "./config.js";
-import { resolvers } from "./graphql/resolvers.js";
-import { typeDefs } from "./graphql/type-defs.js";
+import { resolvers } from "./graphql/resolvers.generated.js";
+import { typeDefs } from "./graphql/typeDefs.generated.js";
 import { IContext, getFormatErrorHandler } from "./lib/apolloServer.js";
 import { envToLogger } from "./lib/fastify.js";
 import { migrationHealthCheck } from "./lib/prisma.js";

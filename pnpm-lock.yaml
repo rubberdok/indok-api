@@ -87,6 +87,9 @@ optionalDependencies:
     version: 1.3.96
 
 devDependencies:
+  '@eddeee888/gcg-typescript-resolver-files':
+    specifier: ^0.7.1
+    version: 0.7.1(graphql@16.8.1)
   '@faker-js/faker':
     specifier: ^8.2.0
     version: 8.2.0
@@ -1107,6 +1110,34 @@ packages:
     engines: {node: '>=12'}
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
+    dev: true
+
+  /@eddeee888/gcg-server-config@0.1.0(graphql@16.8.1):
+    resolution: {integrity: sha512-ZM4Cfem3FWelpz5sdCfJ+fZTCyY1WDdcT6K5GZ/UZpr7JjMApSMKnf+o9VMT2T+BB91Hffr0AH8W4oLEWUEWuw==}
+    dependencies:
+      '@graphql-codegen/typescript': 4.0.1(graphql@16.8.1)
+      '@graphql-codegen/typescript-resolvers': 4.0.1(graphql@16.8.1)
+    transitivePeerDependencies:
+      - encoding
+      - graphql
+      - supports-color
+    dev: true
+
+  /@eddeee888/gcg-typescript-resolver-files@0.7.1(graphql@16.8.1):
+    resolution: {integrity: sha512-2dppOIlLkBdd1k+LmjnRj3Ud808IXqpTfPzVNn6ZfmP4KwG2516rFuOH0IT1BW63GWgvyXIhbg4D9wmUbq4aIg==}
+    peerDependencies:
+      graphql: ^15.0.0 || ^16.0.0
+    dependencies:
+      '@eddeee888/gcg-server-config': 0.1.0(graphql@16.8.1)
+      '@graphql-codegen/add': 5.0.0(graphql@16.8.1)
+      '@graphql-codegen/plugin-helpers': 5.0.1(graphql@16.8.1)
+      '@graphql-codegen/typescript': 4.0.1(graphql@16.8.1)
+      '@graphql-codegen/typescript-resolvers': 4.0.1(graphql@16.8.1)
+      graphql: 16.8.1
+      ts-morph: 19.0.0
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
     dev: true
 
   /@eslint-community/eslint-utils@4.4.0(eslint@8.53.0):
@@ -2900,6 +2931,15 @@ packages:
     resolution: {integrity: sha512-OvjF+z51L3ov0OyAU0duzsYuvO01PH7x4t6DJx+guahgTnBHkhJdG7soQeTSFLWN3efnHyibZ4Z8l2EuWwJN3A==}
     dev: true
 
+  /@ts-morph/common@0.20.0:
+    resolution: {integrity: sha512-7uKjByfbPpwuzkstL3L5MQyuXPSKdoNG93Fmi2JoDcTf3pEP731JdRFAduRVkOs8oqxPsXKA+ScrWkdQ8t/I+Q==}
+    dependencies:
+      fast-glob: 3.3.2
+      minimatch: 7.4.6
+      mkdirp: 2.1.6
+      path-browserify: 1.0.1
+    dev: true
+
   /@tsconfig/node14@1.0.3:
     resolution: {integrity: sha512-ysT8mhdixWK6Hw3i1V2AeRqZ5WfXg1G43mqoYlM2nc6388Fq5jcXyr5mRsqViLx/GJYdoL0bfXD8nmF+Zn/Iow==}
     dev: true
@@ -4121,6 +4161,10 @@ packages:
   /co@4.6.0:
     resolution: {integrity: sha512-QVb0dM5HvG+uaxitm8wONl7jltx8dqhfU33DcqtOZcLSVIKSDDLDi7+0LbAKiyI8hD9u42m2YxXSkMGWThaecQ==}
     engines: {iojs: '>= 1.0.0', node: '>= 0.12.0'}
+    dev: true
+
+  /code-block-writer@12.0.0:
+    resolution: {integrity: sha512-q4dMFMlXtKR3XNBHyMHt/3pwYNA69EDk00lloMOaaUMKPUXBw6lpXtbu3MMVG6/uOihGnRDOlkyqsONEUj60+w==}
     dev: true
 
   /collect-v8-coverage@1.0.2:
@@ -7121,8 +7165,21 @@ packages:
       brace-expansion: 2.0.1
     dev: true
 
+  /minimatch@7.4.6:
+    resolution: {integrity: sha512-sBz8G/YjVniEz6lKPNpKxXwazJe4c19fEfV2GDMX6AjFz+MX9uDWIZW8XreVhkFW3fkIdTv/gxWr/Kks5FFAVw==}
+    engines: {node: '>=10'}
+    dependencies:
+      brace-expansion: 2.0.1
+    dev: true
+
   /minimist@1.2.8:
     resolution: {integrity: sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA==}
+    dev: true
+
+  /mkdirp@2.1.6:
+    resolution: {integrity: sha512-+hEnITedc8LAtIP9u3HJDFIdcLV2vXP33sqLLIzkv1Db1zO/1OxbvYf0Y1OC/S/Qo5dxHXepofhmxL02PsKe+A==}
+    engines: {node: '>=10'}
+    hasBin: true
     dev: true
 
   /mnemonist@0.39.5:
@@ -7530,6 +7587,10 @@ packages:
     dependencies:
       no-case: 3.0.4
       tslib: 2.5.3
+    dev: true
+
+  /path-browserify@1.0.1:
+    resolution: {integrity: sha512-b7uo2UCUOYZcnF/3ID0lulOJi/bafxa1xPe7ZPsammBSpjSWQkjNxlt635YGS2MiR9GjvuXCtz2emr3jbsz98g==}
     dev: true
 
   /path-case@3.0.4:
@@ -8677,6 +8738,13 @@ packages:
 
   /ts-log@2.2.5:
     resolution: {integrity: sha512-PGcnJoTBnVGy6yYNFxWVNkdcAuAMstvutN9MgDJIV6L0oG8fB+ZNNy1T+wJzah8RPGor1mZuPQkVfXNDpy9eHA==}
+    dev: true
+
+  /ts-morph@19.0.0:
+    resolution: {integrity: sha512-D6qcpiJdn46tUqV45vr5UGM2dnIEuTGNxVhg0sk5NX11orcouwj6i1bMqZIz2mZTZB1Hcgy7C3oEVhAT+f6mbQ==}
+    dependencies:
+      '@ts-morph/common': 0.20.0
+      code-block-writer: 12.0.0
     dev: true
 
   /ts-node@11.0.0-beta.1(@swc/core@1.3.96)(@types/node@18.18.9)(typescript@5.2.2):

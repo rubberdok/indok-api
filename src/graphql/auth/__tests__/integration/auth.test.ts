@@ -4,7 +4,6 @@ import { faker } from "@faker-js/faker";
 
 import { env } from "@/config.js";
 import { codes } from "@/core/errors.js";
-import { LogoutStatus } from "@/graphql/__types__.js";
 import { GraphQLTestClient } from "@/graphql/test-clients/graphqlTestClient.js";
 import { graphql } from "@/graphql/test-clients/integration/gql.js";
 import postmark from "@/lib/postmark.js";
@@ -262,7 +261,7 @@ describe("Auth GraphQL", () => {
       expect(errors).toBeUndefined();
       expect(data).toEqual({
         logout: {
-          status: LogoutStatus.Success,
+          status: "SUCCESS",
         },
       });
       expect(logoutResponse.cookies[0]?.value).not.toEqual(loggedInSessionCookie);

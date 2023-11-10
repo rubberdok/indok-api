@@ -1,4 +1,5 @@
 // @ts-check
+const { defineConfig } = require("@eddeee888/gcg-typescript-resolver-files");
 
 const generatedPrefix = `
 /* eslint-disable */
@@ -22,8 +23,11 @@ To regenerate this file, run \`npm run generate:gql\`
 /** @type {import("@graphql-codegen/cli").CodegenConfig} */
 const config = {
   overwrite: true,
-  schema: "src/graphql/type-defs.ts",
+  schema: "src/graphql/**/schema.graphql",
   emitLegacyCommonJSImports: false,
+  hooks: {
+    afterAllFileWrite: ["prettier --write"],
+  },
   generates: {
     /**
      * Generate typed document nodes for operations that are used for
@@ -76,40 +80,6 @@ const config = {
         },
       ],
     },
-    "src/graphql/__types__.ts": {
-      config: {
-        useIndexSignature: true,
-        showUnusedMappers: true,
-        immutableTypes: true,
-        strictScalars: true,
-        enumsAsConst: true,
-
-        scalars: {
-          DateTime: "Date",
-        },
-
-        contextType: "@/lib/apolloServer.js#IContext",
-
-        mapperTypeSuffix: "Model",
-
-        mappers: {
-          User: "@prisma/client#User",
-          Cabin: "@prisma/client#Cabin",
-          Booking: "@prisma/client#Booking",
-          Organization: "@prisma/client#Organization",
-          Member: "@prisma/client#Member",
-        },
-      },
-      plugins: [
-        {
-          add: {
-            content: generatedPrefix,
-          },
-        },
-        "typescript",
-        "typescript-resolvers",
-      ],
-    },
     "schema.graphql": {
       plugins: [
         {
@@ -120,6 +90,16 @@ const config = {
         "schema-ast",
       ],
     },
+    "src/graphql": defineConfig(
+      {
+        mode: "modules",
+        emitLegacyCommonJSImports: false,
+        typesPluginsConfig: {
+          contextType: "@/lib/apolloServer.js#IContext",
+        },
+      },
+      { schema: "src/graphql/**/*.{graphql}" }
+    ),
   },
 };
 
