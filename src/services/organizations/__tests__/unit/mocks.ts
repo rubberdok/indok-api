@@ -1,6 +1,6 @@
 import type { Member, Role } from "@prisma/client";
 
-import { NotFoundError } from "@/core/errors.js";
+import { NotFoundError } from "@/domain/errors.js";
 
 /**
  * Create a mock implementation of the hasRole method on the MemberRepository.

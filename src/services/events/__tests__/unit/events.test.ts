@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 import { Event } from "@prisma/client";
 import { mockDeep } from "jest-mock-extended";
 
-import { BaseError, InvalidArgumentError } from "@/core/errors.js";
+import { BaseError, InvalidArgumentError } from "@/domain/errors.js";
 
 import { EventRepository, EventService, OrganizationService } from "../../service.js";
 

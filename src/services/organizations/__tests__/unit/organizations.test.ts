@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 import type { Member, Organization, User } from "@prisma/client";
 import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 
-import { BaseError, InvalidArgumentError, PermissionDeniedError } from "@/core/errors.js";
+import { BaseError, InvalidArgumentError, PermissionDeniedError } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
 
 import { MemberRepository, OrganizationRepository, OrganizationService, UserService } from "../../service.js";

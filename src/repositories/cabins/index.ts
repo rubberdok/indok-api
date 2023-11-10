@@ -1,6 +1,4 @@
-import { Booking, BookingStatus, Cabin, Prisma } from "@prisma/client";
-
-import { Database } from "@/core/index.js";
+import { Booking, BookingStatus, Cabin, Prisma, PrismaClient } from "@prisma/client";
 
 export type OverlappingBookingsData = {
   bookingId: string;
@@ -10,7 +8,7 @@ export type OverlappingBookingsData = {
 };
 
 export class CabinRepository {
-  constructor(private db: Database) {}
+  constructor(private db: PrismaClient) {}
 
   getBookingById(id: string): Promise<Booking> {
     return this.db.booking.findFirstOrThrow({

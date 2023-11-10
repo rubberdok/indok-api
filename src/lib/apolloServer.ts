@@ -4,7 +4,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { GraphQLFormattedError } from "graphql";
 import { ZodError } from "zod";
 
-import { BaseError, codes, InternalServerError, ValidationError } from "@/core/errors.js";
+import { BaseError, codes, InternalServerError, ValidationError } from "@/domain/errors.js";
 import { User } from "@/domain/users.js";
 import { IAuthService, ICabinService } from "@/services/index.js";
 

@@ -2,7 +2,7 @@ import { ApolloServerPlugin } from "@apollo/server";
 import { FastifyInstance } from "fastify";
 import { GraphQLError } from "graphql";
 
-import { codes } from "@/core/errors.js";
+import { codes } from "@/domain/errors.js";
 
 import { IContext } from "./apolloServer.js";
 

@@ -1,4 +1,3 @@
-import { Database } from "@/core/index.js";
 import prisma from "@/lib/prisma.js";
 import { UserRepository } from "@/repositories/users/index.js";
 import { IAuthService } from "@/services/interfaces.js";
@@ -8,11 +7,12 @@ import { FeideProvider } from "../../providers.js";
 import { AuthService, UserService as IUserService } from "../../service.js";
 import { setupMockFeideClient } from "../__mocks__/feide.js";
 
+import { PrismaClient } from "@prisma/client";
 import { OAuthCase } from "./interfaces.js";
 
 let authService: IAuthService;
 let userService: IUserService;
-let db: Database;
+let db: PrismaClient;
 
 describe("OAuth", () => {
   beforeAll(() => {

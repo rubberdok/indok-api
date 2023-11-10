@@ -1,7 +1,7 @@
 import type { Member, Organization, User } from "@prisma/client";
 import { z } from "zod";
 
-import { InvalidArgumentError, PermissionDeniedError } from "@/core/errors.js";
+import { InvalidArgumentError, PermissionDeniedError } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
 
 export interface OrganizationRepository {

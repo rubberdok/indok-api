@@ -14,7 +14,7 @@ import fastify, { FastifyInstance } from "fastify";
 import { createClient } from "redis";
 
 import { env } from "./config.js";
-import { BadRequestError, InternalServerError } from "./core/errors.js";
+import { BadRequestError, InternalServerError } from "./domain/errors.js";
 import { resolvers } from "./graphql/resolvers.generated.js";
 import { typeDefs } from "./graphql/typeDefs.generated.js";
 import { IContext, getFormatErrorHandler } from "./lib/apolloServer.js";

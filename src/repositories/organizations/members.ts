@@ -1,11 +1,10 @@
-import type { Member, Role } from "@prisma/client";
+import type { Member, PrismaClient, Role } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 
-import { InvalidArgumentError, NotFoundError } from "@/core/errors.js";
-import { Database } from "@/core/interfaces.js";
+import { InvalidArgumentError, NotFoundError } from "@/domain/errors.js";
 
 export class MemberRepository {
-  constructor(private db: Database) {}
+  constructor(private db: PrismaClient) {}
 
   async findMany(where?: { organizationId?: string; userId?: string }): Promise<Member[]> {
     return this.db.member.findMany({

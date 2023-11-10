@@ -1,6 +1,6 @@
 import { Booking, Cabin } from "@prisma/client";
 
-import { ValidationError } from "@/core/errors.js";
+import { ValidationError } from "@/domain/errors.js";
 import { BookingStatus } from "@/domain/cabins.js";
 import { IMailService, TemplateAliasEnum } from "@/services/mail/interfaces.js";
 
