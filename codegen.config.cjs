@@ -90,6 +90,11 @@ const config = {
         "schema-ast",
       ],
     },
+    /**
+     * Generate resolvers and types for the GraphQL schema in
+     * a modular way.
+     * Docs: https://the-guild.dev/graphql/codegen/docs/guides/graphql-server-apollo-yoga-with-server-preset
+     */
     "src/graphql": defineConfig(
       {
         mode: "modules",

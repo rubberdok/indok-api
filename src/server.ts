@@ -14,7 +14,7 @@ import fastify, { FastifyInstance } from "fastify";
 import { createClient } from "redis";
 
 import { env } from "./config.js";
-import { BadRequestError } from "./core/errors.js";
+import { BadRequestError, InternalServerError } from "./core/errors.js";
 import { resolvers } from "./graphql/resolvers.generated.js";
 import { typeDefs } from "./graphql/typeDefs.generated.js";
 import { IContext, getFormatErrorHandler } from "./lib/apolloServer.js";
@@ -89,7 +89,9 @@ export async function initServer(dependencies: Dependencies, opts: Options): Pro
   const app = fastify({ logger: envToLogger[env.NODE_ENV], ignoreTrailingSlash: true });
 
   /**
-   * Set up Sentry monitoring
+   * Set up Sentry monitoring before anything else
+   * so that we can monitor the server for errors and performance issues, even during
+   * the initial setup.
    */
   app.register(fastifySentry, {
     dsn: env.SENTRY_DSN,
@@ -285,13 +287,17 @@ export async function initServer(dependencies: Dependencies, opts: Options): Pro
         throw new BadRequestError("Missing code verifier");
       }
 
-      const user = await authService.getUser({ code, codeVerifier });
+      try {
+        const user = await authService.getUser({ code, codeVerifier });
+        req.session.set("authenticated", true);
+        req.session.set("userId", user.id);
+        req.log.info("User authenticated", { userId: user.id });
 
-      req.session.set("authenticated", true);
-      req.session.set("userId", user.id);
-      req.log.info("User authenticated", { userId: user.id });
-
-      return reply.redirect(303, state);
+        return reply.redirect(303, state);
+      } catch (err) {
+        req.log.error(err, "Authentication failed");
+        throw new InternalServerError("Authentication failed");
+      }
     },
   });
 
