@@ -22,7 +22,7 @@ import { envToLogger } from "./lib/fastify.js";
 import { migrationHealthCheck } from "./lib/prisma.js";
 import { fastifyApolloSentryPlugin } from "./lib/sentry.js";
 import { AuthService } from "./services/auth/index.js";
-import { CabinService } from "./services/cabins/index.js";
+import { CabinService } from "./services/cabins/service.js";
 import { OrganizationService } from "./services/organizations/index.js";
 import { UserService } from "./services/users/index.js";
 
