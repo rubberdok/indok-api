@@ -1,26 +1,23 @@
-import { Prisma, User as PrismaUser, User } from "@prisma/client";
+import { Prisma, User as PrismaUser } from "@prisma/client";
 import dayjs from "dayjs";
 import { merge } from "lodash-es";
+
+import { User } from "@/domain/users.js";
 
 import { createUserSchema, updateUserSchema } from "./validation.js";
 
 export interface UserRepository {
-  get(id: string): Promise<User>;
-  getAll(): Promise<User[]>;
-  getByFeideId(feideId: string): Promise<User>;
-  update(id: string, data: Prisma.UserUpdateInput): Promise<User>;
-  create(data: Prisma.UserCreateInput): Promise<User>;
-}
-
-export interface DomainUser extends PrismaUser {
-  gradeYear?: number;
-  canUpdateYear: boolean;
+  get(id: string): Promise<PrismaUser>;
+  getAll(): Promise<PrismaUser[]>;
+  getByFeideId(feideId: string): Promise<PrismaUser>;
+  update(id: string, data: Prisma.UserUpdateInput): Promise<PrismaUser>;
+  create(data: Prisma.UserCreateInput): Promise<PrismaUser>;
 }
 
 export class UserService {
   constructor(private usersRepository: UserRepository) {}
 
-  async update(id: string, data: Prisma.UserUpdateInput): Promise<DomainUser> {
+  async update(id: string, data: Prisma.UserUpdateInput): Promise<User> {
     updateUserSchema.parse(data);
 
     const user = await this.usersRepository.get(id);
@@ -37,24 +34,24 @@ export class UserService {
     return this.toDomainUser(updatedUser);
   }
 
-  canUpdateYear(user: User): boolean {
+  canUpdateYear(user: Pick<User, "graduationYearUpdatedAt">): boolean {
     return (
       user.graduationYearUpdatedAt === null || dayjs(user.graduationYearUpdatedAt).add(1, "year").isBefore(dayjs())
     );
   }
 
-  async login(id: string): Promise<DomainUser> {
+  async login(id: string): Promise<User> {
     const user = await this.usersRepository.update(id, { lastLogin: new Date() });
     return this.toDomainUser(user);
   }
 
-  async create(data: Prisma.UserCreateInput): Promise<DomainUser> {
+  async create(data: Prisma.UserCreateInput): Promise<User> {
     this.validateUser(data);
     const user = await this.usersRepository.create(data);
     return this.toDomainUser(user);
   }
 
-  async getByFeideID(feideId: string): Promise<DomainUser | null> {
+  async getByFeideID(feideId: string): Promise<User | null> {
     try {
       const user = await this.usersRepository.getByFeideId(feideId);
       return this.toDomainUser(user);
@@ -67,16 +64,16 @@ export class UserService {
     createUserSchema.parse(user);
   }
 
-  async get(id: string): Promise<DomainUser> {
+  async get(id: string): Promise<User> {
     const user = await this.usersRepository.get(id);
     return this.toDomainUser(user);
   }
-  async getAll(): Promise<DomainUser[]> {
+  async getAll(): Promise<User[]> {
     const users = await this.usersRepository.getAll();
     return users.map(this.toDomainUser);
   }
 
-  toDomainUser(user: PrismaUser): DomainUser {
+  toDomainUser(user: PrismaUser): User {
     const canUpdateYear = this.canUpdateYear(user);
 
     if (!user.graduationYear) {

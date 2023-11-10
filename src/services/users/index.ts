@@ -1,1 +1,1 @@
-export { UserService, DomainUser } from "./service.js";
+export { UserService } from "./service.js";

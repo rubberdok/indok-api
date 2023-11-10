@@ -1,12 +1,12 @@
 import { unwrapResolverError } from "@apollo/server/errors";
-import { Member, Organization, Prisma, Role, User } from "@prisma/client";
+import { Member, Organization, Prisma, Role } from "@prisma/client";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { GraphQLFormattedError } from "graphql";
 import { ZodError } from "zod";
 
 import { BaseError, codes, InternalServerError, ValidationError } from "@/core/errors.js";
+import { User } from "@/domain/users.js";
 import { IAuthService, ICabinService } from "@/services/index.js";
-import { DomainUser } from "@/services/users/service.js";
 
 export function getFormatErrorHandler(app?: FastifyInstance) {
   const formatError = (formattedError: GraphQLFormattedError, error: unknown): GraphQLFormattedError => {
@@ -51,13 +51,13 @@ export interface OrganizationService {
 }
 
 interface UserService {
-  get(id: string): Promise<DomainUser>;
-  getAll(): Promise<DomainUser[]>;
-  getByFeideID(feideId: string): Promise<DomainUser | null>;
-  update(id: string, data: Prisma.UserUpdateInput): Promise<DomainUser>;
-  login(id: string): Promise<DomainUser>;
-  create(data: Prisma.UserCreateInput): Promise<DomainUser>;
-  canUpdateYear(user: User): boolean;
+  get(id: string): Promise<User>;
+  getAll(): Promise<User[]>;
+  getByFeideID(feideId: string): Promise<User | null>;
+  update(id: string, data: Prisma.UserUpdateInput): Promise<User>;
+  login(id: string): Promise<User>;
+  create(data: Prisma.UserCreateInput): Promise<User>;
+  canUpdateYear(user: Pick<User, "graduationYearUpdatedAt">): boolean;
 }
 
 export interface IContext {
