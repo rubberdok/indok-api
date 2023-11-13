@@ -14,7 +14,7 @@ on:
       - .github/workflows/tf-shared-infrastructure.yml
   pull_request:
     paths:
-      - infrastructure/shared/**
+      - infrastructure/shared_resources/**
       - .github/workflows/tf-shared-infrastructure.yml
 
 defaults:
