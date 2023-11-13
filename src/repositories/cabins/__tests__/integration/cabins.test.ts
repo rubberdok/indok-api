@@ -2,10 +2,9 @@ import { randomUUID } from "crypto";
 
 import { faker } from "@faker-js/faker";
 import { jest } from "@jest/globals";
-import { Cabin } from "@prisma/client";
+import { Cabin, PrismaClient } from "@prisma/client";
 import dayjs from "dayjs";
 
-import { Database } from "@/core/index.js";
 import { BookingStatus } from "@/domain/cabins.js";
 import prisma from "@/lib/prisma.js";
 
@@ -16,7 +15,7 @@ const systemTime = dayjs().add(50, "years").toDate();
 const cabins: Record<string, Cabin> = {};
 const id = randomUUID();
 
-let db: Database;
+let db: PrismaClient;
 let cabinRepository: CabinRepository;
 
 beforeAll(() => {

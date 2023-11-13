@@ -3,7 +3,7 @@ import assert from "assert";
 import { faker } from "@faker-js/faker";
 import { ResultOf } from "@graphql-typed-document-node/core";
 
-import { codes } from "@/core/errors.js";
+import { codes } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
 import { createMockApolloServer } from "@/graphql/test-clients/mockApolloServer.js";
 import { graphql } from "@/graphql/test-clients/unit/gql.js";

@@ -1,9 +1,7 @@
-import { Prisma, User } from "@prisma/client";
-
-import { Database } from "@/core/index.js";
+import { Prisma, PrismaClient, User } from "@prisma/client";
 
 export class UserRepository {
-  constructor(private db: Database) {}
+  constructor(private db: PrismaClient) {}
 
   update(id: string, data: Prisma.UserUpdateInput): Promise<User> {
     return this.db.user.update({

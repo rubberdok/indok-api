@@ -2,7 +2,7 @@ import { Event } from "@prisma/client";
 import { merge } from "lodash-es";
 import { z } from "zod";
 
-import { InvalidArgumentError, PermissionDeniedError } from "@/core/errors.js";
+import { InvalidArgumentError, PermissionDeniedError } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
 
 export interface EventRepository {
@@ -40,10 +40,11 @@ export class EventService {
    * @param userId - The ID of the user that is creating the event, will also be the organizer of the event
    * @param organizationId - The ID of the organization that the event belongs to
    * @param data.name - The name of the event
-   * @param data.description - The description of the event, @default ""
+   * @param data.description - The description of the event
    * @param data.startAt - The start datetime of the event, must be in the future
-   * @param data.endAt - The end datetime of the event, @default startAt + 2 hours, must be greater than `startAt`
-   * @param data.location - The location of the event, @default ""
+   * @param data.endAt - The end datetime of the event
+   * @param data.location - The location of the event
+   * @returns The created event
    */
   async create(
     userId: string,

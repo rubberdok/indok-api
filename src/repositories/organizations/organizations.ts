@@ -1,12 +1,11 @@
-import { Organization } from "@prisma/client";
+import { Organization, PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 
-import { InternalServerError, InvalidArgumentError, NotFoundError } from "@/core/errors.js";
-import { Database } from "@/core/interfaces.js";
+import { InternalServerError, InvalidArgumentError, NotFoundError } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
 
 export class OrganizationRepository {
-  constructor(private db: Database) {}
+  constructor(private db: PrismaClient) {}
 
   async findMany(): Promise<Organization[]> {
     return this.db.organization.findMany();

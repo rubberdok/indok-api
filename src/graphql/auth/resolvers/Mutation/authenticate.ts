@@ -1,4 +1,4 @@
-import { InvalidArgumentError } from "@/core/errors.js";
+import { InvalidArgumentError } from "@/domain/errors.js";
 
 import type { MutationResolvers } from "./../../../types.generated.js";
 export const authenticate: NonNullable<MutationResolvers["authenticate"]> = async (_parent, { code }, ctx) => {

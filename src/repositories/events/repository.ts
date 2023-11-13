@@ -1,11 +1,10 @@
-import { ParticipationStatus, Event, EventSignUp, EventSlot } from "@prisma/client";
+import { ParticipationStatus, Event, EventSignUp, EventSlot, PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 
-import { NotFoundError } from "@/core/errors.js";
-import { Database } from "@/core/interfaces.js";
+import { NotFoundError } from "@/domain/errors.js";
 
 export class EventRepository {
-  constructor(private db: Database) {}
+  constructor(private db: PrismaClient) {}
 
   /**
    * Create a new event.

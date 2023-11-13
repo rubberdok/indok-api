@@ -1,4 +1,5 @@
-import { Database } from "@/core/index.js";
+import { PrismaClient } from "@prisma/client";
+
 import prisma from "@/lib/prisma.js";
 import { UserRepository } from "@/repositories/users/index.js";
 import { IAuthService } from "@/services/interfaces.js";
@@ -12,7 +13,7 @@ import { OAuthCase } from "./interfaces.js";
 
 let authService: IAuthService;
 let userService: IUserService;
-let db: Database;
+let db: PrismaClient;
 
 describe("OAuth", () => {
   beforeAll(() => {

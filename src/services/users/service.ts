@@ -70,7 +70,7 @@ export class UserService {
   }
   async getAll(): Promise<User[]> {
     const users = await this.usersRepository.getAll();
-    return users.map(this.toDomainUser);
+    return users.map((user) => this.toDomainUser(user));
   }
 
   toDomainUser(user: PrismaUser): User {

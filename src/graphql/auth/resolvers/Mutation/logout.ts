@@ -1,4 +1,4 @@
-import { BadRequestError, InternalServerError } from "@/core/errors.js";
+import { BadRequestError, InternalServerError } from "@/domain/errors.js";
 
 import type { MutationResolvers } from "./../../../types.generated.js";
 export const logout: NonNullable<MutationResolvers["logout"]> = async (_parent, _arg, ctx) => {

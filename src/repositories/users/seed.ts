@@ -1,7 +1,7 @@
 import { Prisma, PrismaClient, User } from "@prisma/client";
 import dayjs from "dayjs";
 
-export const userData: Prisma.UserCreateInput[] = [
+const userData: Prisma.UserCreateInput[] = [
   {
     username: "indok",
     feideId: "indok",

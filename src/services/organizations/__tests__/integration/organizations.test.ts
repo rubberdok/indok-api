@@ -3,7 +3,7 @@ import assert from "assert";
 import { faker } from "@faker-js/faker";
 import { Prisma } from "@prisma/client";
 
-import { BaseError, InvalidArgumentError, PermissionDeniedError } from "@/core/errors.js";
+import { BaseError, InvalidArgumentError, PermissionDeniedError } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
 import prisma from "@/lib/prisma.js";
 import { MemberRepository } from "@/repositories/organizations/members.js";

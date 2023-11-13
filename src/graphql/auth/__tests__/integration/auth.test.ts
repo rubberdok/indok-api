@@ -3,7 +3,7 @@ import assert from "assert";
 import { faker } from "@faker-js/faker";
 
 import { env } from "@/config.js";
-import { codes } from "@/core/errors.js";
+import { codes } from "@/domain/errors.js";
 import { GraphQLTestClient } from "@/graphql/test-clients/graphqlTestClient.js";
 import { graphql } from "@/graphql/test-clients/integration/gql.js";
 import postmark from "@/lib/postmark.js";

@@ -10,7 +10,7 @@ import { initServer } from "./server.js";
 import { feideClient } from "./services/auth/clients.js";
 import { AuthService } from "./services/auth/index.js";
 import { FeideProvider } from "./services/auth/providers.js";
-import { CabinService } from "./services/cabins/service.js";
+import { CabinService } from "./services/cabins/index.js";
 import { MailService } from "./services/mail/index.js";
 import { OrganizationService } from "./services/organizations/index.js";
 import { UserService } from "./services/users/index.js";
