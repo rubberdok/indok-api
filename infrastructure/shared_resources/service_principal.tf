@@ -37,7 +37,7 @@ resource "azuread_service_principal" "github" {
   as described in https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_oidc
 */
 resource "azuread_application_federated_identity_credential" "github_branch_main" {
-  application_id = azuread_application.github.client_id
+  application_id = azuread_application.github.id
   display_name   = "github-branch-main"
   description    = "GitHub Actions Service Principal"
   audiences      = ["api://AzureADTokenExchange"]
@@ -46,7 +46,7 @@ resource "azuread_application_federated_identity_credential" "github_branch_main
 }
 
 resource "azuread_application_federated_identity_credential" "github_environment_production" {
-  application_id = azuread_application.github.client_id
+  application_id = azuread_application.github.id
   display_name   = "github-environment-production"
   description    = "GitHub Actions Service Principal"
   audiences      = ["api://AzureADTokenExchange"]
@@ -55,7 +55,7 @@ resource "azuread_application_federated_identity_credential" "github_environment
 }
 
 resource "azuread_application_federated_identity_credential" "github_pull_request" {
-  application_id = azuread_application.github.client_id
+  application_id = azuread_application.github.id
   display_name   = "github-pull-request"
   description    = "GitHub Actions Service Principal"
   audiences      = ["api://AzureADTokenExchange"]
