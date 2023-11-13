@@ -71,8 +71,8 @@ resource "time_rotating" "yearly" {
 }
 
 resource "azuread_application_password" "github" {
-  application_object_id = azuread_application.github.client_id
-  display_name          = "github-actions"
+  application_id = azuread_application.github.client_id
+  display_name   = "github-actions"
 
   rotate_when_changed = {
     rotation = time_rotating.yearly.id
