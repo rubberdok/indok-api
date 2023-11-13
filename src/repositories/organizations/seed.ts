@@ -1,5 +1,5 @@
-import { Organization, Prisma, PrismaClient } from "@prisma/client";
 import { faker } from "@faker-js/faker";
+import { Organization, Prisma, PrismaClient } from "@prisma/client";
 
 faker.seed(42);
 

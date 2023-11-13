@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 
-import * as Users from "./users/seed.js";
 import * as Organizations from "./organizations/seed.js";
+import * as Users from "./users/seed.js";
 
 const db = new PrismaClient();
 
