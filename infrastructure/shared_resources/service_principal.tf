@@ -37,30 +37,30 @@ resource "azuread_service_principal" "github" {
   as described in https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_oidc
 */
 resource "azuread_application_federated_identity_credential" "github_branch_main" {
-  application_object_id = azuread_application.github.client_id
-  display_name          = "github-branch-main"
-  description           = "GitHub Actions Service Principal"
-  audiences             = ["api://AzureADTokenExchange"]
-  issuer                = "https://token.actions.githubusercontent.com"
-  subject               = "repo:rubberdok/${var.repository_name}:ref:refs/heads/main"
+  application_id = azuread_application.github.client_id
+  display_name   = "github-branch-main"
+  description    = "GitHub Actions Service Principal"
+  audiences      = ["api://AzureADTokenExchange"]
+  issuer         = "https://token.actions.githubusercontent.com"
+  subject        = "repo:rubberdok/${var.repository_name}:ref:refs/heads/main"
 }
 
 resource "azuread_application_federated_identity_credential" "github_environment_production" {
-  application_object_id = azuread_application.github.client_id
-  display_name          = "github-environment-production"
-  description           = "GitHub Actions Service Principal"
-  audiences             = ["api://AzureADTokenExchange"]
-  issuer                = "https://token.actions.githubusercontent.com"
-  subject               = "repo:rubberdok/indok-api:environment:production"
+  application_id = azuread_application.github.client_id
+  display_name   = "github-environment-production"
+  description    = "GitHub Actions Service Principal"
+  audiences      = ["api://AzureADTokenExchange"]
+  issuer         = "https://token.actions.githubusercontent.com"
+  subject        = "repo:rubberdok/indok-api:environment:production"
 }
 
 resource "azuread_application_federated_identity_credential" "github_pull_request" {
-  application_object_id = azuread_application.github.client_id
-  display_name          = "github-pull-request"
-  description           = "GitHub Actions Service Principal"
-  audiences             = ["api://AzureADTokenExchange"]
-  issuer                = "https://token.actions.githubusercontent.com"
-  subject               = "repo:rubberdok/${var.repository_name}:pull_request"
+  application_id = azuread_application.github.client_id
+  display_name   = "github-pull-request"
+  description    = "GitHub Actions Service Principal"
+  audiences      = ["api://AzureADTokenExchange"]
+  issuer         = "https://token.actions.githubusercontent.com"
+  subject        = "repo:rubberdok/${var.repository_name}:pull_request"
 }
 
 resource "time_rotating" "yearly" {
