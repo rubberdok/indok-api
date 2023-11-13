@@ -1,7 +1,7 @@
 resource "github_actions_variable" "azure_client_id" {
   repository    = var.repository_name
   variable_name = "AZURE_CLIENT_ID"
-  value         = azuread_application.github.application_id
+  value         = azuread_application.github.client_id
 }
 
 resource "github_actions_variable" "azure_tenant_id" {

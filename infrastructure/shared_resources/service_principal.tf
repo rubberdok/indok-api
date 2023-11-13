@@ -26,7 +26,7 @@ resource "azuread_application" "github" {
 
 # Service Principal, used by Github Actions to authenticate with Azure
 resource "azuread_service_principal" "github" {
-  application_id               = azuread_application.github.application_id
+  client_id                    = azuread_application.github.client_id
   app_role_assignment_required = false
   owners                       = [local.azure_admin_id]
   description                  = "Service principal for GitHub actions"
@@ -37,30 +37,30 @@ resource "azuread_service_principal" "github" {
   as described in https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_oidc
 */
 resource "azuread_application_federated_identity_credential" "github_branch_main" {
-  application_object_id = azuread_application.github.object_id
-  display_name          = "github-branch-main"
-  description           = "GitHub Actions Service Principal"
-  audiences             = ["api://AzureADTokenExchange"]
-  issuer                = "https://token.actions.githubusercontent.com"
-  subject               = "repo:rubberdok/${var.repository_name}:ref:refs/heads/main"
+  application_id = azuread_application.github.client_id
+  display_name   = "github-branch-main"
+  description    = "GitHub Actions Service Principal"
+  audiences      = ["api://AzureADTokenExchange"]
+  issuer         = "https://token.actions.githubusercontent.com"
+  subject        = "repo:rubberdok/${var.repository_name}:ref:refs/heads/main"
 }
 
 resource "azuread_application_federated_identity_credential" "github_environment_production" {
-  application_object_id = azuread_application.github.object_id
-  display_name          = "github-environment-production"
-  description           = "GitHub Actions Service Principal"
-  audiences             = ["api://AzureADTokenExchange"]
-  issuer                = "https://token.actions.githubusercontent.com"
-  subject               = "repo:rubberdok/indok-api:environment:production"
+  application_id = azuread_application.github.client_id
+  display_name   = "github-environment-production"
+  description    = "GitHub Actions Service Principal"
+  audiences      = ["api://AzureADTokenExchange"]
+  issuer         = "https://token.actions.githubusercontent.com"
+  subject        = "repo:rubberdok/indok-api:environment:production"
 }
 
 resource "azuread_application_federated_identity_credential" "github_pull_request" {
-  application_object_id = azuread_application.github.object_id
-  display_name          = "github-pull-request"
-  description           = "GitHub Actions Service Principal"
-  audiences             = ["api://AzureADTokenExchange"]
-  issuer                = "https://token.actions.githubusercontent.com"
-  subject               = "repo:rubberdok/${var.repository_name}:pull_request"
+  application_id = azuread_application.github.client_id
+  display_name   = "github-pull-request"
+  description    = "GitHub Actions Service Principal"
+  audiences      = ["api://AzureADTokenExchange"]
+  issuer         = "https://token.actions.githubusercontent.com"
+  subject        = "repo:rubberdok/${var.repository_name}:pull_request"
 }
 
 resource "time_rotating" "yearly" {
@@ -71,8 +71,8 @@ resource "time_rotating" "yearly" {
 }
 
 resource "azuread_application_password" "github" {
-  application_object_id = azuread_application.github.object_id
-  display_name          = "github-actions"
+  application_id = azuread_application.github.client_id
+  display_name   = "github-actions"
 
   rotate_when_changed = {
     rotation = time_rotating.yearly.id
@@ -87,8 +87,8 @@ data "azuread_application_published_app_ids" "well_known" {}
 
 
 resource "azuread_service_principal" "msgraph" {
-  application_id = data.azuread_application_published_app_ids.well_known.result.MicrosoftGraph
-  use_existing   = true
+  client_id    = data.azuread_application_published_app_ids.well_known.result.MicrosoftGraph
+  use_existing = true
 }
 
 resource "azuread_app_role_assignment" "github_app_rw_all" {
