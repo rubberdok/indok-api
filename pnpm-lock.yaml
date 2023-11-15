@@ -69,8 +69,8 @@ dependencies:
     specifier: ^3.3.2
     version: 3.3.2
   postmark:
-    specifier: ^3.1.1
-    version: 3.1.2
+    specifier: ^3.11.0
+    version: 3.11.0
   prisma:
     specifier: ^5.5.2
     version: 5.5.2
@@ -7889,8 +7889,8 @@ packages:
       find-up: 4.1.0
     dev: true
 
-  /postmark@3.1.2:
-    resolution: {integrity: sha512-nm5vZR75Fk7coboWVMysq6eWZHMOUZAXOl+JXD3O1rzjOlZ9eYYq++/WyrheTyl0L4h97XJkftanFVU7OCTCDw==}
+  /postmark@3.11.0:
+    resolution: {integrity: sha512-asguBQ9M/8ueQMJ1D45iPF+3+T641q8rAU8m8cQSfhDWePw4TVYql9wszjAwSCE93dUonyrF08D8Kvg6USBoFA==}
     dependencies:
       axios: 0.25.0
     transitivePeerDependencies:
