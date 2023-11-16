@@ -12,8 +12,8 @@ dependencies:
     specifier: ^2.1.1
     version: 2.1.1(@apollo/server@4.9.5)(fastify@4.24.3)
   '@fastify/cookie':
-    specifier: ^9.1.0
-    version: 9.1.0
+    specifier: ^9.2.0
+    version: 9.2.0
   '@fastify/cors':
     specifier: ^8.4.1
     version: 8.4.1
@@ -1193,10 +1193,10 @@ packages:
       fast-uri: 2.3.0
     dev: false
 
-  /@fastify/cookie@9.1.0:
-    resolution: {integrity: sha512-w/LlQjj7cmYlQNhEKNm4jQoLkFXCL73kFu1Jy3aL7IFbYEojEKur0f7ieCKUxBBaU65tpaWC83UM8xW7AzY6uw==}
+  /@fastify/cookie@9.2.0:
+    resolution: {integrity: sha512-fkg1yjjQRHPFAxSHeLC8CqYuNzvR6Lwlj/KjrzQcGjNBK+K82nW+UfCjfN71g1GkoVoc1GTOgIWkFJpcMfMkHQ==}
     dependencies:
-      cookie: 0.5.0
+      cookie-signature: 1.2.1
       fastify-plugin: 4.5.1
     dev: false
 
@@ -4443,6 +4443,11 @@ packages:
 
   /cookie-signature@1.0.6:
     resolution: {integrity: sha512-QADzlaHc8icV8I7vbaJXJwod9HWYp8uCqf1xa4OfNu1T7JVxQIrUgOWtHdNDtPiywmFbiS12VjotIXLrKM3orQ==}
+    dev: false
+
+  /cookie-signature@1.2.1:
+    resolution: {integrity: sha512-78KWk9T26NhzXtuL26cIJ8/qNHANyJ/ZYrmEXFzUmhZdjpBv+DlWlOANRTGBt48YcyslsLrj0bMLFTmXvLRCOw==}
+    engines: {node: '>=6.6.0'}
     dev: false
 
   /cookie@0.4.2:
