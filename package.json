@@ -47,7 +47,7 @@
     "@graphql-typed-document-node/core": "^3.2.0",
     "@jest/globals": "^29.7.0",
     "@parcel/watcher": "^2.3.0",
-    "@swc/cli": "^0.1.62",
+    "@swc/cli": "^0.1.63",
     "@swc/core": "1.3.96",
     "@swc/helpers": "^0.5.3",
     "@swc/jest": "^0.2.29",
