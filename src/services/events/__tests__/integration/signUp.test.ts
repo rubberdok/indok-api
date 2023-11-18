@@ -1,29 +1,25 @@
-import { EventRepository } from "@/repositories/events/repository.js";
-import { EventService } from "../../service.js";
 import prisma from "@/lib/prisma.js";
-import { OrganizationService } from "@/services/organizations/service.js";
-import { OrganizationRepository } from "@/repositories/organizations/organizations.js";
+import { EventRepository } from "@/repositories/events/repository.js";
 import { MemberRepository } from "@/repositories/organizations/members.js";
-import { UserService } from "@/services/users/service.js";
+import { OrganizationRepository } from "@/repositories/organizations/organizations.js";
 import { UserRepository } from "@/repositories/users/index.js";
+import { OrganizationService } from "@/services/organizations/service.js";
+import { UserService } from "@/services/users/service.js";
 import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
-import fastify from "fastify";
-import { envToLogger } from "@/lib/fastify.js";
-import { env } from "@/config.js";
+import { EventService } from "../../service.js";
 
 describe("Event Sign Up", () => {
   let eventService: EventService;
 
   beforeAll(() => {
     console.log("Seed:", faker.seed());
-    const app = fastify({ logger: { ...envToLogger[env.NODE_ENV], level: "info" } });
     const eventRepository = new EventRepository(prisma);
     const organizationRepository = new OrganizationRepository(prisma);
     const memberRepository = new MemberRepository(prisma);
     const userService = new UserService(new UserRepository(prisma));
     const organizationService = new OrganizationService(organizationRepository, memberRepository, userService);
-    eventService = new EventService(eventRepository, organizationService, app.log);
+    eventService = new EventService(eventRepository, organizationService);
     prisma.organization.deleteMany({});
   });
 

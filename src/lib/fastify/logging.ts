@@ -16,7 +16,10 @@ const redact: PinoLoggerOptions["redact"] = [
   "*.user",
 ];
 
-export const envToLogger: Record<"development" | "production" | "test", FastifyServerOptions["logger"]> = {
+export const envToLogger: Record<
+  "development" | "production" | "test",
+  Exclude<FastifyServerOptions["logger"], boolean>
+> = {
   development: {
     enabled: env.LOG_ENABLED,
     transport: {
