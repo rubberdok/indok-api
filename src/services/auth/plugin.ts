@@ -1,6 +1,7 @@
+import { FastifyPluginAsync } from "fastify";
+
 import { BadRequestError, InternalServerError } from "@/domain/errors.js";
 import { User } from "@/domain/users.js";
-import { FastifyPluginAsync } from "fastify";
 
 interface AuthService {
   ssoUrl(state?: string | null): { url: string; codeVerifier: string };

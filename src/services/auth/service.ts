@@ -1,8 +1,7 @@
 import crypto from "crypto";
 
-import { User } from "@/domain/users.js";
-
 import { env } from "@/config.js";
+import { User } from "@/domain/users.js";
 import { GetUserParams, IAuthService } from "@/services/interfaces.js";
 
 export interface AuthProvider {

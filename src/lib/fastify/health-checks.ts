@@ -1,4 +1,5 @@
 import { FastifyPluginAsync } from "fastify";
+
 import { migrationHealthCheck } from "../prisma.js";
 
 const healthCheckPlugin: FastifyPluginAsync = async (app) => {

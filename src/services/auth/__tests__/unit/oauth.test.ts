@@ -1,15 +1,12 @@
 import crypto from "crypto";
 
-import { User } from "@prisma/client";
-import { DeepMockProxy, mockDeep } from "jest-mock-extended";
+import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
+
+import { User } from "@/domain/users.js";
 
 import { FeideProvider } from "../../providers.js";
 import { AuthService, UserService } from "../../service.js";
-import { setupMockFeideClient } from "../__mocks__/feide.js";
-
-import { OAuthCase } from "./interfaces.js";
-
-const dummyUser = mockDeep<User>();
+import { FeideResponses, setupMockFeideClient } from "../__mocks__/feide.js";
 
 let mockUserService: DeepMockProxy<UserService>;
 
@@ -32,7 +29,13 @@ describe("OAuth", () => {
     expect(expected).toStrictEqual(codeChallenge);
   });
 
-  const newUserCases: OAuthCase[] = [
+  interface TestCase {
+    name: string;
+    responses: FeideResponses;
+    expected: User;
+  }
+
+  const newUserCases: TestCase[] = [
     {
       name: "should create a new user if one does not exist",
       responses: {
@@ -53,18 +56,10 @@ describe("OAuth", () => {
           },
         },
       },
-      expected: {
-        ...dummyUser,
+      expected: mock<User>({
         username: "example",
         feideId: "feide_id",
-        id: "id",
-        firstName: "first",
-        lastName: "last",
-        email: "example@example.com",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lastLogin: new Date(),
-      },
+      }),
     },
   ];
   test.each(newUserCases)("authentication - $name", async ({ responses, expected }) => {
@@ -83,7 +78,7 @@ describe("OAuth", () => {
     expect(mockUserService.create).not.toHaveBeenCalled();
   });
 
-  const existingUserCases: OAuthCase[] = [
+  const existingUserCases: TestCase[] = [
     {
       name: "should fetch an existing user",
       responses: {
@@ -104,23 +99,19 @@ describe("OAuth", () => {
           },
         },
       },
-      expected: {
-        ...dummyUser,
+      expected: mock<User>({
         username: "existing",
         feideId: "feide_id",
         id: "id",
         firstName: "first",
         lastName: "last",
         email: "existing@example.com",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lastLogin: new Date(),
         graduationYear: null,
         firstLogin: false,
         graduationYearUpdatedAt: null,
         allergies: "",
         phoneNumber: "40000000",
-      },
+      }),
     },
   ];
   test.each(existingUserCases)("authentication - $name", async ({ responses, expected }) => {
