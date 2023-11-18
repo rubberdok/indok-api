@@ -4,7 +4,7 @@ import { mockDeep } from "jest-mock-extended";
 
 import { BaseError, InvalidArgumentError } from "@/domain/errors.js";
 
-import { EventRepository, EventService, OrganizationService, UserService } from "../../service.js";
+import { EventRepository, EventService, OrganizationService } from "../../service.js";
 
 function setup() {
   const organizationService = mockDeep<OrganizationService>();

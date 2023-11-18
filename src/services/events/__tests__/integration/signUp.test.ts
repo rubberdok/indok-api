@@ -1,3 +1,6 @@
+import { faker } from "@faker-js/faker";
+import { ParticipationStatus } from "@prisma/client";
+
 import prisma from "@/lib/prisma.js";
 import { EventRepository } from "@/repositories/events/repository.js";
 import { MemberRepository } from "@/repositories/organizations/members.js";
@@ -5,8 +8,7 @@ import { OrganizationRepository } from "@/repositories/organizations/organizatio
 import { UserRepository } from "@/repositories/users/index.js";
 import { OrganizationService } from "@/services/organizations/service.js";
 import { UserService } from "@/services/users/service.js";
-import { faker } from "@faker-js/faker";
-import { ParticipationStatus } from "@prisma/client";
+
 import { EventService } from "../../service.js";
 
 describe("Event Sign Up", () => {

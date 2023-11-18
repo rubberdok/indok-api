@@ -1,11 +1,11 @@
 import { Event, EventSignUp, EventSlot } from "@prisma/client";
+import { FastifyBaseLogger } from "fastify";
 import { merge } from "lodash-es";
 import { z } from "zod";
 
 import { InternalServerError, InvalidArgumentError, NotFoundError, PermissionDeniedError } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
 import { User } from "@/domain/users.js";
-import { FastifyBaseLogger } from "fastify";
 
 export interface EventRepository {
   create(data: {
