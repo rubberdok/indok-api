@@ -15,7 +15,6 @@ describe("Event Sign Up", () => {
   let eventService: EventService;
 
   beforeAll(() => {
-    console.log("Seed:", faker.seed());
     const eventRepository = new EventRepository(prisma);
     const organizationRepository = new OrganizationRepository(prisma);
     const memberRepository = new MemberRepository(prisma);
@@ -306,6 +305,10 @@ describe("Event Sign Up", () => {
       const updatedSlot = await prisma.eventSlot.findUniqueOrThrow({ where: { id: slot.id } });
       expect(updatedSlot.spots).toEqual(0);
     });
+  });
+
+  afterAll(() => {
+    console.log("Seed:", faker.seed());
   });
 });
 
