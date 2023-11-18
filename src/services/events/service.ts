@@ -3,8 +3,7 @@ import { FastifyBaseLogger } from "fastify";
 import { merge } from "lodash-es";
 import { z } from "zod";
 
-import { InvalidArgumentError, NotFoundError, PermissionDeniedError } from "@/domain/errors.js";
-import { EventFullError } from "@/domain/events.js";
+import { InternalServerError, InvalidArgumentError, NotFoundError, PermissionDeniedError } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
 import { User } from "@/domain/users.js";
 
@@ -169,11 +168,11 @@ export class EventService {
   /**
    * Sign up a user for an event. If there are no available spots on the event, either because all avilable slots are
    * full, or because the event itself is full, the user will be added to the wait list.
-   * This method will attempt a maximum of 20 times to sign up the user. If it fails, an s thrown.
+   * This method will attempt a maximum of 20 times to sign up the user. If it fails, an InternalServerError is thrown.
    * If this happens, it is likely due to a high number of concurrent requests, and the user can try again.
    *
-   * @throws {EventFullError} If the event is full
    * @throws {InvalidArgumentError} If the event does not have sign ups
+   * @throws {InternalServerError} If the user could not be signed up after 20 attempts
    * @param userId - The ID of the user that is signing up
    * @param eventId - The ID of the event to sign up for
    * @returns The event sign up. If there are no available spots on the event, either because all avilable slots are
@@ -181,42 +180,61 @@ export class EventService {
    * either have a status of `CONFIRMED` or `WAIT_LIST`.
    */
   async signUp(userId: string, eventId: string): Promise<EventSignUp> {
-    this.logger?.info({ userId, eventId }, "Attempting to sign up user for event.");
-    // Fetch the event to check if it has available slots or not
-    const event = await this.eventRepository.get(eventId);
-    if (event.spots === null) {
-      throw new InvalidArgumentError("This event does does not have sign ups.");
-    }
+    const maxAttempts = 20;
+    /**
+     * We may need to retry this multiple times, as we rely on optimistic concurrency control
+     * to ensure that that the event and slot have not been updated since we last fetched them.
+     * This is to avoid overfilling the event or slot during periods with a high number of concurrent requests.
+     *
+     * This number may need to be tweaked.
+     */
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      this.logger?.info({ userId, eventId, attempt }, "Attempting to sign up user for event.");
+      // Fetch the event to check if it has available slots or not
+      const event = await this.eventRepository.get(eventId);
+      if (event.spots === null) {
+        throw new InvalidArgumentError("This event does does not have sign ups.");
+      }
 
-    // If there are no spots left on the event, it doesn't matter if there are any spots left on the slots.
-    if (event.spots <= 0) {
-      this.logger?.info({ event }, "Event is full, adding user to wait list.");
-      return await this.eventRepository.createOnWaitlistSignUp(userId, { id: event.id });
-    }
-
-    let slotToSignUp: EventSlot;
-    try {
-      slotToSignUp = await this.eventRepository.getSlotWithAvailableSpots(eventId);
-    } catch (err) {
-      // If there are no slots with available spots, we add the user to the wait list.
-      if (err instanceof NotFoundError) {
+      // If there are no spots left on the event, it doesn't matter if there are any spots left on the slots.
+      if (event.spots <= 0) {
         this.logger?.info({ event }, "Event is full, adding user to wait list.");
         return await this.eventRepository.createOnWaitlistSignUp(userId, { id: event.id });
       }
-      throw err;
-    }
 
-    try {
-      // Try to sign the user up for the event. If there have been changes, i.e. `version` does not match, a NotFoundError is thrown.
-      // In that case, we refetch the event and slot, and try again.
-      const { signUp } = await this.eventRepository.createConfirmedSignUp(userId, event, slotToSignUp);
-      this.logger?.info({ signUp }, "Successfully signed up user for event.");
-      return signUp;
-    } catch (err) {
-      if (!(err instanceof NotFoundError)) {
+      let slotToSignUp: EventSlot;
+      try {
+        slotToSignUp = await this.eventRepository.getSlotWithAvailableSpots(eventId);
+      } catch (err) {
+        // If there are no slots with available spots, we add the user to the wait list.
+        if (err instanceof NotFoundError) {
+          this.logger?.info({ event }, "Event is full, adding user to wait list.");
+          return await this.eventRepository.createOnWaitlistSignUp(userId, { id: event.id });
+        }
         throw err;
       }
-      throw new EventFullError();
+
+      try {
+        // Try to sign the user up for the event. If there have been changes, i.e. `version` does not match, a NotFoundError is thrown.
+        // In that case, we refetch the event and slot, and try again.
+        const { signUp } = await this.eventRepository.createConfirmedSignUp(userId, event, slotToSignUp);
+        this.logger?.info({ signUp, attempt }, "Successfully signed up user for event.");
+        return signUp;
+      } catch (err) {
+        if (!(err instanceof NotFoundError)) {
+          throw err;
+        }
+      }
     }
+
+    /**
+     * If we reach this point, we have tried to sign up the user 20 times, and failed every time.
+     * Since the user hasn't been added to the wait list, there are likely still spots left on the event,
+     * but we have to abort at some point to avoid stalling the request.
+     */
+    this.logger?.error(
+      "Failed to sign up user after 20 attempts. If this happens often, consider increasing the number of attempts."
+    );
+    throw new InternalServerError("Failed to sign up user after 20 attempts");
   }
 }
