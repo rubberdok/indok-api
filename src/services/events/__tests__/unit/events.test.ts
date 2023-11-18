@@ -4,7 +4,7 @@ import { mockDeep } from "jest-mock-extended";
 
 import { BaseError, InvalidArgumentError } from "@/domain/errors.js";
 
-import { EventRepository, EventService, OrganizationService } from "../../service.js";
+import { EventRepository, EventService, OrganizationService, UserService } from "../../service.js";
 
 function setup() {
   const organizationService = mockDeep<OrganizationService>();
@@ -506,7 +506,7 @@ describe("EventsService", () => {
          * Assert
          */
         await expect(result).resolves.not.toThrow();
-        expect(eventsRepository.update).toHaveBeenCalledWith(act.data);
+        expect(eventsRepository.update).toHaveBeenCalledWith(expect.any(String), act.data);
       });
     });
   });

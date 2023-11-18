@@ -107,7 +107,6 @@ export class EventRepository {
         this.db.eventSlot.update({
           where: {
             id: slot.id,
-            version: slot.version,
             spots: {
               gt: 0,
             },
@@ -125,7 +124,6 @@ export class EventRepository {
         this.db.event.update({
           where: {
             id: event.id,
-            version: event.version,
             spots: {
               gt: 0,
             },
@@ -179,5 +177,51 @@ export class EventRepository {
       }
       throw err;
     }
+  }
+
+  /**
+   * getSlotWithAvailableSpots returns the slot with the greatest number of available spots for the given event.
+   *
+   * @throws {NotFoundError} If there are no slots with available spots for the event
+   * @param eventId - The ID of the event to get a slot for
+   * @returns The slot with the greatest number of available spots for the given event
+   */
+  async getSlotWithAvailableSpots(eventId: string): Promise<EventSlot> {
+    const slot = await this.db.eventSlot.findFirst({
+      where: {
+        eventId,
+        spots: {
+          gt: 0,
+        },
+      },
+      orderBy: {
+        spots: "desc",
+      },
+    });
+
+    if (slot === null) {
+      throw new NotFoundError(`No slots with available spots for event { id: ${eventId} }`);
+    }
+
+    return slot;
+  }
+
+  /**
+   * get returns the event with the given ID.
+   *
+   * @throws {NotFoundError} If an event with the given ID does not exist
+   */
+  async get(id: string): Promise<Event> {
+    const event = await this.db.event.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    if (event === null) {
+      throw new NotFoundError(`Event { id: ${id} } not found`);
+    }
+
+    return event;
   }
 }
