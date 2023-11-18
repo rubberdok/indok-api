@@ -1,6 +1,6 @@
 import crypto from "crypto";
 
-import { User } from "@prisma/client";
+import { User } from "@/domain/users.js";
 
 import { env } from "@/config.js";
 import { GetUserParams, IAuthService } from "@/services/interfaces.js";

@@ -7,7 +7,7 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { GraphQLFormattedError } from "graphql";
 import { mock, mockDeep } from "jest-mock-extended";
 
-import { getFormatErrorHandler, IContext } from "@/lib/apolloServer.js";
+import { getFormatErrorHandler, IContext } from "@/lib/apollo-server.js";
 
 import { resolvers } from "../resolvers.generated.js";
 import { typeDefs } from "../typeDefs.generated.js";
