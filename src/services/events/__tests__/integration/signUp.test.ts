@@ -199,7 +199,7 @@ describe("Event Sign Up", () => {
       });
 
       await prisma.user.createMany({
-        data: Array(200)
+        data: Array(concurrentUsers)
           .fill(null)
           .map(() => getCreateUserData()),
         skipDuplicates: true,
