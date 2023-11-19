@@ -110,7 +110,12 @@ describe("EventsRepository", () => {
        * Ensure that the event was created with additional slots
        */
       expect(result).toEqual({
-        ...data,
+        name: data.name,
+        description: data.description,
+        startAt: data.startAt,
+        endAt: data.endAt,
+        organizationId: data.organizationId,
+        organizerId: data.organizerId,
         id: expect.any(String),
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
