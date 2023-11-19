@@ -100,9 +100,26 @@ export type Event = {
   name: Scalars['String']['output'];
 };
 
+export type EventInput = {
+  id: Scalars['ID']['input'];
+};
+
+export type EventResponse = {
+  __typename?: 'EventResponse';
+  event: Event;
+};
+
+export type EventsInput = {
+  futureEventsOnly?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
 export type EventsResponse = {
   __typename?: 'EventsResponse';
   events: Array<Event>;
+  nextWeek: Array<Event>;
+  thisWeek: Array<Event>;
+  total: Scalars['Int']['output'];
+  twoWeeksOrLater: Array<Event>;
 };
 
 export type Member = {
@@ -197,8 +214,20 @@ export type Organization = {
 
 export type Query = {
   __typename?: 'Query';
+  event: EventResponse;
+  events: EventsResponse;
   user: UserResponse;
   users: UsersResponse;
+};
+
+
+export type QueryEventArgs = {
+  data: EventInput;
+};
+
+
+export type QueryEventsArgs = {
+  data?: InputMaybe<EventsInput>;
 };
 
 export type RemoveMemberInput = {

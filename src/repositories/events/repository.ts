@@ -245,4 +245,24 @@ export class EventRepository {
 
     return event;
   }
+
+  /**
+   * findMany returns a list of events.
+   * @param data.endAtGte - Only return events that end after this date
+   * @returns A list of events
+   */
+  async findMany(data?: { endAtGte?: Date }): Promise<Event[]> {
+    if (data) {
+      const { endAtGte } = data;
+      return this.db.event.findMany({
+        where: {
+          endAt: {
+            gte: endAtGte,
+          },
+        },
+      });
+    }
+
+    return this.db.event.findMany();
+  }
 }

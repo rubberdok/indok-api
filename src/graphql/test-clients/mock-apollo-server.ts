@@ -18,7 +18,10 @@ interface QueryResult<T extends TypedDocumentNode<ResultOf<T>, VariablesOf<T>>> 
 }
 
 class ApolloServerClient {
-  constructor(public server: ApolloServer<ApolloContext>) {}
+  constructor(
+    public server: ApolloServer<ApolloContext>,
+    private createMockContext: (session: Partial<FastifySessionObject>) => ApolloContext
+  ) {}
 
   async query<T extends TypedDocumentNode<ResultOf<T>, VariablesOf<T>>>(
     request: { query: T; variables?: VariablesOf<T> },
@@ -32,7 +35,7 @@ class ApolloServerClient {
         variables: request.variables,
       },
       {
-        contextValue: options?.contextValue,
+        contextValue: options?.contextValue ?? this.createMockContext({}),
       }
     );
 
@@ -70,7 +73,6 @@ export const createMockApolloServer = (logger?: Partial<FastifyBaseLogger>) => {
   const userService = mockDeep<ApolloContext["userService"]>();
   const organizationService = mockDeep<ApolloContext["organizationService"]>();
   const cabinService = mockDeep<ApolloContext["cabinService"]>();
-  const authService = mockDeep<ApolloContext["authService"]>();
   const eventService = mockDeep<ApolloContext["eventService"]>();
 
   function createMockContext(session: Partial<FastifySessionObject>) {
@@ -82,19 +84,17 @@ export const createMockApolloServer = (logger?: Partial<FastifyBaseLogger>) => {
       userService,
       organizationService,
       cabinService,
-      authService,
       eventService,
     };
     return contextValue;
   }
 
-  const client = new ApolloServerClient(server);
+  const client = new ApolloServerClient(server, createMockContext);
 
   return {
     userService,
     organizationService,
     cabinService,
-    authService,
     eventService,
     createMockContext,
     server,

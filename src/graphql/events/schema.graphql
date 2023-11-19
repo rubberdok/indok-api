@@ -26,6 +26,31 @@ input CreateEventSlot {
   spots: Int!
 }
 
+type EventResponse {
+  event: Event!
+}
+
+input EventInput {
+  id: ID!
+}
+
+type EventsResponse {
+  events: [Event!]!
+  nextWeek: [Event!]!
+  thisWeek: [Event!]!
+  twoWeeksOrLater: [Event!]!
+  total: Int!
+}
+
+input EventsInput {
+  futureEventsOnly: Boolean
+}
+
 type Mutation {
   createEvent(data: CreateEventInput!): CreateEventResponse!
+}
+
+type Query {
+  event(data: EventInput!): EventResponse!
+  events(data: EventsInput): EventsResponse!
 }
