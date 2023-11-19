@@ -2,6 +2,8 @@ import { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
 import { FastifyInstance, InjectOptions, LightMyRequestResponse } from "fastify";
 import { GraphQLError } from "graphql";
 
+import { env } from "@/config.js";
+
 /**
  * A test client for integration testing GraphQL resolvers.
  *
@@ -124,5 +126,26 @@ export class GraphQLTestClient {
 
     const { data } = response.json<{ data: ResultOf<T> }>();
     return { errors, data, response };
+  }
+
+  async performLogin(): Promise<Record<string, string>> {
+    const redirectUrl = await this.app.inject({
+      method: "GET",
+      url: "/auth/login",
+    });
+    const sessionCookie = redirectUrl.cookies[0]?.value ?? "";
+
+    const authenticateResponse = await this.app.inject({
+      method: "GET",
+      url: "/auth/authenticate",
+      query: {
+        code: "code",
+      },
+      cookies: {
+        [env.SESSION_COOKIE_NAME]: sessionCookie,
+      },
+    });
+    const authenticatedCookie = authenticateResponse.cookies[0]?.value ?? "";
+    return { [env.SESSION_COOKIE_NAME]: authenticatedCookie };
   }
 }

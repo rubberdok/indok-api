@@ -2,16 +2,13 @@ import assert from "assert";
 
 import { faker } from "@faker-js/faker";
 import { FastifyInstance, InjectOptions } from "fastify";
-import { mock } from "jest-mock-extended";
 
+import { defaultTestDependenciesFactory } from "@/__tests__/dependencies-factory.js";
 import { env } from "@/config.js";
 import { codes } from "@/domain/errors.js";
 import prisma from "@/lib/prisma.js";
-import { createRedisClient } from "@/lib/redis.js";
 import { UserRepository } from "@/repositories/users/index.js";
 import { initServer } from "@/server.js";
-import { CabinService } from "@/services/cabins/service.js";
-import { OrganizationService } from "@/services/organizations/service.js";
 import { UserService } from "@/services/users/service.js";
 
 import { AuthClient, UserInfo } from "../../clients.js";
@@ -39,13 +36,7 @@ describe("AuthPlugin", () => {
     const userRepository = new UserRepository(prisma);
     const userService = new UserService(userRepository);
     const authService = new AuthService(userService, new MockFeideClient(), FeideProvider);
-    const dependencies = {
-      authService,
-      userService,
-      cabinService: mock<CabinService>(),
-      organizationService: mock<OrganizationService>(),
-      createRedisClient: createRedisClient,
-    };
+    const dependencies = defaultTestDependenciesFactory({ authService, userService });
     app = await initServer(dependencies, { port: 4001, host: "0.0.0.0" });
   });
 

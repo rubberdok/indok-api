@@ -14,43 +14,18 @@ import * as types from './graphql.js';
  * Therefore it is highly recommended to use the babel or swc plugin for production.
  */
 const documents = {
-    "\n          mutation redirectUrl {\n            redirectUrl {\n              url\n            }\n          }\n        ": types.RedirectUrlDocument,
-    "\n            mutation authenticate1 {\n              authenticate(code: \"code\") {\n                user {\n                  id\n                }\n              }\n            }\n          ": types.Authenticate1Document,
-    "\n            mutation redirectUrl {\n              redirectUrl {\n                url\n              }\n            }\n          ": types.RedirectUrlDocument,
-    "\n              mutation authenticate($code: String!) {\n                authenticate(code: $code) {\n                  user {\n                    id\n                  }\n                }\n              }\n            ": types.AuthenticateDocument,
-    "\n          mutation logout {\n            logout {\n              status\n            }\n          }\n        ": types.LogoutDocument,
-    "\n            mutation authenticate($code: String!) {\n              authenticate(code: $code) {\n                user {\n                  id\n                }\n              }\n            }\n          ": types.AuthenticateDocument,
-    "\n            mutation logout {\n              logout {\n                status\n              }\n            }\n          ": types.LogoutDocument,
+    "\n          query me {\n            user {\n              user {\n                id\n              }\n            }\n          }\n        ": types.MeDocument,
+    "\n            query loggedIn {\n              user {\n                user {\n                  id\n                }\n              }\n            }\n          ": types.LoggedInDocument,
 };
 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n          mutation redirectUrl {\n            redirectUrl {\n              url\n            }\n          }\n        "): typeof import('./graphql.js').RedirectUrlDocument;
+export function graphql(source: "\n          query me {\n            user {\n              user {\n                id\n              }\n            }\n          }\n        "): typeof import('./graphql.js').MeDocument;
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n            mutation authenticate1 {\n              authenticate(code: \"code\") {\n                user {\n                  id\n                }\n              }\n            }\n          "): typeof import('./graphql.js').Authenticate1Document;
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n            mutation redirectUrl {\n              redirectUrl {\n                url\n              }\n            }\n          "): typeof import('./graphql.js').RedirectUrlDocument;
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n              mutation authenticate($code: String!) {\n                authenticate(code: $code) {\n                  user {\n                    id\n                  }\n                }\n              }\n            "): typeof import('./graphql.js').AuthenticateDocument;
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n          mutation logout {\n            logout {\n              status\n            }\n          }\n        "): typeof import('./graphql.js').LogoutDocument;
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n            mutation authenticate($code: String!) {\n              authenticate(code: $code) {\n                user {\n                  id\n                }\n              }\n            }\n          "): typeof import('./graphql.js').AuthenticateDocument;
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n            mutation logout {\n              logout {\n                status\n              }\n            }\n          "): typeof import('./graphql.js').LogoutDocument;
+export function graphql(source: "\n            query loggedIn {\n              user {\n                user {\n                  id\n                }\n              }\n            }\n          "): typeof import('./graphql.js').LoggedInDocument;
 
 
 export function graphql(source: string) {

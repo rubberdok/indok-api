@@ -249,54 +249,6 @@ describe("EventsRepository", () => {
 
       const testCases: TestCase[] = [
         {
-          name: "if slot versions don't match",
-          arrange: {
-            event: {
-              version: 0,
-              spots: 1,
-            },
-            slot: {
-              version: 0,
-              spots: 1,
-            },
-          },
-          act: {
-            slot: {
-              version: 1,
-            },
-            event: {
-              version: 0,
-            },
-          },
-          assert: {
-            error: NotFoundError,
-          },
-        },
-        {
-          name: "if event versions don't match",
-          arrange: {
-            event: {
-              version: 0,
-              spots: 1,
-            },
-            slot: {
-              version: 0,
-              spots: 1,
-            },
-          },
-          act: {
-            slot: {
-              version: 0,
-            },
-            event: {
-              version: 1,
-            },
-          },
-          assert: {
-            error: NotFoundError,
-          },
-        },
-        {
           name: "if slot spots are 0",
           arrange: {
             event: {

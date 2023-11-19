@@ -5,7 +5,7 @@ import { ResultOf } from "@graphql-typed-document-node/core";
 
 import { codes } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
-import { createMockApolloServer } from "@/graphql/test-clients/mockApolloServer.js";
+import { createMockApolloServer } from "@/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "@/graphql/test-clients/unit/gql.js";
 import { AddMember2Document, RemoveMember2Document } from "@/graphql/test-clients/unit/graphql.js";
 

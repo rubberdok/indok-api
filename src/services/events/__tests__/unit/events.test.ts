@@ -506,7 +506,7 @@ describe("EventsService", () => {
          * Assert
          */
         await expect(result).resolves.not.toThrow();
-        expect(eventsRepository.update).toHaveBeenCalledWith(act.data);
+        expect(eventsRepository.update).toHaveBeenCalledWith(expect.any(String), act.data);
       });
     });
   });

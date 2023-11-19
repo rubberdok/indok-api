@@ -11,6 +11,7 @@ import fastifySession from "@fastify/session";
 import fastifySentry from "@immobiliarelabs/fastify-sentry";
 import RedisStore from "connect-redis";
 import fastify, { FastifyInstance } from "fastify";
+import { merge } from "lodash-es";
 import { createClient } from "redis";
 
 import { env } from "./config.js";
@@ -19,14 +20,23 @@ import { typeDefs } from "./graphql/typeDefs.generated.js";
 import { IContext, getFormatErrorHandler } from "./lib/apollo-server.js";
 import { healthCheckPlugin } from "./lib/fastify/health-checks.js";
 import { envToLogger } from "./lib/fastify/logging.js";
+import postmark from "./lib/postmark.js";
+import prisma from "./lib/prisma.js";
+import { createRedisClient } from "./lib/redis.js";
 import { fastifyApolloSentryPlugin } from "./lib/sentry.js";
-import { AuthService } from "./services/auth/index.js";
+import { CabinRepository } from "./repositories/cabins/index.js";
+import { MemberRepository } from "./repositories/organizations/members.js";
+import { OrganizationRepository } from "./repositories/organizations/organizations.js";
+import { UserRepository } from "./repositories/users/index.js";
+import { feideClient } from "./services/auth/clients.js";
+import { AuthService, FeideProvider } from "./services/auth/index.js";
 import { getAuthPlugin } from "./services/auth/plugin.js";
 import { CabinService } from "./services/cabins/service.js";
+import { MailService } from "./services/mail/index.js";
 import { OrganizationService } from "./services/organizations/index.js";
 import { UserService } from "./services/users/index.js";
 
-interface Dependencies {
+export interface Dependencies {
   cabinService: CabinService;
   userService: UserService;
   authService: AuthService;
@@ -37,6 +47,34 @@ interface Dependencies {
 interface Options {
   port: number;
   host: string;
+}
+
+/**
+ * Utility function to create a `Dependencies` object with the specified overrides.
+ * @param overrides - The overrides to apply to the default `Dependencies` object.
+ * @returns A `Dependencies` object with the specified overrides.
+ */
+export function dependenciesFactory(overrides?: Partial<Dependencies>): Dependencies {
+  const cabinRepository = new CabinRepository(prisma);
+  const userRepository = new UserRepository(prisma);
+  const memberRepository = new MemberRepository(prisma);
+  const organizationRepository = new OrganizationRepository(prisma);
+
+  const mailService = new MailService(postmark, env.NO_REPLY_EMAIL);
+  const cabinService = new CabinService(cabinRepository, mailService);
+  const userService = new UserService(userRepository);
+  const authService = new AuthService(userService, feideClient, FeideProvider);
+  const organizationService = new OrganizationService(organizationRepository, memberRepository, userService);
+
+  const defaultDependencies = {
+    cabinService,
+    userService,
+    authService,
+    organizationService,
+    createRedisClient: createRedisClient,
+  };
+
+  return merge({}, defaultDependencies, overrides);
 }
 
 /**

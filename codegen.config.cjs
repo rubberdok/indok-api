@@ -28,6 +28,7 @@ const config = {
   hooks: {
     afterAllFileWrite: ["prettier --write"],
   },
+  ignoreNoDocuments: true,
   generates: {
     /**
      * Generate typed document nodes for operations that are used for
@@ -49,6 +50,7 @@ const config = {
         documentMode: "string",
       },
       presetConfig: {
+        useTypeImports: true,
         /* Fragment masking is only useful for actual clients, and it's not relevant for testing */
         fragmentMasking: false,
       },
@@ -103,7 +105,7 @@ const config = {
           "./types.generated.ts": { content: generatedPrefix },
         },
         typesPluginsConfig: {
-          contextType: "@/lib/apolloServer.js#IContext",
+          contextType: "@/lib/apollo-server.js#IContext",
         },
       },
       { schema: "src/graphql/**/*.{graphql}" }

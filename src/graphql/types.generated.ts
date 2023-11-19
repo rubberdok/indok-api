@@ -79,15 +79,6 @@ export type CreateOrganizationResponse = {
   organization: Organization;
 };
 
-export type LogoutResponse = {
-  __typename?: 'LogoutResponse';
-  status: LogoutStatus;
-};
-
-export type LogoutStatus =
-  | 'ERROR'
-  | 'SUCCESS';
-
 export type Member = {
   __typename?: 'Member';
   id: Scalars['ID']['output'];
@@ -103,12 +94,9 @@ export type Mutation = {
   __typename?: 'Mutation';
   /** Add a member to the organization */
   addMember: AddMemberResponse;
-  authenticate: UserResponse;
   /** Create a new organization, and add the current user as an admin of the organization. */
   createOrganization: CreateOrganizationResponse;
-  logout: LogoutResponse;
   newBooking: Booking;
-  redirectUrl: RedirectUrlResponse;
   /** Remove a member from the organization by the ID of the membership. */
   removeMember: RemoveMemberResponse;
   updateBookingStatus: Booking;
@@ -126,11 +114,6 @@ export type MutationaddMemberArgs = {
 };
 
 
-export type MutationauthenticateArgs = {
-  code: Scalars['String']['input'];
-};
-
-
 export type MutationcreateOrganizationArgs = {
   data: CreateOrganizationInput;
 };
@@ -138,11 +121,6 @@ export type MutationcreateOrganizationArgs = {
 
 export type MutationnewBookingArgs = {
   data: NewBookingInput;
-};
-
-
-export type MutationredirectUrlArgs = {
-  state?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -189,11 +167,6 @@ export type Query = {
   __typename?: 'Query';
   user: UserResponse;
   users: UsersResponse;
-};
-
-export type RedirectUrlResponse = {
-  __typename?: 'RedirectUrlResponse';
-  url: Scalars['String']['output'];
 };
 
 export type RemoveMemberInput = {
@@ -363,14 +336,11 @@ export type ResolversTypes = {
   CreateOrganizationInput: CreateOrganizationInput;
   CreateOrganizationResponse: ResolverTypeWrapper<Omit<CreateOrganizationResponse, 'organization'> & { organization: ResolversTypes['Organization'] }>;
   DateTime: ResolverTypeWrapper<Scalars['DateTime']['output']>;
-  LogoutResponse: ResolverTypeWrapper<LogoutResponse>;
-  LogoutStatus: LogoutStatus;
   Member: ResolverTypeWrapper<MemberMapper>;
   Mutation: ResolverTypeWrapper<{}>;
   NewBookingInput: NewBookingInput;
   Organization: ResolverTypeWrapper<OrganizationMapper>;
   Query: ResolverTypeWrapper<{}>;
-  RedirectUrlResponse: ResolverTypeWrapper<RedirectUrlResponse>;
   RemoveMemberInput: RemoveMemberInput;
   RemoveMemberResponse: ResolverTypeWrapper<Omit<RemoveMemberResponse, 'member'> & { member: ResolversTypes['Member'] }>;
   Role: Role;
@@ -397,13 +367,11 @@ export type ResolversParentTypes = {
   CreateOrganizationInput: CreateOrganizationInput;
   CreateOrganizationResponse: Omit<CreateOrganizationResponse, 'organization'> & { organization: ResolversParentTypes['Organization'] };
   DateTime: Scalars['DateTime']['output'];
-  LogoutResponse: LogoutResponse;
   Member: MemberMapper;
   Mutation: {};
   NewBookingInput: NewBookingInput;
   Organization: OrganizationMapper;
   Query: {};
-  RedirectUrlResponse: RedirectUrlResponse;
   RemoveMemberInput: RemoveMemberInput;
   RemoveMemberResponse: Omit<RemoveMemberResponse, 'member'> & { member: ResolversParentTypes['Member'] };
   UpdateBookingStatusInput: UpdateBookingStatusInput;
@@ -451,11 +419,6 @@ export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversT
   name: 'DateTime';
 }
 
-export type LogoutResponseResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['LogoutResponse'] = ResolversParentTypes['LogoutResponse']> = {
-  status?: Resolver<ResolversTypes['LogoutStatus'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
 export type MemberResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['Member'] = ResolversParentTypes['Member']> = {
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   organization?: Resolver<ResolversTypes['Organization'], ParentType, ContextType>;
@@ -466,11 +429,8 @@ export type MemberResolvers<ContextType = IContext, ParentType extends Resolvers
 
 export type MutationResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
   addMember?: Resolver<ResolversTypes['AddMemberResponse'], ParentType, ContextType, RequireFields<MutationaddMemberArgs, 'data'>>;
-  authenticate?: Resolver<ResolversTypes['UserResponse'], ParentType, ContextType, RequireFields<MutationauthenticateArgs, 'code'>>;
   createOrganization?: Resolver<ResolversTypes['CreateOrganizationResponse'], ParentType, ContextType, RequireFields<MutationcreateOrganizationArgs, 'data'>>;
-  logout?: Resolver<ResolversTypes['LogoutResponse'], ParentType, ContextType>;
   newBooking?: Resolver<ResolversTypes['Booking'], ParentType, ContextType, RequireFields<MutationnewBookingArgs, 'data'>>;
-  redirectUrl?: Resolver<ResolversTypes['RedirectUrlResponse'], ParentType, ContextType, Partial<MutationredirectUrlArgs>>;
   removeMember?: Resolver<ResolversTypes['RemoveMemberResponse'], ParentType, ContextType, RequireFields<MutationremoveMemberArgs, 'data'>>;
   updateBookingStatus?: Resolver<ResolversTypes['Booking'], ParentType, ContextType, RequireFields<MutationupdateBookingStatusArgs, 'data'>>;
   updateOrganization?: Resolver<ResolversTypes['UpdateOrganizationResponse'], ParentType, ContextType, RequireFields<MutationupdateOrganizationArgs, 'data'>>;
@@ -488,11 +448,6 @@ export type OrganizationResolvers<ContextType = IContext, ParentType extends Res
 export type QueryResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
   user?: Resolver<ResolversTypes['UserResponse'], ParentType, ContextType>;
   users?: Resolver<ResolversTypes['UsersResponse'], ParentType, ContextType>;
-};
-
-export type RedirectUrlResponseResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['RedirectUrlResponse'] = ResolversParentTypes['RedirectUrlResponse']> = {
-  url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type RemoveMemberResponseResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['RemoveMemberResponse'] = ResolversParentTypes['RemoveMemberResponse']> = {
@@ -537,12 +492,10 @@ export type Resolvers<ContextType = IContext> = {
   Cabin?: CabinResolvers<ContextType>;
   CreateOrganizationResponse?: CreateOrganizationResponseResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
-  LogoutResponse?: LogoutResponseResolvers<ContextType>;
   Member?: MemberResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   Organization?: OrganizationResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
-  RedirectUrlResponse?: RedirectUrlResponseResolvers<ContextType>;
   RemoveMemberResponse?: RemoveMemberResponseResolvers<ContextType>;
   UpdateOrganizationResponse?: UpdateOrganizationResponseResolvers<ContextType>;
   User?: UserResolvers<ContextType>;

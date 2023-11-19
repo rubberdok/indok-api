@@ -74,16 +74,6 @@ export type CreateOrganizationResponse = {
   organization: Organization;
 };
 
-export type LogoutResponse = {
-  __typename?: 'LogoutResponse';
-  status: LogoutStatus;
-};
-
-export enum LogoutStatus {
-  Error = 'ERROR',
-  Success = 'SUCCESS'
-}
-
 export type Member = {
   __typename?: 'Member';
   id: Scalars['ID']['output'];
@@ -99,12 +89,9 @@ export type Mutation = {
   __typename?: 'Mutation';
   /** Add a member to the organization */
   addMember: AddMemberResponse;
-  authenticate: UserResponse;
   /** Create a new organization, and add the current user as an admin of the organization. */
   createOrganization: CreateOrganizationResponse;
-  logout: LogoutResponse;
   newBooking: Booking;
-  redirectUrl: RedirectUrlResponse;
   /** Remove a member from the organization by the ID of the membership. */
   removeMember: RemoveMemberResponse;
   updateBookingStatus: Booking;
@@ -122,11 +109,6 @@ export type MutationAddMemberArgs = {
 };
 
 
-export type MutationAuthenticateArgs = {
-  code: Scalars['String']['input'];
-};
-
-
 export type MutationCreateOrganizationArgs = {
   data: CreateOrganizationInput;
 };
@@ -134,11 +116,6 @@ export type MutationCreateOrganizationArgs = {
 
 export type MutationNewBookingArgs = {
   data: NewBookingInput;
-};
-
-
-export type MutationRedirectUrlArgs = {
-  state?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -185,11 +162,6 @@ export type Query = {
   __typename?: 'Query';
   user: UserResponse;
   users: UsersResponse;
-};
-
-export type RedirectUrlResponse = {
-  __typename?: 'RedirectUrlResponse';
-  url: Scalars['String']['output'];
 };
 
 export type RemoveMemberInput = {
