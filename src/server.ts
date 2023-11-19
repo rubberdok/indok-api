@@ -16,7 +16,7 @@ import { createClient } from "redis";
 
 import { env } from "./config.js";
 import { resolvers } from "./graphql/resolvers.generated.js";
-import { typeDefs } from "./graphql/typeDefs.generated.js";
+import { typeDefs } from "./graphql/type-defs.generated.js";
 import { IContext, getFormatErrorHandler } from "./lib/apollo-server.js";
 import { healthCheckPlugin } from "./lib/fastify/health-checks.js";
 import { envToLogger } from "./lib/fastify/logging.js";
