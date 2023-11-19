@@ -63,12 +63,32 @@ export type Cabin = {
 };
 
 export type CreateEventInput = {
+  /**
+   * The description of the event, defaults to "". We support markdown on the client, so this can be markdown.
+   * This will be displayed to users.
+   */
   description?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * The end time of the event. If this is not provided, the event will be assumed to be two hours long.
+   * This will be displayed to users.
+   */
   endAt?: InputMaybe<Scalars['DateTime']['input']>;
+  /** The name of the event, this will be displayed to users */
   name: Scalars['String']['input'];
+  /**
+   * The organization that is hosting the event. Events must be hosted by an organization, and the user
+   * creating the event must be a member of the organization.
+   */
   organizationId: Scalars['ID']['input'];
+  /** The slots for the event. If this is not provided, but spots is, then all users can attend the event. */
   slots?: InputMaybe<Array<CreateEventSlot>>;
+  /**
+   * Total number of spots for the event, regardless of the number of spots in each slot.
+   * This number takes precedence over the spots in each slot, so if there are no spots remaining on the event
+   * no more users can be registered as attending.
+   */
   spots?: InputMaybe<Scalars['Int']['input']>;
+  /** The start time of the event. Events must have a start time. */
   startAt: Scalars['DateTime']['input'];
 };
 
@@ -95,8 +115,10 @@ export type CreateOrganizationResponse = {
 
 export type Event = {
   __typename?: 'Event';
+  /** The description of the event. We support markdown on the client, so this can be markdown. */
   description: Scalars['String']['output'];
   id: Scalars['ID']['output'];
+  /** The name of the event. */
   name: Scalars['String']['output'];
 };
 
@@ -110,15 +132,24 @@ export type EventResponse = {
 };
 
 export type EventsInput = {
+  /**
+   * If true, only return events that are currently happening, or will happen in the future
+   * i.e. events where endAt is in the future.
+   */
   futureEventsOnly?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type EventsResponse = {
   __typename?: 'EventsResponse';
+  /** All events, if futureEventsOnly is false, otherwise only future events */
   events: Array<Event>;
+  /** The events that start next week, by week number */
   nextWeek: Array<Event>;
+  /** The events that start this week, by week number */
   thisWeek: Array<Event>;
+  /** The total number of events returned by this query (for now) */
   total: Scalars['Int']['output'];
+  /** The events that start in two weeks or later, by week number */
   twoWeeksOrLater: Array<Event>;
 };
 
