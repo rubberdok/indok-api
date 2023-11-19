@@ -11,7 +11,6 @@ import fastifySession from "@fastify/session";
 import fastifySentry from "@immobiliarelabs/fastify-sentry";
 import RedisStore from "connect-redis";
 import fastify, { FastifyInstance } from "fastify";
-import { createClient } from "redis";
 
 import { env } from "./config.js";
 import { resolvers } from "./graphql/resolvers.generated.js";
@@ -21,19 +20,7 @@ import { ServerDependencies } from "./lib/fastify/dependencies.js";
 import { healthCheckPlugin } from "./lib/fastify/health-checks.js";
 import { envToLogger } from "./lib/fastify/logging.js";
 import { fastifyApolloSentryPlugin } from "./lib/sentry.js";
-import { AuthService } from "./services/auth/index.js";
 import { getAuthPlugin } from "./services/auth/plugin.js";
-import { CabinService } from "./services/cabins/service.js";
-import { OrganizationService } from "./services/organizations/index.js";
-import { UserService } from "./services/users/index.js";
-
-export interface Dependencies {
-  cabinService: CabinService;
-  userService: UserService;
-  authService: AuthService;
-  organizationService: OrganizationService;
-  createRedisClient: (app: FastifyInstance) => ReturnType<typeof createClient>;
-}
 
 interface Options {
   port: number;
