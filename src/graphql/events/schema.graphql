@@ -1,0 +1,26 @@
+type Event {
+  id: ID!
+  name: String!
+  description: String!
+}
+
+type EventsResponse {
+  events: [Event!]!
+}
+
+type CreateEventResponse {
+  event: Event!
+}
+
+input CreateEventInput {
+  name: String!
+  description: String
+  organizationId: ID!
+  startAt: DateTime!
+  endAt: DateTime
+  spots: Int
+}
+
+type Mutation {
+  createEvent(data: CreateEventInput!): CreateEventResponse!
+}

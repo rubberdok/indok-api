@@ -1,5 +1,6 @@
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
 import { BookingMapper } from './cabins/schema.mappers.js';
+import { EventMapper } from './events/schema.mappers.js';
 import { MemberMapper, OrganizationMapper } from './organizations/schema.mappers.js';
 import { UserMapper, UsersResponseMapper } from './users/schema.mappers.js';
 import { ApolloContext } from '@/lib/apollo-server.js';
@@ -67,6 +68,20 @@ export type Cabin = {
   name: Scalars['String']['output'];
 };
 
+export type CreateEventInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  endAt?: InputMaybe<Scalars['DateTime']['input']>;
+  name: Scalars['String']['input'];
+  organizationId: Scalars['ID']['input'];
+  spots?: InputMaybe<Scalars['Int']['input']>;
+  startAt: Scalars['DateTime']['input'];
+};
+
+export type CreateEventResponse = {
+  __typename?: 'CreateEventResponse';
+  event: Event;
+};
+
 export type CreateOrganizationInput = {
   /** The description of the organization, cannot exceed 10 000 characters */
   description?: InputMaybe<Scalars['String']['input']>;
@@ -77,6 +92,18 @@ export type CreateOrganizationInput = {
 export type CreateOrganizationResponse = {
   __typename?: 'CreateOrganizationResponse';
   organization: Organization;
+};
+
+export type Event = {
+  __typename?: 'Event';
+  description: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type EventsResponse = {
+  __typename?: 'EventsResponse';
+  events: Array<Event>;
 };
 
 export type Member = {
@@ -94,6 +121,7 @@ export type Mutation = {
   __typename?: 'Mutation';
   /** Add a member to the organization */
   addMember: AddMemberResponse;
+  createEvent: CreateEventResponse;
   /** Create a new organization, and add the current user as an admin of the organization. */
   createOrganization: CreateOrganizationResponse;
   newBooking: Booking;
@@ -111,6 +139,11 @@ export type Mutation = {
 
 export type MutationaddMemberArgs = {
   data: AddMemberInput;
+};
+
+
+export type MutationcreateEventArgs = {
+  data: CreateEventInput;
 };
 
 
@@ -333,9 +366,13 @@ export type ResolversTypes = {
   String: ResolverTypeWrapper<Scalars['String']['output']>;
   Cabin: ResolverTypeWrapper<Cabin>;
   Int: ResolverTypeWrapper<Scalars['Int']['output']>;
+  CreateEventInput: CreateEventInput;
+  CreateEventResponse: ResolverTypeWrapper<Omit<CreateEventResponse, 'event'> & { event: ResolversTypes['Event'] }>;
   CreateOrganizationInput: CreateOrganizationInput;
   CreateOrganizationResponse: ResolverTypeWrapper<Omit<CreateOrganizationResponse, 'organization'> & { organization: ResolversTypes['Organization'] }>;
   DateTime: ResolverTypeWrapper<Scalars['DateTime']['output']>;
+  Event: ResolverTypeWrapper<EventMapper>;
+  EventsResponse: ResolverTypeWrapper<Omit<EventsResponse, 'events'> & { events: Array<ResolversTypes['Event']> }>;
   Member: ResolverTypeWrapper<MemberMapper>;
   Mutation: ResolverTypeWrapper<{}>;
   NewBookingInput: NewBookingInput;
@@ -364,9 +401,13 @@ export type ResolversParentTypes = {
   String: Scalars['String']['output'];
   Cabin: Cabin;
   Int: Scalars['Int']['output'];
+  CreateEventInput: CreateEventInput;
+  CreateEventResponse: Omit<CreateEventResponse, 'event'> & { event: ResolversParentTypes['Event'] };
   CreateOrganizationInput: CreateOrganizationInput;
   CreateOrganizationResponse: Omit<CreateOrganizationResponse, 'organization'> & { organization: ResolversParentTypes['Organization'] };
   DateTime: Scalars['DateTime']['output'];
+  Event: EventMapper;
+  EventsResponse: Omit<EventsResponse, 'events'> & { events: Array<ResolversParentTypes['Event']> };
   Member: MemberMapper;
   Mutation: {};
   NewBookingInput: NewBookingInput;
@@ -410,6 +451,11 @@ export type CabinResolvers<ContextType = ApolloContext, ParentType extends Resol
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type CreateEventResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['CreateEventResponse'] = ResolversParentTypes['CreateEventResponse']> = {
+  event?: Resolver<ResolversTypes['Event'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type CreateOrganizationResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['CreateOrganizationResponse'] = ResolversParentTypes['CreateOrganizationResponse']> = {
   organization?: Resolver<ResolversTypes['Organization'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -418,6 +464,18 @@ export type CreateOrganizationResponseResolvers<ContextType = ApolloContext, Par
 export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['DateTime'], any> {
   name: 'DateTime';
 }
+
+export type EventResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Event'] = ResolversParentTypes['Event']> = {
+  description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type EventsResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['EventsResponse'] = ResolversParentTypes['EventsResponse']> = {
+  events?: Resolver<Array<ResolversTypes['Event']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
 
 export type MemberResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Member'] = ResolversParentTypes['Member']> = {
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
@@ -429,6 +487,7 @@ export type MemberResolvers<ContextType = ApolloContext, ParentType extends Reso
 
 export type MutationResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
   addMember?: Resolver<ResolversTypes['AddMemberResponse'], ParentType, ContextType, RequireFields<MutationaddMemberArgs, 'data'>>;
+  createEvent?: Resolver<ResolversTypes['CreateEventResponse'], ParentType, ContextType, RequireFields<MutationcreateEventArgs, 'data'>>;
   createOrganization?: Resolver<ResolversTypes['CreateOrganizationResponse'], ParentType, ContextType, RequireFields<MutationcreateOrganizationArgs, 'data'>>;
   newBooking?: Resolver<ResolversTypes['Booking'], ParentType, ContextType, RequireFields<MutationnewBookingArgs, 'data'>>;
   removeMember?: Resolver<ResolversTypes['RemoveMemberResponse'], ParentType, ContextType, RequireFields<MutationremoveMemberArgs, 'data'>>;
@@ -490,8 +549,11 @@ export type Resolvers<ContextType = ApolloContext> = {
   AddMemberResponse?: AddMemberResponseResolvers<ContextType>;
   Booking?: BookingResolvers<ContextType>;
   Cabin?: CabinResolvers<ContextType>;
+  CreateEventResponse?: CreateEventResponseResolvers<ContextType>;
   CreateOrganizationResponse?: CreateOrganizationResponseResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
+  Event?: EventResolvers<ContextType>;
+  EventsResponse?: EventsResponseResolvers<ContextType>;
   Member?: MemberResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   Organization?: OrganizationResolvers<ContextType>;

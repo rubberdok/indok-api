@@ -1,4 +1,4 @@
-import { Booking, Cabin, Member, Organization, Prisma } from "@prisma/client";
+import { Booking, Cabin, Member, Organization, Prisma, Event } from "@prisma/client";
 import { merge } from "lodash-es";
 
 import { env } from "@/config.js";
@@ -6,6 +6,7 @@ import { BookingStatus } from "@/domain/cabins.js";
 import { Role } from "@/domain/organizations.js";
 import { User } from "@/domain/users.js";
 import { CabinRepository } from "@/repositories/cabins/index.js";
+import { EventRepository } from "@/repositories/events/repository.js";
 import { MemberRepository } from "@/repositories/organizations/members.js";
 import { OrganizationRepository } from "@/repositories/organizations/organizations.js";
 import { UserRepository } from "@/repositories/users/index.js";
@@ -13,6 +14,7 @@ import { feideClient } from "@/services/auth/clients.js";
 import { FeideProvider } from "@/services/auth/providers.js";
 import { AuthService } from "@/services/auth/service.js";
 import { CabinService } from "@/services/cabins/service.js";
+import { EventService } from "@/services/events/service.js";
 import { MailService } from "@/services/mail/index.js";
 import { OrganizationService } from "@/services/organizations/service.js";
 import { UserService } from "@/services/users/service.js";
@@ -67,11 +69,20 @@ interface IAuthService {
   };
 }
 
+interface IEventService {
+  create(
+    userId: string,
+    organizationId: string,
+    data: { name: string; description?: string | null; startAt: Date; endAt?: Date | null; location?: string | null }
+  ): Promise<Event>;
+}
+
 export interface ServiceDependencies {
   userService: IUserService;
   organizationService: IOrganizationService;
   authService: IAuthService;
   cabinService: ICabinService;
+  eventService: IEventService;
 }
 
 export interface ServerDependencies {
@@ -94,18 +105,21 @@ export function dependenciesFactory(
   const userRepository = new UserRepository(prisma);
   const memberRepository = new MemberRepository(prisma);
   const organizationRepository = new OrganizationRepository(prisma);
+  const eventRepository = new EventRepository(prisma);
 
   const mailService = new MailService(postmark, env.NO_REPLY_EMAIL);
   const cabinService = new CabinService(cabinRepository, mailService);
   const userService = new UserService(userRepository);
   const authService = new AuthService(userService, feideClient, FeideProvider);
   const organizationService = new OrganizationService(organizationRepository, memberRepository, userService);
+  const eventService = new EventService(eventRepository, organizationService);
 
   const defaultServiceDependencies: ServiceDependencies = {
     cabinService,
     userService,
     authService,
     organizationService,
+    eventService,
   };
 
   const serviceDependencies = merge(defaultServiceDependencies, overrides?.serviceDependencies);

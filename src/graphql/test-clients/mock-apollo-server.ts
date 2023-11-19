@@ -7,7 +7,7 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { GraphQLFormattedError } from "graphql";
 import { mock, mockDeep } from "jest-mock-extended";
 
-import { getFormatErrorHandler, ApolloContext } from "@/lib/apollo-server.js";
+import { ApolloContext, getFormatErrorHandler } from "@/lib/apollo-server.js";
 
 import { resolvers } from "../resolvers.generated.js";
 import { typeDefs } from "../type-defs.generated.js";
@@ -71,6 +71,7 @@ export const createMockApolloServer = () => {
   const organizationService = mockDeep<ApolloContext["organizationService"]>();
   const cabinService = mockDeep<ApolloContext["cabinService"]>();
   const authService = mockDeep<ApolloContext["authService"]>();
+  const eventService = mockDeep<ApolloContext["eventService"]>();
 
   function createMockContext(session: Partial<FastifySessionObject>) {
     const contextValue = {
@@ -82,11 +83,21 @@ export const createMockApolloServer = () => {
       organizationService,
       cabinService,
       authService,
+      eventService,
     };
     return contextValue;
   }
 
   const client = new ApolloServerClient(server);
 
-  return { userService, organizationService, cabinService, authService, createMockContext, server, client };
+  return {
+    userService,
+    organizationService,
+    cabinService,
+    authService,
+    eventService,
+    createMockContext,
+    server,
+    client,
+  };
 };

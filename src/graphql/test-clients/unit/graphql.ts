@@ -62,6 +62,20 @@ export type Cabin = {
   name: Scalars['String']['output'];
 };
 
+export type CreateEventInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  endAt?: InputMaybe<Scalars['DateTime']['input']>;
+  name: Scalars['String']['input'];
+  organizationId: Scalars['ID']['input'];
+  spots?: InputMaybe<Scalars['Int']['input']>;
+  startAt: Scalars['DateTime']['input'];
+};
+
+export type CreateEventResponse = {
+  __typename?: 'CreateEventResponse';
+  event: Event;
+};
+
 export type CreateOrganizationInput = {
   /** The description of the organization, cannot exceed 10 000 characters */
   description?: InputMaybe<Scalars['String']['input']>;
@@ -72,6 +86,18 @@ export type CreateOrganizationInput = {
 export type CreateOrganizationResponse = {
   __typename?: 'CreateOrganizationResponse';
   organization: Organization;
+};
+
+export type Event = {
+  __typename?: 'Event';
+  description: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type EventsResponse = {
+  __typename?: 'EventsResponse';
+  events: Array<Event>;
 };
 
 export type Member = {
@@ -89,6 +115,7 @@ export type Mutation = {
   __typename?: 'Mutation';
   /** Add a member to the organization */
   addMember: AddMemberResponse;
+  createEvent: CreateEventResponse;
   /** Create a new organization, and add the current user as an admin of the organization. */
   createOrganization: CreateOrganizationResponse;
   newBooking: Booking;
@@ -106,6 +133,11 @@ export type Mutation = {
 
 export type MutationAddMemberArgs = {
   data: AddMemberInput;
+};
+
+
+export type MutationCreateEventArgs = {
+  data: CreateEventInput;
 };
 
 
