@@ -8,6 +8,14 @@ type Event {
   The description of the event. We support markdown on the client, so this can be markdown.
   """
   description: String!
+  """
+  The start time of the event.
+  """
+  startAt: DateTime!
+  """
+  The end time of the event.
+  """
+  endAt: DateTime!
 }
 
 type EventsResponse {

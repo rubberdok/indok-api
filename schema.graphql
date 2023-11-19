@@ -116,12 +116,22 @@ type Event {
   The description of the event. We support markdown on the client, so this can be markdown.
   """
   description: String!
+
+  """
+  The end time of the event.
+  """
+  endAt: DateTime!
   id: ID!
 
   """
   The name of the event.
   """
   name: String!
+
+  """
+  The start time of the event.
+  """
+  startAt: DateTime!
 }
 
 input EventInput {

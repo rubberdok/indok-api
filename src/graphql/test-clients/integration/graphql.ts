@@ -117,9 +117,13 @@ export type Event = {
   __typename?: 'Event';
   /** The description of the event. We support markdown on the client, so this can be markdown. */
   description: Scalars['String']['output'];
+  /** The end time of the event. */
+  endAt: Scalars['DateTime']['output'];
   id: Scalars['ID']['output'];
   /** The name of the event. */
   name: Scalars['String']['output'];
+  /** The start time of the event. */
+  startAt: Scalars['DateTime']['output'];
 };
 
 export type EventInput = {

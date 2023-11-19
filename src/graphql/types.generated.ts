@@ -123,9 +123,13 @@ export type Event = {
   __typename?: 'Event';
   /** The description of the event. We support markdown on the client, so this can be markdown. */
   description: Scalars['String']['output'];
+  /** The end time of the event. */
+  endAt: Scalars['DateTime']['output'];
   id: Scalars['ID']['output'];
   /** The name of the event. */
   name: Scalars['String']['output'];
+  /** The start time of the event. */
+  startAt: Scalars['DateTime']['output'];
 };
 
 export type EventInput = {
@@ -540,8 +544,10 @@ export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversT
 
 export type EventResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Event'] = ResolversParentTypes['Event']> = {
   description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  endAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  startAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
