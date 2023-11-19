@@ -16,6 +16,9 @@ permissions:
   deployments: write
   id-token: write
 
+env:
+  FORCE_COLOR: 1
+
 jobs:
   unit-test:
     name: Unit Test
@@ -40,7 +43,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run Unit Tests
-        run: pnpm test -- --collect-coverage --colors
+        run: pnpm test -- --collect-coverage
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v3
@@ -177,7 +180,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run Integration Tests
-        run: pnpm test:integration:headless --collect-coverage --shard ${{ matrix.shard }}/4 --colors
+        run: pnpm test:integration:headless --collect-coverage --shard ${{ matrix.shard }}/4
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v3
