@@ -146,6 +146,7 @@ export async function initServer(dependencies: Dependencies, opts: Options): Pro
   await app.register(fastifySession, {
     secret: env.SESSION_SECRET,
     cookieName: env.SESSION_COOKIE_NAME,
+    saveUninitialized: true,
     store: new RedisStore({
       client: redisClient,
     }),
@@ -207,8 +208,8 @@ export async function initServer(dependencies: Dependencies, opts: Options): Pro
     context: contextFunction,
   });
 
-  await app.register(healthCheckPlugin);
-  await app.register(getAuthPlugin(authService));
+  await app.register(healthCheckPlugin, { prefix: "/-" });
+  await app.register(getAuthPlugin(authService), { prefix: "/auth" });
 
   const { port, host } = opts;
 

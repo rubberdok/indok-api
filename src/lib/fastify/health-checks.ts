@@ -7,7 +7,7 @@ const healthCheckPlugin: FastifyPluginAsync = async (app) => {
    * Straight forward health check, currently just used for testing.
    */
   app.route({
-    url: "/-/health",
+    url: "/health",
     method: "GET",
     handler: async (req, reply) => {
       reply.statusCode = 200;
@@ -21,7 +21,7 @@ const healthCheckPlugin: FastifyPluginAsync = async (app) => {
    * @returns `200: {"status": "ok"}` if the Prisma migrations in `prisma/migrations` are applied, `503: { "status": "error", "message": "Missing migrations" }` otherwise.
    */
   app.route({
-    url: "/-/migration-health",
+    url: "/migration-health",
     method: "GET",
     handler: async (req, reply) => {
       req.log.info("Health check");
