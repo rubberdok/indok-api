@@ -1,4 +1,5 @@
 /* eslint-disable */
+import { DocumentTypeDecoration } from '@graphql-typed-document-node/core';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -251,6 +252,16 @@ export type UsersResponse = {
   users: Array<User>;
 };
 
+export type MeQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MeQuery = { __typename?: 'Query', user: { __typename?: 'UserResponse', user?: { __typename?: 'User', id: string } | null } };
+
+export type LoggedInQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type LoggedInQuery = { __typename?: 'Query', user: { __typename?: 'UserResponse', user?: { __typename?: 'User', id: string } | null } };
+
 export class TypedDocumentString<TResult, TVariables>
   extends String
   implements DocumentTypeDecoration<TResult, TVariables>
@@ -265,3 +276,22 @@ export class TypedDocumentString<TResult, TVariables>
     return this.value;
   }
 }
+
+export const MeDocument = new TypedDocumentString(`
+    query me {
+  user {
+    user {
+      id
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<MeQuery, MeQueryVariables>;
+export const LoggedInDocument = new TypedDocumentString(`
+    query loggedIn {
+  user {
+    user {
+      id
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<LoggedInQuery, LoggedInQueryVariables>;

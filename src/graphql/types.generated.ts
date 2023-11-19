@@ -2,7 +2,7 @@ import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from '
 import { BookingMapper } from './cabins/schema.mappers.js';
 import { MemberMapper, OrganizationMapper } from './organizations/schema.mappers.js';
 import { UserMapper, UsersResponseMapper } from './users/schema.mappers.js';
-import { IContext } from '@/lib/apolloServer.js';
+import { IContext } from '@/lib/apollo-server.js';
 export type Maybe<T> = T | null | undefined;
 export type InputMaybe<T> = T | null | undefined;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
