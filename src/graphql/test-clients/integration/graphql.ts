@@ -1,5 +1,4 @@
 /* eslint-disable */
-import { DocumentTypeDecoration } from '@graphql-typed-document-node/core';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -74,16 +73,6 @@ export type CreateOrganizationResponse = {
   organization: Organization;
 };
 
-export type LogoutResponse = {
-  __typename?: 'LogoutResponse';
-  status: LogoutStatus;
-};
-
-export enum LogoutStatus {
-  Error = 'ERROR',
-  Success = 'SUCCESS'
-}
-
 export type Member = {
   __typename?: 'Member';
   id: Scalars['ID']['output'];
@@ -99,12 +88,9 @@ export type Mutation = {
   __typename?: 'Mutation';
   /** Add a member to the organization */
   addMember: AddMemberResponse;
-  authenticate: UserResponse;
   /** Create a new organization, and add the current user as an admin of the organization. */
   createOrganization: CreateOrganizationResponse;
-  logout: LogoutResponse;
   newBooking: Booking;
-  redirectUrl: RedirectUrlResponse;
   /** Remove a member from the organization by the ID of the membership. */
   removeMember: RemoveMemberResponse;
   updateBookingStatus: Booking;
@@ -122,11 +108,6 @@ export type MutationAddMemberArgs = {
 };
 
 
-export type MutationAuthenticateArgs = {
-  code: Scalars['String']['input'];
-};
-
-
 export type MutationCreateOrganizationArgs = {
   data: CreateOrganizationInput;
 };
@@ -134,11 +115,6 @@ export type MutationCreateOrganizationArgs = {
 
 export type MutationNewBookingArgs = {
   data: NewBookingInput;
-};
-
-
-export type MutationRedirectUrlArgs = {
-  state?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -185,11 +161,6 @@ export type Query = {
   __typename?: 'Query';
   user: UserResponse;
   users: UsersResponse;
-};
-
-export type RedirectUrlResponse = {
-  __typename?: 'RedirectUrlResponse';
-  url: Scalars['String']['output'];
 };
 
 export type RemoveMemberInput = {
@@ -280,28 +251,6 @@ export type UsersResponse = {
   users: Array<User>;
 };
 
-export type RedirectUrlMutationVariables = Exact<{ [key: string]: never; }>;
-
-
-export type RedirectUrlMutation = { __typename?: 'Mutation', redirectUrl: { __typename?: 'RedirectUrlResponse', url: string } };
-
-export type Authenticate1MutationVariables = Exact<{ [key: string]: never; }>;
-
-
-export type Authenticate1Mutation = { __typename?: 'Mutation', authenticate: { __typename?: 'UserResponse', user?: { __typename?: 'User', id: string } | null } };
-
-export type AuthenticateMutationVariables = Exact<{
-  code: Scalars['String']['input'];
-}>;
-
-
-export type AuthenticateMutation = { __typename?: 'Mutation', authenticate: { __typename?: 'UserResponse', user?: { __typename?: 'User', id: string } | null } };
-
-export type LogoutMutationVariables = Exact<{ [key: string]: never; }>;
-
-
-export type LogoutMutation = { __typename?: 'Mutation', logout: { __typename?: 'LogoutResponse', status: LogoutStatus } };
-
 export class TypedDocumentString<TResult, TVariables>
   extends String
   implements DocumentTypeDecoration<TResult, TVariables>
@@ -316,36 +265,3 @@ export class TypedDocumentString<TResult, TVariables>
     return this.value;
   }
 }
-
-export const RedirectUrlDocument = new TypedDocumentString(`
-    mutation redirectUrl {
-  redirectUrl {
-    url
-  }
-}
-    `) as unknown as TypedDocumentString<RedirectUrlMutation, RedirectUrlMutationVariables>;
-export const Authenticate1Document = new TypedDocumentString(`
-    mutation authenticate1 {
-  authenticate(code: "code") {
-    user {
-      id
-    }
-  }
-}
-    `) as unknown as TypedDocumentString<Authenticate1Mutation, Authenticate1MutationVariables>;
-export const AuthenticateDocument = new TypedDocumentString(`
-    mutation authenticate($code: String!) {
-  authenticate(code: $code) {
-    user {
-      id
-    }
-  }
-}
-    `) as unknown as TypedDocumentString<AuthenticateMutation, AuthenticateMutationVariables>;
-export const LogoutDocument = new TypedDocumentString(`
-    mutation logout {
-  logout {
-    status
-  }
-}
-    `) as unknown as TypedDocumentString<LogoutMutation, LogoutMutationVariables>;

@@ -61,15 +61,6 @@ type CreateOrganizationResponse {
 
 scalar DateTime
 
-type LogoutResponse {
-  status: LogoutStatus!
-}
-
-enum LogoutStatus {
-  ERROR
-  SUCCESS
-}
-
 type Member {
   id: ID!
 
@@ -94,15 +85,12 @@ type Mutation {
   Add a member to the organization
   """
   addMember(data: AddMemberInput!): AddMemberResponse!
-  authenticate(code: String!): UserResponse!
 
   """
   Create a new organization, and add the current user as an admin of the organization.
   """
   createOrganization(data: CreateOrganizationInput!): CreateOrganizationResponse!
-  logout: LogoutResponse!
   newBooking(data: NewBookingInput!): Booking!
-  redirectUrl(state: String): RedirectUrlResponse!
 
   """
   Remove a member from the organization by the ID of the membership.
@@ -142,10 +130,6 @@ type Organization {
 type Query {
   user: UserResponse!
   users: UsersResponse!
-}
-
-type RedirectUrlResponse {
-  url: String!
 }
 
 input RemoveMemberInput {

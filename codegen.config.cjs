@@ -28,6 +28,7 @@ const config = {
   hooks: {
     afterAllFileWrite: ["prettier --write"],
   },
+  ignoreNoDocuments: true,
   generates: {
     /**
      * Generate typed document nodes for operations that are used for
