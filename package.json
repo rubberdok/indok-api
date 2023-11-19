@@ -21,14 +21,14 @@
     "generate:gql": "NODE_OPTIONS='--loader ts-node/esm' graphql-codegen-esm --config codegen.config.cjs",
     "generate:prisma": "prisma generate",
     "generate": "run-p generate:*",
-    "integration-test": "dotenv -e .env.test -- pnpm db:push && dotenv -e .env.test -- node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config jest.integration.config.cjs",
+    "integration-test": "dotenv -e .env.test -- pnpm db:push && dotenv -e .env.test -- node --experimental-vm-modules --no-warnings=ExperimentalWarning ./node_modules/jest/bin/jest.js --config jest.integration.config.cjs",
     "lint:fix": "pnpm lint  --fix",
     "lint": "eslint .",
     "setup-integration-test": "run-s docker:up && wait-on tcp:5433 -t 20000",
     "swc": "swc src -d dist",
     "test:integration:headless": "pnpm integration-test",
     "test:integration": "pnpm setup-integration-test && pnpm integration-test",
-    "test": "dotenv -e .env.test -- node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
+    "test": "dotenv -e .env.test -- node --experimental-vm-modules --no-warnings=ExperimentalWarning ./node_modules/jest/bin/jest.js",
     "tsc": "pnpm generate:prisma && tsc"
   },
   "optionalDependencies": {
