@@ -62,7 +62,7 @@ describe("EventService", () => {
        *
        * 1. Create an event
        */
-      const notFoundEventId = "not-found-event-id";
+      const notFoundEventId = faker.string.uuid();
       await prisma.event.create({
         data: {
           name: faker.person.firstName(),

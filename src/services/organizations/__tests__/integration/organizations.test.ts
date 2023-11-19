@@ -244,7 +244,7 @@ describe("OrganizationsService", () => {
               isSuperUser: true,
             },
             organization: {
-              name: faker.company.name(),
+              name: faker.string.sample(),
             },
             member: {
               role: Role.MEMBER,
