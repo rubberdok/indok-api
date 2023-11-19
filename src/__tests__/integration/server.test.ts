@@ -1,5 +1,5 @@
 import { initServer } from "../../server.js";
-import { defaultTestDependenciesFactory } from "../dependenciesFactory.js";
+import { defaultTestDependenciesFactory } from "../dependencies-factory.js";
 
 describe("Server", () => {
   let server: Awaited<ReturnType<typeof initServer>> | void;

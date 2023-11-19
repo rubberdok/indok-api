@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
 
-import { defaultTestDependenciesFactory } from "@/__tests__/dependenciesFactory.js";
-import { GraphQLTestClient } from "@/graphql/test-clients/graphqlTestClient.js";
+import { defaultTestDependenciesFactory } from "@/__tests__/dependencies-factory.js";
+import { GraphQLTestClient } from "@/graphql/test-clients/graphql-test-client.js";
 import { graphql } from "@/graphql/test-clients/integration/gql.js";
 import { initServer } from "@/server.js";
 

@@ -3,7 +3,7 @@ import assert from "assert";
 import { faker } from "@faker-js/faker";
 import { FastifyInstance, InjectOptions } from "fastify";
 
-import { defaultTestDependenciesFactory } from "@/__tests__/dependenciesFactory.js";
+import { defaultTestDependenciesFactory } from "@/__tests__/dependencies-factory.js";
 import { env } from "@/config.js";
 import { codes } from "@/domain/errors.js";
 import prisma from "@/lib/prisma.js";
