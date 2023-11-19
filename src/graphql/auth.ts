@@ -1,5 +1,5 @@
 import { AuthenticationError } from "@/domain/errors.js";
-import { IContext } from "@/lib/apolloServer.js";
+import { IContext } from "@/lib/apollo-server.js";
 
 type AuthenticatedContext = IContext & { req: { session: { userId: string; authenticated: true } } };
 

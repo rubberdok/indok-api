@@ -4,7 +4,7 @@ import { GraphQLError } from "graphql";
 
 import { codes } from "@/domain/errors.js";
 
-import { IContext } from "./apolloServer.js";
+import { IContext } from "./apollo-server.js";
 
 const USER_FACING_ERRORS = new Set<string>([
   codes.ERR_BAD_REQUEST,

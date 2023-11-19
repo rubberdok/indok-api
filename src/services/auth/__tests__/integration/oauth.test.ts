@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 
+import { User } from "@/domain/users.js";
 import prisma from "@/lib/prisma.js";
 import { UserRepository } from "@/repositories/users/index.js";
 import { IAuthService } from "@/services/interfaces.js";
@@ -7,9 +8,7 @@ import { UserService } from "@/services/users/index.js";
 
 import { FeideProvider } from "../../providers.js";
 import { AuthService, UserService as IUserService } from "../../service.js";
-import { setupMockFeideClient } from "../__mocks__/feide.js";
-
-import { OAuthCase } from "./interfaces.js";
+import { FeideResponses, setupMockFeideClient } from "../__mocks__/feide.js";
 
 let authService: IAuthService;
 let userService: IUserService;
@@ -50,7 +49,13 @@ describe("OAuth", () => {
     });
   });
 
-  const cases: OAuthCase[] = [
+  interface TestCase {
+    name: string;
+    responses: FeideResponses;
+    expected: Pick<User, "email" | "feideId" | "firstName" | "lastName" | "username">;
+  }
+
+  const cases: TestCase[] = [
     {
       name: "should create a new user if one does not exist",
       responses: {

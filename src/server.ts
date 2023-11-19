@@ -14,14 +14,14 @@ import fastify, { FastifyInstance } from "fastify";
 import { createClient } from "redis";
 
 import { env } from "./config.js";
-import { BadRequestError, InternalServerError } from "./domain/errors.js";
 import { resolvers } from "./graphql/resolvers.generated.js";
 import { typeDefs } from "./graphql/typeDefs.generated.js";
-import { IContext, getFormatErrorHandler } from "./lib/apolloServer.js";
-import { envToLogger } from "./lib/fastify.js";
-import { migrationHealthCheck } from "./lib/prisma.js";
+import { IContext, getFormatErrorHandler } from "./lib/apollo-server.js";
+import { healthCheckPlugin } from "./lib/fastify/health-checks.js";
+import { envToLogger } from "./lib/fastify/logging.js";
 import { fastifyApolloSentryPlugin } from "./lib/sentry.js";
 import { AuthService } from "./services/auth/index.js";
+import { getAuthPlugin } from "./services/auth/plugin.js";
 import { CabinService } from "./services/cabins/service.js";
 import { OrganizationService } from "./services/organizations/index.js";
 import { UserService } from "./services/users/index.js";
@@ -146,6 +146,7 @@ export async function initServer(dependencies: Dependencies, opts: Options): Pro
   await app.register(fastifySession, {
     secret: env.SESSION_SECRET,
     cookieName: env.SESSION_COOKIE_NAME,
+    saveUninitialized: true,
     store: new RedisStore({
       client: redisClient,
     }),
@@ -207,99 +208,8 @@ export async function initServer(dependencies: Dependencies, opts: Options): Pro
     context: contextFunction,
   });
 
-  /**
-   * Straight forward health check, currently just used for testing.
-   */
-  app.route({
-    url: "/-/health",
-    method: "GET",
-    handler: async (req, reply) => {
-      reply.statusCode = 200;
-      return reply.send({ status: "ok" });
-    },
-  });
-
-  /**
-   * Migration health check, used by the StartupProbe for the server container to check if the server is ready to
-   * receive connections. See `infrastructure/modules/server/server_app.tf` for infrastructure details.
-   * @returns `200: {"status": "ok"}` if the Prisma migrations in `prisma/migrations` are applied, `503: { "status": "error", "message": "Missing migrations" }` otherwise.
-   */
-  app.route({
-    url: "/-/migration-health",
-    method: "GET",
-    handler: async (req, reply) => {
-      req.log.info("Health check");
-      const { status, message } = await migrationHealthCheck(app);
-      if (!status) {
-        req.log.info("Health check failed");
-        reply.statusCode = 503;
-        return reply.send({ message, status: "error" });
-      } else {
-        req.log.info("Health check succeeded");
-        reply.statusCode = 200;
-        return reply.send({ statusCode: 200, status: "ok" });
-      }
-    },
-  });
-
-  app.route<{
-    Querystring: {
-      state: string;
-    };
-  }>({
-    url: "/login",
-    method: "GET",
-    schema: {
-      querystring: {
-        state: { type: "string" },
-      },
-    },
-    handler: async (req, reply) => {
-      const { state } = req.query;
-      const { codeVerifier, url } = authService.ssoUrl(state);
-      req.session.set("codeVerifier", codeVerifier);
-
-      return reply.redirect(303, url);
-    },
-  });
-
-  app.route<{
-    Querystring: {
-      code: string;
-      state: string;
-    };
-  }>({
-    url: "/authenticate",
-    method: "GET",
-    schema: {
-      querystring: {
-        code: { type: "string" },
-        state: { type: "string" },
-      },
-    },
-    handler: async (req, reply) => {
-      const { code, state } = req.query;
-      const codeVerifier = req.session.get("codeVerifier");
-
-      req.log.info("Authenticating user", { code, state, codeVerifier });
-
-      if (!codeVerifier) {
-        throw new BadRequestError("Missing code verifier");
-      }
-
-      try {
-        const user = await authService.getUser({ code, codeVerifier });
-        req.session.set("authenticated", true);
-        req.session.set("userId", user.id);
-        req.log.info("User authenticated", { userId: user.id });
-
-        return reply.redirect(303, state);
-      } catch (err) {
-        req.log.error(err, "Authentication failed");
-        throw new InternalServerError("Authentication failed");
-      }
-    },
-  });
+  await app.register(healthCheckPlugin, { prefix: "/-" });
+  await app.register(getAuthPlugin(authService), { prefix: "/auth" });
 
   const { port, host } = opts;
 
