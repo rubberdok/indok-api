@@ -73,7 +73,15 @@ interface IEventService {
   create(
     userId: string,
     organizationId: string,
-    data: { name: string; description?: string | null; startAt: Date; endAt?: Date | null; location?: string | null }
+    data: {
+      name: string;
+      description?: string | null;
+      startAt: Date;
+      endAt?: Date | null;
+      location?: string | null;
+      spots?: number | null;
+      slots?: { spots: number }[] | null;
+    }
   ): Promise<Event>;
 }
 

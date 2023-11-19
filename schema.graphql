@@ -48,12 +48,17 @@ input CreateEventInput {
   endAt: DateTime
   name: String!
   organizationId: ID!
+  slots: [CreateEventSlot!]
   spots: Int
   startAt: DateTime!
 }
 
 type CreateEventResponse {
   event: Event!
+}
+
+input CreateEventSlot {
+  spots: Int!
 }
 
 input CreateOrganizationInput {

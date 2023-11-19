@@ -16,6 +16,8 @@ export interface EventRepository {
     organizationId: string;
     organizerId: string;
     location?: string;
+    spots?: number;
+    slots?: { spots: number }[];
   }): Promise<Event>;
   update(
     id: string,
@@ -68,7 +70,15 @@ export class EventService {
   async create(
     userId: string,
     organizationId: string,
-    data: { name: string; description?: string | null; startAt: Date; endAt?: Date | null; location?: string | null }
+    data: {
+      name: string;
+      description?: string | null;
+      startAt: Date;
+      endAt?: Date | null;
+      location?: string | null;
+      spots?: number | null;
+      slots?: { spots: number }[] | null;
+    }
   ) {
     const schema = z
       .object({
@@ -77,6 +87,8 @@ export class EventService {
         startAt: z.date().min(new Date()),
         endAt: z.date().min(new Date()).optional(),
         location: z.string().max(100).optional(),
+        spots: z.number().int().min(0).optional(),
+        slots: z.array(z.object({ spots: z.number().int().min(0) })).optional(),
       })
       .refine((data) => (data.endAt ? data.startAt < data.endAt : true), {
         message: "End date must be after start date",
@@ -88,7 +100,7 @@ export class EventService {
       throw new InvalidArgumentError(parsed.error.message);
     }
 
-    const { name, description, startAt, location } = parsed.data;
+    const { name, description, startAt, location, slots, spots } = parsed.data;
     let endAt = parsed.data.endAt;
     if (!endAt) {
       endAt = new Date(startAt.getTime() + 2 * 60 * 60 * 1000);
@@ -101,6 +113,8 @@ export class EventService {
       organizationId,
       location,
       organizerId: userId,
+      spots,
+      slots,
     });
   }
 

@@ -4,7 +4,7 @@ import type { MutationResolvers } from "./../../../types.generated.js";
 export const createEvent: NonNullable<MutationResolvers["createEvent"]> = async (_parent, { data }, ctx) => {
   assertIsAuthenticated(ctx);
 
-  const { name, description, startAt: rawStartAt, endAt: rawEndAt, organizationId } = data;
+  const { name, description, startAt: rawStartAt, endAt: rawEndAt, organizationId, slots, spots } = data;
   let startAt: Date;
   if (typeof rawStartAt === "string") {
     startAt = new Date(rawStartAt);
@@ -24,6 +24,8 @@ export const createEvent: NonNullable<MutationResolvers["createEvent"]> = async 
     description,
     startAt,
     endAt,
+    slots,
+    spots,
   });
   return { event };
 };

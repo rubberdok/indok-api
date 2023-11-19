@@ -19,6 +19,11 @@ input CreateEventInput {
   startAt: DateTime!
   endAt: DateTime
   spots: Int
+  slots: [CreateEventSlot!]
+}
+
+input CreateEventSlot {
+  spots: Int!
 }
 
 type Mutation {

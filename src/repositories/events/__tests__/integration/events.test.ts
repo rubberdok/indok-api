@@ -63,6 +63,69 @@ describe("EventsRepository", () => {
         version: 0,
       });
     });
+
+    it("should create an event with slots", async () => {
+      /**
+       * Arrange
+       *
+       * 1. Create a user with userId {userId} to act as an organizer
+       * 2. Create an organization with organizationId {organizationId} to act as the organization that the event belongs to
+       * 3. Create event data
+       */
+      const user = await prisma.user.create({
+        data: {
+          email: faker.internet.email(),
+          feideId: faker.string.uuid(),
+          firstName: faker.person.firstName(),
+          lastName: faker.person.lastName(),
+          username: faker.internet.userName(),
+        },
+      });
+      const organization = await prisma.organization.create({
+        data: {
+          name: faker.company.name(),
+        },
+      });
+
+      const startAt = faker.date.future();
+      const data = {
+        name: faker.company.name(),
+        description: faker.lorem.paragraph(),
+        startAt,
+        endAt: faker.date.future({ refDate: startAt }),
+        organizationId: organization.id,
+        organizerId: user.id,
+        spots: 10,
+        slots: [{ spots: 5 }, { spots: 5 }],
+      };
+
+      /**
+       * Act
+       */
+      const result = await eventsRepository.create(data);
+
+      /**
+       * Assert
+       *
+       * Ensure that the event was created with additional slots
+       */
+      expect(result).toEqual({
+        ...data,
+        id: expect.any(String),
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+        location: expect.any(String),
+        spots: 10,
+        version: 0,
+      });
+      const slots = await prisma.eventSlot.findMany({
+        where: {
+          eventId: result.id,
+        },
+      });
+      expect(slots).toHaveLength(2);
+      expect(slots.every((slot) => slot.spots === 5)).toBe(true);
+    });
   });
 
   describe("update", () => {
