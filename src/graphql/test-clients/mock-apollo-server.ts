@@ -3,7 +3,7 @@ import assert from "assert";
 import { ApolloServer } from "@apollo/server";
 import { FastifySessionObject } from "@fastify/session";
 import { ResultOf, TypedDocumentNode, VariablesOf } from "@graphql-typed-document-node/core";
-import { FastifyReply, FastifyRequest } from "fastify";
+import { FastifyBaseLogger, FastifyReply, FastifyRequest } from "fastify";
 import { GraphQLFormattedError } from "graphql";
 import { mock, mockDeep } from "jest-mock-extended";
 
@@ -60,11 +60,11 @@ class ApolloServerClient {
   }
 }
 
-export const createMockApolloServer = () => {
+export const createMockApolloServer = (logger?: Partial<FastifyBaseLogger>) => {
   const server = new ApolloServer<ApolloContext>({
     typeDefs: typeDefs,
     resolvers: resolvers,
-    formatError: getFormatErrorHandler(),
+    formatError: getFormatErrorHandler(logger),
   });
 
   const userService = mockDeep<ApolloContext["userService"]>();

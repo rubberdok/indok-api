@@ -24,8 +24,28 @@ export class EventRepository {
     endAt: Date;
     organizationId: string;
     organizerId: string;
+    spots?: number;
+    slots?: { spots: number }[];
   }): Promise<Event> {
-    const { name, description, startAt, organizationId, endAt, organizerId } = data;
+    const { name, description, startAt, organizationId, endAt, organizerId, spots, slots } = data;
+    if (slots && slots.length > 0) {
+      return this.db.event.create({
+        data: {
+          name: name,
+          description,
+          startAt,
+          endAt,
+          organizationId,
+          organizerId,
+          spots,
+          slots: {
+            createMany: {
+              data: slots,
+            },
+          },
+        },
+      });
+    }
     return this.db.event.create({
       data: {
         name: name,
@@ -34,6 +54,7 @@ export class EventRepository {
         endAt,
         organizationId,
         organizerId,
+        spots,
       },
     });
   }

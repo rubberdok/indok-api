@@ -48,8 +48,9 @@ describe("Event mutations", () => {
             data: {
               organizationId: faker.string.uuid(),
               name: faker.person.fullName(),
-              description: faker.lorem.paragraph(),
               startAt: faker.date.future(),
+              spots: 10,
+              slots: [{ spots: 10 }, { spots: 10 }],
             },
           },
         },
@@ -64,12 +65,13 @@ describe("Event mutations", () => {
        * Ensure that the event creation was attempted with the correct arguments,
        * and that no errors were returned.
        */
+      expect(errors).toBeUndefined();
       expect(eventService.create).toHaveBeenCalledWith(expect.any(String), expect.any(String), {
         name: expect.any(String),
-        description: expect.any(String),
         startAt: expect.any(Date),
+        spots: 10,
+        slots: [{ spots: 10 }, { spots: 10 }],
       });
-      expect(errors).toBeUndefined();
     });
 
     it("should err if not logged in", async () => {

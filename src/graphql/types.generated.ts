@@ -73,6 +73,7 @@ export type CreateEventInput = {
   endAt?: InputMaybe<Scalars['DateTime']['input']>;
   name: Scalars['String']['input'];
   organizationId: Scalars['ID']['input'];
+  slots?: InputMaybe<Array<CreateEventSlot>>;
   spots?: InputMaybe<Scalars['Int']['input']>;
   startAt: Scalars['DateTime']['input'];
 };
@@ -80,6 +81,10 @@ export type CreateEventInput = {
 export type CreateEventResponse = {
   __typename?: 'CreateEventResponse';
   event: Event;
+};
+
+export type CreateEventSlot = {
+  spots: Scalars['Int']['input'];
 };
 
 export type CreateOrganizationInput = {
@@ -368,6 +373,7 @@ export type ResolversTypes = {
   Int: ResolverTypeWrapper<Scalars['Int']['output']>;
   CreateEventInput: CreateEventInput;
   CreateEventResponse: ResolverTypeWrapper<Omit<CreateEventResponse, 'event'> & { event: ResolversTypes['Event'] }>;
+  CreateEventSlot: CreateEventSlot;
   CreateOrganizationInput: CreateOrganizationInput;
   CreateOrganizationResponse: ResolverTypeWrapper<Omit<CreateOrganizationResponse, 'organization'> & { organization: ResolversTypes['Organization'] }>;
   DateTime: ResolverTypeWrapper<Scalars['DateTime']['output']>;
@@ -403,6 +409,7 @@ export type ResolversParentTypes = {
   Int: Scalars['Int']['output'];
   CreateEventInput: CreateEventInput;
   CreateEventResponse: Omit<CreateEventResponse, 'event'> & { event: ResolversParentTypes['Event'] };
+  CreateEventSlot: CreateEventSlot;
   CreateOrganizationInput: CreateOrganizationInput;
   CreateOrganizationResponse: Omit<CreateOrganizationResponse, 'organization'> & { organization: ResolversParentTypes['Organization'] };
   DateTime: Scalars['DateTime']['output'];

@@ -67,6 +67,7 @@ export type CreateEventInput = {
   endAt?: InputMaybe<Scalars['DateTime']['input']>;
   name: Scalars['String']['input'];
   organizationId: Scalars['ID']['input'];
+  slots?: InputMaybe<Array<CreateEventSlot>>;
   spots?: InputMaybe<Scalars['Int']['input']>;
   startAt: Scalars['DateTime']['input'];
 };
@@ -74,6 +75,10 @@ export type CreateEventInput = {
 export type CreateEventResponse = {
   __typename?: 'CreateEventResponse';
   event: Event;
+};
+
+export type CreateEventSlot = {
+  spots: Scalars['Int']['input'];
 };
 
 export type CreateOrganizationInput = {

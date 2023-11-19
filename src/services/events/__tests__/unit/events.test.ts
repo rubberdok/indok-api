@@ -46,6 +46,8 @@ describe("EventsService", () => {
             startAt: Date;
             endAt?: Date;
             location?: string;
+            spots?: number;
+            slots?: { spots: number }[];
           };
         };
         expectedError: typeof BaseError;
@@ -121,9 +123,34 @@ describe("EventsService", () => {
           },
           expectedError: InvalidArgumentError,
         },
+        {
+          act: {
+            userId: faker.string.uuid(),
+            organizationId: faker.string.uuid(),
+            data: {
+              name: faker.string.sample(10),
+              startAt: faker.date.future(),
+              spots: -1,
+            },
+          },
+          expectedError: InvalidArgumentError,
+        },
+        {
+          act: {
+            userId: faker.string.uuid(),
+            organizationId: faker.string.uuid(),
+            data: {
+              name: faker.string.sample(10),
+              startAt: faker.date.future(),
+              spots: 1,
+              slots: [{ spots: -1 }, { spots: 1 }],
+            },
+          },
+          expectedError: InvalidArgumentError,
+        },
       ];
 
-      test.concurrent.each(testCases)("$expectedError.name, $act.data", async ({ act, expectedError }) => {
+      test.each(testCases)("$expectedError.name, $act.data", async ({ act, expectedError }) => {
         const { service } = setup();
         /**
          * Arrange
@@ -163,6 +190,8 @@ describe("EventsService", () => {
         startAt,
         endAt: faker.date.soon({ refDate: startAt }),
         location: faker.location.streetAddress(),
+        spots: 10,
+        slots: [{ spots: 1 }, { spots: 2 }],
       };
       const result = service.create(userId, organizationId, data);
 
