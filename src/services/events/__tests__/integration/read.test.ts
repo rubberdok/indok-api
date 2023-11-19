@@ -121,7 +121,7 @@ describe("EventService", () => {
        * 1. The events should be returned
        */
       expect(events.length).toBeGreaterThanOrEqual(3);
-      eventIds.map((id) => expect(events.map((event) => event.id)).toContainEqual(id));
+      eventIds.forEach((id) => expect(events.map((event) => event.id)).toContainEqual(id));
     });
 
     it("{ onlyFutureEvents: true } should only return events in the future", async () => {

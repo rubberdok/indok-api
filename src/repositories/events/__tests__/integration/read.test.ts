@@ -44,7 +44,7 @@ describe("EventRepository", () => {
        * 1. The events should be returned
        */
       expect(events.length).toBeGreaterThanOrEqual(3);
-      eventIds.map((id) => expect(events.map((event) => event.id)).toContainEqual(id));
+      eventIds.forEach((id) => expect(events.map((event) => event.id)).toContainEqual(id));
     });
 
     it("should only return events after endAtGte", async () => {
@@ -88,7 +88,7 @@ describe("EventRepository", () => {
        *
        * 1. The event in the past should not have been returned
        */
-      events.map((event) => expect(event.id).not.toEqual(eventInThePast.id));
+      events.forEach((event) => expect(event.id).not.toEqual(eventInThePast.id));
     });
   });
 });
