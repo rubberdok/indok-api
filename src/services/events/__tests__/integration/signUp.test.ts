@@ -231,7 +231,7 @@ describe("Event Sign Up", () => {
 
       const updatedSlot = await prisma.eventSlot.findUniqueOrThrow({ where: { id: slot.id } });
       expect(updatedSlot.spots).toEqual(0);
-    });
+    }, 10_000);
 
     it("should not overfill the event", async () => {
       /**

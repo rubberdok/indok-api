@@ -23,13 +23,18 @@ class MockFeideClient implements AuthClient {
   }
 }
 
-export function defaultTestDependenciesFactory(serivceOverrides?: Partial<ServerDependencies["serviceDependencies"]>) {
+export function defaultTestDependenciesFactory(
+  serivceOverrides: Partial<ServerDependencies["apolloServerDependencies"]> & {
+    authService?: ServerDependencies["authService"];
+  } = {}
+) {
   const mockFeideClient = new MockFeideClient();
   const userRepository = new UserRepository(prisma);
   const userService = new UserService(userRepository);
   const authService = new AuthService(userService, mockFeideClient, FeideProvider);
+  const { authService: authServiceOverride, ...apolloServerOverrides } = serivceOverrides;
 
-  const serviceDependencies = merge({}, { authService, userService }, serivceOverrides);
+  const apolloServerDependencies = merge({}, { userService }, apolloServerOverrides);
 
-  return dependenciesFactory({ serviceDependencies });
+  return dependenciesFactory({ apolloServerDependencies, authService: authServiceOverride ?? authService });
 }

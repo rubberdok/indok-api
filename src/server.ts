@@ -72,7 +72,7 @@ interface Options {
  * @returns The Fastify server instance
  */
 export async function initServer(dependencies: ServerDependencies, opts: Options): Promise<FastifyInstance> {
-  const { serviceDependencies, createRedisClient } = dependencies;
+  const { apolloServerDependencies, authService, createRedisClient } = dependencies;
 
   const app = fastify({ logger: envToLogger[env.NODE_ENV], ignoreTrailingSlash: true });
 
@@ -182,7 +182,7 @@ export async function initServer(dependencies: ServerDependencies, opts: Options
   // Custom context function to inject dependencies into the Apollo Context
   const contextFunction: ApolloFastifyContextFunction<ApolloContext> = async (req, res) => {
     return {
-      ...serviceDependencies,
+      ...apolloServerDependencies,
       req,
       res,
     };
@@ -194,7 +194,7 @@ export async function initServer(dependencies: ServerDependencies, opts: Options
   });
 
   await app.register(healthCheckPlugin, { prefix: "/-" });
-  await app.register(getAuthPlugin(serviceDependencies.authService), { prefix: "/auth" });
+  await app.register(getAuthPlugin(authService), { prefix: "/auth" });
 
   const { port, host } = opts;
 
