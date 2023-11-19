@@ -84,9 +84,3 @@ export const fastifyApolloSentryPlugin = (app: FastifyInstance): ApolloServerPlu
     },
   };
 };
-
-declare module "graphql" {
-  interface GraphQLErrorExtensions {
-    code: string;
-  }
-}
