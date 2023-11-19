@@ -43,3 +43,9 @@ export interface ApolloContext extends ServiceDependencies {
   res: FastifyReply;
   req: FastifyRequest;
 }
+
+declare module "graphql" {
+  interface GraphQLErrorExtensions {
+    code: string;
+  }
+}

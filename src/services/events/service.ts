@@ -68,7 +68,7 @@ export class EventService {
   async create(
     userId: string,
     organizationId: string,
-    data: { name: string; description?: string; startAt: Date; endAt?: Date; location?: string }
+    data: { name: string; description?: string | null; startAt: Date; endAt?: Date | null; location?: string | null }
   ) {
     const schema = z
       .object({

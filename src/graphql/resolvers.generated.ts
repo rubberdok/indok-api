@@ -3,9 +3,13 @@
     import    { AddMemberResponse } from './organizations/resolvers/AddMemberResponse.js';
 import    { Booking } from './cabins/resolvers/Booking.js';
 import    { Cabin } from './cabins/resolvers/Cabin.js';
+import    { CreateEventResponse } from './events/resolvers/CreateEventResponse.js';
 import    { CreateOrganizationResponse } from './organizations/resolvers/CreateOrganizationResponse.js';
+import    { Event } from './events/resolvers/Event.js';
+import    { EventsResponse } from './events/resolvers/EventsResponse.js';
 import    { Member } from './organizations/resolvers/Member.js';
 import    { addMember as Mutation_addMember } from './organizations/resolvers/Mutation/addMember.js';
+import    { createEvent as Mutation_createEvent } from './events/resolvers/Mutation/createEvent.js';
 import    { createOrganization as Mutation_createOrganization } from './organizations/resolvers/Mutation/createOrganization.js';
 import    { newBooking as Mutation_newBooking } from './cabins/resolvers/Mutation/newBooking.js';
 import    { removeMember as Mutation_removeMember } from './organizations/resolvers/Mutation/removeMember.js';
@@ -23,12 +27,15 @@ import    { UsersResponse } from './users/resolvers/UsersResponse.js';
 import    { DateTimeResolver } from 'graphql-scalars';
     export const resolvers: Resolvers = {
       Query: { user: Query_user,users: Query_users },
-      Mutation: { addMember: Mutation_addMember,createOrganization: Mutation_createOrganization,newBooking: Mutation_newBooking,removeMember: Mutation_removeMember,updateBookingStatus: Mutation_updateBookingStatus,updateOrganization: Mutation_updateOrganization,updateUser: Mutation_updateUser },
+      Mutation: { addMember: Mutation_addMember,createEvent: Mutation_createEvent,createOrganization: Mutation_createOrganization,newBooking: Mutation_newBooking,removeMember: Mutation_removeMember,updateBookingStatus: Mutation_updateBookingStatus,updateOrganization: Mutation_updateOrganization,updateUser: Mutation_updateUser },
       
       AddMemberResponse: AddMemberResponse,
 Booking: Booking,
 Cabin: Cabin,
+CreateEventResponse: CreateEventResponse,
 CreateOrganizationResponse: CreateOrganizationResponse,
+Event: Event,
+EventsResponse: EventsResponse,
 Member: Member,
 Organization: Organization,
 RemoveMemberResponse: RemoveMemberResponse,
