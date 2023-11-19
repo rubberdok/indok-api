@@ -9,6 +9,9 @@ concurrency:
   group: deploy
   cancel-in-progress: false
 
+env:
+  FORCE_COLOR: 1
+
 jobs:
   build:
     name: Build Image and Push

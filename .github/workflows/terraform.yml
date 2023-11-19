@@ -5,6 +5,9 @@
 
 name: "Terraform"
 
+env:
+  FORCE_COLOR: 1
+
 on:
   pull_request:
     paths:
