@@ -4,6 +4,7 @@ import { GraphQLFormattedError } from "graphql";
 import { ZodError } from "zod";
 
 import { BaseError, codes, InternalServerError, ValidationError } from "@/domain/errors.js";
+
 import { ServiceDependencies } from "./fastify/dependencies.js";
 
 export function getFormatErrorHandler(app?: FastifyInstance) {
