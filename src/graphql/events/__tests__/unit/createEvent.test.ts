@@ -15,7 +15,7 @@ describe("Event mutations", () => {
        * Create an authenticated context,
        * and set up the mock return value for the eventService.create method.
        */
-      const { client, createMockContext, eventService } = createMockApolloServer(console);
+      const { client, createMockContext, eventService } = createMockApolloServer();
 
       const contextValue = createMockContext({
         authenticated: true,
