@@ -36,7 +36,14 @@ input EventInput {
 
 type EventsResponse {
   events: [Event!]!
+  nextWeek: [Event!]!
+  thisWeek: [Event!]!
+  twoWeeksOrLater: [Event!]!
   total: Int!
+}
+
+input EventsInput {
+  futureEventsOnly: Boolean
 }
 
 type Mutation {
@@ -45,5 +52,5 @@ type Mutation {
 
 type Query {
   event(data: EventInput!): EventResponse!
-  events: EventsResponse!
+  events(data: EventsInput): EventsResponse!
 }

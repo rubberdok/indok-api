@@ -37,7 +37,7 @@ export interface EventRepository {
   ): Promise<{ signUp: EventSignUp }>;
   createOnWaitlistSignUp(userId: string, event: { id: string }): Promise<EventSignUp>;
   getSlotWithAvailableSpots(eventId: string): Promise<EventSlot>;
-  findMany(): Promise<Event[]>;
+  findMany(data?: { endAtGte?: Date | null }): Promise<Event[]>;
 }
 
 export interface UserService {
@@ -267,9 +267,19 @@ export class EventService {
   /**
    * findMany returns all events.
    *
+   * @params data.onlyFutureEvents - If true, only future events that have an `endAt` in the future will be returned
    * @returns All events
    */
-  async findMany(): Promise<Event[]> {
-    return await this.eventRepository.findMany();
+  async findMany(data?: { onlyFutureEvents?: boolean }): Promise<Event[]> {
+    if (!data) {
+      return await this.eventRepository.findMany();
+    }
+
+    let endAtGte: Date | undefined;
+    if (data.onlyFutureEvents) {
+      endAtGte = new Date();
+    }
+
+    return await this.eventRepository.findMany({ endAtGte });
   }
 }

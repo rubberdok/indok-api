@@ -17,6 +17,8 @@ const documents = {
     "\n            mutation createEvent($data: CreateEventInput!) {\n              createEvent(data: $data) {\n                event {\n                  id\n                  name\n                  description\n                }\n              }\n            }\n          ": types.CreateEventDocument,
     "\n          query event($data: EventInput!) {\n            event(data: $data) {\n              event {\n                id\n              }\n            }\n          }\n        ": types.EventDocument,
     "\n          query events {\n            events {\n              events {\n                id\n              }\n              total\n            }\n          }\n        ": types.EventsDocument,
+    "\n          query futureEvents($data: EventsInput!) {\n            events(data: $data) {\n              events {\n                id\n              }\n              total\n            }\n          }\n        ": types.FutureEventsDocument,
+    "\n          query weekEvents {\n            events {\n              thisWeek {\n                id\n              }\n              nextWeek {\n                id\n              }\n              twoWeeksOrLater {\n                id\n              }\n              total\n            }\n          }\n        ": types.WeekEventsDocument,
     "\n              mutation createOrganization1 {\n                createOrganization(data: { name: \"test\" }) {\n                  organization {\n                    id\n                  }\n                }\n              }\n            ": types.CreateOrganization1Document,
     "\n              mutation createOrganization {\n                createOrganization(data: { name: \"test\" }) {\n                  organization {\n                    id\n                    name\n                  }\n                }\n              }\n            ": types.CreateOrganizationDocument,
     "\n              mutation updateOrganization1 {\n                updateOrganization(data: { name: \"test\", id: \"id\" }) {\n                  organization {\n                    id\n                  }\n                }\n              }\n            ": types.UpdateOrganization1Document,
@@ -57,6 +59,14 @@ export function graphql(source: "\n          query event($data: EventInput!) {\n
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n          query events {\n            events {\n              events {\n                id\n              }\n              total\n            }\n          }\n        "): (typeof documents)["\n          query events {\n            events {\n              events {\n                id\n              }\n              total\n            }\n          }\n        "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n          query futureEvents($data: EventsInput!) {\n            events(data: $data) {\n              events {\n                id\n              }\n              total\n            }\n          }\n        "): (typeof documents)["\n          query futureEvents($data: EventsInput!) {\n            events(data: $data) {\n              events {\n                id\n              }\n              total\n            }\n          }\n        "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n          query weekEvents {\n            events {\n              thisWeek {\n                id\n              }\n              nextWeek {\n                id\n              }\n              twoWeeksOrLater {\n                id\n              }\n              total\n            }\n          }\n        "): (typeof documents)["\n          query weekEvents {\n            events {\n              thisWeek {\n                id\n              }\n              nextWeek {\n                id\n              }\n              twoWeeksOrLater {\n                id\n              }\n              total\n            }\n          }\n        "];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

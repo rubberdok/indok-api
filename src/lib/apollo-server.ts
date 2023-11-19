@@ -99,7 +99,7 @@ interface IEventService {
     }
   ): Promise<Event>;
   get(id: string): Promise<Event>;
-  findMany(): Promise<Event[]>;
+  findMany(data?: { onlyFutureEvents?: boolean | null }): Promise<Event[]>;
 }
 
 export interface ApolloServerDependencies {

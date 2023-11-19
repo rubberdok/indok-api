@@ -93,9 +93,16 @@ type EventResponse {
   event: Event!
 }
 
+input EventsInput {
+  futureEventsOnly: Boolean
+}
+
 type EventsResponse {
   events: [Event!]!
+  nextWeek: [Event!]!
+  thisWeek: [Event!]!
   total: Int!
+  twoWeeksOrLater: [Event!]!
 }
 
 type Member {
@@ -167,7 +174,7 @@ type Organization {
 
 type Query {
   event(data: EventInput!): EventResponse!
-  events: EventsResponse!
+  events(data: EventsInput): EventsResponse!
   user: UserResponse!
   users: UsersResponse!
 }

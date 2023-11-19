@@ -1,4 +1,5 @@
 import { faker } from "@faker-js/faker";
+import dayjs from "dayjs";
 
 import { NotFoundError } from "@/domain/errors.js";
 import prisma from "@/lib/prisma.js";
@@ -121,6 +122,47 @@ describe("EventService", () => {
        */
       expect(events.length).toBeGreaterThanOrEqual(3);
       eventIds.map((id) => expect(events.map((event) => event.id)).toContainEqual(id));
+    });
+
+    it("{ onlyFutureEvents: true } should only return events in the future", async () => {
+      /**
+       * Arrange
+       *
+       * 1. Create an event in the future
+       * 2. Create an event in the past
+       */
+      const eventInTheFuture = await prisma.event.create({
+        data: {
+          id: faker.string.uuid(),
+          name: faker.person.firstName(),
+          startAt: dayjs().add(1, "day").toDate(),
+          endAt: dayjs().add(2, "day").toDate(),
+        },
+      });
+      const eventInThePast = await prisma.event.create({
+        data: {
+          id: faker.string.uuid(),
+          name: faker.person.firstName(),
+          startAt: dayjs().subtract(2, "day").toDate(),
+          endAt: dayjs().subtract(1, "day").toDate(),
+        },
+      });
+
+      /**
+       * Act
+       *
+       * 1. Get all events with { onlyFutureEvents: true }
+       */
+      const events = await eventService.findMany({ onlyFutureEvents: true });
+
+      /**
+       * Assert
+       *
+       * 1. The event in the past should not be returned
+       * 2. The event in the future should be returned
+       */
+      expect(events.map((event) => event.id)).not.toContain(eventInThePast.id);
+      expect(events.map((event) => event.id)).toContain(eventInTheFuture.id);
     });
   });
 });
