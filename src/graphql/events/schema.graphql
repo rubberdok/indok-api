@@ -26,6 +26,24 @@ input CreateEventSlot {
   spots: Int!
 }
 
+type EventResponse {
+  event: Event!
+}
+
+input EventInput {
+  id: ID!
+}
+
+type EventsResponse {
+  events: [Event!]!
+  total: Int!
+}
+
 type Mutation {
   createEvent(data: CreateEventInput!): CreateEventResponse!
+}
+
+type Query {
+  event(data: EventInput!): EventResponse!
+  events: EventsResponse!
 }

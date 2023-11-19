@@ -245,4 +245,12 @@ export class EventRepository {
 
     return event;
   }
+
+  /**
+   * findMany returns a list of events.
+   * @returns A list of events
+   */
+  async findMany(): Promise<Event[]> {
+    return this.db.event.findMany();
+  }
 }

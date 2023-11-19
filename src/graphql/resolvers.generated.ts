@@ -6,6 +6,7 @@ import    { Cabin } from './cabins/resolvers/Cabin.js';
 import    { CreateEventResponse } from './events/resolvers/CreateEventResponse.js';
 import    { CreateOrganizationResponse } from './organizations/resolvers/CreateOrganizationResponse.js';
 import    { Event } from './events/resolvers/Event.js';
+import    { EventResponse } from './events/resolvers/EventResponse.js';
 import    { EventsResponse } from './events/resolvers/EventsResponse.js';
 import    { Member } from './organizations/resolvers/Member.js';
 import    { addMember as Mutation_addMember } from './organizations/resolvers/Mutation/addMember.js';
@@ -17,6 +18,8 @@ import    { updateBookingStatus as Mutation_updateBookingStatus } from './cabins
 import    { updateOrganization as Mutation_updateOrganization } from './organizations/resolvers/Mutation/updateOrganization.js';
 import    { updateUser as Mutation_updateUser } from './users/resolvers/Mutation/updateUser.js';
 import    { Organization } from './organizations/resolvers/Organization.js';
+import    { event as Query_event } from './events/resolvers/Query/event.js';
+import    { events as Query_events } from './events/resolvers/Query/events.js';
 import    { user as Query_user } from './users/resolvers/Query/user.js';
 import    { users as Query_users } from './users/resolvers/Query/users.js';
 import    { RemoveMemberResponse } from './organizations/resolvers/RemoveMemberResponse.js';
@@ -26,7 +29,7 @@ import    { UserResponse } from './users/resolvers/UserResponse.js';
 import    { UsersResponse } from './users/resolvers/UsersResponse.js';
 import    { DateTimeResolver } from 'graphql-scalars';
     export const resolvers: Resolvers = {
-      Query: { user: Query_user,users: Query_users },
+      Query: { event: Query_event,events: Query_events,user: Query_user,users: Query_users },
       Mutation: { addMember: Mutation_addMember,createEvent: Mutation_createEvent,createOrganization: Mutation_createOrganization,newBooking: Mutation_newBooking,removeMember: Mutation_removeMember,updateBookingStatus: Mutation_updateBookingStatus,updateOrganization: Mutation_updateOrganization,updateUser: Mutation_updateUser },
       
       AddMemberResponse: AddMemberResponse,
@@ -35,6 +38,7 @@ Cabin: Cabin,
 CreateEventResponse: CreateEventResponse,
 CreateOrganizationResponse: CreateOrganizationResponse,
 Event: Event,
+EventResponse: EventResponse,
 EventsResponse: EventsResponse,
 Member: Member,
 Organization: Organization,

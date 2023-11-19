@@ -100,9 +100,19 @@ export type Event = {
   name: Scalars['String']['output'];
 };
 
+export type EventInput = {
+  id: Scalars['ID']['input'];
+};
+
+export type EventResponse = {
+  __typename?: 'EventResponse';
+  event: Event;
+};
+
 export type EventsResponse = {
   __typename?: 'EventsResponse';
   events: Array<Event>;
+  total: Scalars['Int']['output'];
 };
 
 export type Member = {
@@ -197,8 +207,15 @@ export type Organization = {
 
 export type Query = {
   __typename?: 'Query';
+  event: EventResponse;
+  events: EventsResponse;
   user: UserResponse;
   users: UsersResponse;
+};
+
+
+export type QueryEventArgs = {
+  data: EventInput;
 };
 
 export type RemoveMemberInput = {

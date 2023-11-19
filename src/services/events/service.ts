@@ -37,6 +37,7 @@ export interface EventRepository {
   ): Promise<{ signUp: EventSignUp }>;
   createOnWaitlistSignUp(userId: string, event: { id: string }): Promise<EventSignUp>;
   getSlotWithAvailableSpots(eventId: string): Promise<EventSlot>;
+  findMany(): Promise<Event[]>;
 }
 
 export interface UserService {
@@ -250,5 +251,25 @@ export class EventService {
       "Failed to sign up user after 20 attempts. If this happens often, consider increasing the number of attempts."
     );
     throw new InternalServerError("Failed to sign up user after 20 attempts");
+  }
+
+  /**
+   * get returns an event with the specified ID.
+   *
+   * @throws {NotFoundError} If an event with the specified ID does not exist
+   * @param id - The ID of the event to get
+   * @returns The event with the specified ID
+   */
+  async get(id: string): Promise<Event> {
+    return await this.eventRepository.get(id);
+  }
+
+  /**
+   * findMany returns all events.
+   *
+   * @returns All events
+   */
+  async findMany(): Promise<Event[]> {
+    return await this.eventRepository.findMany();
   }
 }

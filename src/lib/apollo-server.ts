@@ -98,6 +98,8 @@ interface IEventService {
       slots?: { spots: number }[] | null;
     }
   ): Promise<Event>;
+  get(id: string): Promise<Event>;
+  findMany(): Promise<Event[]>;
 }
 
 export interface ApolloServerDependencies {
