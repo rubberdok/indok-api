@@ -106,7 +106,7 @@ const config = {
           "./types.generated.ts": { content: generatedPrefix },
         },
         typesPluginsConfig: {
-          contextType: "@/lib/apollo-server.js#IContext",
+          contextType: "@/lib/apollo-server.js#ApolloContext",
         },
       },
       { schema: "src/graphql/**/*.{graphql}" }

@@ -2,7 +2,7 @@ import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from '
 import { BookingMapper } from './cabins/schema.mappers.js';
 import { MemberMapper, OrganizationMapper } from './organizations/schema.mappers.js';
 import { UserMapper, UsersResponseMapper } from './users/schema.mappers.js';
-import { IContext } from '@/lib/apollo-server.js';
+import { ApolloContext } from '@/lib/apollo-server.js';
 export type Maybe<T> = T | null | undefined;
 export type InputMaybe<T> = T | null | undefined;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -384,12 +384,12 @@ export type ResolversParentTypes = {
   UsersResponse: UsersResponseMapper;
 };
 
-export type AddMemberResponseResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['AddMemberResponse'] = ResolversParentTypes['AddMemberResponse']> = {
+export type AddMemberResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['AddMemberResponse'] = ResolversParentTypes['AddMemberResponse']> = {
   member?: Resolver<ResolversTypes['Member'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type BookingResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['Booking'] = ResolversParentTypes['Booking']> = {
+export type BookingResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Booking'] = ResolversParentTypes['Booking']> = {
   cabin?: Resolver<ResolversTypes['Cabin'], ParentType, ContextType>;
   email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   endDate?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
@@ -402,7 +402,7 @@ export type BookingResolvers<ContextType = IContext, ParentType extends Resolver
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type CabinResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['Cabin'] = ResolversParentTypes['Cabin']> = {
+export type CabinResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Cabin'] = ResolversParentTypes['Cabin']> = {
   externalPrice?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   internalPrice?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
@@ -410,7 +410,7 @@ export type CabinResolvers<ContextType = IContext, ParentType extends ResolversP
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type CreateOrganizationResponseResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['CreateOrganizationResponse'] = ResolversParentTypes['CreateOrganizationResponse']> = {
+export type CreateOrganizationResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['CreateOrganizationResponse'] = ResolversParentTypes['CreateOrganizationResponse']> = {
   organization?: Resolver<ResolversTypes['Organization'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -419,7 +419,7 @@ export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversT
   name: 'DateTime';
 }
 
-export type MemberResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['Member'] = ResolversParentTypes['Member']> = {
+export type MemberResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Member'] = ResolversParentTypes['Member']> = {
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   organization?: Resolver<ResolversTypes['Organization'], ParentType, ContextType>;
   role?: Resolver<ResolversTypes['Role'], ParentType, ContextType>;
@@ -427,7 +427,7 @@ export type MemberResolvers<ContextType = IContext, ParentType extends Resolvers
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type MutationResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
+export type MutationResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
   addMember?: Resolver<ResolversTypes['AddMemberResponse'], ParentType, ContextType, RequireFields<MutationaddMemberArgs, 'data'>>;
   createOrganization?: Resolver<ResolversTypes['CreateOrganizationResponse'], ParentType, ContextType, RequireFields<MutationcreateOrganizationArgs, 'data'>>;
   newBooking?: Resolver<ResolversTypes['Booking'], ParentType, ContextType, RequireFields<MutationnewBookingArgs, 'data'>>;
@@ -437,7 +437,7 @@ export type MutationResolvers<ContextType = IContext, ParentType extends Resolve
   updateUser?: Resolver<ResolversTypes['User'], ParentType, ContextType, RequireFields<MutationupdateUserArgs, 'data' | 'id'>>;
 };
 
-export type OrganizationResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['Organization'] = ResolversParentTypes['Organization']> = {
+export type OrganizationResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Organization'] = ResolversParentTypes['Organization']> = {
   description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   members?: Resolver<Array<ResolversTypes['Member']>, ParentType, ContextType>;
@@ -445,22 +445,22 @@ export type OrganizationResolvers<ContextType = IContext, ParentType extends Res
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type QueryResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
+export type QueryResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
   user?: Resolver<ResolversTypes['UserResponse'], ParentType, ContextType>;
   users?: Resolver<ResolversTypes['UsersResponse'], ParentType, ContextType>;
 };
 
-export type RemoveMemberResponseResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['RemoveMemberResponse'] = ResolversParentTypes['RemoveMemberResponse']> = {
+export type RemoveMemberResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['RemoveMemberResponse'] = ResolversParentTypes['RemoveMemberResponse']> = {
   member?: Resolver<ResolversTypes['Member'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type UpdateOrganizationResponseResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['UpdateOrganizationResponse'] = ResolversParentTypes['UpdateOrganizationResponse']> = {
+export type UpdateOrganizationResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['UpdateOrganizationResponse'] = ResolversParentTypes['UpdateOrganizationResponse']> = {
   organization?: Resolver<ResolversTypes['Organization'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type UserResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = {
+export type UserResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = {
   allergies?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   canUpdateYear?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
@@ -475,18 +475,18 @@ export type UserResolvers<ContextType = IContext, ParentType extends ResolversPa
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type UserResponseResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['UserResponse'] = ResolversParentTypes['UserResponse']> = {
+export type UserResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['UserResponse'] = ResolversParentTypes['UserResponse']> = {
   user?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type UsersResponseResolvers<ContextType = IContext, ParentType extends ResolversParentTypes['UsersResponse'] = ResolversParentTypes['UsersResponse']> = {
+export type UsersResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['UsersResponse'] = ResolversParentTypes['UsersResponse']> = {
   total?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   users?: Resolver<Array<ResolversTypes['User']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type Resolvers<ContextType = IContext> = {
+export type Resolvers<ContextType = ApolloContext> = {
   AddMemberResponse?: AddMemberResponseResolvers<ContextType>;
   Booking?: BookingResolvers<ContextType>;
   Cabin?: CabinResolvers<ContextType>;

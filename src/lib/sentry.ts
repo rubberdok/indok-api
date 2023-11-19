@@ -4,7 +4,7 @@ import { GraphQLError } from "graphql";
 
 import { codes } from "@/domain/errors.js";
 
-import { IContext } from "./apollo-server.js";
+import { ApolloContext } from "./apollo-server.js";
 
 const USER_FACING_ERRORS = new Set<string>([
   codes.ERR_BAD_REQUEST,
@@ -34,7 +34,7 @@ function isUserFacingError(error: GraphQLError): boolean {
  * @param app - The fastify app instance
  * @returns The Apollo Server plugin
  */
-export const fastifyApolloSentryPlugin = (app: FastifyInstance): ApolloServerPlugin<IContext> => {
+export const fastifyApolloSentryPlugin = (app: FastifyInstance): ApolloServerPlugin<ApolloContext> => {
   return {
     async requestDidStart() {
       return {

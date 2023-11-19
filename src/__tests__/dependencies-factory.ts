@@ -1,9 +1,10 @@
 import { faker } from "@faker-js/faker";
 import { merge } from "lodash-es";
 
+import { dependenciesFactory } from "@/lib/fastify/dependencies.js";
 import prisma from "@/lib/prisma.js";
 import { UserRepository } from "@/repositories/users/index.js";
-import { Dependencies, dependenciesFactory } from "@/server.js";
+import { Dependencies } from "@/server.js";
 import { AuthClient, UserInfo } from "@/services/auth/clients.js";
 import { FeideProvider } from "@/services/auth/providers.js";
 import { AuthService } from "@/services/auth/service.js";
@@ -28,6 +29,6 @@ export function defaultTestDependenciesFactory(overrides?: Partial<Dependencies>
   const userRepository = new UserRepository(prisma);
   const userService = new UserService(userRepository);
   const authService = new AuthService(userService, mockFeideClient, FeideProvider);
-  const dependencies = merge({}, dependenciesFactory({ authService, userService }), overrides);
+  const dependencies = merge({}, dependenciesFactory({ serviceDependencies: { authService, userService } }), overrides);
   return dependencies;
 }

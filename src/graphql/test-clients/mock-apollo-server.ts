@@ -7,7 +7,7 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { GraphQLFormattedError } from "graphql";
 import { mock, mockDeep } from "jest-mock-extended";
 
-import { getFormatErrorHandler, IContext } from "@/lib/apollo-server.js";
+import { getFormatErrorHandler, ApolloContext } from "@/lib/apollo-server.js";
 
 import { resolvers } from "../resolvers.generated.js";
 import { typeDefs } from "../type-defs.generated.js";
@@ -18,11 +18,11 @@ interface QueryResult<T extends TypedDocumentNode<ResultOf<T>, VariablesOf<T>>> 
 }
 
 class ApolloServerClient {
-  constructor(public server: ApolloServer<IContext>) {}
+  constructor(public server: ApolloServer<ApolloContext>) {}
 
   async query<T extends TypedDocumentNode<ResultOf<T>, VariablesOf<T>>>(
     request: { query: T; variables?: VariablesOf<T> },
-    options?: { contextValue?: IContext }
+    options?: { contextValue?: ApolloContext }
   ): Promise<QueryResult<T>> {
     // @ts-expect-error We can get more accurate typing for variables by using the `VariablesOf` helper
     // so we ignore the TS error raised here.
@@ -53,7 +53,7 @@ class ApolloServerClient {
 
   public async mutate<T extends TypedDocumentNode<ResultOf<T>, VariablesOf<T>>>(
     request: { mutation: T; variables?: VariablesOf<T> },
-    options?: { contextValue?: IContext }
+    options?: { contextValue?: ApolloContext }
   ): Promise<QueryResult<T>> {
     const { mutation, variables } = request;
     return this.query({ query: mutation, variables }, options);
@@ -61,16 +61,16 @@ class ApolloServerClient {
 }
 
 export const createMockApolloServer = () => {
-  const server = new ApolloServer<IContext>({
+  const server = new ApolloServer<ApolloContext>({
     typeDefs: typeDefs,
     resolvers: resolvers,
     formatError: getFormatErrorHandler(),
   });
 
-  const userService = mockDeep<IContext["userService"]>();
-  const organizationService = mockDeep<IContext["organizationService"]>();
-  const cabinService = mockDeep<IContext["cabinService"]>();
-  const authService = mockDeep<IContext["authService"]>();
+  const userService = mockDeep<ApolloContext["userService"]>();
+  const organizationService = mockDeep<ApolloContext["organizationService"]>();
+  const cabinService = mockDeep<ApolloContext["cabinService"]>();
+  const authService = mockDeep<ApolloContext["authService"]>();
 
   function createMockContext(session: Partial<FastifySessionObject>) {
     const contextValue = {
