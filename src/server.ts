@@ -169,7 +169,7 @@ export async function initServer(dependencies: ServerDependencies, opts: Options
     csrfPrevention: true,
     introspection: true,
     resolvers: resolvers,
-    formatError: getFormatErrorHandler(app),
+    formatError: getFormatErrorHandler(app.log.child({ service: "apollo-server" })),
     plugins: [
       fastifyApolloDrainPlugin(app),
       fastifyApolloSentryPlugin(app),

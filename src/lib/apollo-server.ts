@@ -7,7 +7,7 @@ import { BaseError, codes, InternalServerError, ValidationError } from "@/domain
 
 import { ServiceDependencies } from "./fastify/dependencies.js";
 
-export function getFormatErrorHandler(app?: FastifyInstance) {
+export function getFormatErrorHandler(log?: FastifyInstance["log"]) {
   const formatError = (formattedError: GraphQLFormattedError, error: unknown): GraphQLFormattedError => {
     if (error instanceof ValidationError || error instanceof ZodError) {
       return {
@@ -19,7 +19,7 @@ export function getFormatErrorHandler(app?: FastifyInstance) {
       };
     }
     const originalError = unwrapResolverError(error);
-    app?.log.error(originalError);
+    log?.error(originalError);
 
     let baseError: BaseError;
     if (originalError instanceof BaseError) {
