@@ -4,8 +4,17 @@ import { BookingStatus } from "@/domain/cabins.js";
 import { ValidationError } from "@/domain/errors.js";
 import { IMailService, TemplateAliasEnum } from "@/services/mail/interfaces.js";
 
-import { BookingData, ICabinService } from "./interfaces.js";
 import { bookingSchema } from "./validation.js";
+
+export interface BookingData {
+  email: string;
+  firstName: string;
+  lastName: string;
+  startDate: Date;
+  endDate: Date;
+  phoneNumber: string;
+  cabinId: string;
+}
 
 export interface CabinRepository {
   getCabinById(id: string): Promise<Cabin>;
@@ -20,7 +29,7 @@ export interface CabinRepository {
   }): Promise<Booking[]>;
 }
 
-export class CabinService implements ICabinService {
+export class CabinService {
   constructor(
     private cabinRepository: CabinRepository,
     private mailService: IMailService

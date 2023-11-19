@@ -57,11 +57,20 @@ export class CabinRepository {
     });
   }
 
-  createBooking(data: Prisma.BookingCreateInput): Promise<Booking> {
+  createBooking(data: {
+    cabinId: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phoneNumber: string;
+    startDate: Date;
+    endDate: Date;
+  }): Promise<Booking> {
     return this.db.booking.create({
       data,
     });
   }
+
   updateBooking(id: string, data: Prisma.BookingUpdateInput): Promise<Booking> {
     return this.db.booking.update({
       where: {

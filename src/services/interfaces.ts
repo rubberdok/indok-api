@@ -1,6 +1,5 @@
 import { User } from "@prisma/client";
 
-export { ICabinService } from "./cabins/interfaces.js";
 export { IMailService } from "./mail/interfaces.js";
 
 export interface GetUserParams {

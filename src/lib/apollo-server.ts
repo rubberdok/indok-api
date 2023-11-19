@@ -72,11 +72,15 @@ interface IUserService {
   canUpdateYear(user: Pick<User, "graduationYearUpdatedAt">): boolean;
 }
 
-export interface BookingData
-  extends Pick<
-    Prisma.BookingCreateInput,
-    "email" | "firstName" | "lastName" | "startDate" | "endDate" | "phoneNumber" | "cabinId"
-  > {}
+export interface BookingData {
+  email: string;
+  firstName: string;
+  lastName: string;
+  startDate: Date;
+  endDate: Date;
+  phoneNumber: string;
+  cabinId: string;
+}
 
 export interface ICabinService {
   newBooking(data: BookingData): Promise<Booking>;
