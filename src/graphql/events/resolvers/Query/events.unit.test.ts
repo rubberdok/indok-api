@@ -76,7 +76,29 @@ describe("Event queries", () => {
         id: faker.string.uuid(),
         startAt: DateTime.now().plus({ week: 5 }).toJSDate(),
       };
-      eventService.findMany.mockResolvedValue([eventThisWeek, eventNextWeek, eventInTwoWeeks, eventFarInTheFuture]);
+      /**
+       * These are included to verify that we don't just compare the week number,
+       * as events one year in the future will have the same week number as events
+       * this week.
+       */
+      const eventOneYearInTheFuture = {
+        ...mock<Event>(),
+        id: faker.string.uuid(),
+        startAt: DateTime.now().plus({ year: 1 }).toJSDate(),
+      };
+      const eventOneYearAndOneWeekInTheFuture = {
+        ...mock<Event>(),
+        id: faker.string.uuid(),
+        startAt: DateTime.now().plus({ year: 1, week: 1 }).toJSDate(),
+      };
+      eventService.findMany.mockResolvedValue([
+        eventThisWeek,
+        eventNextWeek,
+        eventInTwoWeeks,
+        eventFarInTheFuture,
+        eventOneYearInTheFuture,
+        eventOneYearAndOneWeekInTheFuture,
+      ]);
 
       const { errors, data } = await client.query({
         query: graphql(`
@@ -106,7 +128,7 @@ describe("Event queries", () => {
       expect(data?.events.nextWeek).toHaveLength(1);
       expect(data?.events.nextWeek[0]?.id).toEqual(eventNextWeek.id);
 
-      expect(data?.events.twoWeeksOrLater).toHaveLength(2);
+      expect(data?.events.twoWeeksOrLater).toHaveLength(4);
       expect(data?.events.twoWeeksOrLater.map((event) => event.id)).toContain(eventInTwoWeeks.id);
       expect(data?.events.twoWeeksOrLater.map((event) => event.id)).toContain(eventFarInTheFuture.id);
     });
