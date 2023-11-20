@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { Organization, ParticipationStatus, User } from "@prisma/client";
+import { Organization, ParticipationStatus } from "@prisma/client";
 
 import { BaseError, NotFoundError } from "@/domain/errors.js";
 import prisma from "@/lib/prisma.js";
@@ -14,21 +14,11 @@ describe("EventsRepository", () => {
   });
 
   describe("createConfirmedSignUp", () => {
-    // All tests here need an event that belongs to an organization and is organized by a user
+    // All tests here need an event that belongs to an organization
     // they don't affect anything else, so we just share them across all tests.
-    let organizer: User;
     let organization: Organization;
 
     beforeAll(async () => {
-      organizer = await prisma.user.create({
-        data: {
-          email: faker.internet.email(),
-          feideId: faker.string.uuid(),
-          firstName: faker.person.firstName(),
-          lastName: faker.person.lastName(),
-          username: faker.internet.userName(),
-        },
-      });
       organization = await prisma.organization.create({
         data: {
           name: faker.company.name(),
@@ -142,7 +132,7 @@ describe("EventsRepository", () => {
          * Arrange
          *
          * 1. Create a user with userId {userId} which is going to sign up for the event
-         * 2. Create an event with eventId {eventId} that belongs to the organization with organizationId {organizationId} and is organized by the organizer
+         * 2. Create an event with eventId {eventId} that belongs to the organization with organizationId {organizationId}
          * 3. Create a a slot with slotId {slotId} that belongs to the event with eventId {eventId} and has {arrange.slot.spots} total spots
          */
         // 1.
@@ -166,7 +156,7 @@ describe("EventsRepository", () => {
             location: faker.location.streetAddress(),
             spots: arrange.event.spots,
             organizationId: organization.id,
-            organizerId: organizer.id,
+            contactEmail: faker.internet.email(),
           },
         });
 
@@ -303,7 +293,7 @@ describe("EventsRepository", () => {
          * Arrange
          *
          * 1. Create a user with userId {userId} which is going to sign up for the event
-         * 2. Create an event with eventId {eventId} that belongs to the organization with organizationId {organizationId} and is organized by the organizer
+         * 2. Create an event with eventId {eventId} that belongs to the organization with organizationId {organizationId}
          * 3. Create a a slot with slotId {slotId} that belongs to the event with eventId {eventId} and has {arrange.slot.spots} total spots
          */
         // 1.
@@ -327,7 +317,6 @@ describe("EventsRepository", () => {
             location: faker.location.streetAddress(),
             spots: arrange.event.spots,
             organizationId: organization.id,
-            organizerId: organizer.id,
             version: arrange.event.version,
           },
         });
@@ -370,21 +359,11 @@ describe("EventsRepository", () => {
     });
   });
   describe("createOnWaitlistSignUp", () => {
-    // All tests here need an event that belongs to an organization and is organized by a user
+    // All tests here need an event that belongs to an organization
     // they don't affect anything else, so we just share them across all tests.
-    let organizer: User;
     let organization: Organization;
 
     beforeAll(async () => {
-      organizer = await prisma.user.create({
-        data: {
-          email: faker.internet.email(),
-          feideId: faker.string.uuid(),
-          firstName: faker.person.firstName(),
-          lastName: faker.person.lastName(),
-          username: faker.internet.userName(),
-        },
-      });
       organization = await prisma.organization.create({
         data: {
           name: faker.company.name(),
@@ -398,7 +377,7 @@ describe("EventsRepository", () => {
        *
        * 1. Create a user with userId {userId} which is going to sign up for the event
        * 2. Create an event with eventId {eventId} that belongs to the organization with
-       * organizationId {organizationId} and is organized by the organizer with 0 spots
+       * organizationId {organizationId} with 0 spots
        * 3. Create a a slot with slotId {slotId} that belongs to the event with eventId {eventId} with 0 spots
        */
       // 1.
@@ -422,7 +401,6 @@ describe("EventsRepository", () => {
           location: faker.location.streetAddress(),
           spots: 0,
           organizationId: organization.id,
-          organizerId: organizer.id,
         },
       });
 

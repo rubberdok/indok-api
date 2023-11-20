@@ -16,19 +16,9 @@ describe("EventsRepository", () => {
       /**
        * Arrange
        *
-       * 1. Create a user with userId {userId} to act as an organizer
-       * 2. Create an organization with organizationId {organizationId} to act as the organization that the event belongs to
-       * 3. Create event data
+       * 1. Create an organization with organizationId {organizationId} to act as the organization that the event belongs to
+       * 2. Create event data
        */
-      const user = await prisma.user.create({
-        data: {
-          email: faker.internet.email(),
-          feideId: faker.string.uuid(),
-          firstName: faker.person.firstName(),
-          lastName: faker.person.lastName(),
-          username: faker.internet.userName(),
-        },
-      });
       const organization = await prisma.organization.create({
         data: {
           name: faker.company.name(),
@@ -42,7 +32,7 @@ describe("EventsRepository", () => {
         startAt,
         endAt: faker.date.future({ refDate: startAt }),
         organizationId: organization.id,
-        organizerId: user.id,
+        contactEmail: faker.internet.email(),
       };
 
       /**
@@ -68,19 +58,9 @@ describe("EventsRepository", () => {
       /**
        * Arrange
        *
-       * 1. Create a user with userId {userId} to act as an organizer
-       * 2. Create an organization with organizationId {organizationId} to act as the organization that the event belongs to
-       * 3. Create event data
+       * 1. Create an organization with organizationId {organizationId} to act as the organization that the event belongs to
+       * 2. Create event data
        */
-      const user = await prisma.user.create({
-        data: {
-          email: faker.internet.email(),
-          feideId: faker.string.uuid(),
-          firstName: faker.person.firstName(),
-          lastName: faker.person.lastName(),
-          username: faker.internet.userName(),
-        },
-      });
       const organization = await prisma.organization.create({
         data: {
           name: faker.company.name(),
@@ -94,7 +74,7 @@ describe("EventsRepository", () => {
         startAt,
         endAt: faker.date.future({ refDate: startAt }),
         organizationId: organization.id,
-        organizerId: user.id,
+        contactEmail: faker.internet.email(),
         spots: 10,
         slots: [{ spots: 5 }, { spots: 5 }],
       };
@@ -115,7 +95,7 @@ describe("EventsRepository", () => {
         startAt: data.startAt,
         endAt: data.endAt,
         organizationId: data.organizationId,
-        organizerId: data.organizerId,
+        contactEmail: expect.any(String),
         id: expect.any(String),
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
@@ -166,19 +146,9 @@ describe("EventsRepository", () => {
       /**
        * Arrange
        *
-       * 1. Create a user with userId {userId} to act as an organizer
-       * 2. Create an organization with organizationId {organizationId} to act as the organization that the event belongs to
-       * 3. Create an event with eventId {eventId} that belongs to the organization with organizationId {organizationId}
+       * 1. Create an organization with organizationId {organizationId} to act as the organization that the event belongs to
+       * 2. Create an event with eventId {eventId} that belongs to the organization with organizationId {organizationId}
        */
-      const user = await prisma.user.create({
-        data: {
-          email: faker.internet.email(),
-          feideId: faker.string.uuid(),
-          firstName: faker.person.firstName(),
-          lastName: faker.person.lastName(),
-          username: faker.internet.userName(),
-        },
-      });
       const organization = await prisma.organization.create({
         data: {
           name: faker.company.name(),
@@ -193,7 +163,7 @@ describe("EventsRepository", () => {
           startAt,
           endAt: faker.date.future({ refDate: startAt }),
           organizationId: organization.id,
-          organizerId: user.id,
+          contactEmail: faker.internet.email(),
         },
       });
 

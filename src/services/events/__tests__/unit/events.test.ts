@@ -1,8 +1,10 @@
 import { faker } from "@faker-js/faker";
 import { Event } from "@prisma/client";
 import { mockDeep } from "jest-mock-extended";
+import { DateTime } from "luxon";
 
-import { BaseError, InvalidArgumentError } from "@/domain/errors.js";
+import { BaseError, InvalidArgumentError, PermissionDeniedError } from "@/domain/errors.js";
+import { Role } from "@/domain/organizations.js";
 
 import { EventRepository, EventService, OrganizationService } from "../../service.js";
 
@@ -23,7 +25,7 @@ function mockEvent(data: Partial<Event> = {}): Event {
     startAt,
     endAt,
     organizationId: faker.string.uuid(),
-    organizerId: faker.string.uuid(),
+    contactEmail: faker.internet.email(),
     createdAt: faker.date.past(),
     updatedAt: faker.date.past(),
     location: faker.location.streetAddress(),
@@ -40,6 +42,7 @@ describe("EventsService", () => {
         act: {
           userId: string;
           organizationId: string;
+          role?: Role | null;
           data: {
             name: string;
             description?: string;
@@ -58,6 +61,7 @@ describe("EventsService", () => {
           act: {
             userId: faker.string.uuid(),
             organizationId: faker.string.uuid(),
+            role: Role.MEMBER,
             data: {
               name: "",
               startAt: faker.date.future(),
@@ -69,6 +73,7 @@ describe("EventsService", () => {
           act: {
             userId: faker.string.uuid(),
             organizationId: faker.string.uuid(),
+            role: Role.MEMBER,
             data: {
               name: faker.commerce.productName(),
               startAt: faker.date.past(),
@@ -80,6 +85,7 @@ describe("EventsService", () => {
           act: {
             userId: faker.string.uuid(),
             organizationId: faker.string.uuid(),
+            role: Role.MEMBER,
             data: {
               name: faker.commerce.productName(),
               startAt: faker.date.future(),
@@ -92,6 +98,7 @@ describe("EventsService", () => {
           act: {
             userId: faker.string.uuid(),
             organizationId: faker.string.uuid(),
+            role: Role.MEMBER,
             data: {
               name: faker.commerce.productName(),
               startAt: faker.date.future(),
@@ -104,6 +111,7 @@ describe("EventsService", () => {
           act: {
             userId: faker.string.uuid(),
             organizationId: faker.string.uuid(),
+            role: Role.MEMBER,
             data: {
               name: faker.commerce.productName(),
               description: faker.string.sample(501),
@@ -116,6 +124,7 @@ describe("EventsService", () => {
           act: {
             userId: faker.string.uuid(),
             organizationId: faker.string.uuid(),
+            role: Role.MEMBER,
             data: {
               name: faker.string.sample(101),
               startAt: faker.date.future(),
@@ -127,6 +136,7 @@ describe("EventsService", () => {
           act: {
             userId: faker.string.uuid(),
             organizationId: faker.string.uuid(),
+            role: Role.MEMBER,
             data: {
               name: faker.string.sample(10),
               startAt: faker.date.future(),
@@ -139,6 +149,7 @@ describe("EventsService", () => {
           act: {
             userId: faker.string.uuid(),
             organizationId: faker.string.uuid(),
+            role: Role.MEMBER,
             data: {
               name: faker.string.sample(10),
               startAt: faker.date.future(),
@@ -148,14 +159,27 @@ describe("EventsService", () => {
           },
           expectedError: InvalidArgumentError,
         },
+        {
+          act: {
+            userId: faker.string.uuid(),
+            organizationId: faker.string.uuid(),
+            role: null,
+            data: {
+              name: faker.string.sample(10),
+              startAt: faker.date.future(),
+            },
+          },
+          expectedError: PermissionDeniedError,
+        },
       ];
 
       test.each(testCases)("$expectedError.name, $act.data", async ({ act, expectedError }) => {
-        const { service } = setup();
+        const { service, organizationService } = setup();
         /**
          * Arrange
          * 1. Set up the mock repository to handle the create method
          */
+        organizationService.hasRole.mockResolvedValueOnce(act.role !== null && act.role !== undefined);
 
         /**
          * Act
@@ -201,7 +225,6 @@ describe("EventsService", () => {
       await expect(result).resolves.not.toThrow();
       expect(eventsRepository.create).toHaveBeenCalledWith({
         ...data,
-        organizerId: userId,
         organizationId,
       });
     });
@@ -235,7 +258,6 @@ describe("EventsService", () => {
       expect(eventsRepository.create).toHaveBeenCalledWith({
         ...data,
         endAt: new Date(startAt.getTime() + 2 * 60 * 60 * 1000),
-        organizerId: userId,
         organizationId,
       });
     });
@@ -456,8 +478,8 @@ describe("EventsService", () => {
             data: {
               name: faker.company.name(),
               description: faker.lorem.paragraph(),
-              startAt: faker.date.soon({ refDate: endAt }),
-              endAt: faker.date.future({ refDate: endAt }),
+              startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+              endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
               location: faker.location.streetAddress(),
             },
           },
