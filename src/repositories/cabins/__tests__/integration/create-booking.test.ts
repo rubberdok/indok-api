@@ -1,7 +1,9 @@
-import prisma from "@/lib/prisma.js";
 import { faker } from "@faker-js/faker";
-import { CabinRepository } from "../../index.js";
 import { BookingStatus } from "@prisma/client";
+
+import prisma from "@/lib/prisma.js";
+
+import { CabinRepository } from "../../index.js";
 
 describe("Cabin Repository", () => {
   describe("createBooking", () => {
