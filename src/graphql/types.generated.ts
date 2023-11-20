@@ -348,6 +348,7 @@ export type User = {
   graduationYearUpdatedAt?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
   lastName: Scalars['String']['output'];
+  organizations: Array<Organization>;
   phoneNumber?: Maybe<Scalars['String']['output']>;
   username: Scalars['String']['output'];
 };
@@ -634,6 +635,7 @@ export type UserResolvers<ContextType = ApolloContext, ParentType extends Resolv
   graduationYearUpdatedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   lastName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  organizations?: Resolver<Array<ResolversTypes['Organization']>, ParentType, ContextType>;
   phoneNumber?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   username?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;

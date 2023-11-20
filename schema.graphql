@@ -332,6 +332,7 @@ type User {
   graduationYearUpdatedAt: DateTime
   id: ID!
   lastName: String!
+  organizations: [Organization!]!
   phoneNumber: String
   username: String!
 }

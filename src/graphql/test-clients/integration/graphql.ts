@@ -344,6 +344,7 @@ export type User = {
   graduationYearUpdatedAt?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
   lastName: Scalars['String']['output'];
+  organizations: Array<Organization>;
   phoneNumber?: Maybe<Scalars['String']['output']>;
   username: Scalars['String']['output'];
 };

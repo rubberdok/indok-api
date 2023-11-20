@@ -782,4 +782,21 @@ describe("OrganizationService", () => {
       await expect(actual).resolves.not.toThrow();
     });
   });
+
+  describe("findMany", () => {
+    it("should get the organizations", async () => {
+      organizationRepository.findMany.mockResolvedValueOnce([mock<Organization>({ id: "1" })]);
+
+      const actual = organizationService.findMany();
+      await expect(actual).resolves.not.toThrow();
+    });
+
+    it("should get the organizations for a user", async () => {
+      organizationRepository.findManyByUserId.mockResolvedValueOnce([mock<Organization>({ id: "1" })]);
+
+      const actual = organizationService.findMany({ userId: faker.string.uuid() });
+      await expect(actual).resolves.not.toThrow();
+      expect(organizationRepository.findManyByUserId).toHaveBeenCalledWith({ userId: expect.any(String) });
+    });
+  });
 });

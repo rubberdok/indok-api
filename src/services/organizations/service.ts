@@ -8,6 +8,8 @@ export interface OrganizationRepository {
   create(data: { name: string; description?: string; userId: string }): Promise<Organization>;
   update(id: string, data: { name?: string; description?: string }): Promise<Organization>;
   get(id: string): Promise<Organization>;
+  findMany(): Promise<Organization[]>;
+  findManyByUserId(data?: { userId?: string }): Promise<Organization[]>;
 }
 
 export interface MemberRepository {
@@ -257,5 +259,17 @@ export class OrganizationService {
    */
   async get(id: string): Promise<Organization> {
     return await this.organizationRepository.get(id);
+  }
+
+  /**
+   * findMany returns all organizations matching the filters
+   *
+   * @params data - filters for the query
+   * @returns - all organizations matching the filters
+   */
+  async findMany(data?: { userId?: string }): Promise<Organization[]> {
+    if (!data) return await this.organizationRepository.findMany();
+    if (data.userId) return await this.organizationRepository.findManyByUserId(data);
+    return [];
   }
 }
