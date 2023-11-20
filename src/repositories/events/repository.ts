@@ -14,7 +14,7 @@ export class EventRepository {
    * @param data.startAt - The start datetime of the event
    * @param data.endAt - The end datetime of the event
    * @param data.organizationId - The ID of the organization that the event belongs to
-   * @param data.organizerId - The ID of the user that is the organizer of the event
+   * @param data.contactEamil - The email address of the contact person for the event
    * @returns The created event
    */
   async create(data: {
@@ -23,11 +23,11 @@ export class EventRepository {
     startAt: Date;
     endAt: Date;
     organizationId: string;
-    organizerId: string;
+    contactEmail: string;
     spots?: number;
     slots?: { spots: number }[];
   }): Promise<Event> {
-    const { name, description, startAt, organizationId, endAt, organizerId, spots, slots } = data;
+    const { name, description, startAt, organizationId, endAt, contactEmail, spots, slots } = data;
     if (slots && slots.length > 0) {
       return this.db.event.create({
         data: {
@@ -36,7 +36,7 @@ export class EventRepository {
           startAt,
           endAt,
           organizationId,
-          organizerId,
+          contactEmail,
           spots,
           slots: {
             createMany: {
@@ -53,7 +53,7 @@ export class EventRepository {
         startAt,
         endAt,
         organizationId,
-        organizerId,
+        contactEmail,
         spots,
       },
     });

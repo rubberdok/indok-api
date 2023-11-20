@@ -14,7 +14,7 @@ export interface EventRepository {
     startAt: Date;
     endAt: Date;
     organizationId: string;
-    organizerId: string;
+    contactEmail?: string;
     location?: string;
     spots?: number;
     slots?: { spots: number }[];
@@ -59,13 +59,15 @@ export class EventService {
   /**
    * Create a new event
    * @throws {InvalidArgumentError} - If any values are invalid
-   * @param userId - The ID of the user that is creating the event, will also be the organizer of the event
+   * @throws {PermissionDeniedError} - If the user does not have permission to create an event for the organization
+   * @param userId - The ID of the user that is creating the event
    * @param organizationId - The ID of the organization that the event belongs to
    * @param data.name - The name of the event
    * @param data.description - The description of the event
    * @param data.startAt - The start datetime of the event, must be in the future
    * @param data.endAt - The end datetime of the event
    * @param data.location - The location of the event
+   * @param data.contactEmail - The email address of the contact person for the event
    * @returns The created event
    */
   async create(
@@ -79,8 +81,19 @@ export class EventService {
       location?: string | null;
       spots?: number | null;
       slots?: { spots: number }[] | null;
+      contactEmail?: string | null;
     }
   ) {
+    const isMember = await this.organizationService.hasRole({
+      userId,
+      organizationId,
+      role: Role.MEMBER,
+    });
+
+    if (isMember === false) {
+      throw new PermissionDeniedError("You do not have permission to create an event for this organization.");
+    }
+
     const schema = z
       .object({
         name: z.string().min(1).max(100),
@@ -90,6 +103,7 @@ export class EventService {
         location: z.string().max(100).optional(),
         spots: z.number().int().min(0).optional(),
         slots: z.array(z.object({ spots: z.number().int().min(0) })).optional(),
+        contactEmail: z.string().email().optional(),
       })
       .refine((data) => (data.endAt ? data.startAt < data.endAt : true), {
         message: "End date must be after start date",
@@ -101,7 +115,7 @@ export class EventService {
       throw new InvalidArgumentError(parsed.error.message);
     }
 
-    const { name, description, startAt, location, slots, spots } = parsed.data;
+    const { name, description, startAt, location, slots, spots, contactEmail } = parsed.data;
     let endAt = parsed.data.endAt;
     if (!endAt) {
       endAt = new Date(startAt.getTime() + 2 * 60 * 60 * 1000);
@@ -113,7 +127,7 @@ export class EventService {
       endAt,
       organizationId,
       location,
-      organizerId: userId,
+      contactEmail,
       spots,
       slots,
     });
