@@ -20,6 +20,7 @@ module.exports = {
     "!**/seed.ts",
     "!**/type-defs.ts",
     "!src/graphql/types.generated.ts",
+    "!**/*.test.ts",
   ],
 
   // The directory where Jest should output its coverage files
