@@ -361,7 +361,7 @@ export class EventRepository {
     slot?: { id: string; increment?: boolean; decrement?: boolean; capacityGt?: number };
   }): { eventUpdateData: Prisma.EventUpdateArgs; eventSlotUpdateData?: Prisma.EventSlotUpdateArgs } {
     const { event, slot } = data;
-    let eventUpdateData: Prisma.EventUpdateArgs = { data: {}, where: { id: event.id } };
+    let eventUpdateData: Prisma.EventUpdateArgs;
     let eventSlotUpdateData: Prisma.EventSlotUpdateArgs | undefined = undefined;
 
     if (event.increment) {
