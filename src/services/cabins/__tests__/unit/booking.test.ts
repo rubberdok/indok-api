@@ -5,10 +5,9 @@ import dayjs from "dayjs";
 import { DeepMockProxy, mockDeep } from "jest-mock-extended";
 
 import { BookingStatus } from "@/domain/cabins.js";
-import { IMailService } from "@/services/index.js";
-import { TemplateAliasEnum } from "@/services/mail/interfaces.js";
+import { TemplateAlias } from "@/lib/postmark.js";
 
-import { BookingData, CabinRepository, CabinService } from "../../service.js";
+import { BookingData, CabinRepository, CabinService, IMailService } from "../../service.js";
 
 import { NegativeValidationTestCase, PositiveValidationTestCase } from "./interfaces.js";
 
@@ -117,7 +116,7 @@ describe("New booking", () => {
     await cabinService.newBooking(input);
     expect(repo.createBooking).toHaveBeenCalledWith(input);
     expect(mockMailService.send).toHaveBeenCalledWith({
-      TemplateAlias: TemplateAliasEnum.CABIN_BOOKING_RECEIPT,
+      TemplateAlias: TemplateAlias.CABIN_BOOKING_RECEIPT,
       TemplateModel: expectedConfirmationEmail,
     });
   });

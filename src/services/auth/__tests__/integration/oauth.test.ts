@@ -3,14 +3,13 @@ import { PrismaClient } from "@prisma/client";
 import { User } from "@/domain/users.js";
 import prisma from "@/lib/prisma.js";
 import { UserRepository } from "@/repositories/users/index.js";
-import { IAuthService } from "@/services/interfaces.js";
 import { UserService } from "@/services/users/index.js";
 
 import { FeideProvider } from "../../providers.js";
 import { AuthService, UserService as IUserService } from "../../service.js";
 import { FeideResponses, setupMockFeideClient } from "../__mocks__/feide.js";
 
-let authService: IAuthService;
+let authService: AuthService;
 let userService: IUserService;
 let db: PrismaClient;
 
