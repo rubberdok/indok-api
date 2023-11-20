@@ -4,8 +4,4 @@ export const UsersResponse: UsersResponseResolvers = {
   total: (parent) => {
     return parent.users.length;
   },
-  users: ({ users }) => {
-    /* UsersResponse.users resolver is required because UsersResponse.users and UsersResponseMapper.users are not compatible */
-    return users;
-  },
 };
