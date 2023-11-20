@@ -60,6 +60,7 @@ interface IOrganizationService {
   removeMember(userId: string, data: { userId: string; organizationId: string } | { id: string }): Promise<Member>;
   getMembers(userId: string, organizationId: string): Promise<Member[]>;
   get(id: string): Promise<Organization>;
+  findMany(data?: { userId?: string }): Promise<Organization[]>;
 }
 
 interface IUserService {

@@ -93,4 +93,29 @@ export class OrganizationRepository {
       throw new InternalServerError(err.message);
     });
   }
+
+  /**
+   * findManyByUserId - Find all organizations that the given user is a member of.
+   * If no userId is given, all organizations are returned.
+   * If the user is not a member of any organizations, an empty array is returned.
+   * If the user does not exist, an empty array is returned.
+   *
+   * @param data.userId - The ID of the user to find organizations for
+   * @returns Organization[]
+   */
+  async findManyByUserId(data?: { userId?: string }): Promise<Organization[]> {
+    const { userId } = data ?? {};
+    if (userId === undefined) {
+      return this.findMany();
+    }
+    return this.db.organization.findMany({
+      where: {
+        members: {
+          some: {
+            userId,
+          },
+        },
+      },
+    });
+  }
 }

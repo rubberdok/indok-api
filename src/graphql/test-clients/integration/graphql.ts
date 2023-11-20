@@ -334,16 +334,23 @@ export type UpdateUserResponse = {
 export type User = {
   __typename?: 'User';
   allergies?: Maybe<Scalars['String']['output']>;
+  /** If the user is permitted to update their graduation year */
   canUpdateYear: Scalars['Boolean']['output'];
   createdAt: Scalars['DateTime']['output'];
+  /** Student email */
   email: Scalars['String']['output'];
   firstLogin: Scalars['Boolean']['output'];
   firstName: Scalars['String']['output'];
+  /** The users grade year, from 1 - 6(+) */
   gradeYear?: Maybe<Scalars['Int']['output']>;
+  /** Expected graduation year for the user */
   graduationYear?: Maybe<Scalars['Int']['output']>;
+  /** The last time the users graduation year was updated */
   graduationYearUpdatedAt?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
   lastName: Scalars['String']['output'];
+  /** All organizations the user is a member of */
+  organizations: Array<Organization>;
   phoneNumber?: Maybe<Scalars['String']['output']>;
   username: Scalars['String']['output'];
 };

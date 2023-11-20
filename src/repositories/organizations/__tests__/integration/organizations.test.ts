@@ -327,4 +327,72 @@ describe("OrganizationsRepository", () => {
       await expect(result).resolves.toEqual(expect.arrayContaining(expected));
     });
   });
+
+  describe("findManyByUserId", () => {
+    it("should return all organizations that the user is a member of", async () => {
+      /**
+       * Arrange
+       *
+       * 1. Create a user with userId {userId}
+       * 2. Create 3 organizations
+       * 3. Add the user as a member of the first and third organization
+       */
+      const user = await prisma.user.create({
+        data: {
+          email: faker.internet.email(),
+          feideId: faker.string.uuid(),
+          firstName: faker.person.firstName(),
+          lastName: faker.person.lastName(),
+          username: faker.internet.userName(),
+        },
+      });
+      const org1 = await prisma.organization.create({
+        data: {
+          name: faker.string.sample(),
+        },
+      });
+
+      const org2 = await prisma.organization.create({
+        data: {
+          name: faker.string.sample(),
+        },
+      });
+
+      const org3 = await prisma.organization.create({
+        data: {
+          name: faker.string.sample(),
+        },
+      });
+
+      await prisma.member.createMany({
+        data: [
+          {
+            userId: user.id,
+            organizationId: org1.id,
+          },
+          {
+            userId: user.id,
+            organizationId: org3.id,
+          },
+        ],
+      });
+
+      /**
+       * Act
+       *
+       * Get all organizations that the user is a member of
+       */
+      const result = await organizationRepository.findManyByUserId({ userId: user.id });
+
+      /**
+       * Assert
+       *
+       * Should return the first and third organization
+       */
+      expect(result).toHaveLength(2);
+      expect(result.map((org) => org.id)).toContain(org1.id);
+      expect(result.map((org) => org.id)).toContain(org3.id);
+      expect(result.map((org) => org.id)).not.toContain(org2.id);
+    });
+  });
 });

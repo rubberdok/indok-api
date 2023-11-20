@@ -322,16 +322,41 @@ type UpdateUserResponse {
 
 type User {
   allergies: String
+
+  """
+  If the user is permitted to update their graduation year
+  """
   canUpdateYear: Boolean!
   createdAt: DateTime!
+
+  """
+  Student email
+  """
   email: String!
   firstLogin: Boolean!
   firstName: String!
+
+  """
+  The users grade year, from 1 - 6(+)
+  """
   gradeYear: Int
+
+  """
+  Expected graduation year for the user
+  """
   graduationYear: Int
+
+  """
+  The last time the users graduation year was updated
+  """
   graduationYearUpdatedAt: DateTime
   id: ID!
   lastName: String!
+
+  """
+  All organizations the user is a member of
+  """
+  organizations: [Organization!]!
   phoneNumber: String
   username: String!
 }

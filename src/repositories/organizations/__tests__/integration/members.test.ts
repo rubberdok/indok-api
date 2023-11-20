@@ -34,7 +34,7 @@ describe("MembersRepository", () => {
       // 2.
       const org = await prisma.organization.create({
         data: {
-          name: faker.company.name(),
+          name: faker.string.sample(),
         },
       });
 
@@ -75,7 +75,7 @@ describe("MembersRepository", () => {
       // 2.
       const org = await prisma.organization.create({
         data: {
-          name: faker.company.name(),
+          name: faker.string.sample(),
         },
       });
       const expected = {
@@ -107,7 +107,7 @@ describe("MembersRepository", () => {
       // 1.
       const org = await prisma.organization.create({
         data: {
-          name: faker.company.name(),
+          name: faker.string.sample(),
         },
       });
       //2.
@@ -153,13 +153,13 @@ describe("MembersRepository", () => {
       // 1.
       const org1 = await prisma.organization.create({
         data: {
-          name: faker.company.name(),
+          name: faker.string.sample(),
         },
       });
       // 2.
       const org2 = await prisma.organization.create({
         data: {
-          name: faker.company.name(),
+          name: faker.string.sample(),
         },
       });
       // 3.
@@ -216,7 +216,7 @@ describe("MembersRepository", () => {
       // 1.
       const org1 = await prisma.organization.create({
         data: {
-          name: faker.company.name(),
+          name: faker.string.sample(),
         },
       });
       // 2.
@@ -293,7 +293,7 @@ describe("MembersRepository", () => {
       // 2.
       const org = await prisma.organization.create({
         data: {
-          name: faker.company.name(),
+          name: faker.string.sample(),
         },
       });
       // 3.
@@ -335,13 +335,13 @@ describe("MembersRepository", () => {
       // 2.
       const org1 = await prisma.organization.create({
         data: {
-          name: faker.company.name(),
+          name: faker.string.sample(),
         },
       });
       // 3.
       const org2 = await prisma.organization.create({
         data: {
-          name: faker.company.name(),
+          name: faker.string.sample(),
         },
       });
       // 4.
@@ -393,7 +393,7 @@ describe("MembersRepository", () => {
       // 2.
       const organization = await prisma.organization.create({
         data: {
-          name: faker.company.name(),
+          name: faker.string.sample(),
         },
       });
       // 3.
@@ -430,7 +430,7 @@ describe("MembersRepository", () => {
       // 2.
       const organization = await prisma.organization.create({
         data: {
-          name: faker.company.name(),
+          name: faker.string.sample(),
         },
       });
       // 3.
