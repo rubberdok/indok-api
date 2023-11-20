@@ -35,12 +35,30 @@ type User {
   username: String!
   createdAt: DateTime!
   firstLogin: Boolean!
+  """
+  If the user is permitted to update their graduation year
+  """
   canUpdateYear: Boolean!
+  """
+  Expected graduation year for the user
+  """
   graduationYear: Int
   phoneNumber: String
   allergies: String
+  """
+  The last time the users graduation year was updated
+  """
   graduationYearUpdatedAt: DateTime
+  """
+  Student email
+  """
   email: String!
+  """
+  The users grade year, from 1 - 6(+)
+  """
   gradeYear: Int
+  """
+  All organizations the user is a member of
+  """
   organizations: [Organization!]!
 }
