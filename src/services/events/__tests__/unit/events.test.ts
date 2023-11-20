@@ -30,7 +30,7 @@ function mockEvent(data: Partial<Event> = {}): Event {
     updatedAt: faker.date.past(),
     location: faker.location.streetAddress(),
     version: 0,
-    spots: 0,
+    remainingCapacity: 0,
     ...data,
   };
 }
@@ -49,8 +49,8 @@ describe("EventsService", () => {
             startAt: Date;
             endAt?: Date;
             location?: string;
-            spots?: number;
-            slots?: { spots: number }[];
+            capacity?: number;
+            slots?: { capacity: number }[];
           };
         };
         expectedError: typeof BaseError;
@@ -140,7 +140,7 @@ describe("EventsService", () => {
             data: {
               name: faker.string.sample(10),
               startAt: faker.date.future(),
-              spots: -1,
+              capacity: -1,
             },
           },
           expectedError: InvalidArgumentError,
@@ -153,8 +153,8 @@ describe("EventsService", () => {
             data: {
               name: faker.string.sample(10),
               startAt: faker.date.future(),
-              spots: 1,
-              slots: [{ spots: -1 }, { spots: 1 }],
+              capacity: 1,
+              slots: [{ capacity: -1 }, { capacity: 1 }],
             },
           },
           expectedError: InvalidArgumentError,
@@ -214,8 +214,8 @@ describe("EventsService", () => {
         startAt,
         endAt: faker.date.soon({ refDate: startAt }),
         location: faker.location.streetAddress(),
-        spots: 10,
-        slots: [{ spots: 1 }, { spots: 2 }],
+        capacity: 10,
+        slots: [{ capacity: 1 }, { capacity: 2 }],
       };
       const result = service.create(userId, organizationId, data);
 

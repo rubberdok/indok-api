@@ -108,8 +108,8 @@ interface IEventService {
       startAt: Date;
       endAt?: Date | null;
       location?: string | null;
-      spots?: number | null;
-      slots?: { spots: number }[] | null;
+      capacity?: number | null;
+      slots?: { capacity: number }[] | null;
     }
   ): Promise<Event>;
   get(id: string): Promise<Event>;

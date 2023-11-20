@@ -1,4 +1,4 @@
-import { ParticipationStatus, Event, EventSignUp, EventSlot, PrismaClient } from "@prisma/client";
+import { Event, EventSignUp, EventSlot, ParticipationStatus, PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 
 import { NotFoundError } from "@/domain/errors.js";
@@ -24,10 +24,11 @@ export class EventRepository {
     endAt: Date;
     organizationId: string;
     contactEmail: string;
-    spots?: number;
-    slots?: { spots: number }[];
+    capacity?: number;
+    slots?: { capacity: number }[];
   }): Promise<Event> {
-    const { name, description, startAt, organizationId, endAt, contactEmail, spots, slots } = data;
+    const { name, description, startAt, organizationId, endAt, contactEmail, capacity } = data;
+    const slots = data.slots?.map((slot) => ({ remainingCapacity: slot.capacity }));
     if (slots && slots.length > 0) {
       return this.db.event.create({
         data: {
@@ -37,7 +38,7 @@ export class EventRepository {
           endAt,
           organizationId,
           contactEmail,
-          spots,
+          remainingCapacity: capacity,
           slots: {
             createMany: {
               data: slots,
@@ -54,7 +55,7 @@ export class EventRepository {
         endAt,
         organizationId,
         contactEmail,
-        spots,
+        remainingCapacity: capacity,
       },
     });
   }
@@ -98,10 +99,10 @@ export class EventRepository {
    *
    * Uses version numbers for slot and event to ensure that the slot and event has not been updated since we last saw it.
    * If the slot or event has been updated, a NotFoundError is thrown, and the sign up is not created.
-   * If this happens, it is recommended to refetch the event and the slot, and, unless they now have no spots left, call this method again
+   * If this happens, it is recommended to refetch the event and the slot, and, unless they now have no capacity left, call this method again
    * with the new version numbers.
    *
-   * @throws {NotFoundError} If an event or event slot with the given ID and version does not exist, or if the event or event slot does not have any spots left.
+   * @throws {NotFoundError} If an event or event slot with the given ID and version does not exist, or if the event or event slot does not have any capacity left.
    * @param userId - The ID of the user to sign up for the event
    * @param event.version - The version of the event to sign up for, used for optimistic concurrency control to ensure that the event has not been updated since we last saw it.
    * @param event.id - The ID of the event to sign up for
@@ -128,7 +129,7 @@ export class EventRepository {
         this.db.eventSlot.update({
           where: {
             id: slot.id,
-            spots: {
+            remainingCapacity: {
               gt: 0,
             },
           },
@@ -136,7 +137,7 @@ export class EventRepository {
             version: {
               increment: 1,
             },
-            spots: {
+            remainingCapacity: {
               decrement: 1,
             },
           },
@@ -145,7 +146,7 @@ export class EventRepository {
         this.db.event.update({
           where: {
             id: event.id,
-            spots: {
+            remainingCapacity: {
               gt: 0,
             },
           },
@@ -153,7 +154,7 @@ export class EventRepository {
             version: {
               increment: 1,
             },
-            spots: {
+            remainingCapacity: {
               decrement: 1,
             },
           },
@@ -176,7 +177,7 @@ export class EventRepository {
    * Create a waitlist sign up for an event.
    *
    * Unlike createConfirmedSignUp, this method does not rely on version numbers for optimistic concurrency control
-   * as wait list sign ups are not affected by the number of spots left.
+   * as wait list sign ups are not affected by the remaining capacity
    *
    * @param userId - The ID of the user to sign up for the event
    * @param event.id - The ID of the event to sign up for
@@ -201,27 +202,27 @@ export class EventRepository {
   }
 
   /**
-   * getSlotWithAvailableSpots returns the slot with the greatest number of available spots for the given event.
+   * getSlotWithRemainingCapacity returns the slot with the greatest number of remaining capacity for the given event.
    *
-   * @throws {NotFoundError} If there are no slots with available spots for the event
+   * @throws {NotFoundError} If there are no slots with remaining capacity for the event
    * @param eventId - The ID of the event to get a slot for
-   * @returns The slot with the greatest number of available spots for the given event
+   * @returns The slot with the greatest number of remaining capacity for the given event
    */
-  async getSlotWithAvailableSpots(eventId: string): Promise<EventSlot> {
+  async getSlotWithRemainingCapacity(eventId: string): Promise<EventSlot> {
     const slot = await this.db.eventSlot.findFirst({
       where: {
         eventId,
-        spots: {
+        remainingCapacity: {
           gt: 0,
         },
       },
       orderBy: {
-        spots: "desc",
+        remainingCapacity: "desc",
       },
     });
 
     if (slot === null) {
-      throw new NotFoundError(`No slots with available spots for event { id: ${eventId} }`);
+      throw new NotFoundError(`No slots with remaining capacity for event { id: ${eventId} }`);
     }
 
     return slot;
@@ -264,5 +265,82 @@ export class EventRepository {
     }
 
     return this.db.event.findMany();
+  }
+
+  /**
+   * findManySignUps returns a list of event sign ups with the given status for the event, ordered by the time they were created.
+   *
+   * @param eventId - The ID of the event to get sign ups for
+   * @param status - The status of the sign ups to get
+   * @returns A list of event sign ups
+   */
+  async findManySignUps(eventId: string, status: ParticipationStatus): Promise<EventSignUp[]> {
+    return this.db.eventSignUp.findMany({
+      where: {
+        eventId,
+        participationStatus: status,
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+  }
+
+  /**
+   * makeConfirmedSignUp updates a sign up to be confirmed, and updates the event and event slot to reflect this.
+   *
+   * @throws {NotFoundError} If the event, event slot or event sign up does not exist, or if the event or event slot does not have any remaining capacity.
+   * @param data.signUpId - The ID of the event sign up to confirm
+   * @param data.slotId - The ID of the event slot to confirm the sign up for
+   * @param data.eventId - The ID of the event to confirm the sign up for
+   * @returns The updated event sign up
+   */
+  async makeConfirmedSignUp(data: {
+    signUp: { id: string; version: number };
+    slotId: string;
+    eventId: string;
+  }): Promise<{ signUp: EventSignUp }> {
+    const { signUp, slotId, eventId } = data;
+    const [eventSignUp] = await this.db.$transaction([
+      this.db.eventSignUp.update({
+        where: {
+          id: signUp.id,
+          version: signUp.version,
+        },
+        data: {
+          participationStatus: ParticipationStatus.CONFIRMED,
+          version: {
+            increment: 1,
+          },
+        },
+      }),
+      this.db.eventSlot.update({
+        where: {
+          id: slotId,
+          remainingCapacity: {
+            gt: 0,
+          },
+        },
+        data: {
+          remainingCapacity: {
+            decrement: 1,
+          },
+        },
+      }),
+      this.db.event.update({
+        where: {
+          id: eventId,
+          remainingCapacity: {
+            gt: 0,
+          },
+        },
+        data: {
+          remainingCapacity: {
+            decrement: 1,
+          },
+        },
+      }),
+    ]);
+    return { signUp: eventSignUp };
   }
 }

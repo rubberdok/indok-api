@@ -70,6 +70,12 @@ export type Cabin = {
 
 export type CreateEventInput = {
   /**
+   * Total capacity for the event, regardless of the capacity in each slot.
+   * This number takes precedence over the capacity in each slot, so if the remaining capacity on the event is 0
+   * no more users can be registered as attending.
+   */
+  capacity?: InputMaybe<Scalars['Int']['input']>;
+  /**
    * The description of the event, defaults to "". We support markdown on the client, so this can be markdown.
    * This will be displayed to users.
    */
@@ -86,14 +92,8 @@ export type CreateEventInput = {
    * creating the event must be a member of the organization.
    */
   organizationId: Scalars['ID']['input'];
-  /** The slots for the event. If this is not provided, but spots is, then all users can attend the event. */
+  /** The slots for the event. If this is not provided, but capacity is, then all users can attend the event. */
   slots?: InputMaybe<Array<CreateEventSlot>>;
-  /**
-   * Total number of spots for the event, regardless of the number of spots in each slot.
-   * This number takes precedence over the spots in each slot, so if there are no spots remaining on the event
-   * no more users can be registered as attending.
-   */
-  spots?: InputMaybe<Scalars['Int']['input']>;
   /** The start time of the event. Events must have a start time. */
   startAt: Scalars['DateTime']['input'];
 };
@@ -104,7 +104,7 @@ export type CreateEventResponse = {
 };
 
 export type CreateEventSlot = {
-  spots: Scalars['Int']['input'];
+  capacity: Scalars['Int']['input'];
 };
 
 export type CreateOrganizationInput = {

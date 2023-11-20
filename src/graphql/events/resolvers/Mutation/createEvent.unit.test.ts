@@ -49,8 +49,8 @@ describe("Event mutations", () => {
               organizationId: faker.string.uuid(),
               name: faker.person.fullName(),
               startAt: faker.date.future(),
-              spots: 10,
-              slots: [{ spots: 10 }, { spots: 10 }],
+              capacity: 10,
+              slots: [{ capacity: 10 }, { capacity: 10 }],
             },
           },
         },
@@ -69,8 +69,8 @@ describe("Event mutations", () => {
       expect(eventService.create).toHaveBeenCalledWith(expect.any(String), expect.any(String), {
         name: expect.any(String),
         startAt: expect.any(Date),
-        spots: 10,
-        slots: [{ spots: 10 }, { spots: 10 }],
+        capacity: 10,
+        slots: [{ capacity: 10 }, { capacity: 10 }],
       });
     });
 

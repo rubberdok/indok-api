@@ -49,7 +49,7 @@ describe("EventsRepository", () => {
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
         location: expect.any(String),
-        spots: null,
+        remainingCapacity: null,
         version: 0,
       });
     });
@@ -75,8 +75,8 @@ describe("EventsRepository", () => {
         endAt: faker.date.future({ refDate: startAt }),
         organizationId: organization.id,
         contactEmail: faker.internet.email(),
-        spots: 10,
-        slots: [{ spots: 5 }, { spots: 5 }],
+        capacity: 10,
+        slots: [{ capacity: 5 }, { capacity: 5 }],
       };
 
       /**
@@ -100,7 +100,7 @@ describe("EventsRepository", () => {
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
         location: expect.any(String),
-        spots: 10,
+        remainingCapacity: 10,
         version: 0,
       });
       const slots = await prisma.eventSlot.findMany({
@@ -109,7 +109,7 @@ describe("EventsRepository", () => {
         },
       });
       expect(slots).toHaveLength(2);
-      expect(slots.every((slot) => slot.spots === 5)).toBe(true);
+      expect(slots.every((slot) => slot.remainingCapacity === 5)).toBe(true);
     });
   });
 

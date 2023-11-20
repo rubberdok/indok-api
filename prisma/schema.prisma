@@ -67,23 +67,23 @@ model Event {
   contactEmail   String        @default("")
 
   // Versioning for optimistic concurrency control
-  version Int  @default(0)
-  // Total spots for the event
-  spots   Int?
+  version           Int  @default(0)
+  // Current remaining capacity for the event
+  remainingCapacity Int?
 
-  slots       EventSlot[]
-  EventSignUp EventSignUp[]
+  slots   EventSlot[]
+  signUps EventSignUp[]
 }
 
 model EventSlot {
-  id        String        @id @default(uuid()) @db.Uuid
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  version   Int           @default(0)
-  spots     Int
-  eventId   String        @db.Uuid
-  event     Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  signUps   EventSignUp[]
+  id                String        @id @default(uuid()) @db.Uuid
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  version           Int           @default(0)
+  remainingCapacity Int
+  eventId           String        @db.Uuid
+  event             Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  signUps           EventSignUp[]
 }
 
 enum ParticipationStatus {

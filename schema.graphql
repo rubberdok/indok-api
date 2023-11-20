@@ -45,6 +45,13 @@ type Cabin {
 
 input CreateEventInput {
   """
+  Total capacity for the event, regardless of the capacity in each slot.
+  This number takes precedence over the capacity in each slot, so if the remaining capacity on the event is 0
+  no more users can be registered as attending.
+  """
+  capacity: Int
+
+  """
   The description of the event, defaults to "". We support markdown on the client, so this can be markdown.
   This will be displayed to users.
   """
@@ -68,16 +75,9 @@ input CreateEventInput {
   organizationId: ID!
 
   """
-  The slots for the event. If this is not provided, but spots is, then all users can attend the event.
+  The slots for the event. If this is not provided, but capacity is, then all users can attend the event.
   """
   slots: [CreateEventSlot!]
-
-  """
-  Total number of spots for the event, regardless of the number of spots in each slot.
-  This number takes precedence over the spots in each slot, so if there are no spots remaining on the event
-  no more users can be registered as attending.
-  """
-  spots: Int
 
   """
   The start time of the event. Events must have a start time.
@@ -90,7 +90,7 @@ type CreateEventResponse {
 }
 
 input CreateEventSlot {
-  spots: Int!
+  capacity: Int!
 }
 
 input CreateOrganizationInput {

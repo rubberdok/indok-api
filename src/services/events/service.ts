@@ -1,4 +1,4 @@
-import { Event, EventSignUp, EventSlot } from "@prisma/client";
+import { Event, EventSignUp, EventSlot, ParticipationStatus } from "@prisma/client";
 import { FastifyBaseLogger } from "fastify";
 import { merge } from "lodash-es";
 import { z } from "zod";
@@ -16,8 +16,8 @@ export interface EventRepository {
     organizationId: string;
     contactEmail?: string;
     location?: string;
-    spots?: number;
-    slots?: { spots: number }[];
+    capacity?: number;
+    slots?: { capacity: number }[];
   }): Promise<Event>;
   update(
     id: string,
@@ -36,8 +36,14 @@ export interface EventRepository {
     slot: { id: string; version: number }
   ): Promise<{ signUp: EventSignUp }>;
   createOnWaitlistSignUp(userId: string, event: { id: string }): Promise<EventSignUp>;
-  getSlotWithAvailableSpots(eventId: string): Promise<EventSlot>;
+  getSlotWithRemainingCapacity(eventId: string): Promise<EventSlot>;
   findMany(data?: { endAtGte?: Date | null }): Promise<Event[]>;
+  makeConfirmedSignUp(data: {
+    slotId: string;
+    eventId: string;
+    signUp: { id: string; version: number };
+  }): Promise<{ signUp: EventSignUp }>;
+  findManySignUps(eventId: string, status: ParticipationStatus): Promise<EventSignUp[]>;
 }
 
 export interface UserService {
@@ -79,8 +85,8 @@ export class EventService {
       startAt: Date;
       endAt?: Date | null;
       location?: string | null;
-      spots?: number | null;
-      slots?: { spots: number }[] | null;
+      capacity?: number | null;
+      slots?: { capacity: number }[] | null;
       contactEmail?: string | null;
     }
   ) {
@@ -101,8 +107,8 @@ export class EventService {
         startAt: z.date().min(new Date()),
         endAt: z.date().min(new Date()).optional(),
         location: z.string().max(100).optional(),
-        spots: z.number().int().min(0).optional(),
-        slots: z.array(z.object({ spots: z.number().int().min(0) })).optional(),
+        capacity: z.number().int().min(0).optional(),
+        slots: z.array(z.object({ capacity: z.number().int().min(0) })).optional(),
         contactEmail: z.string().email().optional(),
       })
       .refine((data) => (data.endAt ? data.startAt < data.endAt : true), {
@@ -115,7 +121,7 @@ export class EventService {
       throw new InvalidArgumentError(parsed.error.message);
     }
 
-    const { name, description, startAt, location, slots, spots, contactEmail } = parsed.data;
+    const { name, description, startAt, location, slots, capacity, contactEmail } = parsed.data;
     let endAt = parsed.data.endAt;
     if (!endAt) {
       endAt = new Date(startAt.getTime() + 2 * 60 * 60 * 1000);
@@ -128,7 +134,7 @@ export class EventService {
       organizationId,
       location,
       contactEmail,
-      spots,
+      capacity,
       slots,
     });
   }
@@ -195,7 +201,7 @@ export class EventService {
   }
 
   /**
-   * Sign up a user for an event. If there are no available spots on the event, either because all avilable slots are
+   * Sign up a user for an event. If there is no remaining capacity on the event, either because all avilable slots are
    * full, or because the event itself is full, the user will be added to the wait list.
    * This method will attempt a maximum of 20 times to sign up the user. If it fails, an InternalServerError is thrown.
    * If this happens, it is likely due to a high number of concurrent requests, and the user can try again.
@@ -204,7 +210,7 @@ export class EventService {
    * @throws {InternalServerError} If the user could not be signed up after 20 attempts
    * @param userId - The ID of the user that is signing up
    * @param eventId - The ID of the event to sign up for
-   * @returns The event sign up. If there are no available spots on the event, either because all avilable slots are
+   * @returns The event sign up. If there is no remaining capacity on the event, either because all avilable slots are
    * full, or because the event itself is full, the user will be added to the wait list. The returned sign up will
    * either have a status of `CONFIRMED` or `WAIT_LIST`.
    */
@@ -221,21 +227,21 @@ export class EventService {
       this.logger?.info({ userId, eventId, attempt }, "Attempting to sign up user for event.");
       // Fetch the event to check if it has available slots or not
       const event = await this.eventRepository.get(eventId);
-      if (event.spots === null) {
+      if (event.remainingCapacity === null) {
         throw new InvalidArgumentError("This event does does not have sign ups.");
       }
 
-      // If there are no spots left on the event, it doesn't matter if there are any spots left on the slots.
-      if (event.spots <= 0) {
+      // If there is no remaining capacity on the event, it doesn't matter if there is any remaining capacity in slots.
+      if (event.remainingCapacity <= 0) {
         this.logger?.info({ event }, "Event is full, adding user to wait list.");
         return await this.eventRepository.createOnWaitlistSignUp(userId, { id: event.id });
       }
 
       let slotToSignUp: EventSlot;
       try {
-        slotToSignUp = await this.eventRepository.getSlotWithAvailableSpots(eventId);
+        slotToSignUp = await this.eventRepository.getSlotWithRemainingCapacity(eventId);
       } catch (err) {
-        // If there are no slots with available spots, we add the user to the wait list.
+        // If there are no slots with remaining capacity, we add the user to the wait list.
         if (err instanceof NotFoundError) {
           this.logger?.info({ event }, "Event is full, adding user to wait list.");
           return await this.eventRepository.createOnWaitlistSignUp(userId, { id: event.id });
@@ -258,7 +264,7 @@ export class EventService {
 
     /**
      * If we reach this point, we have tried to sign up the user 20 times, and failed every time.
-     * Since the user hasn't been added to the wait list, there are likely still spots left on the event,
+     * Since the user hasn't been added to the wait list, there is likely still remaining capacity on the event,
      * but we have to abort at some point to avoid stalling the request.
      */
     this.logger?.error(
@@ -295,5 +301,42 @@ export class EventService {
     }
 
     return await this.eventRepository.findMany({ endAtGte });
+  }
+
+  /**
+   * promoteFromWaitList promotes the first available user on the wait list for the specified event to a confirmed sign up.
+   *
+   * @param eventId - The ID of the event to promote a user from the wait list for
+   * @returns The confirmed sign up, or null if there are no users on the wait list, or if there is no remaining capacity
+   * on the event, or no available slots for the users on the wait list.
+   */
+  async promoteFromWaitList(eventId: string): Promise<EventSignUp | null> {
+    const event = await this.eventRepository.get(eventId);
+    if (event.remainingCapacity === null) {
+      throw new InvalidArgumentError("This event does does not have sign ups.");
+    }
+
+    if (event.remainingCapacity <= 0) {
+      throw new InvalidArgumentError("This event is full.");
+    }
+
+    const signUpsOnWaitlist = await this.eventRepository.findManySignUps(eventId, ParticipationStatus.ON_WAITLIST);
+    for (const waitlistSignUp of signUpsOnWaitlist) {
+      try {
+        const slot = await this.eventRepository.getSlotWithRemainingCapacity(eventId);
+        const { signUp: confirmedSignUp } = await this.eventRepository.makeConfirmedSignUp({
+          signUp: waitlistSignUp,
+          slotId: slot.id,
+          eventId,
+        });
+        this.logger?.info({ confirmedSignUp }, "Promoted from waitlist to confirmed sign up.");
+        return confirmedSignUp;
+      } catch (err) {
+        if (!(err instanceof NotFoundError)) {
+          throw err;
+        }
+      }
+    }
+    return null;
   }
 }
