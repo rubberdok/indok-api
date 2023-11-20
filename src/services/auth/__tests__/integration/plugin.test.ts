@@ -5,7 +5,7 @@ import { FastifyInstance, InjectOptions } from "fastify";
 
 import { defaultTestDependenciesFactory } from "@/__tests__/dependencies-factory.js";
 import { env } from "@/config.js";
-import { codes } from "@/domain/errors.js";
+import { errorCodes } from "@/domain/errors.js";
 import prisma from "@/lib/prisma.js";
 import { UserRepository } from "@/repositories/users/index.js";
 import { initServer } from "@/server.js";
@@ -75,7 +75,7 @@ describe("AuthPlugin", () => {
 
       expect(result.statusCode).toBe(400);
       expect(result.json()).toEqual({
-        code: codes.ERR_BAD_REQUEST,
+        code: errorCodes.ERR_BAD_REQUEST,
         error: "Bad Request",
         message: "Code verifier not found in session",
         statusCode: 400,

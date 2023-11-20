@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 import { Event } from "@prisma/client";
 import { mock } from "jest-mock-extended";
 
-import { codes } from "@/domain/errors.js";
+import { errorCodes } from "@/domain/errors.js";
 import { createMockApolloServer } from "@/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "@/graphql/test-clients/unit/gql.js";
 
@@ -49,8 +49,8 @@ describe("Event mutations", () => {
               organizationId: faker.string.uuid(),
               name: faker.person.fullName(),
               startAt: faker.date.future(),
-              spots: 10,
-              slots: [{ spots: 10 }, { spots: 10 }],
+              capacity: 10,
+              slots: [{ capacity: 10 }, { capacity: 10 }],
             },
           },
         },
@@ -69,8 +69,8 @@ describe("Event mutations", () => {
       expect(eventService.create).toHaveBeenCalledWith(expect.any(String), expect.any(String), {
         name: expect.any(String),
         startAt: expect.any(Date),
-        spots: 10,
-        slots: [{ spots: 10 }, { spots: 10 }],
+        capacity: 10,
+        slots: [{ capacity: 10 }, { capacity: 10 }],
       });
     });
 
@@ -115,7 +115,7 @@ describe("Event mutations", () => {
        * Event creation was not attempted, and the mutation returned an error.
        */
       expect(errors).toBeDefined();
-      expect(errors?.every((error) => error.extensions?.code === codes.ERR_PERMISSION_DENIED)).toBe(true);
+      expect(errors?.every((error) => error.extensions?.code === errorCodes.ERR_PERMISSION_DENIED)).toBe(true);
       expect(eventService.create).not.toHaveBeenCalled();
     });
   });

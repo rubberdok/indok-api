@@ -2,36 +2,27 @@ import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 
 import prisma from "@/lib/prisma.js";
-import { EventRepository } from "@/repositories/events/repository.js";
-import { MemberRepository } from "@/repositories/organizations/members.js";
-import { OrganizationRepository } from "@/repositories/organizations/organizations.js";
-import { UserRepository } from "@/repositories/users/index.js";
-import { OrganizationService } from "@/services/organizations/service.js";
-import { UserService } from "@/services/users/service.js";
 
 import { EventService } from "../../service.js";
+
+import { makeDependencies } from "./dependencies-factory.js";
 
 describe("Event Sign Up", () => {
   let eventService: EventService;
 
   beforeAll(() => {
-    const eventRepository = new EventRepository(prisma);
-    const organizationRepository = new OrganizationRepository(prisma);
-    const memberRepository = new MemberRepository(prisma);
-    const userService = new UserService(new UserRepository(prisma));
-    const organizationService = new OrganizationService(organizationRepository, memberRepository, userService);
-    eventService = new EventService(eventRepository, organizationService);
+    ({ eventService } = makeDependencies());
     prisma.organization.deleteMany({});
   });
 
   describe("signUp", () => {
-    it("should sign up a user for an event with available spots", async () => {
+    it("should sign up a user for an event with remaining capacity", async () => {
       /**
        * Arrange.
        *
        * 1. Create an organization to host the event.
-       * 2. Create an event with spots available.
-       * 3. Create a slot for the event with spots available.
+       * 2. Create an event with capacity.
+       * 3. Create a slot for the event with capacity.
        * 4. Create a user to sign up for the event.
        */
       const organization = await prisma.organization.create({
@@ -46,14 +37,14 @@ describe("Event Sign Up", () => {
           description: faker.lorem.paragraph(),
           startAt: "2021-01-01T00:00:00.000Z",
           endAt: "2021-01-01T01:00:00.000Z",
-          spots: 1,
+          remainingCapacity: 1,
         },
       });
 
       const slot = await prisma.eventSlot.create({
         data: {
           eventId: event.id,
-          spots: 1,
+          remainingCapacity: 1,
         },
       });
 
@@ -87,82 +78,85 @@ describe("Event Sign Up", () => {
 
     describe("should add the user to wait list when", () => {
       interface TestCase {
-        eventSpots: number;
-        slotSpots: number;
+        eventCapacity: number;
+        slotCapacity: number;
       }
       const testCases: TestCase[] = [
         {
-          eventSpots: 0,
-          slotSpots: 1,
+          eventCapacity: 0,
+          slotCapacity: 1,
         },
         {
-          eventSpots: 1,
-          slotSpots: 0,
+          eventCapacity: 1,
+          slotCapacity: 0,
         },
         {
-          eventSpots: 0,
-          slotSpots: 0,
+          eventCapacity: 0,
+          slotCapacity: 0,
         },
       ];
-      test.each(testCases)("event spots: $eventSpots, slot spots: $slotSpots", async ({ eventSpots, slotSpots }) => {
-        /**
-         * Arrange.
-         *
-         * 1. Create an organization to host the event.
-         * 2. Create an event with spots available.
-         * 3. Create a slot for the event with spots available.
-         * 4. Create a user to sign up for the event.
-         */
-        const organization = await prisma.organization.create({
-          data: {
-            name: faker.company.name(),
-          },
-        });
-        const event = await prisma.event.create({
-          data: {
-            organizationId: organization.id,
-            name: faker.color.human(),
-            description: faker.lorem.paragraph(),
-            startAt: "2021-01-01T00:00:00.000Z",
-            endAt: "2021-01-01T01:00:00.000Z",
-            spots: eventSpots,
-          },
-        });
+      test.each(testCases)(
+        "event capacity: $eventCapacity, slot capacity: $slotCapacity",
+        async ({ eventCapacity, slotCapacity }) => {
+          /**
+           * Arrange.
+           *
+           * 1. Create an organization to host the event.
+           * 2. Create an event with capacity.
+           * 3. Create a slot for the event with capacity.
+           * 4. Create a user to sign up for the event.
+           */
+          const organization = await prisma.organization.create({
+            data: {
+              name: faker.company.name(),
+            },
+          });
+          const event = await prisma.event.create({
+            data: {
+              organizationId: organization.id,
+              name: faker.color.human(),
+              description: faker.lorem.paragraph(),
+              startAt: "2021-01-01T00:00:00.000Z",
+              endAt: "2021-01-01T01:00:00.000Z",
+              remainingCapacity: eventCapacity,
+            },
+          });
 
-        await prisma.eventSlot.create({
-          data: {
-            eventId: event.id,
-            spots: slotSpots,
-          },
-        });
+          await prisma.eventSlot.create({
+            data: {
+              eventId: event.id,
+              remainingCapacity: slotCapacity,
+            },
+          });
 
-        const user = await prisma.user.create({
-          data: {
-            firstName: faker.person.firstName(),
-            lastName: faker.person.lastName(),
-            username: faker.internet.userName(),
-            feideId: faker.internet.userName(),
-            email: faker.internet.email(),
-          },
-        });
+          const user = await prisma.user.create({
+            data: {
+              firstName: faker.person.firstName(),
+              lastName: faker.person.lastName(),
+              username: faker.internet.userName(),
+              feideId: faker.internet.userName(),
+              email: faker.internet.email(),
+            },
+          });
 
-        /**
-         * Act.
-         *
-         * 1. Sign up the user for the event.
-         */
-        const actual = await eventService.signUp(user.id, event.id);
+          /**
+           * Act.
+           *
+           * 1. Sign up the user for the event.
+           */
+          const actual = await eventService.signUp(user.id, event.id);
 
-        /**
-         * Assert.
-         *
-         * 1. User should be signed up for the event with status CONFIRMED
-         */
-        expect(actual.participationStatus).toEqual(ParticipationStatus.ON_WAITLIST);
-        expect(actual.userId).toEqual(user.id);
-        expect(actual.eventId).toEqual(event.id);
-        expect(actual.slotId).toBeNull();
-      });
+          /**
+           * Assert.
+           *
+           * 1. User should be signed up for the event with status CONFIRMED
+           */
+          expect(actual.participationStatus).toEqual(ParticipationStatus.ON_WAITLIST);
+          expect(actual.userId).toEqual(user.id);
+          expect(actual.eventId).toEqual(event.id);
+          expect(actual.slotId).toBeNull();
+        }
+      );
     });
 
     it("should handle multiple concurrent sign ups", async () => {
@@ -170,8 +164,8 @@ describe("Event Sign Up", () => {
        * Arrange.
        *
        * 1. Create an organization to host the event.
-       * 2. Create an event with spots available.
-       * 3. Create a slot for the event with spots available.
+       * 2. Create an event with capacity.
+       * 3. Create a slot for the event with capacity.
        * 4. Create a user to sign up for the event.
        */
       const concurrentUsers = 2_000;
@@ -188,14 +182,14 @@ describe("Event Sign Up", () => {
           description: faker.lorem.paragraph(),
           startAt: "2021-01-01T00:00:00.000Z",
           endAt: "2021-01-01T01:00:00.000Z",
-          spots: concurrentUsers,
+          remainingCapacity: concurrentUsers,
         },
       });
 
       const slot = await prisma.eventSlot.create({
         data: {
           eventId: event.id,
-          spots: concurrentUsers,
+          remainingCapacity: concurrentUsers,
         },
       });
 
@@ -220,17 +214,17 @@ describe("Event Sign Up", () => {
        * Assert.
        *
        * All users should be signed up for the event with status CONFIRMED.
-       * The event should have 0 spots left.
-       * The slot should have 0 spots left.
+       * The event should have 0 remaining capacity left.
+       * The slot should have 0 remaining capacity left.
        */
       expect(actual.length).toEqual(concurrentUsers);
       expect(actual.every((signUp) => signUp.participationStatus === ParticipationStatus.CONFIRMED)).toBe(true);
 
       const updatedEvent = await prisma.event.findUniqueOrThrow({ where: { id: event.id } });
-      expect(updatedEvent.spots).toEqual(0);
+      expect(updatedEvent.remainingCapacity).toEqual(0);
 
       const updatedSlot = await prisma.eventSlot.findUniqueOrThrow({ where: { id: slot.id } });
-      expect(updatedSlot.spots).toEqual(0);
+      expect(updatedSlot.remainingCapacity).toEqual(0);
     }, 10_000);
 
     it("should not overfill the event", async () => {
@@ -238,12 +232,12 @@ describe("Event Sign Up", () => {
        * Arrange.
        *
        * 1. Create an organization to host the event.
-       * 2. Create an event with spots available.
-       * 3. Create a slot for the event with spots available.
+       * 2. Create an event with capacity.
+       * 3. Create a slot for the event with capacity.
        * 4. Create a user to sign up for the event.
        */
       const concurrentUsers = 2_000;
-      const availableSpots = 200;
+      const capacity = 200;
       const organization = await prisma.organization.create({
         data: {
           name: faker.company.name(),
@@ -256,14 +250,14 @@ describe("Event Sign Up", () => {
           description: faker.lorem.paragraph(),
           startAt: "2021-01-01T00:00:00.000Z",
           endAt: "2021-01-01T01:00:00.000Z",
-          spots: availableSpots,
+          remainingCapacity: capacity,
         },
       });
 
       const slot = await prisma.eventSlot.create({
         data: {
           eventId: event.id,
-          spots: availableSpots,
+          remainingCapacity: capacity,
         },
       });
 
@@ -288,22 +282,22 @@ describe("Event Sign Up", () => {
        * Assert.
        *
        * All users should be signed up for the event with status CONFIRMED.
-       * The event should have 0 spots left.
-       * The slot should have 0 spots left.
+       * The event should have 0 remaining capacity.
+       * The slot should have 0 remaining capacity.
        */
       expect(actual.length).toEqual(concurrentUsers);
       expect(actual.filter((signUp) => signUp.participationStatus === ParticipationStatus.CONFIRMED).length).toEqual(
-        availableSpots
+        capacity
       );
       expect(actual.filter((signUp) => signUp.participationStatus === ParticipationStatus.ON_WAITLIST).length).toEqual(
-        concurrentUsers - availableSpots
+        concurrentUsers - capacity
       );
 
       const updatedEvent = await prisma.event.findUniqueOrThrow({ where: { id: event.id } });
-      expect(updatedEvent.spots).toEqual(0);
+      expect(updatedEvent.remainingCapacity).toEqual(0);
 
       const updatedSlot = await prisma.eventSlot.findUniqueOrThrow({ where: { id: slot.id } });
-      expect(updatedSlot.spots).toEqual(0);
+      expect(updatedSlot.remainingCapacity).toEqual(0);
     });
   });
 

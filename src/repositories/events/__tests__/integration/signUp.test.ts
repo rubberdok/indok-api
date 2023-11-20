@@ -31,10 +31,10 @@ describe("EventsRepository", () => {
         name: string;
         arrange: {
           event: {
-            spots: number;
+            remainingCapacity: number;
           };
           slot: {
-            spots: number;
+            remainingCapacity: number;
           };
         };
         assert: {
@@ -42,11 +42,11 @@ describe("EventsRepository", () => {
             participationStatus: ParticipationStatus;
           };
           eventSlot: {
-            spots: number;
+            remainingCapacity: number;
             version: number;
           };
           event: {
-            spots: number;
+            remainingCapacity: number;
             version: number;
           };
         };
@@ -54,13 +54,13 @@ describe("EventsRepository", () => {
 
       const testCases: TestCase[] = [
         {
-          name: "if there are spots left on the event and the slot",
+          name: "if there are remainingCapacity left on the event and the slot",
           arrange: {
             event: {
-              spots: 1,
+              remainingCapacity: 1,
             },
             slot: {
-              spots: 1,
+              remainingCapacity: 1,
             },
           },
           assert: {
@@ -68,23 +68,23 @@ describe("EventsRepository", () => {
               participationStatus: ParticipationStatus.CONFIRMED,
             },
             eventSlot: {
-              spots: 0,
+              remainingCapacity: 0,
               version: 1,
             },
             event: {
-              spots: 0,
+              remainingCapacity: 0,
               version: 1,
             },
           },
         },
         {
-          name: "should decrement the event and slot spots by 1",
+          name: "should decrement the event and slot remainingCapacity by 1",
           arrange: {
             event: {
-              spots: 1,
+              remainingCapacity: 1,
             },
             slot: {
-              spots: 1,
+              remainingCapacity: 1,
             },
           },
           assert: {
@@ -92,11 +92,11 @@ describe("EventsRepository", () => {
               participationStatus: ParticipationStatus.CONFIRMED,
             },
             eventSlot: {
-              spots: 0,
+              remainingCapacity: 0,
               version: 1,
             },
             event: {
-              spots: 0,
+              remainingCapacity: 0,
               version: 1,
             },
           },
@@ -105,10 +105,10 @@ describe("EventsRepository", () => {
           name: "should increment the event and slot versions by 1",
           arrange: {
             event: {
-              spots: 1,
+              remainingCapacity: 1,
             },
             slot: {
-              spots: 1,
+              remainingCapacity: 1,
             },
           },
           assert: {
@@ -116,11 +116,11 @@ describe("EventsRepository", () => {
               participationStatus: ParticipationStatus.CONFIRMED,
             },
             eventSlot: {
-              spots: 0,
+              remainingCapacity: 0,
               version: 1,
             },
             event: {
-              spots: 0,
+              remainingCapacity: 0,
               version: 1,
             },
           },
@@ -133,7 +133,7 @@ describe("EventsRepository", () => {
          *
          * 1. Create a user with userId {userId} which is going to sign up for the event
          * 2. Create an event with eventId {eventId} that belongs to the organization with organizationId {organizationId}
-         * 3. Create a a slot with slotId {slotId} that belongs to the event with eventId {eventId} and has {arrange.slot.spots} total spots
+         * 3. Create a a slot with slotId {slotId} that belongs to the event with eventId {eventId} and has {arrange.slot.remainingCapacity} total remainingCapacity
          */
         // 1.
         const user = await prisma.user.create({
@@ -154,7 +154,7 @@ describe("EventsRepository", () => {
             startAt: faker.date.future(),
             endAt: faker.date.future(),
             location: faker.location.streetAddress(),
-            spots: arrange.event.spots,
+            remainingCapacity: arrange.event.remainingCapacity,
             organizationId: organization.id,
             contactEmail: faker.internet.email(),
           },
@@ -164,7 +164,7 @@ describe("EventsRepository", () => {
         const slot = await prisma.eventSlot.create({
           data: {
             eventId: event.id,
-            spots: arrange.slot.spots,
+            remainingCapacity: arrange.slot.remainingCapacity,
           },
         });
 
@@ -180,9 +180,9 @@ describe("EventsRepository", () => {
          *
          * 1. The sign up should be created with the correct values
          * 2. The event slots version should be incremented by 1
-         * 3. The event slots spots should be decremented by 1
+         * 3. The event slots remaining capacity should be decremented by 1
          * 4. The event version should be incremented by 1
-         * 5. The event spots should be decremented by 1
+         * 5. The events' remaining capacity should be decremented by 1
          */
         await expect(result).resolves.toEqual({
           signUp: {
@@ -197,13 +197,13 @@ describe("EventsRepository", () => {
           },
           event: {
             ...event,
-            spots: assert.event.spots,
+            remainingCapacity: assert.event.remainingCapacity,
             version: assert.event.version,
             updatedAt: expect.any(Date),
           },
           eventSlot: {
             ...slot,
-            spots: assert.eventSlot.spots,
+            remainingCapacity: assert.eventSlot.remainingCapacity,
             version: assert.eventSlot.version,
             updatedAt: expect.any(Date),
           },
@@ -217,11 +217,11 @@ describe("EventsRepository", () => {
         arrange: {
           event: {
             version: number;
-            spots: number;
+            remainingCapacity: number;
           };
           slot: {
             version: number;
-            spots: number;
+            remainingCapacity: number;
           };
         };
         act: {
@@ -239,15 +239,15 @@ describe("EventsRepository", () => {
 
       const testCases: TestCase[] = [
         {
-          name: "if slot spots are 0",
+          name: "if slot remainingCapacity are 0",
           arrange: {
             event: {
               version: 0,
-              spots: 1,
+              remainingCapacity: 1,
             },
             slot: {
               version: 0,
-              spots: 0,
+              remainingCapacity: 0,
             },
           },
           act: {
@@ -263,15 +263,15 @@ describe("EventsRepository", () => {
           },
         },
         {
-          name: "if event spots are 0",
+          name: "if event remainingCapacity are 0",
           arrange: {
             event: {
               version: 0,
-              spots: 0,
+              remainingCapacity: 0,
             },
             slot: {
               version: 0,
-              spots: 1,
+              remainingCapacity: 1,
             },
           },
           act: {
@@ -294,7 +294,7 @@ describe("EventsRepository", () => {
          *
          * 1. Create a user with userId {userId} which is going to sign up for the event
          * 2. Create an event with eventId {eventId} that belongs to the organization with organizationId {organizationId}
-         * 3. Create a a slot with slotId {slotId} that belongs to the event with eventId {eventId} and has {arrange.slot.spots} total spots
+         * 3. Create a a slot with slotId {slotId} that belongs to the event with eventId {eventId} and has {arrange.slot.remainingCapacity} total remainingCapacity
          */
         // 1.
         const user = await prisma.user.create({
@@ -315,7 +315,7 @@ describe("EventsRepository", () => {
             startAt: faker.date.future(),
             endAt: faker.date.future(),
             location: faker.location.streetAddress(),
-            spots: arrange.event.spots,
+            remainingCapacity: arrange.event.remainingCapacity,
             organizationId: organization.id,
             version: arrange.event.version,
           },
@@ -325,7 +325,7 @@ describe("EventsRepository", () => {
         const slot = await prisma.eventSlot.create({
           data: {
             eventId: event.id,
-            spots: arrange.slot.spots,
+            remainingCapacity: arrange.slot.remainingCapacity,
             version: arrange.slot.version,
           },
         });
@@ -346,9 +346,9 @@ describe("EventsRepository", () => {
          *
          * 1. The sign up should not be created
          * 2. The event slots version should not be incremented
-         * 3. The event slots spots should not be decremented
+         * 3. The event slots remainingCapacity should not be decremented
          * 4. The event version should not be incremented
-         * 5. The event spots should not be decremented
+         * 5. The event remainingCapacity should not be decremented
          * 6. The error should be {assert.error}
          */
         await expect(result).rejects.toThrow(assert.error);
@@ -377,8 +377,8 @@ describe("EventsRepository", () => {
        *
        * 1. Create a user with userId {userId} which is going to sign up for the event
        * 2. Create an event with eventId {eventId} that belongs to the organization with
-       * organizationId {organizationId} with 0 spots
-       * 3. Create a a slot with slotId {slotId} that belongs to the event with eventId {eventId} with 0 spots
+       * organizationId {organizationId} with 0 remainingCapacity
+       * 3. Create a a slot with slotId {slotId} that belongs to the event with eventId {eventId} with 0 remainingCapacity
        */
       // 1.
       const user = await prisma.user.create({
@@ -399,7 +399,7 @@ describe("EventsRepository", () => {
           startAt: faker.date.future(),
           endAt: faker.date.future(),
           location: faker.location.streetAddress(),
-          spots: 0,
+          remainingCapacity: 0,
           organizationId: organization.id,
         },
       });
@@ -408,7 +408,7 @@ describe("EventsRepository", () => {
       const slot = await prisma.eventSlot.create({
         data: {
           eventId: event.id,
-          spots: 0,
+          remainingCapacity: 0,
         },
       });
 
@@ -424,9 +424,9 @@ describe("EventsRepository", () => {
        *
        * 1. The sign up should be created with the correct values
        * 2. The event slots version should not be incremented
-       * 3. The event slots spots should not be decremented
+       * 3. The event slots remainingCapacity should not be decremented
        * 4. The event version should not be incremented
-       * 5. The event spots should not be decremented
+       * 5. The event remainingCapacity should not be decremented
        */
       await expect(result).resolves.toEqual({
         id: expect.any(String),
