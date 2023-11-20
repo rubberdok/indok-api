@@ -193,7 +193,7 @@ type Member {
   """
   The user that is a member of the organization
   """
-  user: User!
+  user: PublicUser!
 }
 
 type Mutation {
@@ -242,6 +242,79 @@ type Organization {
   """
   members: [Member!]!
   name: String!
+}
+
+"""
+PrivateUser should only be used when accessed by the authenticated user themselves
+as it contains sensitive information.
+"""
+type PrivateUser {
+  allergies: String
+
+  """
+  If the user is permitted to update their graduation year
+  """
+  canUpdateYear: Boolean!
+  createdAt: DateTime!
+
+  """
+  Student email
+  """
+  email: String!
+  firstLogin: Boolean!
+  firstName: String!
+
+  """
+  The users grade year, from 1 - 6(+)
+  """
+  gradeYear: Int
+
+  """
+  Expected graduation year for the user
+  """
+  graduationYear: Int
+
+  """
+  The last time the users graduation year was updated
+  """
+  graduationYearUpdatedAt: DateTime
+  id: ID!
+  lastName: String!
+
+  """
+  All organizations the user is a member of
+  """
+  organizations: [Organization!]!
+  phoneNumber: String
+  username: String!
+}
+
+"""
+The public facing user type, with limited information.
+This type is is available to other users, and should therefore not contain sensitive information,
+unless the information is restricted by access control.
+"""
+type PublicUser {
+  """
+  The users' given/first name
+  """
+  firstName: String!
+
+  """
+  The users' grade year
+  """
+  gradeYear: Int
+  id: ID!
+
+  """
+  The users' family/last name
+  """
+  lastName: String!
+
+  """
+  The users' username
+  """
+  username: String!
 }
 
 type Query {
@@ -317,55 +390,14 @@ input UpdateUserInput {
 }
 
 type UpdateUserResponse {
-  user: User!
-}
-
-type User {
-  allergies: String
-
-  """
-  If the user is permitted to update their graduation year
-  """
-  canUpdateYear: Boolean!
-  createdAt: DateTime!
-
-  """
-  Student email
-  """
-  email: String!
-  firstLogin: Boolean!
-  firstName: String!
-
-  """
-  The users grade year, from 1 - 6(+)
-  """
-  gradeYear: Int
-
-  """
-  Expected graduation year for the user
-  """
-  graduationYear: Int
-
-  """
-  The last time the users graduation year was updated
-  """
-  graduationYearUpdatedAt: DateTime
-  id: ID!
-  lastName: String!
-
-  """
-  All organizations the user is a member of
-  """
-  organizations: [Organization!]!
-  phoneNumber: String
-  username: String!
+  user: PrivateUser!
 }
 
 type UserResponse {
-  user: User
+  user: PrivateUser
 }
 
 type UsersResponse {
   total: Int!
-  users: [User!]!
+  users: [PrivateUser!]!
 }

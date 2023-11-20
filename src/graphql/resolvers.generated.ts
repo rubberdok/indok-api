@@ -18,6 +18,8 @@ import    { updateBookingStatus as Mutation_updateBookingStatus } from './cabins
 import    { updateOrganization as Mutation_updateOrganization } from './organizations/resolvers/Mutation/updateOrganization.js';
 import    { updateUser as Mutation_updateUser } from './users/resolvers/Mutation/updateUser.js';
 import    { Organization } from './organizations/resolvers/Organization.js';
+import    { PrivateUser } from './users/resolvers/PrivateUser.js';
+import    { PublicUser } from './users/resolvers/PublicUser.js';
 import    { event as Query_event } from './events/resolvers/Query/event.js';
 import    { events as Query_events } from './events/resolvers/Query/events.js';
 import    { user as Query_user } from './users/resolvers/Query/user.js';
@@ -25,7 +27,6 @@ import    { users as Query_users } from './users/resolvers/Query/users.js';
 import    { RemoveMemberResponse } from './organizations/resolvers/RemoveMemberResponse.js';
 import    { UpdateOrganizationResponse } from './organizations/resolvers/UpdateOrganizationResponse.js';
 import    { UpdateUserResponse } from './users/resolvers/UpdateUserResponse.js';
-import    { User } from './users/resolvers/User.js';
 import    { UserResponse } from './users/resolvers/UserResponse.js';
 import    { UsersResponse } from './users/resolvers/UsersResponse.js';
 import    { DateTimeResolver } from 'graphql-scalars';
@@ -43,10 +44,11 @@ EventResponse: EventResponse,
 EventsResponse: EventsResponse,
 Member: Member,
 Organization: Organization,
+PrivateUser: PrivateUser,
+PublicUser: PublicUser,
 RemoveMemberResponse: RemoveMemberResponse,
 UpdateOrganizationResponse: UpdateOrganizationResponse,
 UpdateUserResponse: UpdateUserResponse,
-User: User,
 UserResponse: UserResponse,
 UsersResponse: UsersResponse,
 DateTime: DateTimeResolver

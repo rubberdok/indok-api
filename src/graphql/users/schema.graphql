@@ -7,16 +7,16 @@ input UpdateUserInput {
 }
 
 type UpdateUserResponse {
-  user: User!
+  user: PrivateUser!
 }
 
 type UsersResponse {
-  users: [User!]!
+  users: [PrivateUser!]!
   total: Int!
 }
 
 type UserResponse {
-  user: User
+  user: PrivateUser
 }
 
 type Query {
@@ -28,7 +28,36 @@ type Mutation {
   updateUser(data: UpdateUserInput!): UpdateUserResponse!
 }
 
-type User {
+"""
+The public facing user type, with limited information.
+This type is is available to other users, and should therefore not contain sensitive information,
+unless the information is restricted by access control.
+"""
+type PublicUser {
+  id: ID!
+  """
+  The users' given/first name
+  """
+  firstName: String!
+  """
+  The users' family/last name
+  """
+  lastName: String!
+  """
+  The users' username
+  """
+  username: String!
+  """
+  The users' grade year
+  """
+  gradeYear: Int
+}
+
+"""
+PrivateUser should only be used when accessed by the authenticated user themselves
+as it contains sensitive information.
+"""
+type PrivateUser {
   id: ID!
   lastName: String!
   firstName: String!

@@ -165,7 +165,7 @@ export type Member = {
   /** The role of the member in the organization */
   role: Role;
   /** The user that is a member of the organization */
-  user: User;
+  user: PublicUser;
 };
 
 export type Mutation = {
@@ -244,6 +244,52 @@ export type Organization = {
   /** The members of the organization */
   members: Array<Member>;
   name: Scalars['String']['output'];
+};
+
+/**
+ * PrivateUser should only be used when accessed by the authenticated user themselves
+ * as it contains sensitive information.
+ */
+export type PrivateUser = {
+  __typename?: 'PrivateUser';
+  allergies?: Maybe<Scalars['String']['output']>;
+  /** If the user is permitted to update their graduation year */
+  canUpdateYear: Scalars['Boolean']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  /** Student email */
+  email: Scalars['String']['output'];
+  firstLogin: Scalars['Boolean']['output'];
+  firstName: Scalars['String']['output'];
+  /** The users grade year, from 1 - 6(+) */
+  gradeYear?: Maybe<Scalars['Int']['output']>;
+  /** Expected graduation year for the user */
+  graduationYear?: Maybe<Scalars['Int']['output']>;
+  /** The last time the users graduation year was updated */
+  graduationYearUpdatedAt?: Maybe<Scalars['DateTime']['output']>;
+  id: Scalars['ID']['output'];
+  lastName: Scalars['String']['output'];
+  /** All organizations the user is a member of */
+  organizations: Array<Organization>;
+  phoneNumber?: Maybe<Scalars['String']['output']>;
+  username: Scalars['String']['output'];
+};
+
+/**
+ * The public facing user type, with limited information.
+ * This type is is available to other users, and should therefore not contain sensitive information,
+ * unless the information is restricted by access control.
+ */
+export type PublicUser = {
+  __typename?: 'PublicUser';
+  /** The users' given/first name */
+  firstName: Scalars['String']['output'];
+  /** The users' grade year */
+  gradeYear?: Maybe<Scalars['Int']['output']>;
+  id: Scalars['ID']['output'];
+  /** The users' family/last name */
+  lastName: Scalars['String']['output'];
+  /** The users' username */
+  username: Scalars['String']['output'];
 };
 
 export type Query = {
@@ -328,53 +374,29 @@ export type UpdateUserInput = {
 
 export type UpdateUserResponse = {
   __typename?: 'UpdateUserResponse';
-  user: User;
-};
-
-export type User = {
-  __typename?: 'User';
-  allergies?: Maybe<Scalars['String']['output']>;
-  /** If the user is permitted to update their graduation year */
-  canUpdateYear: Scalars['Boolean']['output'];
-  createdAt: Scalars['DateTime']['output'];
-  /** Student email */
-  email: Scalars['String']['output'];
-  firstLogin: Scalars['Boolean']['output'];
-  firstName: Scalars['String']['output'];
-  /** The users grade year, from 1 - 6(+) */
-  gradeYear?: Maybe<Scalars['Int']['output']>;
-  /** Expected graduation year for the user */
-  graduationYear?: Maybe<Scalars['Int']['output']>;
-  /** The last time the users graduation year was updated */
-  graduationYearUpdatedAt?: Maybe<Scalars['DateTime']['output']>;
-  id: Scalars['ID']['output'];
-  lastName: Scalars['String']['output'];
-  /** All organizations the user is a member of */
-  organizations: Array<Organization>;
-  phoneNumber?: Maybe<Scalars['String']['output']>;
-  username: Scalars['String']['output'];
+  user: PrivateUser;
 };
 
 export type UserResponse = {
   __typename?: 'UserResponse';
-  user?: Maybe<User>;
+  user?: Maybe<PrivateUser>;
 };
 
 export type UsersResponse = {
   __typename?: 'UsersResponse';
   total: Scalars['Int']['output'];
-  users: Array<User>;
+  users: Array<PrivateUser>;
 };
 
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename?: 'Query', user: { __typename?: 'UserResponse', user?: { __typename?: 'User', id: string } | null } };
+export type MeQuery = { __typename?: 'Query', user: { __typename?: 'UserResponse', user?: { __typename?: 'PrivateUser', id: string } | null } };
 
 export type LoggedInQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type LoggedInQuery = { __typename?: 'Query', user: { __typename?: 'UserResponse', user?: { __typename?: 'User', id: string } | null } };
+export type LoggedInQuery = { __typename?: 'Query', user: { __typename?: 'UserResponse', user?: { __typename?: 'PrivateUser', id: string } | null } };
 
 export class TypedDocumentString<TResult, TVariables>
   extends String
