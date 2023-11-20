@@ -11,7 +11,7 @@ export class BaseError extends Error {
   constructor(
     name: string,
     public description: string,
-    public code: ErrorCode = codes.ERR_INTERNAL_SERVER_ERROR
+    public code: ErrorCode = errorCodes.ERR_INTERNAL_SERVER_ERROR
   ) {
     super(description);
     this.name = name;
@@ -21,47 +21,47 @@ export class BaseError extends Error {
 
 export class ValidationError extends BaseError {
   constructor(description: string) {
-    super("ValidationError", description, codes.ERR_BAD_USER_INPUT);
+    super("ValidationError", description, errorCodes.ERR_BAD_USER_INPUT);
   }
 }
 
 export class InvalidArgumentError extends BaseError {
   constructor(description: string) {
-    super("InvalidArgumentError", description, codes.ERR_BAD_USER_INPUT);
+    super("InvalidArgumentError", description, errorCodes.ERR_BAD_USER_INPUT);
   }
 }
 
 export class InternalServerError extends BaseError {
   constructor(description: string) {
-    super("InternalServerError", description, codes.ERR_INTERNAL_SERVER_ERROR);
+    super("InternalServerError", description, errorCodes.ERR_INTERNAL_SERVER_ERROR);
   }
 }
 
 export class PermissionDeniedError extends BaseError {
   constructor(description: string) {
-    super("PermissionDeniedError", description, codes.ERR_PERMISSION_DENIED);
+    super("PermissionDeniedError", description, errorCodes.ERR_PERMISSION_DENIED);
   }
 }
 
 export class AuthenticationError extends BaseError {
   constructor(description: string) {
-    super("AuthenticationError", description, codes.ERR_PERMISSION_DENIED);
+    super("AuthenticationError", description, errorCodes.ERR_PERMISSION_DENIED);
   }
 }
 
 export class NotFoundError extends BaseError {
   constructor(description: string) {
-    super("NotFoundError", description, codes.ERR_BAD_USER_INPUT);
+    super("NotFoundError", description, errorCodes.ERR_NOT_FOUND);
   }
 }
 
 export class BadRequestError extends BaseError {
   constructor(description: string) {
-    super("BadRequestError", description, codes.ERR_BAD_REQUEST);
+    super("BadRequestError", description, errorCodes.ERR_BAD_REQUEST);
   }
 }
 
-export const codes = {
+export const errorCodes = {
   /**
    * ERR_NOT_FOUND should be used for errors that arise as a result of a resource not being found,
    * e.g. trying to get an organization that doesn't exist, trying to get a user that doesn't exist.
@@ -94,4 +94,11 @@ export const codes = {
   ERR_INTERNAL_SERVER_ERROR: "INTERNAL_SERVER_ERROR",
 } as const;
 
-type ErrorCode = (typeof codes)[keyof typeof codes];
+export type ErrorCode = (typeof errorCodes)[keyof typeof errorCodes];
+
+/**
+ * @deprecated use `errorCodes` instead
+ */
+const codes = errorCodes;
+
+export { codes };
