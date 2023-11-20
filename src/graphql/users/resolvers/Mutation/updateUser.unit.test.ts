@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { mock } from "jest-mock-extended";
 
-import { codes } from "@/domain/errors.js";
+import { errorCodes } from "@/domain/errors.js";
 import { User } from "@/domain/users.js";
 import { createMockApolloServer } from "@/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "@/graphql/test-clients/unit/gql.js";
@@ -68,7 +68,7 @@ describe("User mutations", () => {
       );
 
       expect(errors).toBeDefined();
-      expect(errors?.some((error) => error.extensions?.code === codes.ERR_PERMISSION_DENIED)).toBe(true);
+      expect(errors?.some((error) => error.extensions?.code === errorCodes.ERR_PERMISSION_DENIED)).toBe(true);
       expect(userService.update).not.toHaveBeenCalled();
     });
   });

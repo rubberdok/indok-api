@@ -2,14 +2,15 @@ import { ApolloServerPlugin } from "@apollo/server";
 import { FastifyInstance } from "fastify";
 import { GraphQLError } from "graphql";
 
-import { codes } from "@/domain/errors.js";
+import { errorCodes } from "@/domain/errors.js";
 
 import { ApolloContext } from "./apollo-server.js";
 
 const USER_FACING_ERRORS = new Set<string>([
-  codes.ERR_BAD_REQUEST,
-  codes.ERR_BAD_USER_INPUT,
-  codes.ERR_PERMISSION_DENIED,
+  errorCodes.ERR_BAD_REQUEST,
+  errorCodes.ERR_BAD_USER_INPUT,
+  errorCodes.ERR_PERMISSION_DENIED,
+  errorCodes.ERR_NOT_FOUND,
 ]);
 
 function isUserFacingError(error: GraphQLError): boolean {

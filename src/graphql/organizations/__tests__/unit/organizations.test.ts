@@ -3,7 +3,7 @@ import assert from "assert";
 import { faker } from "@faker-js/faker";
 import { ResultOf } from "@graphql-typed-document-node/core";
 
-import { codes } from "@/domain/errors.js";
+import { errorCodes } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
 import { createMockApolloServer } from "@/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "@/graphql/test-clients/unit/gql.js";
@@ -44,7 +44,7 @@ describe("OrganizationResolvers", () => {
           }
         );
         assert(typeof errors !== "undefined");
-        expect(errors[0]?.extensions?.code).toBe(codes.ERR_PERMISSION_DENIED);
+        expect(errors[0]?.extensions?.code).toBe(errorCodes.ERR_PERMISSION_DENIED);
       });
 
       it("should call createOrganization if the user is authenticated", async () => {
@@ -132,7 +132,7 @@ describe("OrganizationResolvers", () => {
           }
         );
         assert(typeof errors !== "undefined");
-        expect(errors[0]?.extensions?.code).toBe(codes.ERR_PERMISSION_DENIED);
+        expect(errors[0]?.extensions?.code).toBe(errorCodes.ERR_PERMISSION_DENIED);
       });
 
       it("should call updateOrganization if the user is authenticated", async () => {
@@ -225,7 +225,7 @@ describe("OrganizationResolvers", () => {
           }
         );
         assert(typeof errors !== "undefined");
-        expect(errors[0]?.extensions?.code).toBe(codes.ERR_PERMISSION_DENIED);
+        expect(errors[0]?.extensions?.code).toBe(errorCodes.ERR_PERMISSION_DENIED);
       });
 
       it("should call addMember if the user is authenticated", async () => {
@@ -348,7 +348,7 @@ describe("OrganizationResolvers", () => {
           }
         );
         assert(typeof errors !== "undefined");
-        expect(errors[0]?.extensions?.code).toBe(codes.ERR_PERMISSION_DENIED);
+        expect(errors[0]?.extensions?.code).toBe(errorCodes.ERR_PERMISSION_DENIED);
       });
 
       it("should call removeMember if the user is authenticated", async () => {
