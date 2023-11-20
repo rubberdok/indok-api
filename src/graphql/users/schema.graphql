@@ -1,9 +1,13 @@
 input UpdateUserInput {
-  firstName: String!
-  lastName: String!
+  firstName: String
+  lastName: String
   phoneNumber: String
   allergies: String
   graduationYear: Int
+}
+
+type UpdateUserResponse {
+  user: User!
 }
 
 type UsersResponse {
@@ -21,7 +25,7 @@ type Query {
 }
 
 type Mutation {
-  updateUser(id: ID!, data: UpdateUserInput!): User!
+  updateUser(data: UpdateUserInput!): UpdateUserResponse!
 }
 
 type User {
@@ -36,4 +40,6 @@ type User {
   phoneNumber: String
   allergies: String
   graduationYearUpdatedAt: DateTime
+  email: String!
+  gradeYear: Int
 }

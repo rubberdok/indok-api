@@ -75,7 +75,7 @@ export const createMockApolloServer = (logger?: Partial<FastifyBaseLogger>) => {
   const cabinService = mockDeep<ApolloContext["cabinService"]>();
   const eventService = mockDeep<ApolloContext["eventService"]>();
 
-  function createMockContext(session: Partial<FastifySessionObject>) {
+  function createMockContext(session: Partial<FastifySessionObject>): ApolloContext {
     const contextValue = {
       req: mock<FastifyRequest>({
         session: mock<FastifySessionObject>(session),

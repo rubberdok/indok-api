@@ -66,7 +66,16 @@ interface IUserService {
   get(id: string): Promise<User>;
   getAll(): Promise<User[]>;
   getByFeideID(feideId: string): Promise<User | null>;
-  update(id: string, data: Prisma.UserUpdateInput): Promise<User>;
+  update(
+    id: string,
+    data: {
+      firstName?: string | null;
+      lastName?: string | null;
+      phoneNumber?: string | null;
+      graduationYear?: number | null;
+      allergies?: string | null;
+    }
+  ): Promise<User>;
   login(id: string): Promise<User>;
   create(data: Prisma.UserCreateInput): Promise<User>;
   canUpdateYear(user: Pick<User, "graduationYearUpdatedAt">): boolean;

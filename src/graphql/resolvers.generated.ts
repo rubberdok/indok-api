@@ -24,6 +24,7 @@ import    { user as Query_user } from './users/resolvers/Query/user.js';
 import    { users as Query_users } from './users/resolvers/Query/users.js';
 import    { RemoveMemberResponse } from './organizations/resolvers/RemoveMemberResponse.js';
 import    { UpdateOrganizationResponse } from './organizations/resolvers/UpdateOrganizationResponse.js';
+import    { UpdateUserResponse } from './users/resolvers/UpdateUserResponse.js';
 import    { User } from './users/resolvers/User.js';
 import    { UserResponse } from './users/resolvers/UserResponse.js';
 import    { UsersResponse } from './users/resolvers/UsersResponse.js';
@@ -44,6 +45,7 @@ Member: Member,
 Organization: Organization,
 RemoveMemberResponse: RemoveMemberResponse,
 UpdateOrganizationResponse: UpdateOrganizationResponse,
+UpdateUserResponse: UpdateUserResponse,
 User: User,
 UserResponse: UserResponse,
 UsersResponse: UsersResponse,
