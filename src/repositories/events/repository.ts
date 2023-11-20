@@ -1,7 +1,7 @@
 import { Event, EventSignUp, EventSlot, ParticipationStatus, PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 
-import { NotFoundError } from "@/domain/errors.js";
+import { InternalServerError, NotFoundError } from "@/domain/errors.js";
 
 export class EventRepository {
   constructor(private db: PrismaClient) {}
@@ -274,7 +274,8 @@ export class EventRepository {
    * @param status - The status of the sign ups to get
    * @returns A list of event sign ups
    */
-  async findManySignUps(eventId: string, status: ParticipationStatus): Promise<EventSignUp[]> {
+  async findManySignUps(data: { eventId: string; status: ParticipationStatus }): Promise<EventSignUp[]> {
+    const { eventId, status } = data;
     return this.db.eventSignUp.findMany({
       where: {
         eventId,
@@ -299,48 +300,56 @@ export class EventRepository {
     signUp: { id: string; version: number };
     slotId: string;
     eventId: string;
-  }): Promise<{ signUp: EventSignUp }> {
+  }): Promise<{ signUp: EventSignUp; event: Event; slot: EventSlot }> {
     const { signUp, slotId, eventId } = data;
-    const [eventSignUp] = await this.db.$transaction([
-      this.db.eventSignUp.update({
-        where: {
-          id: signUp.id,
-          version: signUp.version,
-        },
-        data: {
-          participationStatus: ParticipationStatus.CONFIRMED,
-          version: {
-            increment: 1,
+    try {
+      const [eventSignUp, slot, event] = await this.db.$transaction([
+        this.db.eventSignUp.update({
+          where: {
+            id: signUp.id,
+            version: signUp.version,
           },
-        },
-      }),
-      this.db.eventSlot.update({
-        where: {
-          id: slotId,
-          remainingCapacity: {
-            gt: 0,
+          data: {
+            participationStatus: ParticipationStatus.CONFIRMED,
+            version: {
+              increment: 1,
+            },
           },
-        },
-        data: {
-          remainingCapacity: {
-            decrement: 1,
+        }),
+        this.db.eventSlot.update({
+          where: {
+            id: slotId,
+            remainingCapacity: {
+              gt: 0,
+            },
           },
-        },
-      }),
-      this.db.event.update({
-        where: {
-          id: eventId,
-          remainingCapacity: {
-            gt: 0,
+          data: {
+            remainingCapacity: {
+              decrement: 1,
+            },
           },
-        },
-        data: {
-          remainingCapacity: {
-            decrement: 1,
+        }),
+        this.db.event.update({
+          where: {
+            id: eventId,
+            remainingCapacity: {
+              gt: 0,
+            },
           },
-        },
-      }),
-    ]);
-    return { signUp: eventSignUp };
+          data: {
+            remainingCapacity: {
+              decrement: 1,
+            },
+          },
+        }),
+      ]);
+      return { signUp: eventSignUp, event, slot };
+    } catch (err) {
+      if (err instanceof PrismaClientKnownRequestError) {
+        if (err.code === "P2025") throw new NotFoundError(err.message);
+        throw err;
+      }
+    }
+    throw new InternalServerError("An unexpected error occurred");
   }
 }
