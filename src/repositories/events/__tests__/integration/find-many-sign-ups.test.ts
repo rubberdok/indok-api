@@ -87,7 +87,7 @@ function makeUser() {
       email: faker.internet.email(),
       firstName: faker.person.firstName(),
       lastName: faker.person.lastName(),
-      username: faker.internet.userName(),
+      username: faker.string.sample(20),
       feideId: faker.string.uuid(),
     },
   });
