@@ -2,25 +2,16 @@ import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 
 import prisma from "@/lib/prisma.js";
-import { EventRepository } from "@/repositories/events/repository.js";
-import { MemberRepository } from "@/repositories/organizations/members.js";
-import { OrganizationRepository } from "@/repositories/organizations/organizations.js";
-import { UserRepository } from "@/repositories/users/index.js";
-import { OrganizationService } from "@/services/organizations/service.js";
-import { UserService } from "@/services/users/service.js";
 
 import { EventService } from "../../service.js";
+
+import { makeDependencies } from "./dependencies-factory.js";
 
 describe("Event Sign Up", () => {
   let eventService: EventService;
 
   beforeAll(() => {
-    const eventRepository = new EventRepository(prisma);
-    const organizationRepository = new OrganizationRepository(prisma);
-    const memberRepository = new MemberRepository(prisma);
-    const userService = new UserService(new UserRepository(prisma));
-    const organizationService = new OrganizationService(organizationRepository, memberRepository, userService);
-    eventService = new EventService(eventRepository, organizationService);
+    ({ eventService } = makeDependencies());
     prisma.organization.deleteMany({});
   });
 

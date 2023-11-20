@@ -43,7 +43,7 @@ export interface EventRepository {
     eventId: string;
     signUp: { id: string; version: number };
   }): Promise<{ signUp: EventSignUp }>;
-  findManySignUps(eventId: string, status: ParticipationStatus): Promise<EventSignUp[]>;
+  findManySignUps(data: { eventId: string; status: ParticipationStatus }): Promise<EventSignUp[]>;
 }
 
 export interface UserService {
@@ -320,7 +320,10 @@ export class EventService {
       throw new InvalidArgumentError("This event is full.");
     }
 
-    const signUpsOnWaitlist = await this.eventRepository.findManySignUps(eventId, ParticipationStatus.ON_WAITLIST);
+    const signUpsOnWaitlist = await this.eventRepository.findManySignUps({
+      eventId,
+      status: ParticipationStatus.ON_WAITLIST,
+    });
     for (const waitlistSignUp of signUpsOnWaitlist) {
       try {
         const slot = await this.eventRepository.getSlotWithRemainingCapacity(eventId);
@@ -337,6 +340,7 @@ export class EventService {
         }
       }
     }
+    this.logger?.info({ eventId }, "Found no valid sign ups to promote from wait list");
     return null;
   }
 }

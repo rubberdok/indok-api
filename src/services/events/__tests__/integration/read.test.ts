@@ -3,26 +3,16 @@ import dayjs from "dayjs";
 
 import { NotFoundError } from "@/domain/errors.js";
 import prisma from "@/lib/prisma.js";
-import { EventRepository } from "@/repositories/events/repository.js";
-import { MemberRepository } from "@/repositories/organizations/members.js";
-import { OrganizationRepository } from "@/repositories/organizations/organizations.js";
-import { UserRepository } from "@/repositories/users/index.js";
-import { OrganizationService } from "@/services/organizations/service.js";
-import { UserService } from "@/services/users/service.js";
 
 import { EventService } from "../../service.js";
+
+import { makeDependencies } from "./dependencies-factory.js";
 
 let eventService: EventService;
 
 describe("EventService", () => {
   beforeAll(() => {
-    const eventRepository = new EventRepository(prisma);
-    const organizationRepository = new OrganizationRepository(prisma);
-    const memberRepository = new MemberRepository(prisma);
-    const userRepository = new UserRepository(prisma);
-    const userService = new UserService(userRepository);
-    const organizationService = new OrganizationService(organizationRepository, memberRepository, userService);
-    eventService = new EventService(eventRepository, organizationService);
+    ({ eventService } = makeDependencies());
   });
   describe("get", () => {
     it("should return an event", async () => {
