@@ -1,9 +1,10 @@
-import { User } from "@/domain/users.js";
-import { createMockApolloServer } from "@/graphql/test-clients/mock-apollo-server.js";
-import { graphql } from "@/graphql/test-clients/unit/gql.js";
 import { faker } from "@faker-js/faker";
 import { Organization } from "@prisma/client";
 import { mock } from "jest-mock-extended";
+
+import { User } from "@/domain/users.js";
+import { createMockApolloServer } from "@/graphql/test-clients/mock-apollo-server.js";
+import { graphql } from "@/graphql/test-clients/unit/gql.js";
 
 describe("User queries", () => {
   describe("user", () => {
