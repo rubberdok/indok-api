@@ -14,6 +14,7 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  */
 const documents = {
     "\n          query getUsers {\n            users {\n              users {\n                id\n              }\n              total\n            }\n          }\n        ": types.GetUsersDocument,
+    "\n          mutation newBooking($data: NewBookingInput!) {\n            newBooking(data: $data) {\n              id\n            }\n          }\n        ": types.NewBookingDocument,
     "\n            mutation createEvent($data: CreateEventInput!) {\n              createEvent(data: $data) {\n                event {\n                  id\n                  name\n                  description\n                }\n              }\n            }\n          ": types.CreateEventDocument,
     "\n          query event($data: EventInput!) {\n            event(data: $data) {\n              event {\n                id\n              }\n            }\n          }\n        ": types.EventDocument,
     "\n          query events {\n            events {\n              events {\n                id\n              }\n              total\n            }\n          }\n        ": types.EventsDocument,
@@ -47,6 +48,10 @@ export function graphql(source: string): unknown;
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n          query getUsers {\n            users {\n              users {\n                id\n              }\n              total\n            }\n          }\n        "): (typeof documents)["\n          query getUsers {\n            users {\n              users {\n                id\n              }\n              total\n            }\n          }\n        "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n          mutation newBooking($data: NewBookingInput!) {\n            newBooking(data: $data) {\n              id\n            }\n          }\n        "): (typeof documents)["\n          mutation newBooking($data: NewBookingInput!) {\n            newBooking(data: $data) {\n              id\n            }\n          }\n        "];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -67,7 +67,7 @@ const config = {
      */
     "src/graphql/test-clients/unit/": {
       /* Only generate documents for unit tests */
-      documents: "src/graphql/**/__tests__/unit/*.ts",
+      documents: ["src/graphql/**/__tests__/unit/*.ts", "src/graphql/**/*.unit.test.ts"],
       /* Client preset is a sensible default, see https://the-guild.dev/graphql/codegen/plugins/presets/preset-client */
       preset: "client-preset",
       presetConfig: {

@@ -31,7 +31,7 @@ module.exports = {
   coverageProvider: "v8",
 
   // The glob patterns Jest uses to detect test files
-  testMatch: ["**/__tests__/unit/**/*.test.ts", "**/?(*.)+unit.test.ts"],
+  testMatch: ["**/__tests__/unit/**/*.test.ts", "**/*.unit.test.ts"],
 
   modulePathIgnorePatterns: ["<rootDir>/dist/"],
 
