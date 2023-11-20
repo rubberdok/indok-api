@@ -2,7 +2,7 @@ import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from '
 import { BookingMapper } from './cabins/schema.mappers.js';
 import { EventMapper, EventsResponseMapper } from './events/schema.mappers.js';
 import { MemberMapper, OrganizationMapper } from './organizations/schema.mappers.js';
-import { UserMapper, UsersResponseMapper } from './users/schema.mappers.js';
+import { PrivateUserMapper, PublicUserMapper, UsersResponseMapper } from './users/schema.mappers.js';
 import { ApolloContext } from '@/lib/apollo-server.js';
 export type Maybe<T> = T | null | undefined;
 export type InputMaybe<T> = T | null | undefined;
@@ -171,7 +171,7 @@ export type Member = {
   /** The role of the member in the organization */
   role: Role;
   /** The user that is a member of the organization */
-  user: User;
+  user: PublicUser;
 };
 
 export type Mutation = {
@@ -250,6 +250,52 @@ export type Organization = {
   /** The members of the organization */
   members: Array<Member>;
   name: Scalars['String']['output'];
+};
+
+/**
+ * PrivateUser should only be used when accessed by the authenticated user themselves
+ * as it contains sensitive information.
+ */
+export type PrivateUser = {
+  __typename?: 'PrivateUser';
+  allergies?: Maybe<Scalars['String']['output']>;
+  /** If the user is permitted to update their graduation year */
+  canUpdateYear: Scalars['Boolean']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  /** Student email */
+  email: Scalars['String']['output'];
+  firstLogin: Scalars['Boolean']['output'];
+  firstName: Scalars['String']['output'];
+  /** The users grade year, from 1 - 6(+) */
+  gradeYear?: Maybe<Scalars['Int']['output']>;
+  /** Expected graduation year for the user */
+  graduationYear?: Maybe<Scalars['Int']['output']>;
+  /** The last time the users graduation year was updated */
+  graduationYearUpdatedAt?: Maybe<Scalars['DateTime']['output']>;
+  id: Scalars['ID']['output'];
+  lastName: Scalars['String']['output'];
+  /** All organizations the user is a member of */
+  organizations: Array<Organization>;
+  phoneNumber?: Maybe<Scalars['String']['output']>;
+  username: Scalars['String']['output'];
+};
+
+/**
+ * The public facing user type, with limited information.
+ * This type is is available to other users, and should therefore not contain sensitive information,
+ * unless the information is restricted by access control.
+ */
+export type PublicUser = {
+  __typename?: 'PublicUser';
+  /** The users' given/first name */
+  firstName: Scalars['String']['output'];
+  /** The users' grade year */
+  gradeYear?: Maybe<Scalars['Int']['output']>;
+  id: Scalars['ID']['output'];
+  /** The users' family/last name */
+  lastName: Scalars['String']['output'];
+  /** The users' username */
+  username: Scalars['String']['output'];
 };
 
 export type Query = {
@@ -332,42 +378,18 @@ export type UpdateUserInput = {
 
 export type UpdateUserResponse = {
   __typename?: 'UpdateUserResponse';
-  user: User;
-};
-
-export type User = {
-  __typename?: 'User';
-  allergies?: Maybe<Scalars['String']['output']>;
-  /** If the user is permitted to update their graduation year */
-  canUpdateYear: Scalars['Boolean']['output'];
-  createdAt: Scalars['DateTime']['output'];
-  /** Student email */
-  email: Scalars['String']['output'];
-  firstLogin: Scalars['Boolean']['output'];
-  firstName: Scalars['String']['output'];
-  /** The users grade year, from 1 - 6(+) */
-  gradeYear?: Maybe<Scalars['Int']['output']>;
-  /** Expected graduation year for the user */
-  graduationYear?: Maybe<Scalars['Int']['output']>;
-  /** The last time the users graduation year was updated */
-  graduationYearUpdatedAt?: Maybe<Scalars['DateTime']['output']>;
-  id: Scalars['ID']['output'];
-  lastName: Scalars['String']['output'];
-  /** All organizations the user is a member of */
-  organizations: Array<Organization>;
-  phoneNumber?: Maybe<Scalars['String']['output']>;
-  username: Scalars['String']['output'];
+  user: PrivateUser;
 };
 
 export type UserResponse = {
   __typename?: 'UserResponse';
-  user?: Maybe<User>;
+  user?: Maybe<PrivateUser>;
 };
 
 export type UsersResponse = {
   __typename?: 'UsersResponse';
   total: Scalars['Int']['output'];
-  users: Array<User>;
+  users: Array<PrivateUser>;
 };
 
 
@@ -464,6 +486,8 @@ export type ResolversTypes = {
   Mutation: ResolverTypeWrapper<{}>;
   NewBookingInput: NewBookingInput;
   Organization: ResolverTypeWrapper<OrganizationMapper>;
+  PrivateUser: ResolverTypeWrapper<PrivateUserMapper>;
+  PublicUser: ResolverTypeWrapper<PublicUserMapper>;
   Query: ResolverTypeWrapper<{}>;
   RemoveMemberInput: RemoveMemberInput;
   RemoveMemberResponse: ResolverTypeWrapper<Omit<RemoveMemberResponse, 'member'> & { member: ResolversTypes['Member'] }>;
@@ -473,9 +497,8 @@ export type ResolversTypes = {
   UpdateOrganizationInput: UpdateOrganizationInput;
   UpdateOrganizationResponse: ResolverTypeWrapper<Omit<UpdateOrganizationResponse, 'organization'> & { organization: ResolversTypes['Organization'] }>;
   UpdateUserInput: UpdateUserInput;
-  UpdateUserResponse: ResolverTypeWrapper<Omit<UpdateUserResponse, 'user'> & { user: ResolversTypes['User'] }>;
-  User: ResolverTypeWrapper<UserMapper>;
-  UserResponse: ResolverTypeWrapper<Omit<UserResponse, 'user'> & { user?: Maybe<ResolversTypes['User']> }>;
+  UpdateUserResponse: ResolverTypeWrapper<Omit<UpdateUserResponse, 'user'> & { user: ResolversTypes['PrivateUser'] }>;
+  UserResponse: ResolverTypeWrapper<Omit<UserResponse, 'user'> & { user?: Maybe<ResolversTypes['PrivateUser']> }>;
   UsersResponse: ResolverTypeWrapper<UsersResponseMapper>;
 };
 
@@ -504,6 +527,8 @@ export type ResolversParentTypes = {
   Mutation: {};
   NewBookingInput: NewBookingInput;
   Organization: OrganizationMapper;
+  PrivateUser: PrivateUserMapper;
+  PublicUser: PublicUserMapper;
   Query: {};
   RemoveMemberInput: RemoveMemberInput;
   RemoveMemberResponse: Omit<RemoveMemberResponse, 'member'> & { member: ResolversParentTypes['Member'] };
@@ -511,9 +536,8 @@ export type ResolversParentTypes = {
   UpdateOrganizationInput: UpdateOrganizationInput;
   UpdateOrganizationResponse: Omit<UpdateOrganizationResponse, 'organization'> & { organization: ResolversParentTypes['Organization'] };
   UpdateUserInput: UpdateUserInput;
-  UpdateUserResponse: Omit<UpdateUserResponse, 'user'> & { user: ResolversParentTypes['User'] };
-  User: UserMapper;
-  UserResponse: Omit<UserResponse, 'user'> & { user?: Maybe<ResolversParentTypes['User']> };
+  UpdateUserResponse: Omit<UpdateUserResponse, 'user'> & { user: ResolversParentTypes['PrivateUser'] };
+  UserResponse: Omit<UserResponse, 'user'> & { user?: Maybe<ResolversParentTypes['PrivateUser']> };
   UsersResponse: UsersResponseMapper;
 };
 
@@ -584,7 +608,7 @@ export type MemberResolvers<ContextType = ApolloContext, ParentType extends Reso
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   organization?: Resolver<ResolversTypes['Organization'], ParentType, ContextType>;
   role?: Resolver<ResolversTypes['Role'], ParentType, ContextType>;
-  user?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
+  user?: Resolver<ResolversTypes['PublicUser'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -607,6 +631,33 @@ export type OrganizationResolvers<ContextType = ApolloContext, ParentType extend
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type PrivateUserResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['PrivateUser'] = ResolversParentTypes['PrivateUser']> = {
+  allergies?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  canUpdateYear?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  firstLogin?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  firstName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  gradeYear?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  graduationYear?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  graduationYearUpdatedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  lastName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  organizations?: Resolver<Array<ResolversTypes['Organization']>, ParentType, ContextType>;
+  phoneNumber?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  username?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type PublicUserResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['PublicUser'] = ResolversParentTypes['PublicUser']> = {
+  firstName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  gradeYear?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  lastName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  username?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type QueryResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
   event?: Resolver<ResolversTypes['EventResponse'], ParentType, ContextType, RequireFields<QueryeventArgs, 'data'>>;
   events?: Resolver<ResolversTypes['EventsResponse'], ParentType, ContextType, Partial<QueryeventsArgs>>;
@@ -625,36 +676,18 @@ export type UpdateOrganizationResponseResolvers<ContextType = ApolloContext, Par
 };
 
 export type UpdateUserResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['UpdateUserResponse'] = ResolversParentTypes['UpdateUserResponse']> = {
-  user?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
-export type UserResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = {
-  allergies?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  canUpdateYear?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
-  email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  firstLogin?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  firstName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  gradeYear?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  graduationYear?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  graduationYearUpdatedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  lastName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  organizations?: Resolver<Array<ResolversTypes['Organization']>, ParentType, ContextType>;
-  phoneNumber?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  username?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  user?: Resolver<ResolversTypes['PrivateUser'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type UserResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['UserResponse'] = ResolversParentTypes['UserResponse']> = {
-  user?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
+  user?: Resolver<Maybe<ResolversTypes['PrivateUser']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type UsersResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['UsersResponse'] = ResolversParentTypes['UsersResponse']> = {
   total?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  users?: Resolver<Array<ResolversTypes['User']>, ParentType, ContextType>;
+  users?: Resolver<Array<ResolversTypes['PrivateUser']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -671,11 +704,12 @@ export type Resolvers<ContextType = ApolloContext> = {
   Member?: MemberResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   Organization?: OrganizationResolvers<ContextType>;
+  PrivateUser?: PrivateUserResolvers<ContextType>;
+  PublicUser?: PublicUserResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   RemoveMemberResponse?: RemoveMemberResponseResolvers<ContextType>;
   UpdateOrganizationResponse?: UpdateOrganizationResponseResolvers<ContextType>;
   UpdateUserResponse?: UpdateUserResponseResolvers<ContextType>;
-  User?: UserResolvers<ContextType>;
   UserResponse?: UserResponseResolvers<ContextType>;
   UsersResponse?: UsersResponseResolvers<ContextType>;
 };

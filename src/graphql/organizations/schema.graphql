@@ -15,7 +15,7 @@ type Member {
   """
   The user that is a member of the organization
   """
-  user: User!
+  user: PublicUser!
 
   """
   The organization the member is a member of
