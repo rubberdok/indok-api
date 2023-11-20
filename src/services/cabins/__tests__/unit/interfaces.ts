@@ -1,5 +1,4 @@
-import { BookingData } from "@/services/cabins/interfaces.js";
-import { CabinBookingReceipt } from "@/services/mail/interfaces.js";
+import { BookingData } from "../../service.js";
 
 export interface NegativeValidationTestCase {
   name: string;
@@ -10,5 +9,8 @@ export interface NegativeValidationTestCase {
 export interface PositiveValidationTestCase {
   name: string;
   input: BookingData;
-  expectedConfirmationEmail: CabinBookingReceipt;
+  expectedConfirmationEmail: {
+    firstName: string;
+    lastName: string;
+  };
 }

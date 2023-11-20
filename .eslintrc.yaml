@@ -59,6 +59,7 @@ rules:
         - "**/__mocks__/**"
         - "src/graphql/test-clients/**"
         - "**/seed.ts"
+        - "**/*.test.ts"
 
   linebreak-style:
     - error

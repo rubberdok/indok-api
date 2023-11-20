@@ -37,7 +37,7 @@ describe("OrganizationsRepository", () => {
        * 1. Create a new organization with the user.
        */
       const organization = await organizationRepository.create({
-        name: faker.company.name(),
+        name: faker.string.sample(),
         userId: user.id,
       });
 
@@ -80,7 +80,7 @@ describe("OrganizationsRepository", () => {
           username: faker.internet.userName(),
         },
       });
-      const duplicateName = faker.company.name();
+      const duplicateName = faker.string.sample();
       await prisma.organization.create({
         data: {
           name: duplicateName,
@@ -122,7 +122,7 @@ describe("OrganizationsRepository", () => {
        *
        * 1. Create a new organization with the user and a random name and description
        */
-      const name = faker.company.name();
+      const name = faker.string.sample();
       const description = faker.company.catchPhrase();
 
       // Assert that the organization has the given name and description
@@ -145,7 +145,7 @@ describe("OrganizationsRepository", () => {
       // Act and assert
       await expect(
         organizationRepository.create({
-          name: faker.company.name(),
+          name: faker.string.sample(),
           userId: "",
         })
       ).rejects.toThrow(InvalidArgumentError);
@@ -166,7 +166,7 @@ describe("OrganizationsRepository", () => {
       {
         name: "should update the organization name",
         data: {
-          name: faker.company.name(),
+          name: faker.string.sample(),
         },
         expected: {
           id: expect.any(String),
@@ -207,7 +207,7 @@ describe("OrganizationsRepository", () => {
        */
       const organization = await prisma.organization.create({
         data: {
-          name: faker.company.name(),
+          name: faker.string.sample(),
           description: faker.lorem.paragraph(),
         },
       });
@@ -241,7 +241,7 @@ describe("OrganizationsRepository", () => {
        */
       const organization = await prisma.organization.create({
         data: {
-          name: faker.company.name(),
+          name: faker.string.sample(),
           description: faker.company.catchPhrase(),
         },
       });
@@ -283,21 +283,21 @@ describe("OrganizationsRepository", () => {
       const expected = [
         {
           id: expect.any(String),
-          name: faker.company.name(),
+          name: faker.string.sample(),
           description: expect.any(String),
           updatedAt: expect.any(Date),
           createdAt: expect.any(Date),
         },
         {
           id: expect.any(String),
-          name: faker.company.name(),
+          name: faker.string.sample(),
           description: expect.any(String),
           updatedAt: expect.any(Date),
           createdAt: expect.any(Date),
         },
         {
           id: expect.any(String),
-          name: faker.company.name(),
+          name: faker.string.sample(),
           description: expect.any(String),
           updatedAt: expect.any(Date),
           createdAt: expect.any(Date),

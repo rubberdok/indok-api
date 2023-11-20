@@ -20,6 +20,7 @@ module.exports = {
     "!**/seed.ts",
     "!**/type-defs.ts",
     "!src/graphql/types.generated.ts",
+    "!**/*.test.ts",
   ],
 
   // The directory where Jest should output its coverage files
@@ -31,7 +32,7 @@ module.exports = {
   coverageProvider: "v8",
 
   // The glob patterns Jest uses to detect test files
-  testMatch: ["**/__tests__/unit/**/*.test.ts", "**/?(*.)+unit.test.ts"],
+  testMatch: ["**/__tests__/unit/**/*.test.ts", "**/*.unit.test.ts"],
 
   modulePathIgnorePatterns: ["<rootDir>/dist/"],
 

@@ -1,11 +1,21 @@
 import { Booking, Cabin } from "@prisma/client";
+import { MessageSendingResponse } from "postmark/dist/client/models/index.js";
 
 import { BookingStatus } from "@/domain/cabins.js";
 import { ValidationError } from "@/domain/errors.js";
-import { IMailService, TemplateAliasEnum } from "@/services/mail/interfaces.js";
+import { EmailContent, TemplateAlias } from "@/lib/postmark.js";
 
-import { BookingData, ICabinService } from "./interfaces.js";
 import { bookingSchema } from "./validation.js";
+
+export interface BookingData {
+  email: string;
+  firstName: string;
+  lastName: string;
+  startDate: Date;
+  endDate: Date;
+  phoneNumber: string;
+  cabinId: string;
+}
 
 export interface CabinRepository {
   getCabinById(id: string): Promise<Cabin>;
@@ -20,7 +30,11 @@ export interface CabinRepository {
   }): Promise<Booking[]>;
 }
 
-export class CabinService implements ICabinService {
+export interface IMailService {
+  send(template: EmailContent): Promise<MessageSendingResponse>;
+}
+
+export class CabinService {
   constructor(
     private cabinRepository: CabinRepository,
     private mailService: IMailService
@@ -36,7 +50,7 @@ export class CabinService implements ICabinService {
 
   private sendBookingConfirmation(booking: Booking) {
     return this.mailService.send({
-      TemplateAlias: TemplateAliasEnum.CABIN_BOOKING_RECEIPT,
+      TemplateAlias: TemplateAlias.CABIN_BOOKING_RECEIPT,
       TemplateModel: {
         firstName: booking.firstName,
         lastName: booking.lastName,

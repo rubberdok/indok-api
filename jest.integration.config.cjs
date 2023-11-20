@@ -6,6 +6,6 @@ const base = require("./jest.config.cjs");
 
 module.exports = {
   ...base,
-  testMatch: ["**/__tests__/integration/**/*.test.ts", "**/?(*.)+integration.test.ts"],
+  testMatch: ["**/__tests__/integration/**/*.test.ts", "**/*.integration.test.ts"],
   coverageDirectory: "coverage/integration",
 };

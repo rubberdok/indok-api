@@ -2,7 +2,6 @@ import crypto from "crypto";
 
 import { env } from "@/config.js";
 import { User } from "@/domain/users.js";
-import { GetUserParams, IAuthService } from "@/services/interfaces.js";
 
 export interface AuthProvider {
   baseUrl: string;
@@ -37,7 +36,7 @@ interface UserInfo {
   email: string;
 }
 
-export class AuthService implements IAuthService {
+export class AuthService {
   constructor(
     private userService: UserService,
     private authClient: AuthClient,
@@ -75,7 +74,8 @@ export class AuthService implements IAuthService {
     };
   }
 
-  async getUser({ code, codeVerifier }: GetUserParams): Promise<User> {
+  async getUser(params: { code: string; codeVerifier: string }): Promise<User> {
+    const { code, codeVerifier } = params;
     const accessToken = await this.getAccessToken(code, codeVerifier);
     const userInfo = await this.getUserInfo(accessToken);
     const { email, sub: feideId, name } = userInfo;

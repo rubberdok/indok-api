@@ -1,6 +1,6 @@
-import { EmailContent, IMailClient, IMailService } from "./interfaces.js";
+import { EmailContent, IMailClient } from "@/lib/postmark.js";
 
-export class MailService implements IMailService {
+export class MailService {
   constructor(
     private client: IMailClient,
     private noReplyEmail: string
