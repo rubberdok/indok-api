@@ -14,8 +14,8 @@ describe("EventRepository", () => {
     eventRepository = new EventRepository(prisma);
   });
 
-  describe("makeConfirmedSignUp", () => {
-    it("should update the status to confirmed, increment version, and decrement remainingCapacity for event and slot", async () => {
+  describe("updateSignUp", () => {
+    it("should update the status, increment version, and decrement remainingCapacity for event and slot", async () => {
       /**
        * Arrange
        *
@@ -30,7 +30,7 @@ describe("EventRepository", () => {
           firstName: faker.person.firstName(),
           lastName: faker.person.lastName(),
           feideId: faker.string.uuid(),
-          username: faker.internet.userName(),
+          username: faker.string.sample(20),
         },
       });
       const event = await prisma.event.create({
@@ -59,9 +59,22 @@ describe("EventRepository", () => {
       /**
        * Act
        *
-       * 1. Call makeConfirmedSignUp
+       * 1. Call updateSignUp
        */
-      const actual = await eventRepository.makeConfirmedSignUp({ signUp, slotId: slot.id, eventId: event.id });
+      const actual = await eventRepository.updateSignUp({
+        signUp,
+        newParticipationStatus: ParticipationStatus.CONFIRMED,
+        event: {
+          id: event.id,
+          capacityGt: 0,
+          decrement: true,
+        },
+        slot: {
+          id: slot.id,
+          capacityGt: 0,
+          decrement: true,
+        },
+      });
 
       /**
        * Assert
@@ -74,7 +87,157 @@ describe("EventRepository", () => {
       expect(actual.signUp.participationStatus).toBe(ParticipationStatus.CONFIRMED);
       expect(actual.signUp.version).toBe(signUp.version + 1);
       expect(actual.event.remainingCapacity).toBe(0);
-      expect(actual.slot.remainingCapacity).toBe(0);
+      expect(actual.slot?.remainingCapacity).toBe(0);
+    });
+
+    it("should update the status, increment version, and increment remainingCapacity for event and slot", async () => {
+      /**
+       * Arrange
+       *
+       * 1. Create a user
+       * 2. Create an event
+       * 3. Create a slot
+       * 4. Create a sign up for the event with status ON_WAITLIST
+       */
+      const user = await prisma.user.create({
+        data: {
+          email: faker.internet.email(),
+          firstName: faker.person.firstName(),
+          lastName: faker.person.lastName(),
+          feideId: faker.string.uuid(),
+          username: faker.string.sample(20),
+        },
+      });
+      const event = await prisma.event.create({
+        data: {
+          name: faker.word.adjective(),
+          startAt: new Date(),
+          endAt: new Date(),
+          remainingCapacity: 1,
+        },
+      });
+      const slot = await prisma.eventSlot.create({
+        data: {
+          eventId: event.id,
+          remainingCapacity: 1,
+        },
+      });
+      const signUp = await prisma.eventSignUp.create({
+        data: {
+          eventId: event.id,
+          slotId: slot.id,
+          participationStatus: ParticipationStatus.ON_WAITLIST,
+          userId: user.id,
+        },
+      });
+
+      /**
+       * Act
+       *
+       * 1. Call updateSignUp
+       */
+      const actual = await eventRepository.updateSignUp({
+        signUp,
+        newParticipationStatus: ParticipationStatus.CONFIRMED,
+        event: {
+          id: event.id,
+          capacityGt: 0,
+          increment: true,
+        },
+        slot: {
+          id: slot.id,
+          capacityGt: 0,
+          increment: true,
+        },
+      });
+
+      /**
+       * Assert
+       *
+       * 1. The participation status should be CONFIRMED
+       * 2. The EventSignUp version should be incremented
+       * 3. The Event remainingCapacity should be incremented
+       * 4. The EventSlot remainingCapacity should be incremented
+       */
+      expect(actual.signUp.participationStatus).toBe(ParticipationStatus.CONFIRMED);
+      expect(actual.signUp.version).toBe(signUp.version + 1);
+      expect(actual.event.remainingCapacity).toBe(2);
+      expect(actual.slot?.remainingCapacity).toBe(2);
+    });
+
+    it("should update the status, increment version, and increment remainingCapacity for event and slot", async () => {
+      /**
+       * Arrange
+       *
+       * 1. Create a user
+       * 2. Create an event
+       * 3. Create a slot
+       * 4. Create a sign up for the event with status ON_WAITLIST
+       */
+      const user = await prisma.user.create({
+        data: {
+          email: faker.internet.email(),
+          firstName: faker.person.firstName(),
+          lastName: faker.person.lastName(),
+          feideId: faker.string.uuid(),
+          username: faker.string.sample(20),
+        },
+      });
+      const event = await prisma.event.create({
+        data: {
+          name: faker.word.adjective(),
+          startAt: new Date(),
+          endAt: new Date(),
+          remainingCapacity: 1,
+        },
+      });
+      const slot = await prisma.eventSlot.create({
+        data: {
+          eventId: event.id,
+          remainingCapacity: 1,
+        },
+      });
+      const signUp = await prisma.eventSignUp.create({
+        data: {
+          eventId: event.id,
+          slotId: slot.id,
+          participationStatus: ParticipationStatus.ON_WAITLIST,
+          userId: user.id,
+        },
+      });
+
+      /**
+       * Act
+       *
+       * 1. Call updateSignUp
+       */
+      const actual = await eventRepository.updateSignUp({
+        signUp,
+        newParticipationStatus: ParticipationStatus.CONFIRMED,
+        event: {
+          id: event.id,
+          capacityGt: 0,
+          increment: true,
+        },
+        slot: {
+          id: slot.id,
+          capacityGt: 0,
+          increment: true,
+        },
+      });
+
+      /**
+       * Assert
+       *
+       * 1. The participation status should be CONFIRMED
+       * 2. The EventSignUp version should be incremented
+       * 3. The Event remainingCapacity should be incremented
+       * 4. The EventSlot remainingCapacity should be incremented
+       */
+      expect(actual.signUp.participationStatus).toBe(ParticipationStatus.CONFIRMED);
+      expect(actual.signUp.version).toBe(signUp.version + 1);
+      expect(actual.event.remainingCapacity).toBe(2);
+      expect(actual.slot?.remainingCapacity).toBe(2);
     });
 
     describe("should raise", () => {
@@ -148,7 +311,7 @@ describe("EventRepository", () => {
             firstName: faker.person.firstName(),
             lastName: faker.person.lastName(),
             feideId: faker.string.uuid(),
-            username: faker.internet.userName(),
+            username: faker.string.sample(20),
           },
         });
         const event = await prisma.event.create({
@@ -179,10 +342,19 @@ describe("EventRepository", () => {
          *
          * Call makeConfirmedSignUp where the sign up version is from test case
          */
-        const actual = eventRepository.makeConfirmedSignUp({
+        const actual = eventRepository.updateSignUp({
           signUp: { id: signUp.id, version: act.signUpVersion },
-          slotId: slot.id,
-          eventId: event.id,
+          newParticipationStatus: ParticipationStatus.CONFIRMED,
+          slot: {
+            id: slot.id,
+            capacityGt: 0,
+            decrement: true,
+          },
+          event: {
+            id: event.id,
+            capacityGt: 0,
+            decrement: true,
+          },
         });
 
         /**
@@ -193,7 +365,8 @@ describe("EventRepository", () => {
         await expect(actual).rejects.toHaveProperty("code", assertion.errorCode);
       });
     });
-    it("should update the status to confirmed, increment version, and decrement remainingCapacity for event and slot", async () => {
+
+    it("should update update the status, and only return the updated event, not the slot", async () => {
       /**
        * Arrange
        *
@@ -208,7 +381,7 @@ describe("EventRepository", () => {
           firstName: faker.person.firstName(),
           lastName: faker.person.lastName(),
           feideId: faker.string.uuid(),
-          username: faker.internet.userName(),
+          username: faker.string.sample(20),
         },
       });
       const event = await prisma.event.create({
@@ -237,9 +410,15 @@ describe("EventRepository", () => {
       /**
        * Act
        *
-       * 1. Call makeConfirmedSignUp
+       * 1. Call updateSignUp
        */
-      const actual = await eventRepository.makeConfirmedSignUp({ signUp, slotId: slot.id, eventId: event.id });
+      const actual = await eventRepository.updateSignUp({
+        signUp,
+        newParticipationStatus: ParticipationStatus.REMOVED,
+        event: {
+          id: event.id,
+        },
+      });
 
       /**
        * Assert
@@ -249,10 +428,10 @@ describe("EventRepository", () => {
        * 3. The Event remainingCapacity should be decremented
        * 4. The EventSlot remainingCapacity should be decremented
        */
-      expect(actual.signUp.participationStatus).toBe(ParticipationStatus.CONFIRMED);
+      expect(actual.signUp.participationStatus).toBe(ParticipationStatus.REMOVED);
       expect(actual.signUp.version).toBe(signUp.version + 1);
-      expect(actual.event.remainingCapacity).toBe(0);
-      expect(actual.slot.remainingCapacity).toBe(0);
+      expect(actual.event.remainingCapacity).toBe(1);
+      expect(actual.slot).toBeUndefined();
     });
   });
 });

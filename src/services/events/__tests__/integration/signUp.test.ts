@@ -52,9 +52,9 @@ describe("Event Sign Up", () => {
         data: {
           firstName: faker.person.firstName(),
           lastName: faker.person.lastName(),
-          username: faker.internet.userName(),
-          feideId: faker.internet.userName(),
-          email: faker.internet.email(),
+          username: faker.string.sample(30),
+          feideId: faker.string.sample(30),
+          email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
         },
       });
 
@@ -133,9 +133,9 @@ describe("Event Sign Up", () => {
             data: {
               firstName: faker.person.firstName(),
               lastName: faker.person.lastName(),
-              username: faker.internet.userName(),
-              feideId: faker.internet.userName(),
-              email: faker.internet.email(),
+              username: faker.string.sample(30),
+              feideId: faker.string.sample(30),
+              email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
             },
           });
 
@@ -310,8 +310,8 @@ function getCreateUserData() {
   return {
     firstName: faker.person.firstName(),
     lastName: faker.person.lastName(),
-    username: faker.internet.userName(),
-    feideId: faker.internet.userName(),
-    email: faker.internet.email(),
+    username: faker.string.sample(30),
+    feideId: faker.string.sample(30),
+    email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
   };
 }
