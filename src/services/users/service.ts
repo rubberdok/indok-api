@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
 
+import { InvalidArgumentError } from "@/domain/errors.js";
 import { User } from "@/domain/users.js";
 
 import { createUserSchema, updateUserSchema } from "./validation.js";
@@ -18,21 +19,48 @@ export interface UserRepository {
 export class UserService {
   constructor(private usersRepository: UserRepository) {}
 
-  async update(id: string, data: Prisma.UserUpdateInput): Promise<User> {
-    updateUserSchema.parse(data);
+  /**
+   * update - Updates a user with the given data. If this user has not logged in before, the firstLogin flag will be set to false.
+   * If the user cannot update graduation year yet, the graduationYear will be set to null.
+   *
+   * @param id - The id of the user to update
+   * @param data - The data to update the user with
+   * @returns
+   */
+  async update(
+    id: string,
+    data: Partial<{
+      firstName: string | null;
+      lastName: string | null;
+      graduationYear: number | null;
+      allergies: string | null;
+      phoneNumber: string | null;
+    }>
+  ): Promise<User> {
+    const parsed = updateUserSchema.safeParse(data);
+    if (parsed.success) {
+      const { data: validatedData } = parsed;
+      const user = await this.usersRepository.get(id);
 
-    const user = await this.usersRepository.get(id);
+      let additionalData: {
+        firstLogin?: boolean;
+        graduationYearUpdatedAt?: Date;
+        graduationYear?: number;
+      } = {};
 
-    if (user.firstLogin) {
-      data = { ...data, firstLogin: false };
-    } else if (!this.canUpdateYear(user)) {
-      data = { ...data, graduationYear: undefined };
-    } else if (data.graduationYear && data.graduationYear !== user.graduationYear) {
-      data = { ...data, graduationYearUpdatedAt: new Date() };
+      if (user.firstLogin) {
+        additionalData = { ...additionalData, firstLogin: false };
+      } else if (!this.canUpdateYear(user)) {
+        additionalData = { ...additionalData, graduationYear: undefined };
+      } else if (data.graduationYear && data.graduationYear !== user.graduationYear) {
+        additionalData = { ...additionalData, graduationYearUpdatedAt: new Date() };
+      }
+
+      const updatedUser = await this.usersRepository.update(id, { ...validatedData, ...additionalData });
+      return this.toDomainUser(updatedUser);
+    } else {
+      throw new InvalidArgumentError(parsed.error.message);
     }
-
-    const updatedUser = await this.usersRepository.update(id, data);
-    return this.toDomainUser(updatedUser);
   }
 
   canUpdateYear(user: Pick<User, "graduationYearUpdatedAt">): boolean {

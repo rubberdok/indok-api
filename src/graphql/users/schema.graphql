@@ -1,6 +1,6 @@
 input UpdateUserInput {
-  firstName: String!
-  lastName: String!
+  firstName: String
+  lastName: String
   phoneNumber: String
   allergies: String
   graduationYear: Int

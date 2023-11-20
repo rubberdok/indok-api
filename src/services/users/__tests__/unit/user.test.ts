@@ -22,7 +22,10 @@ beforeAll(() => {
 describe("UserService", () => {
   interface TestCase {
     name: string;
-    input: Partial<Prisma.UserUpdateInput>;
+    input: Partial<{
+      firstName: string | null;
+      graduationYear: number | null;
+    }>;
     updateInput: Partial<Prisma.UserUpdateInput>;
     existing: User;
     expected: User;

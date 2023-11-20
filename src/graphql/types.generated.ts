@@ -324,9 +324,9 @@ export type UpdateOrganizationResponse = {
 
 export type UpdateUserInput = {
   allergies?: InputMaybe<Scalars['String']['input']>;
-  firstName: Scalars['String']['input'];
+  firstName?: InputMaybe<Scalars['String']['input']>;
   graduationYear?: InputMaybe<Scalars['Int']['input']>;
-  lastName: Scalars['String']['input'];
+  lastName?: InputMaybe<Scalars['String']['input']>;
   phoneNumber?: InputMaybe<Scalars['String']['input']>;
 };
 

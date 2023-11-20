@@ -310,9 +310,9 @@ type UpdateOrganizationResponse {
 
 input UpdateUserInput {
   allergies: String
-  firstName: String!
+  firstName: String
   graduationYear: Int
-  lastName: String!
+  lastName: String
   phoneNumber: String
 }
 
