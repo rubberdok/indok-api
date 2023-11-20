@@ -1,6 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { Event } from "@prisma/client";
 import { mockDeep } from "jest-mock-extended";
+import { DateTime } from "luxon";
 
 import { BaseError, InvalidArgumentError, PermissionDeniedError } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
@@ -477,8 +478,8 @@ describe("EventsService", () => {
             data: {
               name: faker.company.name(),
               description: faker.lorem.paragraph(),
-              startAt: faker.date.soon({ refDate: endAt }),
-              endAt: faker.date.future({ refDate: endAt }),
+              startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+              endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
               location: faker.location.streetAddress(),
             },
           },
