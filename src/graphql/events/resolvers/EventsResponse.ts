@@ -7,26 +7,28 @@ export const EventsResponse: EventsResponseResolvers = {
     return events.length;
   },
   thisWeek: ({ events }) => {
-    const now = DateTime.now().startOf("week");
+    const startOfWeek = DateTime.now().startOf("week");
+    const endOfWeek = DateTime.now().endOf("week");
     const predicate = (startAt: Date) => {
       const startAtDateTime = DateTime.fromJSDate(startAt);
-      return startAtDateTime.weekNumber == now.weekNumber;
+      return startOfWeek <= startAtDateTime && startAtDateTime <= endOfWeek;
     };
     return events.filter((event) => predicate(event.startAt));
   },
   nextWeek: ({ events }) => {
-    const nextWeek = DateTime.now().startOf("week").plus({ weeks: 1 });
+    const startOfNextWeek = DateTime.now().plus({ weeks: 1 }).startOf("week");
+    const endOfNextWeek = DateTime.now().plus({ weeks: 1 }).endOf("week");
     const predicate = (startAt: Date) => {
       const startAtDateTime = DateTime.fromJSDate(startAt);
-      return startAtDateTime.weekNumber == nextWeek.weekNumber;
+      return startOfNextWeek <= startAtDateTime && startAtDateTime <= endOfNextWeek;
     };
     return events.filter((event) => predicate(event.startAt));
   },
   twoWeeksOrLater: ({ events }) => {
-    const twoWeeksAhead = DateTime.now().startOf("week").plus({ week: 2 });
+    const twoWeeksAhead = DateTime.now().plus({ week: 2 }).startOf("week");
     const predicate = (startAt: Date) => {
       const startAtDateTime = DateTime.fromJSDate(startAt);
-      return startAtDateTime.weekNumber >= twoWeeksAhead.weekNumber;
+      return twoWeeksAhead <= startAtDateTime;
     };
     return events.filter((event) => predicate(event.startAt));
   },

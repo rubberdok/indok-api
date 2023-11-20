@@ -184,7 +184,7 @@ export type Mutation = {
    * Passing null or omitting a value will leave the value unchanged.
    */
   updateOrganization: UpdateOrganizationResponse;
-  updateUser: User;
+  updateUser: UpdateUserResponse;
 };
 
 
@@ -225,7 +225,6 @@ export type MutationUpdateOrganizationArgs = {
 
 export type MutationUpdateUserArgs = {
   data: UpdateUserInput;
-  id: Scalars['ID']['input'];
 };
 
 export type NewBookingInput = {
@@ -327,13 +326,20 @@ export type UpdateUserInput = {
   phoneNumber?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type UpdateUserResponse = {
+  __typename?: 'UpdateUserResponse';
+  user: User;
+};
+
 export type User = {
   __typename?: 'User';
   allergies?: Maybe<Scalars['String']['output']>;
   canUpdateYear: Scalars['Boolean']['output'];
   createdAt: Scalars['DateTime']['output'];
+  email: Scalars['String']['output'];
   firstLogin: Scalars['Boolean']['output'];
   firstName: Scalars['String']['output'];
+  gradeYear?: Maybe<Scalars['Int']['output']>;
   graduationYear?: Maybe<Scalars['Int']['output']>;
   graduationYearUpdatedAt?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];

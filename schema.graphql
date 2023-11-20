@@ -220,7 +220,7 @@ type Mutation {
   Passing null or omitting a value will leave the value unchanged.
   """
   updateOrganization(data: UpdateOrganizationInput!): UpdateOrganizationResponse!
-  updateUser(data: UpdateUserInput!, id: ID!): User!
+  updateUser(data: UpdateUserInput!): UpdateUserResponse!
 }
 
 input NewBookingInput {
@@ -316,12 +316,18 @@ input UpdateUserInput {
   phoneNumber: String
 }
 
+type UpdateUserResponse {
+  user: User!
+}
+
 type User {
   allergies: String
   canUpdateYear: Boolean!
   createdAt: DateTime!
+  email: String!
   firstLogin: Boolean!
   firstName: String!
+  gradeYear: Int
   graduationYear: Int
   graduationYearUpdatedAt: DateTime
   id: ID!

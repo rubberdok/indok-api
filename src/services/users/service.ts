@@ -1,6 +1,7 @@
 import { Prisma, User as PrismaUser } from "@prisma/client";
 import dayjs from "dayjs";
 import { merge } from "lodash-es";
+import { DateTime } from "luxon";
 
 import { User } from "@/domain/users.js";
 
@@ -95,10 +96,10 @@ export class UserService {
      * | 2022-08-01   | 2026            | 2          |
      */
 
-    const currentDate = dayjs();
-    const graduationDate = dayjs(user.graduationYear);
-    const gradeYear = graduationDate.year() - currentDate.year();
-    const offset = currentDate.month() >= 7 ? 1 : 0;
+    const now = DateTime.now();
+    const graduationYear = user.graduationYear;
+    const gradeYear = 5 - (graduationYear - now.year);
+    const offset = now.month >= 7 ? 1 : 0;
 
     return merge({}, user, { gradeYear: gradeYear + offset, canUpdateYear });
   }
