@@ -95,10 +95,3 @@ export const errorCodes = {
 } as const;
 
 export type ErrorCode = (typeof errorCodes)[keyof typeof errorCodes];
-
-/**
- * @deprecated use `errorCodes` instead
- */
-const codes = errorCodes;
-
-export { codes };

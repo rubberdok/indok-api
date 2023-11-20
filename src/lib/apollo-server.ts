@@ -5,7 +5,7 @@ import { GraphQLFormattedError } from "graphql";
 import { ZodError } from "zod";
 
 import { BookingStatus } from "@/domain/cabins.js";
-import { BaseError, codes, InternalServerError, ValidationError } from "@/domain/errors.js";
+import { BaseError, errorCodes, InternalServerError, ValidationError } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
 import { User } from "@/domain/users.js";
 
@@ -16,7 +16,7 @@ export function getFormatErrorHandler(log?: Partial<FastifyInstance["log"]>) {
         ...formattedError,
         message: error.message,
         extensions: {
-          code: codes.ERR_BAD_USER_INPUT,
+          code: errorCodes.ERR_BAD_USER_INPUT,
         },
       };
     }
