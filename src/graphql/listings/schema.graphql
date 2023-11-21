@@ -67,9 +67,18 @@ type UpdateListingResponse {
   listing: Listing!
 }
 
+input DeleteListingInput {
+  id: ID!
+}
+
+type DeleteListingResponse {
+  listing: Listing!
+}
+
 type Mutation {
   createListing(data: CreateListingInput!): CreateListingResponse!
   updateListing(id: ID!, data: UpdateListingInput!): UpdateListingResponse!
+  deleteListing(data: DeleteListingInput!): DeleteListingResponse!
 }
 
 type Query {

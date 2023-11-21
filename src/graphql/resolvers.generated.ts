@@ -6,6 +6,7 @@ import    { Cabin } from './cabins/resolvers/Cabin.js';
 import    { CreateEventResponse } from './events/resolvers/CreateEventResponse.js';
 import    { CreateListingResponse } from './listings/resolvers/CreateListingResponse.js';
 import    { CreateOrganizationResponse } from './organizations/resolvers/CreateOrganizationResponse.js';
+import    { DeleteListingResponse } from './listings/resolvers/DeleteListingResponse.js';
 import    { Event } from './events/resolvers/Event.js';
 import    { EventResponse } from './events/resolvers/EventResponse.js';
 import    { EventsResponse } from './events/resolvers/EventsResponse.js';
@@ -17,6 +18,7 @@ import    { addMember as Mutation_addMember } from './organizations/resolvers/Mu
 import    { createEvent as Mutation_createEvent } from './events/resolvers/Mutation/createEvent.js';
 import    { createListing as Mutation_createListing } from './listings/resolvers/Mutation/createListing.js';
 import    { createOrganization as Mutation_createOrganization } from './organizations/resolvers/Mutation/createOrganization.js';
+import    { deleteListing as Mutation_deleteListing } from './listings/resolvers/Mutation/deleteListing.js';
 import    { newBooking as Mutation_newBooking } from './cabins/resolvers/Mutation/newBooking.js';
 import    { removeMember as Mutation_removeMember } from './organizations/resolvers/Mutation/removeMember.js';
 import    { retractSignUp as Mutation_retractSignUp } from './events/resolvers/Mutation/retractSignUp.js';
@@ -46,7 +48,7 @@ import    { UsersResponse } from './users/resolvers/UsersResponse.js';
 import    { DateTimeResolver } from 'graphql-scalars';
     export const resolvers: Resolvers = {
       Query: { event: Query_event,events: Query_events,listing: Query_listing,listings: Query_listings,user: Query_user,users: Query_users },
-      Mutation: { addMember: Mutation_addMember,createEvent: Mutation_createEvent,createListing: Mutation_createListing,createOrganization: Mutation_createOrganization,newBooking: Mutation_newBooking,removeMember: Mutation_removeMember,retractSignUp: Mutation_retractSignUp,signUp: Mutation_signUp,updateBookingStatus: Mutation_updateBookingStatus,updateListing: Mutation_updateListing,updateOrganization: Mutation_updateOrganization,updateUser: Mutation_updateUser },
+      Mutation: { addMember: Mutation_addMember,createEvent: Mutation_createEvent,createListing: Mutation_createListing,createOrganization: Mutation_createOrganization,deleteListing: Mutation_deleteListing,newBooking: Mutation_newBooking,removeMember: Mutation_removeMember,retractSignUp: Mutation_retractSignUp,signUp: Mutation_signUp,updateBookingStatus: Mutation_updateBookingStatus,updateListing: Mutation_updateListing,updateOrganization: Mutation_updateOrganization,updateUser: Mutation_updateUser },
       
       AddMemberResponse: AddMemberResponse,
 Booking: Booking,
@@ -54,6 +56,7 @@ Cabin: Cabin,
 CreateEventResponse: CreateEventResponse,
 CreateListingResponse: CreateListingResponse,
 CreateOrganizationResponse: CreateOrganizationResponse,
+DeleteListingResponse: DeleteListingResponse,
 Event: Event,
 EventResponse: EventResponse,
 EventsResponse: EventsResponse,

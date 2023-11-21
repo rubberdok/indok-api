@@ -141,6 +141,7 @@ interface ListingService {
       closesAt: Date | null;
     }>
   ): Promise<Listing>;
+  delete(userId: string, id: string): Promise<Listing>;
 }
 
 export interface ApolloServerDependencies {

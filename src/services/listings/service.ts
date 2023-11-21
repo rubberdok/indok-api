@@ -23,6 +23,7 @@ export interface ListingRepository {
     }>
   ): Promise<Listing>;
   findMany(): Promise<Listing[]>;
+  delete(id: string): Promise<Listing>;
 }
 
 export interface PermissionService {
@@ -146,6 +147,18 @@ export class ListingService {
       }
       throw err;
     }
+  }
+
+  /**
+   * delete deletes a listing
+   * @param userId - the id of the user
+   * @param id - the id of the listing to delete
+   */
+  async delete(userId: string, id: string): Promise<Listing> {
+    const listing = await this.listingRepository.get(id);
+    await this.assertHasPermission(userId, listing.organizationId);
+
+    return this.listingRepository.delete(id);
   }
 
   private async assertHasPermission(userId: string, organizationId: string): Promise<void> {

@@ -138,6 +138,15 @@ export type CreateOrganizationResponse = {
   organization: Organization;
 };
 
+export type DeleteListingInput = {
+  id: Scalars['ID']['input'];
+};
+
+export type DeleteListingResponse = {
+  __typename?: 'DeleteListingResponse';
+  listing: Listing;
+};
+
 export type Event = {
   __typename?: 'Event';
   /** The description of the event. We support markdown on the client, so this can be markdown. */
@@ -224,6 +233,7 @@ export type Mutation = {
   createListing: CreateListingResponse;
   /** Create a new organization, and add the current user as an admin of the organization. */
   createOrganization: CreateOrganizationResponse;
+  deleteListing: DeleteListingResponse;
   newBooking: Booking;
   /** Remove a member from the organization by the ID of the membership. */
   removeMember: RemoveMemberResponse;
@@ -259,6 +269,11 @@ export type MutationcreateListingArgs = {
 
 export type MutationcreateOrganizationArgs = {
   data: CreateOrganizationInput;
+};
+
+
+export type MutationdeleteListingArgs = {
+  data: DeleteListingInput;
 };
 
 
@@ -611,6 +626,8 @@ export type ResolversTypes = {
   CreateOrganizationInput: CreateOrganizationInput;
   CreateOrganizationResponse: ResolverTypeWrapper<Omit<CreateOrganizationResponse, 'organization'> & { organization: ResolversTypes['Organization'] }>;
   DateTime: ResolverTypeWrapper<Scalars['DateTime']['output']>;
+  DeleteListingInput: DeleteListingInput;
+  DeleteListingResponse: ResolverTypeWrapper<Omit<DeleteListingResponse, 'listing'> & { listing: ResolversTypes['Listing'] }>;
   Event: ResolverTypeWrapper<EventMapper>;
   EventInput: EventInput;
   EventResponse: ResolverTypeWrapper<Omit<EventResponse, 'event'> & { event: ResolversTypes['Event'] }>;
@@ -666,6 +683,8 @@ export type ResolversParentTypes = {
   CreateOrganizationInput: CreateOrganizationInput;
   CreateOrganizationResponse: Omit<CreateOrganizationResponse, 'organization'> & { organization: ResolversParentTypes['Organization'] };
   DateTime: Scalars['DateTime']['output'];
+  DeleteListingInput: DeleteListingInput;
+  DeleteListingResponse: Omit<DeleteListingResponse, 'listing'> & { listing: ResolversParentTypes['Listing'] };
   Event: EventMapper;
   EventInput: EventInput;
   EventResponse: Omit<EventResponse, 'event'> & { event: ResolversParentTypes['Event'] };
@@ -746,6 +765,11 @@ export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversT
   name: 'DateTime';
 }
 
+export type DeleteListingResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['DeleteListingResponse'] = ResolversParentTypes['DeleteListingResponse']> = {
+  listing?: Resolver<ResolversTypes['Listing'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type EventResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Event'] = ResolversParentTypes['Event']> = {
   description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   endAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
@@ -800,6 +824,7 @@ export type MutationResolvers<ContextType = ApolloContext, ParentType extends Re
   createEvent?: Resolver<ResolversTypes['CreateEventResponse'], ParentType, ContextType, RequireFields<MutationcreateEventArgs, 'data'>>;
   createListing?: Resolver<ResolversTypes['CreateListingResponse'], ParentType, ContextType, RequireFields<MutationcreateListingArgs, 'data'>>;
   createOrganization?: Resolver<ResolversTypes['CreateOrganizationResponse'], ParentType, ContextType, RequireFields<MutationcreateOrganizationArgs, 'data'>>;
+  deleteListing?: Resolver<ResolversTypes['DeleteListingResponse'], ParentType, ContextType, RequireFields<MutationdeleteListingArgs, 'data'>>;
   newBooking?: Resolver<ResolversTypes['Booking'], ParentType, ContextType, RequireFields<MutationnewBookingArgs, 'data'>>;
   removeMember?: Resolver<ResolversTypes['RemoveMemberResponse'], ParentType, ContextType, RequireFields<MutationremoveMemberArgs, 'data'>>;
   retractSignUp?: Resolver<ResolversTypes['RetractSignUpResponse'], ParentType, ContextType, RequireFields<MutationretractSignUpArgs, 'data'>>;
@@ -911,6 +936,7 @@ export type Resolvers<ContextType = ApolloContext> = {
   CreateListingResponse?: CreateListingResponseResolvers<ContextType>;
   CreateOrganizationResponse?: CreateOrganizationResponseResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
+  DeleteListingResponse?: DeleteListingResponseResolvers<ContextType>;
   Event?: EventResolvers<ContextType>;
   EventResponse?: EventResponseResolvers<ContextType>;
   EventsResponse?: EventsResponseResolvers<ContextType>;

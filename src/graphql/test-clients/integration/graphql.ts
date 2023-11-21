@@ -131,6 +131,15 @@ export type CreateOrganizationResponse = {
   organization: Organization;
 };
 
+export type DeleteListingInput = {
+  id: Scalars['ID']['input'];
+};
+
+export type DeleteListingResponse = {
+  __typename?: 'DeleteListingResponse';
+  listing: Listing;
+};
+
 export type Event = {
   __typename?: 'Event';
   /** The description of the event. We support markdown on the client, so this can be markdown. */
@@ -217,6 +226,7 @@ export type Mutation = {
   createListing: CreateListingResponse;
   /** Create a new organization, and add the current user as an admin of the organization. */
   createOrganization: CreateOrganizationResponse;
+  deleteListing: DeleteListingResponse;
   newBooking: Booking;
   /** Remove a member from the organization by the ID of the membership. */
   removeMember: RemoveMemberResponse;
@@ -252,6 +262,11 @@ export type MutationCreateListingArgs = {
 
 export type MutationCreateOrganizationArgs = {
   data: CreateOrganizationInput;
+};
+
+
+export type MutationDeleteListingArgs = {
+  data: DeleteListingInput;
 };
 
 
