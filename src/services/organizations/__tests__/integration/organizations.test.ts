@@ -10,7 +10,6 @@ import { MemberRepository } from "@/repositories/organizations/members.js";
 import { OrganizationRepository } from "@/repositories/organizations/organizations.js";
 import { UserRepository } from "@/repositories/users/index.js";
 import { PermissionService } from "@/services/permissions/service.js";
-import { UserService } from "@/services/users/service.js";
 
 import { OrganizationService } from "../../service.js";
 
@@ -19,10 +18,9 @@ let organizationService: OrganizationService;
 describe("OrganizationsService", () => {
   beforeAll(async () => {
     const userRepository = new UserRepository(prisma);
-    const userService = new UserService(userRepository);
     const memberRepository = new MemberRepository(prisma);
     const organizationRepository = new OrganizationRepository(prisma);
-    const permissionService = new PermissionService(memberRepository, userService, organizationRepository);
+    const permissionService = new PermissionService(memberRepository, userRepository, organizationRepository);
     organizationService = new OrganizationService(organizationRepository, memberRepository, permissionService);
   });
 

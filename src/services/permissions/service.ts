@@ -1,13 +1,12 @@
-import { FeaturePermission, Organization } from "@prisma/client";
+import { FeaturePermission, Organization, User } from "@prisma/client";
 
 import { Role } from "@/domain/organizations.js";
-import { User } from "@/domain/users.js";
 
 export interface MemberRepository {
   hasRole(data: { userId: string; organizationId: string; role: Role }): Promise<boolean>;
 }
 
-export interface UserService {
+export interface UserRepository {
   get(id: string): Promise<User>;
 }
 
@@ -18,7 +17,7 @@ export interface OrganizationRepository {
 export class PermissionService {
   constructor(
     private memberRepository: MemberRepository,
-    private userService: UserService,
+    private userRepository: UserRepository,
     private organizationRepository: OrganizationRepository
   ) {}
 
@@ -26,7 +25,7 @@ export class PermissionService {
    * isSuperUser returns true if the user is a super user, false otherwise.
    */
   public async isSuperUser(userId: string): Promise<boolean> {
-    const user = await this.userService.get(userId);
+    const user = await this.userRepository.get(userId);
     return user.isSuperUser;
   }
 
@@ -94,7 +93,7 @@ export class PermissionService {
   }): Promise<boolean> {
     const { userId, organizationId, role, featurePermission } = data;
 
-    const user = await this.userService.get(userId);
+    const user = await this.userRepository.get(userId);
     if (user.isSuperUser) return true;
 
     const hasRole = await this.hasOrganizationRole({ userId, organizationId, role });

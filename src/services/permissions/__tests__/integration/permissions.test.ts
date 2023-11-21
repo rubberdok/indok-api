@@ -6,7 +6,6 @@ import prisma from "@/lib/prisma.js";
 import { MemberRepository } from "@/repositories/organizations/members.js";
 import { OrganizationRepository } from "@/repositories/organizations/organizations.js";
 import { UserRepository } from "@/repositories/users/index.js";
-import { UserService } from "@/services/users/service.js";
 
 import { PermissionService } from "../../service.js";
 
@@ -15,10 +14,9 @@ let permissionService: PermissionService;
 describe("OrganizationsService", () => {
   beforeAll(async () => {
     const userRepository = new UserRepository(prisma);
-    const userService = new UserService(userRepository);
     const memberRepository = new MemberRepository(prisma);
     const organizationRepository = new OrganizationRepository(prisma);
-    permissionService = new PermissionService(memberRepository, userService, organizationRepository);
+    permissionService = new PermissionService(memberRepository, userRepository, organizationRepository);
   });
 
   describe("hasRole", () => {
