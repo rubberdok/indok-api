@@ -93,6 +93,37 @@ input CreateEventSlot {
   capacity: Int!
 }
 
+input CreateListingInput {
+  """
+  An optional URL to the application form for the listing.
+  """
+  applicationUrl: String
+
+  """
+  At what time the listing will close, will show as a deadline to users, and the listing will be hidden afterwards
+  """
+  closesAt: DateTime!
+
+  """
+  The description of the listing, can be markdown.
+  """
+  description: String
+
+  """
+  The name of the listing, will be visible to users.
+  """
+  name: String!
+
+  """
+  The ID of the organization that the listing belongs to.
+  """
+  organizationId: ID!
+}
+
+type CreateListingResponse {
+  listing: Listing!
+}
+
 input CreateOrganizationInput {
   """
   The description of the organization, cannot exceed 10 000 characters
@@ -177,6 +208,25 @@ type EventsResponse {
   twoWeeksOrLater: [Event!]!
 }
 
+type Listing {
+  closesAt: String!
+  description: String!
+  id: ID!
+  name: String!
+}
+
+input ListingInput {
+  id: ID!
+}
+
+type ListingResponse {
+  listing: Listing!
+}
+
+type ListingsResponse {
+  listings: [Listing!]!
+}
+
 type Member {
   id: ID!
 
@@ -206,6 +256,7 @@ type Mutation {
   Create an event, requires that the user is logged in, and is a member of the organization that is hosting the event
   """
   createEvent(data: CreateEventInput!): CreateEventResponse!
+  createListing(data: CreateListingInput!): CreateListingResponse!
 
   """
   Create a new organization, and add the current user as an admin of the organization.
@@ -228,6 +279,7 @@ type Mutation {
   """
   signUp(data: SignUpInput!): SignUpResponse!
   updateBookingStatus(data: UpdateBookingStatusInput!): Booking!
+  updateListing(data: UpdateListingInput!, id: ID!): UpdateListingResponse!
 
   """
   Update an organization with the given name and description.
@@ -356,6 +408,8 @@ type PublicUser {
 type Query {
   event(data: EventInput!): EventResponse!
   events(data: EventsInput): EventsResponse!
+  listing(data: ListingInput!): ListingResponse!
+  listings: ListingsResponse!
   user: UserResponse!
   users: UsersResponse!
 }
@@ -432,6 +486,32 @@ enum Status {
 input UpdateBookingStatusInput {
   id: ID!
   status: Status!
+}
+
+input UpdateListingInput {
+  """
+  An optional URL to the application form for the listing.
+  """
+  applicationUrl: String
+
+  """
+  At what time the listing will close, will show as a deadline to users, and the listing will be hidden afterwards
+  """
+  closesAt: DateTime
+
+  """
+  The description of the listing, can be markdown.
+  """
+  description: String
+
+  """
+  The name of the listing, will be visible to users.
+  """
+  name: String
+}
+
+type UpdateListingResponse {
+  listing: Listing!
 }
 
 input UpdateOrganizationInput {

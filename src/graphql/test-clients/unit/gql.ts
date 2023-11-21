@@ -22,6 +22,10 @@ const documents = {
     "\n          query events {\n            events {\n              events {\n                id\n              }\n              total\n            }\n          }\n        ": types.EventsDocument,
     "\n          query futureEvents($data: EventsInput!) {\n            events(data: $data) {\n              events {\n                id\n              }\n              total\n            }\n          }\n        ": types.FutureEventsDocument,
     "\n          query weekEvents {\n            events {\n              thisWeek {\n                id\n              }\n              nextWeek {\n                id\n              }\n              twoWeeksOrLater {\n                id\n              }\n              total\n            }\n          }\n        ": types.WeekEventsDocument,
+    "\n            mutation createListing($data: CreateListingInput!) {\n              createListing(data: $data) {\n                listing {\n                  id\n                }\n              }\n            }\n          ": types.CreateListingDocument,
+    "\n            mutation updateListing($id: ID!, $data: UpdateListingInput!) {\n              updateListing(id: $id, data: $data) {\n                listing {\n                  id\n                }\n              }\n            }\n          ": types.UpdateListingDocument,
+    "\n          query listing($data: ListingInput!) {\n            listing(data: $data) {\n              listing {\n                id\n              }\n            }\n          }\n        ": types.ListingDocument,
+    "\n          query listings {\n            listings {\n              listings {\n                id\n              }\n            }\n          }\n        ": types.ListingsDocument,
     "\n              mutation createOrganization1 {\n                createOrganization(data: { name: \"test\" }) {\n                  organization {\n                    id\n                  }\n                }\n              }\n            ": types.CreateOrganization1Document,
     "\n              mutation createOrganization {\n                createOrganization(data: { name: \"test\" }) {\n                  organization {\n                    id\n                    name\n                  }\n                }\n              }\n            ": types.CreateOrganizationDocument,
     "\n              mutation updateOrganization1 {\n                updateOrganization(data: { name: \"test\", id: \"id\" }) {\n                  organization {\n                    id\n                  }\n                }\n              }\n            ": types.UpdateOrganization1Document,
@@ -84,6 +88,22 @@ export function graphql(source: "\n          query futureEvents($data: EventsInp
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n          query weekEvents {\n            events {\n              thisWeek {\n                id\n              }\n              nextWeek {\n                id\n              }\n              twoWeeksOrLater {\n                id\n              }\n              total\n            }\n          }\n        "): (typeof documents)["\n          query weekEvents {\n            events {\n              thisWeek {\n                id\n              }\n              nextWeek {\n                id\n              }\n              twoWeeksOrLater {\n                id\n              }\n              total\n            }\n          }\n        "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n            mutation createListing($data: CreateListingInput!) {\n              createListing(data: $data) {\n                listing {\n                  id\n                }\n              }\n            }\n          "): (typeof documents)["\n            mutation createListing($data: CreateListingInput!) {\n              createListing(data: $data) {\n                listing {\n                  id\n                }\n              }\n            }\n          "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n            mutation updateListing($id: ID!, $data: UpdateListingInput!) {\n              updateListing(id: $id, data: $data) {\n                listing {\n                  id\n                }\n              }\n            }\n          "): (typeof documents)["\n            mutation updateListing($id: ID!, $data: UpdateListingInput!) {\n              updateListing(id: $id, data: $data) {\n                listing {\n                  id\n                }\n              }\n            }\n          "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n          query listing($data: ListingInput!) {\n            listing(data: $data) {\n              listing {\n                id\n              }\n            }\n          }\n        "): (typeof documents)["\n          query listing($data: ListingInput!) {\n            listing(data: $data) {\n              listing {\n                id\n              }\n            }\n          }\n        "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n          query listings {\n            listings {\n              listings {\n                id\n              }\n            }\n          }\n        "): (typeof documents)["\n          query listings {\n            listings {\n              listings {\n                id\n              }\n            }\n          }\n        "];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
