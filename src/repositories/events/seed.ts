@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { Event, Prisma, PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { DateTime } from "luxon";
 
 faker.seed(42);
@@ -59,7 +59,7 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
   },
 ];
 
-export const load = async (db: PrismaClient): Promise<Event[]> => {
+export const load = async (db: PrismaClient) => {
   console.log("Seeding events");
   for (const event of eventCreateInput) {
     await db.event.upsert({
@@ -70,7 +70,14 @@ export const load = async (db: PrismaClient): Promise<Event[]> => {
       create: event,
     });
   }
-  const events = await db.event.findMany();
+  const events = await db.event.findMany({
+    select: {
+      id: true,
+      name: true,
+      organizationId: true,
+      startAt: true,
+    },
+  });
 
   return events;
 };

@@ -49,6 +49,7 @@ model Organization {
 
   events  Event[]
   members Member[]
+  Listing Listing[]
 }
 
 model Event {
@@ -190,4 +191,16 @@ model PaymentAttempt {
   order     Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
   amount    Int
   status    PaymentStatus @default(PENDING)
+}
+
+model Listing {
+  id             String       @id @default(uuid()) @db.Uuid
+  name           String
+  description    String       @default("")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String       @db.Uuid
+  closesAt       DateTime
+  applicationUrl String       @default("")
 }

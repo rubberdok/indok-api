@@ -101,6 +101,24 @@ export type CreateEventSlot = {
   capacity: Scalars['Int']['input'];
 };
 
+export type CreateListingInput = {
+  /** An optional URL to the application form for the listing. */
+  applicationUrl?: InputMaybe<Scalars['String']['input']>;
+  /** At what time the listing will close, will show as a deadline to users, and the listing will be hidden afterwards */
+  closesAt: Scalars['DateTime']['input'];
+  /** The description of the listing, can be markdown. */
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** The name of the listing, will be visible to users. */
+  name: Scalars['String']['input'];
+  /** The ID of the organization that the listing belongs to. */
+  organizationId: Scalars['ID']['input'];
+};
+
+export type CreateListingResponse = {
+  __typename?: 'CreateListingResponse';
+  listing: Listing;
+};
+
 export type CreateOrganizationInput = {
   /** The description of the organization, cannot exceed 10 000 characters */
   description?: InputMaybe<Scalars['String']['input']>;
@@ -111,6 +129,15 @@ export type CreateOrganizationInput = {
 export type CreateOrganizationResponse = {
   __typename?: 'CreateOrganizationResponse';
   organization: Organization;
+};
+
+export type DeleteListingInput = {
+  id: Scalars['ID']['input'];
+};
+
+export type DeleteListingResponse = {
+  __typename?: 'DeleteListingResponse';
+  listing: Listing;
 };
 
 export type Event = {
@@ -157,6 +184,28 @@ export type EventsResponse = {
   twoWeeksOrLater: Array<Event>;
 };
 
+export type Listing = {
+  __typename?: 'Listing';
+  closesAt: Scalars['DateTime']['output'];
+  description: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type ListingInput = {
+  id: Scalars['ID']['input'];
+};
+
+export type ListingResponse = {
+  __typename?: 'ListingResponse';
+  listing: Listing;
+};
+
+export type ListingsResponse = {
+  __typename?: 'ListingsResponse';
+  listings: Array<Listing>;
+};
+
 export type Member = {
   __typename?: 'Member';
   id: Scalars['ID']['output'];
@@ -174,8 +223,10 @@ export type Mutation = {
   addMember: AddMemberResponse;
   /** Create an event, requires that the user is logged in, and is a member of the organization that is hosting the event */
   createEvent: CreateEventResponse;
+  createListing: CreateListingResponse;
   /** Create a new organization, and add the current user as an admin of the organization. */
   createOrganization: CreateOrganizationResponse;
+  deleteListing: DeleteListingResponse;
   newBooking: Booking;
   /** Remove a member from the organization by the ID of the membership. */
   removeMember: RemoveMemberResponse;
@@ -184,6 +235,7 @@ export type Mutation = {
   /** Sign up for an event, requires that the user is logged in */
   signUp: SignUpResponse;
   updateBookingStatus: Booking;
+  updateListing: UpdateListingResponse;
   /**
    * Update an organization with the given name and description.
    * Passing null or omitting a value will leave the value unchanged.
@@ -203,8 +255,18 @@ export type MutationCreateEventArgs = {
 };
 
 
+export type MutationCreateListingArgs = {
+  data: CreateListingInput;
+};
+
+
 export type MutationCreateOrganizationArgs = {
   data: CreateOrganizationInput;
+};
+
+
+export type MutationDeleteListingArgs = {
+  data: DeleteListingInput;
 };
 
 
@@ -230,6 +292,12 @@ export type MutationSignUpArgs = {
 
 export type MutationUpdateBookingStatusArgs = {
   data: UpdateBookingStatusInput;
+};
+
+
+export type MutationUpdateListingArgs = {
+  data: UpdateListingInput;
+  id: Scalars['ID']['input'];
 };
 
 
@@ -322,6 +390,8 @@ export type Query = {
   __typename?: 'Query';
   event: EventResponse;
   events: EventsResponse;
+  listing: ListingResponse;
+  listings: ListingsResponse;
   user: UserResponse;
   users: UsersResponse;
 };
@@ -334,6 +404,11 @@ export type QueryEventArgs = {
 
 export type QueryEventsArgs = {
   data?: InputMaybe<EventsInput>;
+};
+
+
+export type QueryListingArgs = {
+  data: ListingInput;
 };
 
 export type RemoveMemberInput = {
@@ -399,6 +474,22 @@ export enum Status {
 export type UpdateBookingStatusInput = {
   id: Scalars['ID']['input'];
   status: Status;
+};
+
+export type UpdateListingInput = {
+  /** An optional URL to the application form for the listing. */
+  applicationUrl?: InputMaybe<Scalars['String']['input']>;
+  /** At what time the listing will close, will show as a deadline to users, and the listing will be hidden afterwards */
+  closesAt?: InputMaybe<Scalars['DateTime']['input']>;
+  /** The description of the listing, can be markdown. */
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** The name of the listing, will be visible to users. */
+  name?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateListingResponse = {
+  __typename?: 'UpdateListingResponse';
+  listing: Listing;
 };
 
 export type UpdateOrganizationInput = {

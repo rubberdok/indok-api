@@ -101,6 +101,24 @@ export type CreateEventSlot = {
   capacity: Scalars['Int']['input'];
 };
 
+export type CreateListingInput = {
+  /** An optional URL to the application form for the listing. */
+  applicationUrl?: InputMaybe<Scalars['String']['input']>;
+  /** At what time the listing will close, will show as a deadline to users, and the listing will be hidden afterwards */
+  closesAt: Scalars['DateTime']['input'];
+  /** The description of the listing, can be markdown. */
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** The name of the listing, will be visible to users. */
+  name: Scalars['String']['input'];
+  /** The ID of the organization that the listing belongs to. */
+  organizationId: Scalars['ID']['input'];
+};
+
+export type CreateListingResponse = {
+  __typename?: 'CreateListingResponse';
+  listing: Listing;
+};
+
 export type CreateOrganizationInput = {
   /** The description of the organization, cannot exceed 10 000 characters */
   description?: InputMaybe<Scalars['String']['input']>;
@@ -111,6 +129,15 @@ export type CreateOrganizationInput = {
 export type CreateOrganizationResponse = {
   __typename?: 'CreateOrganizationResponse';
   organization: Organization;
+};
+
+export type DeleteListingInput = {
+  id: Scalars['ID']['input'];
+};
+
+export type DeleteListingResponse = {
+  __typename?: 'DeleteListingResponse';
+  listing: Listing;
 };
 
 export type Event = {
@@ -157,6 +184,28 @@ export type EventsResponse = {
   twoWeeksOrLater: Array<Event>;
 };
 
+export type Listing = {
+  __typename?: 'Listing';
+  closesAt: Scalars['DateTime']['output'];
+  description: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type ListingInput = {
+  id: Scalars['ID']['input'];
+};
+
+export type ListingResponse = {
+  __typename?: 'ListingResponse';
+  listing: Listing;
+};
+
+export type ListingsResponse = {
+  __typename?: 'ListingsResponse';
+  listings: Array<Listing>;
+};
+
 export type Member = {
   __typename?: 'Member';
   id: Scalars['ID']['output'];
@@ -174,8 +223,10 @@ export type Mutation = {
   addMember: AddMemberResponse;
   /** Create an event, requires that the user is logged in, and is a member of the organization that is hosting the event */
   createEvent: CreateEventResponse;
+  createListing: CreateListingResponse;
   /** Create a new organization, and add the current user as an admin of the organization. */
   createOrganization: CreateOrganizationResponse;
+  deleteListing: DeleteListingResponse;
   newBooking: Booking;
   /** Remove a member from the organization by the ID of the membership. */
   removeMember: RemoveMemberResponse;
@@ -184,6 +235,7 @@ export type Mutation = {
   /** Sign up for an event, requires that the user is logged in */
   signUp: SignUpResponse;
   updateBookingStatus: Booking;
+  updateListing: UpdateListingResponse;
   /**
    * Update an organization with the given name and description.
    * Passing null or omitting a value will leave the value unchanged.
@@ -203,8 +255,18 @@ export type MutationCreateEventArgs = {
 };
 
 
+export type MutationCreateListingArgs = {
+  data: CreateListingInput;
+};
+
+
 export type MutationCreateOrganizationArgs = {
   data: CreateOrganizationInput;
+};
+
+
+export type MutationDeleteListingArgs = {
+  data: DeleteListingInput;
 };
 
 
@@ -230,6 +292,12 @@ export type MutationSignUpArgs = {
 
 export type MutationUpdateBookingStatusArgs = {
   data: UpdateBookingStatusInput;
+};
+
+
+export type MutationUpdateListingArgs = {
+  data: UpdateListingInput;
+  id: Scalars['ID']['input'];
 };
 
 
@@ -322,6 +390,8 @@ export type Query = {
   __typename?: 'Query';
   event: EventResponse;
   events: EventsResponse;
+  listing: ListingResponse;
+  listings: ListingsResponse;
   user: UserResponse;
   users: UsersResponse;
 };
@@ -334,6 +404,11 @@ export type QueryEventArgs = {
 
 export type QueryEventsArgs = {
   data?: InputMaybe<EventsInput>;
+};
+
+
+export type QueryListingArgs = {
+  data: ListingInput;
 };
 
 export type RemoveMemberInput = {
@@ -399,6 +474,22 @@ export enum Status {
 export type UpdateBookingStatusInput = {
   id: Scalars['ID']['input'];
   status: Status;
+};
+
+export type UpdateListingInput = {
+  /** An optional URL to the application form for the listing. */
+  applicationUrl?: InputMaybe<Scalars['String']['input']>;
+  /** At what time the listing will close, will show as a deadline to users, and the listing will be hidden afterwards */
+  closesAt?: InputMaybe<Scalars['DateTime']['input']>;
+  /** The description of the listing, can be markdown. */
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** The name of the listing, will be visible to users. */
+  name?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateListingResponse = {
+  __typename?: 'UpdateListingResponse';
+  listing: Listing;
 };
 
 export type UpdateOrganizationInput = {
@@ -502,6 +593,40 @@ export type WeekEventsQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type WeekEventsQuery = { __typename?: 'Query', events: { __typename?: 'EventsResponse', total: number, thisWeek: Array<{ __typename?: 'Event', id: string }>, nextWeek: Array<{ __typename?: 'Event', id: string }>, twoWeeksOrLater: Array<{ __typename?: 'Event', id: string }> } };
 
+export type CreateListingMutationVariables = Exact<{
+  data: CreateListingInput;
+}>;
+
+
+export type CreateListingMutation = { __typename?: 'Mutation', createListing: { __typename?: 'CreateListingResponse', listing: { __typename?: 'Listing', id: string } } };
+
+export type DeleteListingMutationVariables = Exact<{
+  data: DeleteListingInput;
+}>;
+
+
+export type DeleteListingMutation = { __typename?: 'Mutation', deleteListing: { __typename?: 'DeleteListingResponse', listing: { __typename?: 'Listing', id: string } } };
+
+export type UpdateListingMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  data: UpdateListingInput;
+}>;
+
+
+export type UpdateListingMutation = { __typename?: 'Mutation', updateListing: { __typename?: 'UpdateListingResponse', listing: { __typename?: 'Listing', id: string } } };
+
+export type ListingQueryVariables = Exact<{
+  data: ListingInput;
+}>;
+
+
+export type ListingQuery = { __typename?: 'Query', listing: { __typename?: 'ListingResponse', listing: { __typename?: 'Listing', id: string } } };
+
+export type ListingsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ListingsQuery = { __typename?: 'Query', listings: { __typename?: 'ListingsResponse', listings: Array<{ __typename?: 'Listing', id: string }> } };
+
 export type CreateOrganization1MutationVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -564,6 +689,11 @@ export const EventDocument = {"kind":"Document","definitions":[{"kind":"Operatio
 export const EventsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"events"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"events"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"events"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"total"}}]}}]}}]} as unknown as DocumentNode<EventsQuery, EventsQueryVariables>;
 export const FutureEventsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"futureEvents"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"EventsInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"events"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"events"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"total"}}]}}]}}]} as unknown as DocumentNode<FutureEventsQuery, FutureEventsQueryVariables>;
 export const WeekEventsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"weekEvents"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"events"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"thisWeek"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"nextWeek"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"twoWeeksOrLater"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"total"}}]}}]}}]} as unknown as DocumentNode<WeekEventsQuery, WeekEventsQueryVariables>;
+export const CreateListingDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"createListing"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateListingInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createListing"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"listing"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]} as unknown as DocumentNode<CreateListingMutation, CreateListingMutationVariables>;
+export const DeleteListingDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"deleteListing"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"DeleteListingInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteListing"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"listing"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]} as unknown as DocumentNode<DeleteListingMutation, DeleteListingMutationVariables>;
+export const UpdateListingDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"updateListing"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateListingInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateListing"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}},{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"listing"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]} as unknown as DocumentNode<UpdateListingMutation, UpdateListingMutationVariables>;
+export const ListingDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"listing"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ListingInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"listing"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"listing"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]} as unknown as DocumentNode<ListingQuery, ListingQueryVariables>;
+export const ListingsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"listings"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"listings"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"listings"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]} as unknown as DocumentNode<ListingsQuery, ListingsQueryVariables>;
 export const CreateOrganization1Document = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"createOrganization1"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createOrganization"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"name"},"value":{"kind":"StringValue","value":"test","block":false}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"organization"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]} as unknown as DocumentNode<CreateOrganization1Mutation, CreateOrganization1MutationVariables>;
 export const CreateOrganizationDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"createOrganization"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createOrganization"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"name"},"value":{"kind":"StringValue","value":"test","block":false}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"organization"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]} as unknown as DocumentNode<CreateOrganizationMutation, CreateOrganizationMutationVariables>;
 export const UpdateOrganization1Document = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"updateOrganization1"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateOrganization"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"name"},"value":{"kind":"StringValue","value":"test","block":false}},{"kind":"ObjectField","name":{"kind":"Name","value":"id"},"value":{"kind":"StringValue","value":"id","block":false}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"organization"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]} as unknown as DocumentNode<UpdateOrganization1Mutation, UpdateOrganization1MutationVariables>;

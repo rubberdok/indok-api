@@ -1,0 +1,87 @@
+type Listing {
+  id: ID!
+  name: String!
+  description: String!
+  closesAt: DateTime!
+}
+
+type ListingsResponse {
+  listings: [Listing!]!
+}
+
+type ListingResponse {
+  listing: Listing!
+}
+
+input ListingInput {
+  id: ID!
+}
+
+type CreateListingResponse {
+  listing: Listing!
+}
+
+input CreateListingInput {
+  """
+  The name of the listing, will be visible to users.
+  """
+  name: String!
+  """
+  The description of the listing, can be markdown.
+  """
+  description: String
+  """
+  At what time the listing will close, will show as a deadline to users, and the listing will be hidden afterwards
+  """
+  closesAt: DateTime!
+  """
+  An optional URL to the application form for the listing.
+  """
+  applicationUrl: String
+  """
+  The ID of the organization that the listing belongs to.
+  """
+  organizationId: ID!
+}
+
+input UpdateListingInput {
+  """
+  The name of the listing, will be visible to users.
+  """
+  name: String
+  """
+  The description of the listing, can be markdown.
+  """
+  description: String
+  """
+  At what time the listing will close, will show as a deadline to users, and the listing will be hidden afterwards
+  """
+  closesAt: DateTime
+  """
+  An optional URL to the application form for the listing.
+  """
+  applicationUrl: String
+}
+
+type UpdateListingResponse {
+  listing: Listing!
+}
+
+input DeleteListingInput {
+  id: ID!
+}
+
+type DeleteListingResponse {
+  listing: Listing!
+}
+
+type Mutation {
+  createListing(data: CreateListingInput!): CreateListingResponse!
+  updateListing(id: ID!, data: UpdateListingInput!): UpdateListingResponse!
+  deleteListing(data: DeleteListingInput!): DeleteListingResponse!
+}
+
+type Query {
+  listing(data: ListingInput!): ListingResponse!
+  listings: ListingsResponse!
+}

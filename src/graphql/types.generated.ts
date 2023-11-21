@@ -1,6 +1,7 @@
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
 import { BookingMapper } from './cabins/schema.mappers.js';
 import { EventMapper, EventsResponseMapper, SignUpMapper } from './events/schema.mappers.js';
+import { ListingMapper } from './listings/schema.mappers.js';
 import { MemberMapper, OrganizationMapper } from './organizations/schema.mappers.js';
 import { PrivateUserMapper, PublicUserMapper, UsersResponseMapper } from './users/schema.mappers.js';
 import { ApolloContext } from '@/lib/apollo-server.js';
@@ -107,6 +108,24 @@ export type CreateEventSlot = {
   capacity: Scalars['Int']['input'];
 };
 
+export type CreateListingInput = {
+  /** An optional URL to the application form for the listing. */
+  applicationUrl?: InputMaybe<Scalars['String']['input']>;
+  /** At what time the listing will close, will show as a deadline to users, and the listing will be hidden afterwards */
+  closesAt: Scalars['DateTime']['input'];
+  /** The description of the listing, can be markdown. */
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** The name of the listing, will be visible to users. */
+  name: Scalars['String']['input'];
+  /** The ID of the organization that the listing belongs to. */
+  organizationId: Scalars['ID']['input'];
+};
+
+export type CreateListingResponse = {
+  __typename?: 'CreateListingResponse';
+  listing: Listing;
+};
+
 export type CreateOrganizationInput = {
   /** The description of the organization, cannot exceed 10 000 characters */
   description?: InputMaybe<Scalars['String']['input']>;
@@ -117,6 +136,15 @@ export type CreateOrganizationInput = {
 export type CreateOrganizationResponse = {
   __typename?: 'CreateOrganizationResponse';
   organization: Organization;
+};
+
+export type DeleteListingInput = {
+  id: Scalars['ID']['input'];
+};
+
+export type DeleteListingResponse = {
+  __typename?: 'DeleteListingResponse';
+  listing: Listing;
 };
 
 export type Event = {
@@ -163,6 +191,28 @@ export type EventsResponse = {
   twoWeeksOrLater: Array<Event>;
 };
 
+export type Listing = {
+  __typename?: 'Listing';
+  closesAt: Scalars['DateTime']['output'];
+  description: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type ListingInput = {
+  id: Scalars['ID']['input'];
+};
+
+export type ListingResponse = {
+  __typename?: 'ListingResponse';
+  listing: Listing;
+};
+
+export type ListingsResponse = {
+  __typename?: 'ListingsResponse';
+  listings: Array<Listing>;
+};
+
 export type Member = {
   __typename?: 'Member';
   id: Scalars['ID']['output'];
@@ -180,8 +230,10 @@ export type Mutation = {
   addMember: AddMemberResponse;
   /** Create an event, requires that the user is logged in, and is a member of the organization that is hosting the event */
   createEvent: CreateEventResponse;
+  createListing: CreateListingResponse;
   /** Create a new organization, and add the current user as an admin of the organization. */
   createOrganization: CreateOrganizationResponse;
+  deleteListing: DeleteListingResponse;
   newBooking: Booking;
   /** Remove a member from the organization by the ID of the membership. */
   removeMember: RemoveMemberResponse;
@@ -190,6 +242,7 @@ export type Mutation = {
   /** Sign up for an event, requires that the user is logged in */
   signUp: SignUpResponse;
   updateBookingStatus: Booking;
+  updateListing: UpdateListingResponse;
   /**
    * Update an organization with the given name and description.
    * Passing null or omitting a value will leave the value unchanged.
@@ -209,8 +262,18 @@ export type MutationcreateEventArgs = {
 };
 
 
+export type MutationcreateListingArgs = {
+  data: CreateListingInput;
+};
+
+
 export type MutationcreateOrganizationArgs = {
   data: CreateOrganizationInput;
+};
+
+
+export type MutationdeleteListingArgs = {
+  data: DeleteListingInput;
 };
 
 
@@ -236,6 +299,12 @@ export type MutationsignUpArgs = {
 
 export type MutationupdateBookingStatusArgs = {
   data: UpdateBookingStatusInput;
+};
+
+
+export type MutationupdateListingArgs = {
+  data: UpdateListingInput;
+  id: Scalars['ID']['input'];
 };
 
 
@@ -327,6 +396,8 @@ export type Query = {
   __typename?: 'Query';
   event: EventResponse;
   events: EventsResponse;
+  listing: ListingResponse;
+  listings: ListingsResponse;
   user: UserResponse;
   users: UsersResponse;
 };
@@ -339,6 +410,11 @@ export type QueryeventArgs = {
 
 export type QueryeventsArgs = {
   data?: InputMaybe<EventsInput>;
+};
+
+
+export type QuerylistingArgs = {
+  data: ListingInput;
 };
 
 export type RemoveMemberInput = {
@@ -402,6 +478,22 @@ export type Status =
 export type UpdateBookingStatusInput = {
   id: Scalars['ID']['input'];
   status: Status;
+};
+
+export type UpdateListingInput = {
+  /** An optional URL to the application form for the listing. */
+  applicationUrl?: InputMaybe<Scalars['String']['input']>;
+  /** At what time the listing will close, will show as a deadline to users, and the listing will be hidden afterwards */
+  closesAt?: InputMaybe<Scalars['DateTime']['input']>;
+  /** The description of the listing, can be markdown. */
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** The name of the listing, will be visible to users. */
+  name?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateListingResponse = {
+  __typename?: 'UpdateListingResponse';
+  listing: Listing;
 };
 
 export type UpdateOrganizationInput = {
@@ -529,15 +621,23 @@ export type ResolversTypes = {
   CreateEventInput: CreateEventInput;
   CreateEventResponse: ResolverTypeWrapper<Omit<CreateEventResponse, 'event'> & { event: ResolversTypes['Event'] }>;
   CreateEventSlot: CreateEventSlot;
+  CreateListingInput: CreateListingInput;
+  CreateListingResponse: ResolverTypeWrapper<Omit<CreateListingResponse, 'listing'> & { listing: ResolversTypes['Listing'] }>;
   CreateOrganizationInput: CreateOrganizationInput;
   CreateOrganizationResponse: ResolverTypeWrapper<Omit<CreateOrganizationResponse, 'organization'> & { organization: ResolversTypes['Organization'] }>;
   DateTime: ResolverTypeWrapper<Scalars['DateTime']['output']>;
+  DeleteListingInput: DeleteListingInput;
+  DeleteListingResponse: ResolverTypeWrapper<Omit<DeleteListingResponse, 'listing'> & { listing: ResolversTypes['Listing'] }>;
   Event: ResolverTypeWrapper<EventMapper>;
   EventInput: EventInput;
   EventResponse: ResolverTypeWrapper<Omit<EventResponse, 'event'> & { event: ResolversTypes['Event'] }>;
   EventsInput: EventsInput;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   EventsResponse: ResolverTypeWrapper<EventsResponseMapper>;
+  Listing: ResolverTypeWrapper<ListingMapper>;
+  ListingInput: ListingInput;
+  ListingResponse: ResolverTypeWrapper<Omit<ListingResponse, 'listing'> & { listing: ResolversTypes['Listing'] }>;
+  ListingsResponse: ResolverTypeWrapper<Omit<ListingsResponse, 'listings'> & { listings: Array<ResolversTypes['Listing']> }>;
   Member: ResolverTypeWrapper<MemberMapper>;
   Mutation: ResolverTypeWrapper<{}>;
   NewBookingInput: NewBookingInput;
@@ -556,6 +656,8 @@ export type ResolversTypes = {
   SignUpResponse: ResolverTypeWrapper<Omit<SignUpResponse, 'signUp'> & { signUp: ResolversTypes['SignUp'] }>;
   Status: Status;
   UpdateBookingStatusInput: UpdateBookingStatusInput;
+  UpdateListingInput: UpdateListingInput;
+  UpdateListingResponse: ResolverTypeWrapper<Omit<UpdateListingResponse, 'listing'> & { listing: ResolversTypes['Listing'] }>;
   UpdateOrganizationInput: UpdateOrganizationInput;
   UpdateOrganizationResponse: ResolverTypeWrapper<Omit<UpdateOrganizationResponse, 'organization'> & { organization: ResolversTypes['Organization'] }>;
   UpdateUserInput: UpdateUserInput;
@@ -576,15 +678,23 @@ export type ResolversParentTypes = {
   CreateEventInput: CreateEventInput;
   CreateEventResponse: Omit<CreateEventResponse, 'event'> & { event: ResolversParentTypes['Event'] };
   CreateEventSlot: CreateEventSlot;
+  CreateListingInput: CreateListingInput;
+  CreateListingResponse: Omit<CreateListingResponse, 'listing'> & { listing: ResolversParentTypes['Listing'] };
   CreateOrganizationInput: CreateOrganizationInput;
   CreateOrganizationResponse: Omit<CreateOrganizationResponse, 'organization'> & { organization: ResolversParentTypes['Organization'] };
   DateTime: Scalars['DateTime']['output'];
+  DeleteListingInput: DeleteListingInput;
+  DeleteListingResponse: Omit<DeleteListingResponse, 'listing'> & { listing: ResolversParentTypes['Listing'] };
   Event: EventMapper;
   EventInput: EventInput;
   EventResponse: Omit<EventResponse, 'event'> & { event: ResolversParentTypes['Event'] };
   EventsInput: EventsInput;
   Boolean: Scalars['Boolean']['output'];
   EventsResponse: EventsResponseMapper;
+  Listing: ListingMapper;
+  ListingInput: ListingInput;
+  ListingResponse: Omit<ListingResponse, 'listing'> & { listing: ResolversParentTypes['Listing'] };
+  ListingsResponse: Omit<ListingsResponse, 'listings'> & { listings: Array<ResolversParentTypes['Listing']> };
   Member: MemberMapper;
   Mutation: {};
   NewBookingInput: NewBookingInput;
@@ -600,6 +710,8 @@ export type ResolversParentTypes = {
   SignUpInput: SignUpInput;
   SignUpResponse: Omit<SignUpResponse, 'signUp'> & { signUp: ResolversParentTypes['SignUp'] };
   UpdateBookingStatusInput: UpdateBookingStatusInput;
+  UpdateListingInput: UpdateListingInput;
+  UpdateListingResponse: Omit<UpdateListingResponse, 'listing'> & { listing: ResolversParentTypes['Listing'] };
   UpdateOrganizationInput: UpdateOrganizationInput;
   UpdateOrganizationResponse: Omit<UpdateOrganizationResponse, 'organization'> & { organization: ResolversParentTypes['Organization'] };
   UpdateUserInput: UpdateUserInput;
@@ -639,6 +751,11 @@ export type CreateEventResponseResolvers<ContextType = ApolloContext, ParentType
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type CreateListingResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['CreateListingResponse'] = ResolversParentTypes['CreateListingResponse']> = {
+  listing?: Resolver<ResolversTypes['Listing'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type CreateOrganizationResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['CreateOrganizationResponse'] = ResolversParentTypes['CreateOrganizationResponse']> = {
   organization?: Resolver<ResolversTypes['Organization'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -647,6 +764,11 @@ export type CreateOrganizationResponseResolvers<ContextType = ApolloContext, Par
 export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['DateTime'], any> {
   name: 'DateTime';
 }
+
+export type DeleteListingResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['DeleteListingResponse'] = ResolversParentTypes['DeleteListingResponse']> = {
+  listing?: Resolver<ResolversTypes['Listing'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
 
 export type EventResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Event'] = ResolversParentTypes['Event']> = {
   description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -671,6 +793,24 @@ export type EventsResponseResolvers<ContextType = ApolloContext, ParentType exte
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type ListingResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Listing'] = ResolversParentTypes['Listing']> = {
+  closesAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ListingResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['ListingResponse'] = ResolversParentTypes['ListingResponse']> = {
+  listing?: Resolver<ResolversTypes['Listing'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ListingsResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['ListingsResponse'] = ResolversParentTypes['ListingsResponse']> = {
+  listings?: Resolver<Array<ResolversTypes['Listing']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type MemberResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Member'] = ResolversParentTypes['Member']> = {
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   organization?: Resolver<ResolversTypes['Organization'], ParentType, ContextType>;
@@ -682,12 +822,15 @@ export type MemberResolvers<ContextType = ApolloContext, ParentType extends Reso
 export type MutationResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
   addMember?: Resolver<ResolversTypes['AddMemberResponse'], ParentType, ContextType, RequireFields<MutationaddMemberArgs, 'data'>>;
   createEvent?: Resolver<ResolversTypes['CreateEventResponse'], ParentType, ContextType, RequireFields<MutationcreateEventArgs, 'data'>>;
+  createListing?: Resolver<ResolversTypes['CreateListingResponse'], ParentType, ContextType, RequireFields<MutationcreateListingArgs, 'data'>>;
   createOrganization?: Resolver<ResolversTypes['CreateOrganizationResponse'], ParentType, ContextType, RequireFields<MutationcreateOrganizationArgs, 'data'>>;
+  deleteListing?: Resolver<ResolversTypes['DeleteListingResponse'], ParentType, ContextType, RequireFields<MutationdeleteListingArgs, 'data'>>;
   newBooking?: Resolver<ResolversTypes['Booking'], ParentType, ContextType, RequireFields<MutationnewBookingArgs, 'data'>>;
   removeMember?: Resolver<ResolversTypes['RemoveMemberResponse'], ParentType, ContextType, RequireFields<MutationremoveMemberArgs, 'data'>>;
   retractSignUp?: Resolver<ResolversTypes['RetractSignUpResponse'], ParentType, ContextType, RequireFields<MutationretractSignUpArgs, 'data'>>;
   signUp?: Resolver<ResolversTypes['SignUpResponse'], ParentType, ContextType, RequireFields<MutationsignUpArgs, 'data'>>;
   updateBookingStatus?: Resolver<ResolversTypes['Booking'], ParentType, ContextType, RequireFields<MutationupdateBookingStatusArgs, 'data'>>;
+  updateListing?: Resolver<ResolversTypes['UpdateListingResponse'], ParentType, ContextType, RequireFields<MutationupdateListingArgs, 'data' | 'id'>>;
   updateOrganization?: Resolver<ResolversTypes['UpdateOrganizationResponse'], ParentType, ContextType, RequireFields<MutationupdateOrganizationArgs, 'data'>>;
   updateUser?: Resolver<ResolversTypes['UpdateUserResponse'], ParentType, ContextType, RequireFields<MutationupdateUserArgs, 'data'>>;
 };
@@ -730,6 +873,8 @@ export type PublicUserResolvers<ContextType = ApolloContext, ParentType extends 
 export type QueryResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
   event?: Resolver<ResolversTypes['EventResponse'], ParentType, ContextType, RequireFields<QueryeventArgs, 'data'>>;
   events?: Resolver<ResolversTypes['EventsResponse'], ParentType, ContextType, Partial<QueryeventsArgs>>;
+  listing?: Resolver<ResolversTypes['ListingResponse'], ParentType, ContextType, RequireFields<QuerylistingArgs, 'data'>>;
+  listings?: Resolver<ResolversTypes['ListingsResponse'], ParentType, ContextType>;
   user?: Resolver<ResolversTypes['UserResponse'], ParentType, ContextType>;
   users?: Resolver<ResolversTypes['UsersResponse'], ParentType, ContextType>;
 };
@@ -754,6 +899,11 @@ export type SignUpResolvers<ContextType = ApolloContext, ParentType extends Reso
 
 export type SignUpResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['SignUpResponse'] = ResolversParentTypes['SignUpResponse']> = {
   signUp?: Resolver<ResolversTypes['SignUp'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type UpdateListingResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['UpdateListingResponse'] = ResolversParentTypes['UpdateListingResponse']> = {
+  listing?: Resolver<ResolversTypes['Listing'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -783,11 +933,16 @@ export type Resolvers<ContextType = ApolloContext> = {
   Booking?: BookingResolvers<ContextType>;
   Cabin?: CabinResolvers<ContextType>;
   CreateEventResponse?: CreateEventResponseResolvers<ContextType>;
+  CreateListingResponse?: CreateListingResponseResolvers<ContextType>;
   CreateOrganizationResponse?: CreateOrganizationResponseResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
+  DeleteListingResponse?: DeleteListingResponseResolvers<ContextType>;
   Event?: EventResolvers<ContextType>;
   EventResponse?: EventResponseResolvers<ContextType>;
   EventsResponse?: EventsResponseResolvers<ContextType>;
+  Listing?: ListingResolvers<ContextType>;
+  ListingResponse?: ListingResponseResolvers<ContextType>;
+  ListingsResponse?: ListingsResponseResolvers<ContextType>;
   Member?: MemberResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   Organization?: OrganizationResolvers<ContextType>;
@@ -798,6 +953,7 @@ export type Resolvers<ContextType = ApolloContext> = {
   RetractSignUpResponse?: RetractSignUpResponseResolvers<ContextType>;
   SignUp?: SignUpResolvers<ContextType>;
   SignUpResponse?: SignUpResponseResolvers<ContextType>;
+  UpdateListingResponse?: UpdateListingResponseResolvers<ContextType>;
   UpdateOrganizationResponse?: UpdateOrganizationResponseResolvers<ContextType>;
   UpdateUserResponse?: UpdateUserResponseResolvers<ContextType>;
   UserResponse?: UserResponseResolvers<ContextType>;

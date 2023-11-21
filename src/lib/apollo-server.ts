@@ -1,5 +1,5 @@
 import { unwrapResolverError } from "@apollo/server/errors";
-import { Booking, Cabin, Member, Organization, Prisma, Event, EventSignUp } from "@prisma/client";
+import { Booking, Cabin, Member, Organization, Prisma, Event, EventSignUp, Listing } from "@prisma/client";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { GraphQLFormattedError } from "graphql";
 import { ZodError } from "zod";
@@ -118,9 +118,36 @@ interface IEventService {
   retractSignUp(userId: string, eventId: string): Promise<EventSignUp>;
 }
 
+interface ListingService {
+  get(id: string): Promise<Listing>;
+  findMany(): Promise<Listing[]>;
+  create(
+    userId: string,
+    data: {
+      name: string;
+      description?: string | null;
+      applicationUrl?: string | null;
+      closesAt: Date;
+      organizationId: string;
+    }
+  ): Promise<Listing>;
+  update(
+    userId: string,
+    id: string,
+    data: Partial<{
+      name: string | null;
+      description: string | null;
+      applicationUrl: string | null;
+      closesAt: Date | null;
+    }>
+  ): Promise<Listing>;
+  delete(userId: string, id: string): Promise<Listing>;
+}
+
 export interface ApolloServerDependencies {
   userService: IUserService;
   organizationService: IOrganizationService;
   cabinService: ICabinService;
   eventService: IEventService;
+  listingService: ListingService;
 }
