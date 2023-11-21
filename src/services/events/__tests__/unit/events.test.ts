@@ -6,13 +6,13 @@ import { DateTime } from "luxon";
 import { BaseError, InvalidArgumentError, PermissionDeniedError } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
 
-import { EventRepository, EventService, OrganizationService } from "../../service.js";
+import { EventRepository, EventService, PermissionService } from "../../service.js";
 
 function setup() {
-  const organizationService = mockDeep<OrganizationService>();
+  const permissionService = mockDeep<PermissionService>();
   const eventsRepository = mockDeep<EventRepository>();
-  const service = new EventService(eventsRepository, organizationService);
-  return { organizationService, eventsRepository, service };
+  const service = new EventService(eventsRepository, permissionService);
+  return { permissionService, eventsRepository, service };
 }
 
 function mockEvent(data: Partial<Event> = {}): Event {
@@ -174,12 +174,12 @@ describe("EventsService", () => {
       ];
 
       test.each(testCases)("$expectedError.name, $act.data", async ({ act, expectedError }) => {
-        const { service, organizationService } = setup();
+        const { service, permissionService } = setup();
         /**
          * Arrange
          * 1. Set up the mock repository to handle the create method
          */
-        organizationService.hasRole.mockResolvedValueOnce(act.role !== null && act.role !== undefined);
+        permissionService.hasRole.mockResolvedValueOnce(act.role !== null && act.role !== undefined);
 
         /**
          * Act
@@ -194,9 +194,9 @@ describe("EventsService", () => {
     });
 
     it("should create an event", async () => {
-      const organizationService = mockDeep<OrganizationService>();
+      const permissionService = mockDeep<PermissionService>();
       const eventsRepository = mockDeep<EventRepository>();
-      const service = new EventService(eventsRepository, organizationService);
+      const service = new EventService(eventsRepository, permissionService);
       /**
        * Arrange
        * 1. Set up the mock repository to handle the create method
@@ -413,18 +413,18 @@ describe("EventsService", () => {
       ];
 
       test.each(testCases)("$assert.error.name, $name, $act.data", async ({ assert, arrange, act }) => {
-        const { service, eventsRepository, organizationService } = setup();
+        const { service, eventsRepository, permissionService } = setup();
 
         /**
          * Arrange
          *
          * 1. Set up the mock for `eventsRepository.get` to return the event in {arrange.event}
-         * 2. Set up the mock for `organizationService.hasRole` to return `true`
+         * 2. Set up the mock for `permissionService.hasRole` to return `true`
          */
         // 1.
         eventsRepository.get.mockResolvedValueOnce(arrange.event);
         // 2.
-        organizationService.hasRole.mockResolvedValueOnce(arrange.hasRole);
+        permissionService.hasRole.mockResolvedValueOnce(arrange.hasRole);
 
         /**
          * Act
@@ -535,18 +535,18 @@ describe("EventsService", () => {
       ];
 
       test.each(testCases)("$name, $act.data", async ({ arrange, act }) => {
-        const { service, eventsRepository, organizationService } = setup();
+        const { service, eventsRepository, permissionService } = setup();
 
         /**
          * Arrange
          *
          * 1. Set up the mock for `eventsRepository.get` to return the event in {arrange.event}
-         * 2. Set up the mock for `organizationService.hasRole` to return `true`
+         * 2. Set up the mock for `permissionService.hasRole` to return `true`
          */
         // 1.
         eventsRepository.get.mockResolvedValueOnce(arrange.event);
         // 2.
-        organizationService.hasRole.mockResolvedValueOnce(true);
+        permissionService.hasRole.mockResolvedValueOnce(true);
 
         /**
          * Act
