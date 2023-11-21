@@ -355,6 +355,7 @@ export type SignUp = {
   __typename?: 'SignUp';
   /** The event the user signed up for */
   event: Event;
+  id: Scalars['ID']['output'];
   /** The status of the user's participation in the event */
   participationStatus: ParticipationStatus;
   /** The user that signed up for the event */

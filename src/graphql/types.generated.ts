@@ -1,6 +1,6 @@
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
 import { BookingMapper } from './cabins/schema.mappers.js';
-import { EventMapper, EventsResponseMapper } from './events/schema.mappers.js';
+import { EventMapper, EventsResponseMapper, SignUpMapper } from './events/schema.mappers.js';
 import { MemberMapper, OrganizationMapper } from './organizations/schema.mappers.js';
 import { PrivateUserMapper, PublicUserMapper, UsersResponseMapper } from './users/schema.mappers.js';
 import { ApolloContext } from '@/lib/apollo-server.js';
@@ -359,6 +359,7 @@ export type SignUp = {
   __typename?: 'SignUp';
   /** The event the user signed up for */
   event: Event;
+  id: Scalars['ID']['output'];
   /** The status of the user's participation in the event */
   participationStatus: ParticipationStatus;
   /** The user that signed up for the event */
@@ -531,7 +532,7 @@ export type ResolversTypes = {
   RemoveMemberInput: RemoveMemberInput;
   RemoveMemberResponse: ResolverTypeWrapper<Omit<RemoveMemberResponse, 'member'> & { member: ResolversTypes['Member'] }>;
   Role: Role;
-  SignUp: ResolverTypeWrapper<Omit<SignUp, 'event' | 'user'> & { event: ResolversTypes['Event'], user: ResolversTypes['PublicUser'] }>;
+  SignUp: ResolverTypeWrapper<SignUpMapper>;
   SignUpInput: SignUpInput;
   SignUpResponse: ResolverTypeWrapper<Omit<SignUpResponse, 'signUp'> & { signUp: ResolversTypes['SignUp'] }>;
   Status: Status;
@@ -574,7 +575,7 @@ export type ResolversParentTypes = {
   Query: {};
   RemoveMemberInput: RemoveMemberInput;
   RemoveMemberResponse: Omit<RemoveMemberResponse, 'member'> & { member: ResolversParentTypes['Member'] };
-  SignUp: Omit<SignUp, 'event' | 'user'> & { event: ResolversParentTypes['Event'], user: ResolversParentTypes['PublicUser'] };
+  SignUp: SignUpMapper;
   SignUpInput: SignUpInput;
   SignUpResponse: Omit<SignUpResponse, 'signUp'> & { signUp: ResolversParentTypes['SignUp'] };
   UpdateBookingStatusInput: UpdateBookingStatusInput;
@@ -718,6 +719,7 @@ export type RemoveMemberResponseResolvers<ContextType = ApolloContext, ParentTyp
 
 export type SignUpResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['SignUp'] = ResolversParentTypes['SignUp']> = {
   event?: Resolver<ResolversTypes['Event'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   participationStatus?: Resolver<ResolversTypes['ParticipationStatus'], ParentType, ContextType>;
   user?: Resolver<ResolversTypes['PublicUser'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
