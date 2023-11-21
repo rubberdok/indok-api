@@ -246,6 +246,7 @@ export class EventService {
      *
      * This number may need to be tweaked.
      */
+
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       this.logger?.info({ userId, eventId, attempt }, "Attempting to sign up user for event.");
       // Fetch the event to check if it has available slots or not

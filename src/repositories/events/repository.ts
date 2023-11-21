@@ -417,85 +417,108 @@ export class EventRepository {
       throw new InvalidArgumentError("Can only change the status of an active sign up, and none were found");
     }
 
-    try {
-      const currentParticipationStatus = currentSignUp.participationStatus;
-      const { newParticipationStatus } = data;
+    const currentParticipationStatus = currentSignUp.participationStatus;
+    const { newParticipationStatus } = data;
 
-      if (currentParticipationStatus === newParticipationStatus) {
-        // No change, we can just return.
-        const { event, slot, ...signUp } = currentSignUp;
-        return { event, slot, signUp };
-      }
+    if (currentParticipationStatus === newParticipationStatus) {
+      // No change, we can just return.
+      const { event, slot, ...signUp } = currentSignUp;
+      return { event, slot, signUp };
+    }
 
-      if (newParticipationStatus === ParticipationStatus.CONFIRMED) {
-        switch (currentParticipationStatus) {
-          case ParticipationStatus.ON_WAITLIST: {
-            try {
-              // Promote from wait list to confirmed
-              return await this.makeOnWaitlistSignUpConfirmed({
-                signUp: {
-                  id: currentSignUp.id,
-                  version: currentSignUp.version,
-                  participationSatus: currentParticipationStatus,
-                },
-                eventId: data.eventId,
-                slotId: data.slotId,
-              });
-            } catch (err) {
-              if (err instanceof PrismaClientKnownRequestError) {
-                if (err.code === "P2002") throw new AlreadySignedUpError(err.message);
-              }
-              throw err;
-            }
+    if (newParticipationStatus === ParticipationStatus.CONFIRMED) {
+      return this.newParticipationStatusConfirmedHandler({
+        currentSignUp,
+        eventId: data.eventId,
+        slotId: data.slotId,
+      });
+    }
+
+    return this.newParticipationStatusInactiveHandler({
+      currentSignUp,
+      userId: data.userId,
+      eventId: data.eventId,
+      newParticipationStatus,
+    });
+  }
+
+  private async newParticipationStatusConfirmedHandler(data: {
+    eventId: string;
+    slotId: string;
+    currentSignUp: { id: string; version: number; participationStatus: ParticipationStatus };
+  }) {
+    const { currentSignUp, eventId, slotId } = data;
+    switch (currentSignUp.participationStatus) {
+      case ParticipationStatus.ON_WAITLIST: {
+        try {
+          // Promote from wait list to confirmed
+          return await this.makeOnWaitlistSignUpConfirmed({
+            signUp: {
+              id: currentSignUp.id,
+              version: currentSignUp.version,
+              participationSatus: currentSignUp.participationStatus,
+            },
+            eventId,
+            slotId,
+          });
+        } catch (err) {
+          if (err instanceof PrismaClientKnownRequestError) {
+            if (err.code === "P2002") throw new AlreadySignedUpError(err.message);
+            if (err.code === "P2025") throw new NotFoundError(err.message);
           }
-          case ParticipationStatus.REMOVED:
-          // fallthrough
-          case ParticipationStatus.RETRACTED:
-          // fallthrough
-          case ParticipationStatus.CONFIRMED: {
-            throw new InvalidArgumentError("Only sign ups on the wait list can be changed to confirmed");
-          }
+          throw err;
         }
       }
+      case ParticipationStatus.REMOVED:
+      // fallthrough
+      case ParticipationStatus.RETRACTED:
+      // fallthrough
+      case ParticipationStatus.CONFIRMED: {
+        throw new InvalidArgumentError("Only sign ups on the wait list can be changed to confirmed");
+      }
+    }
+  }
 
-      switch (currentParticipationStatus) {
-        case ParticipationStatus.CONFIRMED:
-        // fallthrough
-        case ParticipationStatus.ON_WAITLIST: {
-          try {
-            // Demote from wait list or confirmed to removed or retracted
-            // Don't need to check active here, as we already did that above
-            return await this.makeActiveSignUpInactive({
-              currentSignUp: {
-                id: currentSignUp.id,
-                version: currentSignUp.version,
-                participationStatus: currentParticipationStatus,
-              },
-              userId: data.userId,
-              eventId: data.eventId,
-              newParticipationStatus: newParticipationStatus,
-            });
-          } catch (err) {
-            if (err instanceof PrismaClientKnownRequestError) {
-              // This would occur if we fail to delete an existing inactive sign up, which should not happen
-              if (err.code === "P2002") throw new InternalServerError("Failed to demote sign up");
-            }
-            throw err;
+  private async newParticipationStatusInactiveHandler(data: {
+    newParticipationStatus: Extract<ParticipationStatus, "REMOVED" | "RETRACTED">;
+    userId: string;
+    eventId: string;
+    currentSignUp: { id: string; version: number; participationStatus: ParticipationStatus };
+  }) {
+    const { currentSignUp, userId, eventId, newParticipationStatus } = data;
+    switch (currentSignUp.participationStatus) {
+      case ParticipationStatus.CONFIRMED:
+      // fallthrough
+      case ParticipationStatus.ON_WAITLIST: {
+        try {
+          // Demote from wait list or confirmed to removed or retracted
+          // Don't need to check active here, as we already did that above
+          return await this.makeActiveSignUpInactive({
+            currentSignUp: {
+              id: currentSignUp.id,
+              version: currentSignUp.version,
+              participationStatus: currentSignUp.participationStatus,
+            },
+            userId,
+            eventId,
+            newParticipationStatus,
+          });
+        } catch (err) {
+          if (err instanceof PrismaClientKnownRequestError) {
+            // This would occur if we fail to delete an existing inactive sign up, which should not happen
+            if (err.code === "P2002") throw new InternalServerError("Failed to demote sign up");
+            if (err.code === "P2025") throw new NotFoundError(err.message);
           }
-        }
-        case ParticipationStatus.REMOVED:
-        // fallthrough
-        case ParticipationStatus.RETRACTED: {
-          throw new InvalidArgumentError(
-            "Only sign ups on the wait list or confirmed can be changed to removed or retracted"
-          );
+          throw err;
         }
       }
-    } catch (err) {
-      if (err instanceof PrismaClientKnownRequestError) {
-        if (err.code === "P2025") throw new NotFoundError(err.message);
+      case ParticipationStatus.REMOVED:
+      // fallthrough
+      case ParticipationStatus.RETRACTED: {
+        throw new InvalidArgumentError(
+          "Only sign ups on the wait list or confirmed can be changed to removed or retracted"
+        );
       }
-      throw err;
     }
   }
 
