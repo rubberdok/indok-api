@@ -131,7 +131,7 @@ describe("EventService", () => {
        *
        * Retract the sign up
        */
-      const actual = await eventService.retractSignUp(signUp.id);
+      const actual = await eventService.retractSignUp(user.id, event.id);
 
       /**
        * Assert
@@ -273,7 +273,7 @@ describe("EventService", () => {
        *
        * Retract the sign up
        */
-      const actual = await eventService.removeSignUp(signUp.id);
+      const actual = await eventService.removeSignUp(user.id, event.id);
 
       /**
        * Assert

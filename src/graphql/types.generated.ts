@@ -178,12 +178,15 @@ export type Mutation = {
   __typename?: 'Mutation';
   /** Add a member to the organization */
   addMember: AddMemberResponse;
+  /** Create an event, requires that the user is logged in, and is a member of the organization that is hosting the event */
   createEvent: CreateEventResponse;
   /** Create a new organization, and add the current user as an admin of the organization. */
   createOrganization: CreateOrganizationResponse;
   newBooking: Booking;
   /** Remove a member from the organization by the ID of the membership. */
   removeMember: RemoveMemberResponse;
+  /** Sign up for an event, requires that the user is logged in */
+  signUp: SignUpResponse;
   updateBookingStatus: Booking;
   /**
    * Update an organization with the given name and description.
@@ -219,6 +222,11 @@ export type MutationremoveMemberArgs = {
 };
 
 
+export type MutationsignUpArgs = {
+  data: SignUpInput;
+};
+
+
 export type MutationupdateBookingStatusArgs = {
   data: UpdateBookingStatusInput;
 };
@@ -251,6 +259,16 @@ export type Organization = {
   members: Array<Member>;
   name: Scalars['String']['output'];
 };
+
+export type ParticipationStatus =
+  /** The user is confirmed to be attending the event */
+  | 'CONFIRMED'
+  /** The user is on the wait list for the event */
+  | 'ON_WAITLIST'
+  /** The user has signed up for the event, and had their sign up removed by an admin */
+  | 'REMOVED'
+  /** The user has signed up for the event, and then retracted their sign up */
+  | 'RETRACTED';
 
 /**
  * PrivateUser should only be used when accessed by the authenticated user themselves
@@ -336,6 +354,26 @@ export type Role =
    * manage members in the organization and delete the organization.
    */
   | 'MEMBER';
+
+export type SignUp = {
+  __typename?: 'SignUp';
+  /** The event the user signed up for */
+  event: Event;
+  /** The status of the user's participation in the event */
+  participationStatus: ParticipationStatus;
+  /** The user that signed up for the event */
+  user: PublicUser;
+};
+
+export type SignUpInput = {
+  /** The event to sign up for */
+  eventId: Scalars['ID']['input'];
+};
+
+export type SignUpResponse = {
+  __typename?: 'SignUpResponse';
+  signUp: SignUp;
+};
 
 export type Status =
   | 'CANCELLED'
@@ -486,12 +524,16 @@ export type ResolversTypes = {
   Mutation: ResolverTypeWrapper<{}>;
   NewBookingInput: NewBookingInput;
   Organization: ResolverTypeWrapper<OrganizationMapper>;
+  ParticipationStatus: ParticipationStatus;
   PrivateUser: ResolverTypeWrapper<PrivateUserMapper>;
   PublicUser: ResolverTypeWrapper<PublicUserMapper>;
   Query: ResolverTypeWrapper<{}>;
   RemoveMemberInput: RemoveMemberInput;
   RemoveMemberResponse: ResolverTypeWrapper<Omit<RemoveMemberResponse, 'member'> & { member: ResolversTypes['Member'] }>;
   Role: Role;
+  SignUp: ResolverTypeWrapper<Omit<SignUp, 'event' | 'user'> & { event: ResolversTypes['Event'], user: ResolversTypes['PublicUser'] }>;
+  SignUpInput: SignUpInput;
+  SignUpResponse: ResolverTypeWrapper<Omit<SignUpResponse, 'signUp'> & { signUp: ResolversTypes['SignUp'] }>;
   Status: Status;
   UpdateBookingStatusInput: UpdateBookingStatusInput;
   UpdateOrganizationInput: UpdateOrganizationInput;
@@ -532,6 +574,9 @@ export type ResolversParentTypes = {
   Query: {};
   RemoveMemberInput: RemoveMemberInput;
   RemoveMemberResponse: Omit<RemoveMemberResponse, 'member'> & { member: ResolversParentTypes['Member'] };
+  SignUp: Omit<SignUp, 'event' | 'user'> & { event: ResolversParentTypes['Event'], user: ResolversParentTypes['PublicUser'] };
+  SignUpInput: SignUpInput;
+  SignUpResponse: Omit<SignUpResponse, 'signUp'> & { signUp: ResolversParentTypes['SignUp'] };
   UpdateBookingStatusInput: UpdateBookingStatusInput;
   UpdateOrganizationInput: UpdateOrganizationInput;
   UpdateOrganizationResponse: Omit<UpdateOrganizationResponse, 'organization'> & { organization: ResolversParentTypes['Organization'] };
@@ -618,6 +663,7 @@ export type MutationResolvers<ContextType = ApolloContext, ParentType extends Re
   createOrganization?: Resolver<ResolversTypes['CreateOrganizationResponse'], ParentType, ContextType, RequireFields<MutationcreateOrganizationArgs, 'data'>>;
   newBooking?: Resolver<ResolversTypes['Booking'], ParentType, ContextType, RequireFields<MutationnewBookingArgs, 'data'>>;
   removeMember?: Resolver<ResolversTypes['RemoveMemberResponse'], ParentType, ContextType, RequireFields<MutationremoveMemberArgs, 'data'>>;
+  signUp?: Resolver<ResolversTypes['SignUpResponse'], ParentType, ContextType, RequireFields<MutationsignUpArgs, 'data'>>;
   updateBookingStatus?: Resolver<ResolversTypes['Booking'], ParentType, ContextType, RequireFields<MutationupdateBookingStatusArgs, 'data'>>;
   updateOrganization?: Resolver<ResolversTypes['UpdateOrganizationResponse'], ParentType, ContextType, RequireFields<MutationupdateOrganizationArgs, 'data'>>;
   updateUser?: Resolver<ResolversTypes['UpdateUserResponse'], ParentType, ContextType, RequireFields<MutationupdateUserArgs, 'data'>>;
@@ -670,6 +716,18 @@ export type RemoveMemberResponseResolvers<ContextType = ApolloContext, ParentTyp
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type SignUpResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['SignUp'] = ResolversParentTypes['SignUp']> = {
+  event?: Resolver<ResolversTypes['Event'], ParentType, ContextType>;
+  participationStatus?: Resolver<ResolversTypes['ParticipationStatus'], ParentType, ContextType>;
+  user?: Resolver<ResolversTypes['PublicUser'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type SignUpResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['SignUpResponse'] = ResolversParentTypes['SignUpResponse']> = {
+  signUp?: Resolver<ResolversTypes['SignUp'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type UpdateOrganizationResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['UpdateOrganizationResponse'] = ResolversParentTypes['UpdateOrganizationResponse']> = {
   organization?: Resolver<ResolversTypes['Organization'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -708,6 +766,8 @@ export type Resolvers<ContextType = ApolloContext> = {
   PublicUser?: PublicUserResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   RemoveMemberResponse?: RemoveMemberResponseResolvers<ContextType>;
+  SignUp?: SignUpResolvers<ContextType>;
+  SignUpResponse?: SignUpResponseResolvers<ContextType>;
   UpdateOrganizationResponse?: UpdateOrganizationResponseResolvers<ContextType>;
   UpdateUserResponse?: UpdateUserResponseResolvers<ContextType>;
   UserResponse?: UserResponseResolvers<ContextType>;

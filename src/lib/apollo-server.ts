@@ -1,5 +1,5 @@
 import { unwrapResolverError } from "@apollo/server/errors";
-import { Booking, Cabin, Member, Organization, Prisma, Event } from "@prisma/client";
+import { Booking, Cabin, Member, Organization, Prisma, Event, EventSignUp } from "@prisma/client";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { GraphQLFormattedError } from "graphql";
 import { ZodError } from "zod";
@@ -114,6 +114,7 @@ interface IEventService {
   ): Promise<Event>;
   get(id: string): Promise<Event>;
   findMany(data?: { onlyFutureEvents?: boolean | null }): Promise<Event[]>;
+  signUp(userId: string, eventId: string): Promise<EventSignUp>;
 }
 
 export interface ApolloServerDependencies {

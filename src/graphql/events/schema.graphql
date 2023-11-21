@@ -105,7 +105,59 @@ input EventsInput {
   futureEventsOnly: Boolean
 }
 
+input SignUpInput {
+  """
+  The event to sign up for
+  """
+  eventId: ID!
+}
+
+enum ParticipationStatus {
+  """
+  The user is confirmed to be attending the event
+  """
+  CONFIRMED
+  """
+  The user has signed up for the event, and then retracted their sign up
+  """
+  RETRACTED
+  """
+  The user is on the wait list for the event
+  """
+  ON_WAITLIST
+  """
+  The user has signed up for the event, and had their sign up removed by an admin
+  """
+  REMOVED
+}
+
+type SignUp {
+  """
+  The status of the user's participation in the event
+  """
+  participationStatus: ParticipationStatus!
+  """
+  The event the user signed up for
+  """
+  event: Event!
+  """
+  The user that signed up for the event
+  """
+  user: PublicUser!
+}
+
+type SignUpResponse {
+  signUp: SignUp!
+}
+
 type Mutation {
+  """
+  Sign up for an event, requires that the user is logged in
+  """
+  signUp(data: SignUpInput!): SignUpResponse!
+  """
+  Create an event, requires that the user is logged in, and is a member of the organization that is hosting the event
+  """
   createEvent(data: CreateEventInput!): CreateEventResponse!
 }
 

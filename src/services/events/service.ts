@@ -4,8 +4,35 @@ import { merge } from "lodash-es";
 import { z } from "zod";
 
 import { InternalServerError, InvalidArgumentError, NotFoundError, PermissionDeniedError } from "@/domain/errors.js";
+import { AlreadySignedUpError } from "@/domain/events.js";
 import { Role } from "@/domain/organizations.js";
 import { User } from "@/domain/users.js";
+
+interface CreateConfirmedSignUpData {
+  userId: string;
+  eventId: string;
+  slotId: string;
+  participationStatus: Extract<ParticipationStatus, "CONFIRMED">;
+}
+
+interface CreateOnWaitlistSignUpData {
+  userId: string;
+  eventId: string;
+  participationStatus: Extract<ParticipationStatus, "ON_WAITLIST">;
+}
+
+interface UpdateToConfirmedSignUpData {
+  userId: string;
+  eventId: string;
+  slotId: string;
+  newParticipationStatus: Extract<ParticipationStatus, "CONFIRMED">;
+}
+
+interface UpdateToInactiveSignUpData {
+  userId: string;
+  eventId: string;
+  newParticipationStatus: Extract<ParticipationStatus, "REMOVED" | "RETRACTED">;
+}
 
 export interface EventRepository {
   create(data: {
@@ -33,40 +60,13 @@ export interface EventRepository {
   getSlotWithRemainingCapacity(eventId: string): Promise<EventSlot>;
   findMany(data?: { endAtGte?: Date | null }): Promise<Event[]>;
   findManySignUps(data: { eventId: string; status: ParticipationStatus }): Promise<EventSignUp[]>;
-  getSignUp(id: string): Promise<EventSignUp>;
-  createSignUp(data: {
-    userId: string;
-    participationStatus: ParticipationStatus;
-    event: {
-      id: string;
-      increment?: boolean;
-      decrement?: boolean;
-      capacityGt?: number;
-    };
-    slot?: {
-      id: string;
-      increment?: boolean;
-      decrement?: boolean;
-      capacityGt?: number;
-    };
-  }): Promise<{ signUp: EventSignUp; slot?: EventSlot; event: Event }>;
-  updateSignUp(data: {
-    signUp: { id: string; version: number };
-    newParticipationStatus: ParticipationStatus;
-    newSlotId?: string | null;
-    event: {
-      id: string;
-      increment?: boolean;
-      decrement?: boolean;
-      capacityGt?: number;
-    };
-    slot?: {
-      id: string;
-      increment?: boolean;
-      decrement?: boolean;
-      capacityGt?: number;
-    };
-  }): Promise<{ signUp: EventSignUp; slot?: EventSlot; event: Event }>;
+  getSignUp(userId: string, eventId: string): Promise<EventSignUp>;
+  createSignUp(
+    data: CreateConfirmedSignUpData | CreateOnWaitlistSignUpData
+  ): Promise<{ signUp: EventSignUp; slot?: EventSlot; event: Event }>;
+  updateSignUp(
+    data: UpdateToConfirmedSignUpData | UpdateToInactiveSignUpData
+  ): Promise<{ signUp: EventSignUp; slot?: EventSlot; event: Event }>;
 }
 
 export interface UserService {
@@ -260,7 +260,7 @@ export class EventService {
         const { signUp } = await this.eventRepository.createSignUp({
           userId,
           participationStatus: ParticipationStatus.ON_WAITLIST,
-          event: { id: event.id },
+          eventId,
         });
         return signUp;
       }
@@ -275,7 +275,7 @@ export class EventService {
           const { signUp } = await this.eventRepository.createSignUp({
             userId,
             participationStatus: ParticipationStatus.ON_WAITLIST,
-            event: { id: event.id },
+            eventId,
           });
           return signUp;
         }
@@ -288,15 +288,17 @@ export class EventService {
         const { signUp } = await this.eventRepository.createSignUp({
           userId,
           participationStatus: ParticipationStatus.CONFIRMED,
-          event: { id: event.id, decrement: true, capacityGt: 0 },
-          slot: { id: slotToSignUp.id, decrement: true, capacityGt: 0 },
+          eventId,
+          slotId: slotToSignUp.id,
         });
         this.logger?.info({ signUp, attempt }, "Successfully signed up user for event.");
         return signUp;
       } catch (err) {
-        if (!(err instanceof NotFoundError)) {
-          throw err;
+        if (err instanceof NotFoundError) continue;
+        if (err instanceof AlreadySignedUpError) {
+          return await this.eventRepository.getSignUp(userId, eventId);
         }
+        throw err;
       }
     }
 
@@ -366,18 +368,10 @@ export class EventService {
       try {
         const slot = await this.eventRepository.getSlotWithRemainingCapacity(eventId);
         const { signUp: confirmedSignUp } = await this.eventRepository.updateSignUp({
-          signUp: waitlistSignUp,
+          userId: waitlistSignUp.userId,
+          eventId,
+          slotId: slot.id,
           newParticipationStatus: ParticipationStatus.CONFIRMED,
-          slot: {
-            id: slot.id,
-            decrement: true,
-            capacityGt: 0,
-          },
-          event: {
-            id: event.id,
-            decrement: true,
-            capacityGt: 0,
-          },
         });
 
         this.logger?.info({ confirmedSignUp }, "Promoted from waitlist to confirmed sign up.");
@@ -404,12 +398,13 @@ export class EventService {
    * @returns The updated sign up
    */
   private async demoteConfirmedSignUp(data: {
-    signUpId: string;
-    newParticipationStatus: Exclude<ParticipationStatus, "CONFIRMED">;
+    userId: string;
+    eventId: string;
+    newParticipationStatus: Extract<ParticipationStatus, "RETRACTED" | "REMOVED">;
   }): Promise<EventSignUp> {
-    const { signUpId, newParticipationStatus } = data;
+    const { userId, eventId, newParticipationStatus } = data;
 
-    const signUp = await this.eventRepository.getSignUp(signUpId);
+    const signUp = await this.eventRepository.getSignUp(userId, eventId);
     if (signUp.participationStatus !== ParticipationStatus.CONFIRMED) {
       throw new InvalidArgumentError(
         `Can only demote sign ups with status confirmed, got, {signUp.participationStatus}`
@@ -421,36 +416,28 @@ export class EventService {
     }
 
     const { signUp: demotedSignUp } = await this.eventRepository.updateSignUp({
-      signUp: { id: signUp.id, version: signUp.version },
       newParticipationStatus,
-      newSlotId: null,
-      event: {
-        id: signUp.eventId,
-        increment: true,
-      },
-      slot: {
-        id: signUp.slotId,
-        increment: true,
-      },
+      eventId: eventId,
+      userId: userId,
     });
     return demotedSignUp;
   }
 
-  private async changeNonPariticipatingSignUp(data: {
-    signUpId: string;
-    newParticipationStatus: Exclude<ParticipationStatus, "CONFIRMED">;
+  private async demoteOnWaitlistSignUp(data: {
+    userId: string;
+    eventId: string;
+    newParticipationStatus: Exclude<ParticipationStatus, "CONFIRMED" | "ON_WAITLIST">;
   }) {
-    const signUp = await this.eventRepository.getSignUp(data.signUpId);
-    if (signUp.participationStatus === ParticipationStatus.CONFIRMED) {
-      throw new InvalidArgumentError("Cannot change the participation status of a confirmed sign up");
+    const { userId, eventId } = data;
+    const signUp = await this.eventRepository.getSignUp(userId, eventId);
+    if (signUp.participationStatus !== ParticipationStatus.ON_WAITLIST) {
+      throw new InvalidArgumentError("Can only demote sign ups with with participation status ON_WAITLIST");
     }
 
     const { signUp: updatedSignUp } = await this.eventRepository.updateSignUp({
-      signUp: { id: signUp.id, version: signUp.version },
+      userId,
+      eventId,
       newParticipationStatus: data.newParticipationStatus,
-      event: {
-        id: signUp.eventId,
-      },
     });
     return updatedSignUp;
   }
@@ -460,15 +447,20 @@ export class EventService {
    * if the sign up was assigned to a slot.
    * This should be used when a user cancels their sign up.
    */
-  async retractSignUp(signUpId: string): Promise<EventSignUp> {
-    const signUp = await this.eventRepository.getSignUp(signUpId);
+  async retractSignUp(userId: string, eventId: string): Promise<EventSignUp> {
+    const signUp = await this.eventRepository.getSignUp(userId, eventId);
 
     switch (signUp.participationStatus) {
       case ParticipationStatus.CONFIRMED:
-        return await this.demoteConfirmedSignUp({ signUpId, newParticipationStatus: ParticipationStatus.RETRACTED });
+        return await this.demoteConfirmedSignUp({
+          userId,
+          eventId,
+          newParticipationStatus: ParticipationStatus.RETRACTED,
+        });
       case ParticipationStatus.ON_WAITLIST:
-        return await this.changeNonPariticipatingSignUp({
-          signUpId,
+        return await this.demoteOnWaitlistSignUp({
+          userId,
+          eventId,
           newParticipationStatus: ParticipationStatus.RETRACTED,
         });
       case ParticipationStatus.REMOVED:
@@ -483,15 +475,20 @@ export class EventService {
    * if the sign up was assigned to a slot.
    * This should be used when a user is removed from an event by an admin.
    */
-  async removeSignUp(signUpId: string): Promise<EventSignUp> {
-    const signUp = await this.eventRepository.getSignUp(signUpId);
+  async removeSignUp(userId: string, eventId: string): Promise<EventSignUp> {
+    const signUp = await this.eventRepository.getSignUp(userId, eventId);
 
     switch (signUp.participationStatus) {
       case ParticipationStatus.CONFIRMED:
-        return await this.demoteConfirmedSignUp({ signUpId, newParticipationStatus: ParticipationStatus.REMOVED });
+        return await this.demoteConfirmedSignUp({
+          userId,
+          eventId,
+          newParticipationStatus: ParticipationStatus.REMOVED,
+        });
       case ParticipationStatus.ON_WAITLIST:
-        return await this.changeNonPariticipatingSignUp({
-          signUpId,
+        return await this.demoteOnWaitlistSignUp({
+          userId,
+          eventId,
           newParticipationStatus: ParticipationStatus.REMOVED,
         });
       case ParticipationStatus.RETRACTED:
