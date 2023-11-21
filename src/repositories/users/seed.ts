@@ -26,7 +26,7 @@ const userData: Prisma.UserCreateInput[] = [
     firstName: "Eva",
     lastName: "Student Åsen",
     username: "eva_student",
-    email: "email: eva_student@feide.no",
+    email: "eva_student@feide.no",
     feideId: "557669b3-af64-4a55-b97e-57c0836efef6",
     graduationYear: DateTime.now().plus({ year: 4 }).year,
   }),
@@ -72,7 +72,7 @@ export const load = async (db: PrismaClient) => {
       where: {
         feideId: user.feideId,
       },
-      update: {},
+      update: user,
       create: user,
     });
   }

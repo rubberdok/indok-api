@@ -193,10 +193,17 @@ export type EventsResponse = {
 
 export type Listing = {
   __typename?: 'Listing';
+  /** An optional URL to the application form for the listing, defaults to "" */
+  applicationUrl: Scalars['String']['output'];
+  /** When the listing closes, i.e. deadline, or when the listing is hidden from view. */
   closesAt: Scalars['DateTime']['output'];
+  /** The description of the listing, can be markdown. */
   description: Scalars['String']['output'];
   id: Scalars['ID']['output'];
+  /** The name/title of the listing, will be visible to users. */
   name: Scalars['String']['output'];
+  /** The organization that the listing belongs to. */
+  organization: Organization;
 };
 
 export type ListingInput = {
@@ -794,10 +801,12 @@ export type EventsResponseResolvers<ContextType = ApolloContext, ParentType exte
 };
 
 export type ListingResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Listing'] = ResolversParentTypes['Listing']> = {
+  applicationUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   closesAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  organization?: Resolver<ResolversTypes['Organization'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
