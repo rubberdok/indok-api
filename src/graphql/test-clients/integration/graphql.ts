@@ -179,6 +179,8 @@ export type Mutation = {
   newBooking: Booking;
   /** Remove a member from the organization by the ID of the membership. */
   removeMember: RemoveMemberResponse;
+  /** Retract an active sign up for an event, requires that the user is logged in */
+  retractSignUp: RetractSignUpResponse;
   /** Sign up for an event, requires that the user is logged in */
   signUp: SignUpResponse;
   updateBookingStatus: Booking;
@@ -213,6 +215,11 @@ export type MutationNewBookingArgs = {
 
 export type MutationRemoveMemberArgs = {
   data: RemoveMemberInput;
+};
+
+
+export type MutationRetractSignUpArgs = {
+  data: RetractSignUpInput;
 };
 
 
@@ -336,6 +343,16 @@ export type RemoveMemberInput = {
 export type RemoveMemberResponse = {
   __typename?: 'RemoveMemberResponse';
   member: Member;
+};
+
+export type RetractSignUpInput = {
+  /** The event to retract the sign up for */
+  eventId: Scalars['ID']['input'];
+};
+
+export type RetractSignUpResponse = {
+  __typename?: 'RetractSignUpResponse';
+  signUp: SignUp;
 };
 
 export enum Role {

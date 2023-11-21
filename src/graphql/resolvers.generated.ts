@@ -14,6 +14,7 @@ import    { createEvent as Mutation_createEvent } from './events/resolvers/Mutat
 import    { createOrganization as Mutation_createOrganization } from './organizations/resolvers/Mutation/createOrganization.js';
 import    { newBooking as Mutation_newBooking } from './cabins/resolvers/Mutation/newBooking.js';
 import    { removeMember as Mutation_removeMember } from './organizations/resolvers/Mutation/removeMember.js';
+import    { retractSignUp as Mutation_retractSignUp } from './events/resolvers/Mutation/retractSignUp.js';
 import    { signUp as Mutation_signUp } from './events/resolvers/Mutation/signUp.js';
 import    { updateBookingStatus as Mutation_updateBookingStatus } from './cabins/resolvers/Mutation/updateBookingStatus.js';
 import    { updateOrganization as Mutation_updateOrganization } from './organizations/resolvers/Mutation/updateOrganization.js';
@@ -26,6 +27,7 @@ import    { events as Query_events } from './events/resolvers/Query/events.js';
 import    { user as Query_user } from './users/resolvers/Query/user.js';
 import    { users as Query_users } from './users/resolvers/Query/users.js';
 import    { RemoveMemberResponse } from './organizations/resolvers/RemoveMemberResponse.js';
+import    { RetractSignUpResponse } from './events/resolvers/RetractSignUpResponse.js';
 import    { SignUp } from './events/resolvers/SignUp.js';
 import    { SignUpResponse } from './events/resolvers/SignUpResponse.js';
 import    { UpdateOrganizationResponse } from './organizations/resolvers/UpdateOrganizationResponse.js';
@@ -35,7 +37,7 @@ import    { UsersResponse } from './users/resolvers/UsersResponse.js';
 import    { DateTimeResolver } from 'graphql-scalars';
     export const resolvers: Resolvers = {
       Query: { event: Query_event,events: Query_events,user: Query_user,users: Query_users },
-      Mutation: { addMember: Mutation_addMember,createEvent: Mutation_createEvent,createOrganization: Mutation_createOrganization,newBooking: Mutation_newBooking,removeMember: Mutation_removeMember,signUp: Mutation_signUp,updateBookingStatus: Mutation_updateBookingStatus,updateOrganization: Mutation_updateOrganization,updateUser: Mutation_updateUser },
+      Mutation: { addMember: Mutation_addMember,createEvent: Mutation_createEvent,createOrganization: Mutation_createOrganization,newBooking: Mutation_newBooking,removeMember: Mutation_removeMember,retractSignUp: Mutation_retractSignUp,signUp: Mutation_signUp,updateBookingStatus: Mutation_updateBookingStatus,updateOrganization: Mutation_updateOrganization,updateUser: Mutation_updateUser },
       
       AddMemberResponse: AddMemberResponse,
 Booking: Booking,
@@ -50,6 +52,7 @@ Organization: Organization,
 PrivateUser: PrivateUser,
 PublicUser: PublicUser,
 RemoveMemberResponse: RemoveMemberResponse,
+RetractSignUpResponse: RetractSignUpResponse,
 SignUp: SignUp,
 SignUpResponse: SignUpResponse,
 UpdateOrganizationResponse: UpdateOrganizationResponse,
