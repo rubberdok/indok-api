@@ -56,6 +56,7 @@ export type Booking = {
 
 export type Cabin = {
   __typename?: 'Cabin';
+  capacity: Scalars['Int']['output'];
   externalPrice: Scalars['Int']['output'];
   id: Scalars['ID']['output'];
   internalPrice: Scalars['Int']['output'];

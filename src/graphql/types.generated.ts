@@ -63,6 +63,7 @@ export type Booking = {
 
 export type Cabin = {
   __typename?: 'Cabin';
+  capacity: Scalars['Int']['output'];
   externalPrice: Scalars['Int']['output'];
   id: Scalars['ID']['output'];
   internalPrice: Scalars['Int']['output'];
@@ -768,6 +769,7 @@ export type BookingResolvers<ContextType = ApolloContext, ParentType extends Res
 };
 
 export type CabinResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Cabin'] = ResolversParentTypes['Cabin']> = {
+  capacity?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   externalPrice?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   internalPrice?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;

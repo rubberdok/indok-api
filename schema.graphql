@@ -37,6 +37,7 @@ type Booking {
 }
 
 type Cabin {
+  capacity: Int!
   externalPrice: Int!
   id: ID!
   internalPrice: Int!

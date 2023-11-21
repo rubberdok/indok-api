@@ -1,3 +1,4 @@
+import { faker } from "@faker-js/faker";
 import { Cabin } from "@prisma/client";
 import { mock } from "jest-mock-extended";
 
@@ -10,9 +11,11 @@ describe("Cabin queries", () => {
       const { client, cabinService } = createMockApolloServer();
       cabinService.findManyCabins.mockResolvedValue([
         mock<Cabin>({
+          id: faker.string.uuid(),
           name: "Oksen",
         }),
         mock<Cabin>({
+          id: faker.string.uuid(),
           name: "Bjørnen",
         }),
       ]);

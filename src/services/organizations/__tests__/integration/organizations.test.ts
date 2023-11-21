@@ -53,7 +53,7 @@ describe("OrganizationsService", () => {
               feideId: faker.string.uuid(),
               firstName: faker.person.firstName(),
               lastName: faker.person.lastName(),
-              username: faker.internet.userName(),
+              username: faker.string.sample(20),
             },
             organization: {
               name: faker.string.sample(20),
@@ -83,7 +83,7 @@ describe("OrganizationsService", () => {
               feideId: faker.string.uuid(),
               firstName: faker.person.firstName(),
               lastName: faker.person.lastName(),
-              username: faker.internet.userName(),
+              username: faker.string.sample(20),
               isSuperUser: true,
             },
             organization: {
@@ -114,7 +114,7 @@ describe("OrganizationsService", () => {
               feideId: faker.string.uuid(),
               firstName: faker.person.firstName(),
               lastName: faker.person.lastName(),
-              username: faker.internet.userName(),
+              username: faker.string.sample(20),
             },
             organization: {
               name: faker.string.sample(20),
@@ -145,7 +145,7 @@ describe("OrganizationsService", () => {
               feideId: faker.string.uuid(),
               firstName: faker.person.firstName(),
               lastName: faker.person.lastName(),
-              username: faker.internet.userName(),
+              username: faker.string.sample(20),
             },
             organization: {
               name: faker.string.sample(20),
@@ -222,7 +222,7 @@ describe("OrganizationsService", () => {
                     feideId: faker.string.uuid(),
                     firstName: faker.person.firstName(),
                     lastName: faker.person.lastName(),
-                    username: faker.internet.userName(),
+                    username: faker.string.sample(20),
                   },
                 },
                 role: member.role,
@@ -287,7 +287,7 @@ describe("OrganizationsService", () => {
               feideId: faker.string.uuid(),
               firstName: faker.person.firstName(),
               lastName: faker.person.lastName(),
-              username: faker.internet.userName(),
+              username: faker.string.sample(20),
             },
             organization: {
               name: faker.string.sample(20),
@@ -315,7 +315,7 @@ describe("OrganizationsService", () => {
               feideId: faker.string.uuid(),
               firstName: faker.person.firstName(),
               lastName: faker.person.lastName(),
-              username: faker.internet.userName(),
+              username: faker.string.sample(20),
             },
             organization: {
               name: faker.string.sample(20),
@@ -344,7 +344,7 @@ describe("OrganizationsService", () => {
               feideId: faker.string.uuid(),
               firstName: faker.person.firstName(),
               lastName: faker.person.lastName(),
-              username: faker.internet.userName(),
+              username: faker.string.sample(20),
             },
             organization: {
               name: faker.string.sample(20),
@@ -419,7 +419,7 @@ describe("OrganizationsService", () => {
                     feideId: faker.string.uuid(),
                     firstName: faker.person.firstName(),
                     lastName: faker.person.lastName(),
-                    username: faker.internet.userName(),
+                    username: faker.string.sample(20),
                   },
                 },
                 role: member.role,

@@ -46,6 +46,7 @@ type Cabin {
   name: String!
   internalPrice: Int!
   externalPrice: Int!
+  capacity: Int!
 }
 
 type Booking {

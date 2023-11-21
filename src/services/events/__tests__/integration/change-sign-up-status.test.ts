@@ -251,7 +251,7 @@ describe("EventService", () => {
       });
       const user = await prisma.user.create({
         data: {
-          email: faker.internet.email(),
+          email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
           firstName: faker.person.firstName(),
           lastName: faker.person.lastName(),
           username: faker.string.sample(20),
