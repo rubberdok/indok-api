@@ -438,6 +438,10 @@ export class EventService {
    * retractSignUp retracts a sign up, incrementing the remaining capacity of the event and slot
    * if the sign up was assigned to a slot.
    * This should be used when a user cancels their sign up.
+   *
+   * @param userId - The ID of the user that is retracting their sign up
+   * @param eventId - The ID of the event to retract the sign up for
+   * @returns The updated sign up
    */
   async retractSignUp(userId: string, eventId: string): Promise<EventSignUp> {
     const signUp = await this.eventRepository.getSignUp(userId, eventId);

@@ -185,6 +185,8 @@ export type Mutation = {
   newBooking: Booking;
   /** Remove a member from the organization by the ID of the membership. */
   removeMember: RemoveMemberResponse;
+  /** Retract an active sign up for an event, requires that the user is logged in */
+  retractSignUp: RetractSignUpResponse;
   /** Sign up for an event, requires that the user is logged in */
   signUp: SignUpResponse;
   updateBookingStatus: Booking;
@@ -219,6 +221,11 @@ export type MutationnewBookingArgs = {
 
 export type MutationremoveMemberArgs = {
   data: RemoveMemberInput;
+};
+
+
+export type MutationretractSignUpArgs = {
+  data: RetractSignUpInput;
 };
 
 
@@ -341,6 +348,16 @@ export type RemoveMemberInput = {
 export type RemoveMemberResponse = {
   __typename?: 'RemoveMemberResponse';
   member: Member;
+};
+
+export type RetractSignUpInput = {
+  /** The event to retract the sign up for */
+  eventId: Scalars['ID']['input'];
+};
+
+export type RetractSignUpResponse = {
+  __typename?: 'RetractSignUpResponse';
+  signUp: SignUp;
 };
 
 export type Role =
@@ -531,6 +548,8 @@ export type ResolversTypes = {
   Query: ResolverTypeWrapper<{}>;
   RemoveMemberInput: RemoveMemberInput;
   RemoveMemberResponse: ResolverTypeWrapper<Omit<RemoveMemberResponse, 'member'> & { member: ResolversTypes['Member'] }>;
+  RetractSignUpInput: RetractSignUpInput;
+  RetractSignUpResponse: ResolverTypeWrapper<Omit<RetractSignUpResponse, 'signUp'> & { signUp: ResolversTypes['SignUp'] }>;
   Role: Role;
   SignUp: ResolverTypeWrapper<SignUpMapper>;
   SignUpInput: SignUpInput;
@@ -575,6 +594,8 @@ export type ResolversParentTypes = {
   Query: {};
   RemoveMemberInput: RemoveMemberInput;
   RemoveMemberResponse: Omit<RemoveMemberResponse, 'member'> & { member: ResolversParentTypes['Member'] };
+  RetractSignUpInput: RetractSignUpInput;
+  RetractSignUpResponse: Omit<RetractSignUpResponse, 'signUp'> & { signUp: ResolversParentTypes['SignUp'] };
   SignUp: SignUpMapper;
   SignUpInput: SignUpInput;
   SignUpResponse: Omit<SignUpResponse, 'signUp'> & { signUp: ResolversParentTypes['SignUp'] };
@@ -664,6 +685,7 @@ export type MutationResolvers<ContextType = ApolloContext, ParentType extends Re
   createOrganization?: Resolver<ResolversTypes['CreateOrganizationResponse'], ParentType, ContextType, RequireFields<MutationcreateOrganizationArgs, 'data'>>;
   newBooking?: Resolver<ResolversTypes['Booking'], ParentType, ContextType, RequireFields<MutationnewBookingArgs, 'data'>>;
   removeMember?: Resolver<ResolversTypes['RemoveMemberResponse'], ParentType, ContextType, RequireFields<MutationremoveMemberArgs, 'data'>>;
+  retractSignUp?: Resolver<ResolversTypes['RetractSignUpResponse'], ParentType, ContextType, RequireFields<MutationretractSignUpArgs, 'data'>>;
   signUp?: Resolver<ResolversTypes['SignUpResponse'], ParentType, ContextType, RequireFields<MutationsignUpArgs, 'data'>>;
   updateBookingStatus?: Resolver<ResolversTypes['Booking'], ParentType, ContextType, RequireFields<MutationupdateBookingStatusArgs, 'data'>>;
   updateOrganization?: Resolver<ResolversTypes['UpdateOrganizationResponse'], ParentType, ContextType, RequireFields<MutationupdateOrganizationArgs, 'data'>>;
@@ -714,6 +736,11 @@ export type QueryResolvers<ContextType = ApolloContext, ParentType extends Resol
 
 export type RemoveMemberResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['RemoveMemberResponse'] = ResolversParentTypes['RemoveMemberResponse']> = {
   member?: Resolver<ResolversTypes['Member'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type RetractSignUpResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['RetractSignUpResponse'] = ResolversParentTypes['RetractSignUpResponse']> = {
+  signUp?: Resolver<ResolversTypes['SignUp'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -768,6 +795,7 @@ export type Resolvers<ContextType = ApolloContext> = {
   PublicUser?: PublicUserResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   RemoveMemberResponse?: RemoveMemberResponseResolvers<ContextType>;
+  RetractSignUpResponse?: RetractSignUpResponseResolvers<ContextType>;
   SignUp?: SignUpResolvers<ContextType>;
   SignUpResponse?: SignUpResponseResolvers<ContextType>;
   UpdateOrganizationResponse?: UpdateOrganizationResponseResolvers<ContextType>;

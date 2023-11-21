@@ -151,7 +151,22 @@ type SignUpResponse {
   signUp: SignUp!
 }
 
+input RetractSignUpInput {
+  """
+  The event to retract the sign up for
+  """
+  eventId: ID!
+}
+
+type RetractSignUpResponse {
+  signUp: SignUp!
+}
+
 type Mutation {
+  """
+  Retract an active sign up for an event, requires that the user is logged in
+  """
+  retractSignUp(data: RetractSignUpInput!): RetractSignUpResponse!
   """
   Sign up for an event, requires that the user is logged in
   """

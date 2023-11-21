@@ -115,6 +115,7 @@ interface IEventService {
   get(id: string): Promise<Event>;
   findMany(data?: { onlyFutureEvents?: boolean | null }): Promise<Event[]>;
   signUp(userId: string, eventId: string): Promise<EventSignUp>;
+  retractSignUp(userId: string, eventId: string): Promise<EventSignUp>;
 }
 
 export interface ApolloServerDependencies {
