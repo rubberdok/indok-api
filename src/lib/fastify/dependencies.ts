@@ -63,9 +63,9 @@ export function dependenciesFactory(
   const listingRepository = new ListingRepository(prisma);
 
   const mailService = new MailService(postmark, env.NO_REPLY_EMAIL);
-  const cabinService = new CabinService(cabinRepository, mailService);
   const userService = new UserService(userRepository);
   const permissionService = new PermissionService(memberRepository, userService, organizationRepository);
+  const cabinService = new CabinService(cabinRepository, mailService, permissionService);
   const authService = overrides?.authService ?? new AuthService(userService, feideClient, FeideProvider);
   const organizationService = new OrganizationService(organizationRepository, memberRepository, permissionService);
   const eventService = new EventService(eventRepository, permissionService);

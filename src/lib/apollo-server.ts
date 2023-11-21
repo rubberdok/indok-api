@@ -93,8 +93,9 @@ export interface BookingData {
 
 export interface ICabinService {
   newBooking(data: BookingData): Promise<Booking>;
-  updateBookingStatus(id: string, status: BookingStatus): Promise<Booking>;
+  updateBookingStatus(userId: string, id: string, status: BookingStatus): Promise<Booking>;
   getCabin(id: string): Promise<Cabin>;
+  getCabinByBookingId(bookingId: string): Promise<Cabin>;
 }
 
 interface IEventService {

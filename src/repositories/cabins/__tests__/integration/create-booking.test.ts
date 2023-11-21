@@ -22,6 +22,11 @@ describe("Cabin Repository", () => {
       // 1.
       const cabin = await prisma.cabin.create({
         data: {
+          organization: {
+            create: {
+              name: faker.string.sample(20),
+            },
+          },
           name: faker.string.sample(),
           capacity: faker.number.int({ max: 10 }),
           internalPrice: faker.number.int({ max: 2000 }),

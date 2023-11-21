@@ -1,5 +1,7 @@
 import { Booking, BookingStatus, Cabin, Prisma, PrismaClient } from "@prisma/client";
 
+import { NotFoundError } from "@/domain/errors.js";
+
 export type OverlappingBookingsData = {
   bookingId: string;
   startDate: Date;
@@ -78,5 +80,23 @@ export class CabinRepository {
       },
       data,
     });
+  }
+
+  /**
+   * getCabinBookingById returns the cabin that has a booking with the given ID.
+   */
+  async getCabinByBookingId(bookingId: string): Promise<Cabin> {
+    const booking = await this.db.cabin.findFirst({
+      where: {
+        bookings: {
+          some: {
+            id: bookingId,
+          },
+        },
+      },
+    });
+
+    if (!booking) throw new NotFoundError("No matching booking found");
+    return booking;
   }
 }

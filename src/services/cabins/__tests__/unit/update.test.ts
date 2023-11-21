@@ -1,0 +1,100 @@
+import { faker } from "@faker-js/faker";
+import { Booking, Cabin, FeaturePermission, Role } from "@prisma/client";
+import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
+
+import { BookingStatus } from "@/domain/cabins.js";
+import { PermissionDeniedError, ValidationError } from "@/domain/errors.js";
+
+import { CabinRepository, CabinService, IMailService, PermissionService } from "../../service.js";
+
+describe("CabinService", () => {
+  let cabinRepository: DeepMockProxy<CabinRepository>;
+  let mailService: DeepMockProxy<IMailService>;
+  let permissionService: DeepMockProxy<PermissionService>;
+  let cabinService: CabinService;
+
+  beforeAll(() => {
+    cabinRepository = mockDeep<CabinRepository>();
+    mailService = mockDeep<IMailService>();
+    permissionService = mockDeep<PermissionService>();
+    cabinService = new CabinService(cabinRepository, mailService, permissionService);
+  });
+
+  describe("updateBookingStatus", () => {
+    it("should throw PermissionDeniedError if user does not have permission to update booking", async () => {
+      /**
+       * Arrange
+       *
+       * Mock the permissionService.hasRole method to return false.
+       * Mock the cabinRepository.getCabinByBookingId method to return a cabin.
+       */
+      const organizationId = faker.string.uuid();
+      const userId = faker.string.uuid();
+      cabinRepository.getCabinByBookingId.mockResolvedValueOnce(mock<Cabin>({ organizationId }));
+      permissionService.hasRole.mockResolvedValueOnce(false);
+
+      /**
+       * Act
+       *
+       * Call updateBookingStatus
+       */
+      const updateBookingStatus = cabinService.updateBookingStatus(
+        userId,
+        faker.string.uuid(),
+        BookingStatus.CONFIRMED
+      );
+
+      /**
+       * Assert
+       *
+       * Expect updateBookingStatus to throw a PermissionDeniedError
+       * Expect permissionService.hasRole to be called with the correct arguments
+       */
+      await expect(updateBookingStatus).rejects.toThrow(PermissionDeniedError);
+      expect(permissionService.hasRole).toHaveBeenCalledWith({
+        userId: userId,
+        organizationId,
+        role: Role.MEMBER,
+        featurePermission: FeaturePermission.CABIN_BOOKING,
+      });
+    });
+
+    it("should throw ValidationError if there are overlapping bookings", async () => {
+      /**
+       * Arrange
+       *
+       * Mock the permissionService.hasRole method to return true.
+       * Mock the cabinRepository.getCabinByBookingId method to return a cabin.
+       * Mock getBookingById to return a booking.
+       * Mock getOverlappingBookings to return multiple bookings.
+       */
+      const organizationId = faker.string.uuid();
+      const userId = faker.string.uuid();
+      cabinRepository.getCabinByBookingId.mockResolvedValueOnce(mock<Cabin>({ organizationId }));
+      permissionService.hasRole.mockResolvedValueOnce(true);
+      cabinRepository.getBookingById.mockResolvedValueOnce(
+        mock<Booking>({ id: faker.string.uuid(), startDate: faker.date.future(), endDate: faker.date.future() })
+      );
+      cabinRepository.getOverlappingBookings.mockResolvedValueOnce([mock<Booking>({ id: faker.string.uuid() })]);
+
+      /**
+       * Act
+       *
+       * Call updateBookingStatus
+       */
+      const updateBookingStatus = cabinService.updateBookingStatus(
+        userId,
+        faker.string.uuid(),
+        BookingStatus.CONFIRMED
+      );
+
+      /**
+       * Assert
+       *
+       * Expect updateBookingStatus to throw a PermissionDeniedError
+       * Expect permissionService.hasRole to be called with the correct arguments
+       */
+      await expect(updateBookingStatus).rejects.toThrow(ValidationError);
+    });
+  });
+});

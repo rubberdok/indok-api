@@ -51,6 +51,7 @@ model Organization {
   members            Member[]
   listings           Listing[]
   featurePermissions FeaturePermission[] @default([])
+  Cabin              Cabin[]
 }
 
 model Event {
@@ -125,14 +126,16 @@ enum BookingStatus {
 }
 
 model Cabin {
-  id            String    @id @default(uuid()) @db.Uuid
-  name          String    @unique
-  internalPrice Int
-  externalPrice Int
-  capacity      Int
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  Booking       Booking[]
+  id             String       @id @default(uuid()) @db.Uuid
+  name           String       @unique
+  internalPrice  Int
+  externalPrice  Int
+  capacity       Int
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  bookings       Booking[]
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String       @db.Uuid
 }
 
 model Booking {

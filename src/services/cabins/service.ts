@@ -1,8 +1,9 @@
-import { Booking, Cabin } from "@prisma/client";
+import { Booking, Cabin, FeaturePermission } from "@prisma/client";
 import { MessageSendingResponse } from "postmark/dist/client/models/index.js";
 
 import { BookingStatus } from "@/domain/cabins.js";
-import { ValidationError } from "@/domain/errors.js";
+import { PermissionDeniedError, ValidationError } from "@/domain/errors.js";
+import { Role } from "@/domain/organizations.js";
 import { EmailContent, TemplateAlias } from "@/lib/postmark.js";
 
 import { bookingSchema } from "./validation.js";
@@ -28,6 +29,16 @@ export interface CabinRepository {
     endDate: Date;
     status: BookingStatus;
   }): Promise<Booking[]>;
+  getCabinByBookingId(bookingId: string): Promise<Cabin>;
+}
+
+export interface PermissionService {
+  hasRole(data: {
+    userId: string;
+    organizationId: string;
+    role: Role;
+    featurePermission: FeaturePermission;
+  }): Promise<boolean>;
 }
 
 export interface IMailService {
@@ -37,10 +48,15 @@ export interface IMailService {
 export class CabinService {
   constructor(
     private cabinRepository: CabinRepository,
-    private mailService: IMailService
+    private mailService: IMailService,
+    private permissionService: PermissionService
   ) {}
 
-  getCabin(id: string): Promise<Cabin> {
+  async getCabinByBookingId(bookingId: string): Promise<Cabin> {
+    return this.cabinRepository.getCabinByBookingId(bookingId);
+  }
+
+  async getCabin(id: string): Promise<Cabin> {
     return this.cabinRepository.getCabinById(id);
   }
 
@@ -65,7 +81,28 @@ export class CabinService {
     return booking;
   }
 
-  async updateBookingStatus(id: string, status: BookingStatus): Promise<Booking> {
+  /**
+   * updateBookingStatus updates the status of a booking. Requires MEMBER role and CABIN_BOOKING permission.
+   *
+   * @throws {PermissionDeniedError} if the user does not have permission to update the booking
+   * @throws {ValidationError} if the new status is CONFIRMED and the booking overlaps with another booking
+   * @param userId - The id of the user performing the update
+   * @param id - The id of the booking to update
+   * @param status - The new status of the booking
+   * @returns The updated booking
+   */
+  async updateBookingStatus(userId: string, id: string, status: BookingStatus): Promise<Booking> {
+    const cabin = await this.cabinRepository.getCabinByBookingId(id);
+
+    const hasRole = await this.permissionService.hasRole({
+      userId,
+      organizationId: cabin.organizationId,
+      role: Role.MEMBER,
+      featurePermission: FeaturePermission.CABIN_BOOKING,
+    });
+
+    if (!hasRole) throw new PermissionDeniedError("You do not have permission to update this booking.");
+
     if (status === BookingStatus.CONFIRMED) {
       const booking = await this.cabinRepository.getBookingById(id);
       const overlapping = await this.cabinRepository.getOverlappingBookings({
