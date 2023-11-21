@@ -193,6 +193,7 @@ export type EventsResponse = {
 
 export type Listing = {
   __typename?: 'Listing';
+  applicationUrl: Scalars['String']['output'];
   closesAt: Scalars['DateTime']['output'];
   description: Scalars['String']['output'];
   id: Scalars['ID']['output'];
@@ -795,6 +796,7 @@ export type EventsResponseResolvers<ContextType = ApolloContext, ParentType exte
 };
 
 export type ListingResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Listing'] = ResolversParentTypes['Listing']> = {
+  applicationUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   closesAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;

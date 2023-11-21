@@ -4,6 +4,7 @@ type Listing {
   description: String!
   closesAt: DateTime!
   organization: Organization!
+  applicationUrl: String!
 }
 
 type ListingsResponse {

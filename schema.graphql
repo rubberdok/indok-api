@@ -217,6 +217,7 @@ type EventsResponse {
 }
 
 type Listing {
+  applicationUrl: String!
   closesAt: DateTime!
   description: String!
   id: ID!
