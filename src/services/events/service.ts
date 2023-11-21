@@ -74,14 +74,14 @@ export interface UserService {
 
 interface Logger extends FastifyBaseLogger {}
 
-export interface OrganizationService {
+export interface PermissionService {
   hasRole(data: { userId: string; organizationId: string; role: Role }): Promise<boolean>;
 }
 
 export class EventService {
   constructor(
     private eventRepository: EventRepository,
-    private organizationService: OrganizationService,
+    private permissionService: PermissionService,
     private logger?: Logger
   ) {}
   /**
@@ -112,7 +112,7 @@ export class EventService {
       contactEmail?: string | null;
     }
   ) {
-    const isMember = await this.organizationService.hasRole({
+    const isMember = await this.permissionService.hasRole({
       userId,
       organizationId,
       role: Role.MEMBER,
@@ -177,7 +177,7 @@ export class EventService {
       throw new InvalidArgumentError("Events that belong to deleted organizations cannot be updated.");
     }
 
-    const isMember = await this.organizationService.hasRole({
+    const isMember = await this.permissionService.hasRole({
       userId,
       organizationId: event.organizationId,
       role: Role.MEMBER,

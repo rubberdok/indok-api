@@ -2,6 +2,8 @@ import assert from "assert";
 
 import { faker } from "@faker-js/faker";
 import { ResultOf } from "@graphql-typed-document-node/core";
+import { Organization } from "@prisma/client";
+import { mock } from "jest-mock-extended";
 
 import { errorCodes } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
@@ -56,13 +58,15 @@ describe("OrganizationResolvers", () => {
          */
         const { createMockContext, client, organizationService } = createMockApolloServer();
         const contextValue = createMockContext({ userId: faker.string.uuid(), authenticated: true });
-        organizationService.create.mockResolvedValueOnce({
-          id: faker.string.uuid(),
-          name: "test",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          description: "",
-        });
+        organizationService.create.mockResolvedValueOnce(
+          mock<Organization>({
+            id: faker.string.uuid(),
+            name: "test",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            description: "",
+          })
+        );
 
         /**
          * Act
@@ -144,13 +148,15 @@ describe("OrganizationResolvers", () => {
          */
         const { createMockContext, client, organizationService } = createMockApolloServer();
         const contextValue = createMockContext({ userId: faker.string.uuid(), authenticated: true });
-        organizationService.update.mockResolvedValueOnce({
-          id: faker.string.uuid(),
-          name: "test",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          description: "",
-        });
+        organizationService.update.mockResolvedValueOnce(
+          mock<Organization>({
+            id: faker.string.uuid(),
+            name: "test",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            description: "",
+          })
+        );
 
         /**
          * Act
@@ -245,13 +251,15 @@ describe("OrganizationResolvers", () => {
           organizationId: faker.string.uuid(),
           role: Role.MEMBER,
         });
-        organizationService.get.mockResolvedValueOnce({
-          id: faker.string.uuid(),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          name: "test",
-          description: "",
-        });
+        organizationService.get.mockResolvedValueOnce(
+          mock<Organization>({
+            id: faker.string.uuid(),
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            name: "test",
+            description: "",
+          })
+        );
         organizationService.getMembers.mockResolvedValueOnce([
           {
             id: faker.string.uuid(),
@@ -369,13 +377,15 @@ describe("OrganizationResolvers", () => {
           organizationId: faker.string.uuid(),
           role: Role.MEMBER,
         });
-        organizationService.get.mockResolvedValueOnce({
-          id: faker.string.uuid(),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          name: "test",
-          description: "",
-        });
+        organizationService.get.mockResolvedValueOnce(
+          mock<Organization>({
+            id: faker.string.uuid(),
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            name: "test",
+            description: "",
+          })
+        );
         organizationService.getMembers.mockResolvedValueOnce([
           {
             id: faker.string.uuid(),

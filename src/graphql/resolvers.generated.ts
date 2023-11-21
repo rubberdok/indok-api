@@ -3,6 +3,7 @@
     import    { AddMemberResponse } from './organizations/resolvers/AddMemberResponse.js';
 import    { Booking } from './cabins/resolvers/Booking.js';
 import    { Cabin } from './cabins/resolvers/Cabin.js';
+import    { CabinsResponse } from './cabins/resolvers/CabinsResponse.js';
 import    { CreateEventResponse } from './events/resolvers/CreateEventResponse.js';
 import    { CreateListingResponse } from './listings/resolvers/CreateListingResponse.js';
 import    { CreateOrganizationResponse } from './organizations/resolvers/CreateOrganizationResponse.js';
@@ -27,9 +28,11 @@ import    { updateBookingStatus as Mutation_updateBookingStatus } from './cabins
 import    { updateListing as Mutation_updateListing } from './listings/resolvers/Mutation/updateListing.js';
 import    { updateOrganization as Mutation_updateOrganization } from './organizations/resolvers/Mutation/updateOrganization.js';
 import    { updateUser as Mutation_updateUser } from './users/resolvers/Mutation/updateUser.js';
+import    { NewBookingResponse } from './cabins/resolvers/NewBookingResponse.js';
 import    { Organization } from './organizations/resolvers/Organization.js';
 import    { PrivateUser } from './users/resolvers/PrivateUser.js';
 import    { PublicUser } from './users/resolvers/PublicUser.js';
+import    { cabins as Query_cabins } from './cabins/resolvers/Query/cabins.js';
 import    { event as Query_event } from './events/resolvers/Query/event.js';
 import    { events as Query_events } from './events/resolvers/Query/events.js';
 import    { listing as Query_listing } from './listings/resolvers/Query/listing.js';
@@ -40,6 +43,7 @@ import    { RemoveMemberResponse } from './organizations/resolvers/RemoveMemberR
 import    { RetractSignUpResponse } from './events/resolvers/RetractSignUpResponse.js';
 import    { SignUp } from './events/resolvers/SignUp.js';
 import    { SignUpResponse } from './events/resolvers/SignUpResponse.js';
+import    { UpdateBookingResponse } from './cabins/resolvers/UpdateBookingResponse.js';
 import    { UpdateListingResponse } from './listings/resolvers/UpdateListingResponse.js';
 import    { UpdateOrganizationResponse } from './organizations/resolvers/UpdateOrganizationResponse.js';
 import    { UpdateUserResponse } from './users/resolvers/UpdateUserResponse.js';
@@ -47,12 +51,13 @@ import    { UserResponse } from './users/resolvers/UserResponse.js';
 import    { UsersResponse } from './users/resolvers/UsersResponse.js';
 import    { DateTimeResolver } from 'graphql-scalars';
     export const resolvers: Resolvers = {
-      Query: { event: Query_event,events: Query_events,listing: Query_listing,listings: Query_listings,user: Query_user,users: Query_users },
+      Query: { cabins: Query_cabins,event: Query_event,events: Query_events,listing: Query_listing,listings: Query_listings,user: Query_user,users: Query_users },
       Mutation: { addMember: Mutation_addMember,createEvent: Mutation_createEvent,createListing: Mutation_createListing,createOrganization: Mutation_createOrganization,deleteListing: Mutation_deleteListing,newBooking: Mutation_newBooking,removeMember: Mutation_removeMember,retractSignUp: Mutation_retractSignUp,signUp: Mutation_signUp,updateBookingStatus: Mutation_updateBookingStatus,updateListing: Mutation_updateListing,updateOrganization: Mutation_updateOrganization,updateUser: Mutation_updateUser },
       
       AddMemberResponse: AddMemberResponse,
 Booking: Booking,
 Cabin: Cabin,
+CabinsResponse: CabinsResponse,
 CreateEventResponse: CreateEventResponse,
 CreateListingResponse: CreateListingResponse,
 CreateOrganizationResponse: CreateOrganizationResponse,
@@ -64,6 +69,7 @@ Listing: Listing,
 ListingResponse: ListingResponse,
 ListingsResponse: ListingsResponse,
 Member: Member,
+NewBookingResponse: NewBookingResponse,
 Organization: Organization,
 PrivateUser: PrivateUser,
 PublicUser: PublicUser,
@@ -71,6 +77,7 @@ RemoveMemberResponse: RemoveMemberResponse,
 RetractSignUpResponse: RetractSignUpResponse,
 SignUp: SignUp,
 SignUpResponse: SignUpResponse,
+UpdateBookingResponse: UpdateBookingResponse,
 UpdateListingResponse: UpdateListingResponse,
 UpdateOrganizationResponse: UpdateOrganizationResponse,
 UpdateUserResponse: UpdateUserResponse,

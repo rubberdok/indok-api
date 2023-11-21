@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { Prisma, PrismaClient } from "@prisma/client";
+import { FeaturePermission, Prisma, PrismaClient } from "@prisma/client";
 
 faker.seed(42);
 
@@ -37,10 +37,26 @@ export const load = async (db: PrismaClient) => {
       create: organization,
     });
   }
+
+  // Load Hyttestyret
+  await db.organization.upsert({
+    where: {
+      name: "Hyttestyret",
+    },
+    update: {
+      featurePermissions: [FeaturePermission.CABIN_BOOKING],
+    },
+    create: {
+      name: "Hyttestyret",
+      featurePermissions: [FeaturePermission.CABIN_BOOKING],
+    },
+  });
+
   const organizations = await db.organization.findMany({
     select: {
       name: true,
       id: true,
+      featurePermissions: true,
     },
   });
 

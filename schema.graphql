@@ -37,10 +37,15 @@ type Booking {
 }
 
 type Cabin {
+  capacity: Int!
   externalPrice: Int!
   id: ID!
   internalPrice: Int!
   name: String!
+}
+
+type CabinsResponse {
+  cabins: [Cabin!]!
 }
 
 input CreateEventInput {
@@ -292,7 +297,7 @@ type Mutation {
   """
   createOrganization(data: CreateOrganizationInput!): CreateOrganizationResponse!
   deleteListing(data: DeleteListingInput!): DeleteListingResponse!
-  newBooking(data: NewBookingInput!): Booking!
+  newBooking(data: NewBookingInput!): NewBookingResponse!
 
   """
   Remove a member from the organization by the ID of the membership.
@@ -308,7 +313,7 @@ type Mutation {
   Sign up for an event, requires that the user is logged in
   """
   signUp(data: SignUpInput!): SignUpResponse!
-  updateBookingStatus(data: UpdateBookingStatusInput!): Booking!
+  updateBookingStatus(data: UpdateBookingStatusInput!): UpdateBookingResponse!
   updateListing(data: UpdateListingInput!, id: ID!): UpdateListingResponse!
 
   """
@@ -327,6 +332,10 @@ input NewBookingInput {
   lastName: String!
   phoneNumber: String!
   startDate: DateTime!
+}
+
+type NewBookingResponse {
+  booking: Booking!
 }
 
 type Organization {
@@ -436,6 +445,7 @@ type PublicUser {
 }
 
 type Query {
+  cabins: CabinsResponse!
   event(data: EventInput!): EventResponse!
   events(data: EventsInput): EventsResponse!
   listing(data: ListingInput!): ListingResponse!
@@ -511,6 +521,10 @@ enum Status {
   CONFIRMED
   PENDING
   REJECTED
+}
+
+type UpdateBookingResponse {
+  booking: Booking!
 }
 
 input UpdateBookingStatusInput {

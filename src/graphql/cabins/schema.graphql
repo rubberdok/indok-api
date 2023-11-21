@@ -8,9 +8,17 @@ input NewBookingInput {
   phoneNumber: String!
 }
 
+type NewBookingResponse {
+  booking: Booking!
+}
+
 input UpdateBookingStatusInput {
   id: ID!
   status: Status!
+}
+
+type UpdateBookingResponse {
+  booking: Booking!
 }
 
 enum Status {
@@ -20,9 +28,17 @@ enum Status {
   REJECTED
 }
 
+type CabinsResponse {
+  cabins: [Cabin!]!
+}
+
+type Query {
+  cabins: CabinsResponse!
+}
+
 type Mutation {
-  newBooking(data: NewBookingInput!): Booking!
-  updateBookingStatus(data: UpdateBookingStatusInput!): Booking!
+  newBooking(data: NewBookingInput!): NewBookingResponse!
+  updateBookingStatus(data: UpdateBookingStatusInput!): UpdateBookingResponse!
 }
 
 type Cabin {
@@ -30,6 +46,7 @@ type Cabin {
   name: String!
   internalPrice: Int!
   externalPrice: Int!
+  capacity: Int!
 }
 
 type Booking {

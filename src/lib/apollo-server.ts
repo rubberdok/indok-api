@@ -53,7 +53,6 @@ declare module "graphql" {
 }
 
 interface IOrganizationService {
-  hasRole(data: { userId: string; organizationId: string; role: Role }): Promise<boolean>;
   create(data: { name: string; description?: string; userId: string }): Promise<Organization>;
   update(userId: string, organizationId: string, data: { name?: string; description?: string }): Promise<Organization>;
   addMember(userId: string, data: { userId: string; organizationId: string; role: Role }): Promise<Member>;
@@ -94,8 +93,10 @@ export interface BookingData {
 
 export interface ICabinService {
   newBooking(data: BookingData): Promise<Booking>;
-  updateBookingStatus(id: string, status: BookingStatus): Promise<Booking>;
+  updateBookingStatus(userId: string, id: string, status: BookingStatus): Promise<Booking>;
   getCabin(id: string): Promise<Cabin>;
+  getCabinByBookingId(bookingId: string): Promise<Cabin>;
+  findManyCabins(): Promise<Cabin[]>;
 }
 
 interface IEventService {
@@ -144,10 +145,16 @@ interface ListingService {
   delete(userId: string, id: string): Promise<Listing>;
 }
 
+interface IPermissionService {
+  isSuperUser(userId: string): Promise<boolean>;
+  hasRole(data: { userId: string; organizationId: string; role: Role }): Promise<boolean>;
+}
+
 export interface ApolloServerDependencies {
   userService: IUserService;
   organizationService: IOrganizationService;
   cabinService: ICabinService;
   eventService: IEventService;
   listingService: ListingService;
+  permissionService: IPermissionService;
 }

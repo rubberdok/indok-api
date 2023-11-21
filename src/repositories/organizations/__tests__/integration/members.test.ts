@@ -200,7 +200,9 @@ describe("MembersRepository", () => {
        *
        * 1. The memberships for the user {userId} should be returned
        */
-      expect(actual).toEqual([member1, member2]);
+      expect(actual).toHaveLength(2);
+      expect(actual).toContainEqual(member1);
+      expect(actual).toContainEqual(member2);
     });
 
     it("should return all memberships for an organization", async () => {

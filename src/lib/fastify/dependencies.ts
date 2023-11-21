@@ -16,6 +16,7 @@ import { EventService } from "@/services/events/service.js";
 import { ListingService } from "@/services/listings/index.js";
 import { MailService } from "@/services/mail/index.js";
 import { OrganizationService } from "@/services/organizations/service.js";
+import { PermissionService } from "@/services/permissions/service.js";
 import { UserService } from "@/services/users/service.js";
 
 import { ApolloServerDependencies } from "../apollo-server.js";
@@ -62,12 +63,13 @@ export function dependenciesFactory(
   const listingRepository = new ListingRepository(prisma);
 
   const mailService = new MailService(postmark, env.NO_REPLY_EMAIL);
-  const cabinService = new CabinService(cabinRepository, mailService);
   const userService = new UserService(userRepository);
+  const permissionService = new PermissionService(memberRepository, userService, organizationRepository);
+  const cabinService = new CabinService(cabinRepository, mailService, permissionService);
   const authService = overrides?.authService ?? new AuthService(userService, feideClient, FeideProvider);
-  const organizationService = new OrganizationService(organizationRepository, memberRepository, userService);
-  const eventService = new EventService(eventRepository, organizationService);
-  const listingService = new ListingService(listingRepository, organizationService);
+  const organizationService = new OrganizationService(organizationRepository, memberRepository, permissionService);
+  const eventService = new EventService(eventRepository, permissionService);
+  const listingService = new ListingService(listingRepository, permissionService);
 
   const defaultApolloServerDependencies: ApolloServerDependencies = {
     cabinService,
@@ -75,6 +77,7 @@ export function dependenciesFactory(
     organizationService,
     eventService,
     listingService,
+    permissionService,
   };
 
   const apolloServerDependencies = merge(defaultApolloServerDependencies, overrides?.apolloServerDependencies);

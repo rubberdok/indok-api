@@ -1,4 +1,4 @@
-import { Organization, PrismaClient } from "@prisma/client";
+import { FeaturePermission, Organization, PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 
 import { InternalServerError, InvalidArgumentError, NotFoundError } from "@/domain/errors.js";
@@ -60,13 +60,17 @@ export class OrganizationRepository {
    * @param data.description - The new description of the organization
    * @returns
    */
-  async update(id: string, data: { name?: string; description?: string }): Promise<Organization> {
-    const { name, description } = data;
+  async update(
+    id: string,
+    data: { name?: string; description?: string; featurePermissions?: FeaturePermission[] }
+  ): Promise<Organization> {
+    const { name, description, featurePermissions } = data;
     return this.db.organization.update({
       where: { id },
       data: {
         name,
         description,
+        featurePermissions,
       },
     });
   }

@@ -7,7 +7,7 @@ import { DeepMockProxy, mockDeep } from "jest-mock-extended";
 import { BookingStatus } from "@/domain/cabins.js";
 import { TemplateAlias } from "@/lib/postmark.js";
 
-import { BookingData, CabinRepository, CabinService, IMailService } from "../../service.js";
+import { BookingData, CabinRepository, CabinService, IMailService, PermissionService } from "../../service.js";
 
 import { NegativeValidationTestCase, PositiveValidationTestCase } from "./interfaces.js";
 
@@ -24,11 +24,13 @@ const validBooking: BookingData = {
 let repo: DeepMockProxy<CabinRepository>;
 let mockMailService: DeepMockProxy<IMailService>;
 let cabinService: CabinService;
+let permissionService: DeepMockProxy<PermissionService>;
 
 beforeAll(() => {
   repo = mockDeep<CabinRepository>();
   mockMailService = mockDeep<IMailService>();
-  cabinService = new CabinService(repo, mockMailService);
+  permissionService = mockDeep<PermissionService>();
+  cabinService = new CabinService(repo, mockMailService, permissionService);
 });
 
 describe("New booking", () => {

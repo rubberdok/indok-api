@@ -1,25 +1,34 @@
 import { faker } from "@faker-js/faker";
-import type { Member, Organization, User } from "@prisma/client";
+import type { Member, Organization } from "@prisma/client";
 import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 
 import { BaseError, InvalidArgumentError, PermissionDeniedError } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
+import { User } from "@/domain/users.js";
+import { PermissionService } from "@/services/permissions/service.js";
+import { UserService } from "@/services/users/service.js";
 
-import { MemberRepository, OrganizationRepository, OrganizationService, UserService } from "../../service.js";
+import { MemberRepository, OrganizationRepository, OrganizationService } from "../../service.js";
 
 import { getMockGetImplementation, getMockHasRoleImplementation } from "./mocks.js";
 
+interface MemberRepositoryMock extends MemberRepository {
+  hasRole(data: { userId: string; organizationId: string; role: Role }): Promise<boolean>;
+}
+
 let organizationService: OrganizationService;
 let organizationRepository: DeepMockProxy<OrganizationRepository>;
-let memberRepository: DeepMockProxy<MemberRepository>;
+let memberRepository: DeepMockProxy<MemberRepositoryMock>;
 let userService: DeepMockProxy<UserService>;
+let permissionService: PermissionService;
 
 describe("OrganizationService", () => {
   beforeEach(() => {
     organizationRepository = mockDeep<OrganizationRepository>();
-    memberRepository = mockDeep<MemberRepository>();
+    memberRepository = mockDeep<MemberRepositoryMock>();
     userService = mockDeep<UserService>();
-    organizationService = new OrganizationService(organizationRepository, memberRepository, userService);
+    permissionService = new PermissionService(memberRepository, userService, organizationRepository);
+    organizationService = new OrganizationService(organizationRepository, memberRepository, permissionService);
   });
 
   describe("hasRole", () => {
@@ -106,7 +115,7 @@ describe("OrganizationService", () => {
         );
 
         // Act
-        const actual = await organizationService.hasRole({
+        const actual = await permissionService.hasRole({
           userId: state.user.id,
           organizationId,
           role: requiredRole,

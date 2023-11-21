@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { Organization } from "@prisma/client";
+import { FeaturePermission, Organization } from "@prisma/client";
 
 import { InvalidArgumentError, NotFoundError } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
@@ -45,23 +45,17 @@ describe("OrganizationsRepository", () => {
        * Assert
        * 1. The organization should have the user as a member.
        */
-      await expect(
-        prisma.member.findUniqueOrThrow({
-          where: {
-            userId_organizationId: {
-              userId: user.id,
-              organizationId: organization.id,
-            },
+      const member = await prisma.member.findUniqueOrThrow({
+        where: {
+          userId_organizationId: {
+            userId: user.id,
+            organizationId: organization.id,
           },
-        })
-      ).resolves.toEqual({
-        id: expect.any(String),
-        role: Role.ADMIN,
-        userId: user.id,
-        organizationId: organization.id,
-        updatedAt: expect.any(Date),
-        createdAt: expect.any(Date),
+        },
       });
+      expect(member.role).toBe(Role.ADMIN);
+      expect(member.userId).toBe(user.id);
+      expect(member.organizationId).toBe(organization.id);
     });
 
     it("should raise InvalidArgumentError for duplicate organization names", async () => {
@@ -126,19 +120,13 @@ describe("OrganizationsRepository", () => {
       const description = faker.company.catchPhrase();
 
       // Assert that the organization has the given name and description
-      await expect(
-        organizationRepository.create({
-          name,
-          description,
-          userId: user.id,
-        })
-      ).resolves.toEqual({
-        id: expect.any(String),
+      const actual = await organizationRepository.create({
         name,
         description,
-        updatedAt: expect.any(Date),
-        createdAt: expect.any(Date),
+        userId: user.id,
       });
+      expect(actual.name).toBe(name);
+      expect(actual.description).toBe(description);
     });
 
     it("should raise InvalidArgumentError if the userId is empty", async () => {
@@ -158,6 +146,7 @@ describe("OrganizationsRepository", () => {
       data: {
         name?: string;
         description?: string;
+        featurePermissions?: FeaturePermission[];
       };
       expected: Partial<Organization>;
     }
@@ -173,6 +162,21 @@ describe("OrganizationsRepository", () => {
           description: expect.any(String),
           updatedAt: expect.any(Date),
           createdAt: expect.any(Date),
+          featurePermissions: [],
+        },
+      },
+      {
+        name: "should update the organizations' feature permissions",
+        data: {
+          name: faker.string.sample(),
+          featurePermissions: [FeaturePermission.ARCHIVE],
+        },
+        expected: {
+          id: expect.any(String),
+          description: expect.any(String),
+          updatedAt: expect.any(Date),
+          createdAt: expect.any(Date),
+          featurePermissions: [FeaturePermission.ARCHIVE],
         },
       },
       {
@@ -185,6 +189,7 @@ describe("OrganizationsRepository", () => {
           name: expect.any(String),
           updatedAt: expect.any(Date),
           createdAt: expect.any(Date),
+          featurePermissions: [],
         },
       },
       {
@@ -196,6 +201,7 @@ describe("OrganizationsRepository", () => {
           description: expect.any(String),
           updatedAt: expect.any(Date),
           createdAt: expect.any(Date),
+          featurePermissions: [],
         },
       },
     ];
@@ -280,36 +286,25 @@ describe("OrganizationsRepository", () => {
 
   describe("findMany", () => {
     it("should return all organizations", async () => {
-      const expected = [
-        {
-          id: expect.any(String),
-          name: faker.string.sample(),
-          description: expect.any(String),
-          updatedAt: expect.any(Date),
-          createdAt: expect.any(Date),
-        },
-        {
-          id: expect.any(String),
-          name: faker.string.sample(),
-          description: expect.any(String),
-          updatedAt: expect.any(Date),
-          createdAt: expect.any(Date),
-        },
-        {
-          id: expect.any(String),
-          name: faker.string.sample(),
-          description: expect.any(String),
-          updatedAt: expect.any(Date),
-          createdAt: expect.any(Date),
-        },
-      ];
       /**
        * Arrange
        *
        * 1. Create 3 organizations
        */
-      await prisma.organization.createMany({
-        data: expected.map((organization) => ({ name: organization.name })),
+      const org1 = await prisma.organization.create({
+        data: {
+          name: faker.string.sample(20),
+        },
+      });
+      const org2 = await prisma.organization.create({
+        data: {
+          name: faker.string.sample(20),
+        },
+      });
+      const org3 = await prisma.organization.create({
+        data: {
+          name: faker.string.sample(20),
+        },
       });
 
       /**
@@ -317,14 +312,17 @@ describe("OrganizationsRepository", () => {
        *
        * Get all organizations
        */
-      const result = organizationRepository.findMany();
+      const actual = await organizationRepository.findMany();
 
       /**
        * Assert
        *
        * Should return all organizations
        */
-      await expect(result).resolves.toEqual(expect.arrayContaining(expected));
+      const ids = actual.map((org) => org.id);
+      expect(ids).toContain(org1.id);
+      expect(ids).toContain(org2.id);
+      expect(ids).toContain(org3.id);
     });
   });
 

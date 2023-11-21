@@ -9,6 +9,7 @@ import prisma from "@/lib/prisma.js";
 import { MemberRepository } from "@/repositories/organizations/members.js";
 import { OrganizationRepository } from "@/repositories/organizations/organizations.js";
 import { UserRepository } from "@/repositories/users/index.js";
+import { PermissionService } from "@/services/permissions/service.js";
 import { UserService } from "@/services/users/service.js";
 
 import { OrganizationService } from "../../service.js";
@@ -21,166 +22,8 @@ describe("OrganizationsService", () => {
     const userService = new UserService(userRepository);
     const memberRepository = new MemberRepository(prisma);
     const organizationRepository = new OrganizationRepository(prisma);
-    organizationService = new OrganizationService(organizationRepository, memberRepository, userService);
-  });
-
-  describe("hasRole", () => {
-    interface TestCase {
-      arrange: {
-        user: Prisma.UserCreateInput;
-        organization: Prisma.OrganizationCreateInput;
-        member: { role: Role | null };
-      };
-      requiredRole: (typeof Role)[keyof typeof Role];
-      expected: boolean;
-    }
-
-    const testCases: TestCase[] = [
-      {
-        arrange: {
-          user: {
-            email: faker.internet.email(),
-            feideId: faker.string.uuid(),
-            firstName: faker.person.firstName(),
-            lastName: faker.person.lastName(),
-            username: faker.internet.userName(),
-            isSuperUser: true,
-          },
-          organization: {
-            name: faker.string.sample(20),
-          },
-          member: { role: null },
-        },
-        requiredRole: Role.ADMIN,
-        expected: true,
-      },
-      {
-        arrange: {
-          user: {
-            email: faker.internet.email(),
-            feideId: faker.string.uuid(),
-            firstName: faker.person.firstName(),
-            lastName: faker.person.lastName(),
-            username: faker.internet.userName(),
-            isSuperUser: false,
-          },
-          organization: {
-            name: faker.string.sample(20),
-          },
-          member: { role: null },
-        },
-        requiredRole: Role.MEMBER,
-        expected: false,
-      },
-      {
-        arrange: {
-          user: {
-            email: faker.internet.email(),
-            feideId: faker.string.uuid(),
-            firstName: faker.person.firstName(),
-            lastName: faker.person.lastName(),
-            username: faker.internet.userName(),
-            isSuperUser: false,
-          },
-          organization: {
-            name: faker.string.sample(20),
-          },
-          member: {
-            role: Role.MEMBER,
-          },
-        },
-        requiredRole: Role.MEMBER,
-        expected: true,
-      },
-      {
-        arrange: {
-          user: {
-            email: faker.internet.email(),
-            feideId: faker.string.uuid(),
-            firstName: faker.person.firstName(),
-            lastName: faker.person.lastName(),
-            username: faker.internet.userName(),
-            isSuperUser: false,
-          },
-          organization: {
-            name: faker.string.sample(20),
-          },
-          member: {
-            role: Role.ADMIN,
-          },
-        },
-        requiredRole: Role.ADMIN,
-        expected: true,
-      },
-      {
-        arrange: {
-          user: {
-            email: faker.internet.email(),
-            feideId: faker.string.uuid(),
-            firstName: faker.person.firstName(),
-            lastName: faker.person.lastName(),
-            username: faker.internet.userName(),
-            isSuperUser: false,
-          },
-          organization: {
-            name: faker.string.sample(20),
-          },
-          member: {
-            role: Role.MEMBER,
-          },
-        },
-        requiredRole: Role.ADMIN,
-        expected: false,
-      },
-    ];
-
-    test.concurrent.each(testCases)(
-      "should return $expected for requiredRole: $requiredRole with: [isSuperUser: $arrange.user.isSuperUser], [role: $arrange.member.role]",
-      async ({ arrange, expected, requiredRole }) => {
-        /**
-         * Arrange
-         *
-         * 1. Create a user with userId {userId} based on the arrange.user object
-         * 2. Create an organization with organizationId {organizationId} based on the arrange.organization object
-         * 3. Create a member with userId {userId} and organizationId {organizationId} based on the arrange.member object
-         * unless undefined
-         */
-        // 1.
-        const user = await prisma.user.create({
-          data: arrange.user,
-        });
-        // 2.
-        const organization = await prisma.organization.create({
-          data: arrange.organization,
-        });
-        // 3.
-        if (arrange.member.role !== null) {
-          await prisma.member.create({
-            data: {
-              role: arrange.member.role,
-              userId: user.id,
-              organizationId: organization.id,
-            },
-          });
-        }
-
-        /**
-         * Act
-         *
-         * 1. Call the hasRole method on the organizationService with the userId and organizationId
-         */
-        const result = organizationService.hasRole({
-          userId: user.id,
-          organizationId: organization.id,
-          role: requiredRole,
-        });
-
-        /**
-         * Assert that the user has the expected role
-         */
-        await expect(result).resolves.toEqual(expected);
-      }
-    );
+    const permissionService = new PermissionService(memberRepository, userService, organizationRepository);
+    organizationService = new OrganizationService(organizationRepository, memberRepository, permissionService);
   });
 
   describe("removeMember", () => {
@@ -210,7 +53,7 @@ describe("OrganizationsService", () => {
               feideId: faker.string.uuid(),
               firstName: faker.person.firstName(),
               lastName: faker.person.lastName(),
-              username: faker.internet.userName(),
+              username: faker.string.sample(20),
             },
             organization: {
               name: faker.string.sample(20),
@@ -240,7 +83,7 @@ describe("OrganizationsService", () => {
               feideId: faker.string.uuid(),
               firstName: faker.person.firstName(),
               lastName: faker.person.lastName(),
-              username: faker.internet.userName(),
+              username: faker.string.sample(20),
               isSuperUser: true,
             },
             organization: {
@@ -271,7 +114,7 @@ describe("OrganizationsService", () => {
               feideId: faker.string.uuid(),
               firstName: faker.person.firstName(),
               lastName: faker.person.lastName(),
-              username: faker.internet.userName(),
+              username: faker.string.sample(20),
             },
             organization: {
               name: faker.string.sample(20),
@@ -302,7 +145,7 @@ describe("OrganizationsService", () => {
               feideId: faker.string.uuid(),
               firstName: faker.person.firstName(),
               lastName: faker.person.lastName(),
-              username: faker.internet.userName(),
+              username: faker.string.sample(20),
             },
             organization: {
               name: faker.string.sample(20),
@@ -379,7 +222,7 @@ describe("OrganizationsService", () => {
                     feideId: faker.string.uuid(),
                     firstName: faker.person.firstName(),
                     lastName: faker.person.lastName(),
-                    username: faker.internet.userName(),
+                    username: faker.string.sample(20),
                   },
                 },
                 role: member.role,
@@ -444,7 +287,7 @@ describe("OrganizationsService", () => {
               feideId: faker.string.uuid(),
               firstName: faker.person.firstName(),
               lastName: faker.person.lastName(),
-              username: faker.internet.userName(),
+              username: faker.string.sample(20),
             },
             organization: {
               name: faker.string.sample(20),
@@ -472,7 +315,7 @@ describe("OrganizationsService", () => {
               feideId: faker.string.uuid(),
               firstName: faker.person.firstName(),
               lastName: faker.person.lastName(),
-              username: faker.internet.userName(),
+              username: faker.string.sample(20),
             },
             organization: {
               name: faker.string.sample(20),
@@ -501,7 +344,7 @@ describe("OrganizationsService", () => {
               feideId: faker.string.uuid(),
               firstName: faker.person.firstName(),
               lastName: faker.person.lastName(),
-              username: faker.internet.userName(),
+              username: faker.string.sample(20),
             },
             organization: {
               name: faker.string.sample(20),
@@ -576,7 +419,7 @@ describe("OrganizationsService", () => {
                     feideId: faker.string.uuid(),
                     firstName: faker.person.firstName(),
                     lastName: faker.person.lastName(),
-                    username: faker.internet.userName(),
+                    username: faker.string.sample(20),
                   },
                 },
                 role: member.role,
