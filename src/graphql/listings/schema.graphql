@@ -3,6 +3,7 @@ type Listing {
   name: String!
   description: String!
   closesAt: DateTime!
+  organization: Organization!
 }
 
 type ListingsResponse {

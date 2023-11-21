@@ -190,6 +190,7 @@ export type Listing = {
   description: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
+  organization: Organization;
 };
 
 export type ListingInput = {

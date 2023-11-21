@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { Listing } from "@prisma/client";
+import { Listing, Organization } from "@prisma/client";
 import { mock } from "jest-mock-extended";
 
 import { createMockApolloServer } from "@/graphql/test-clients/mock-apollo-server.js";
@@ -28,6 +28,40 @@ describe("Listing queries", () => {
 
       expect(errors).toBeUndefined();
       expect(listingService.get).toHaveBeenCalledWith(expect.any(String));
+    });
+
+    it("should resolve additional attributes", async () => {
+      const { client, listingService, organizationService } = createMockApolloServer(console);
+      listingService.get.mockResolvedValue(
+        mock<Listing>({ id: faker.string.uuid(), organizationId: faker.string.uuid() })
+      );
+      organizationService.get.mockResolvedValue(mock<Organization>({ id: faker.string.uuid() }));
+
+      const { errors, data } = await client.query({
+        query: graphql(`
+          query listingWithOrganization($data: ListingInput!) {
+            listing(data: $data) {
+              listing {
+                id
+                organization {
+                  id
+                }
+              }
+            }
+          }
+        `),
+        variables: {
+          data: { id: faker.string.uuid() },
+        },
+      });
+
+      expect(errors).toBeUndefined();
+      expect(data?.listing.listing).toEqual({
+        id: expect.any(String),
+        organization: {
+          id: expect.any(String),
+        },
+      });
     });
   });
 });

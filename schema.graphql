@@ -221,6 +221,7 @@ type Listing {
   description: String!
   id: ID!
   name: String!
+  organization: Organization!
 }
 
 input ListingInput {
