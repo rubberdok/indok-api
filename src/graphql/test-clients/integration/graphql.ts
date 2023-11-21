@@ -172,12 +172,15 @@ export type Mutation = {
   __typename?: 'Mutation';
   /** Add a member to the organization */
   addMember: AddMemberResponse;
+  /** Create an event, requires that the user is logged in, and is a member of the organization that is hosting the event */
   createEvent: CreateEventResponse;
   /** Create a new organization, and add the current user as an admin of the organization. */
   createOrganization: CreateOrganizationResponse;
   newBooking: Booking;
   /** Remove a member from the organization by the ID of the membership. */
   removeMember: RemoveMemberResponse;
+  /** Sign up for an event, requires that the user is logged in */
+  signUp: SignUpResponse;
   updateBookingStatus: Booking;
   /**
    * Update an organization with the given name and description.
@@ -213,6 +216,11 @@ export type MutationRemoveMemberArgs = {
 };
 
 
+export type MutationSignUpArgs = {
+  data: SignUpInput;
+};
+
+
 export type MutationUpdateBookingStatusArgs = {
   data: UpdateBookingStatusInput;
 };
@@ -245,6 +253,17 @@ export type Organization = {
   members: Array<Member>;
   name: Scalars['String']['output'];
 };
+
+export enum ParticipationStatus {
+  /** The user is confirmed to be attending the event */
+  Confirmed = 'CONFIRMED',
+  /** The user is on the wait list for the event */
+  OnWaitlist = 'ON_WAITLIST',
+  /** The user has signed up for the event, and had their sign up removed by an admin */
+  Removed = 'REMOVED',
+  /** The user has signed up for the event, and then retracted their sign up */
+  Retracted = 'RETRACTED'
+}
 
 /**
  * PrivateUser should only be used when accessed by the authenticated user themselves
@@ -331,6 +350,27 @@ export enum Role {
    */
   Member = 'MEMBER'
 }
+
+export type SignUp = {
+  __typename?: 'SignUp';
+  /** The event the user signed up for */
+  event: Event;
+  id: Scalars['ID']['output'];
+  /** The status of the user's participation in the event */
+  participationStatus: ParticipationStatus;
+  /** The user that signed up for the event */
+  user: PublicUser;
+};
+
+export type SignUpInput = {
+  /** The event to sign up for */
+  eventId: Scalars['ID']['input'];
+};
+
+export type SignUpResponse = {
+  __typename?: 'SignUpResponse';
+  signUp: SignUp;
+};
 
 export enum Status {
   Cancelled = 'CANCELLED',

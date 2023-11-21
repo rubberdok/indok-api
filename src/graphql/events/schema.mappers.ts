@@ -5,3 +5,4 @@ interface EventsResponseMapper {
 }
 
 export { EventMapper, EventsResponseMapper };
+export { EventSignUp as SignUpMapper } from "@prisma/client";

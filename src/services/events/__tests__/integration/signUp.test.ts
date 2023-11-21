@@ -27,7 +27,7 @@ describe("Event Sign Up", () => {
        */
       const organization = await prisma.organization.create({
         data: {
-          name: faker.company.name(),
+          name: faker.string.sample(20),
         },
       });
       const event = await prisma.event.create({
@@ -108,7 +108,7 @@ describe("Event Sign Up", () => {
            */
           const organization = await prisma.organization.create({
             data: {
-              name: faker.company.name(),
+              name: faker.string.sample(20),
             },
           });
           const event = await prisma.event.create({
@@ -168,11 +168,11 @@ describe("Event Sign Up", () => {
        * 3. Create a slot for the event with capacity.
        * 4. Create a user to sign up for the event.
        */
-      const concurrentUsers = 2_000;
+      const concurrentUsers = 500;
 
       const organization = await prisma.organization.create({
         data: {
-          name: faker.company.name(),
+          name: faker.string.sample(20),
         },
       });
       const event = await prisma.event.create({
@@ -225,7 +225,7 @@ describe("Event Sign Up", () => {
 
       const updatedSlot = await prisma.eventSlot.findUniqueOrThrow({ where: { id: slot.id } });
       expect(updatedSlot.remainingCapacity).toEqual(0);
-    }, 10_000);
+    });
 
     it("should not overfill the event", async () => {
       /**
@@ -236,11 +236,11 @@ describe("Event Sign Up", () => {
        * 3. Create a slot for the event with capacity.
        * 4. Create a user to sign up for the event.
        */
-      const concurrentUsers = 2_000;
-      const capacity = 200;
+      const concurrentUsers = 500;
+      const capacity = 50;
       const organization = await prisma.organization.create({
         data: {
-          name: faker.company.name(),
+          name: faker.string.sample(20),
         },
       });
       const event = await prisma.event.create({

@@ -47,7 +47,7 @@ describe("OrganizationsService", () => {
             isSuperUser: true,
           },
           organization: {
-            name: faker.company.name(),
+            name: faker.string.sample(20),
           },
           member: { role: null },
         },
@@ -65,7 +65,7 @@ describe("OrganizationsService", () => {
             isSuperUser: false,
           },
           organization: {
-            name: faker.company.name(),
+            name: faker.string.sample(20),
           },
           member: { role: null },
         },
@@ -83,7 +83,7 @@ describe("OrganizationsService", () => {
             isSuperUser: false,
           },
           organization: {
-            name: faker.company.name(),
+            name: faker.string.sample(20),
           },
           member: {
             role: Role.MEMBER,
@@ -103,7 +103,7 @@ describe("OrganizationsService", () => {
             isSuperUser: false,
           },
           organization: {
-            name: faker.company.name(),
+            name: faker.string.sample(20),
           },
           member: {
             role: Role.ADMIN,
@@ -123,7 +123,7 @@ describe("OrganizationsService", () => {
             isSuperUser: false,
           },
           organization: {
-            name: faker.company.name(),
+            name: faker.string.sample(20),
           },
           member: {
             role: Role.MEMBER,
@@ -213,7 +213,7 @@ describe("OrganizationsService", () => {
               username: faker.internet.userName(),
             },
             organization: {
-              name: faker.company.name(),
+              name: faker.string.sample(20),
             },
             member: {
               role: Role.ADMIN,
@@ -274,7 +274,7 @@ describe("OrganizationsService", () => {
               username: faker.internet.userName(),
             },
             organization: {
-              name: faker.company.name(),
+              name: faker.string.sample(20),
             },
             member: {
               role: Role.ADMIN,
@@ -305,7 +305,7 @@ describe("OrganizationsService", () => {
               username: faker.internet.userName(),
             },
             organization: {
-              name: faker.company.name(),
+              name: faker.string.sample(20),
             },
             member: {
               role: Role.MEMBER,
@@ -447,7 +447,7 @@ describe("OrganizationsService", () => {
               username: faker.internet.userName(),
             },
             organization: {
-              name: faker.company.name(),
+              name: faker.string.sample(20),
             },
             member: {
               role: Role.MEMBER,
@@ -475,7 +475,7 @@ describe("OrganizationsService", () => {
               username: faker.internet.userName(),
             },
             organization: {
-              name: faker.company.name(),
+              name: faker.string.sample(20),
             },
             member: {
               role: Role.MEMBER,
@@ -504,7 +504,7 @@ describe("OrganizationsService", () => {
               username: faker.internet.userName(),
             },
             organization: {
-              name: faker.company.name(),
+              name: faker.string.sample(20),
             },
             member: {
               role: Role.ADMIN,

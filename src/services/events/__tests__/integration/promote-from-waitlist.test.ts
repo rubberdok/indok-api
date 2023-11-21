@@ -35,7 +35,7 @@ describe("EventService", () => {
         },
       });
 
-      await prisma.eventSlot.create({
+      const slot = await prisma.eventSlot.create({
         data: {
           eventId: event.id,
           remainingCapacity: 1,
@@ -50,6 +50,7 @@ describe("EventService", () => {
         userId: user1.id,
         eventId: event.id,
         participationStatus: ParticipationStatus.CONFIRMED,
+        slotId: slot.id,
       });
       const signUp2 = await makeSignUp({
         userId: user2.id,
@@ -71,10 +72,29 @@ describe("EventService", () => {
        * Assert
        *
        * 1. The first sign up should be promoted from the waitlist
+       * 2. The sign up should have status CONFIRMED
+       * 3. The sign up should belong to the slot
+       * 4. The sign up version should be incremented
+       * 5. The slot remaining capacity should be decreased
+       * 6. The event remaining capacity should be decreased
        */
       expect(actual).toEqual(
-        merge(signUp2, { participationStatus: ParticipationStatus.CONFIRMED, version: 1, updatedAt: expect.any(Date) })
+        merge(signUp2, {
+          slotId: slot.id,
+          participationStatus: ParticipationStatus.CONFIRMED,
+          version: 1,
+          updatedAt: expect.any(Date),
+        })
       );
+
+      const updatedSlot = await prisma.eventSlot.findUnique({
+        where: { id: slot.id },
+      });
+      expect(updatedSlot?.remainingCapacity).toBe(slot.remainingCapacity - 1);
+      const updatedEvent = await prisma.event.findUnique({
+        where: { id: event.id },
+      });
+      expect(updatedEvent?.remainingCapacity).toBe((event.remainingCapacity ?? NaN) - 1);
     });
   });
 });
@@ -94,10 +114,12 @@ function makeUser() {
 function makeSignUp({
   userId,
   eventId,
+  slotId,
   participationStatus = ParticipationStatus.ON_WAITLIST,
 }: {
   userId: string;
   eventId: string;
+  slotId?: string;
   participationStatus?: ParticipationStatus;
 }) {
   return prisma.eventSignUp.create({
@@ -105,6 +127,7 @@ function makeSignUp({
       userId,
       eventId,
       participationStatus,
+      slotId,
     },
   });
 }

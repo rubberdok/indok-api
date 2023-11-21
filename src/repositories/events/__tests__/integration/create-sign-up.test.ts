@@ -3,184 +3,206 @@ import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
 
 import { ErrorCode, errorCodes } from "@/domain/errors.js";
+import { AlreadySignedUpError } from "@/domain/events.js";
 import prisma from "@/lib/prisma.js";
 
 import { EventRepository } from "../../repository.js";
 
 describe("EventRepository", () => {
   let eventRepository: EventRepository;
-
   beforeAll(() => {
     eventRepository = new EventRepository(prisma);
   });
 
   describe("createSignUp", () => {
-    describe("should create sign up", () => {
-      interface TestCase {
-        name: string;
-        arrange: {
-          eventCapacity: number;
-          slotCapacity: number;
-        };
-        act: {
-          participationsStatus: ParticipationStatus;
-          event: {
-            decrement?: boolean;
-            capacityGt?: number;
-          };
-          slot?: {
-            decrement?: boolean;
-            capacityGt?: number;
-          };
-        };
-        assertion: {
-          expected: {
-            slotId: string | null;
-            slotCapacity?: number;
-            eventCapacity: number;
-          };
-        };
-      }
-
-      const testCases: TestCase[] = [
-        {
-          name: "if the event has remaining capacity",
-          arrange: {
-            eventCapacity: 1,
-            slotCapacity: 1,
-          },
-          act: {
-            participationsStatus: ParticipationStatus.CONFIRMED,
-            event: {
-              decrement: true,
-              capacityGt: 0,
-            },
-            slot: {
-              decrement: true,
-              capacityGt: 0,
-            },
-          },
-          assertion: {
-            expected: {
-              eventCapacity: 0,
-              slotCapacity: 0,
-              slotId: expect.any(String),
-            },
-          },
-        },
-        {
-          name: "and not decrement if the flag is not set",
-          arrange: {
-            eventCapacity: 1,
-            slotCapacity: 1,
-          },
-          act: {
-            participationsStatus: ParticipationStatus.CONFIRMED,
-            event: {
-              capacityGt: 0,
-            },
-            slot: {
-              capacityGt: 0,
-            },
-          },
-          assertion: {
-            expected: {
-              eventCapacity: 1,
-              slotCapacity: 1,
-              slotId: expect.any(String),
-            },
-          },
-        },
-        {
-          name: "and not update slot if the slot is not set",
-          arrange: {
-            eventCapacity: 1,
-            slotCapacity: 1,
-          },
-          act: {
-            participationsStatus: ParticipationStatus.CONFIRMED,
-            event: {
-              capacityGt: 0,
-            },
-          },
-          assertion: {
-            expected: {
-              eventCapacity: 1,
-              slotCapacity: undefined,
-              slotId: null,
-            },
-          },
-        },
-      ];
-
-      test.each(testCases)("$name, event: $act.event, slot: $act.slot", async ({ arrange, act, assertion }) => {
-        /**
-         * Arrange
-         *
-         * 1. Create an event with capacity from test case
-         * 2. Create a slot with capacity from test case
-         * 3. Create a user
-         */
-        const event = await prisma.event.create({
-          data: {
-            startAt: DateTime.now().toJSDate(),
-            name: faker.word.adjective(),
-            endAt: DateTime.now().plus({ hours: 1 }).toJSDate(),
-            remainingCapacity: arrange.eventCapacity,
-          },
-        });
-        const slot = await prisma.eventSlot.create({
-          data: {
-            eventId: event.id,
-            remainingCapacity: arrange.slotCapacity,
-          },
-        });
-        const user = await prisma.user.create({
-          data: {
-            email: faker.internet.email(),
-            firstName: faker.person.firstName(),
-            lastName: faker.person.lastName(),
-            feideId: faker.string.uuid(),
-            username: faker.string.sample(20),
-          },
-        });
-
-        /**
-         * Act
-         *
-         * Call createSignUp with args from test case
-         */
-        const actual = await eventRepository.createSignUp({
-          userId: user.id,
-          participationStatus: act.participationsStatus,
-          event: {
-            id: event.id,
-            capacityGt: act.event.capacityGt,
-            decrement: act.event.decrement,
-          },
-          ...(act.slot && {
-            slot: {
-              id: slot.id,
-              capacityGt: act.slot.capacityGt,
-              decrement: act.slot.decrement,
-            },
-          }),
-        });
-
-        /**
-         * Assert
-         *
-         * The sign up should be created with the expected values,
-         * the event and slot should be decremented if the decrement flag is set.
-         * Versions should be incremented
-         */
-        expect(actual.signUp.eventId).toEqual(event.id);
-        expect(actual.signUp.participationStatus).toEqual(act.participationsStatus);
-        expect(actual.signUp.slotId).toEqual(assertion.expected.slotId);
-        expect(actual.event.version).toEqual(event.version + 1);
-        expect(actual.event.remainingCapacity).toEqual(assertion.expected.eventCapacity);
-        expect(actual.slot?.remainingCapacity).toEqual(assertion.expected.slotCapacity);
+    it("should raise AlreadySignedUpError if the user already has an active sign up", async () => {
+      /**
+       * Arrange
+       *
+       * 1. Create an event with capacity
+       * 2. Create a slot with capacity
+       * 3. Create a user to sign up for the event
+       * 4. Sign up the user to the event and slot with active: true and participationStatus: CONFIRMED
+       */
+      const event = await makeEvent({ capacity: 1 });
+      const slot = await makeSlot({ eventId: event.id, capacity: 1 });
+      const user = await makeUser();
+      await makeSignUp({
+        userId: user.id,
+        eventId: event.id,
+        slotId: slot.id,
+        participationStatus: ParticipationStatus.CONFIRMED,
+        active: true,
       });
+
+      /**
+       * Act
+       *
+       * Call createSignUp2 with the same user and event
+       */
+      const actual = eventRepository.createSignUp({
+        userId: user.id,
+        eventId: event.id,
+        participationStatus: ParticipationStatus.CONFIRMED,
+        slotId: slot.id,
+      });
+
+      /**
+       * Assert
+       *
+       * Should throw an error that the unique constraint is violated
+       */
+      await expect(actual).rejects.toThrow(AlreadySignedUpError);
+      const updatedEvent = await prisma.event.findUnique({
+        where: { id: event.id },
+      });
+      const updatedSlot = await prisma.eventSlot.findUnique({
+        where: { id: slot.id },
+      });
+      expect(updatedEvent?.remainingCapacity).toBe(event.remainingCapacity);
+      expect(updatedSlot?.remainingCapacity).toBe(slot.remainingCapacity);
+    });
+
+    it("should create a sign up with `active: true` and decrement capacities", async () => {
+      /**
+       * Arrange
+       *
+       * 1. Create an event with capacity
+       * 2. Create a slot with capacity
+       * 3. Create a user to sign up for the event
+       */
+      const event = await makeEvent({ capacity: 1 });
+      const slot = await makeSlot({ eventId: event.id, capacity: 1 });
+      const user = await makeUser();
+
+      /**
+       * Act
+       *
+       * Call createSignUp2 with the user, event, and slot
+       */
+      const actual = await eventRepository.createSignUp({
+        userId: user.id,
+        eventId: event.id,
+        participationStatus: ParticipationStatus.CONFIRMED,
+        slotId: slot.id,
+      });
+
+      /**
+       * Assert
+       *
+       * Should return the sign up with `active: true`
+       */
+      expect(actual.signUp.active).toBe(true);
+      expect(actual.slot.remainingCapacity).toBe(slot.remainingCapacity - 1);
+      expect(actual.event.remainingCapacity).toBe((event.remainingCapacity ?? NaN) - 1);
+      expect(actual.slot.version).toBe(slot.version + 1);
+      expect(actual.event.version).toBe(event.version + 1);
+    });
+
+    it("should not decrement remaining capacities if participation status is ON_WAITLIST", async () => {
+      /**
+       * Arrange
+       *
+       * 1. Create an event with capacity
+       * 2. Create a slot with capacity
+       * 3. Create a user to sign up for the event
+       */
+      const event = await makeEvent({ capacity: 1 });
+      await makeSlot({ eventId: event.id, capacity: 1 });
+      const user = await makeUser();
+
+      /**
+       * Act
+       *
+       * Call createSignUp2 with the user and event, with participation status ON_WAITLIST
+       */
+      const actual = await eventRepository.createSignUp({
+        userId: user.id,
+        eventId: event.id,
+        participationStatus: ParticipationStatus.ON_WAITLIST,
+      });
+
+      /**
+       * Assert
+       *
+       * Should return the sign up with `active: true`
+       */
+      expect(actual.signUp.active).toBe(true);
+      expect(actual.event.remainingCapacity).toBe(event.remainingCapacity);
+      expect(actual.event.version).toBe(event.version + 1);
+    });
+
+    it("create a sign up if a sign up with `active: false` already exists", async () => {
+      /**
+       * Arrange
+       *
+       * 1. Create an event with capacity
+       * 2. Create a slot with capacity
+       * 3. Create a user to sign up for the event
+       */
+      const event = await makeEvent({ capacity: 1 });
+      const slot = await makeSlot({ eventId: event.id, capacity: 1 });
+      const user = await makeUser();
+      const existingSignUp = await makeSignUp({
+        eventId: event.id,
+        userId: user.id,
+        active: false,
+        participationStatus: ParticipationStatus.REMOVED,
+      });
+
+      /**
+       * Act
+       *
+       * Call createSignUp2 with the user and event, with participation status ON_WAITLIST
+       */
+      const actual = await eventRepository.createSignUp({
+        userId: user.id,
+        eventId: event.id,
+        slotId: slot.id,
+        participationStatus: ParticipationStatus.CONFIRMED,
+      });
+
+      /**
+       * Assert
+       *
+       * Should return the sign up with `active: true`
+       */
+      expect(actual.signUp.active).toBe(true);
+      expect(actual.signUp.id).not.toBe(existingSignUp.id);
+      expect(actual.event.remainingCapacity).toBe((event.remainingCapacity ?? NaN) - 1);
+      expect(actual.event.version).toBe(event.version + 1);
+    });
+
+    it("create a sign up with status ON_WAITLIST even if the event is full", async () => {
+      /**
+       * Arrange
+       *
+       * 1. Create an event with capacity
+       * 2. Create a slot with capacity
+       * 3. Create a user to sign up for the event
+       */
+      const event = await makeEvent({ capacity: 0 });
+      await makeSlot({ eventId: event.id, capacity: 0 });
+      const user = await makeUser();
+
+      /**
+       * Act
+       *
+       * Call createSignUp2 with the user and event, with participation status ON_WAITLIST
+       */
+      const actual = await eventRepository.createSignUp({
+        userId: user.id,
+        eventId: event.id,
+        participationStatus: ParticipationStatus.ON_WAITLIST,
+      });
+
+      /**
+       * Assert
+       *
+       * Should return the sign up with `active: true`
+       */
+      expect(actual.signUp.active).toBe(true);
+      expect(actual.event.remainingCapacity).toBe(event.remainingCapacity);
     });
 
     describe("should raise", () => {
@@ -190,55 +212,26 @@ describe("EventRepository", () => {
           eventCapacity: number;
           slotCapacity: number;
         };
-        act: {
-          slot?: {
-            capacityGt?: number;
-          };
-          event: {
-            capacityGt?: number;
-          };
-        };
         assertion: {
           errorCode: ErrorCode;
         };
       }
       const testCases: TestCase[] = [
         {
-          name: "if the event capacity is less than required",
+          name: "if the event is full",
           arrange: {
             eventCapacity: 0,
             slotCapacity: 1,
-          },
-          act: {
-            event: { capacityGt: 0 },
-            slot: { capacityGt: 0 },
           },
           assertion: {
             errorCode: errorCodes.ERR_NOT_FOUND,
           },
         },
         {
-          name: "if the slot capacity is less than required",
+          name: "if the slot is full",
           arrange: {
             eventCapacity: 1,
             slotCapacity: 0,
-          },
-          act: {
-            event: { capacityGt: 0 },
-            slot: { capacityGt: 0 },
-          },
-          assertion: {
-            errorCode: errorCodes.ERR_NOT_FOUND,
-          },
-        },
-        {
-          name: "if slot is not provided and event capacity is less than required",
-          arrange: {
-            eventCapacity: 0,
-            slotCapacity: 1,
-          },
-          act: {
-            event: { capacityGt: 0 },
           },
           assertion: {
             errorCode: errorCodes.ERR_NOT_FOUND,
@@ -246,7 +239,7 @@ describe("EventRepository", () => {
         },
       ];
 
-      test.each(testCases)("$assertion.errorCode $name", async ({ assertion, act, arrange }) => {
+      test.each(testCases)("$assertion.errorCode $name", async ({ assertion, arrange }) => {
         /**
          * Arrange
          *
@@ -254,29 +247,9 @@ describe("EventRepository", () => {
          * 2. Create an event with remainingCapacity from test case
          * 3. Create a slot with remainingCapacity from test case
          */
-        const user = await prisma.user.create({
-          data: {
-            email: faker.internet.email(),
-            firstName: faker.person.firstName(),
-            lastName: faker.person.lastName(),
-            feideId: faker.string.uuid(),
-            username: faker.string.sample(20),
-          },
-        });
-        const event = await prisma.event.create({
-          data: {
-            name: faker.word.adjective(),
-            startAt: DateTime.now().toJSDate(),
-            endAt: DateTime.now().plus({ hours: 1 }).toJSDate(),
-            remainingCapacity: arrange.eventCapacity,
-          },
-        });
-        const slot = await prisma.eventSlot.create({
-          data: {
-            eventId: event.id,
-            remainingCapacity: arrange.slotCapacity,
-          },
-        });
+        const user = await makeUser();
+        const event = await makeEvent({ capacity: arrange.eventCapacity });
+        const slot = await makeSlot({ eventId: event.id, capacity: arrange.slotCapacity });
 
         /**
          * Act
@@ -286,27 +259,69 @@ describe("EventRepository", () => {
         const actual = eventRepository.createSignUp({
           userId: user.id,
           participationStatus: ParticipationStatus.CONFIRMED,
-          ...(act.slot && {
-            slot: {
-              id: slot.id,
-              capacityGt: act.slot.capacityGt,
-              decrement: true,
-            },
-          }),
-          event: {
-            id: event.id,
-            capacityGt: act.event.capacityGt,
-            decrement: true,
-          },
+          slotId: slot.id,
+          eventId: event.id,
         });
 
         /**
          * Assert
          *
-         * The expected error is raised
+         * The error code should match the expected error code
          */
         await expect(actual).rejects.toHaveProperty("code", assertion.errorCode);
       });
     });
   });
 });
+
+function makeUser() {
+  return prisma.user.create({
+    data: {
+      email: faker.internet.email(),
+      firstName: faker.person.firstName(),
+      lastName: faker.person.lastName(),
+      username: faker.string.sample(20),
+      feideId: faker.string.uuid(),
+    },
+  });
+}
+
+function makeEvent(data: { capacity: number }) {
+  return prisma.event.create({
+    data: {
+      name: faker.word.adjective(),
+      startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+      endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+      remainingCapacity: data.capacity,
+    },
+  });
+}
+
+function makeSlot(data: { eventId: string; capacity: number }) {
+  const { eventId, capacity } = data;
+  return prisma.eventSlot.create({
+    data: {
+      eventId,
+      remainingCapacity: capacity,
+    },
+  });
+}
+
+function makeSignUp(data: {
+  eventId: string;
+  userId: string;
+  slotId?: string;
+  participationStatus: ParticipationStatus;
+  active?: boolean;
+}) {
+  const { eventId, slotId, userId, participationStatus, active } = data;
+  return prisma.eventSignUp.create({
+    data: {
+      eventId,
+      slotId,
+      userId,
+      participationStatus,
+      active,
+    },
+  });
+}

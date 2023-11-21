@@ -109,8 +109,9 @@ model EventSignUp {
   event               Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId             String              @db.Uuid
   participationStatus ParticipationStatus @default(CONFIRMED)
+  active              Boolean             @default(true)
 
-  @@index([createdAt])
+  @@unique([userId, eventId, active])
 }
 
 // Cabins

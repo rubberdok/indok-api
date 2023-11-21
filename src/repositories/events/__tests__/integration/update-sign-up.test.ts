@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
 
-import { ErrorCode, errorCodes } from "@/domain/errors.js";
+import { InvalidArgumentError, NotFoundError } from "@/domain/errors.js";
 import prisma from "@/lib/prisma.js";
 
 import { EventRepository } from "../../repository.js";
@@ -15,423 +15,448 @@ describe("EventRepository", () => {
   });
 
   describe("updateSignUp", () => {
-    it("should update the status, increment version, and decrement remainingCapacity for event and slot", async () => {
-      /**
-       * Arrange
-       *
-       * 1. Create a user
-       * 2. Create an event
-       * 3. Create a slot
-       * 4. Create a sign up for the event with status ON_WAITLIST
-       */
-      const user = await prisma.user.create({
-        data: {
-          email: faker.internet.email(),
-          firstName: faker.person.firstName(),
-          lastName: faker.person.lastName(),
-          feideId: faker.string.uuid(),
-          username: faker.string.sample(20),
-        },
-      });
-      const event = await prisma.event.create({
-        data: {
-          name: faker.word.adjective(),
-          startAt: new Date(),
-          endAt: new Date(),
-          remainingCapacity: 1,
-        },
-      });
-      const slot = await prisma.eventSlot.create({
-        data: {
-          eventId: event.id,
-          remainingCapacity: 1,
-        },
-      });
-      const signUp = await prisma.eventSignUp.create({
-        data: {
-          eventId: event.id,
-          slotId: slot.id,
-          participationStatus: ParticipationStatus.ON_WAITLIST,
-          userId: user.id,
-        },
-      });
-
-      /**
-       * Act
-       *
-       * 1. Call updateSignUp
-       */
-      const actual = await eventRepository.updateSignUp({
-        signUp,
-        newParticipationStatus: ParticipationStatus.CONFIRMED,
-        event: {
-          id: event.id,
-          capacityGt: 0,
-          decrement: true,
-        },
-        slot: {
-          id: slot.id,
-          capacityGt: 0,
-          decrement: true,
-        },
-      });
-
-      /**
-       * Assert
-       *
-       * 1. The participation status should be CONFIRMED
-       * 2. The EventSignUp version should be incremented
-       * 3. The Event remainingCapacity should be decremented
-       * 4. The EventSlot remainingCapacity should be decremented
-       */
-      expect(actual.signUp.participationStatus).toBe(ParticipationStatus.CONFIRMED);
-      expect(actual.signUp.version).toBe(signUp.version + 1);
-      expect(actual.event.remainingCapacity).toBe(0);
-      expect(actual.slot?.remainingCapacity).toBe(0);
-    });
-
-    it("should update the status, increment version, and increment remainingCapacity for event and slot", async () => {
-      /**
-       * Arrange
-       *
-       * 1. Create a user
-       * 2. Create an event
-       * 3. Create a slot
-       * 4. Create a sign up for the event with status ON_WAITLIST
-       */
-      const user = await prisma.user.create({
-        data: {
-          email: faker.internet.email(),
-          firstName: faker.person.firstName(),
-          lastName: faker.person.lastName(),
-          feideId: faker.string.uuid(),
-          username: faker.string.sample(20),
-        },
-      });
-      const event = await prisma.event.create({
-        data: {
-          name: faker.word.adjective(),
-          startAt: new Date(),
-          endAt: new Date(),
-          remainingCapacity: 1,
-        },
-      });
-      const slot = await prisma.eventSlot.create({
-        data: {
-          eventId: event.id,
-          remainingCapacity: 1,
-        },
-      });
-      const signUp = await prisma.eventSignUp.create({
-        data: {
-          eventId: event.id,
-          slotId: slot.id,
-          participationStatus: ParticipationStatus.ON_WAITLIST,
-          userId: user.id,
-        },
-      });
-
-      /**
-       * Act
-       *
-       * 1. Call updateSignUp
-       */
-      const actual = await eventRepository.updateSignUp({
-        signUp,
-        newParticipationStatus: ParticipationStatus.CONFIRMED,
-        event: {
-          id: event.id,
-          capacityGt: 0,
-          increment: true,
-        },
-        slot: {
-          id: slot.id,
-          capacityGt: 0,
-          increment: true,
-        },
-      });
-
-      /**
-       * Assert
-       *
-       * 1. The participation status should be CONFIRMED
-       * 2. The EventSignUp version should be incremented
-       * 3. The Event remainingCapacity should be incremented
-       * 4. The EventSlot remainingCapacity should be incremented
-       */
-      expect(actual.signUp.participationStatus).toBe(ParticipationStatus.CONFIRMED);
-      expect(actual.signUp.version).toBe(signUp.version + 1);
-      expect(actual.event.remainingCapacity).toBe(2);
-      expect(actual.slot?.remainingCapacity).toBe(2);
-    });
-
-    it("should update the status, increment version, and increment remainingCapacity for event and slot", async () => {
-      /**
-       * Arrange
-       *
-       * 1. Create a user
-       * 2. Create an event
-       * 3. Create a slot
-       * 4. Create a sign up for the event with status ON_WAITLIST
-       */
-      const user = await prisma.user.create({
-        data: {
-          email: faker.internet.email(),
-          firstName: faker.person.firstName(),
-          lastName: faker.person.lastName(),
-          feideId: faker.string.uuid(),
-          username: faker.string.sample(20),
-        },
-      });
-      const event = await prisma.event.create({
-        data: {
-          name: faker.word.adjective(),
-          startAt: new Date(),
-          endAt: new Date(),
-          remainingCapacity: 1,
-        },
-      });
-      const slot = await prisma.eventSlot.create({
-        data: {
-          eventId: event.id,
-          remainingCapacity: 1,
-        },
-      });
-      const signUp = await prisma.eventSignUp.create({
-        data: {
-          eventId: event.id,
-          slotId: slot.id,
-          participationStatus: ParticipationStatus.ON_WAITLIST,
-          userId: user.id,
-        },
-      });
-
-      /**
-       * Act
-       *
-       * 1. Call updateSignUp
-       */
-      const actual = await eventRepository.updateSignUp({
-        signUp,
-        newParticipationStatus: ParticipationStatus.CONFIRMED,
-        event: {
-          id: event.id,
-          capacityGt: 0,
-          increment: true,
-        },
-        slot: {
-          id: slot.id,
-          capacityGt: 0,
-          increment: true,
-        },
-      });
-
-      /**
-       * Assert
-       *
-       * 1. The participation status should be CONFIRMED
-       * 2. The EventSignUp version should be incremented
-       * 3. The Event remainingCapacity should be incremented
-       * 4. The EventSlot remainingCapacity should be incremented
-       */
-      expect(actual.signUp.participationStatus).toBe(ParticipationStatus.CONFIRMED);
-      expect(actual.signUp.version).toBe(signUp.version + 1);
-      expect(actual.event.remainingCapacity).toBe(2);
-      expect(actual.slot?.remainingCapacity).toBe(2);
-    });
-
-    describe("should raise", () => {
-      interface TestCase {
-        name: string;
-        arrange: {
-          eventCapacity: number;
-          slotCapacity: number;
-        };
-        act: {
-          signUpVersion: number;
-        };
-        assertion: {
-          errorCode: ErrorCode;
-        };
-      }
-      const testCases: TestCase[] = [
-        {
-          name: "if the sign up version doesn't match",
-          arrange: {
-            eventCapacity: 1,
-            slotCapacity: 1,
-          },
-          act: {
-            signUpVersion: 1,
-          },
-          assertion: {
-            errorCode: errorCodes.ERR_NOT_FOUND,
-          },
-        },
-        {
-          name: "if the event has no remaining capacity",
-          arrange: {
-            eventCapacity: 0,
-            slotCapacity: 1,
-          },
-          act: {
-            signUpVersion: 0,
-          },
-          assertion: {
-            errorCode: errorCodes.ERR_NOT_FOUND,
-          },
-        },
-        {
-          name: "if the slot has no remaining capacity",
-          arrange: {
-            eventCapacity: 1,
-            slotCapacity: 0,
-          },
-          act: {
-            signUpVersion: 0,
-          },
-          assertion: {
-            errorCode: errorCodes.ERR_NOT_FOUND,
-          },
-        },
-      ];
-
-      test.each(testCases)("$assertion.errorCode $name", async ({ assertion, act, arrange }) => {
+    describe("newParticipationStatus: CONFIRMED", () => {
+      it("should update the status for a wait list sign up, decrementing the event and slot capacities", async () => {
         /**
          * Arrange
          *
          * 1. Create a user
-         * 2. Create an event with remainingCapacity from test case
-         * 3. Create a slot with remainingCapacity from test case
-         * 4. Create a sign up with status ON_WAITLIST, and version from test case
+         * 2. Create an event with capacity
+         * 3. Create a slot with capacity
+         * 4. Create a sign up for the event with status ON_WAITLIST
          */
-        const user = await prisma.user.create({
-          data: {
-            email: faker.internet.email(),
-            firstName: faker.person.firstName(),
-            lastName: faker.person.lastName(),
-            feideId: faker.string.uuid(),
-            username: faker.string.sample(20),
-          },
-        });
-        const event = await prisma.event.create({
-          data: {
-            name: faker.word.adjective(),
-            startAt: DateTime.now().toJSDate(),
-            endAt: DateTime.now().plus({ hours: 1 }).toJSDate(),
-            remainingCapacity: arrange.eventCapacity,
-          },
-        });
-        const slot = await prisma.eventSlot.create({
-          data: {
-            eventId: event.id,
-            remainingCapacity: arrange.slotCapacity,
-          },
-        });
-        const signUp = await prisma.eventSignUp.create({
-          data: {
-            eventId: event.id,
-            slotId: slot.id,
-            participationStatus: ParticipationStatus.ON_WAITLIST,
-            userId: user.id,
-          },
+        const user = await makeUser();
+        const event = await makeEvent({ capacity: 1 });
+        const slot = await makeSlot({ eventId: event.id, capacity: 1 });
+        const signUp = await makeSignUp({
+          userId: user.id,
+          eventId: event.id,
+          participationStatus: ParticipationStatus.ON_WAITLIST,
         });
 
         /**
          * Act
          *
-         * Call makeConfirmedSignUp where the sign up version is from test case
+         * 1. Call updateSignUp and change the participation status to CONFIRMED
          */
-        const actual = eventRepository.updateSignUp({
-          signUp: { id: signUp.id, version: act.signUpVersion },
+        const actual = await eventRepository.updateSignUp({
+          eventId: event.id,
+          userId: user.id,
+          slotId: slot.id,
           newParticipationStatus: ParticipationStatus.CONFIRMED,
-          slot: {
-            id: slot.id,
-            capacityGt: 0,
-            decrement: true,
-          },
-          event: {
-            id: event.id,
-            capacityGt: 0,
-            decrement: true,
-          },
         });
 
         /**
          * Assert
          *
-         * The expected error is raised
+         * The participation status should be CONFIRMED
+         * The EventSignUp version should be incremented
+         * The Event remainingCapacity should be decremented
+         * The EventSlot remainingCapacity should be decremented
+         * The EventSignUp should be returned
          */
-        await expect(actual).rejects.toHaveProperty("code", assertion.errorCode);
+        expect(actual.signUp.participationStatus).toBe(ParticipationStatus.CONFIRMED);
+        expect(actual.signUp.version).toBe(signUp.version + 1);
+        expect(actual.event.remainingCapacity).toBe(0);
+        expect(actual.slot?.remainingCapacity).toBe(0);
+      });
+
+      it("should not make any changes if the sign up is already confirmed", async () => {
+        /**
+         * Arrange
+         *
+         * 1. Create a user
+         * 2. Create an event with capacity
+         * 3. Create a slot with capacity
+         * 4. Create a sign up for the event with status CONFIRMED
+         */
+        const user = await makeUser();
+        const event = await makeEvent({ capacity: 1 });
+        const slot = await makeSlot({ eventId: event.id, capacity: 1 });
+        const signUp = await makeSignUp({
+          userId: user.id,
+          eventId: event.id,
+          slotId: slot.id,
+          participationStatus: ParticipationStatus.CONFIRMED,
+        });
+
+        /**
+         * Act
+         *
+         * 1. Call updateSignUp and change the participation status to CONFIRMED
+         */
+        const actual = await eventRepository.updateSignUp({
+          eventId: event.id,
+          userId: user.id,
+          slotId: slot.id,
+          newParticipationStatus: ParticipationStatus.CONFIRMED,
+        });
+
+        /**
+         * Assert
+         *
+         * The sign up version should remain unchanged
+         * The event remainingCapacity should remain unchanged
+         * The slot remainingCapacity should remain unchanged
+         */
+        expect(actual.signUp.version).toBe(signUp.version);
+        expect(actual.event.remainingCapacity).toBe(event.remainingCapacity);
+        expect(actual.slot?.remainingCapacity).toBe(slot.remainingCapacity);
+      });
+
+      it("should raise InvalidArgumentError if the sign up is already `active: false`", async () => {
+        /**
+         * Arrange
+         *
+         * 1. Create a user
+         * 2. Create an event with capacity
+         * 3. Create a slot with capacity
+         * 4. Create a sign up for the event with status REMOVED and active: false
+         */
+        const user = await makeUser();
+        const event = await makeEvent({ capacity: 1 });
+        const slot = await makeSlot({ eventId: event.id, capacity: 1 });
+        await makeSignUp({
+          userId: user.id,
+          eventId: event.id,
+          participationStatus: ParticipationStatus.REMOVED,
+          active: false,
+        });
+
+        /**
+         * Act
+         *
+         * 1. Call updateSignUp and change the participation status to CONFIRMED
+         */
+        const actual = eventRepository.updateSignUp({
+          eventId: event.id,
+          userId: user.id,
+          slotId: slot.id,
+          newParticipationStatus: ParticipationStatus.CONFIRMED,
+        });
+
+        /**
+         * Assert
+         *
+         * InvalidArugmentError should be raised
+         */
+        await expect(actual).rejects.toThrow(InvalidArgumentError);
+      });
+
+      it("should raise NotFoundError if the event is full and existing sign up is ON_WAITLIST", async () => {
+        /**
+         * Arrange
+         *
+         * 1. Create a user
+         * 2. Create an event with capacity 0
+         * 3. Create a slot with capacity
+         * 4. Create a sign up for the event with status REMOVED and active: false
+         */
+        const user = await makeUser();
+        const event = await makeEvent({ capacity: 0 });
+        const slot = await makeSlot({ eventId: event.id, capacity: 1 });
+        await makeSignUp({
+          userId: user.id,
+          eventId: event.id,
+          participationStatus: ParticipationStatus.ON_WAITLIST,
+        });
+
+        /**
+         * Act
+         *
+         * 1. Call updateSignUp and change the participation status to CONFIRMED
+         */
+        const actual = eventRepository.updateSignUp({
+          eventId: event.id,
+          userId: user.id,
+          slotId: slot.id,
+          newParticipationStatus: ParticipationStatus.CONFIRMED,
+        });
+
+        /**
+         * Assert
+         *
+         * InvalidArugmentError should be raised
+         */
+        await expect(actual).rejects.toThrow(NotFoundError);
+      });
+
+      it("should raise NotFoundError if the slot is full and existing sign up is ON_WAITLIST", async () => {
+        /**
+         * Arrange
+         *
+         * 1. Create a user
+         * 2. Create an event with capacity
+         * 3. Create a slot with capacity 0
+         * 4. Create a sign up for the event with status REMOVED and active: false
+         */
+        const user = await makeUser();
+        const event = await makeEvent({ capacity: 1 });
+        const slot = await makeSlot({ eventId: event.id, capacity: 0 });
+        await makeSignUp({
+          userId: user.id,
+          eventId: event.id,
+          participationStatus: ParticipationStatus.ON_WAITLIST,
+        });
+
+        /**
+         * Act
+         *
+         * 1. Call updateSignUp and change the participation status to CONFIRMED
+         */
+        const actual = eventRepository.updateSignUp({
+          eventId: event.id,
+          userId: user.id,
+          slotId: slot.id,
+          newParticipationStatus: ParticipationStatus.CONFIRMED,
+        });
+
+        /**
+         * Assert
+         *
+         * InvalidArugmentError should be raised
+         */
+        await expect(actual).rejects.toThrow(NotFoundError);
       });
     });
 
-    it("should update update the status, and only return the updated event, not the slot", async () => {
-      /**
-       * Arrange
-       *
-       * 1. Create a user
-       * 2. Create an event
-       * 3. Create a slot
-       * 4. Create a sign up for the event with status ON_WAITLIST
-       */
-      const user = await prisma.user.create({
-        data: {
-          email: faker.internet.email(),
-          firstName: faker.person.firstName(),
-          lastName: faker.person.lastName(),
-          feideId: faker.string.uuid(),
-          username: faker.string.sample(20),
-        },
-      });
-      const event = await prisma.event.create({
-        data: {
-          name: faker.word.adjective(),
-          startAt: new Date(),
-          endAt: new Date(),
-          remainingCapacity: 1,
-        },
-      });
-      const slot = await prisma.eventSlot.create({
-        data: {
-          eventId: event.id,
-          remainingCapacity: 1,
-        },
-      });
-      const signUp = await prisma.eventSignUp.create({
-        data: {
+    describe("newParticipationStatus: REMOVED or RETRACTED", () => {
+      it("should update the status for a confirmed sign up, incrementing the event and slot capacities", async () => {
+        /**
+         * Arrange
+         *
+         * 1. Create a user
+         * 2. Create an event
+         * 3. Create a slot
+         * 4. Create a sign up for the event with status CONFIRMED
+         */
+        const user = await makeUser();
+        const event = await makeEvent({ capacity: 0 });
+        const slot = await makeSlot({ eventId: event.id, capacity: 0 });
+        const signUp = await makeSignUp({
+          userId: user.id,
           eventId: event.id,
           slotId: slot.id,
-          participationStatus: ParticipationStatus.ON_WAITLIST,
+          participationStatus: ParticipationStatus.CONFIRMED,
+        });
+
+        /**
+         * Act
+         *
+         * 1. Call updateSignUp and change the participation status to REMOVED
+         */
+        const actual = await eventRepository.updateSignUp({
+          eventId: event.id,
           userId: user.id,
-        },
+          newParticipationStatus: ParticipationStatus.REMOVED,
+        });
+
+        /**
+         * Assert
+         *
+         * The participation status should be REMOVED
+         * The EventSignUp version should be incremented
+         * The Event remainingCapacity should be incremented
+         * The EventSlot remainingCapacity should be incremented
+         */
+        expect(actual.signUp.participationStatus).toBe(ParticipationStatus.REMOVED);
+        expect(actual.signUp.version).toBe(signUp.version + 1);
+        expect(actual.event.remainingCapacity).toBe((event.remainingCapacity ?? NaN) + 1);
+        const updatedSlot = await prisma.eventSlot.findUnique({
+          where: { id: slot.id },
+        });
+        expect(updatedSlot?.remainingCapacity).toBe(slot.remainingCapacity + 1);
       });
 
-      /**
-       * Act
-       *
-       * 1. Call updateSignUp
-       */
-      const actual = await eventRepository.updateSignUp({
-        signUp,
-        newParticipationStatus: ParticipationStatus.REMOVED,
-        event: {
-          id: event.id,
-        },
+      it("should update the status for a ON_WAITLIST sign up without changing capacities", async () => {
+        /**
+         * Arrange
+         *
+         * 1. Create a user
+         * 2. Create an event
+         * 3. Create a slot
+         * 4. Create a sign up for the event with status ON_WAITLIST
+         */
+        const user = await makeUser();
+        const event = await makeEvent({ capacity: 0 });
+        const slot = await makeSlot({ eventId: event.id, capacity: 0 });
+        const signUp = await makeSignUp({
+          userId: user.id,
+          eventId: event.id,
+          participationStatus: ParticipationStatus.ON_WAITLIST,
+        });
+
+        /**
+         * Act
+         *
+         * 1. Call updateSignUp and change the participation status to REMOVED
+         */
+        const actual = await eventRepository.updateSignUp({
+          eventId: event.id,
+          userId: user.id,
+          newParticipationStatus: ParticipationStatus.REMOVED,
+        });
+
+        /**
+         * Assert
+         *
+         * The participation status should be REMOVED
+         * The EventSignUp version should be incremented
+         * The EventSignUp should have active: false
+         * The Event remainingCapacity should not be incremented
+         * The EventSlot remainingCapacity should not be incremented
+         */
+        expect(actual.signUp.participationStatus).toBe(ParticipationStatus.REMOVED);
+        expect(actual.signUp.active).toBe(false);
+        expect(actual.signUp.version).toBe(signUp.version + 1);
+        expect(actual.event.remainingCapacity).toBe(event.remainingCapacity);
+        const updatedSlot = await prisma.eventSlot.findUnique({
+          where: { id: slot.id },
+        });
+        expect(updatedSlot?.remainingCapacity).toBe(slot.remainingCapacity);
       });
 
-      /**
-       * Assert
-       *
-       * 1. The participation status should be CONFIRMED
-       * 2. The EventSignUp version should be incremented
-       * 3. The Event remainingCapacity should be decremented
-       * 4. The EventSlot remainingCapacity should be decremented
-       */
-      expect(actual.signUp.participationStatus).toBe(ParticipationStatus.REMOVED);
-      expect(actual.signUp.version).toBe(signUp.version + 1);
-      expect(actual.event.remainingCapacity).toBe(1);
-      expect(actual.slot).toBeUndefined();
+      it("should replace an existing active: false sign up with the newer sign up", async () => {
+        /**
+         * Arrange
+         *
+         * 1. Create a user
+         * 2. Create an event
+         * 3. Create a slot
+         * 4. Create a sign up for the event with status ON_WAITLIST
+         */
+        const user = await makeUser();
+        const event = await makeEvent({ capacity: 0 });
+        await makeSlot({ eventId: event.id, capacity: 0 });
+        const existingInactiveSignUp = await makeSignUp({
+          userId: user.id,
+          eventId: event.id,
+          participationStatus: ParticipationStatus.REMOVED,
+          active: false,
+        });
+        const signUp = await makeSignUp({
+          userId: user.id,
+          eventId: event.id,
+          participationStatus: ParticipationStatus.ON_WAITLIST,
+        });
+
+        /**
+         * Act
+         *
+         * 1. Call updateSignUp and change the participation status to REMOVED
+         */
+        const actual = await eventRepository.updateSignUp({
+          eventId: event.id,
+          userId: user.id,
+          newParticipationStatus: ParticipationStatus.REMOVED,
+        });
+
+        /**
+         * Assert
+         *
+         * The participation status should be REMOVED
+         * The EventSignUp version should be incremented
+         * The EventSignUp should have active: false
+         * The previous inactive sign up should be deleted
+         */
+        expect(actual.signUp.participationStatus).toBe(ParticipationStatus.REMOVED);
+        expect(actual.signUp.active).toBe(false);
+        expect(actual.signUp.version).toBe(signUp.version + 1);
+        const previousSignUp = await prisma.eventSignUp.findUnique({
+          where: { id: existingInactiveSignUp.id },
+        });
+        expect(previousSignUp).toBe(null);
+      });
+
+      it("should raise InvalidArugmentError if active: false already", async () => {
+        /**
+         * Arrange
+         *
+         * 1. Create a user
+         * 2. Create an event
+         * 3. Create a slot
+         * 4. Create a sign up for the event with status ON_WAITLIST
+         */
+        const user = await makeUser();
+        const event = await makeEvent({ capacity: 0 });
+        await makeSlot({ eventId: event.id, capacity: 0 });
+        await makeSignUp({
+          userId: user.id,
+          eventId: event.id,
+          participationStatus: ParticipationStatus.REMOVED,
+          active: false,
+        });
+
+        /**
+         * Act
+         *
+         * 1. Call updateSignUp and change the participation status to REMOVED
+         */
+        const actual = eventRepository.updateSignUp({
+          eventId: event.id,
+          userId: user.id,
+          newParticipationStatus: ParticipationStatus.REMOVED,
+        });
+
+        /**
+         * Assert
+         *
+         * InvalidArugmentError should be raised
+         */
+        await expect(actual).rejects.toThrow(InvalidArgumentError);
+      });
     });
   });
 });
+
+function makeEvent(data: { capacity: number }) {
+  return prisma.event.create({
+    data: {
+      name: faker.word.adjective(),
+      startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+      endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+      remainingCapacity: data.capacity,
+    },
+  });
+}
+
+function makeSlot(data: { eventId: string; capacity: number }) {
+  const { eventId, capacity } = data;
+  return prisma.eventSlot.create({
+    data: {
+      eventId,
+      remainingCapacity: capacity,
+    },
+  });
+}
+
+function makeSignUp(data: {
+  eventId: string;
+  userId: string;
+  slotId?: string;
+  participationStatus: ParticipationStatus;
+  active?: boolean;
+}) {
+  const { eventId, slotId, userId, participationStatus, active } = data;
+  return prisma.eventSignUp.create({
+    data: {
+      eventId,
+      slotId,
+      userId,
+      participationStatus,
+      active,
+    },
+  });
+}
+
+function makeUser() {
+  return prisma.user.create({
+    data: {
+      email: faker.internet.email(),
+      firstName: faker.person.firstName(),
+      lastName: faker.person.lastName(),
+      username: faker.string.sample(20),
+      feideId: faker.string.uuid(),
+    },
+  });
+}
