@@ -1,18 +1,22 @@
 import { faker } from "@faker-js/faker";
 import { DeepMockProxy, mockDeep } from "jest-mock-extended";
 
-import { InvalidArgumentError } from "@/domain/errors.js";
+import { InvalidArgumentError, PermissionDeniedError } from "@/domain/errors.js";
+import { Role } from "@/domain/organizations.js";
 
-import { ListingRepository, ListingService } from "../../service.js";
+import { ListingRepository, ListingService, PermissionService } from "../../service.js";
 
 describe("ListingService", () => {
   let listingService: ListingService;
   let listingRepository: DeepMockProxy<ListingRepository>;
+  let permissionService: DeepMockProxy<PermissionService>;
 
   beforeAll(() => {
     listingRepository = mockDeep<ListingRepository>();
-    listingService = new ListingService(listingRepository);
+    permissionService = mockDeep<PermissionService>();
+    listingService = new ListingService(listingRepository, permissionService);
   });
+
   describe("create", () => {
     describe("should raise InvalidArgumentError when", () => {
       interface TestCase {
@@ -70,7 +74,14 @@ describe("ListingService", () => {
       ];
 
       test.each(testCases)("$name", async ({ data }) => {
-        await expect(listingService.create(data)).rejects.toThrow(InvalidArgumentError);
+        /**
+         * Arrange
+         *
+         * Mock hasRole to return true
+         */
+        permissionService.hasRole.mockResolvedValue(true);
+
+        await expect(listingService.create(faker.string.uuid(), data)).rejects.toThrow(InvalidArgumentError);
       });
     });
 
@@ -154,8 +165,77 @@ describe("ListingService", () => {
       ];
 
       test.each(testCases)("$name", async ({ data, expected }) => {
-        await expect(listingService.create(data)).resolves.not.toThrow();
+        /**
+         * Arrange
+         *
+         * Mock the permission check to true
+         */
+        permissionService.hasRole.mockResolvedValue(true);
+
+        await expect(listingService.create(faker.string.uuid(), data)).resolves.not.toThrow();
         expect(listingRepository.create).toHaveBeenCalledWith(expected);
+      });
+    });
+
+    describe("permissions", () => {
+      it("should pass the correct arguments to hasRole", async () => {
+        /**
+         * Arrange
+         *
+         * Mock the permission check to true
+         */
+        const userId = faker.string.uuid();
+        const organizationId = faker.string.uuid();
+        const data = {
+          name: faker.word.adjective(),
+          closesAt: faker.date.future(),
+          organizationId,
+        };
+        permissionService.hasRole.mockResolvedValue(true);
+
+        /**
+         * Act
+         *
+         * Call create
+         */
+        await expect(listingService.create(userId, data)).resolves.not.toThrow();
+
+        /**
+         * Assert
+         *
+         * Has role should have been called with userId and organizationId
+         */
+        expect(permissionService.hasRole).toHaveBeenCalledWith({ userId, organizationId, role: Role.MEMBER });
+      });
+
+      it("should raise PermissionDeniedError if the user does not have the role", async () => {
+        /**
+         * Arrange
+         *
+         * Mock the permission check to true
+         */
+        const userId = faker.string.uuid();
+        const organizationId = faker.string.uuid();
+        const data = {
+          name: faker.word.adjective(),
+          closesAt: faker.date.future(),
+          organizationId,
+        };
+        permissionService.hasRole.mockResolvedValue(false);
+
+        /**
+         * Act
+         *
+         * Call create
+         */
+        await expect(listingService.create(userId, data)).rejects.toThrow(PermissionDeniedError);
+
+        /**
+         * Assert
+         *
+         * Create should now have been called
+         */
+        expect(listingRepository.create).not.toHaveBeenCalled();
       });
     });
   });

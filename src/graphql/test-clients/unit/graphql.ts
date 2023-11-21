@@ -177,7 +177,7 @@ export type EventsResponse = {
 
 export type Listing = {
   __typename?: 'Listing';
-  closesAt: Scalars['String']['output'];
+  closesAt: Scalars['DateTime']['output'];
   description: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];

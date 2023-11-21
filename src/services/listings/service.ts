@@ -1,7 +1,8 @@
 import { Listing } from "@prisma/client";
 import { ZodError, z } from "zod";
 
-import { InvalidArgumentError } from "@/domain/errors.js";
+import { InvalidArgumentError, PermissionDeniedError } from "@/domain/errors.js";
+import { Role } from "@/domain/organizations.js";
 
 export interface ListingRepository {
   get(id: string): Promise<Listing>;
@@ -24,8 +25,15 @@ export interface ListingRepository {
   findMany(): Promise<Listing[]>;
 }
 
+export interface PermissionService {
+  hasRole(data: { userId: string; organizationId: string; role: Role }): Promise<boolean>;
+}
+
 export class ListingService {
-  constructor(private readonly listingRepository: ListingRepository) {}
+  constructor(
+    private readonly listingRepository: ListingRepository,
+    private readonly permissionService: PermissionService
+  ) {}
 
   /**
    * get returns a listing by id
@@ -48,13 +56,18 @@ export class ListingService {
    * @param data - the data to create a listing
    * @returns the created listing
    */
-  async create(data: {
-    name: string;
-    description?: string | null;
-    closesAt: Date;
-    applicationUrl?: string | null;
-    organizationId: string;
-  }): Promise<Listing> {
+  async create(
+    userId: string,
+    data: {
+      name: string;
+      description?: string | null;
+      closesAt: Date;
+      applicationUrl?: string | null;
+      organizationId: string;
+    }
+  ): Promise<Listing> {
+    await this.assertHasPermission(userId, data.organizationId);
+
     const listingSchema = z.object({
       name: z.string().min(2).max(100),
       description: z
@@ -89,6 +102,7 @@ export class ListingService {
    * @returns the updated listing
    */
   async update(
+    userId: string,
     id: string,
     data: {
       name?: string | null;
@@ -97,6 +111,9 @@ export class ListingService {
       applicationUrl?: string | null;
     }
   ): Promise<Listing> {
+    const listing = await this.listingRepository.get(id);
+    await this.assertHasPermission(userId, listing.organizationId);
+
     const listingSchema = z.object({
       name: z
         .string()
@@ -128,6 +145,18 @@ export class ListingService {
         throw new InvalidArgumentError(err.message);
       }
       throw err;
+    }
+  }
+
+  private async assertHasPermission(userId: string, organizationId: string): Promise<void> {
+    const isMember = await this.permissionService.hasRole({
+      organizationId,
+      userId,
+      role: Role.MEMBER,
+    });
+
+    if (isMember === false) {
+      throw new PermissionDeniedError("You do not have permission to update this listing.");
     }
   }
 }

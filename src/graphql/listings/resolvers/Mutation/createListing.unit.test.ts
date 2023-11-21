@@ -36,9 +36,10 @@ describe("Listing mutations", () => {
       );
 
       expect(errors).toBeUndefined();
-      expect(listingService.create).toHaveBeenCalledWith(authenticatedContext.req.session.userId, expect.any(String), {
+      expect(listingService.create).toHaveBeenCalledWith(authenticatedContext.req.session.userId, {
         closesAt: expect.any(Date),
         name: expect.any(String),
+        organizationId: expect.any(String),
       });
     });
 

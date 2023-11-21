@@ -123,8 +123,13 @@ interface ListingService {
   findMany(): Promise<Listing[]>;
   create(
     userId: string,
-    organizationId: string,
-    data: { name: string; description?: string | null; applicationUrl?: string | null; closesAt: Date }
+    data: {
+      name: string;
+      description?: string | null;
+      applicationUrl?: string | null;
+      closesAt: Date;
+      organizationId: string;
+    }
   ): Promise<Listing>;
   update(
     userId: string,

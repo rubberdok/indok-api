@@ -2,7 +2,7 @@ type Listing {
   id: ID!
   name: String!
   description: String!
-  closesAt: String!
+  closesAt: DateTime!
 }
 
 type ListingsResponse {

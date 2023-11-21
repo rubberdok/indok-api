@@ -209,7 +209,7 @@ type EventsResponse {
 }
 
 type Listing {
-  closesAt: String!
+  closesAt: DateTime!
   description: String!
   id: ID!
   name: String!
