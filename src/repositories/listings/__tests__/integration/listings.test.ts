@@ -95,6 +95,27 @@ describe("ListingRepository", () => {
     });
   });
 
+  describe("delete", () => {
+    it("deletes the listing", async () => {
+      /**
+       * Arrange
+       *
+       * Create a listing to get
+       */
+      const listing = await makeListing({ organizationId: organization.id });
+
+      const actual = await listingRepository.delete(listing.id);
+
+      expect(actual).toBeDefined();
+      expect(actual).toEqual(listing);
+    });
+
+    it("raises a NotFoundError if the listing does not exist", async () => {
+      const actual = listingRepository.delete(faker.string.uuid());
+      await expect(actual).rejects.toThrow(NotFoundError);
+    });
+  });
+
   describe("findMany", () => {
     it("retrieves all listings", async () => {
       /**
