@@ -4,7 +4,6 @@ import { merge } from "lodash-es";
 import { z } from "zod";
 
 import { InternalServerError, InvalidArgumentError, NotFoundError, PermissionDeniedError } from "@/domain/errors.js";
-import { AlreadySignedUpError } from "@/domain/events.js";
 import { Role } from "@/domain/organizations.js";
 import { User } from "@/domain/users.js";
 
@@ -57,7 +56,7 @@ export interface EventRepository {
     }
   ): Promise<Event>;
   get(id: string): Promise<Event>;
-  getSlotWithRemainingCapacity(eventId: string): Promise<EventSlot>;
+  getSlotWithRemainingCapacity(eventId: string): Promise<EventSlot | null>;
   findMany(data?: { endAtGte?: Date | null }): Promise<Event[]>;
   findManySignUps(data: { eventId: string; status: ParticipationStatus }): Promise<EventSignUp[]>;
   getSignUp(userId: string, eventId: string): Promise<EventSignUp>;
@@ -266,12 +265,10 @@ export class EventService {
         return signUp;
       }
 
-      let slotToSignUp: EventSlot;
       try {
-        slotToSignUp = await this.eventRepository.getSlotWithRemainingCapacity(eventId);
-      } catch (err) {
-        // If there are no slots with remaining capacity, we add the user to the wait list.
-        if (err instanceof NotFoundError) {
+        const slotToSignUp = await this.eventRepository.getSlotWithRemainingCapacity(eventId);
+
+        if (slotToSignUp === null) {
           this.logger?.info({ event }, "Event is full, adding user to wait list.");
           const { signUp } = await this.eventRepository.createSignUp({
             userId,
@@ -279,26 +276,19 @@ export class EventService {
             eventId,
           });
           return signUp;
+        } else {
+          const { signUp } = await this.eventRepository.createSignUp({
+            userId,
+            participationStatus: ParticipationStatus.CONFIRMED,
+            eventId,
+            slotId: slotToSignUp.id,
+          });
+          this.logger?.info({ signUp, attempt }, "Successfully signed up user for event.");
+          return signUp;
         }
-        throw err;
-      }
-
-      try {
-        // Try to sign the user up for the event. If there have been changes, i.e. `version` does not match, a NotFoundError is thrown.
-        // In that case, we refetch the event and slot, and try again.
-        const { signUp } = await this.eventRepository.createSignUp({
-          userId,
-          participationStatus: ParticipationStatus.CONFIRMED,
-          eventId,
-          slotId: slotToSignUp.id,
-        });
-        this.logger?.info({ signUp, attempt }, "Successfully signed up user for event.");
-        return signUp;
       } catch (err) {
+        // If there are no slots with remaining capacity, we add the user to the wait list.
         if (err instanceof NotFoundError) continue;
-        if (err instanceof AlreadySignedUpError) {
-          return await this.eventRepository.getSignUp(userId, eventId);
-        }
         throw err;
       }
     }
@@ -368,19 +358,20 @@ export class EventService {
     for (const waitlistSignUp of signUpsOnWaitlist) {
       try {
         const slot = await this.eventRepository.getSlotWithRemainingCapacity(eventId);
-        const { signUp: confirmedSignUp } = await this.eventRepository.updateSignUp({
-          userId: waitlistSignUp.userId,
-          eventId,
-          slotId: slot.id,
-          newParticipationStatus: ParticipationStatus.CONFIRMED,
-        });
+        if (slot !== null) {
+          const { signUp: confirmedSignUp } = await this.eventRepository.updateSignUp({
+            userId: waitlistSignUp.userId,
+            eventId,
+            slotId: slot.id,
+            newParticipationStatus: ParticipationStatus.CONFIRMED,
+          });
 
-        this.logger?.info({ confirmedSignUp }, "Promoted from waitlist to confirmed sign up.");
-        return confirmedSignUp;
-      } catch (err) {
-        if (!(err instanceof NotFoundError)) {
-          throw err;
+          this.logger?.info({ confirmedSignUp }, "Promoted from waitlist to confirmed sign up.");
+          return confirmedSignUp;
         }
+      } catch (err) {
+        if (err instanceof NotFoundError) continue;
+        throw err;
       }
     }
     this.logger?.info({ eventId }, "Found no valid sign ups to promote from wait list");

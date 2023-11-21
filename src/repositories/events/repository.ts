@@ -98,11 +98,10 @@ export class EventRepository {
   /**
    * getSlotWithRemainingCapacity returns the slot with the greatest number of remaining capacity for the given event.
    *
-   * @throws {NotFoundError} If there are no slots with remaining capacity for the event
    * @param eventId - The ID of the event to get a slot for
    * @returns The slot with the greatest number of remaining capacity for the given event
    */
-  async getSlotWithRemainingCapacity(eventId: string): Promise<EventSlot> {
+  async getSlotWithRemainingCapacity(eventId: string): Promise<EventSlot | null> {
     const slot = await this.db.eventSlot.findFirst({
       where: {
         eventId,
@@ -114,10 +113,6 @@ export class EventRepository {
         remainingCapacity: "desc",
       },
     });
-
-    if (slot === null) {
-      throw new NotFoundError(`No slots with remaining capacity for event { id: ${eventId} }`);
-    }
 
     return slot;
   }
