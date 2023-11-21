@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { Organization, Prisma, PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 
 faker.seed(42);
 
@@ -26,7 +26,7 @@ const organizationCreateInput: Prisma.OrganizationCreateInput[] = [
   },
 ];
 
-export const load = async (db: PrismaClient): Promise<Organization[]> => {
+export const load = async (db: PrismaClient) => {
   console.log("Seeding organizations");
   for (const organization of organizationCreateInput) {
     await db.organization.upsert({
@@ -37,7 +37,12 @@ export const load = async (db: PrismaClient): Promise<Organization[]> => {
       create: organization,
     });
   }
-  const organizations = await db.organization.findMany();
+  const organizations = await db.organization.findMany({
+    select: {
+      name: true,
+      id: true,
+    },
+  });
 
   return organizations;
 };
