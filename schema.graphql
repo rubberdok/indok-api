@@ -217,11 +217,30 @@ type EventsResponse {
 }
 
 type Listing {
+  """
+  An optional URL to the application form for the listing, defaults to ""
+  """
   applicationUrl: String!
+
+  """
+  When the listing closes, i.e. deadline, or when the listing is hidden from view.
+  """
   closesAt: DateTime!
+
+  """
+  The description of the listing, can be markdown.
+  """
   description: String!
   id: ID!
+
+  """
+  The name/title of the listing, will be visible to users.
+  """
   name: String!
+
+  """
+  The organization that the listing belongs to.
+  """
   organization: Organization!
 }
 

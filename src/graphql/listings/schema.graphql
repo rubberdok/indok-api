@@ -1,9 +1,24 @@
 type Listing {
   id: ID!
+  """
+  The name/title of the listing, will be visible to users.
+  """
   name: String!
+  """
+  The description of the listing, can be markdown.
+  """
   description: String!
+  """
+  When the listing closes, i.e. deadline, or when the listing is hidden from view.
+  """
   closesAt: DateTime!
+  """
+  The organization that the listing belongs to.
+  """
   organization: Organization!
+  """
+  An optional URL to the application form for the listing, defaults to ""
+  """
   applicationUrl: String!
 }
 

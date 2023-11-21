@@ -193,11 +193,16 @@ export type EventsResponse = {
 
 export type Listing = {
   __typename?: 'Listing';
+  /** An optional URL to the application form for the listing, defaults to "" */
   applicationUrl: Scalars['String']['output'];
+  /** When the listing closes, i.e. deadline, or when the listing is hidden from view. */
   closesAt: Scalars['DateTime']['output'];
+  /** The description of the listing, can be markdown. */
   description: Scalars['String']['output'];
   id: Scalars['ID']['output'];
+  /** The name/title of the listing, will be visible to users. */
   name: Scalars['String']['output'];
+  /** The organization that the listing belongs to. */
   organization: Organization;
 };
 
