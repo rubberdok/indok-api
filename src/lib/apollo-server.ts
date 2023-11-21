@@ -96,6 +96,7 @@ export interface ICabinService {
   updateBookingStatus(userId: string, id: string, status: BookingStatus): Promise<Booking>;
   getCabin(id: string): Promise<Cabin>;
   getCabinByBookingId(bookingId: string): Promise<Cabin>;
+  findManyCabins(): Promise<Cabin[]>;
 }
 
 interface IEventService {

@@ -1,3 +1,1 @@
-import { Booking } from "@prisma/client";
-
-export type BookingMapper = Booking;
+export { Booking as BookingMapper, Cabin as CabinMapper } from "@prisma/client";

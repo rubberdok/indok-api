@@ -8,5 +8,6 @@ export const updateBookingStatus: NonNullable<MutationResolvers["updateBookingSt
 ) => {
   assertIsAuthenticated(ctx);
   const { id, status } = data;
-  return await ctx.cabinService.updateBookingStatus(ctx.req.session.userId, id, status);
+  const booking = await ctx.cabinService.updateBookingStatus(ctx.req.session.userId, id, status);
+  return { booking };
 };

@@ -1,2 +1,2 @@
-schema: schema.graphql
+schema: src/graphql/**/*.graphql
 documents: src/graphql/**/__tests__/**/*.ts

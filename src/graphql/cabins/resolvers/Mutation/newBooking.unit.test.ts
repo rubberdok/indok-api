@@ -26,7 +26,9 @@ describe("Cabin mutations", () => {
         mutation: graphql(`
           mutation newBooking($data: NewBookingInput!) {
             newBooking(data: $data) {
-              id
+              booking {
+                id
+              }
             }
           }
         `),

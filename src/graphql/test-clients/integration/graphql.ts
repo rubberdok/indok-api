@@ -62,6 +62,11 @@ export type Cabin = {
   name: Scalars['String']['output'];
 };
 
+export type CabinsResponse = {
+  __typename?: 'CabinsResponse';
+  cabins: Array<Cabin>;
+};
+
 export type CreateEventInput = {
   /**
    * Total capacity for the event, regardless of the capacity in each slot.
@@ -234,14 +239,14 @@ export type Mutation = {
   /** Create a new organization, and add the current user as an admin of the organization. */
   createOrganization: CreateOrganizationResponse;
   deleteListing: DeleteListingResponse;
-  newBooking: Booking;
+  newBooking: NewBookingResponse;
   /** Remove a member from the organization by the ID of the membership. */
   removeMember: RemoveMemberResponse;
   /** Retract an active sign up for an event, requires that the user is logged in */
   retractSignUp: RetractSignUpResponse;
   /** Sign up for an event, requires that the user is logged in */
   signUp: SignUpResponse;
-  updateBookingStatus: Booking;
+  updateBookingStatus: UpdateBookingResponse;
   updateListing: UpdateListingResponse;
   /**
    * Update an organization with the given name and description.
@@ -327,6 +332,11 @@ export type NewBookingInput = {
   startDate: Scalars['DateTime']['input'];
 };
 
+export type NewBookingResponse = {
+  __typename?: 'NewBookingResponse';
+  booking: Booking;
+};
+
 export type Organization = {
   __typename?: 'Organization';
   description: Scalars['String']['output'];
@@ -395,6 +405,7 @@ export type PublicUser = {
 
 export type Query = {
   __typename?: 'Query';
+  cabins: CabinsResponse;
   event: EventResponse;
   events: EventsResponse;
   listing: ListingResponse;
@@ -477,6 +488,11 @@ export enum Status {
   Pending = 'PENDING',
   Rejected = 'REJECTED'
 }
+
+export type UpdateBookingResponse = {
+  __typename?: 'UpdateBookingResponse';
+  booking: Booking;
+};
 
 export type UpdateBookingStatusInput = {
   id: Scalars['ID']['input'];

@@ -30,6 +30,7 @@ export interface CabinRepository {
     status: BookingStatus;
   }): Promise<Booking[]>;
   getCabinByBookingId(bookingId: string): Promise<Cabin>;
+  findManyCabins(): Promise<Cabin[]>;
 }
 
 export interface PermissionService {
@@ -116,5 +117,12 @@ export class CabinService {
       }
     }
     return this.cabinRepository.updateBooking(id, { status });
+  }
+
+  /**
+   * findManyCabins returns all cabins.
+   */
+  async findManyCabins(): Promise<Cabin[]> {
+    return this.cabinRepository.findManyCabins();
   }
 }

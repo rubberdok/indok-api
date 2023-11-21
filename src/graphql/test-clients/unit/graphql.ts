@@ -62,6 +62,11 @@ export type Cabin = {
   name: Scalars['String']['output'];
 };
 
+export type CabinsResponse = {
+  __typename?: 'CabinsResponse';
+  cabins: Array<Cabin>;
+};
+
 export type CreateEventInput = {
   /**
    * Total capacity for the event, regardless of the capacity in each slot.
@@ -234,14 +239,14 @@ export type Mutation = {
   /** Create a new organization, and add the current user as an admin of the organization. */
   createOrganization: CreateOrganizationResponse;
   deleteListing: DeleteListingResponse;
-  newBooking: Booking;
+  newBooking: NewBookingResponse;
   /** Remove a member from the organization by the ID of the membership. */
   removeMember: RemoveMemberResponse;
   /** Retract an active sign up for an event, requires that the user is logged in */
   retractSignUp: RetractSignUpResponse;
   /** Sign up for an event, requires that the user is logged in */
   signUp: SignUpResponse;
-  updateBookingStatus: Booking;
+  updateBookingStatus: UpdateBookingResponse;
   updateListing: UpdateListingResponse;
   /**
    * Update an organization with the given name and description.
@@ -327,6 +332,11 @@ export type NewBookingInput = {
   startDate: Scalars['DateTime']['input'];
 };
 
+export type NewBookingResponse = {
+  __typename?: 'NewBookingResponse';
+  booking: Booking;
+};
+
 export type Organization = {
   __typename?: 'Organization';
   description: Scalars['String']['output'];
@@ -395,6 +405,7 @@ export type PublicUser = {
 
 export type Query = {
   __typename?: 'Query';
+  cabins: CabinsResponse;
   event: EventResponse;
   events: EventsResponse;
   listing: ListingResponse;
@@ -478,6 +489,11 @@ export enum Status {
   Rejected = 'REJECTED'
 }
 
+export type UpdateBookingResponse = {
+  __typename?: 'UpdateBookingResponse';
+  booking: Booking;
+};
+
 export type UpdateBookingStatusInput = {
   id: Scalars['ID']['input'];
   status: Status;
@@ -553,7 +569,12 @@ export type NewBookingMutationVariables = Exact<{
 }>;
 
 
-export type NewBookingMutation = { __typename?: 'Mutation', newBooking: { __typename?: 'Booking', id: string } };
+export type NewBookingMutation = { __typename?: 'Mutation', newBooking: { __typename?: 'NewBookingResponse', booking: { __typename?: 'Booking', id: string } } };
+
+export type CabinsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type CabinsQuery = { __typename?: 'Query', cabins: { __typename?: 'CabinsResponse', cabins: Array<{ __typename?: 'Cabin', id: string, name: string }> } };
 
 export type CreateEventMutationVariables = Exact<{
   data: CreateEventInput;
@@ -695,7 +716,8 @@ export type UserWithOrganizationsQuery = { __typename?: 'Query', user: { __typen
 
 
 export const GetUsersDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"getUsers"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"users"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"users"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"total"}}]}}]}}]} as unknown as DocumentNode<GetUsersQuery, GetUsersQueryVariables>;
-export const NewBookingDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"newBooking"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"NewBookingInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"newBooking"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]} as unknown as DocumentNode<NewBookingMutation, NewBookingMutationVariables>;
+export const NewBookingDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"newBooking"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"NewBookingInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"newBooking"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"booking"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]} as unknown as DocumentNode<NewBookingMutation, NewBookingMutationVariables>;
+export const CabinsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"cabins"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"cabins"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"cabins"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]} as unknown as DocumentNode<CabinsQuery, CabinsQueryVariables>;
 export const CreateEventDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"createEvent"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateEventInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createEvent"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"event"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}}]}}]}}]}}]} as unknown as DocumentNode<CreateEventMutation, CreateEventMutationVariables>;
 export const RetractSignUpDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"retractSignUp"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"RetractSignUpInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"retractSignUp"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"signUp"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"event"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"participationStatus"}}]}}]}}]}}]} as unknown as DocumentNode<RetractSignUpMutation, RetractSignUpMutationVariables>;
 export const SignUpDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"signUp"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"SignUpInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"signUp"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"signUp"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"event"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"participationStatus"}}]}}]}}]}}]} as unknown as DocumentNode<SignUpMutation, SignUpMutationVariables>;
