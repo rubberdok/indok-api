@@ -568,16 +568,16 @@ describe("CabinService", () => {
             name: "the booking semesters are adjacent",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester({ endAt: DateTime.now().plus({ days: 1 }).startOf("day").toJSDate() }),
+                autumn: makeBookingSemester({ endAt: DateTime.now().plus({ days: 2 }).startOf("day").toJSDate() }),
                 spring: makeBookingSemester({
-                  startAt: DateTime.now().plus({ days: 2 }).endOf("day").toJSDate(),
+                  startAt: DateTime.now().plus({ days: 3 }).endOf("day").toJSDate(),
                 }),
               },
             },
             act: {
               input: makeCabinInput({
-                startDate: DateTime.now().plus({ hour: 1 }).toJSDate(),
-                endDate: DateTime.now().plus({ days: 3 }).toJSDate(),
+                startDate: DateTime.now().plus({ days: 1 }).startOf("day").toJSDate(),
+                endDate: DateTime.now().plus({ days: 4 }).startOf("day").toJSDate(),
               }),
             },
           },
@@ -610,15 +610,15 @@ describe("CabinService", () => {
             arrange: {
               bookingSemesters: {
                 autumn: makeBookingSemester({
-                  startAt: DateTime.now().plus({ days: 2 }).endOf("day").toJSDate(),
+                  startAt: DateTime.now().plus({ days: 3 }).endOf("day").toJSDate(),
                 }),
-                spring: makeBookingSemester({ endAt: DateTime.now().plus({ days: 1 }).startOf("day").toJSDate() }),
+                spring: makeBookingSemester({ endAt: DateTime.now().plus({ days: 2 }).startOf("day").toJSDate() }),
               },
             },
             act: {
               input: makeCabinInput({
-                startDate: DateTime.now().plus({ hour: 1 }).toJSDate(),
-                endDate: DateTime.now().plus({ days: 3 }).toJSDate(),
+                startDate: DateTime.now().plus({ days: 1 }).startOf("day").toJSDate(),
+                endDate: DateTime.now().plus({ days: 4 }).startOf("day").toJSDate(),
               }),
             },
           },
