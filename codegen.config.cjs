@@ -48,12 +48,12 @@ const config = {
          * See https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#documentmode
          */
         documentMode: "string",
+        enumsAsTypes: true,
       },
       presetConfig: {
         useTypeImports: true,
         /* Fragment masking is only useful for actual clients, and it's not relevant for testing */
         fragmentMasking: false,
-        enumsAsTypes: true,
       },
       plugins: [
         {
@@ -71,10 +71,12 @@ const config = {
       documents: ["src/graphql/**/__tests__/unit/*.ts", "src/graphql/**/*.unit.test.ts"],
       /* Client preset is a sensible default, see https://the-guild.dev/graphql/codegen/plugins/presets/preset-client */
       preset: "client-preset",
+      config: {
+        enumsAsTypes: true,
+      },
       presetConfig: {
         /* Fragment masking is only useful for actual clients, and it's not relevant for testing */
         fragmentMasking: false,
-        enumsAsTypes: true,
       },
       plugins: [
         {

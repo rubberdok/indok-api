@@ -5,7 +5,7 @@ import { merge } from "lodash-es";
 import { DateTime } from "luxon";
 import { MessageSendingResponse } from "postmark/dist/client/models/index.js";
 
-import { ValidationError } from "@/domain/errors.js";
+import { InvalidArgumentError } from "@/domain/errors.js";
 
 import { BookingData, CabinRepository, CabinService, IMailService, PermissionService } from "../../service.js";
 
@@ -21,7 +21,7 @@ describe("CabinService", () => {
   });
 
   describe("newBooking", () => {
-    describe("should raise ValidationError if", () => {
+    describe("should raise InvalidArgumentError if", () => {
       interface TestCase {
         name: string;
         arrange: {
@@ -60,9 +60,9 @@ describe("CabinService", () => {
         /**
          * Assert
          *
-         * Expect newBooking to throw a ValidationError with the expected error message.
+         * Expect newBooking to throw a InvalidArgumentError with the expected error message.
          */
-        await expect(newBooking).rejects.toThrow(ValidationError);
+        await expect(newBooking).rejects.toThrow(InvalidArgumentError);
         await expect(newBooking).rejects.toThrow(expected.error);
         expect(cabinRepository.createBooking).not.toHaveBeenCalled();
       }

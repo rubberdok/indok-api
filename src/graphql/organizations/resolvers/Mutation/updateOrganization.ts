@@ -9,12 +9,12 @@ export const updateOrganization: NonNullable<MutationResolvers["updateOrganizati
   assertIsAuthenticated(ctx);
   const { userId } = ctx.req.session;
 
-  const { id, name, description } = data;
-  const newName = name === null ? undefined : name;
-  const newDescription = description === null ? undefined : description;
+  const { id, name, description, featurePermissions } = data;
+
   const organization = await ctx.organizationService.update(userId, id, {
-    name: newName,
-    description: newDescription,
+    name,
+    description,
+    featurePermissions,
   });
   return { organization };
 };

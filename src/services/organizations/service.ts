@@ -1,12 +1,20 @@
-import type { Member, Organization } from "@prisma/client";
+import { FeaturePermission, Member, Organization } from "@prisma/client";
 import { z } from "zod";
 
 import { InvalidArgumentError, PermissionDeniedError } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
 
 export interface OrganizationRepository {
-  create(data: { name: string; description?: string; userId: string }): Promise<Organization>;
-  update(id: string, data: { name?: string; description?: string }): Promise<Organization>;
+  create(data: {
+    name: string;
+    description?: string;
+    userId: string;
+    featurePermissions?: FeaturePermission[];
+  }): Promise<Organization>;
+  update(
+    id: string,
+    data: { name?: string; description?: string; featurePermissions?: FeaturePermission[] }
+  ): Promise<Organization>;
   get(id: string): Promise<Organization>;
   findMany(): Promise<Organization[]>;
   findManyByUserId(data?: { userId?: string }): Promise<Organization[]>;
@@ -21,6 +29,7 @@ export interface MemberRepository {
 
 export interface PermissionService {
   hasRole(data: { userId: string; organizationId: string; role: Role }): Promise<boolean>;
+  isSuperUser(userId: string): Promise<{ isSuperUser: boolean }>;
 }
 
 export class OrganizationService {
@@ -33,23 +42,58 @@ export class OrganizationService {
   /**
    * Create a new organization, and add the given user as an admin member of the
    * organization.
-   * @param {string} data.name - The name of the organization
-   * @param {string} data.description - The description of the organization (optional)
-   * @param {string} data.userId - The ID of the user to add to the organization as an admin
+   *
+   * @requires The user must be a super user to create an organization with a feature permission
+   *
+   * @param data.name - The name of the organization
+   * @param data.description - The description of the organization (optional)
+   * @param data.userId - The ID of the user to add to the organization as an admin
+   * @param data.featurePermissions - The feature permissions to grant to the user (optional)
    * @returns The created organization
    */
-  async create(data: { name: string; description?: string; userId: string }): Promise<Organization> {
-    const schema = z.object({
+  async create(data: {
+    name: string;
+    description?: string | null;
+    userId: string;
+    featurePermissions?: FeaturePermission[] | null;
+  }): Promise<Organization> {
+    const { isSuperUser } = await this.permissionService.isSuperUser(data.userId);
+
+    const baseSchema = z.object({
       name: z.string().min(1).max(100),
-      description: z.string().max(10000).optional(),
+      description: z
+        .string()
+        .max(10000)
+        .nullish()
+        .transform((val) => val ?? undefined),
     });
-    const parsed = schema.safeParse(data);
-    if (!parsed.success) throw new InvalidArgumentError("Invalid input");
 
-    const { name, description } = parsed.data;
-
-    const organization = await this.organizationRepository.create({ name, description, userId: data.userId });
-    return organization;
+    try {
+      if (isSuperUser === false) {
+        const schema = baseSchema;
+        const { name, description } = schema.parse(data);
+        const organization = await this.organizationRepository.create({ name, description, userId: data.userId });
+        return organization;
+      } else {
+        const schema = baseSchema.extend({
+          featurePermissions: z
+            .array(z.nativeEnum(FeaturePermission))
+            .nullish()
+            .transform((val) => val ?? undefined),
+        });
+        const { name, description, featurePermissions } = schema.parse(data);
+        const organization = await this.organizationRepository.create({
+          name,
+          description,
+          userId: data.userId,
+          featurePermissions,
+        });
+        return organization;
+      }
+    } catch (err) {
+      if (err instanceof z.ZodError) throw new InvalidArgumentError(err.message);
+      throw err;
+    }
   }
 
   /**
@@ -68,26 +112,56 @@ export class OrganizationService {
   async update(
     userId: string,
     organizationId: string,
-    data: { name?: string; description?: string }
+    data: Partial<{ name: string | null; description: string | null; featurePermissions: FeaturePermission[] | null }>
   ): Promise<Organization> {
-    const isMember = await this.permissionService.hasRole({ userId, organizationId, role: Role.MEMBER });
-    if (isMember === true) {
-      const schema = z.object({
-        name: z.string().min(1).max(100).optional(),
-        description: z.string().max(10000).optional(),
-      });
-      const parsed = schema.safeParse(data);
-      if (!parsed.success) throw new InvalidArgumentError("Invalid input");
+    const baseSchema = z.object({
+      name: z
+        .string()
+        .min(1)
+        .max(100)
+        .nullish()
+        .transform((val) => val ?? undefined),
+      description: z
+        .string()
+        .max(10000)
+        .nullish()
+        .transform((val) => val ?? undefined),
+    });
 
-      const { name, description } = parsed.data;
+    const { isSuperUser } = await this.permissionService.isSuperUser(userId);
 
-      const organization = await this.organizationRepository.update(organizationId, {
-        name,
-        description,
-      });
-      return organization;
-    } else {
-      throw new PermissionDeniedError("You must be a member of the organization to update it.");
+    try {
+      if (isSuperUser) {
+        const superUserSchema = baseSchema.extend({
+          featurePermissions: z
+            .array(z.nativeEnum(FeaturePermission))
+            .nullish()
+            .transform((val) => val ?? undefined),
+        });
+
+        const { name, description, featurePermissions } = superUserSchema.parse(data);
+        return await this.organizationRepository.update(organizationId, {
+          name,
+          description,
+          featurePermissions,
+        });
+      } else {
+        const isMember = await this.permissionService.hasRole({ userId, organizationId, role: Role.MEMBER });
+        if (isMember !== true) {
+          throw new PermissionDeniedError("You must be a member of the organization to update it.");
+        }
+
+        const schema = baseSchema;
+        const { name, description } = schema.parse(data);
+
+        return await this.organizationRepository.update(organizationId, {
+          name,
+          description,
+        });
+      }
+    } catch (err) {
+      if (err instanceof z.ZodError) throw new InvalidArgumentError(err.message);
+      throw err;
     }
   }
 

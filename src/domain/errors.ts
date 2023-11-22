@@ -3,7 +3,7 @@
  * It is used to provide a consistent way to handle errors in the application.
  * It is also used to provide a consistent way to handle errors in the client.
  *
- * @param name - The name of the error, e.g. "ValidationError", or "InvalidArgumentError"
+ * @param name - The name of the error, e.g. "InternalServerError", or "InvalidArgumentError"
  * @param description - Human-readable description of the error, e.g. "The email address is invalid"
  * @param code - A code that can be used to identify the error, e.g. "BAD_USER_INPUT", should be one of `codes`
  */
@@ -16,12 +16,6 @@ export class BaseError extends Error {
     super(description);
     this.name = name;
     Error.captureStackTrace(this);
-  }
-}
-
-export class ValidationError extends BaseError {
-  constructor(description: string) {
-    super("ValidationError", description, errorCodes.ERR_BAD_USER_INPUT);
   }
 }
 

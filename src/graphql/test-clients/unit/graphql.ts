@@ -156,6 +156,11 @@ export type CreateListingResponse = {
 export type CreateOrganizationInput = {
   /** The description of the organization, cannot exceed 10 000 characters */
   description?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * Features to enable for the organization. Defaults to an empty list.
+   * Requires that the current user is a super user, otherwise, this field is ignored.
+   */
+  featurePermissions?: InputMaybe<Array<FeaturePermission>>;
   /** The name of the organization, must be unique and between 1 and 100 characters */
   name: Scalars['String']['input'];
 };
@@ -217,6 +222,10 @@ export type EventsResponse = {
   /** The events that start in two weeks or later, by week number */
   twoWeeksOrLater: Array<Event>;
 };
+
+export type FeaturePermission =
+  | 'ARCHIVE'
+  | 'CABIN_BOOKING';
 
 export type Listing = {
   __typename?: 'Listing';
@@ -386,10 +395,20 @@ export type NewBookingResponse = {
 export type Organization = {
   __typename?: 'Organization';
   description: Scalars['String']['output'];
+  /**
+   * The features that are enabled for the organization.
+   * Changing these fields requires super user permissions.
+   */
+  featurePermissions: Array<FeaturePermission>;
   id: Scalars['ID']['output'];
   /** The members of the organization */
   members: Array<Member>;
   name: Scalars['String']['output'];
+};
+
+export type OrganizationsResponse = {
+  __typename?: 'OrganizationsResponse';
+  organizations: Array<Organization>;
 };
 
 export type ParticipationStatus =
@@ -457,6 +476,8 @@ export type Query = {
   events: EventsResponse;
   listing: ListingResponse;
   listings: ListingsResponse;
+  /** Get all organizations */
+  organizations?: Maybe<OrganizationsResponse>;
   user: UserResponse;
   users: UsersResponse;
 };
@@ -600,6 +621,11 @@ export type UpdateOrganizationInput = {
    * Omitting the value or passing null will leave the description unchanged
    */
   description?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * Features to enable for the organization.
+   * Requires that the current user is a super user, otherwise, this field is ignored.
+   */
+  featurePermissions?: InputMaybe<Array<FeaturePermission>>;
   /** The ID of the organization to update */
   id: Scalars['ID']['input'];
   /**
@@ -805,6 +831,11 @@ export type RemoveMember2MutationVariables = Exact<{ [key: string]: never; }>;
 
 export type RemoveMember2Mutation = { __typename?: 'Mutation', removeMember: { __typename?: 'RemoveMemberResponse', member: { __typename?: 'Member', id: string, organization: { __typename?: 'Organization', id: string, members: Array<{ __typename?: 'Member', id: string }> } } } };
 
+export type OrganizationsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type OrganizationsQuery = { __typename?: 'Query', organizations?: { __typename?: 'OrganizationsResponse', organizations: Array<{ __typename?: 'Organization', id: string }> } | null };
+
 export type UpdateAuthenticatedUserMutationVariables = Exact<{
   data: UpdateUserInput;
 }>;
@@ -846,5 +877,6 @@ export const AddMember1Document = {"kind":"Document","definitions":[{"kind":"Ope
 export const AddMember2Document = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"addMember2"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"addMember"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"userId"},"value":{"kind":"StringValue","value":"user","block":false}},{"kind":"ObjectField","name":{"kind":"Name","value":"organizationId"},"value":{"kind":"StringValue","value":"org","block":false}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"member"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"organization"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"members"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<AddMember2Mutation, AddMember2MutationVariables>;
 export const RemoveMember1Document = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"removeMember1"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"removeMember"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"id"},"value":{"kind":"StringValue","value":"id","block":false}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"member"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"organization"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"members"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<RemoveMember1Mutation, RemoveMember1MutationVariables>;
 export const RemoveMember2Document = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"removeMember2"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"removeMember"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"id"},"value":{"kind":"StringValue","value":"id","block":false}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"member"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"organization"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"members"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<RemoveMember2Mutation, RemoveMember2MutationVariables>;
+export const OrganizationsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"organizations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"organizations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"organizations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]} as unknown as DocumentNode<OrganizationsQuery, OrganizationsQueryVariables>;
 export const UpdateAuthenticatedUserDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateAuthenticatedUser"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateUserInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateUser"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]} as unknown as DocumentNode<UpdateAuthenticatedUserMutation, UpdateAuthenticatedUserMutationVariables>;
 export const UserWithOrganizationsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"UserWithOrganizations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"organizations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]}}]} as unknown as DocumentNode<UserWithOrganizationsQuery, UserWithOrganizationsQueryVariables>;

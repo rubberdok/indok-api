@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 import { BookingContact, FeaturePermission } from "@prisma/client";
 import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 
-import { PermissionDeniedError, ValidationError } from "@/domain/errors.js";
+import { PermissionDeniedError, InvalidArgumentError } from "@/domain/errors.js";
 
 import { CabinRepository, CabinService, IMailService, PermissionService } from "../../service.js";
 
@@ -126,7 +126,7 @@ describe("CabinService", () => {
       });
     });
 
-    it("should raise ValidationError if the booking contact is invalid", async () => {
+    it("should raise InvalidArgumentError if the booking contact is invalid", async () => {
       /**
        * Arrange
        *
@@ -150,9 +150,9 @@ describe("CabinService", () => {
       /**
        * Assert
        *
-       * Expect updateBookingContact to throw a ValidationError
+       * Expect updateBookingContact to throw a InvalidArgumentError
        */
-      await expect(updateBookingContact).rejects.toThrow(ValidationError);
+      await expect(updateBookingContact).rejects.toThrow(InvalidArgumentError);
     });
   });
 

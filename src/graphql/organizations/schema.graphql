@@ -2,11 +2,15 @@ type Organization {
   id: ID!
   name: String!
   description: String!
-
   """
   The members of the organization
   """
   members: [Member!]!
+  """
+  The features that are enabled for the organization.
+  Changing these fields requires super user permissions.
+  """
+  featurePermissions: [FeaturePermission!]!
 }
 
 type Member {
@@ -56,6 +60,11 @@ input UpdateOrganizationInput {
   Omitting the value or passing null will leave the description unchanged
   """
   description: String
+  """
+  Features to enable for the organization.
+  Requires that the current user is a super user, otherwise, this field is ignored.
+  """
+  featurePermissions: [FeaturePermission!]
 }
 
 type UpdateOrganizationResponse {
@@ -71,6 +80,16 @@ input CreateOrganizationInput {
   The description of the organization, cannot exceed 10 000 characters
   """
   description: String
+  """
+  Features to enable for the organization. Defaults to an empty list.
+  Requires that the current user is a super user, otherwise, this field is ignored.
+  """
+  featurePermissions: [FeaturePermission!]
+}
+
+enum FeaturePermission {
+  CABIN_BOOKING
+  ARCHIVE
 }
 
 type CreateOrganizationResponse {
@@ -102,6 +121,17 @@ input RemoveMemberInput {
 
 type RemoveMemberResponse {
   member: Member!
+}
+
+type OrganizationsResponse {
+  organizations: [Organization!]!
+}
+
+type Query {
+  """
+  Get all organizations
+  """
+  organizations: OrganizationsResponse
 }
 
 type Mutation {

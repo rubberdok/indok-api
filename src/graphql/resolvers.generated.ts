@@ -36,6 +36,7 @@ import    { updateOrganization as Mutation_updateOrganization } from './organiza
 import    { updateUser as Mutation_updateUser } from './users/resolvers/Mutation/updateUser.js';
 import    { NewBookingResponse } from './cabins/resolvers/NewBookingResponse.js';
 import    { Organization } from './organizations/resolvers/Organization.js';
+import    { OrganizationsResponse } from './organizations/resolvers/OrganizationsResponse.js';
 import    { PrivateUser } from './users/resolvers/PrivateUser.js';
 import    { PublicUser } from './users/resolvers/PublicUser.js';
 import    { bookingContact as Query_bookingContact } from './cabins/resolvers/Query/bookingContact.js';
@@ -45,6 +46,7 @@ import    { event as Query_event } from './events/resolvers/Query/event.js';
 import    { events as Query_events } from './events/resolvers/Query/events.js';
 import    { listing as Query_listing } from './listings/resolvers/Query/listing.js';
 import    { listings as Query_listings } from './listings/resolvers/Query/listings.js';
+import    { organizations as Query_organizations } from './organizations/resolvers/Query/organizations.js';
 import    { user as Query_user } from './users/resolvers/Query/user.js';
 import    { users as Query_users } from './users/resolvers/Query/users.js';
 import    { RemoveMemberResponse } from './organizations/resolvers/RemoveMemberResponse.js';
@@ -61,7 +63,7 @@ import    { UserResponse } from './users/resolvers/UserResponse.js';
 import    { UsersResponse } from './users/resolvers/UsersResponse.js';
 import    { DateTimeResolver } from 'graphql-scalars';
     export const resolvers: Resolvers = {
-      Query: { bookingContact: Query_bookingContact,bookingSemesters: Query_bookingSemesters,cabins: Query_cabins,event: Query_event,events: Query_events,listing: Query_listing,listings: Query_listings,user: Query_user,users: Query_users },
+      Query: { bookingContact: Query_bookingContact,bookingSemesters: Query_bookingSemesters,cabins: Query_cabins,event: Query_event,events: Query_events,listing: Query_listing,listings: Query_listings,organizations: Query_organizations,user: Query_user,users: Query_users },
       Mutation: { addMember: Mutation_addMember,createEvent: Mutation_createEvent,createListing: Mutation_createListing,createOrganization: Mutation_createOrganization,deleteListing: Mutation_deleteListing,newBooking: Mutation_newBooking,removeMember: Mutation_removeMember,retractSignUp: Mutation_retractSignUp,signUp: Mutation_signUp,updateBookingContact: Mutation_updateBookingContact,updateBookingSemester: Mutation_updateBookingSemester,updateBookingStatus: Mutation_updateBookingStatus,updateListing: Mutation_updateListing,updateOrganization: Mutation_updateOrganization,updateUser: Mutation_updateUser },
       
       AddMemberResponse: AddMemberResponse,
@@ -85,6 +87,7 @@ ListingsResponse: ListingsResponse,
 Member: Member,
 NewBookingResponse: NewBookingResponse,
 Organization: Organization,
+OrganizationsResponse: OrganizationsResponse,
 PrivateUser: PrivateUser,
 PublicUser: PublicUser,
 RemoveMemberResponse: RemoveMemberResponse,
