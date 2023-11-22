@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 import { BookingContact, FeaturePermission } from "@prisma/client";
 import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 
-import { PermissionDeniedError } from "@/domain/errors.js";
+import { PermissionDeniedError, ValidationError } from "@/domain/errors.js";
 
 import { CabinRepository, CabinService, IMailService, PermissionService } from "../../service.js";
 
@@ -38,7 +38,7 @@ describe("CabinService", () => {
       const updateBookingContact = cabinService.updateBookingContact(userId, {
         name: faker.person.fullName(),
         email: faker.internet.email(),
-        phoneNumber: faker.phone.number(),
+        phoneNumber: "40000000",
       });
 
       /**
@@ -72,7 +72,7 @@ describe("CabinService", () => {
        */
       const name = faker.person.fullName();
       const email = faker.internet.email();
-      const phoneNumber = faker.phone.number();
+      const phoneNumber = "4740000000";
 
       await cabinService.updateBookingContact(userId, {
         name,
@@ -124,6 +124,35 @@ describe("CabinService", () => {
         email: undefined,
         phoneNumber: undefined,
       });
+    });
+
+    it("should raise ValidationError if the booking contact is invalid", async () => {
+      /**
+       * Arrange
+       *
+       * Mock the permissionService.hasFeaturePermission method to return true.
+       * Mock the cabinRepository.updateBookingContact method to return a booking contact.
+       */
+      const userId = faker.string.uuid();
+      permissionService.hasFeaturePermission.mockResolvedValueOnce(true);
+      cabinRepository.updateBookingContact.mockResolvedValueOnce(mock<BookingContact>());
+
+      /**
+       * Act
+       *
+       * Call updateBookingContact
+       */
+      const updateBookingContact = cabinService.updateBookingContact(userId, {
+        email: "",
+        phoneNumber: "",
+      });
+
+      /**
+       * Assert
+       *
+       * Expect updateBookingContact to throw a ValidationError
+       */
+      await expect(updateBookingContact).rejects.toThrow(ValidationError);
     });
   });
 

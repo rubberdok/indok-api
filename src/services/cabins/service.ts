@@ -389,7 +389,6 @@ export class CabinService {
     const schema = z.object({
       name: z
         .string()
-        .min(1)
         .nullish()
         .transform((val) => val ?? undefined),
       email: z
@@ -399,7 +398,9 @@ export class CabinService {
         .transform((val) => val ?? undefined),
       phoneNumber: z
         .string()
-        .min(1)
+        .regex(/^(0047|\+47|47)?\d{8}$/, {
+          message: "invalid phone number",
+        })
         .nullish()
         .transform((val) => val ?? undefined),
     });
