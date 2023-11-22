@@ -35,7 +35,7 @@ environment_variables = [
   },
   {
     name  = "FEIDE_REDIRECT_URI"
-    value = "https://indokntnu.no/api/auth/feide/callback"
+    value = "https://server-e2c94gd8.happyglacier-c4b0db05.norwayeast.azurecontainerapps.io/auth/authenticate"
   },
   {
     name  = "FEIDE_BASE_URL"
@@ -47,7 +47,7 @@ environment_variables = [
   },
   {
     name  = "SESSION_COOKIE_DOMAIN"
-    value = "thankfulpebble-c9bfb320.norwayeast.azurecontainerapps.io"
+    value = "server-e2c94gd8.happyglacier-c4b0db05.norwayeast.azurecontainerapps.io"
   },
   {
     name  = "SESSION_COOKIE_HTTP_ONLY"
