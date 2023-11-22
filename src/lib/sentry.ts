@@ -1,6 +1,5 @@
 import { ApolloServerPlugin } from "@apollo/server";
 import { FastifyInstance } from "fastify";
-import { GraphQLError } from "graphql";
 
 import { errorCodes } from "@/domain/errors.js";
 
@@ -13,8 +12,16 @@ const USER_FACING_ERRORS = new Set<string>([
   errorCodes.ERR_NOT_FOUND,
 ]);
 
-function isUserFacingError(error: GraphQLError): boolean {
-  return USER_FACING_ERRORS.has(error.extensions.code);
+function isErrorWithCode(error: Error | undefined): error is Error & { code: string } {
+  if (!error) return false;
+  return "code" in error;
+}
+
+function isUserFacingError(error?: Error): boolean {
+  if (isErrorWithCode(error)) {
+    return USER_FACING_ERRORS.has(error.code);
+  }
+  return false;
 }
 
 /**
@@ -30,7 +37,6 @@ function isUserFacingError(error: GraphQLError): boolean {
  * Inspired by
  * https://blog.sentry.io/handling-graphql-errors-using-sentry/
  *
- * @todo Filter out user-facing errors
  * @todo Add transaction ID
  * @param app - The fastify app instance
  * @returns The Apollo Server plugin
@@ -47,10 +53,8 @@ export const fastifyApolloSentryPlugin = (app: FastifyInstance): ApolloServerPlu
           }
           for (const err of ctx.errors) {
             // Only report internal server errors,
-            // all errors extending ApolloError should be user-facing
-
             // Filter out user-facing errors, we're not really interested in logging those to Sentry
-            if (isUserFacingError(err)) {
+            if (isUserFacingError(err.originalError)) {
               continue;
             }
 
@@ -62,6 +66,7 @@ export const fastifyApolloSentryPlugin = (app: FastifyInstance): ApolloServerPlu
               // Annotate with user ID
               if (ctx.contextValue.req.session.userId) {
                 scope.setUser({ id: ctx.contextValue.req.session.userId });
+                scope.setExtra("authenticated", ctx.contextValue.req.session.authenticated);
               }
 
               // Log query and variables as extras
