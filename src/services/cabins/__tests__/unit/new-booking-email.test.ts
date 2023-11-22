@@ -7,6 +7,8 @@ import { DeepMockProxy, mockDeep } from "jest-mock-extended";
 import { BookingStatus } from "@/domain/cabins.js";
 import { TemplateAlias } from "@/lib/postmark.js";
 
+import { Semester } from "@prisma/client";
+import { DateTime } from "luxon";
 import { BookingData, CabinRepository, CabinService, IMailService, PermissionService } from "../../service.js";
 
 const validBooking: BookingData = {
@@ -53,6 +55,18 @@ describe("newBooking", () => {
   ];
 
   test.each(testCase)("$name", async ({ input, expectedConfirmationEmail }) => {
+    repo.getBookingSemester.mockImplementation(async (semester: Semester) => {
+      return {
+        bookingsEnabled: true,
+        semester: semester,
+        startAt: DateTime.fromObject({ year: 0 }).toJSDate(),
+        endAt: DateTime.now().plus({ years: 3000 }).toJSDate(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        id: randomUUID(),
+      };
+    });
+
     repo.createBooking.mockReturnValueOnce(
       Promise.resolve({
         ...input,
