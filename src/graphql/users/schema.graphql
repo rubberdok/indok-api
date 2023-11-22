@@ -108,4 +108,8 @@ type PrivateUser {
   All organizations the user is a member of
   """
   organizations: [Organization!]!
+  """
+  true if the user is a super user, false otherwise
+  """
+  isSuperUser: Boolean!
 }

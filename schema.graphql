@@ -468,6 +468,11 @@ type PrivateUser {
   """
   graduationYearUpdatedAt: DateTime
   id: ID!
+
+  """
+  true if the user is a super user, false otherwise
+  """
+  isSuperUser: Boolean!
   lastName: String!
 
   """
