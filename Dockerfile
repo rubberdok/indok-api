@@ -9,6 +9,6 @@ COPY . ./
 
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
-RUN pnpm run generate:prisma
+RUN pnpm run setup
 
 CMD ["npm", "run", "dev"]
