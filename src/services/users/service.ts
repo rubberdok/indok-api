@@ -1,11 +1,12 @@
 import { Prisma, User as PrismaUser } from "@prisma/client";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
+import { z } from "zod";
 
-import { InvalidArgumentError } from "@/domain/errors.js";
+import { InvalidArgumentError, PermissionDeniedError } from "@/domain/errors.js";
 import { User } from "@/domain/users.js";
 
-import { createUserSchema, updateUserSchema } from "./validation.js";
+import { createUserSchema } from "./validation.js";
 
 export interface UserRepository {
   get(id: string): Promise<PrismaUser>;
@@ -15,14 +16,86 @@ export interface UserRepository {
   create(data: Prisma.UserCreateInput): Promise<PrismaUser>;
 }
 
+export interface PermissionService {
+  isSuperUser(userId: string): Promise<{ isSuperUser: boolean }>;
+}
+
 export class UserService {
-  constructor(private usersRepository: UserRepository) {}
+  constructor(
+    private usersRepository: UserRepository,
+    private permissionService: PermissionService
+  ) {}
+
+  /**
+   * superUpdateUser - Updates a user with the given data. This method can only be called by a super user.
+   *
+   * @throws PermissionDeniedError - If the caller is not a super user
+   * @param callerId - The id of the user making the request, must be a super user
+   * @param userToUpdateId - The id of the user to update
+   * @param data - The data to update the user with
+   */
+  async superUpdateUser(
+    callerId: string,
+    userToUpdateId: string,
+    data: Partial<{
+      firstName: string | null;
+      lastName: string | null;
+      graduationYear: number | null;
+      allergies: string | null;
+      phoneNumber: string | null;
+      isSuperUser?: boolean | null;
+    }>
+  ): Promise<User> {
+    const { isSuperUser } = await this.permissionService.isSuperUser(callerId);
+    if (!isSuperUser) throw new PermissionDeniedError("You do not have permission to update this user");
+
+    const schema = z.object({
+      firstName: z
+        .string()
+        .min(2)
+        .nullish()
+        .transform((val) => val ?? undefined),
+      lastName: z
+        .string()
+        .min(2)
+        .nullish()
+        .transform((val) => val ?? undefined),
+      email: z
+        .string()
+        .email({ message: "invalid email" })
+        .nullish()
+        .transform((val) => val ?? undefined),
+      graduationYear: z
+        .number()
+        .min(DateTime.now().year)
+        .nullish()
+        .transform((val) => val ?? undefined),
+      allergies: z
+        .string()
+        .nullish()
+        .transform((val) => val ?? undefined),
+      phoneNumber: z
+        .string()
+        .regex(/^(0047|\+47|47)?[49]\d{7}$/)
+        .nullish()
+        .transform((val) => val ?? undefined),
+      isSuperUser: z
+        .boolean()
+        .nullish()
+        .transform((val) => val ?? undefined),
+    });
+    const validatedData = schema.parse(data);
+
+    const user = await this.usersRepository.update(userToUpdateId, validatedData);
+    return this.toDomainUser(user);
+  }
 
   /**
    * update - Updates a user with the given data. If this user has not logged in before, the firstLogin flag will be set to false.
    * If the user cannot update graduation year yet, the graduationYear will be set to null.
    *
-   * @param id - The id of the user to update
+   * @param callerUserId - The id of the user making the request
+   * @param userToUpdateId - The id of the user to update
    * @param data - The data to update the user with
    * @returns
    */
@@ -36,29 +109,64 @@ export class UserService {
       phoneNumber: string | null;
     }>
   ): Promise<User> {
-    const parsed = updateUserSchema.safeParse(data);
-    if (parsed.success) {
-      const { data: validatedData } = parsed;
+    const schema = z.object({
+      firstName: z
+        .string()
+        .min(2)
+        .nullish()
+        .transform((val) => val ?? undefined),
+      lastName: z
+        .string()
+        .min(2)
+        .nullish()
+        .transform((val) => val ?? undefined),
+      email: z
+        .string()
+        .email({ message: "invalid email" })
+        .nullish()
+        .transform((val) => val ?? undefined),
+      graduationYear: z
+        .number()
+        .min(DateTime.now().year)
+        .nullish()
+        .transform((val) => val ?? undefined),
+      allergies: z
+        .string()
+        .nullish()
+        .transform((val) => val ?? undefined),
+      phoneNumber: z
+        .string()
+        .regex(/^(0047|\+47|47)?[49]\d{7}$/)
+        .nullish()
+        .transform((val) => val ?? undefined),
+    });
+    try {
       const user = await this.usersRepository.get(id);
 
-      let additionalData: {
-        firstLogin?: boolean;
-        graduationYearUpdatedAt?: Date;
-        graduationYear?: number;
-      } = {};
+      const { firstName, lastName, email, phoneNumber, allergies, graduationYear } = schema.parse(data);
+      let firstLogin: boolean | undefined;
+      let newGraduationYear: number | undefined = graduationYear;
+      let graduationYearUpdatedAt: Date | undefined = undefined;
 
-      if (user.firstLogin) {
-        additionalData = { ...additionalData, firstLogin: false };
-      } else if (!this.canUpdateYear(user)) {
-        additionalData = { ...additionalData, graduationYear: undefined };
-      } else if (data.graduationYear && data.graduationYear !== user.graduationYear) {
-        additionalData = { ...additionalData, graduationYearUpdatedAt: new Date() };
-      }
+      if (user.firstLogin) firstLogin = false;
+      else if (!this.canUpdateYear(user)) newGraduationYear = undefined;
+      else if (graduationYear && graduationYear !== user.graduationYear) graduationYearUpdatedAt = new Date();
 
-      const updatedUser = await this.usersRepository.update(id, { ...validatedData, ...additionalData });
+      const updatedUser = await this.usersRepository.update(id, {
+        firstName,
+        lastName,
+        email,
+        phoneNumber,
+        allergies,
+        graduationYear: newGraduationYear,
+        graduationYearUpdatedAt,
+        firstLogin,
+      });
+
       return this.toDomainUser(updatedUser);
-    } else {
-      throw new InvalidArgumentError(parsed.error.message);
+    } catch (err) {
+      if (err instanceof z.ZodError) throw new InvalidArgumentError(err.message);
+      throw err;
     }
   }
 

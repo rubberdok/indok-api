@@ -43,6 +43,8 @@ const documents = {
     "\n              mutation removeMember1 {\n                removeMember(data: { id: \"id\" }) {\n                  member {\n                    id\n                    organization {\n                      members {\n                        id\n                      }\n                    }\n                  }\n                }\n              }\n            ": types.RemoveMember1Document,
     "\n              mutation removeMember2 {\n                removeMember(data: { id: \"id\" }) {\n                  member {\n                    id\n                    organization {\n                      id\n                      members {\n                        id\n                      }\n                    }\n                  }\n                }\n              }\n            ": types.RemoveMember2Document,
     "\n          query organizations {\n            organizations {\n              organizations {\n                id\n              }\n            }\n          }\n        ": types.OrganizationsDocument,
+    "\n            mutation SuperUpdateUser($id: ID!, $data: SuperUpdateUserInput!) {\n              superUpdateUser(id: $id, data: $data) {\n                user {\n                  id\n                }\n              }\n            }\n          ": types.SuperUpdateUserDocument,
+    "\n          mutation SuperUpdateUser($id: ID!, $data: SuperUpdateUserInput!) {\n            superUpdateUser(id: $id, data: $data) {\n              user {\n                id\n              }\n            }\n          }\n        ": types.SuperUpdateUserDocument,
     "\n            mutation UpdateAuthenticatedUser($data: UpdateUserInput!) {\n              updateUser(data: $data) {\n                user {\n                  id\n                }\n              }\n            }\n          ": types.UpdateAuthenticatedUserDocument,
     "\n            query UserWithOrganizations {\n              user {\n                user {\n                  id\n                  organizations {\n                    id\n                  }\n                }\n              }\n            }\n          ": types.UserWithOrganizationsDocument,
 };
@@ -181,6 +183,14 @@ export function graphql(source: "\n              mutation removeMember2 {\n     
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n          query organizations {\n            organizations {\n              organizations {\n                id\n              }\n            }\n          }\n        "): (typeof documents)["\n          query organizations {\n            organizations {\n              organizations {\n                id\n              }\n            }\n          }\n        "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n            mutation SuperUpdateUser($id: ID!, $data: SuperUpdateUserInput!) {\n              superUpdateUser(id: $id, data: $data) {\n                user {\n                  id\n                }\n              }\n            }\n          "): (typeof documents)["\n            mutation SuperUpdateUser($id: ID!, $data: SuperUpdateUserInput!) {\n              superUpdateUser(id: $id, data: $data) {\n                user {\n                  id\n                }\n              }\n            }\n          "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n          mutation SuperUpdateUser($id: ID!, $data: SuperUpdateUserInput!) {\n            superUpdateUser(id: $id, data: $data) {\n              user {\n                id\n              }\n            }\n          }\n        "): (typeof documents)["\n          mutation SuperUpdateUser($id: ID!, $data: SuperUpdateUserInput!) {\n            superUpdateUser(id: $id, data: $data) {\n              user {\n                id\n              }\n            }\n          }\n        "];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

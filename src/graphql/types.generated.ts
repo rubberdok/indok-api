@@ -291,6 +291,11 @@ export type Mutation = {
   retractSignUp: RetractSignUpResponse;
   /** Sign up for an event, requires that the user is logged in */
   signUp: SignUpResponse;
+  /**
+   * Update the user with the given ID with super user privileges, requires that
+   * the caller is an authenticated super user. Otherwise, use updateUser.
+   */
+  superUpdateUser: SuperUpdateUserResponse;
   /** Updates the booking contact, requires that the user is in an organization with the CABIN_BOOKING permission. */
   updateBookingContact: UpdateBookingContactResponse;
   /**
@@ -351,6 +356,12 @@ export type MutationretractSignUpArgs = {
 
 export type MutationsignUpArgs = {
   data: SignUpInput;
+};
+
+
+export type MutationsuperUpdateUserArgs = {
+  data: SuperUpdateUserInput;
+  id: Scalars['ID']['input'];
 };
 
 
@@ -565,6 +576,20 @@ export type Status =
   | 'CONFIRMED'
   | 'PENDING'
   | 'REJECTED';
+
+export type SuperUpdateUserInput = {
+  allergies?: InputMaybe<Scalars['String']['input']>;
+  firstName?: InputMaybe<Scalars['String']['input']>;
+  graduationYear?: InputMaybe<Scalars['Int']['input']>;
+  isSuperUser?: InputMaybe<Scalars['Boolean']['input']>;
+  lastName?: InputMaybe<Scalars['String']['input']>;
+  phoneNumber?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type SuperUpdateUserResponse = {
+  __typename?: 'SuperUpdateUserResponse';
+  user: PrivateUser;
+};
 
 export type UpdateBookingContactInput = {
   /** The email address of the booking contact, will be publicly available, pass the empty string to remove the email address */
@@ -795,6 +820,8 @@ export type ResolversTypes = {
   SignUpInput: SignUpInput;
   SignUpResponse: ResolverTypeWrapper<Omit<SignUpResponse, 'signUp'> & { signUp: ResolversTypes['SignUp'] }>;
   Status: Status;
+  SuperUpdateUserInput: SuperUpdateUserInput;
+  SuperUpdateUserResponse: ResolverTypeWrapper<Omit<SuperUpdateUserResponse, 'user'> & { user: ResolversTypes['PrivateUser'] }>;
   UpdateBookingContactInput: UpdateBookingContactInput;
   UpdateBookingContactResponse: ResolverTypeWrapper<UpdateBookingContactResponse>;
   UpdateBookingResponse: ResolverTypeWrapper<Omit<UpdateBookingResponse, 'booking'> & { booking: ResolversTypes['Booking'] }>;
@@ -861,6 +888,8 @@ export type ResolversParentTypes = {
   SignUp: SignUpMapper;
   SignUpInput: SignUpInput;
   SignUpResponse: Omit<SignUpResponse, 'signUp'> & { signUp: ResolversParentTypes['SignUp'] };
+  SuperUpdateUserInput: SuperUpdateUserInput;
+  SuperUpdateUserResponse: Omit<SuperUpdateUserResponse, 'user'> & { user: ResolversParentTypes['PrivateUser'] };
   UpdateBookingContactInput: UpdateBookingContactInput;
   UpdateBookingContactResponse: UpdateBookingContactResponse;
   UpdateBookingResponse: Omit<UpdateBookingResponse, 'booking'> & { booking: ResolversParentTypes['Booking'] };
@@ -1022,6 +1051,7 @@ export type MutationResolvers<ContextType = ApolloContext, ParentType extends Re
   removeMember?: Resolver<ResolversTypes['RemoveMemberResponse'], ParentType, ContextType, RequireFields<MutationremoveMemberArgs, 'data'>>;
   retractSignUp?: Resolver<ResolversTypes['RetractSignUpResponse'], ParentType, ContextType, RequireFields<MutationretractSignUpArgs, 'data'>>;
   signUp?: Resolver<ResolversTypes['SignUpResponse'], ParentType, ContextType, RequireFields<MutationsignUpArgs, 'data'>>;
+  superUpdateUser?: Resolver<ResolversTypes['SuperUpdateUserResponse'], ParentType, ContextType, RequireFields<MutationsuperUpdateUserArgs, 'data' | 'id'>>;
   updateBookingContact?: Resolver<ResolversTypes['UpdateBookingContactResponse'], ParentType, ContextType, RequireFields<MutationupdateBookingContactArgs, 'data'>>;
   updateBookingSemester?: Resolver<ResolversTypes['UpdateBookingSemesterResponse'], ParentType, ContextType, RequireFields<MutationupdateBookingSemesterArgs, 'data'>>;
   updateBookingStatus?: Resolver<ResolversTypes['UpdateBookingResponse'], ParentType, ContextType, RequireFields<MutationupdateBookingStatusArgs, 'data'>>;
@@ -1112,6 +1142,11 @@ export type SignUpResponseResolvers<ContextType = ApolloContext, ParentType exte
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type SuperUpdateUserResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['SuperUpdateUserResponse'] = ResolversParentTypes['SuperUpdateUserResponse']> = {
+  user?: Resolver<ResolversTypes['PrivateUser'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type UpdateBookingContactResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['UpdateBookingContactResponse'] = ResolversParentTypes['UpdateBookingContactResponse']> = {
   bookingContact?: Resolver<ResolversTypes['BookingContact'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -1185,6 +1220,7 @@ export type Resolvers<ContextType = ApolloContext> = {
   RetractSignUpResponse?: RetractSignUpResponseResolvers<ContextType>;
   SignUp?: SignUpResolvers<ContextType>;
   SignUpResponse?: SignUpResponseResolvers<ContextType>;
+  SuperUpdateUserResponse?: SuperUpdateUserResponseResolvers<ContextType>;
   UpdateBookingContactResponse?: UpdateBookingContactResponseResolvers<ContextType>;
   UpdateBookingResponse?: UpdateBookingResponseResolvers<ContextType>;
   UpdateBookingSemesterResponse?: UpdateBookingSemesterResponseResolvers<ContextType>;

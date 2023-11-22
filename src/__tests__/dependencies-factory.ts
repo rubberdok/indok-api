@@ -28,9 +28,11 @@ export function defaultTestDependenciesFactory(
     authService?: ServerDependencies["authService"];
   } = {}
 ) {
+  const defaultDependencies = dependenciesFactory();
+
   const mockFeideClient = new MockFeideClient();
   const userRepository = new UserRepository(prisma);
-  const userService = new UserService(userRepository);
+  const userService = new UserService(userRepository, defaultDependencies.apolloServerDependencies.permissionService);
   const authService = new AuthService(userService, mockFeideClient, FeideProvider);
   const { authService: authServiceOverride, ...apolloServerOverrides } = serivceOverrides;
 

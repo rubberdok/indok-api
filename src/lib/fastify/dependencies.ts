@@ -68,7 +68,7 @@ export function dependenciesFactory(
   const listingService = new ListingService(listingRepository, permissionService);
   const cabinService = new CabinService(cabinRepository, mailService, permissionService);
   const eventService = new EventService(eventRepository, permissionService);
-  const userService = new UserService(userRepository);
+  const userService = new UserService(userRepository, permissionService);
   const authService = overrides?.authService ?? new AuthService(userService, feideClient, FeideProvider);
 
   const defaultApolloServerDependencies: ApolloServerDependencies = {
@@ -77,6 +77,7 @@ export function dependenciesFactory(
     organizationService,
     eventService,
     listingService,
+    permissionService,
   };
 
   const apolloServerDependencies = merge(defaultApolloServerDependencies, overrides?.apolloServerDependencies);

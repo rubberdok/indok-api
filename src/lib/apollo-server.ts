@@ -98,6 +98,18 @@ interface IUserService {
       allergies?: string | null;
     }
   ): Promise<User>;
+  superUpdateUser(
+    callerId: string,
+    userToUpdateId: string,
+    data: {
+      firstName?: string | null;
+      lastName?: string | null;
+      phoneNumber?: string | null;
+      graduationYear?: number | null;
+      allergies?: string | null;
+      isSuperUser?: boolean | null;
+    }
+  ): Promise<User>;
   login(id: string): Promise<User>;
   create(data: Prisma.UserCreateInput): Promise<User>;
   canUpdateYear(user: Pick<User, "graduationYearUpdatedAt">): boolean;
@@ -183,4 +195,9 @@ export interface ApolloServerDependencies {
   cabinService: ICabinService;
   eventService: IEventService;
   listingService: ListingService;
+  permissionService: IPermissionService;
+}
+
+interface IPermissionService {
+  isSuperUser(userId: string): Promise<{ isSuperUser: boolean }>;
 }

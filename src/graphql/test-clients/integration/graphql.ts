@@ -284,6 +284,11 @@ export type Mutation = {
   retractSignUp: RetractSignUpResponse;
   /** Sign up for an event, requires that the user is logged in */
   signUp: SignUpResponse;
+  /**
+   * Update the user with the given ID with super user privileges, requires that
+   * the caller is an authenticated super user. Otherwise, use updateUser.
+   */
+  superUpdateUser: SuperUpdateUserResponse;
   /** Updates the booking contact, requires that the user is in an organization with the CABIN_BOOKING permission. */
   updateBookingContact: UpdateBookingContactResponse;
   /**
@@ -344,6 +349,12 @@ export type MutationRetractSignUpArgs = {
 
 export type MutationSignUpArgs = {
   data: SignUpInput;
+};
+
+
+export type MutationSuperUpdateUserArgs = {
+  data: SuperUpdateUserInput;
+  id: Scalars['ID']['input'];
 };
 
 
@@ -558,6 +569,20 @@ export type Status =
   | 'CONFIRMED'
   | 'PENDING'
   | 'REJECTED';
+
+export type SuperUpdateUserInput = {
+  allergies?: InputMaybe<Scalars['String']['input']>;
+  firstName?: InputMaybe<Scalars['String']['input']>;
+  graduationYear?: InputMaybe<Scalars['Int']['input']>;
+  isSuperUser?: InputMaybe<Scalars['Boolean']['input']>;
+  lastName?: InputMaybe<Scalars['String']['input']>;
+  phoneNumber?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type SuperUpdateUserResponse = {
+  __typename?: 'SuperUpdateUserResponse';
+  user: PrivateUser;
+};
 
 export type UpdateBookingContactInput = {
   /** The email address of the booking contact, will be publicly available, pass the empty string to remove the email address */

@@ -3,7 +3,7 @@ import { Prisma, User } from "@prisma/client";
 import dayjs from "dayjs";
 import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 
-import { UserRepository, UserService } from "../../service.js";
+import { PermissionService, UserRepository, UserService } from "../../service.js";
 
 const dummyUser = mockDeep<User>();
 
@@ -11,10 +11,12 @@ const time = new Date(`${dayjs().year() + 1}-01-01`);
 
 let service: UserService;
 let repo: DeepMockProxy<UserRepository>;
+let permissionService: DeepMockProxy<PermissionService>;
 
 beforeAll(() => {
   repo = mockDeep<UserRepository>();
-  service = new UserService(repo);
+  permissionService = mockDeep<PermissionService>();
+  service = new UserService(repo, permissionService);
 
   jest.useFakeTimers().setSystemTime(time);
 });
@@ -142,6 +144,7 @@ describe("UserService", () => {
   test.each(testCases)("should $name", async ({ existing, expected, input, updateInput }) => {
     repo.get.mockReturnValueOnce(Promise.resolve(existing));
     repo.update.mockReturnValueOnce(Promise.resolve(expected));
+    permissionService.isSuperUser.mockResolvedValue({ isSuperUser: false });
 
     await service.update(existing.id, input);
 
