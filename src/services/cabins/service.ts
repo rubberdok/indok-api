@@ -1,4 +1,11 @@
-import { Booking, BookingContact, BookingSemester, Cabin, FeaturePermission, Semester } from "@prisma/client";
+import {
+  Booking,
+  BookingSemester,
+  Cabin,
+  FeaturePermission,
+  BookingContact as PrismaBookingContact,
+  Semester,
+} from "@prisma/client";
 import { DateTime } from "luxon";
 import { MessageSendingResponse } from "postmark/dist/client/models/index.js";
 import { z } from "zod";
@@ -16,6 +23,8 @@ export interface BookingData {
   phoneNumber: string;
   cabinId: string;
 }
+
+type BookingContact = Pick<PrismaBookingContact, "email" | "name" | "phoneNumber" | "id">;
 
 export interface CabinRepository {
   getCabinById(id: string): Promise<Cabin>;
@@ -43,10 +52,10 @@ export interface CabinRepository {
     bookingsEnabled?: boolean;
   }): Promise<BookingSemester>;
   getBookingSemester(semester: Semester): Promise<BookingSemester | null>;
-  getBookingContact(): Promise<Pick<BookingContact, "email" | "name" | "phoneNumber" | "id">>;
+  getBookingContact(): Promise<BookingContact>;
   updateBookingContact(
     data: Partial<{ name: string | null; phoneNumber: string | null; email?: string | null }>
-  ): Promise<Pick<BookingContact, "email" | "name" | "phoneNumber" | "id">>;
+  ): Promise<BookingContact>;
 }
 
 export interface PermissionService {
@@ -378,7 +387,7 @@ export class CabinService {
       email: string | null;
       phoneNumber: string | null;
     }>
-  ): Promise<Pick<BookingContact, "email" | "name" | "phoneNumber" | "id">> {
+  ): Promise<BookingContact> {
     const hasPermission = await this.permissionService.hasFeaturePermission({
       userId,
       featurePermission: FeaturePermission.CABIN_BOOKING,
@@ -424,7 +433,7 @@ export class CabinService {
   /**
    * getBookingContact returns the booking contact information.
    */
-  async getBookingContact(): Promise<Pick<BookingContact, "email" | "id" | "name" | "phoneNumber">> {
+  async getBookingContact(): Promise<BookingContact> {
     return await this.cabinRepository.getBookingContact();
   }
 }
