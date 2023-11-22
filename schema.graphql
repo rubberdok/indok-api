@@ -350,6 +350,12 @@ type Mutation {
   signUp(data: SignUpInput!): SignUpResponse!
 
   """
+  Update the user with the given ID with super user privileges, requires that
+  the caller is an authenticated super user. Otherwise, use updateUser.
+  """
+  superUpdateUser(data: SuperUpdateUserInput!, id: ID!): SuperUpdateUserResponse!
+
+  """
   Updates the booking contact, requires that the user is in an organization with the CABIN_BOOKING permission.
   """
   updateBookingContact(data: UpdateBookingContactInput!): UpdateBookingContactResponse!
@@ -589,6 +595,19 @@ enum Status {
   CONFIRMED
   PENDING
   REJECTED
+}
+
+input SuperUpdateUserInput {
+  allergies: String
+  firstName: String
+  graduationYear: Int
+  isSuperUser: Boolean
+  lastName: String
+  phoneNumber: String
+}
+
+type SuperUpdateUserResponse {
+  user: PrivateUser!
 }
 
 input UpdateBookingContactInput {

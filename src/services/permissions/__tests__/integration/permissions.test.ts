@@ -427,7 +427,7 @@ function makeUser(data: { isSuperUser: boolean }) {
     feideId: faker.string.uuid(),
     firstName: faker.person.firstName(),
     lastName: faker.person.lastName(),
-    username: faker.internet.userName(),
+    username: faker.string.sample(20),
     isSuperUser: data.isSuperUser,
   };
 }

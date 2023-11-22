@@ -33,8 +33,11 @@ describe("AuthPlugin", () => {
   let app: FastifyInstance;
 
   beforeAll(async () => {
+    const {
+      apolloServerDependencies: { permissionService },
+    } = defaultTestDependenciesFactory();
     const userRepository = new UserRepository(prisma);
-    const userService = new UserService(userRepository);
+    const userService = new UserService(userRepository, permissionService);
     const authService = new AuthService(userService, new MockFeideClient(), FeideProvider);
     const dependencies = defaultTestDependenciesFactory({ authService, userService });
     app = await initServer(dependencies, { port: 4001, host: "0.0.0.0" });
