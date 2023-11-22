@@ -8,7 +8,7 @@ import { graphql } from "@/graphql/test-clients/unit/gql.js";
 describe("Listing queries", () => {
   describe("listing", () => {
     it("should return an listing", async () => {
-      const { client, listingService } = createMockApolloServer(console);
+      const { client, listingService } = createMockApolloServer();
       listingService.get.mockResolvedValue(mock<Listing>({ id: faker.string.uuid() }));
 
       const { errors } = await client.query({
@@ -31,7 +31,7 @@ describe("Listing queries", () => {
     });
 
     it("should resolve additional attributes", async () => {
-      const { client, listingService, organizationService } = createMockApolloServer(console);
+      const { client, listingService, organizationService } = createMockApolloServer();
       listingService.get.mockResolvedValue(
         mock<Listing>({ id: faker.string.uuid(), organizationId: faker.string.uuid() })
       );

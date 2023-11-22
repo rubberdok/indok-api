@@ -15,6 +15,11 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
 const documents = {
     "\n          query getUsers {\n            users {\n              users {\n                id\n              }\n              total\n            }\n          }\n        ": types.GetUsersDocument,
     "\n          mutation newBooking($data: NewBookingInput!) {\n            newBooking(data: $data) {\n              booking {\n                id\n              }\n            }\n          }\n        ": types.NewBookingDocument,
+    "\n          mutation UpdateBookingContact($data: UpdateBookingContactInput!) {\n            updateBookingContact(data: $data) {\n              bookingContact {\n                id\n              }\n            }\n          }\n        ": types.UpdateBookingContactDocument,
+    "\n            mutation UpdateBookingContact($data: UpdateBookingContactInput!) {\n              updateBookingContact(data: $data) {\n                bookingContact {\n                  id\n                }\n              }\n            }\n          ": types.UpdateBookingContactDocument,
+    "\n            mutation updateBookingSemester($data: UpdateBookingSemesterInput!) {\n              updateBookingSemester(data: $data) {\n                bookingSemester {\n                  id\n                }\n              }\n            }\n          ": types.UpdateBookingSemesterDocument,
+    "\n          query BookingContact {\n            bookingContact {\n              bookingContact {\n                id\n                name\n                phoneNumber\n                email\n              }\n            }\n          }\n        ": types.BookingContactDocument,
+    "\n          query BookingSemesters {\n            bookingSemesters {\n              autumn {\n                semester\n              }\n              spring {\n                semester\n              }\n            }\n          }\n        ": types.BookingSemestersDocument,
     "\n          query cabins {\n            cabins {\n              cabins {\n                id\n                name\n              }\n            }\n          }\n        ": types.CabinsDocument,
     "\n            mutation createEvent($data: CreateEventInput!) {\n              createEvent(data: $data) {\n                event {\n                  id\n                  name\n                  description\n                }\n              }\n            }\n          ": types.CreateEventDocument,
     "\n            mutation retractSignUp($data: RetractSignUpInput!) {\n              retractSignUp(data: $data) {\n                signUp {\n                  id\n                  event {\n                    id\n                  }\n                  user {\n                    id\n                  }\n                  participationStatus\n                }\n              }\n            }\n          ": types.RetractSignUpDocument,
@@ -63,6 +68,26 @@ export function graphql(source: "\n          query getUsers {\n            users
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n          mutation newBooking($data: NewBookingInput!) {\n            newBooking(data: $data) {\n              booking {\n                id\n              }\n            }\n          }\n        "): (typeof documents)["\n          mutation newBooking($data: NewBookingInput!) {\n            newBooking(data: $data) {\n              booking {\n                id\n              }\n            }\n          }\n        "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n          mutation UpdateBookingContact($data: UpdateBookingContactInput!) {\n            updateBookingContact(data: $data) {\n              bookingContact {\n                id\n              }\n            }\n          }\n        "): (typeof documents)["\n          mutation UpdateBookingContact($data: UpdateBookingContactInput!) {\n            updateBookingContact(data: $data) {\n              bookingContact {\n                id\n              }\n            }\n          }\n        "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n            mutation UpdateBookingContact($data: UpdateBookingContactInput!) {\n              updateBookingContact(data: $data) {\n                bookingContact {\n                  id\n                }\n              }\n            }\n          "): (typeof documents)["\n            mutation UpdateBookingContact($data: UpdateBookingContactInput!) {\n              updateBookingContact(data: $data) {\n                bookingContact {\n                  id\n                }\n              }\n            }\n          "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n            mutation updateBookingSemester($data: UpdateBookingSemesterInput!) {\n              updateBookingSemester(data: $data) {\n                bookingSemester {\n                  id\n                }\n              }\n            }\n          "): (typeof documents)["\n            mutation updateBookingSemester($data: UpdateBookingSemesterInput!) {\n              updateBookingSemester(data: $data) {\n                bookingSemester {\n                  id\n                }\n              }\n            }\n          "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n          query BookingContact {\n            bookingContact {\n              bookingContact {\n                id\n                name\n                phoneNumber\n                email\n              }\n            }\n          }\n        "): (typeof documents)["\n          query BookingContact {\n            bookingContact {\n              bookingContact {\n                id\n                name\n                phoneNumber\n                email\n              }\n            }\n          }\n        "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n          query BookingSemesters {\n            bookingSemesters {\n              autumn {\n                semester\n              }\n              spring {\n                semester\n              }\n            }\n          }\n        "): (typeof documents)["\n          query BookingSemesters {\n            bookingSemesters {\n              autumn {\n                semester\n              }\n              spring {\n                semester\n              }\n            }\n          }\n        "];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

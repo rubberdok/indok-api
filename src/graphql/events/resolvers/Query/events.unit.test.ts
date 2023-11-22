@@ -55,7 +55,7 @@ describe("Event queries", () => {
     });
 
     it("should split events into this week, next week, and two weeks ahead or more", async () => {
-      const { client, eventService } = createMockApolloServer(console);
+      const { client, eventService } = createMockApolloServer();
       const eventThisWeek = {
         ...mock<Event>(),
         id: faker.string.uuid(),

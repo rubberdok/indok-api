@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { Booking, Cabin, FeaturePermission, Role } from "@prisma/client";
+import { Booking, Cabin, FeaturePermission } from "@prisma/client";
 import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 
 import { BookingStatus } from "@/domain/cabins.js";
@@ -25,13 +25,12 @@ describe("CabinService", () => {
       /**
        * Arrange
        *
-       * Mock the permissionService.hasRole method to return false.
+       * Mock the permissionService.hasFeaturePermission method to return false.
        * Mock the cabinRepository.getCabinByBookingId method to return a cabin.
        */
-      const organizationId = faker.string.uuid();
       const userId = faker.string.uuid();
-      cabinRepository.getCabinByBookingId.mockResolvedValueOnce(mock<Cabin>({ organizationId }));
-      permissionService.hasRole.mockResolvedValueOnce(false);
+      cabinRepository.getCabinByBookingId.mockResolvedValueOnce(mock<Cabin>());
+      permissionService.hasFeaturePermission.mockResolvedValueOnce(false);
 
       /**
        * Act
@@ -48,13 +47,11 @@ describe("CabinService", () => {
        * Assert
        *
        * Expect updateBookingStatus to throw a PermissionDeniedError
-       * Expect permissionService.hasRole to be called with the correct arguments
+       * Expect permissionService.hasFeaturePermission to be called with the correct arguments
        */
       await expect(updateBookingStatus).rejects.toThrow(PermissionDeniedError);
-      expect(permissionService.hasRole).toHaveBeenCalledWith({
+      expect(permissionService.hasFeaturePermission).toHaveBeenCalledWith({
         userId: userId,
-        organizationId,
-        role: Role.MEMBER,
         featurePermission: FeaturePermission.CABIN_BOOKING,
       });
     });
@@ -63,15 +60,14 @@ describe("CabinService", () => {
       /**
        * Arrange
        *
-       * Mock the permissionService.hasRole method to return true.
+       * Mock the permissionService.hasFeaturePermission method to return true.
        * Mock the cabinRepository.getCabinByBookingId method to return a cabin.
        * Mock getBookingById to return a booking.
        * Mock getOverlappingBookings to return multiple bookings.
        */
-      const organizationId = faker.string.uuid();
       const userId = faker.string.uuid();
-      cabinRepository.getCabinByBookingId.mockResolvedValueOnce(mock<Cabin>({ organizationId }));
-      permissionService.hasRole.mockResolvedValueOnce(true);
+      cabinRepository.getCabinByBookingId.mockResolvedValueOnce(mock<Cabin>());
+      permissionService.hasFeaturePermission.mockResolvedValueOnce(true);
       cabinRepository.getBookingById.mockResolvedValueOnce(
         mock<Booking>({ id: faker.string.uuid(), startDate: faker.date.future(), endDate: faker.date.future() })
       );
@@ -92,7 +88,7 @@ describe("CabinService", () => {
        * Assert
        *
        * Expect updateBookingStatus to throw a PermissionDeniedError
-       * Expect permissionService.hasRole to be called with the correct arguments
+       * Expect permissionService.hasFeaturePermission to be called with the correct arguments
        */
       await expect(updateBookingStatus).rejects.toThrow(ValidationError);
     });

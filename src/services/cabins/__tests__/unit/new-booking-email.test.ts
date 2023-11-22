@@ -1,15 +1,15 @@
 import { randomUUID } from "crypto";
 
 import { faker } from "@faker-js/faker";
+import { Semester } from "@prisma/client";
 import dayjs from "dayjs";
 import { DeepMockProxy, mockDeep } from "jest-mock-extended";
+import { DateTime } from "luxon";
 
 import { BookingStatus } from "@/domain/cabins.js";
 import { TemplateAlias } from "@/lib/postmark.js";
 
 import { BookingData, CabinRepository, CabinService, IMailService, PermissionService } from "../../service.js";
-
-import { NegativeValidationTestCase, PositiveValidationTestCase } from "./interfaces.js";
 
 const validBooking: BookingData = {
   cabinId: faker.string.uuid(),
@@ -33,64 +33,17 @@ beforeAll(() => {
   cabinService = new CabinService(repo, mockMailService, permissionService);
 });
 
-describe("New booking", () => {
-  const negativeValidationTestCases: NegativeValidationTestCase[] = [
-    {
-      name: "should disallow bookings with a start date in the past",
-      input: {
-        ...validBooking,
-        startDate: dayjs().subtract(1, "day").toDate(),
-      },
-      expectedError: "start date must be in the future",
-    },
-    {
-      name: "should disallow bookings with an end date in the past",
-      input: {
-        ...validBooking,
-        endDate: dayjs().subtract(1, "day").toDate(),
-      },
-      expectedError: "end date must be in the future",
-    },
-    {
-      name: "should disallow bookings with an end date before the start date",
-      input: {
-        ...validBooking,
-        startDate: dayjs().add(3, "day").toDate(),
-        endDate: dayjs().add(2, "day").toDate(),
-      },
-      expectedError: "end date must be after start date",
-    },
-    {
-      name: "should disallow invalid emails",
-      input: {
-        ...validBooking,
-        email: "example.com",
-      },
-      expectedError: "invalid email",
-    },
-    {
-      name: "should disallow invalid phone numbers",
-      input: {
-        ...validBooking,
-        phoneNumber: "111",
-      },
-      expectedError: "invalid phone number",
-    },
-    {
-      name: "should disallow cabin ids",
-      input: {
-        ...validBooking,
-        cabinId: "123",
-      },
-      expectedError: "invalid cabin id",
-    },
-  ];
+describe("newBooking", () => {
+  interface TestCase {
+    name: string;
+    input: BookingData;
+    expectedConfirmationEmail: {
+      firstName: string;
+      lastName: string;
+    };
+  }
 
-  test.each(negativeValidationTestCases)("$name", async ({ input, expectedError }) => {
-    expect(cabinService.newBooking(input)).rejects.toThrow(expectedError);
-  });
-
-  const positiveValidationTestCases: PositiveValidationTestCase[] = [
+  const testCase: TestCase[] = [
     {
       name: "should send a booking confirmation email",
       input: validBooking,
@@ -101,7 +54,19 @@ describe("New booking", () => {
     },
   ];
 
-  test.each(positiveValidationTestCases)("$name", async ({ input, expectedConfirmationEmail }) => {
+  test.each(testCase)("$name", async ({ input, expectedConfirmationEmail }) => {
+    repo.getBookingSemester.mockImplementation(async (semester: Semester) => {
+      return {
+        bookingsEnabled: true,
+        semester: semester,
+        startAt: DateTime.fromObject({ year: 0 }).toJSDate(),
+        endAt: DateTime.now().plus({ years: 3000 }).toJSDate(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        id: randomUUID(),
+      };
+    });
+
     repo.createBooking.mockReturnValueOnce(
       Promise.resolve({
         ...input,

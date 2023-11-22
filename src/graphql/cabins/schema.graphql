@@ -1,3 +1,71 @@
+type Cabin {
+  id: ID!
+  name: String!
+  internalPrice: Int!
+  externalPrice: Int!
+  capacity: Int!
+}
+
+type Booking {
+  id: ID!
+  endDate: DateTime!
+  startDate: DateTime!
+  firstName: String!
+  lastName: String!
+  email: String!
+  phoneNumber: String!
+  cabin: Cabin!
+  status: Status!
+}
+
+type BookingContact {
+  id: ID!
+  name: String!
+  email: String!
+  phoneNumber: String!
+}
+
+enum Semester {
+  SPRING
+  AUTUMN
+}
+
+type BookingSemester {
+  id: ID!
+  startAt: DateTime!
+  endAt: DateTime!
+  bookingsEnabled: Boolean!
+  semester: Semester!
+}
+
+input UpdateBookingSemesterInput {
+  """
+  There are only ever two semesters, so this is the ID of the semester to update.
+  """
+  semester: Semester!
+  """
+  The start date for the booking period
+  """
+  startAt: DateTime
+  """
+  The end date for the booking period
+  """
+  endAt: DateTime
+  """
+  Whether or not bookings are enabled for this semester
+  """
+  bookingsEnabled: Boolean
+}
+
+type UpdateBookingSemesterResponse {
+  bookingSemester: BookingSemester!
+}
+
+type BookingSemestersResponse {
+  spring: BookingSemester
+  autumn: BookingSemester
+}
+
 input NewBookingInput {
   cabinId: ID!
   startDate: DateTime!
@@ -32,31 +100,45 @@ type CabinsResponse {
   cabins: [Cabin!]!
 }
 
+type BookingContactResponse {
+  bookingContact: BookingContact!
+}
+
+input UpdateBookingContactInput {
+  """
+  The full name of the booking contact, will be publicly available, pass the empty string to remove the name
+  """
+  name: String
+  """
+  The email address of the booking contact, will be publicly available, pass the empty string to remove the email address
+  """
+  email: String
+  """
+  The phone number of the booking contact, will be publicly available, pass the empty string to remove the phone number
+  """
+  phoneNumber: String
+}
+
+type UpdateBookingContactResponse {
+  bookingContact: BookingContact!
+}
+
 type Query {
   cabins: CabinsResponse!
+  bookingSemesters: BookingSemestersResponse!
+  bookingContact: BookingContactResponse!
 }
 
 type Mutation {
   newBooking(data: NewBookingInput!): NewBookingResponse!
   updateBookingStatus(data: UpdateBookingStatusInput!): UpdateBookingResponse!
-}
-
-type Cabin {
-  id: ID!
-  name: String!
-  internalPrice: Int!
-  externalPrice: Int!
-  capacity: Int!
-}
-
-type Booking {
-  id: ID!
-  endDate: DateTime!
-  startDate: DateTime!
-  firstName: String!
-  lastName: String!
-  email: String!
-  phoneNumber: String!
-  cabin: Cabin!
-  status: Status!
+  """
+  Updates the booking semester for the given semester, requires that the user is in an organization with
+  the CABIN_BOOKING permission.
+  """
+  updateBookingSemester(data: UpdateBookingSemesterInput!): UpdateBookingSemesterResponse!
+  """
+  Updates the booking contact, requires that the user is in an organization with the CABIN_BOOKING permission.
+  """
+  updateBookingContact(data: UpdateBookingContactInput!): UpdateBookingContactResponse!
 }

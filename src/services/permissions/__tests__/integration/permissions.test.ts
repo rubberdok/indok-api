@@ -6,7 +6,6 @@ import prisma from "@/lib/prisma.js";
 import { MemberRepository } from "@/repositories/organizations/members.js";
 import { OrganizationRepository } from "@/repositories/organizations/organizations.js";
 import { UserRepository } from "@/repositories/users/index.js";
-import { UserService } from "@/services/users/service.js";
 
 import { PermissionService } from "../../service.js";
 
@@ -15,10 +14,9 @@ let permissionService: PermissionService;
 describe("OrganizationsService", () => {
   beforeAll(async () => {
     const userRepository = new UserRepository(prisma);
-    const userService = new UserService(userRepository);
     const memberRepository = new MemberRepository(prisma);
     const organizationRepository = new OrganizationRepository(prisma);
-    permissionService = new PermissionService(memberRepository, userService, organizationRepository);
+    permissionService = new PermissionService(memberRepository, userRepository, organizationRepository);
   });
 
   describe("hasRole", () => {
@@ -240,28 +238,19 @@ describe("OrganizationsService", () => {
        *
        * 1. Create a user with isSuperUser set to true
        */
-      const user = await prisma.user.create({
-        data: {
-          email: faker.internet.email(),
-          feideId: faker.string.uuid(),
-          firstName: faker.person.firstName(),
-          lastName: faker.person.lastName(),
-          username: faker.internet.userName(),
-          isSuperUser: true,
-        },
-      });
+      const user = await prisma.user.create({ data: makeUser({ isSuperUser: true }) });
 
       /**
        * Act
        *
        * 1. Call the isSuperUser method on the permissionService with the userId
        */
-      const result = permissionService.isSuperUser(user.id);
+      const { isSuperUser } = await permissionService.isSuperUser(user.id);
 
       /**
        * Assert that the user is a super user
        */
-      expect(result).resolves.toEqual(true);
+      expect(isSuperUser).toEqual(true);
     });
 
     it("should return false if the user is not a super user", async () => {
@@ -270,28 +259,164 @@ describe("OrganizationsService", () => {
        *
        * 1. Create a user with isSuperUser set to true
        */
-      const user = await prisma.user.create({
-        data: {
-          email: faker.internet.email(),
-          feideId: faker.string.uuid(),
-          firstName: faker.person.firstName(),
-          lastName: faker.person.lastName(),
-          username: faker.internet.userName(),
-          isSuperUser: false,
-        },
-      });
+      const user = await prisma.user.create({ data: makeUser({ isSuperUser: false }) });
 
       /**
        * Act
        *
        * 1. Call the isSuperUser method on the permissionService with the userId
        */
-      const result = permissionService.isSuperUser(user.id);
+      const { isSuperUser } = await permissionService.isSuperUser(user.id);
 
       /**
        * Assert that the user is a super user
        */
-      expect(result).resolves.toEqual(false);
+      expect(isSuperUser).toEqual(false);
+    });
+  });
+
+  describe("hasFeaturePermission", () => {
+    it("should return true if the user is a super user", async () => {
+      /**
+       * Arrange
+       *
+       * 1. Create a user with isSuperUser set to true
+       */
+      const user = await prisma.user.create({ data: makeUser({ isSuperUser: true }) });
+
+      /**
+       * Act
+       * 1. Call the hasFeaturePermission method on the permissionService with the userId and a feature permission
+       */
+      const result = permissionService.hasFeaturePermission({
+        userId: user.id,
+        featurePermission: FeaturePermission.CABIN_BOOKING,
+      });
+
+      /**
+       * Assert that the user has the feature permission
+       */
+      await expect(result).resolves.toEqual(true);
+    });
+
+    it("should return false if the user is not a super user, and not a member of an organization", async () => {
+      /**
+       * Arrange
+       *
+       * 1. Create a user with isSuperUser set to true
+       */
+      const user = await prisma.user.create({ data: makeUser({ isSuperUser: false }) });
+
+      /**
+       * Act
+       * 1. Call the hasFeaturePermission method on the permissionService with the userId and a feature permission
+       */
+      const result = permissionService.hasFeaturePermission({
+        userId: user.id,
+        featurePermission: FeaturePermission.CABIN_BOOKING,
+      });
+
+      /**
+       * Assert that the user does not have the feature permission
+       */
+      await expect(result).resolves.toEqual(false);
+    });
+
+    it("should return true if the user is a member of an organization with the feature permission", async () => {
+      /**
+       * Arrange
+       *
+       * 1. Create a user with isSuperUser set to true
+       * 2. Create an organization with the feature permission
+       * 3. Create a member with the user and organization
+       * 4. Create an organization without the feature permission
+       *
+       */
+      const user = await prisma.user.create({ data: makeUser({ isSuperUser: false }) });
+      const organizationWithoutFeaturePermission = await makeOrganization({});
+      const organizationWithFeaturePermission = await makeOrganization({
+        featurePermissions: [FeaturePermission.CABIN_BOOKING],
+      });
+      await makeMember({ userId: user.id, organizationId: organizationWithoutFeaturePermission.id });
+      await makeMember({ userId: user.id, organizationId: organizationWithFeaturePermission.id });
+
+      /**
+       * Act
+       * 1. Call the hasFeaturePermission method on the permissionService with the userId and a feature permission
+       */
+      const result = permissionService.hasFeaturePermission({
+        userId: user.id,
+        featurePermission: FeaturePermission.CABIN_BOOKING,
+      });
+
+      /**
+       * Assert that the user has the feature permission
+       */
+      await expect(result).resolves.toEqual(true);
+    });
+
+    it("should return false if the user is a member of an organization without the feature permission", async () => {
+      /**
+       * Arrange
+       *
+       * 1. Create a user with isSuperUser set to true
+       * 2. Create an organization with the feature permission
+       * 3. Create a member with the user and organization
+       * 4. Create an organization without the feature permission
+       *
+       */
+      const user = await prisma.user.create({ data: makeUser({ isSuperUser: false }) });
+      const organizationWithoutFeaturePermission = await makeOrganization({});
+      await makeOrganization({
+        featurePermissions: [FeaturePermission.CABIN_BOOKING],
+      });
+      await makeMember({ userId: user.id, organizationId: organizationWithoutFeaturePermission.id });
+
+      /**
+       * Act
+       * 1. Call the hasFeaturePermission method on the permissionService with the userId and a feature permission
+       */
+      const result = permissionService.hasFeaturePermission({
+        userId: user.id,
+        featurePermission: FeaturePermission.CABIN_BOOKING,
+      });
+
+      /**
+       * Assert that the user has the feature permission
+       */
+      await expect(result).resolves.toEqual(false);
+    });
+
+    it("should return true if the user is a member of an organization with multiple feature permissions", async () => {
+      /**
+       * Arrange
+       *
+       * 1. Create a user with isSuperUser set to true
+       * 2. Create an organization with the feature permission
+       * 3. Create a member with the user and organization
+       * 4. Create an organization without the feature permission
+       */
+      const user = await prisma.user.create({ data: makeUser({ isSuperUser: false }) });
+      const organizationWithoutFeaturePermission = await makeOrganization({});
+      const organizationWithFeaturePermission = await makeOrganization({
+        featurePermissions: [FeaturePermission.CABIN_BOOKING, FeaturePermission.ARCHIVE],
+      });
+      await makeMember({ userId: user.id, organizationId: organizationWithoutFeaturePermission.id });
+      await makeMember({ userId: user.id, organizationId: organizationWithFeaturePermission.id });
+
+      /**
+       * Act
+       * 1. Call the hasFeaturePermission method on the permissionService with the userId and a feature permission
+       */
+      const result = permissionService.hasFeaturePermission({
+        userId: user.id,
+        featurePermission: FeaturePermission.CABIN_BOOKING,
+      });
+
+      /**
+       * Assert that the user has the feature permission
+       */
+      await expect(result).resolves.toEqual(true);
     });
   });
 });
@@ -305,4 +430,23 @@ function makeUser(data: { isSuperUser: boolean }) {
     username: faker.internet.userName(),
     isSuperUser: data.isSuperUser,
   };
+}
+
+function makeOrganization(data: { featurePermissions?: FeaturePermission[] }) {
+  return prisma.organization.create({
+    data: {
+      name: faker.string.sample(20),
+      featurePermissions: data.featurePermissions,
+    },
+  });
+}
+
+function makeMember(data: { userId: string; organizationId: string; role?: Role }) {
+  return prisma.member.create({
+    data: {
+      userId: data.userId,
+      organizationId: data.organizationId,
+      role: data.role ?? Role.MEMBER,
+    },
+  });
 }

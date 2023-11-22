@@ -5,19 +5,19 @@ import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { Role } from "@/domain/organizations.js";
 import { User } from "@/domain/users.js";
 
-import { MemberRepository, OrganizationRepository, PermissionService, UserService } from "../../service.js";
+import { MemberRepository, OrganizationRepository, PermissionService, UserRepository } from "../../service.js";
 
 describe("PermissionService", () => {
   let permissionService: PermissionService;
-  let userService: DeepMockProxy<UserService>;
+  let UserRepository: DeepMockProxy<UserRepository>;
   let memberRepository: DeepMockProxy<MemberRepository>;
   let organizationRepository: DeepMockProxy<OrganizationRepository>;
 
   beforeAll(async () => {
-    userService = mockDeep<UserService>();
+    UserRepository = mockDeep<UserRepository>();
     memberRepository = mockDeep<MemberRepository>();
     organizationRepository = mockDeep<OrganizationRepository>();
-    permissionService = new PermissionService(memberRepository, userService, organizationRepository);
+    permissionService = new PermissionService(memberRepository, UserRepository, organizationRepository);
   });
 
   describe("hasRole should return", () => {
@@ -204,7 +204,7 @@ describe("PermissionService", () => {
        * Set up mocks for user service and member repository according to the
        * test case.
        */
-      userService.get.mockResolvedValueOnce(mock<User>(arrange.user));
+      UserRepository.get.mockResolvedValueOnce(mock<User>(arrange.user));
       memberRepository.hasRole.mockImplementation(async (data) => {
         return arrange.organizationRole === data.role;
       });

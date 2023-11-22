@@ -63,13 +63,13 @@ export function dependenciesFactory(
   const listingRepository = new ListingRepository(prisma);
 
   const mailService = new MailService(postmark, env.NO_REPLY_EMAIL);
-  const userService = new UserService(userRepository);
-  const permissionService = new PermissionService(memberRepository, userService, organizationRepository);
-  const cabinService = new CabinService(cabinRepository, mailService, permissionService);
-  const authService = overrides?.authService ?? new AuthService(userService, feideClient, FeideProvider);
+  const permissionService = new PermissionService(memberRepository, userRepository, organizationRepository);
   const organizationService = new OrganizationService(organizationRepository, memberRepository, permissionService);
-  const eventService = new EventService(eventRepository, permissionService);
   const listingService = new ListingService(listingRepository, permissionService);
+  const cabinService = new CabinService(cabinRepository, mailService, permissionService);
+  const eventService = new EventService(eventRepository, permissionService);
+  const userService = new UserService(userRepository);
+  const authService = overrides?.authService ?? new AuthService(userService, feideClient, FeideProvider);
 
   const defaultApolloServerDependencies: ApolloServerDependencies = {
     cabinService,
@@ -77,7 +77,6 @@ export function dependenciesFactory(
     organizationService,
     eventService,
     listingService,
-    permissionService,
   };
 
   const apolloServerDependencies = merge(defaultApolloServerDependencies, overrides?.apolloServerDependencies);

@@ -5,8 +5,8 @@ import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { BaseError, InvalidArgumentError, PermissionDeniedError } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
 import { User } from "@/domain/users.js";
+import { UserRepository } from "@/repositories/users/index.js";
 import { PermissionService } from "@/services/permissions/service.js";
-import { UserService } from "@/services/users/service.js";
 
 import { MemberRepository, OrganizationRepository, OrganizationService } from "../../service.js";
 
@@ -19,15 +19,15 @@ interface MemberRepositoryMock extends MemberRepository {
 let organizationService: OrganizationService;
 let organizationRepository: DeepMockProxy<OrganizationRepository>;
 let memberRepository: DeepMockProxy<MemberRepositoryMock>;
-let userService: DeepMockProxy<UserService>;
+let userRepository: DeepMockProxy<UserRepository>;
 let permissionService: PermissionService;
 
 describe("OrganizationService", () => {
   beforeEach(() => {
     organizationRepository = mockDeep<OrganizationRepository>();
     memberRepository = mockDeep<MemberRepositoryMock>();
-    userService = mockDeep<UserService>();
-    permissionService = new PermissionService(memberRepository, userService, organizationRepository);
+    userRepository = mockDeep<UserRepository>();
+    permissionService = new PermissionService(memberRepository, userRepository, organizationRepository);
     organizationService = new OrganizationService(organizationRepository, memberRepository, permissionService);
   });
 
@@ -105,7 +105,7 @@ describe("OrganizationService", () => {
          *
          * Set up the mock user and hasRole implementation
          */
-        userService.get.mockResolvedValueOnce(state.user);
+        userRepository.get.mockResolvedValueOnce(state.user);
         memberRepository.hasRole.mockImplementation(
           getMockHasRoleImplementation({
             userId: state.user.id,
@@ -186,7 +186,7 @@ describe("OrganizationService", () => {
          *
          * Set up the mock user and hasRole implementation.
          */
-        userService.get.mockResolvedValueOnce(state.user);
+        userRepository.get.mockResolvedValueOnce(state.user);
         memberRepository.hasRole.mockImplementation(
           getMockHasRoleImplementation({
             userId: state.user.id,
@@ -263,7 +263,7 @@ describe("OrganizationService", () => {
            *
            * Set up the mock user and hasRole implementation.
            */
-          userService.get.mockResolvedValueOnce(state.user);
+          userRepository.get.mockResolvedValueOnce(state.user);
           memberRepository.hasRole.mockImplementation(
             getMockHasRoleImplementation({
               userId: state.user.id,
@@ -357,7 +357,7 @@ describe("OrganizationService", () => {
          *
          * Set up the mock user and hasRole implementation.
          */
-        userService.get.mockResolvedValueOnce(state.user);
+        userRepository.get.mockResolvedValueOnce(state.user);
 
         /**
          * Act and assert
@@ -410,7 +410,7 @@ describe("OrganizationService", () => {
          *
          * Set up the mock user and hasRole implementation.
          */
-        userService.get.mockResolvedValueOnce(state.user);
+        userRepository.get.mockResolvedValueOnce(state.user);
 
         /**
          * Act
@@ -447,7 +447,7 @@ describe("OrganizationService", () => {
        *
        * Set up the mock user and hasRole implementation.
        */
-      userService.get.mockResolvedValueOnce(mock<User>({ id: "1", isSuperUser: false }));
+      userRepository.get.mockResolvedValueOnce(mock<User>({ id: "1", isSuperUser: false }));
       memberRepository.hasRole.mockImplementation(
         getMockHasRoleImplementation({
           userId: "1",
@@ -520,7 +520,7 @@ describe("OrganizationService", () => {
          *
          * Set up the mock user and hasRole implementation.
          */
-        userService.get.mockResolvedValueOnce(state.user);
+        userRepository.get.mockResolvedValueOnce(state.user);
         memberRepository.hasRole.mockImplementation(
           getMockHasRoleImplementation({
             userId: state.user.id,
@@ -619,7 +619,7 @@ describe("OrganizationService", () => {
          *
          * Set up the mock user and hasRole implementation.
          */
-        userService.get.mockResolvedValueOnce(state.user);
+        userRepository.get.mockResolvedValueOnce(state.user);
         memberRepository.hasRole.mockImplementation(
           getMockHasRoleImplementation({
             userId: state.user.id,
@@ -710,7 +710,7 @@ describe("OrganizationService", () => {
          *
          * Set up the mock user and hasRole implementation.
          */
-        userService.get.mockResolvedValueOnce(state.user);
+        userRepository.get.mockResolvedValueOnce(state.user);
         memberRepository.hasRole.mockImplementation(
           getMockHasRoleImplementation({
             userId: state.user.id,
@@ -743,7 +743,7 @@ describe("OrganizationService", () => {
        *
        * Set up the mock user and hasRole implementation.
        */
-      userService.get.mockResolvedValueOnce(mock<User>({ id: "1", isSuperUser: false }));
+      userRepository.get.mockResolvedValueOnce(mock<User>({ id: "1", isSuperUser: false }));
       memberRepository.hasRole.mockImplementation(
         getMockHasRoleImplementation({
           userId: "1",
@@ -767,7 +767,7 @@ describe("OrganizationService", () => {
        *
        * Set up the mock user and hasRole implementation.
        */
-      userService.get.mockResolvedValueOnce(mock<User>({ id: "1", isSuperUser: false }));
+      userRepository.get.mockResolvedValueOnce(mock<User>({ id: "1", isSuperUser: false }));
       memberRepository.hasRole.mockImplementation(
         getMockHasRoleImplementation({
           userId: "1",

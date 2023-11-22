@@ -1,5 +1,5 @@
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
-import { BookingMapper, CabinMapper } from './cabins/schema.mappers.js';
+import { BookingMapper, BookingSemesterMapper, BookingSemestersResponseMapper, CabinMapper } from './cabins/schema.mappers.js';
 import { EventMapper, EventsResponseMapper, SignUpMapper } from './events/schema.mappers.js';
 import { ListingMapper } from './listings/schema.mappers.js';
 import { MemberMapper, OrganizationMapper } from './organizations/schema.mappers.js';
@@ -59,6 +59,34 @@ export type Booking = {
   phoneNumber: Scalars['String']['output'];
   startDate: Scalars['DateTime']['output'];
   status: Status;
+};
+
+export type BookingContact = {
+  __typename?: 'BookingContact';
+  email: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  phoneNumber: Scalars['String']['output'];
+};
+
+export type BookingContactResponse = {
+  __typename?: 'BookingContactResponse';
+  bookingContact: BookingContact;
+};
+
+export type BookingSemester = {
+  __typename?: 'BookingSemester';
+  bookingsEnabled: Scalars['Boolean']['output'];
+  endAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  semester: Semester;
+  startAt: Scalars['DateTime']['output'];
+};
+
+export type BookingSemestersResponse = {
+  __typename?: 'BookingSemestersResponse';
+  autumn?: Maybe<BookingSemester>;
+  spring?: Maybe<BookingSemester>;
 };
 
 export type Cabin = {
@@ -254,6 +282,13 @@ export type Mutation = {
   retractSignUp: RetractSignUpResponse;
   /** Sign up for an event, requires that the user is logged in */
   signUp: SignUpResponse;
+  /** Updates the booking contact, requires that the user is in an organization with the CABIN_BOOKING permission. */
+  updateBookingContact: UpdateBookingContactResponse;
+  /**
+   * Updates the booking semester for the given semester, requires that the user is in an organization with
+   * the CABIN_BOOKING permission.
+   */
+  updateBookingSemester: UpdateBookingSemesterResponse;
   updateBookingStatus: UpdateBookingResponse;
   updateListing: UpdateListingResponse;
   /**
@@ -307,6 +342,16 @@ export type MutationretractSignUpArgs = {
 
 export type MutationsignUpArgs = {
   data: SignUpInput;
+};
+
+
+export type MutationupdateBookingContactArgs = {
+  data: UpdateBookingContactInput;
+};
+
+
+export type MutationupdateBookingSemesterArgs = {
+  data: UpdateBookingSemesterInput;
 };
 
 
@@ -412,6 +457,8 @@ export type PublicUser = {
 
 export type Query = {
   __typename?: 'Query';
+  bookingContact: BookingContactResponse;
+  bookingSemesters: BookingSemestersResponse;
   cabins: CabinsResponse;
   event: EventResponse;
   events: EventsResponse;
@@ -467,6 +514,10 @@ export type Role =
    */
   | 'MEMBER';
 
+export type Semester =
+  | 'AUTUMN'
+  | 'SPRING';
+
 export type SignUp = {
   __typename?: 'SignUp';
   /** The event the user signed up for */
@@ -494,9 +545,39 @@ export type Status =
   | 'PENDING'
   | 'REJECTED';
 
+export type UpdateBookingContactInput = {
+  /** The email address of the booking contact, will be publicly available, pass the empty string to remove the email address */
+  email?: InputMaybe<Scalars['String']['input']>;
+  /** The full name of the booking contact, will be publicly available, pass the empty string to remove the name */
+  name?: InputMaybe<Scalars['String']['input']>;
+  /** The phone number of the booking contact, will be publicly available, pass the empty string to remove the phone number */
+  phoneNumber?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateBookingContactResponse = {
+  __typename?: 'UpdateBookingContactResponse';
+  bookingContact: BookingContact;
+};
+
 export type UpdateBookingResponse = {
   __typename?: 'UpdateBookingResponse';
   booking: Booking;
+};
+
+export type UpdateBookingSemesterInput = {
+  /** Whether or not bookings are enabled for this semester */
+  bookingsEnabled?: InputMaybe<Scalars['Boolean']['input']>;
+  /** The end date for the booking period */
+  endAt?: InputMaybe<Scalars['DateTime']['input']>;
+  /** There are only ever two semesters, so this is the ID of the semester to update. */
+  semester: Semester;
+  /** The start date for the booking period */
+  startAt?: InputMaybe<Scalars['DateTime']['input']>;
+};
+
+export type UpdateBookingSemesterResponse = {
+  __typename?: 'UpdateBookingSemesterResponse';
+  bookingSemester: BookingSemester;
 };
 
 export type UpdateBookingStatusInput = {
@@ -640,6 +721,11 @@ export type ResolversTypes = {
   AddMemberResponse: ResolverTypeWrapper<Omit<AddMemberResponse, 'member'> & { member: ResolversTypes['Member'] }>;
   Booking: ResolverTypeWrapper<BookingMapper>;
   String: ResolverTypeWrapper<Scalars['String']['output']>;
+  BookingContact: ResolverTypeWrapper<BookingContact>;
+  BookingContactResponse: ResolverTypeWrapper<BookingContactResponse>;
+  BookingSemester: ResolverTypeWrapper<BookingSemesterMapper>;
+  Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
+  BookingSemestersResponse: ResolverTypeWrapper<BookingSemestersResponseMapper>;
   Cabin: ResolverTypeWrapper<CabinMapper>;
   Int: ResolverTypeWrapper<Scalars['Int']['output']>;
   CabinsResponse: ResolverTypeWrapper<Omit<CabinsResponse, 'cabins'> & { cabins: Array<ResolversTypes['Cabin']> }>;
@@ -657,7 +743,6 @@ export type ResolversTypes = {
   EventInput: EventInput;
   EventResponse: ResolverTypeWrapper<Omit<EventResponse, 'event'> & { event: ResolversTypes['Event'] }>;
   EventsInput: EventsInput;
-  Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   EventsResponse: ResolverTypeWrapper<EventsResponseMapper>;
   Listing: ResolverTypeWrapper<ListingMapper>;
   ListingInput: ListingInput;
@@ -677,11 +762,16 @@ export type ResolversTypes = {
   RetractSignUpInput: RetractSignUpInput;
   RetractSignUpResponse: ResolverTypeWrapper<Omit<RetractSignUpResponse, 'signUp'> & { signUp: ResolversTypes['SignUp'] }>;
   Role: Role;
+  Semester: Semester;
   SignUp: ResolverTypeWrapper<SignUpMapper>;
   SignUpInput: SignUpInput;
   SignUpResponse: ResolverTypeWrapper<Omit<SignUpResponse, 'signUp'> & { signUp: ResolversTypes['SignUp'] }>;
   Status: Status;
+  UpdateBookingContactInput: UpdateBookingContactInput;
+  UpdateBookingContactResponse: ResolverTypeWrapper<UpdateBookingContactResponse>;
   UpdateBookingResponse: ResolverTypeWrapper<Omit<UpdateBookingResponse, 'booking'> & { booking: ResolversTypes['Booking'] }>;
+  UpdateBookingSemesterInput: UpdateBookingSemesterInput;
+  UpdateBookingSemesterResponse: ResolverTypeWrapper<Omit<UpdateBookingSemesterResponse, 'bookingSemester'> & { bookingSemester: ResolversTypes['BookingSemester'] }>;
   UpdateBookingStatusInput: UpdateBookingStatusInput;
   UpdateListingInput: UpdateListingInput;
   UpdateListingResponse: ResolverTypeWrapper<Omit<UpdateListingResponse, 'listing'> & { listing: ResolversTypes['Listing'] }>;
@@ -700,6 +790,11 @@ export type ResolversParentTypes = {
   AddMemberResponse: Omit<AddMemberResponse, 'member'> & { member: ResolversParentTypes['Member'] };
   Booking: BookingMapper;
   String: Scalars['String']['output'];
+  BookingContact: BookingContact;
+  BookingContactResponse: BookingContactResponse;
+  BookingSemester: BookingSemesterMapper;
+  Boolean: Scalars['Boolean']['output'];
+  BookingSemestersResponse: BookingSemestersResponseMapper;
   Cabin: CabinMapper;
   Int: Scalars['Int']['output'];
   CabinsResponse: Omit<CabinsResponse, 'cabins'> & { cabins: Array<ResolversParentTypes['Cabin']> };
@@ -717,7 +812,6 @@ export type ResolversParentTypes = {
   EventInput: EventInput;
   EventResponse: Omit<EventResponse, 'event'> & { event: ResolversParentTypes['Event'] };
   EventsInput: EventsInput;
-  Boolean: Scalars['Boolean']['output'];
   EventsResponse: EventsResponseMapper;
   Listing: ListingMapper;
   ListingInput: ListingInput;
@@ -738,7 +832,11 @@ export type ResolversParentTypes = {
   SignUp: SignUpMapper;
   SignUpInput: SignUpInput;
   SignUpResponse: Omit<SignUpResponse, 'signUp'> & { signUp: ResolversParentTypes['SignUp'] };
+  UpdateBookingContactInput: UpdateBookingContactInput;
+  UpdateBookingContactResponse: UpdateBookingContactResponse;
   UpdateBookingResponse: Omit<UpdateBookingResponse, 'booking'> & { booking: ResolversParentTypes['Booking'] };
+  UpdateBookingSemesterInput: UpdateBookingSemesterInput;
+  UpdateBookingSemesterResponse: Omit<UpdateBookingSemesterResponse, 'bookingSemester'> & { bookingSemester: ResolversParentTypes['BookingSemester'] };
   UpdateBookingStatusInput: UpdateBookingStatusInput;
   UpdateListingInput: UpdateListingInput;
   UpdateListingResponse: Omit<UpdateListingResponse, 'listing'> & { listing: ResolversParentTypes['Listing'] };
@@ -765,6 +863,34 @@ export type BookingResolvers<ContextType = ApolloContext, ParentType extends Res
   phoneNumber?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   startDate?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['Status'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type BookingContactResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['BookingContact'] = ResolversParentTypes['BookingContact']> = {
+  email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  phoneNumber?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type BookingContactResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['BookingContactResponse'] = ResolversParentTypes['BookingContactResponse']> = {
+  bookingContact?: Resolver<ResolversTypes['BookingContact'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type BookingSemesterResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['BookingSemester'] = ResolversParentTypes['BookingSemester']> = {
+  bookingsEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  endAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  semester?: Resolver<ResolversTypes['Semester'], ParentType, ContextType>;
+  startAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type BookingSemestersResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['BookingSemestersResponse'] = ResolversParentTypes['BookingSemestersResponse']> = {
+  autumn?: Resolver<Maybe<ResolversTypes['BookingSemester']>, ParentType, ContextType>;
+  spring?: Resolver<Maybe<ResolversTypes['BookingSemester']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -867,6 +993,8 @@ export type MutationResolvers<ContextType = ApolloContext, ParentType extends Re
   removeMember?: Resolver<ResolversTypes['RemoveMemberResponse'], ParentType, ContextType, RequireFields<MutationremoveMemberArgs, 'data'>>;
   retractSignUp?: Resolver<ResolversTypes['RetractSignUpResponse'], ParentType, ContextType, RequireFields<MutationretractSignUpArgs, 'data'>>;
   signUp?: Resolver<ResolversTypes['SignUpResponse'], ParentType, ContextType, RequireFields<MutationsignUpArgs, 'data'>>;
+  updateBookingContact?: Resolver<ResolversTypes['UpdateBookingContactResponse'], ParentType, ContextType, RequireFields<MutationupdateBookingContactArgs, 'data'>>;
+  updateBookingSemester?: Resolver<ResolversTypes['UpdateBookingSemesterResponse'], ParentType, ContextType, RequireFields<MutationupdateBookingSemesterArgs, 'data'>>;
   updateBookingStatus?: Resolver<ResolversTypes['UpdateBookingResponse'], ParentType, ContextType, RequireFields<MutationupdateBookingStatusArgs, 'data'>>;
   updateListing?: Resolver<ResolversTypes['UpdateListingResponse'], ParentType, ContextType, RequireFields<MutationupdateListingArgs, 'data' | 'id'>>;
   updateOrganization?: Resolver<ResolversTypes['UpdateOrganizationResponse'], ParentType, ContextType, RequireFields<MutationupdateOrganizationArgs, 'data'>>;
@@ -914,6 +1042,8 @@ export type PublicUserResolvers<ContextType = ApolloContext, ParentType extends 
 };
 
 export type QueryResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
+  bookingContact?: Resolver<ResolversTypes['BookingContactResponse'], ParentType, ContextType>;
+  bookingSemesters?: Resolver<ResolversTypes['BookingSemestersResponse'], ParentType, ContextType>;
   cabins?: Resolver<ResolversTypes['CabinsResponse'], ParentType, ContextType>;
   event?: Resolver<ResolversTypes['EventResponse'], ParentType, ContextType, RequireFields<QueryeventArgs, 'data'>>;
   events?: Resolver<ResolversTypes['EventsResponse'], ParentType, ContextType, Partial<QueryeventsArgs>>;
@@ -946,8 +1076,18 @@ export type SignUpResponseResolvers<ContextType = ApolloContext, ParentType exte
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type UpdateBookingContactResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['UpdateBookingContactResponse'] = ResolversParentTypes['UpdateBookingContactResponse']> = {
+  bookingContact?: Resolver<ResolversTypes['BookingContact'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type UpdateBookingResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['UpdateBookingResponse'] = ResolversParentTypes['UpdateBookingResponse']> = {
   booking?: Resolver<ResolversTypes['Booking'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type UpdateBookingSemesterResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['UpdateBookingSemesterResponse'] = ResolversParentTypes['UpdateBookingSemesterResponse']> = {
+  bookingSemester?: Resolver<ResolversTypes['BookingSemester'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -980,6 +1120,10 @@ export type UsersResponseResolvers<ContextType = ApolloContext, ParentType exten
 export type Resolvers<ContextType = ApolloContext> = {
   AddMemberResponse?: AddMemberResponseResolvers<ContextType>;
   Booking?: BookingResolvers<ContextType>;
+  BookingContact?: BookingContactResolvers<ContextType>;
+  BookingContactResponse?: BookingContactResponseResolvers<ContextType>;
+  BookingSemester?: BookingSemesterResolvers<ContextType>;
+  BookingSemestersResponse?: BookingSemestersResponseResolvers<ContextType>;
   Cabin?: CabinResolvers<ContextType>;
   CabinsResponse?: CabinsResponseResolvers<ContextType>;
   CreateEventResponse?: CreateEventResponseResolvers<ContextType>;
@@ -1004,7 +1148,9 @@ export type Resolvers<ContextType = ApolloContext> = {
   RetractSignUpResponse?: RetractSignUpResponseResolvers<ContextType>;
   SignUp?: SignUpResolvers<ContextType>;
   SignUpResponse?: SignUpResponseResolvers<ContextType>;
+  UpdateBookingContactResponse?: UpdateBookingContactResponseResolvers<ContextType>;
   UpdateBookingResponse?: UpdateBookingResponseResolvers<ContextType>;
+  UpdateBookingSemesterResponse?: UpdateBookingSemesterResponseResolvers<ContextType>;
   UpdateListingResponse?: UpdateListingResponseResolvers<ContextType>;
   UpdateOrganizationResponse?: UpdateOrganizationResponseResolvers<ContextType>;
   UpdateUserResponse?: UpdateUserResponseResolvers<ContextType>;
