@@ -743,6 +743,7 @@ type UserResponse {
 }
 
 type UsersResponse {
+  super: [PrivateUser!]!
   total: Int!
-  users: [PrivateUser!]!
+  users: [PublicUser!]!
 }

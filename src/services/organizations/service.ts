@@ -43,21 +43,23 @@ export class OrganizationService {
    * Create a new organization, and add the given user as an admin member of the
    * organization.
    *
-   * @requires The user must be a super user to create an organization with a feature permission
+   * The user must be a super user to create an organization with a feature permission
    *
+   * @param userId - The ID of the user to add to the organization as an admin
    * @param data.name - The name of the organization
    * @param data.description - The description of the organization (optional)
-   * @param data.userId - The ID of the user to add to the organization as an admin
    * @param data.featurePermissions - The feature permissions to grant to the user (optional)
    * @returns The created organization
    */
-  async create(data: {
-    name: string;
-    description?: string | null;
-    userId: string;
-    featurePermissions?: FeaturePermission[] | null;
-  }): Promise<Organization> {
-    const { isSuperUser } = await this.permissionService.isSuperUser(data.userId);
+  async create(
+    userId: string,
+    data: {
+      name: string;
+      description?: string | null;
+      featurePermissions?: FeaturePermission[] | null;
+    }
+  ): Promise<Organization> {
+    const { isSuperUser } = await this.permissionService.isSuperUser(userId);
 
     const baseSchema = z.object({
       name: z.string().min(1).max(100),
@@ -67,14 +69,8 @@ export class OrganizationService {
         .nullish()
         .transform((val) => val ?? undefined),
     });
-
     try {
-      if (isSuperUser === false) {
-        const schema = baseSchema;
-        const { name, description } = schema.parse(data);
-        const organization = await this.organizationRepository.create({ name, description, userId: data.userId });
-        return organization;
-      } else {
+      if (isSuperUser === true) {
         const schema = baseSchema.extend({
           featurePermissions: z
             .array(z.nativeEnum(FeaturePermission))
@@ -85,9 +81,14 @@ export class OrganizationService {
         const organization = await this.organizationRepository.create({
           name,
           description,
-          userId: data.userId,
+          userId,
           featurePermissions,
         });
+        return organization;
+      } else {
+        const schema = baseSchema;
+        const { name, description } = schema.parse(data);
+        const organization = await this.organizationRepository.create({ name, description, userId });
         return organization;
       }
     } catch (err) {

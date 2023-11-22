@@ -358,6 +358,7 @@ describe("OrganizationService", () => {
          * Set up the mock user and hasRole implementation.
          */
         userRepository.get.mockResolvedValueOnce(state.user);
+        const { userId, ...rest } = input;
 
         /**
          * Act and assert
@@ -365,7 +366,7 @@ describe("OrganizationService", () => {
          * We call the update method with the user ID, organization ID, and the
          * new organization name.
          */
-        await expect(organizationService.create(input)).rejects.toThrow(expectedError);
+        await expect(organizationService.create(userId, rest)).rejects.toThrow(expectedError);
       });
     });
 
@@ -411,6 +412,7 @@ describe("OrganizationService", () => {
          * Set up the mock user and hasRole implementation.
          */
         userRepository.get.mockResolvedValueOnce(state.user);
+        const { userId, ...rest } = input;
 
         /**
          * Act
@@ -418,7 +420,7 @@ describe("OrganizationService", () => {
          * We call the update method with the user ID, organization ID, and the
          * new organization name.
          */
-        const actual = organizationService.create(input);
+        const actual = organizationService.create(userId, rest);
 
         /**
          * Assert
@@ -432,9 +434,8 @@ describe("OrganizationService", () => {
          */
         await expect(actual).resolves.not.toThrow();
         expect(organizationRepository.create).toHaveBeenCalledWith({
-          name: input.name,
-          description: input.description,
-          userId: input.userId,
+          userId,
+          ...rest,
         });
       });
     });
