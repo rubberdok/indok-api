@@ -7,8 +7,6 @@ import { BookingStatus } from "@/domain/cabins.js";
 import { NotFoundError, PermissionDeniedError, ValidationError } from "@/domain/errors.js";
 import { EmailContent, TemplateAlias } from "@/lib/postmark.js";
 
-import { bookingSchema } from "./validation.js";
-
 export interface BookingData {
   email: string;
   firstName: string;
@@ -74,8 +72,115 @@ export class CabinService {
     return this.cabinRepository.getCabinById(id);
   }
 
-  private validateBooking(data: BookingData): void {
-    bookingSchema.parse(data);
+  /**
+   * isInActiveBookingSemester returns true if the booking is in the given booking semester, and bookings are enabled.
+   * @param data.startDate - The start date of the booking
+   * @param data.endDate - The end date of the booking
+   * @param bookingSemester - The booking semester to check against
+   * @returns true if the booking is in the given booking semester, and bookings are enabled, false otherwise
+   */
+  private isInActiveBookingSemester(data: { startDate: Date; endDate: Date }, bookingSemester: BookingSemester | null) {
+    if (bookingSemester === null) return false;
+    if (!bookingSemester.bookingsEnabled) return false;
+    return data.startDate >= bookingSemester.startAt && data.endDate <= bookingSemester.endAt;
+  }
+
+  /**
+   * isCrossSemesterBooking returns true if the booking is a valid cross-semester booking, i.e.
+   * the booking starts in one semester, and ends in the other. Requires that both semeters have bookings enabled,
+   * and that the end of one semester overlaps with the start of the other. That is, if the start of the next semester
+   * is not before, or the day after the end of the previous semester, there can be no valid cross-semester bookings.
+   * @param data.startDate - The start date of the booking
+   * @param data.endDate - The end date of the booking
+   * @param bookingSemesters.autumn - The autumn booking semester
+   * @param bookingSemesters.spring - The spring booking semester
+   * @returns true if the booking is a valid cross-semester booking, false otherwise
+   */
+  private isCrossSemesterBooking(
+    data: { startDate: Date; endDate: Date },
+    bookingSemesters: { autumn: BookingSemester | null; spring: BookingSemester | null }
+  ) {
+    const { autumn, spring } = bookingSemesters;
+    // If one of the booking semeters are disabled, there can be no valid cross-semester bookings.
+    if (!autumn?.bookingsEnabled || !spring?.bookingsEnabled) return false;
+
+    const endOfAutumnOverlapsWithStartOfSpring =
+      DateTime.fromJSDate(autumn.endAt).plus({ days: 1 }).startOf("day") >=
+      DateTime.fromJSDate(spring.startAt).startOf("day");
+
+    const endOfSpringOverlapsWithStartOfAutumn =
+      DateTime.fromJSDate(spring.endAt).plus({ days: 1 }).startOf("day") >=
+      DateTime.fromJSDate(autumn.startAt).startOf("day");
+
+    // If none of the booking semesters overlap, there can be no valid cross-semester bookings.
+    if (!endOfAutumnOverlapsWithStartOfSpring && !endOfSpringOverlapsWithStartOfAutumn) return false;
+
+    const { startDate, endDate } = data;
+
+    /**
+     * If the booking starts in autumn and ends in spring, and the end of autumn overlaps with the start of spring,
+     * the booking is valid.
+     */
+    const startsInAutumn = startDate >= autumn.startAt && startDate <= autumn.endAt;
+    const endsInSpring = endDate >= spring.startAt && endDate <= spring.endAt;
+    if (startsInAutumn && endsInSpring && endOfAutumnOverlapsWithStartOfSpring) return true;
+
+    /**
+     * If the booking starts in spring and ends in autumn, and the end of spring overlaps with the start of autumn,
+     * the booking is valid.
+     */
+    const startsInSpring = startDate >= spring.startAt && startDate <= spring.endAt;
+    const endsInAutumn = endDate >= autumn.startAt && endDate <= autumn.endAt;
+    return startsInSpring && endsInAutumn && endOfSpringOverlapsWithStartOfAutumn;
+  }
+
+  private validateBooking(
+    data: BookingData,
+    bookingSemesters: { spring: BookingSemester | null; autumn: BookingSemester | null }
+  ): BookingData {
+    const { autumn, spring } = bookingSemesters;
+
+    if (!autumn?.bookingsEnabled && !spring?.bookingsEnabled) throw new ValidationError("Bookings are not enabled.");
+
+    const bookingSchema = z
+      .object({
+        firstName: z.string().min(1, "first name must be at least 1 character"),
+        lastName: z.string().min(1, "last name must be at least 1 character"),
+        startDate: z.date().min(new Date(), { message: "start date must be in the future" }),
+        endDate: z.date().min(new Date(), { message: "end date must be in the future" }),
+        email: z.string().email({ message: "invalid email" }),
+        phoneNumber: z.string().regex(/^(0047|\+47|47)?\d{8}$/, {
+          message: "invalid phone number",
+        }),
+        cabinId: z.string().uuid({ message: "invalid cabin id" }),
+      })
+      .refine((obj) => obj.endDate > obj.startDate, {
+        message: "end date must be after start date",
+      })
+      .refine(
+        (obj) => {
+          const isValidAutumnBooking = this.isInActiveBookingSemester(obj, autumn);
+          if (isValidAutumnBooking) return true;
+
+          const isValidSpringBooking = this.isInActiveBookingSemester(obj, spring);
+          if (isValidSpringBooking) return true;
+
+          const isValidCrossSemesterBooking = this.isCrossSemesterBooking(obj, { spring, autumn });
+          return isValidCrossSemesterBooking;
+        },
+        {
+          message: "booking is not in an active booking semester, and is not a valid cross-semester booking",
+          path: ["startDate", "endDate"],
+        }
+      );
+    try {
+      return bookingSchema.parse(data);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        throw new ValidationError(err.message);
+      }
+      throw err;
+    }
   }
 
   private sendBookingConfirmation(booking: Booking) {
@@ -88,9 +193,20 @@ export class CabinService {
     });
   }
 
+  /**
+   * newBooking creates a new booking. Does not require any authentication.
+   *
+   * Sends a booking confirmation email to the user.
+   *
+   * @throws {ValidationError} if the booking data is invalid
+   *
+   * @param data - The booking data
+   * @returns The created booking
+   */
   async newBooking(data: BookingData): Promise<Booking> {
-    this.validateBooking(data);
-    const booking = await this.cabinRepository.createBooking(data);
+    const bookingSemesters = await this.getBookingSemesters();
+    const validatedData = this.validateBooking(data, bookingSemesters);
+    const booking = await this.cabinRepository.createBooking(validatedData);
     this.sendBookingConfirmation(booking);
     return booking;
   }
@@ -231,6 +347,12 @@ export class CabinService {
       }
       throw err;
     }
+  }
+
+  private getBookingSemesters(): Promise<{ spring: BookingSemester | null; autumn: BookingSemester | null }> {
+    return Promise.all([this.getBookingSemester("SPRING"), this.getBookingSemester("AUTUMN")]).then(
+      ([spring, autumn]) => ({ spring, autumn })
+    );
   }
 
   /**
