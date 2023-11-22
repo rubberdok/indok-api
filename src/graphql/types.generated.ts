@@ -460,6 +460,8 @@ export type PrivateUser = {
   /** The last time the users graduation year was updated */
   graduationYearUpdatedAt?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
+  /** true if the user is a super user, false otherwise */
+  isSuperUser: Scalars['Boolean']['output'];
   lastName: Scalars['String']['output'];
   /** All organizations the user is a member of */
   organizations: Array<Organization>;
@@ -1090,6 +1092,7 @@ export type PrivateUserResolvers<ContextType = ApolloContext, ParentType extends
   graduationYear?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   graduationYearUpdatedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  isSuperUser?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   lastName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   organizations?: Resolver<Array<ResolversTypes['Organization']>, ParentType, ContextType>;
   phoneNumber?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;

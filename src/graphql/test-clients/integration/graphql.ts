@@ -453,6 +453,8 @@ export type PrivateUser = {
   /** The last time the users graduation year was updated */
   graduationYearUpdatedAt?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
+  /** true if the user is a super user, false otherwise */
+  isSuperUser: Scalars['Boolean']['output'];
   lastName: Scalars['String']['output'];
   /** All organizations the user is a member of */
   organizations: Array<Organization>;
