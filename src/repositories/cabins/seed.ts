@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { FeaturePermission, Prisma, PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { DateTime } from "luxon";
 
 import { BookingStatus } from "@/domain/cabins.js";
@@ -13,17 +13,6 @@ const cabinCreateInput: Prisma.CabinCreateInput[] = [
     capacity: 18,
     internalPrice: 10,
     externalPrice: 20,
-    organization: {
-      connectOrCreate: {
-        where: {
-          name: "Hyttestyret",
-        },
-        create: {
-          name: "Hyttestyret",
-          featurePermissions: [FeaturePermission.CABIN_BOOKING],
-        },
-      },
-    },
   },
   {
     id: faker.string.uuid(),
@@ -31,17 +20,6 @@ const cabinCreateInput: Prisma.CabinCreateInput[] = [
     capacity: 18,
     internalPrice: 10,
     externalPrice: 20,
-    organization: {
-      connectOrCreate: {
-        where: {
-          name: "Hyttestyret",
-        },
-        create: {
-          name: "Hyttestyret",
-          featurePermissions: [FeaturePermission.CABIN_BOOKING],
-        },
-      },
-    },
   },
 ];
 
@@ -138,7 +116,6 @@ export const load = async (db: PrismaClient) => {
     select: {
       id: true,
       name: true,
-      organizationId: true,
     },
   });
 

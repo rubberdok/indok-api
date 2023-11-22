@@ -5,11 +5,11 @@ import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { BaseError, InvalidArgumentError, PermissionDeniedError } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
 import { User } from "@/domain/users.js";
+import { UserRepository } from "@/repositories/users/index.js";
 import { PermissionService } from "@/services/permissions/service.js";
 
 import { MemberRepository, OrganizationRepository, OrganizationService } from "../../service.js";
 
-import { UserRepository } from "@/repositories/users/index.js";
 import { getMockGetImplementation, getMockHasRoleImplementation } from "./mocks.js";
 
 interface MemberRepositoryMock extends MemberRepository {

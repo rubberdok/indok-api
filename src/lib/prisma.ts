@@ -35,3 +35,8 @@ export async function migrationHealthCheck(app: FastifyInstance): Promise<Migrat
     return { status: false, message: "Unknown error" };
   }
 }
+
+export const prismaKnownErrorCodes = {
+  ERR_UNIQUE_CONSTRAINT_VIOLATION: "P2002",
+  ERR_NOT_FOUND: "P2025",
+} as const;

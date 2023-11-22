@@ -53,11 +53,6 @@ describe("Overlapping bookings", () => {
         externalPrice: 20,
       },
       create: {
-        organization: {
-          create: {
-            name: faker.string.sample(20),
-          },
-        },
         name: "Oksen",
         capacity: 18,
         internalPrice: 10,

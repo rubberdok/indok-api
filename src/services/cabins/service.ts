@@ -1,9 +1,10 @@
-import { Booking, Cabin, FeaturePermission } from "@prisma/client";
+import { Booking, BookingContact, BookingSemester, Cabin, FeaturePermission, Semester } from "@prisma/client";
+import { DateTime } from "luxon";
 import { MessageSendingResponse } from "postmark/dist/client/models/index.js";
+import { z } from "zod";
 
 import { BookingStatus } from "@/domain/cabins.js";
-import { PermissionDeniedError, ValidationError } from "@/domain/errors.js";
-import { Role } from "@/domain/organizations.js";
+import { NotFoundError, PermissionDeniedError, ValidationError } from "@/domain/errors.js";
 import { EmailContent, TemplateAlias } from "@/lib/postmark.js";
 
 import { bookingSchema } from "./validation.js";
@@ -31,15 +32,27 @@ export interface CabinRepository {
   }): Promise<Booking[]>;
   getCabinByBookingId(bookingId: string): Promise<Cabin>;
   findManyCabins(): Promise<Cabin[]>;
+  updateBookingSemester(data: {
+    semester: Semester;
+    startAt?: Date;
+    endAt?: Date;
+    bookingsEnabled?: boolean;
+  }): Promise<BookingSemester>;
+  createBookingSemester(data: {
+    semester: Semester;
+    startAt: Date;
+    endAt: Date;
+    bookingsEnabled?: boolean;
+  }): Promise<BookingSemester>;
+  getBookingSemester(semester: Semester): Promise<BookingSemester | null>;
+  getBookingContact(): Promise<Pick<BookingContact, "email" | "name" | "phoneNumber" | "id">>;
+  updateBookingContact(
+    data: Partial<{ name: string | null; phoneNumber: string | null; email?: string | null }>
+  ): Promise<Pick<BookingContact, "email" | "name" | "phoneNumber" | "id">>;
 }
 
 export interface PermissionService {
-  hasRole(data: {
-    userId: string;
-    organizationId: string;
-    role: Role;
-    featurePermission: FeaturePermission;
-  }): Promise<boolean>;
+  hasFeaturePermission(data: { userId: string; featurePermission: FeaturePermission }): Promise<boolean>;
 }
 
 export interface IMailService {
@@ -93,16 +106,12 @@ export class CabinService {
    * @returns The updated booking
    */
   async updateBookingStatus(userId: string, id: string, status: BookingStatus): Promise<Booking> {
-    const cabin = await this.cabinRepository.getCabinByBookingId(id);
-
-    const hasRole = await this.permissionService.hasRole({
+    const hasPermission = await this.permissionService.hasFeaturePermission({
       userId,
-      organizationId: cabin.organizationId,
-      role: Role.MEMBER,
       featurePermission: FeaturePermission.CABIN_BOOKING,
     });
 
-    if (!hasRole) throw new PermissionDeniedError("You do not have permission to update this booking.");
+    if (!hasPermission) throw new PermissionDeniedError("You do not have permission to update this booking.");
 
     if (status === BookingStatus.CONFIRMED) {
       const booking = await this.cabinRepository.getBookingById(id);
@@ -124,5 +133,175 @@ export class CabinService {
    */
   async findManyCabins(): Promise<Cabin[]> {
     return this.cabinRepository.findManyCabins();
+  }
+
+  /**
+   * updateBookingSemester updates a booking semester. If a booking semester does not already
+   * exist for the given semester, a new one will be created, with `startAt` default to the
+   * first day of the semester and `endAt` default to the last day of the semester.
+   *
+   * @requires a membership in an organization with the CABIN_BOOKING feature permission.
+   *
+   * @param userId - The id of the user performing the update
+   * @param data - The new booking semester data
+   * @returns The updated booking semester
+   */
+  async updateBookingSemester(
+    userId: string,
+    data: { semester: Semester; startAt?: Date | null; endAt?: Date | null; bookingsEnabled?: boolean | null }
+  ) {
+    const hasPermission = await this.permissionService.hasFeaturePermission({
+      userId,
+      featurePermission: FeaturePermission.CABIN_BOOKING,
+    });
+
+    if (!hasPermission) throw new PermissionDeniedError("You do not have permission to update the booking semester.");
+
+    const schema = z.object({
+      semester: z.enum(["SPRING", "AUTUMN"]),
+      startAt: z
+        .date()
+        .nullish()
+        .transform((val) => val ?? undefined),
+      endAt: z
+        .date()
+        .nullish()
+        .transform((val) => val ?? undefined),
+      bookingsEnabled: z
+        .boolean()
+        .nullish()
+        .transform((val) => val ?? undefined),
+    });
+    try {
+      const { semester, startAt, endAt, bookingsEnabled } = schema.parse(data);
+
+      return await this.cabinRepository.updateBookingSemester({
+        semester,
+        startAt,
+        endAt,
+        bookingsEnabled,
+      });
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        throw new ValidationError(err.message);
+      }
+      if (err instanceof NotFoundError) {
+        /**
+         * If the booking semester does not exist, create it.
+         */
+        return this.createBookingSemester(data);
+      }
+      throw err;
+    }
+  }
+
+  /**
+   * createBookingSemester creates a new booking semester. If `startAt` or `endAt` is not provided, they will default to
+   * the first and last day of the semester respectively. If `bookingEnabled` is not provided, it will default to `false`.
+   */
+  private async createBookingSemester(data: {
+    semester: Semester;
+    startAt?: Date | null;
+    endAt?: Date | null;
+    bookingsEnabled?: boolean | null;
+  }) {
+    try {
+      const schema = z.object({
+        semester: z.enum(["SPRING", "AUTUMN"]),
+        startAt: z
+          .date()
+          .default(DateTime.fromObject({ month: data.semester === "SPRING" ? 1 : 8, day: 1 }).toJSDate()),
+        endAt: z
+          .date()
+          .default(DateTime.fromObject({ month: data.semester === "SPRING" ? 7 : 12, day: 31 }).toJSDate()),
+        bookingsEnabled: z.boolean().default(false),
+      });
+
+      const { semester, startAt, endAt, bookingsEnabled } = schema.parse(data);
+
+      return await this.cabinRepository.createBookingSemester({
+        semester,
+        startAt: startAt,
+        endAt: endAt,
+        bookingsEnabled,
+      });
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        throw new ValidationError(err.message);
+      }
+      throw err;
+    }
+  }
+
+  /**
+   * getBookingSemester returns the booking semester for the given semester, or null if it does not exist.
+   */
+  async getBookingSemester(semester: Semester): Promise<BookingSemester | null> {
+    return this.cabinRepository.getBookingSemester(semester);
+  }
+
+  /**
+   * updateBookingContact updates the booking contact information.
+   *
+   * @throws {PermissionDeniedError} if the user does not have permission to update the booking contact
+   * @throws {ValidationError} if the new booking contact data is invalid
+   * @param userId - The id of the user performing the update
+   * @param data - The new booking contact data
+   *
+   */
+  async updateBookingContact(
+    userId: string,
+    data: Partial<{
+      name: string | null;
+      email: string | null;
+      phoneNumber: string | null;
+    }>
+  ): Promise<Pick<BookingContact, "email" | "name" | "phoneNumber" | "id">> {
+    const hasPermission = await this.permissionService.hasFeaturePermission({
+      userId,
+      featurePermission: FeaturePermission.CABIN_BOOKING,
+    });
+
+    if (!hasPermission) throw new PermissionDeniedError("You do not have permission to update the booking contact.");
+
+    const schema = z.object({
+      name: z
+        .string()
+        .min(1)
+        .nullish()
+        .transform((val) => val ?? undefined),
+      email: z
+        .string()
+        .email()
+        .nullish()
+        .transform((val) => val ?? undefined),
+      phoneNumber: z
+        .string()
+        .min(1)
+        .nullish()
+        .transform((val) => val ?? undefined),
+    });
+
+    try {
+      const { name, email, phoneNumber } = schema.parse(data);
+
+      return await this.cabinRepository.updateBookingContact({
+        name,
+        email,
+        phoneNumber,
+      });
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        throw new ValidationError(err.message);
+      }
+      throw err;
+    }
+  }
+
+  /**
+   * getBookingContact returns the booking contact information.
+   */
+  async getBookingContact(): Promise<Pick<BookingContact, "email" | "id" | "name" | "phoneNumber">> {
+    return await this.cabinRepository.getBookingContact();
   }
 }

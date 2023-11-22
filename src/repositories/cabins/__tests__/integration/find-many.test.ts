@@ -45,11 +45,6 @@ describe("CabinRepository", () => {
 async function makeCabin() {
   return await prisma.cabin.create({
     data: {
-      organization: {
-        create: {
-          name: faker.string.sample(20),
-        },
-      },
       id: faker.string.uuid(),
       name: faker.string.sample(),
       capacity: faker.number.int({ max: 10 }),

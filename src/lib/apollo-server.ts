@@ -1,5 +1,17 @@
 import { unwrapResolverError } from "@apollo/server/errors";
-import { Booking, Cabin, Member, Organization, Prisma, Event, EventSignUp, Listing } from "@prisma/client";
+import {
+  Booking,
+  BookingContact,
+  BookingSemester,
+  Cabin,
+  Event,
+  EventSignUp,
+  Listing,
+  Member,
+  Organization,
+  Prisma,
+  Semester,
+} from "@prisma/client";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { GraphQLFormattedError } from "graphql";
 import { ZodError } from "zod";
@@ -97,6 +109,16 @@ export interface ICabinService {
   getCabin(id: string): Promise<Cabin>;
   getCabinByBookingId(bookingId: string): Promise<Cabin>;
   findManyCabins(): Promise<Cabin[]>;
+  updateBookingSemester(
+    userId: string,
+    data: { semester: Semester; startAt?: Date | null; endAt?: Date | null; bookingsEnabled?: boolean | null }
+  ): Promise<BookingSemester>;
+  getBookingSemester(semester: Semester): Promise<BookingSemester | null>;
+  getBookingContact(): Promise<Pick<BookingContact, "email" | "name" | "phoneNumber" | "id">>;
+  updateBookingContact(
+    userId: string,
+    data: Partial<{ name: string | null; phoneNumber: string | null; email: string | null }>
+  ): Promise<Pick<BookingContact, "email" | "name" | "phoneNumber" | "id">>;
 }
 
 interface IEventService {
@@ -145,16 +167,10 @@ interface ListingService {
   delete(userId: string, id: string): Promise<Listing>;
 }
 
-interface IPermissionService {
-  isSuperUser(userId: string): Promise<boolean>;
-  hasRole(data: { userId: string; organizationId: string; role: Role }): Promise<boolean>;
-}
-
 export interface ApolloServerDependencies {
   userService: IUserService;
   organizationService: IOrganizationService;
   cabinService: ICabinService;
   eventService: IEventService;
   listingService: ListingService;
-  permissionService: IPermissionService;
 }

@@ -54,6 +54,34 @@ export type Booking = {
   status: Status;
 };
 
+export type BookingContact = {
+  __typename?: 'BookingContact';
+  email: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  phoneNumber: Scalars['String']['output'];
+};
+
+export type BookingContactResponse = {
+  __typename?: 'BookingContactResponse';
+  bookingContact: BookingContact;
+};
+
+export type BookingSemester = {
+  __typename?: 'BookingSemester';
+  bookingsEnabled: Scalars['Boolean']['output'];
+  endAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  semester: Semester;
+  startAt: Scalars['DateTime']['output'];
+};
+
+export type BookingSemestersResponse = {
+  __typename?: 'BookingSemestersResponse';
+  autumn?: Maybe<BookingSemester>;
+  spring?: Maybe<BookingSemester>;
+};
+
 export type Cabin = {
   __typename?: 'Cabin';
   capacity: Scalars['Int']['output'];
@@ -247,6 +275,13 @@ export type Mutation = {
   retractSignUp: RetractSignUpResponse;
   /** Sign up for an event, requires that the user is logged in */
   signUp: SignUpResponse;
+  /** Updates the booking contact, requires that the user is in an organization with the CABIN_BOOKING permission. */
+  updateBookingContact: UpdateBookingContactResponse;
+  /**
+   * Updates the booking semester for the given semester, requires that the user is in an organization with
+   * the CABIN_BOOKING permission.
+   */
+  updateBookingSemester: UpdateBookingSemesterResponse;
   updateBookingStatus: UpdateBookingResponse;
   updateListing: UpdateListingResponse;
   /**
@@ -303,6 +338,16 @@ export type MutationSignUpArgs = {
 };
 
 
+export type MutationUpdateBookingContactArgs = {
+  data: UpdateBookingContactInput;
+};
+
+
+export type MutationUpdateBookingSemesterArgs = {
+  data: UpdateBookingSemesterInput;
+};
+
+
 export type MutationUpdateBookingStatusArgs = {
   data: UpdateBookingStatusInput;
 };
@@ -347,16 +392,15 @@ export type Organization = {
   name: Scalars['String']['output'];
 };
 
-export enum ParticipationStatus {
+export type ParticipationStatus =
   /** The user is confirmed to be attending the event */
-  Confirmed = 'CONFIRMED',
+  | 'CONFIRMED'
   /** The user is on the wait list for the event */
-  OnWaitlist = 'ON_WAITLIST',
+  | 'ON_WAITLIST'
   /** The user has signed up for the event, and had their sign up removed by an admin */
-  Removed = 'REMOVED',
+  | 'REMOVED'
   /** The user has signed up for the event, and then retracted their sign up */
-  Retracted = 'RETRACTED'
-}
+  | 'RETRACTED';
 
 /**
  * PrivateUser should only be used when accessed by the authenticated user themselves
@@ -406,6 +450,8 @@ export type PublicUser = {
 
 export type Query = {
   __typename?: 'Query';
+  bookingContact: BookingContactResponse;
+  bookingSemesters: BookingSemestersResponse;
   cabins: CabinsResponse;
   event: EventResponse;
   events: EventsResponse;
@@ -449,18 +495,21 @@ export type RetractSignUpResponse = {
   signUp: SignUp;
 };
 
-export enum Role {
+export type Role =
   /**
    * An admin of the organization, can do everything a member can,
    * # and can also manage members in the organization and delete the organization.
    */
-  Admin = 'ADMIN',
+  | 'ADMIN'
   /**
    * A member of the organization, can do everything except
    * manage members in the organization and delete the organization.
    */
-  Member = 'MEMBER'
-}
+  | 'MEMBER';
+
+export type Semester =
+  | 'AUTUMN'
+  | 'SPRING';
 
 export type SignUp = {
   __typename?: 'SignUp';
@@ -483,16 +532,45 @@ export type SignUpResponse = {
   signUp: SignUp;
 };
 
-export enum Status {
-  Cancelled = 'CANCELLED',
-  Confirmed = 'CONFIRMED',
-  Pending = 'PENDING',
-  Rejected = 'REJECTED'
-}
+export type Status =
+  | 'CANCELLED'
+  | 'CONFIRMED'
+  | 'PENDING'
+  | 'REJECTED';
+
+export type UpdateBookingContactInput = {
+  /** The email address of the booking contact, will be publicly available, pass the empty string to remove the email address */
+  email?: InputMaybe<Scalars['String']['input']>;
+  /** The full name of the booking contact, will be publicly available, pass the empty string to remove the name */
+  name?: InputMaybe<Scalars['String']['input']>;
+  /** The phone number of the booking contact, will be publicly available, pass the empty string to remove the phone number */
+  phoneNumber?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateBookingContactResponse = {
+  __typename?: 'UpdateBookingContactResponse';
+  bookingContact: BookingContact;
+};
 
 export type UpdateBookingResponse = {
   __typename?: 'UpdateBookingResponse';
   booking: Booking;
+};
+
+export type UpdateBookingSemesterInput = {
+  /** Whether or not bookings are enabled for this semester */
+  bookingsEnabled?: InputMaybe<Scalars['Boolean']['input']>;
+  /** The end date for the booking period */
+  endAt?: InputMaybe<Scalars['DateTime']['input']>;
+  /** There are only ever two semesters, so this is the ID of the semester to update. */
+  semester: Semester;
+  /** The start date for the booking period */
+  startAt?: InputMaybe<Scalars['DateTime']['input']>;
+};
+
+export type UpdateBookingSemesterResponse = {
+  __typename?: 'UpdateBookingSemesterResponse';
+  bookingSemester: BookingSemester;
 };
 
 export type UpdateBookingStatusInput = {

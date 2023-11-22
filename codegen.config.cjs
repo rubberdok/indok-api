@@ -53,6 +53,7 @@ const config = {
         useTypeImports: true,
         /* Fragment masking is only useful for actual clients, and it's not relevant for testing */
         fragmentMasking: false,
+        enumsAsTypes: true,
       },
       plugins: [
         {
@@ -73,6 +74,7 @@ const config = {
       presetConfig: {
         /* Fragment masking is only useful for actual clients, and it's not relevant for testing */
         fragmentMasking: false,
+        enumsAsTypes: true,
       },
       plugins: [
         {

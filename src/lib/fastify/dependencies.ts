@@ -77,7 +77,6 @@ export function dependenciesFactory(
     organizationService,
     eventService,
     listingService,
-    permissionService,
   };
 
   const apolloServerDependencies = merge(defaultApolloServerDependencies, overrides?.apolloServerDependencies);

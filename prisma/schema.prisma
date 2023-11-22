@@ -11,6 +11,7 @@ datasource db {
   url      = env("DATABASE_CONNECTION_STRING")
 }
 
+// Archive
 model GoogleDocument {
   id        String   @id @default(uuid()) @db.Uuid
   identifer String   @unique
@@ -19,6 +20,7 @@ model GoogleDocument {
   updatedAt DateTime @updatedAt
 }
 
+// User
 model User {
   id                      String        @id @default(uuid()) @db.Uuid
   feideId                 String        @unique
@@ -40,20 +42,7 @@ model User {
   orders                  Order[]
 }
 
-model Organization {
-  id          String   @id @default(uuid()) @db.Uuid
-  name        String   @unique
-  description String   @default("")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  events             Event[]
-  members            Member[]
-  listings           Listing[]
-  featurePermissions FeaturePermission[] @default([])
-  cabins             Cabin[]
-}
-
+// Events
 model Event {
   id             String        @id @default(uuid()) @db.Uuid
   createdAt      DateTime      @default(now())
@@ -126,16 +115,14 @@ enum BookingStatus {
 }
 
 model Cabin {
-  id             String       @id @default(uuid()) @db.Uuid
-  name           String       @unique
-  internalPrice  Int
-  externalPrice  Int
-  capacity       Int
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  bookings       Booking[]
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId String       @db.Uuid
+  id            String    @id @default(uuid()) @db.Uuid
+  name          String    @unique
+  internalPrice Int
+  externalPrice Int
+  capacity      Int
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  bookings      Booking[]
 }
 
 model Booking {
@@ -153,6 +140,22 @@ model Booking {
   status      BookingStatus @default(PENDING)
 }
 
+enum Semester {
+  SPRING
+  AUTUMN
+}
+
+model BookingSemester {
+  id              String   @id @default(uuid()) @db.Uuid
+  startAt         DateTime
+  endAt           DateTime
+  bookingsEnabled Boolean  @default(false)
+  semester        Semester @unique
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Organizations, memberships, and permissions
 enum Role {
   ADMIN
   MEMBER
@@ -171,6 +174,34 @@ model Member {
   @@unique([userId, organizationId])
 }
 
+enum FeaturePermission {
+  CABIN_BOOKING
+  ARCHIVE
+}
+
+model Organization {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique
+  description String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  events             Event[]
+  members            Member[]
+  listings           Listing[]
+  featurePermissions FeaturePermission[] @default([])
+}
+
+model BookingContact {
+  id          String   @id @default("booking-contact")
+  name        String   @default("")
+  email       String   @default("")
+  phoneNumber String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// E-commerce
 model Order {
   id              String           @id @default(uuid()) @db.Uuid
   createdAt       DateTime         @default(now())
@@ -197,6 +228,8 @@ model PaymentAttempt {
   status    PaymentStatus @default(PENDING)
 }
 
+// Listings
+
 model Listing {
   id             String       @id @default(uuid()) @db.Uuid
   name           String
@@ -207,9 +240,4 @@ model Listing {
   organizationId String       @db.Uuid
   closesAt       DateTime
   applicationUrl String       @default("")
-}
-
-enum FeaturePermission {
-  CABIN_BOOKING
-  ARCHIVE
 }

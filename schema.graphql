@@ -36,6 +36,30 @@ type Booking {
   status: Status!
 }
 
+type BookingContact {
+  email: String!
+  id: ID!
+  name: String!
+  phoneNumber: String!
+}
+
+type BookingContactResponse {
+  bookingContact: BookingContact!
+}
+
+type BookingSemester {
+  bookingsEnabled: Boolean!
+  endAt: DateTime!
+  id: ID!
+  semester: Semester!
+  startAt: DateTime!
+}
+
+type BookingSemestersResponse {
+  autumn: BookingSemester
+  spring: BookingSemester
+}
+
 type Cabin {
   capacity: Int!
   externalPrice: Int!
@@ -313,6 +337,17 @@ type Mutation {
   Sign up for an event, requires that the user is logged in
   """
   signUp(data: SignUpInput!): SignUpResponse!
+
+  """
+  Updates the booking contact, requires that the user is in an organization with the CABIN_BOOKING permission.
+  """
+  updateBookingContact(data: UpdateBookingContactInput!): UpdateBookingContactResponse!
+
+  """
+  Updates the booking semester for the given semester, requires that the user is in an organization with
+  the CABIN_BOOKING permission.
+  """
+  updateBookingSemester(data: UpdateBookingSemesterInput!): UpdateBookingSemesterResponse!
   updateBookingStatus(data: UpdateBookingStatusInput!): UpdateBookingResponse!
   updateListing(data: UpdateListingInput!, id: ID!): UpdateListingResponse!
 
@@ -445,6 +480,8 @@ type PublicUser {
 }
 
 type Query {
+  bookingContact: BookingContactResponse!
+  bookingSemesters: BookingSemestersResponse!
   cabins: CabinsResponse!
   event(data: EventInput!): EventResponse!
   events(data: EventsInput): EventsResponse!
@@ -487,6 +524,11 @@ enum Role {
   MEMBER
 }
 
+enum Semester {
+  AUTUMN
+  SPRING
+}
+
 type SignUp {
   """
   The event the user signed up for
@@ -523,8 +565,55 @@ enum Status {
   REJECTED
 }
 
+input UpdateBookingContactInput {
+  """
+  The email address of the booking contact, will be publicly available, pass the empty string to remove the email address
+  """
+  email: String
+
+  """
+  The full name of the booking contact, will be publicly available, pass the empty string to remove the name
+  """
+  name: String
+
+  """
+  The phone number of the booking contact, will be publicly available, pass the empty string to remove the phone number
+  """
+  phoneNumber: String
+}
+
+type UpdateBookingContactResponse {
+  bookingContact: BookingContact!
+}
+
 type UpdateBookingResponse {
   booking: Booking!
+}
+
+input UpdateBookingSemesterInput {
+  """
+  Whether or not bookings are enabled for this semester
+  """
+  bookingsEnabled: Boolean
+
+  """
+  The end date for the booking period
+  """
+  endAt: DateTime
+
+  """
+  There are only ever two semesters, so this is the ID of the semester to update.
+  """
+  semester: Semester!
+
+  """
+  The start date for the booking period
+  """
+  startAt: DateTime
+}
+
+type UpdateBookingSemesterResponse {
+  bookingSemester: BookingSemester!
 }
 
 input UpdateBookingStatusInput {
