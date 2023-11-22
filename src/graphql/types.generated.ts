@@ -694,8 +694,9 @@ export type UserResponse = {
 
 export type UsersResponse = {
   __typename?: 'UsersResponse';
+  super: Array<PrivateUser>;
   total: Scalars['Int']['output'];
-  users: Array<PrivateUser>;
+  users: Array<PublicUser>;
 };
 
 
@@ -1186,8 +1187,9 @@ export type UserResponseResolvers<ContextType = ApolloContext, ParentType extend
 };
 
 export type UsersResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['UsersResponse'] = ResolversParentTypes['UsersResponse']> = {
+  super?: Resolver<Array<ResolversTypes['PrivateUser']>, ParentType, ContextType>;
   total?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  users?: Resolver<Array<ResolversTypes['PrivateUser']>, ParentType, ContextType>;
+  users?: Resolver<Array<ResolversTypes['PublicUser']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

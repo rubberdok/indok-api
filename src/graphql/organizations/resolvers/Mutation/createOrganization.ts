@@ -10,10 +10,10 @@ export const createOrganization: NonNullable<MutationResolvers["createOrganizati
   const { userId } = ctx.req.session;
 
   const { name, description, featurePermissions } = data;
-  const organization = await ctx.organizationService.create({
+  ctx.req.log.info({ name, description, featurePermissions }, "Creating organization");
+  const organization = await ctx.organizationService.create(userId, {
     name,
     description,
-    userId,
     featurePermissions,
   });
   return {

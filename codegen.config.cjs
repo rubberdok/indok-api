@@ -38,7 +38,7 @@ const config = {
      */
     "src/graphql/test-clients/integration/": {
       /* Only generate documents for integration tests */
-      documents: "src/graphql/**/__tests__/integration/*.ts",
+      documents: ["src/graphql/**/__tests__/integration/*.ts", "src/graphql/**/*.integration.test.ts"],
       /* Client preset is a sensible default, see https://the-guild.dev/graphql/codegen/plugins/presets/preset-client */
       preset: "client-preset",
       config: {

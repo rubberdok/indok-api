@@ -687,14 +687,15 @@ export type UserResponse = {
 
 export type UsersResponse = {
   __typename?: 'UsersResponse';
+  super: Array<PrivateUser>;
   total: Scalars['Int']['output'];
-  users: Array<PrivateUser>;
+  users: Array<PublicUser>;
 };
 
 export type GetUsersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetUsersQuery = { __typename?: 'Query', users: { __typename?: 'UsersResponse', total: number, users: Array<{ __typename?: 'PrivateUser', id: string }> } };
+export type GetUsersQuery = { __typename?: 'Query', users: { __typename?: 'UsersResponse', total: number, users: Array<{ __typename?: 'PublicUser', id: string }> } };
 
 export type NewBookingMutationVariables = Exact<{
   data: NewBookingInput;

@@ -687,9 +687,17 @@ export type UserResponse = {
 
 export type UsersResponse = {
   __typename?: 'UsersResponse';
+  super: Array<PrivateUser>;
   total: Scalars['Int']['output'];
-  users: Array<PrivateUser>;
+  users: Array<PublicUser>;
 };
+
+export type CreateOrganizationMutationVariables = Exact<{
+  data: CreateOrganizationInput;
+}>;
+
+
+export type CreateOrganizationMutation = { __typename?: 'Mutation', createOrganization: { __typename?: 'CreateOrganizationResponse', organization: { __typename?: 'Organization', id: string, name: string, featurePermissions: Array<FeaturePermission> } } };
 
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -700,6 +708,11 @@ export type LoggedInQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type LoggedInQuery = { __typename?: 'Query', user: { __typename?: 'UserResponse', user?: { __typename?: 'PrivateUser', id: string } | null } };
+
+export type UsersQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type UsersQuery = { __typename?: 'Query', users: { __typename?: 'UsersResponse', users: Array<{ __typename?: 'PublicUser', id: string }>, super: Array<{ __typename?: 'PrivateUser', id: string, email: string }> } };
 
 export class TypedDocumentString<TResult, TVariables>
   extends String
@@ -716,6 +729,17 @@ export class TypedDocumentString<TResult, TVariables>
   }
 }
 
+export const CreateOrganizationDocument = new TypedDocumentString(`
+    mutation createOrganization($data: CreateOrganizationInput!) {
+  createOrganization(data: $data) {
+    organization {
+      id
+      name
+      featurePermissions
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<CreateOrganizationMutation, CreateOrganizationMutationVariables>;
 export const MeDocument = new TypedDocumentString(`
     query me {
   user {
@@ -734,3 +758,16 @@ export const LoggedInDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<LoggedInQuery, LoggedInQueryVariables>;
+export const UsersDocument = new TypedDocumentString(`
+    query users {
+  users {
+    users {
+      id
+    }
+    super {
+      id
+      email
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<UsersQuery, UsersQueryVariables>;

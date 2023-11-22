@@ -1,27 +1,22 @@
-import { FastifyInstance } from "fastify";
+import { faker } from "@faker-js/faker";
 
-import { defaultTestDependenciesFactory } from "@/__tests__/dependencies-factory.js";
-import { GraphQLTestClient } from "@/graphql/test-clients/graphql-test-client.js";
+import { GraphQLTestClient, newGraphQLTestClient } from "@/graphql/test-clients/graphql-test-client.js";
 import { graphql } from "@/graphql/test-clients/integration/gql.js";
-import { initServer } from "@/server.js";
 
 describe("Users", () => {
-  let server: FastifyInstance;
-  let testClient: GraphQLTestClient;
+  let client: GraphQLTestClient;
 
   beforeAll(async () => {
-    const dependencies = defaultTestDependenciesFactory();
-    server = await initServer(dependencies, { port: 4002, host: "0.0.0.0" });
-    testClient = new GraphQLTestClient(server);
+    client = await newGraphQLTestClient({ port: 4374 });
   });
 
   afterAll(() => {
-    server.close();
+    client.close();
   });
 
   describe("query user", () => {
     it("should return null if no user is logged in", async () => {
-      const { data } = await testClient.query({
+      const { data } = await client.query({
         query: graphql(`
           query me {
             user {
@@ -37,9 +32,20 @@ describe("Users", () => {
     });
 
     it("should return the logged in user", async () => {
-      const cookies = await testClient.performLogin();
+      /**
+       * Arrange
+       *
+       * Create a user
+       */
+      const user = await client.dependencies.apolloServerDependencies.userService.create({
+        feideId: faker.string.uuid(),
+        firstName: faker.person.firstName(),
+        lastName: faker.person.lastName(),
+        email: faker.internet.email(),
+        username: faker.string.sample(20),
+      });
 
-      const { data } = await testClient.query(
+      const { data } = await client.query(
         {
           query: graphql(`
             query loggedIn {
@@ -52,7 +58,7 @@ describe("Users", () => {
           `),
         },
         {
-          cookies,
+          userId: user.id,
         }
       );
 

@@ -14,10 +14,16 @@ import * as types from './graphql.js';
  * Therefore it is highly recommended to use the babel or swc plugin for production.
  */
 const documents = {
+    "\n              mutation createOrganization($data: CreateOrganizationInput!) {\n                createOrganization(data: $data) {\n                  organization {\n                    id\n                    name\n                    featurePermissions\n                  }\n                }\n              }\n            ": types.CreateOrganizationDocument,
     "\n          query me {\n            user {\n              user {\n                id\n              }\n            }\n          }\n        ": types.MeDocument,
     "\n            query loggedIn {\n              user {\n                user {\n                  id\n                }\n              }\n            }\n          ": types.LoggedInDocument,
+    "\n              query users {\n                users {\n                  users {\n                    id\n                  }\n                  super {\n                    id\n                    email\n                  }\n                }\n              }\n            ": types.UsersDocument,
 };
 
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n              mutation createOrganization($data: CreateOrganizationInput!) {\n                createOrganization(data: $data) {\n                  organization {\n                    id\n                    name\n                    featurePermissions\n                  }\n                }\n              }\n            "): typeof import('./graphql.js').CreateOrganizationDocument;
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -26,6 +32,10 @@ export function graphql(source: "\n          query me {\n            user {\n   
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n            query loggedIn {\n              user {\n                user {\n                  id\n                }\n              }\n            }\n          "): typeof import('./graphql.js').LoggedInDocument;
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n              query users {\n                users {\n                  users {\n                    id\n                  }\n                  super {\n                    id\n                    email\n                  }\n                }\n              }\n            "): typeof import('./graphql.js').UsersDocument;
 
 
 export function graphql(source: string) {
