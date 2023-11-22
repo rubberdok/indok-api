@@ -9,20 +9,13 @@ export const createOrganization: NonNullable<MutationResolvers["createOrganizati
   assertIsAuthenticated(ctx);
   const { userId } = ctx.req.session;
 
-  let organization;
-  const { name, description } = data;
-  if (description === null) {
-    organization = await ctx.organizationService.create({
-      name,
-      userId,
-    });
-  } else {
-    organization = await ctx.organizationService.create({
-      name,
-      description,
-      userId,
-    });
-  }
+  const { name, description, featurePermissions } = data;
+  const organization = await ctx.organizationService.create({
+    name,
+    description,
+    userId,
+    featurePermissions,
+  });
   return {
     organization,
   };

@@ -25,9 +25,9 @@ export class PermissionService {
   /**
    * isSuperUser returns true if the user is a super user, false otherwise.
    */
-  public async isSuperUser(userId: string): Promise<{ user: User; isSuperUser: boolean }> {
+  public async isSuperUser(userId: string): Promise<{ isSuperUser: boolean }> {
     const user = await this.userRepository.get(userId);
-    return { user, isSuperUser: user.isSuperUser };
+    return { isSuperUser: user.isSuperUser };
   }
 
   /**

@@ -156,6 +156,11 @@ export type CreateListingResponse = {
 export type CreateOrganizationInput = {
   /** The description of the organization, cannot exceed 10 000 characters */
   description?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * Features to enable for the organization. Defaults to an empty list.
+   * Requires that the current user is a super user, otherwise, this field is ignored.
+   */
+  featurePermissions?: InputMaybe<Array<FeaturePermission>>;
   /** The name of the organization, must be unique and between 1 and 100 characters */
   name: Scalars['String']['input'];
 };
@@ -217,6 +222,10 @@ export type EventsResponse = {
   /** The events that start in two weeks or later, by week number */
   twoWeeksOrLater: Array<Event>;
 };
+
+export type FeaturePermission =
+  | 'ARCHIVE'
+  | 'CABIN_BOOKING';
 
 export type Listing = {
   __typename?: 'Listing';
@@ -386,10 +395,20 @@ export type NewBookingResponse = {
 export type Organization = {
   __typename?: 'Organization';
   description: Scalars['String']['output'];
+  /**
+   * The features that are enabled for the organization.
+   * Changing these fields requires super user permissions.
+   */
+  featurePermissions: Array<FeaturePermission>;
   id: Scalars['ID']['output'];
   /** The members of the organization */
   members: Array<Member>;
   name: Scalars['String']['output'];
+};
+
+export type OrganizationsResponse = {
+  __typename?: 'OrganizationsResponse';
+  organizations: Array<Organization>;
 };
 
 export type ParticipationStatus =
@@ -457,6 +476,8 @@ export type Query = {
   events: EventsResponse;
   listing: ListingResponse;
   listings: ListingsResponse;
+  /** Get all organizations */
+  organizations?: Maybe<OrganizationsResponse>;
   user: UserResponse;
   users: UsersResponse;
 };
@@ -600,6 +621,11 @@ export type UpdateOrganizationInput = {
    * Omitting the value or passing null will leave the description unchanged
    */
   description?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * Features to enable for the organization.
+   * Requires that the current user is a super user, otherwise, this field is ignored.
+   */
+  featurePermissions?: InputMaybe<Array<FeaturePermission>>;
   /** The ID of the organization to update */
   id: Scalars['ID']['input'];
   /**

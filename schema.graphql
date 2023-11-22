@@ -160,6 +160,12 @@ input CreateOrganizationInput {
   description: String
 
   """
+  Features to enable for the organization. Defaults to an empty list.
+  Requires that the current user is a super user, otherwise, this field is ignored.
+  """
+  featurePermissions: [FeaturePermission!]
+
+  """
   The name of the organization, must be unique and between 1 and 100 characters
   """
   name: String!
@@ -243,6 +249,11 @@ type EventsResponse {
   The events that start in two weeks or later, by week number
   """
   twoWeeksOrLater: [Event!]!
+}
+
+enum FeaturePermission {
+  ARCHIVE
+  CABIN_BOOKING
 }
 
 type Listing {
@@ -375,6 +386,12 @@ type NewBookingResponse {
 
 type Organization {
   description: String!
+
+  """
+  The features that are enabled for the organization.
+  Changing these fields requires super user permissions.
+  """
+  featurePermissions: [FeaturePermission!]!
   id: ID!
 
   """
@@ -382,6 +399,10 @@ type Organization {
   """
   members: [Member!]!
   name: String!
+}
+
+type OrganizationsResponse {
+  organizations: [Organization!]!
 }
 
 enum ParticipationStatus {
@@ -487,6 +508,11 @@ type Query {
   events(data: EventsInput): EventsResponse!
   listing(data: ListingInput!): ListingResponse!
   listings: ListingsResponse!
+
+  """
+  Get all organizations
+  """
+  organizations: OrganizationsResponse
   user: UserResponse!
   users: UsersResponse!
 }
@@ -653,6 +679,12 @@ input UpdateOrganizationInput {
   Omitting the value or passing null will leave the description unchanged
   """
   description: String
+
+  """
+  Features to enable for the organization.
+  Requires that the current user is a super user, otherwise, this field is ignored.
+  """
+  featurePermissions: [FeaturePermission!]
 
   """
   The ID of the organization to update

@@ -186,7 +186,7 @@ describe("OrganizationService", () => {
          *
          * Set up the mock user and hasRole implementation.
          */
-        userRepository.get.mockResolvedValueOnce(state.user);
+        userRepository.get.mockResolvedValue(state.user);
         memberRepository.hasRole.mockImplementation(
           getMockHasRoleImplementation({
             userId: state.user.id,
@@ -263,7 +263,7 @@ describe("OrganizationService", () => {
            *
            * Set up the mock user and hasRole implementation.
            */
-          userRepository.get.mockResolvedValueOnce(state.user);
+          userRepository.get.mockResolvedValue(state.user);
           memberRepository.hasRole.mockImplementation(
             getMockHasRoleImplementation({
               userId: state.user.id,

@@ -11,7 +11,7 @@ import { MessageSendingResponse } from "postmark/dist/client/models/index.js";
 import { z } from "zod";
 
 import { BookingStatus } from "@/domain/cabins.js";
-import { NotFoundError, PermissionDeniedError, ValidationError } from "@/domain/errors.js";
+import { InvalidArgumentError, NotFoundError, PermissionDeniedError } from "@/domain/errors.js";
 import { EmailContent, TemplateAlias } from "@/lib/postmark.js";
 
 export interface BookingData {
@@ -149,7 +149,8 @@ export class CabinService {
   ): BookingData {
     const { autumn, spring } = bookingSemesters;
 
-    if (!autumn?.bookingsEnabled && !spring?.bookingsEnabled) throw new ValidationError("Bookings are not enabled.");
+    if (!autumn?.bookingsEnabled && !spring?.bookingsEnabled)
+      throw new InvalidArgumentError("Bookings are not enabled.");
 
     const bookingSchema = z
       .object({
@@ -186,7 +187,7 @@ export class CabinService {
       return bookingSchema.parse(data);
     } catch (err) {
       if (err instanceof z.ZodError) {
-        throw new ValidationError(err.message);
+        throw new InvalidArgumentError(err.message);
       }
       throw err;
     }
@@ -207,7 +208,7 @@ export class CabinService {
    *
    * Sends a booking confirmation email to the user.
    *
-   * @throws {ValidationError} if the booking data is invalid
+   * @throws {InvalidArgumentError} if the booking data is invalid
    *
    * @param data - The booking data
    * @returns The created booking
@@ -224,7 +225,7 @@ export class CabinService {
    * updateBookingStatus updates the status of a booking. Requires MEMBER role and CABIN_BOOKING permission.
    *
    * @throws {PermissionDeniedError} if the user does not have permission to update the booking
-   * @throws {ValidationError} if the new status is CONFIRMED and the booking overlaps with another booking
+   * @throws {InvalidArgumentError} if the new status is CONFIRMED and the booking overlaps with another booking
    * @param userId - The id of the user performing the update
    * @param id - The id of the booking to update
    * @param status - The new status of the booking
@@ -247,7 +248,7 @@ export class CabinService {
         status,
       });
       if (overlapping.length > 0) {
-        throw new ValidationError("bookings cannot overlap");
+        throw new InvalidArgumentError("this booking overlaps with another confirmed booking");
       }
     }
     return this.cabinRepository.updateBooking(id, { status });
@@ -283,7 +284,7 @@ export class CabinService {
     if (!hasPermission) throw new PermissionDeniedError("You do not have permission to update the booking semester.");
 
     const schema = z.object({
-      semester: z.enum(["SPRING", "AUTUMN"]),
+      semester: z.nativeEnum(Semester),
       startAt: z
         .date()
         .nullish()
@@ -308,7 +309,7 @@ export class CabinService {
       });
     } catch (err) {
       if (err instanceof z.ZodError) {
-        throw new ValidationError(err.message);
+        throw new InvalidArgumentError(err.message);
       }
       if (err instanceof NotFoundError) {
         /**
@@ -332,7 +333,7 @@ export class CabinService {
   }) {
     try {
       const schema = z.object({
-        semester: z.enum(["SPRING", "AUTUMN"]),
+        semester: z.nativeEnum(Semester),
         startAt: z
           .date()
           .default(DateTime.fromObject({ month: data.semester === "SPRING" ? 1 : 8, day: 1 }).toJSDate()),
@@ -352,7 +353,7 @@ export class CabinService {
       });
     } catch (err) {
       if (err instanceof z.ZodError) {
-        throw new ValidationError(err.message);
+        throw new InvalidArgumentError(err.message);
       }
       throw err;
     }
@@ -375,7 +376,7 @@ export class CabinService {
    * updateBookingContact updates the booking contact information.
    *
    * @throws {PermissionDeniedError} if the user does not have permission to update the booking contact
-   * @throws {ValidationError} if the new booking contact data is invalid
+   * @throws {InvalidArgumentError} if the new booking contact data is invalid
    * @param userId - The id of the user performing the update
    * @param data - The new booking contact data
    *
@@ -424,7 +425,7 @@ export class CabinService {
       });
     } catch (err) {
       if (err instanceof z.ZodError) {
-        throw new ValidationError(err.message);
+        throw new InvalidArgumentError(err.message);
       }
       throw err;
     }

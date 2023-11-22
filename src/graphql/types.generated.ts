@@ -163,6 +163,11 @@ export type CreateListingResponse = {
 export type CreateOrganizationInput = {
   /** The description of the organization, cannot exceed 10 000 characters */
   description?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * Features to enable for the organization. Defaults to an empty list.
+   * Requires that the current user is a super user, otherwise, this field is ignored.
+   */
+  featurePermissions?: InputMaybe<Array<FeaturePermission>>;
   /** The name of the organization, must be unique and between 1 and 100 characters */
   name: Scalars['String']['input'];
 };
@@ -224,6 +229,10 @@ export type EventsResponse = {
   /** The events that start in two weeks or later, by week number */
   twoWeeksOrLater: Array<Event>;
 };
+
+export type FeaturePermission =
+  | 'ARCHIVE'
+  | 'CABIN_BOOKING';
 
 export type Listing = {
   __typename?: 'Listing';
@@ -393,10 +402,20 @@ export type NewBookingResponse = {
 export type Organization = {
   __typename?: 'Organization';
   description: Scalars['String']['output'];
+  /**
+   * The features that are enabled for the organization.
+   * Changing these fields requires super user permissions.
+   */
+  featurePermissions: Array<FeaturePermission>;
   id: Scalars['ID']['output'];
   /** The members of the organization */
   members: Array<Member>;
   name: Scalars['String']['output'];
+};
+
+export type OrganizationsResponse = {
+  __typename?: 'OrganizationsResponse';
+  organizations: Array<Organization>;
 };
 
 export type ParticipationStatus =
@@ -464,6 +483,8 @@ export type Query = {
   events: EventsResponse;
   listing: ListingResponse;
   listings: ListingsResponse;
+  /** Get all organizations */
+  organizations?: Maybe<OrganizationsResponse>;
   user: UserResponse;
   users: UsersResponse;
 };
@@ -607,6 +628,11 @@ export type UpdateOrganizationInput = {
    * Omitting the value or passing null will leave the description unchanged
    */
   description?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * Features to enable for the organization.
+   * Requires that the current user is a super user, otherwise, this field is ignored.
+   */
+  featurePermissions?: InputMaybe<Array<FeaturePermission>>;
   /** The ID of the organization to update */
   id: Scalars['ID']['input'];
   /**
@@ -744,6 +770,7 @@ export type ResolversTypes = {
   EventResponse: ResolverTypeWrapper<Omit<EventResponse, 'event'> & { event: ResolversTypes['Event'] }>;
   EventsInput: EventsInput;
   EventsResponse: ResolverTypeWrapper<EventsResponseMapper>;
+  FeaturePermission: FeaturePermission;
   Listing: ResolverTypeWrapper<ListingMapper>;
   ListingInput: ListingInput;
   ListingResponse: ResolverTypeWrapper<Omit<ListingResponse, 'listing'> & { listing: ResolversTypes['Listing'] }>;
@@ -753,6 +780,7 @@ export type ResolversTypes = {
   NewBookingInput: NewBookingInput;
   NewBookingResponse: ResolverTypeWrapper<Omit<NewBookingResponse, 'booking'> & { booking: ResolversTypes['Booking'] }>;
   Organization: ResolverTypeWrapper<OrganizationMapper>;
+  OrganizationsResponse: ResolverTypeWrapper<Omit<OrganizationsResponse, 'organizations'> & { organizations: Array<ResolversTypes['Organization']> }>;
   ParticipationStatus: ParticipationStatus;
   PrivateUser: ResolverTypeWrapper<PrivateUserMapper>;
   PublicUser: ResolverTypeWrapper<PublicUserMapper>;
@@ -822,6 +850,7 @@ export type ResolversParentTypes = {
   NewBookingInput: NewBookingInput;
   NewBookingResponse: Omit<NewBookingResponse, 'booking'> & { booking: ResolversParentTypes['Booking'] };
   Organization: OrganizationMapper;
+  OrganizationsResponse: Omit<OrganizationsResponse, 'organizations'> & { organizations: Array<ResolversParentTypes['Organization']> };
   PrivateUser: PrivateUserMapper;
   PublicUser: PublicUserMapper;
   Query: {};
@@ -1008,9 +1037,15 @@ export type NewBookingResponseResolvers<ContextType = ApolloContext, ParentType 
 
 export type OrganizationResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Organization'] = ResolversParentTypes['Organization']> = {
   description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  featurePermissions?: Resolver<Array<ResolversTypes['FeaturePermission']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   members?: Resolver<Array<ResolversTypes['Member']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type OrganizationsResponseResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['OrganizationsResponse'] = ResolversParentTypes['OrganizationsResponse']> = {
+  organizations?: Resolver<Array<ResolversTypes['Organization']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -1049,6 +1084,7 @@ export type QueryResolvers<ContextType = ApolloContext, ParentType extends Resol
   events?: Resolver<ResolversTypes['EventsResponse'], ParentType, ContextType, Partial<QueryeventsArgs>>;
   listing?: Resolver<ResolversTypes['ListingResponse'], ParentType, ContextType, RequireFields<QuerylistingArgs, 'data'>>;
   listings?: Resolver<ResolversTypes['ListingsResponse'], ParentType, ContextType>;
+  organizations?: Resolver<Maybe<ResolversTypes['OrganizationsResponse']>, ParentType, ContextType>;
   user?: Resolver<ResolversTypes['UserResponse'], ParentType, ContextType>;
   users?: Resolver<ResolversTypes['UsersResponse'], ParentType, ContextType>;
 };
@@ -1141,6 +1177,7 @@ export type Resolvers<ContextType = ApolloContext> = {
   Mutation?: MutationResolvers<ContextType>;
   NewBookingResponse?: NewBookingResponseResolvers<ContextType>;
   Organization?: OrganizationResolvers<ContextType>;
+  OrganizationsResponse?: OrganizationsResponseResolvers<ContextType>;
   PrivateUser?: PrivateUserResolvers<ContextType>;
   PublicUser?: PublicUserResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;

@@ -3,7 +3,7 @@ import { Booking, Cabin, FeaturePermission } from "@prisma/client";
 import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 
 import { BookingStatus } from "@/domain/cabins.js";
-import { PermissionDeniedError, ValidationError } from "@/domain/errors.js";
+import { PermissionDeniedError, InvalidArgumentError } from "@/domain/errors.js";
 
 import { CabinRepository, CabinService, IMailService, PermissionService } from "../../service.js";
 
@@ -56,7 +56,7 @@ describe("CabinService", () => {
       });
     });
 
-    it("should throw ValidationError if there are overlapping bookings", async () => {
+    it("should throw InvalidArgumentError if there are overlapping bookings", async () => {
       /**
        * Arrange
        *
@@ -90,7 +90,7 @@ describe("CabinService", () => {
        * Expect updateBookingStatus to throw a PermissionDeniedError
        * Expect permissionService.hasFeaturePermission to be called with the correct arguments
        */
-      await expect(updateBookingStatus).rejects.toThrow(ValidationError);
+      await expect(updateBookingStatus).rejects.toThrow(InvalidArgumentError);
     });
   });
 });

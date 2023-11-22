@@ -6,6 +6,7 @@ import {
   Cabin,
   Event,
   EventSignUp,
+  FeaturePermission,
   Listing,
   Member,
   Organization,
@@ -17,13 +18,13 @@ import { GraphQLFormattedError } from "graphql";
 import { ZodError } from "zod";
 
 import { BookingStatus } from "@/domain/cabins.js";
-import { BaseError, errorCodes, InternalServerError, ValidationError } from "@/domain/errors.js";
+import { BaseError, errorCodes, InternalServerError } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
 import { User } from "@/domain/users.js";
 
 export function getFormatErrorHandler(log?: Partial<FastifyInstance["log"]>) {
   const formatError = (formattedError: GraphQLFormattedError, error: unknown): GraphQLFormattedError => {
-    if (error instanceof ValidationError || error instanceof ZodError) {
+    if (error instanceof ZodError) {
       return {
         ...formattedError,
         message: error.message,
@@ -65,8 +66,17 @@ declare module "graphql" {
 }
 
 interface IOrganizationService {
-  create(data: { name: string; description?: string; userId: string }): Promise<Organization>;
-  update(userId: string, organizationId: string, data: { name?: string; description?: string }): Promise<Organization>;
+  create(data: {
+    name: string;
+    description?: string | null;
+    userId: string;
+    featurePermissions?: FeaturePermission[] | null;
+  }): Promise<Organization>;
+  update(
+    userId: string,
+    organizationId: string,
+    data: { name?: string | null; description?: string | null; featurePermissions?: FeaturePermission[] | null }
+  ): Promise<Organization>;
   addMember(userId: string, data: { userId: string; organizationId: string; role: Role }): Promise<Member>;
   removeMember(userId: string, data: { userId: string; organizationId: string } | { id: string }): Promise<Member>;
   getMembers(userId: string, organizationId: string): Promise<Member[]>;

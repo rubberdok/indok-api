@@ -1,5 +1,4 @@
 import { Prisma, User as PrismaUser } from "@prisma/client";
-import dayjs from "dayjs";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
 
@@ -65,7 +64,8 @@ export class UserService {
 
   canUpdateYear(user: Pick<User, "graduationYearUpdatedAt">): boolean {
     return (
-      user.graduationYearUpdatedAt === null || dayjs(user.graduationYearUpdatedAt).add(1, "year").isBefore(dayjs())
+      user.graduationYearUpdatedAt === null ||
+      DateTime.fromJSDate(user.graduationYearUpdatedAt).plus({ years: 1 }) < DateTime.now()
     );
   }
 
