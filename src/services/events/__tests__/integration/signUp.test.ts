@@ -300,10 +300,6 @@ describe("Event Sign Up", () => {
       expect(updatedSlot.remainingCapacity).toEqual(0);
     });
   });
-
-  afterAll(() => {
-    console.log("Seed:", faker.seed());
-  });
 });
 
 function getCreateUserData() {

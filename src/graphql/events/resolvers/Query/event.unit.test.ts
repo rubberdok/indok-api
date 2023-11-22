@@ -8,7 +8,7 @@ import { graphql } from "@/graphql/test-clients/unit/gql.js";
 describe("Event queries", () => {
   describe("event", () => {
     it("should return an event", async () => {
-      const { client, eventService } = createMockApolloServer(console);
+      const { client, eventService } = createMockApolloServer();
       eventService.get.mockResolvedValue(mock<Event>({ id: faker.string.uuid() }));
 
       const { errors } = await client.query({

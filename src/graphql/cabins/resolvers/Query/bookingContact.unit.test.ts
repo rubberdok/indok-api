@@ -8,7 +8,7 @@ import { graphql } from "@/graphql/test-clients/unit/gql.js";
 describe("Cabin queries", () => {
   describe("bookingContact", () => {
     it("should not require authentication", async () => {
-      const { client, cabinService } = createMockApolloServer(console);
+      const { client, cabinService } = createMockApolloServer();
       cabinService.getBookingContact.mockResolvedValueOnce(
         mock<BookingContact>({
           id: "booking-contact",

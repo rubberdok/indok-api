@@ -8,7 +8,7 @@ import { graphql } from "@/graphql/test-clients/unit/gql.js";
 describe("Listing queries", () => {
   describe("listings", () => {
     it("should return listings", async () => {
-      const { client, listingService } = createMockApolloServer(console);
+      const { client, listingService } = createMockApolloServer();
       listingService.findMany.mockResolvedValue([
         mock<Listing>({ id: faker.string.uuid() }),
         mock<Listing>({ id: faker.string.uuid() }),
