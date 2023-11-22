@@ -9,10 +9,12 @@ import { FeideProvider } from "@/services/auth/providers.js";
 import { AuthService } from "@/services/auth/service.js";
 import { UserService } from "@/services/users/service.js";
 
-class MockFeideClient implements AuthClient {
+export class MockFeideClient implements AuthClient {
+  constructor(private userId?: string) {}
+
   fetchUserInfo(): Promise<UserInfo> {
     return Promise.resolve({
-      sub: faker.string.uuid(),
+      sub: this.userId ?? faker.string.uuid(),
       name: faker.person.fullName(),
       "dataporten-userid_sec": [faker.internet.email()],
       email: faker.internet.email(),
@@ -26,14 +28,14 @@ class MockFeideClient implements AuthClient {
 export function defaultTestDependenciesFactory(
   serivceOverrides: Partial<ServerDependencies["apolloServerDependencies"]> & {
     authService?: ServerDependencies["authService"];
-  } = {}
-) {
+  } = {},
+  feideClient: AuthClient = new MockFeideClient()
+): ReturnType<typeof dependenciesFactory> {
   const defaultDependencies = dependenciesFactory();
 
-  const mockFeideClient = new MockFeideClient();
   const userRepository = new UserRepository(prisma);
   const userService = new UserService(userRepository, defaultDependencies.apolloServerDependencies.permissionService);
-  const authService = new AuthService(userService, mockFeideClient, FeideProvider);
+  const authService = new AuthService(userService, feideClient, FeideProvider);
   const { authService: authServiceOverride, ...apolloServerOverrides } = serivceOverrides;
 
   const apolloServerDependencies = merge({}, { userService }, apolloServerOverrides);

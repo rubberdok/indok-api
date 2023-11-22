@@ -1,8 +1,13 @@
+import { faker } from "@faker-js/faker";
 import { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
 import { FastifyInstance, InjectOptions, LightMyRequestResponse } from "fastify";
 import { GraphQLError } from "graphql";
+import { DeepMockProxy, mockDeep } from "jest-mock-extended";
 
+import { defaultTestDependenciesFactory } from "@/__tests__/dependencies-factory.js";
 import { env } from "@/config.js";
+import { initServer } from "@/server.js";
+import { AuthClient } from "@/services/auth/clients.js";
 
 /**
  * A test client for integration testing GraphQL resolvers.
@@ -44,7 +49,35 @@ import { env } from "@/config.js";
  * ```
  */
 export class GraphQLTestClient {
-  constructor(public app: FastifyInstance) {}
+  public mockFeideClient: DeepMockProxy<AuthClient>;
+  public dependencies: ReturnType<typeof defaultTestDependenciesFactory>;
+  public app: FastifyInstance;
+
+  constructor(options: {
+    app: FastifyInstance;
+    dependencies: ReturnType<typeof defaultTestDependenciesFactory>;
+    mockFeideClient: DeepMockProxy<AuthClient>;
+  }) {
+    this.app = options.app;
+    this.dependencies = options.dependencies;
+    this.mockFeideClient = options.mockFeideClient;
+  }
+
+  public async performMockedLogin(userId: string): Promise<{ cookies: Record<string, string>; userId: string }> {
+    const user = await this.dependencies?.apolloServerDependencies.userService.get(userId);
+    this.mockFeideClient.fetchAccessToken.mockResolvedValue(faker.string.uuid());
+    this.mockFeideClient.fetchUserInfo.mockResolvedValue({
+      sub: user.feideId,
+      name: `${user.firstName} ${user.lastName}`,
+      "dataporten-userid_sec": [user.email],
+      email: user.email,
+    });
+    return await this.performLogin();
+  }
+
+  public async close(): Promise<void> {
+    await this.app.close();
+  }
 
   /**
    * Perform a GraphQL mutation.
@@ -55,27 +88,32 @@ export class GraphQLTestClient {
    * If there are any errors in the response, the `data` property will be `undefined`,
    * otherwise, `data` is the result of the mutation.
    *
-   * @param options.mutation - The GraphQL mutation
-   * @param options.varaibles - The variables to pass to the mutation
-   * @param request.request - The request options to pass to Fastify
+   * @param queryData.mutation - The GraphQL mutation
+   * @param queryData.varaibles - The variables to pass to the mutation
+   * @param options.request - The request options to pass to Fastify
+   * @param options.userId - The ID of the user to perform the mutation as
    */
   public async mutate<T>(
-    options: {
+    queryData: {
       mutation: T;
       variables?: VariablesOf<T>;
     },
-    request?: InjectOptions
+    options?: {
+      request?: InjectOptions;
+      userId?: string;
+    }
   ): Promise<{
     data?: ResultOf<T>;
     errors?: GraphQLError[];
     response: LightMyRequestResponse;
   }> {
+    const { mutation: query, variables } = queryData;
     return this.query(
       {
-        query: options.mutation,
-        variables: options.variables,
+        query,
+        variables,
       },
-      request
+      options
     );
   }
 
@@ -88,22 +126,34 @@ export class GraphQLTestClient {
    * If there are any errors in the response, the `data` property will be `undefined`,
    * otherwise, `data` is the result of the mutation.
    *
-   * @param options.query - The GraphQL query
-   * @param options.varaibles - The variables to pass to the mutation
-   * @param request.request - The request options to pass to Fastify
+   * @param queryData.query - The GraphQL query
+   * @param queryData.variables - The variables to pass to the mutation
+   * @param options.request - The request options to pass to Fastify
+   * @param options.userId - The ID of the user to perform the query as
    */
   public async query<T>(
-    options: {
+    queryData: {
       query: T;
       variables?: VariablesOf<T>;
     },
-    request?: InjectOptions
+    options?: {
+      userId?: string;
+      request?: InjectOptions;
+    }
   ): Promise<{
     data?: ResultOf<T>;
     errors?: GraphQLError[];
     response: LightMyRequestResponse;
   }> {
-    const { query, variables } = options;
+    const { query, variables } = queryData;
+    const { request, userId } = options ?? {};
+    let cookies: Record<string, string> | undefined;
+    if (userId) {
+      const res = await this.performMockedLogin(userId);
+      cookies = res.cookies;
+      this.app.log.info("Logged in as user", { userId });
+    }
+
     const response = await this.app.inject({
       method: "POST",
       url: "/graphql",
@@ -111,6 +161,7 @@ export class GraphQLTestClient {
         query,
         variables,
       },
+      cookies,
       ...request,
     });
 
@@ -128,7 +179,7 @@ export class GraphQLTestClient {
     return { errors, data, response };
   }
 
-  async performLogin(): Promise<Record<string, string>> {
+  async performLogin(): Promise<{ cookies: Record<string, string>; userId: string }> {
     const redirectUrl = await this.app.inject({
       method: "GET",
       url: "/auth/login",
@@ -146,6 +197,69 @@ export class GraphQLTestClient {
       },
     });
     const authenticatedCookie = authenticateResponse.cookies[0]?.value ?? "";
-    return { [env.SESSION_COOKIE_NAME]: authenticatedCookie };
+
+    const userInfo = await this.app.inject({
+      method: "GET",
+      url: "/auth/me",
+      cookies: {
+        [env.SESSION_COOKIE_NAME]: authenticatedCookie,
+      },
+    });
+    const { user } = await userInfo.json();
+    return { cookies: { [env.SESSION_COOKIE_NAME]: authenticatedCookie }, userId: user };
   }
+}
+
+/**
+ * Returns a GraphQLTestClient that allows for simple integration testing of GraphQL resolvers,
+ * including session management by relying on mocked authentication towards Feide.
+ * @param options.port - The port to run the server on
+ *
+ * * A test client for integration testing GraphQL resolvers.
+ *
+ * This class can be used to test GraphQL resolvers by using the `query` and `mutate` methods.
+ *
+ * ### Example
+ *
+ * ```ts
+ * import { newGraphqlTestClient } from "@/graphql/test-clients/graphqlTestClient.js";
+ * import { graphql } from "@/graphql/test-clients/gql.js"
+ * import { initServer } from "@/server.js";
+ *
+ * describe("GraphQL", () => {
+ *  let client: GraphQLTestClient;
+ *
+ *  beforeAll(async () => {
+ *      // initialize the test client
+ *     client = await newGraphQLTestClient({ port: <SOME PORT NUMBER> });
+ *  });
+ *
+ *  it("example test", () => {
+ *    const { data, errors, response } = await graphqlClient.query({
+ *      query: graphql(`
+ *          query example {
+ *              __typename
+ *          }
+ *      `)
+ *    },
+ *    // Optionally, pass the ID of the user to perform the query authenticated as the user.
+ *    {
+ *      userId: "some-user-id"
+ *    }
+ *   )
+ *    // Perform assertions
+ *  })
+ *
+ *  afterAll(async () => {
+ *     await client.close();
+ *  });
+ * });
+ * ```
+ */
+export async function newGraphQLTestClient(options: { port: number }): Promise<GraphQLTestClient> {
+  const mockFeideClient = mockDeep<AuthClient>();
+  const dependencies = defaultTestDependenciesFactory(undefined, mockFeideClient);
+  const { port } = options;
+  const app = await initServer(dependencies, { port, host: "0.0.0.0" });
+  return new GraphQLTestClient({ app, dependencies, mockFeideClient });
 }

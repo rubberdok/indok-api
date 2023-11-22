@@ -3,6 +3,5 @@ export const users: NonNullable<QueryResolvers["users"]> = async (_parent, _arg,
   const users = await ctx.userService.getAll();
   return {
     users,
-    total: users.length,
   };
 };

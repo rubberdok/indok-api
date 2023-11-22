@@ -29,14 +29,14 @@ describe("OrganizationService", () => {
          * Mock the organization repository to return
          */
         organizationRepository.create.mockResolvedValueOnce(mock<Organization>());
+        const callerUserId = faker.string.uuid();
 
         /**
          * Act
          */
-        const actual = organizationService.create({
+        const actual = organizationService.create(callerUserId, {
           name: faker.company.name(),
           description: faker.lorem.paragraph(),
-          userId: faker.string.uuid(),
           featurePermissions: [FeaturePermission.CABIN_BOOKING, FeaturePermission.ARCHIVE],
         });
 
@@ -50,6 +50,7 @@ describe("OrganizationService", () => {
           description: expect.any(String),
           featurePermissions: [FeaturePermission.CABIN_BOOKING, FeaturePermission.ARCHIVE],
         });
+        expect(permissionService.isSuperUser).toHaveBeenCalledWith(callerUserId);
       });
     });
 
@@ -69,14 +70,13 @@ describe("OrganizationService", () => {
          * Mock hasRole to return true
          */
         permissionService.hasRole.mockResolvedValueOnce(true);
-
+        const callerUserId = faker.string.uuid();
         /**
          * Act
          */
-        const actual = organizationService.create({
+        const actual = organizationService.create(callerUserId, {
           name: faker.company.name(),
           description: faker.lorem.paragraph(),
-          userId: faker.string.uuid(),
           featurePermissions: [FeaturePermission.CABIN_BOOKING, FeaturePermission.ARCHIVE],
         });
 
@@ -90,6 +90,7 @@ describe("OrganizationService", () => {
           description: expect.any(String),
           featurePermissions: undefined,
         });
+        expect(permissionService.isSuperUser).toHaveBeenCalledWith(callerUserId);
       });
     });
   });

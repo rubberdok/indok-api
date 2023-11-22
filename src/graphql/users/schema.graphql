@@ -24,7 +24,8 @@ type UpdateUserResponse {
 }
 
 type UsersResponse {
-  users: [PrivateUser!]!
+  users: [PublicUser!]!
+  super: [PrivateUser!]!
   total: Int!
 }
 

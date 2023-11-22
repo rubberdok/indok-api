@@ -80,6 +80,7 @@ export const createMockApolloServer = (logger?: Partial<FastifyBaseLogger>) => {
   function createMockContext(session: Partial<FastifySessionObject>): ApolloContext {
     const contextValue = {
       req: mock<FastifyRequest>({
+        log: mock<FastifyBaseLogger>(logger),
         session: mock<FastifySessionObject>(session),
       }),
       res: mock<FastifyReply>(),

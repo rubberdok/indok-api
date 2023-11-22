@@ -66,12 +66,14 @@ declare module "graphql" {
 }
 
 interface IOrganizationService {
-  create(data: {
-    name: string;
-    description?: string | null;
-    userId: string;
-    featurePermissions?: FeaturePermission[] | null;
-  }): Promise<Organization>;
+  create(
+    userId: string,
+    data: {
+      name: string;
+      description?: string | null;
+      featurePermissions?: FeaturePermission[] | null;
+    }
+  ): Promise<Organization>;
   update(
     userId: string,
     organizationId: string,

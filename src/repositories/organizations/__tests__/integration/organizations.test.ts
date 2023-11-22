@@ -128,16 +128,6 @@ describe("OrganizationsRepository", () => {
       expect(actual.name).toBe(name);
       expect(actual.description).toBe(description);
     });
-
-    it("should raise InvalidArgumentError if the userId is empty", async () => {
-      // Act and assert
-      await expect(
-        organizationRepository.create({
-          name: faker.string.sample(),
-          userId: "",
-        })
-      ).rejects.toThrow(InvalidArgumentError);
-    });
   });
 
   describe("update", () => {

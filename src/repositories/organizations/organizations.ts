@@ -3,6 +3,7 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js
 
 import { InternalServerError, InvalidArgumentError, NotFoundError } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
+import { prismaKnownErrorCodes } from "@/lib/prisma.js";
 
 export class OrganizationRepository {
   constructor(private db: PrismaClient) {}
@@ -19,31 +20,31 @@ export class OrganizationRepository {
    * @param data.name - The name of the organization
    * @param data.description - The description of the organization
    * @param data.userId - The ID of the user to add as an admin of the organization
+   * @param data.featurePermissions - The feature permissions of the organization
    * @returns The created organization
    */
-  async create(data: { name: string; description?: string; userId: string }): Promise<Organization> {
-    const { name, description, userId } = data;
-    if (userId === "") throw new InvalidArgumentError("userId cannot be empty");
+  async create(data: {
+    name: string;
+    description?: string;
+    userId: string;
+    featurePermissions?: FeaturePermission[];
+  }): Promise<Organization> {
+    const { userId, ...rest } = data;
     return this.db.organization
       .create({
         data: {
-          name,
-          description,
           members: {
             create: {
               userId,
               role: Role.ADMIN,
             },
           },
+          ...rest,
         },
       })
       .catch((err) => {
         if (err instanceof PrismaClientKnownRequestError) {
-          /**
-           * "Unique constraint failed on the {constraint}"
-           * https://www.prisma.io/docs/reference/api-reference/error-reference#p2002
-           */
-          if (err.code === "P2002") {
+          if (err.code === prismaKnownErrorCodes.ERR_UNIQUE_CONSTRAINT_VIOLATION) {
             throw new InvalidArgumentError("The organization name is already taken.");
           }
         }
