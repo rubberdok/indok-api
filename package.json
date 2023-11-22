@@ -20,7 +20,7 @@
     "dev": "concurrently --restart-tries 3 -n server,transpile,graphql,prisma --kill-signal -c cyan.bold,black.dim,magenta.dim,black.dim 'dotenv -e .env.development -- nodemon --delay 250ms --watch .env --watch dist' 'pnpm:swc --watch' \"pnpm:generate:gql --watch 'src/graphql/**/type-defs.ts'\" 'pnpm:generate:prisma --watch'",
     "docker:up": "docker compose up postgres redis -d",
     "generate:gql": "NODE_OPTIONS='--loader ts-node/esm --no-warnings' graphql-codegen-esm -c codegen.config.cjs",
-    "generate:prisma": "prisma generate --no-engine",
+    "generate:prisma": "prisma generate",
     "generate": "run-p generate:*",
     "integration-test": "dotenv -e .env.test -- pnpm db:push && dotenv -e .env.test -- node --experimental-vm-modules --no-warnings=ExperimentalWarning ./node_modules/jest/bin/jest.js --config jest.integration.config.cjs",
     "lint:fix": "pnpm lint  --fix",
