@@ -42,11 +42,8 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Prepare prisma
-        run: pnpm generate:prisma
-
       - name: Run Unit Tests
-        run: pnpm test -- --collect-coverage
+        run: pnpm run test:ci --collect-coverage
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v3
@@ -78,7 +75,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run Lint
-        run: pnpm lint
+        run: pnpm lint:ci
 
   typescript:
     name: Typescript
@@ -103,7 +100,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run tsc
-        run: pnpm tsc
+        run: pnpm tsc:ci
 
   build:
     name: Build
@@ -128,7 +125,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build
-        run: pnpm build
+        run: pnpm build:production
 
   integration-test:
     name: Integration Test
@@ -182,11 +179,8 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Prepare prisma
-        run: pnpm generate:prisma
-
       - name: Run Integration Tests
-        run: pnpm test:integration:headless --collect-coverage --shard ${{ matrix.shard }}/4
+        run: pnpm test:integration:ci --collect-coverage --shard ${{ matrix.shard }}/4
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v3
