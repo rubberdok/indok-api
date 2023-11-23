@@ -58,7 +58,7 @@
     "@swc/helpers": "^0.5.3",
     "@swc/jest": "^0.2.29",
     "@types/connect-redis": "^0.0.23",
-    "@types/jest": "^29.5.6",
+    "@types/jest": "^29.5.10",
     "@types/lodash-es": "^4.17.12",
     "@types/luxon": "^3.3.5",
     "@types/node": "18",
