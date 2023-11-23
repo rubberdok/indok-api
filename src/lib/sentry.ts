@@ -3,7 +3,7 @@ import { unwrapResolverError } from "@apollo/server/errors";
 import { FastifyInstance } from "fastify";
 import { GraphQLError } from "graphql";
 
-import { isUserFacingError } from "@/domain/errors.js";
+import { isErrorWithCode, isUserFacingError } from "@/domain/errors.js";
 
 import { ApolloContext } from "./apollo-server.js";
 
@@ -46,7 +46,7 @@ export const fastifyApolloSentryPlugin = (app: FastifyInstance): ApolloServerPlu
               continue;
             }
 
-            if (originalError instanceof Error && "code" in originalError && typeof originalError.code === "string") {
+            if (isErrorWithCode(originalError)) {
               err.extensions.code = originalError.code;
             }
 
