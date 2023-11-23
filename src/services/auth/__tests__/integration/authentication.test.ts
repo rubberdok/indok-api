@@ -1,13 +1,13 @@
 import { faker } from "@faker-js/faker";
+import { jest } from "@jest/globals";
 import { FastifyRequest } from "fastify";
 import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
+import { DateTime } from "luxon";
 
 import { defaultTestDependenciesFactory } from "@/__tests__/dependencies-factory.js";
 import { AuthenticationError } from "@/domain/errors.js";
 import { User } from "@/domain/users.js";
 
-import { jest } from "@jest/globals";
-import { DateTime } from "luxon";
 import { AuthClient } from "../../clients.js";
 import { FeideProvider } from "../../providers.js";
 import { AuthService, UserService } from "../../service.js";
