@@ -48,7 +48,11 @@ module "server" {
   source = "../../../modules/server"
   suffix = random_string.resource_code.result
 
-  environment_variables    = var.environment_variables
+  environment_variables = concat(var.environment_variables, [{
+    name  = "SENTRY_RELEASE",
+    value = var.git_sha
+  }])
+
   docker_registry_password = var.docker_registry_password
   environment              = var.environment
   image_tag                = var.image_tag

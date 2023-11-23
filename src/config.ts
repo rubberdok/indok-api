@@ -23,6 +23,7 @@ const envVarsSchema = z.object({
     .string()
     .transform((val) => Number.parseFloat(val))
     .default("1"),
+  SENTRY_RELEASE: z.string().optional(),
   FEIDE_CLIENT_ID: z.string(),
   FEIDE_CLIENT_SECRET: z.string(),
   FEIDE_REDIRECT_URI: z.string(),

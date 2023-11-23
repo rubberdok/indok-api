@@ -91,7 +91,7 @@ jobs:
         run: terraform init
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve -input=false -var docker_registry_password="${{ env.GITHUB_TOKEN }}" -var image_tag="${{ needs.build.outputs.image-tag }}"
+        run: terraform apply -auto-approve -input=false -var docker_registry_password="${{ env.GITHUB_TOKEN }}" -var image_tag="${{ needs.build.outputs.image-tag }}" -var git_sha="${{ github.sha }}"
 
       - name: Sentry Release
         uses: getsentry/action-release@v1
