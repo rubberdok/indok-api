@@ -6,14 +6,9 @@ import { FastifyInstance, InjectOptions } from "fastify";
 import { defaultTestDependenciesFactory } from "@/__tests__/dependencies-factory.js";
 import { env } from "@/config.js";
 import { errorCodes } from "@/domain/errors.js";
-import prisma from "@/lib/prisma.js";
-import { UserRepository } from "@/repositories/users/index.js";
 import { initServer } from "@/server.js";
-import { UserService } from "@/services/users/service.js";
 
 import { AuthClient, UserInfo } from "../../clients.js";
-import { FeideProvider } from "../../providers.js";
-import { AuthService } from "../../service.js";
 
 class MockFeideClient implements AuthClient {
   fetchUserInfo(): Promise<UserInfo> {
@@ -33,13 +28,9 @@ describe("AuthPlugin", () => {
   let app: FastifyInstance;
 
   beforeAll(async () => {
-    const {
-      apolloServerDependencies: { permissionService },
-    } = defaultTestDependenciesFactory();
-    const userRepository = new UserRepository(prisma);
-    const userService = new UserService(userRepository, permissionService);
-    const authService = new AuthService(userService, new MockFeideClient(), FeideProvider);
-    const dependencies = defaultTestDependenciesFactory({ authService, userService });
+    const dependencies = defaultTestDependenciesFactory({
+      feideClient: new MockFeideClient(),
+    });
     app = await initServer(dependencies, { port: 4001, host: "0.0.0.0" });
   });
 

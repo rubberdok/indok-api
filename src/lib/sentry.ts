@@ -1,7 +1,9 @@
 import { ApolloServerPlugin } from "@apollo/server";
+import { unwrapResolverError } from "@apollo/server/errors";
 import { FastifyInstance } from "fastify";
+import { GraphQLError } from "graphql";
 
-import { isUserFacingError } from "@/domain/errors.js";
+import { isErrorWithCode, isUserFacingError } from "@/domain/errors.js";
 
 import { ApolloContext } from "./apollo-server.js";
 
@@ -35,8 +37,17 @@ export const fastifyApolloSentryPlugin = (app: FastifyInstance): ApolloServerPlu
           for (const err of ctx.errors) {
             // Only report internal server errors,
             // Filter out user-facing errors, we're not really interested in logging those to Sentry
-            if (isUserFacingError(err.originalError)) {
+            const originalError = unwrapResolverError(err);
+            if (originalError instanceof GraphQLError) {
               continue;
+            }
+
+            if (isUserFacingError(originalError)) {
+              continue;
+            }
+
+            if (isErrorWithCode(originalError)) {
+              err.extensions.code = originalError.code;
             }
 
             // Add scoped report details and send to Sentry

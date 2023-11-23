@@ -97,12 +97,14 @@ const USER_FACING_ERRORS = new Set<string>([
   errorCodes.ERR_NOT_FOUND,
 ]);
 
-function isErrorWithCode(error: Error | undefined): error is Error & { code: string } {
+export function isErrorWithCode(error: unknown): error is Error & { code: string } {
   if (!error) return false;
-  return "code" in error;
+  if (!(error instanceof Error)) return false;
+  if (!("code" in error)) return false;
+  return typeof error.code === "string";
 }
 
-export function isUserFacingError(error?: Error): boolean {
+export function isUserFacingError(error?: unknown): boolean {
   if (isErrorWithCode(error)) {
     return USER_FACING_ERRORS.has(error.code);
   }
