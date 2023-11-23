@@ -503,12 +503,15 @@ export class EventService {
 
     if (event.remainingCapacity <= 0) return false;
 
-    const signUp = await this.eventRepository.getSignUp(userId, eventId);
-    if (signUp.active) return false;
+    try {
+      const signUp = await this.eventRepository.getSignUp(userId, eventId);
+      if (signUp.active) return false;
+    } catch (err) {
+      const isNotFoundError = err instanceof NotFoundError;
+      if (!isNotFoundError) throw err;
+    }
 
     const slot = await this.eventRepository.getSlotWithRemainingCapacity(eventId);
-    if (slot === null) return false;
-
-    return true;
+    return slot !== null;
   }
 }
