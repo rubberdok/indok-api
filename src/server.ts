@@ -177,6 +177,7 @@ export async function initServer(dependencies: ServerDependencies, opts: Options
     introspection: true,
     resolvers: resolvers,
     formatError: getFormatErrorHandler(app.log.child({ service: "apollo-server" })),
+    includeStacktraceInErrorResponses: env.NODE_ENV !== "production",
     plugins: [
       fastifyApolloDrainPlugin(app),
       fastifyApolloSentryPlugin(app),

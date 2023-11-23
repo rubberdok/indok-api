@@ -1,5 +1,5 @@
 /**
- * BaseError is the base class for all errors in the application.
+ * KnownDomainError is the base class for all errors in the application.
  * It is used to provide a consistent way to handle errors in the application.
  * It is also used to provide a consistent way to handle errors in the client.
  *
@@ -7,7 +7,7 @@
  * @param description - Human-readable description of the error, e.g. "The email address is invalid"
  * @param code - A code that can be used to identify the error, e.g. "BAD_USER_INPUT", should be one of `codes`
  */
-export class BaseError extends Error {
+export class KnownDomainError extends Error {
   constructor(
     name: string,
     public description: string,
@@ -19,37 +19,37 @@ export class BaseError extends Error {
   }
 }
 
-export class InvalidArgumentError extends BaseError {
+export class InvalidArgumentError extends KnownDomainError {
   constructor(description: string) {
     super("InvalidArgumentError", description, errorCodes.ERR_BAD_USER_INPUT);
   }
 }
 
-export class InternalServerError extends BaseError {
+export class InternalServerError extends KnownDomainError {
   constructor(description: string) {
     super("InternalServerError", description, errorCodes.ERR_INTERNAL_SERVER_ERROR);
   }
 }
 
-export class PermissionDeniedError extends BaseError {
+export class PermissionDeniedError extends KnownDomainError {
   constructor(description: string) {
     super("PermissionDeniedError", description, errorCodes.ERR_PERMISSION_DENIED);
   }
 }
 
-export class AuthenticationError extends BaseError {
+export class AuthenticationError extends KnownDomainError {
   constructor(description: string) {
     super("AuthenticationError", description, errorCodes.ERR_PERMISSION_DENIED);
   }
 }
 
-export class NotFoundError extends BaseError {
+export class NotFoundError extends KnownDomainError {
   constructor(description: string) {
     super("NotFoundError", description, errorCodes.ERR_NOT_FOUND);
   }
 }
 
-export class BadRequestError extends BaseError {
+export class BadRequestError extends KnownDomainError {
   constructor(description: string) {
     super("BadRequestError", description, errorCodes.ERR_BAD_REQUEST);
   }
@@ -89,3 +89,22 @@ export const errorCodes = {
 } as const;
 
 export type ErrorCode = (typeof errorCodes)[keyof typeof errorCodes];
+
+const USER_FACING_ERRORS = new Set<string>([
+  errorCodes.ERR_BAD_REQUEST,
+  errorCodes.ERR_BAD_USER_INPUT,
+  errorCodes.ERR_PERMISSION_DENIED,
+  errorCodes.ERR_NOT_FOUND,
+]);
+
+function isErrorWithCode(error: Error | undefined): error is Error & { code: string } {
+  if (!error) return false;
+  return "code" in error;
+}
+
+export function isUserFacingError(error?: Error): boolean {
+  if (isErrorWithCode(error)) {
+    return USER_FACING_ERRORS.has(error.code);
+  }
+  return false;
+}

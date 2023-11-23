@@ -68,6 +68,7 @@ export const createMockApolloServer = (logger?: Partial<FastifyBaseLogger>) => {
     typeDefs: typeDefs,
     resolvers: resolvers,
     formatError: getFormatErrorHandler(logger),
+    includeStacktraceInErrorResponses: true,
   });
 
   const userService = mockDeep<ApolloContext["userService"]>();

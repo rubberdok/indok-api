@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 import type { Member, Organization } from "@prisma/client";
 import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 
-import { BaseError, InvalidArgumentError, PermissionDeniedError } from "@/domain/errors.js";
+import { KnownDomainError, InvalidArgumentError, PermissionDeniedError } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
 import { User } from "@/domain/users.js";
 import { UserRepository } from "@/repositories/users/index.js";
@@ -140,7 +140,7 @@ describe("OrganizationService", () => {
           name?: string;
           description?: string;
         };
-        expectedError: typeof BaseError;
+        expectedError: typeof KnownDomainError;
       }[] = [
         {
           name: "if the user is not a member of the organization",
@@ -313,7 +313,7 @@ describe("OrganizationService", () => {
           name: string;
           description?: string;
         };
-        expectedError: typeof BaseError;
+        expectedError: typeof KnownDomainError;
       }[] = [
         {
           name: "if the description is too long",
@@ -484,7 +484,7 @@ describe("OrganizationService", () => {
           userId: string;
           role: Role;
         };
-        expectedError: typeof BaseError;
+        expectedError: typeof KnownDomainError;
       }
       const testCases: TestCase[] = [
         {
@@ -554,7 +554,7 @@ describe("OrganizationService", () => {
           organizationId: string;
           userId: string;
         };
-        expectedError: typeof BaseError;
+        expectedError: typeof KnownDomainError;
       }
       const testCases: TestCase[] = [
         {
