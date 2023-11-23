@@ -1,11 +1,13 @@
-import { FastifyPluginAsync } from "fastify";
+import { FastifyPluginAsync, FastifyRequest } from "fastify";
 
 import { BadRequestError, InternalServerError, PermissionDeniedError } from "@/domain/errors.js";
 import { User } from "@/domain/users.js";
 
 interface AuthService {
-  ssoUrl(state?: string | null): { url: string; codeVerifier: string };
-  getUser(data: { code: string; codeVerifier: string }): Promise<User>;
+  getOAuthLoginUrl(req: FastifyRequest, state?: string | null): { url: string };
+  getOrCreateUser(req: FastifyRequest, data: { code: string }): Promise<User>;
+  login(req: FastifyRequest, user: User): Promise<User>;
+  logout(req: FastifyRequest): Promise<void>;
 }
 
 function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
@@ -27,8 +29,7 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
       },
       handler: async (req, reply) => {
         const { state } = req.query;
-        const { codeVerifier, url } = authService.ssoUrl(state);
-        req.session.set("codeVerifier", codeVerifier);
+        const { url } = authService.getOAuthLoginUrl(req, state);
 
         return reply.redirect(303, url);
       },
@@ -54,27 +55,15 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
       },
       handler: async (req, reply) => {
         const { code, state } = req.query;
-        const codeVerifier = req.session.get("codeVerifier");
-
-        req.log.info("Authenticating user", { code, state, codeVerifier });
-
-        if (!codeVerifier) {
-          req.log.error("Code verifier not found in session");
-          return reply.status(400).send(new BadRequestError("Code verifier not found in session"));
-        }
-
         try {
-          const user = await authService.getUser({ code, codeVerifier });
-          req.session.set("authenticated", true);
-          req.session.set("userId", user.id);
-
-          req.log.info("User authenticated", { userId: user.id });
-          await req.session.regenerate(["authenticated", "userId"]);
+          const user = await authService.getOrCreateUser(req, { code });
+          await authService.login(req, user);
 
           return reply.redirect(303, state ?? "/");
         } catch (err) {
           req.log.error(err, "Authentication failed");
-          throw new InternalServerError("Authentication failed");
+          if (err instanceof BadRequestError) return reply.status(400).send(err);
+          return reply.send(new InternalServerError("Authentication failed"));
         }
       },
     });
@@ -83,12 +72,8 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
       method: "POST",
       url: "/logout",
       handler: async (req, reply) => {
-        if (req.session.authenticated) {
-          await req.session.destroy();
-          req.log.info("User logged out");
-          return reply.redirect(303, "/");
-        }
-        req.log.info("User not authenticated");
+        await authService.logout(req);
+        req.log.info("User logged out");
         return reply.redirect(303, "/");
       },
     });

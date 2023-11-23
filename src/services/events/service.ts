@@ -493,4 +493,25 @@ export class EventService {
         return signUp;
     }
   }
+
+  /**
+   * canSignUpForEvent returns true if the user can sign up for the event, false otherwise.
+   */
+  async canSignUpForEvent(userId: string, eventId: string): Promise<boolean> {
+    const event = await this.eventRepository.get(eventId);
+    if (event.remainingCapacity === null) return false;
+
+    if (event.remainingCapacity <= 0) return false;
+
+    try {
+      const signUp = await this.eventRepository.getSignUp(userId, eventId);
+      if (signUp.active) return false;
+    } catch (err) {
+      const isNotFoundError = err instanceof NotFoundError;
+      if (!isNotFoundError) throw err;
+    }
+
+    const slot = await this.eventRepository.getSlotWithRemainingCapacity(eventId);
+    return slot !== null;
+  }
 }
