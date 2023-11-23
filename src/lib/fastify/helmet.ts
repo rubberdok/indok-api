@@ -13,9 +13,9 @@ export const helmetOptionsByEnv: Record<typeof env.NODE_ENV, FastifyHelmetOption
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", "data:", "validator.swagger.io"],
-        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'"],
+        imgSrc: ["'self'"],
+        scriptSrc: ["'self'"],
       },
     },
   },
