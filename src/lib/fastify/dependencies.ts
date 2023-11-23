@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { FastifyRequest } from "fastify";
 
 import { env } from "@/config.js";
 import { User } from "@/domain/users.js";
@@ -24,17 +25,16 @@ import postmark from "../postmark.js";
 import prisma from "../prisma.js";
 import { createRedisClient } from "../redis.js";
 
-interface GetUserParams {
-  code: string;
-  codeVerifier: string;
-}
 interface IAuthService {
-  getUser(data: GetUserParams): Promise<User>;
-  ssoUrl(state?: string | null): {
+  getOrCreateUser(req: FastifyRequest, data: { code: string }): Promise<User>;
+  getOAuthLoginUrl(
+    req: FastifyRequest,
+    state?: string | null
+  ): {
     url: string;
-    codeChallenge: string;
-    codeVerifier: string;
   };
+  logout(req: FastifyRequest): Promise<void>;
+  login(req: FastifyRequest, user: User): Promise<User>;
 }
 
 export interface ServerDependencies {

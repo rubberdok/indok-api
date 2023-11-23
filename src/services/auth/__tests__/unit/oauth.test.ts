@@ -1,5 +1,6 @@
 import crypto from "crypto";
 
+import { FastifyRequest } from "fastify";
 import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 
 import { User } from "@/domain/users.js";
@@ -9,22 +10,25 @@ import { AuthService, UserService } from "../../service.js";
 import { FeideResponses, setupMockFeideClient } from "../__mocks__/feide.js";
 
 let mockUserService: DeepMockProxy<UserService>;
+let mockRequest: DeepMockProxy<FastifyRequest>;
 
 describe("OAuth", () => {
   beforeAll(() => {
     mockUserService = mockDeep<UserService>();
+    mockRequest = mockDeep<FastifyRequest>();
+    mockRequest.session.get.mockReturnValue("code_verifier");
   });
 
   it("should generate a login url with PKCE params", () => {
     const authService = new AuthService(mockUserService, setupMockFeideClient({}), FeideProvider);
-    const { url, codeChallenge } = authService.ssoUrl();
+    const { url, codeChallenge } = authService.getOAuthLoginUrl(mockRequest);
     expect(url).toContain(`code_challenge=${codeChallenge}`);
     expect(url).toContain("code_challenge_method=S256");
   });
 
   it("should generate a valid code challenge", () => {
     const authService = new AuthService(mockUserService, setupMockFeideClient({}), FeideProvider);
-    const { codeChallenge, codeVerifier } = authService.ssoUrl();
+    const { codeChallenge, codeVerifier } = authService.getOAuthLoginUrl(mockRequest);
     const expected = crypto.createHash("sha256").update(codeVerifier).digest("base64url");
     expect(expected).toStrictEqual(codeChallenge);
   });
@@ -68,9 +72,8 @@ describe("OAuth", () => {
     mockUserService.getByFeideID.mockReturnValueOnce(Promise.resolve(expected));
     mockUserService.login.mockReturnValueOnce(Promise.resolve(expected));
 
-    const user = await authService.getUser({
+    const user = await authService.getOrCreateUser(mockRequest, {
       code: "code",
-      codeVerifier: "verifier",
     });
 
     expect(user).toEqual(expected);
@@ -120,9 +123,8 @@ describe("OAuth", () => {
     mockUserService.getByFeideID.mockReturnValueOnce(Promise.resolve(null));
     mockUserService.create.mockReturnValueOnce(Promise.resolve(expected));
 
-    const user = await authService.getUser({
+    const user = await authService.getOrCreateUser(mockRequest, {
       code: "code",
-      codeVerifier: "verifier",
     });
 
     expect(user).toEqual(expected);

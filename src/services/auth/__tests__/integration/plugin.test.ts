@@ -71,7 +71,7 @@ describe("AuthPlugin", () => {
       expect(result.json()).toEqual({
         code: errorCodes.ERR_BAD_REQUEST,
         error: "Bad Request",
-        message: "Code verifier not found in session",
+        message: "Missing code verifier",
         statusCode: 400,
       });
     });

@@ -1,6 +1,9 @@
 import crypto from "crypto";
 
+import { FastifyRequest } from "fastify";
+
 import { env } from "@/config.js";
+import { AuthenticationError, BadRequestError } from "@/domain/errors.js";
 import { User } from "@/domain/users.js";
 
 export interface AuthProvider {
@@ -47,12 +50,16 @@ export class AuthService {
     " "
   );
 
-  ssoUrl(state?: string | null): {
+  getOAuthLoginUrl(
+    req: FastifyRequest,
+    state?: string | null
+  ): {
     url: string;
     codeChallenge: string;
     codeVerifier: string;
   } {
     const { codeVerifier, codeChallenge } = this.pkce();
+    req.session.set("codeVerifier", codeVerifier);
 
     const url = new URL(this.authProvider.authorization, this.authProvider.baseUrl);
     const searchParams = new URLSearchParams({
@@ -74,8 +81,12 @@ export class AuthService {
     };
   }
 
-  async getUser(params: { code: string; codeVerifier: string }): Promise<User> {
-    const { code, codeVerifier } = params;
+  async getOrCreateUser(req: FastifyRequest, params: { code: string }): Promise<User> {
+    const codeVerifier = req.session.get("codeVerifier");
+    if (!codeVerifier) {
+      throw new BadRequestError("Missing code verifier");
+    }
+    const { code } = params;
     const accessToken = await this.getAccessToken(code, codeVerifier);
     const userInfo = await this.getUserInfo(accessToken);
     const { email, sub: feideId, name } = userInfo;
@@ -94,7 +105,7 @@ export class AuthService {
         username,
       });
     } else {
-      return this.userService.login(user.id);
+      return user;
     }
   }
 
@@ -129,5 +140,21 @@ export class AuthService {
     const codeChallenge = crypto.createHash("sha256").update(codeVerifier).digest("base64url");
 
     return { codeVerifier, codeChallenge };
+  }
+
+  async login(req: FastifyRequest, user: User): Promise<User> {
+    req.session.set("authenticated", true);
+    req.session.set("userId", user.id);
+    await req.session.regenerate(["authenticated", "userId"]);
+    const updatedUser = await this.userService.login(user.id);
+    return updatedUser;
+  }
+
+  async logout(req: FastifyRequest): Promise<void> {
+    if (req.session.get("authenticated")) {
+      await req.session.destroy();
+      return;
+    }
+    throw new AuthenticationError("You need to be logged in to perform this action.");
   }
 }
