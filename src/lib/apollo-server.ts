@@ -171,6 +171,7 @@ interface IEventService {
   findMany(data?: { onlyFutureEvents?: boolean | null }): Promise<Event[]>;
   signUp(userId: string, eventId: string): Promise<EventSignUp>;
   retractSignUp(userId: string, eventId: string): Promise<EventSignUp>;
+  canSignUpForEvent(userId: string, eventId: string): Promise<boolean>;
 }
 
 interface ListingService {

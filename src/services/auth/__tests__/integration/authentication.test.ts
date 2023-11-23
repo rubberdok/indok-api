@@ -1,6 +1,8 @@
 import { faker } from "@faker-js/faker";
+import { jest } from "@jest/globals";
 import { FastifyRequest } from "fastify";
 import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
+import { DateTime } from "luxon";
 
 import { defaultTestDependenciesFactory } from "@/__tests__/dependencies-factory.js";
 import { AuthenticationError } from "@/domain/errors.js";
@@ -14,6 +16,13 @@ describe("AuthService", () => {
   let authService: AuthService;
   let feideClient: DeepMockProxy<AuthClient>;
   let userService: UserService;
+
+  beforeAll(() => {
+    jest.useFakeTimers();
+  });
+  afterAll(() => {
+    jest.useRealTimers();
+  });
 
   beforeAll(() => {
     feideClient = mock<AuthClient>();
@@ -152,6 +161,8 @@ describe("AuthService", () => {
         feideId: faker.string.uuid(),
         username: faker.string.sample(),
       });
+
+      jest.setSystemTime(DateTime.now().plus({ minutes: 5 }).toJSDate());
       const req = mockDeep<FastifyRequest>();
       const actual = await authService.login(
         req,
