@@ -3,7 +3,6 @@ export const user: NonNullable<QueryResolvers["user"]> = async (_parent, _arg, c
   const { userId } = ctx.req.session;
   if (userId) {
     const user = await ctx.userService.get(userId);
-    console.log({ user, userId });
     return {
       user: user,
     };

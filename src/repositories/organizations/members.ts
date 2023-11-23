@@ -2,6 +2,7 @@ import type { Member, PrismaClient, Role } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 
 import { InvalidArgumentError, NotFoundError } from "@/domain/errors.js";
+import { prismaKnownErrorCodes } from "@/lib/prisma.js";
 
 export class MemberRepository {
   constructor(private db: PrismaClient) {}
@@ -34,27 +35,22 @@ export class MemberRepository {
    * @returns Membership
    */
   async get(data: { id: string } | { userId: string; organizationId: string }): Promise<Member> {
-    let promise: Promise<Member>;
-    if ("id" in data) {
-      promise = this.db.member.findUniqueOrThrow({ where: { id: data.id } });
-    } else {
-      promise = this.db.member.findUniqueOrThrow({
-        where: { userId_organizationId: { userId: data.userId, organizationId: data.organizationId } },
-      });
-    }
-    return promise.catch((err) => {
+    try {
+      let promise: Promise<Member>;
+      if ("id" in data) {
+        promise = this.db.member.findUniqueOrThrow({ where: { id: data.id } });
+      } else {
+        promise = this.db.member.findUniqueOrThrow({
+          where: { userId_organizationId: { userId: data.userId, organizationId: data.organizationId } },
+        });
+      }
+      return await promise;
+    } catch (err) {
       if (err instanceof PrismaClientKnownRequestError) {
-        /**
-         * "An operation failed because it depends on one or more records that were required but not found. {cause}"
-         * https://www.prisma.io/docs/reference/api-reference/error-reference#p2025
-         */
-        if (err.code === "P2025") {
-          throw new NotFoundError("The membership does not exist.");
-        }
-        console.log(err.code);
+        if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) throw new NotFoundError("The membership does not exist.");
       }
       throw err;
-    });
+    }
   }
 
   /**
