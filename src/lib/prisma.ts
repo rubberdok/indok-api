@@ -24,11 +24,14 @@ interface MigrationHealthCheckReturnType {
 export async function migrationHealthCheck(app: FastifyInstance): Promise<MigrationHealthCheckReturnType> {
   try {
     app.log.info("Running migration health check");
-    await execa("pnpm", ["exec", "prisma", "migrate", "status"]);
+    await execa("pnpm", ["exec", "prisma", "migrate", "status"], { timeout: 15_000 }).catch((err) => {
+      if (err.timedOut) app.log.error(err, "Migration health check timed out");
+      else app.log.error(err, "Migration health check failed");
+      throw err;
+    });
     app.log.info("Migration health check passed");
     return { status: true };
   } catch (err) {
-    app.log.error(err, "Migration health check failed", err);
     if (err instanceof Error) {
       return { status: false, message: "Missing migrations" };
     }
