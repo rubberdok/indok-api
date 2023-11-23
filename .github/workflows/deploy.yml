@@ -101,3 +101,5 @@ jobs:
           SENTRY_PROJECT: node
         with:
           environment: production
+          ignore_empty: true
+          ignore_missing: true
