@@ -1,8 +1,6 @@
 import { ApolloServer } from "@apollo/server";
-import {
-  ApolloServerPluginLandingPageLocalDefault,
-  ApolloServerPluginLandingPageProductionDefault,
-} from "@apollo/server/plugin/landingPage/default";
+import { ApolloServerPluginLandingPageDisabled } from "@apollo/server/plugin/disabled";
+import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
 import fastifyApollo, { ApolloFastifyContextFunction, fastifyApolloDrainPlugin } from "@as-integrations/fastify";
 import fastifyCookie from "@fastify/cookie";
 import fastifyCors from "@fastify/cors";
@@ -19,6 +17,7 @@ import { typeDefs } from "./graphql/type-defs.generated.js";
 import { ApolloContext, getFormatErrorHandler } from "./lib/apollo-server.js";
 import { ServerDependencies } from "./lib/fastify/dependencies.js";
 import { healthCheckPlugin } from "./lib/fastify/health-checks.js";
+import { helmetOptionsByEnv } from "./lib/fastify/helmet.js";
 import { envToLogger } from "./lib/fastify/logging.js";
 import { fastifyApolloSentryPlugin } from "./lib/sentry.js";
 import { getAuthPlugin } from "./services/auth/plugin.js";
@@ -95,28 +94,7 @@ export async function initServer(dependencies: ServerDependencies, opts: Options
   });
 
   // Security headers
-  app.register(fastifyHelmet, {
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: [
-          "'self'",
-          /** @by-us - adds graphiql support over helmet's default CSP */
-          "'unsafe-inline'",
-          /** add support for apollo sandbox */
-          "https://sandbox.embed.apollographql.com/",
-        ],
-        scriptSrc: [
-          "'self'",
-          /** @by-us - adds graphiql support over helmet's default CSP */
-          "'unsafe-inline'",
-          /** @by-us - adds graphiql support over helmet's default CSP */
-          "'unsafe-eval'",
-          /** add support for apollo sandbox */
-          "https://embeddable-sandbox.cdn.apollographql.com/",
-        ],
-      },
-    },
-  });
+  app.register(fastifyHelmet, helmetOptionsByEnv[env.NODE_ENV]);
 
   /**
    * Register plugins
@@ -182,7 +160,7 @@ export async function initServer(dependencies: ServerDependencies, opts: Options
       fastifyApolloDrainPlugin(app),
       fastifyApolloSentryPlugin(app),
       env.NODE_ENV === "production"
-        ? ApolloServerPluginLandingPageProductionDefault({ footer: false })
+        ? ApolloServerPluginLandingPageDisabled()
         : ApolloServerPluginLandingPageLocalDefault({ footer: false, includeCookies: true, embed: true }),
     ],
   });
