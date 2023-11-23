@@ -187,6 +187,12 @@ type DeleteListingResponse {
 
 type Event {
   """
+  canSignUp is true if the current user can sign up for the event, false otherwise.
+  If the user is not logged in, this will be always be false.
+  """
+  canSignUp: Boolean!
+
+  """
   The description of the event. We support markdown on the client, so this can be markdown.
   """
   description: String!
