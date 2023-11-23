@@ -1,3 +1,4 @@
+import { PrismaClient } from "@prisma/client";
 import { merge } from "lodash-es";
 
 import { env } from "@/config.js";
@@ -39,6 +40,7 @@ interface IAuthService {
 
 export interface ServerDependencies {
   createRedisClient: typeof createRedisClient;
+  prisma: PrismaClient;
   authService: IAuthService;
   apolloServerDependencies: ApolloServerDependencies;
 }
@@ -51,6 +53,7 @@ export interface ServerDependencies {
 export function dependenciesFactory(
   overrides?: Partial<{
     authService: IAuthService;
+    prismaClient: PrismaClient;
     apolloServerDependencies: Partial<ApolloServerDependencies>;
     createRedisClient: typeof createRedisClient;
   }>
@@ -82,10 +85,12 @@ export function dependenciesFactory(
 
   const apolloServerDependencies = merge(defaultApolloServerDependencies, overrides?.apolloServerDependencies);
   const createRedisClientFn = overrides?.createRedisClient ?? createRedisClient;
+  const prismaClient = overrides?.prismaClient ?? prisma;
 
   const defaultDependencies: ServerDependencies = {
     authService,
     apolloServerDependencies,
+    prisma: prismaClient,
     createRedisClient: createRedisClientFn,
   };
 

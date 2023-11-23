@@ -9,6 +9,7 @@ import fastifyCors from "@fastify/cors";
 import fastifyHelmet from "@fastify/helmet";
 import fastifySession from "@fastify/session";
 import fastifySentry from "@immobiliarelabs/fastify-sentry";
+import * as Sentry from "@sentry/node";
 import RedisStore from "connect-redis";
 import fastify, { FastifyInstance } from "fastify";
 
@@ -86,6 +87,11 @@ export async function initServer(dependencies: ServerDependencies, opts: Options
     environment: env.NODE_ENV,
     tracesSampleRate: env.SENTRY_TRACES_SAMPLE_RATE,
     release: env.SENTRY_RELEASE,
+    integrations: [
+      new Sentry.Integrations.Prisma({ client: dependencies.prisma }),
+      new Sentry.Integrations.GraphQL(),
+      new Sentry.Integrations.Apollo(),
+    ],
   });
 
   // Security headers
