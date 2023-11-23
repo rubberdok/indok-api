@@ -1,11 +1,13 @@
 import { faker } from "@faker-js/faker";
 import { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
+import { PrismaClient } from "@prisma/client";
 import { FastifyInstance, InjectOptions, LightMyRequestResponse } from "fastify";
 import { GraphQLError } from "graphql";
 import { DeepMockProxy, mockDeep } from "jest-mock-extended";
 
 import { defaultTestDependenciesFactory } from "@/__tests__/dependencies-factory.js";
 import { env } from "@/config.js";
+import { ApolloServerDependencies } from "@/lib/apollo-server.js";
 import { initServer } from "@/server.js";
 import { AuthClient } from "@/services/auth/clients.js";
 
@@ -256,9 +258,20 @@ export class GraphQLTestClient {
  * });
  * ```
  */
-export async function newGraphQLTestClient(options: { port: number }): Promise<GraphQLTestClient> {
+export async function newGraphQLTestClient(
+  options: { port: number },
+  overrideDependencies: Partial<{
+    apolloServerDependencies: Partial<ApolloServerDependencies>;
+    feideClient: AuthClient;
+    prismaClient: PrismaClient;
+  }> = {}
+): Promise<GraphQLTestClient> {
   const mockFeideClient = mockDeep<AuthClient>();
-  const dependencies = defaultTestDependenciesFactory(undefined, mockFeideClient);
+  const dependencies = defaultTestDependenciesFactory({
+    feideClient: mockFeideClient,
+    ...overrideDependencies,
+  });
+
   const { port } = options;
   const app = await initServer(dependencies, { port, host: "0.0.0.0" });
   return new GraphQLTestClient({ app, dependencies, mockFeideClient });

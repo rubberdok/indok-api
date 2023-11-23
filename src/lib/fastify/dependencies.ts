@@ -1,5 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-import { merge } from "lodash-es";
 
 import { env } from "@/config.js";
 import { User } from "@/domain/users.js";
@@ -50,14 +49,7 @@ export interface ServerDependencies {
  * @param overrides - The overrides to apply to the default `Dependencies` object.
  * @returns A `Dependencies` object with the specified overrides.
  */
-export function dependenciesFactory(
-  overrides?: Partial<{
-    authService: IAuthService;
-    prismaClient: PrismaClient;
-    apolloServerDependencies: Partial<ApolloServerDependencies>;
-    createRedisClient: typeof createRedisClient;
-  }>
-): ServerDependencies {
+export function dependenciesFactory(): ServerDependencies {
   const cabinRepository = new CabinRepository(prisma);
   const userRepository = new UserRepository(prisma);
   const memberRepository = new MemberRepository(prisma);
@@ -72,9 +64,9 @@ export function dependenciesFactory(
   const cabinService = new CabinService(cabinRepository, mailService, permissionService);
   const eventService = new EventService(eventRepository, permissionService);
   const userService = new UserService(userRepository, permissionService);
-  const authService = overrides?.authService ?? new AuthService(userService, feideClient, FeideProvider);
+  const authService = new AuthService(userService, feideClient, FeideProvider);
 
-  const defaultApolloServerDependencies: ApolloServerDependencies = {
+  const apolloServerDependencies: ApolloServerDependencies = {
     cabinService,
     userService,
     organizationService,
@@ -83,15 +75,11 @@ export function dependenciesFactory(
     permissionService,
   };
 
-  const apolloServerDependencies = merge(defaultApolloServerDependencies, overrides?.apolloServerDependencies);
-  const createRedisClientFn = overrides?.createRedisClient ?? createRedisClient;
-  const prismaClient = overrides?.prismaClient ?? prisma;
-
   const defaultDependencies: ServerDependencies = {
     authService,
     apolloServerDependencies,
-    prisma: prismaClient,
-    createRedisClient: createRedisClientFn,
+    prisma: prisma,
+    createRedisClient,
   };
 
   return defaultDependencies;
