@@ -2,16 +2,17 @@ import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
 
-import { defaultTestDependenciesFactory } from "@/__tests__/dependencies-factory.js";
 import prisma from "@/lib/prisma.js";
 
+import { EventService } from "../../service.js";
+
+import { makeDependencies } from "./dependencies-factory.js";
+
 describe("EventService", () => {
-  let eventService: ReturnType<typeof defaultTestDependenciesFactory>["apolloServerDependencies"]["eventService"];
+  let eventService: EventService;
 
   beforeAll(() => {
-    ({
-      apolloServerDependencies: { eventService },
-    } = defaultTestDependenciesFactory());
+    ({ eventService } = makeDependencies());
   });
 
   describe("canSignUpForEvent", () => {
