@@ -1,6 +1,6 @@
-import { BaseError, errorCodes } from "./errors.js";
+import { KnownDomainError, errorCodes } from "./errors.js";
 
-export class AlreadySignedUpError extends BaseError {
+export class AlreadySignedUpError extends KnownDomainError {
   constructor(description: string) {
     super("AlreadySignedUpError", description, errorCodes.ERR_BAD_USER_INPUT);
   }

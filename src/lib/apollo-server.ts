@@ -13,12 +13,14 @@ import {
   Prisma,
   Semester,
 } from "@prisma/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { GraphQLFormattedError } from "graphql";
+import { merge } from "lodash-es";
 import { ZodError } from "zod";
 
 import { BookingStatus } from "@/domain/cabins.js";
-import { BaseError, errorCodes, InternalServerError } from "@/domain/errors.js";
+import { KnownDomainError, errorCodes } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
 import { User } from "@/domain/users.js";
 
@@ -33,23 +35,29 @@ export function getFormatErrorHandler(log?: Partial<FastifyInstance["log"]>) {
         },
       };
     }
-    const originalError = unwrapResolverError(error);
-    log?.error?.(originalError);
 
-    let baseError: BaseError;
-    if (originalError instanceof BaseError) {
-      baseError = originalError;
-    } else {
-      baseError = new InternalServerError("Internal Server Error");
+    const originalError = unwrapResolverError(error);
+
+    if (originalError instanceof KnownDomainError) {
+      return merge({}, formattedError, {
+        message: originalError.description,
+        extensions: {
+          code: originalError.code,
+        },
+      });
     }
 
-    return {
-      ...formattedError,
-      message: baseError.message,
-      extensions: {
-        code: baseError.code,
-      },
-    };
+    if (originalError instanceof PrismaClientKnownRequestError) {
+      log?.error?.(originalError);
+      return merge({}, formattedError, {
+        message: originalError.message,
+        extensions: {
+          code: errorCodes.ERR_INTERNAL_SERVER_ERROR,
+        },
+      });
+    }
+
+    return formattedError;
   };
   return formatError;
 }

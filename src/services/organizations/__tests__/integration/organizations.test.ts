@@ -3,7 +3,7 @@ import assert from "assert";
 import { faker } from "@faker-js/faker";
 import { Prisma } from "@prisma/client";
 
-import { BaseError, InvalidArgumentError, PermissionDeniedError } from "@/domain/errors.js";
+import { KnownDomainError, InvalidArgumentError, PermissionDeniedError } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
 import prisma from "@/lib/prisma.js";
 import { MemberRepository } from "@/repositories/organizations/members.js";
@@ -271,7 +271,7 @@ describe("OrganizationsService", () => {
         act: {
           memberIndex: number;
         };
-        expected: typeof BaseError;
+        expected: typeof KnownDomainError;
       }
 
       const selfId = faker.string.uuid();

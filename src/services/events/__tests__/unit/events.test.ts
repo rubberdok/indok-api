@@ -3,7 +3,7 @@ import { Event } from "@prisma/client";
 import { mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
 
-import { BaseError, InvalidArgumentError, PermissionDeniedError } from "@/domain/errors.js";
+import { KnownDomainError, InvalidArgumentError, PermissionDeniedError } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
 
 import { EventRepository, EventService, PermissionService } from "../../service.js";
@@ -53,7 +53,7 @@ describe("EventsService", () => {
             slots?: { capacity: number }[];
           };
         };
-        expectedError: typeof BaseError;
+        expectedError: typeof KnownDomainError;
       }
 
       const testCases: TestCase[] = [
@@ -281,7 +281,7 @@ describe("EventsService", () => {
           };
         };
         assert: {
-          error: typeof BaseError;
+          error: typeof KnownDomainError;
         };
       }
       const startAt = faker.date.soon();

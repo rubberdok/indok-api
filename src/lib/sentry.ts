@@ -1,28 +1,9 @@
 import { ApolloServerPlugin } from "@apollo/server";
 import { FastifyInstance } from "fastify";
 
-import { errorCodes } from "@/domain/errors.js";
+import { isUserFacingError } from "@/domain/errors.js";
 
 import { ApolloContext } from "./apollo-server.js";
-
-const USER_FACING_ERRORS = new Set<string>([
-  errorCodes.ERR_BAD_REQUEST,
-  errorCodes.ERR_BAD_USER_INPUT,
-  errorCodes.ERR_PERMISSION_DENIED,
-  errorCodes.ERR_NOT_FOUND,
-]);
-
-function isErrorWithCode(error: Error | undefined): error is Error & { code: string } {
-  if (!error) return false;
-  return "code" in error;
-}
-
-function isUserFacingError(error?: Error): boolean {
-  if (isErrorWithCode(error)) {
-    return USER_FACING_ERRORS.has(error.code);
-  }
-  return false;
-}
 
 /**
  * Plugin for Apollo Server that reports errors to Sentry.
