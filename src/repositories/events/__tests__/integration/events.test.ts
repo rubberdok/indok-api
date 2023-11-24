@@ -50,6 +50,8 @@ describe("EventsRepository", () => {
         updatedAt: expect.any(Date),
         location: expect.any(String),
         remainingCapacity: null,
+        capacity: null,
+        slots: [],
         version: 0,
       });
     });
@@ -101,7 +103,9 @@ describe("EventsRepository", () => {
         updatedAt: expect.any(Date),
         location: expect.any(String),
         remainingCapacity: 10,
+        capacity: 10,
         version: 0,
+        slots: expect.any(Array),
       });
       const slots = await prisma.eventSlot.findMany({
         where: {

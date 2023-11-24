@@ -3,6 +3,7 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js
 
 import { InternalServerError, InvalidArgumentError, NotFoundError } from "@/domain/errors.js";
 import { AlreadySignedUpError } from "@/domain/events.js";
+import { prismaKnownErrorCodes } from "@/lib/prisma.js";
 
 export class EventRepository {
   constructor(private db: PrismaClient) {}
@@ -27,11 +28,14 @@ export class EventRepository {
     contactEmail: string;
     capacity?: number;
     slots?: { capacity: number }[];
-  }): Promise<Event> {
+  }): Promise<Event & { slots: EventSlot[] }> {
     const { name, description, startAt, organizationId, endAt, contactEmail, capacity } = data;
-    const slots = data.slots?.map((slot) => ({ remainingCapacity: slot.capacity }));
+    const slots = data.slots?.map((slot) => ({ capacity: slot.capacity, remainingCapacity: slot.capacity }));
     if (slots && slots.length > 0) {
       return this.db.event.create({
+        include: {
+          slots: true,
+        },
         data: {
           name: name,
           description,
@@ -39,6 +43,7 @@ export class EventRepository {
           endAt,
           organizationId,
           contactEmail,
+          capacity,
           remainingCapacity: capacity,
           slots: {
             createMany: {
@@ -49,6 +54,9 @@ export class EventRepository {
       });
     }
     return this.db.event.create({
+      include: {
+        slots: true,
+      },
       data: {
         name: name,
         description,
@@ -70,18 +78,15 @@ export class EventRepository {
    * @param data.description - The new description of the event
    * @param data.startAt - The new start datetime of the event
    * @param data.endAt - The new end datetime of the event
+   * @param data.capacity - The new capacity of the event
    * @returns The updated event
    */
-  async update(
-    id: string,
-    data: {
-      name?: string;
-      description?: string;
-      startAt?: Date;
-      endAt?: Date;
+  async update(id: string, data: UpdateData) {
+    const { name, description, startAt, endAt, capacity } = data;
+    if (capacity !== undefined) {
+      return this.updateWithCapacity(id, { name, description, startAt, endAt, capacity });
     }
-  ) {
-    const { name, description, startAt, endAt } = data;
+
     return this.db.event.update({
       data: {
         name,
@@ -93,6 +98,92 @@ export class EventRepository {
         id,
       },
     });
+  }
+
+  /**
+   *
+   * @param id
+   * @param data
+   * @returns
+   */
+  async updateWithCapacity(id: string, data: UpdateData & { capacity: number }) {
+    const { name, description, startAt, endAt, capacity } = data;
+
+    const previousEvent = await this.db.event.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    if (previousEvent === null) {
+      throw new NotFoundError(`Event { id: ${id} } not found`);
+    }
+
+    try {
+      const previousCapacity = previousEvent.capacity;
+      if (previousCapacity === null) {
+        return await this.db.event.update({
+          data: {
+            name,
+            description,
+            startAt,
+            endAt,
+            capacity,
+            remainingCapacity: capacity,
+          },
+          where: {
+            capacity: previousCapacity,
+            id,
+          },
+        });
+      }
+
+      const changeInCapacity = capacity - previousCapacity;
+
+      if (changeInCapacity > 0) {
+        return await this.db.event.update({
+          data: {
+            name,
+            description,
+            startAt,
+            endAt,
+            capacity,
+            remainingCapacity: {
+              increment: changeInCapacity,
+            },
+          },
+          where: {
+            capacity: previousCapacity,
+            id,
+          },
+        });
+      }
+
+      return await this.db.event.update({
+        where: {
+          id,
+          capacity: previousCapacity,
+          remainingCapacity: {
+            gte: -changeInCapacity,
+          },
+        },
+        data: {
+          name,
+          description,
+          startAt,
+          endAt,
+          capacity,
+          remainingCapacity: {
+            increment: changeInCapacity,
+          },
+        },
+      });
+    } catch (err) {
+      if (err instanceof PrismaClientKnownRequestError) {
+        if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) throw new NotFoundError(err.message);
+      }
+      throw err;
+    }
   }
 
   /**
@@ -743,4 +834,12 @@ interface UpdateToInactiveSignUpData {
   userId: string;
   eventId: string;
   newParticipationStatus: Extract<ParticipationStatus, "REMOVED" | "RETRACTED">;
+}
+
+interface UpdateData {
+  name?: string;
+  description?: string;
+  startAt?: Date;
+  endAt?: Date;
+  capacity?: number;
 }

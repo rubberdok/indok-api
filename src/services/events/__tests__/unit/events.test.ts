@@ -31,6 +31,7 @@ function mockEvent(data: Partial<Event> = {}): Event {
     location: faker.location.streetAddress(),
     version: 0,
     remainingCapacity: 0,
+    capacity: 0,
     ...data,
   };
 }
