@@ -372,6 +372,10 @@ type Mutation {
   """
   updateBookingSemester(data: UpdateBookingSemesterInput!): UpdateBookingSemesterResponse!
   updateBookingStatus(data: UpdateBookingStatusInput!): UpdateBookingResponse!
+
+  """
+  """
+  updateEvent(data: UpdateEventInput!, id: ID!): UpdateEventResponse!
   updateListing(data: UpdateListingInput!, id: ID!): UpdateListingResponse!
 
   """
@@ -675,6 +679,45 @@ type UpdateBookingSemesterResponse {
 input UpdateBookingStatusInput {
   id: ID!
   status: Status!
+}
+
+input UpdateEventInput {
+  """
+  Total capacity for the event, regardless of the capacity in each slot.
+  This number takes precedence over the capacity in each slot, so if the remaining capacity on the event is 0
+  no more users can be registered as attending. Cannot be less than the number of users currently signed up for the event.
+  """
+  capacity: Int
+
+  """
+  The description of the event, defaults to "". We support markdown on the client, so this can be markdown.
+  This will be displayed to users.
+  """
+  description: String
+
+  """
+  The end time of the event, must be after startAt.
+  """
+  endAt: DateTime
+
+  """
+  location of the event
+  """
+  location: String
+
+  """
+  The name of the event, this will be displayed to users
+  """
+  name: String
+
+  """
+  The start time of the event. Must be before endAt and after the current time.
+  """
+  startAt: DateTime
+}
+
+type UpdateEventResponse {
+  event: Event!
 }
 
 input UpdateListingInput {

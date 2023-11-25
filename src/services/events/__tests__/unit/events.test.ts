@@ -3,7 +3,7 @@ import { Event } from "@prisma/client";
 import { mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
 
-import { KnownDomainError, InvalidArgumentError, PermissionDeniedError } from "@/domain/errors.js";
+import { InvalidArgumentError, KnownDomainError, PermissionDeniedError } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
 
 import { EventRepository, EventService, PermissionService } from "../../service.js";
@@ -452,6 +452,17 @@ describe("EventsService", () => {
             startAt?: Date;
             endAt?: Date;
             location?: string;
+            capacity?: number;
+          };
+        };
+        assert?: {
+          data: {
+            name?: string;
+            description?: string;
+            startAt?: Date;
+            endAt?: Date;
+            location?: string;
+            capacity?: number;
           };
         };
       }
@@ -495,7 +506,15 @@ describe("EventsService", () => {
               name: faker.company.name(),
               startAt: undefined,
               endAt: faker.date.future({ refDate: endAt }),
-              location: faker.location.streetAddress(),
+              location: undefined,
+            },
+          },
+          assert: {
+            data: {
+              location: undefined,
+              startAt: expect.any(Date),
+              endAt: expect.any(Date),
+              name: expect.any(String),
             },
           },
         },
@@ -509,6 +528,12 @@ describe("EventsService", () => {
               startAt: faker.date.recent({ refDate: endAt }),
             },
           },
+          assert: {
+            data: {
+              startAt: expect.any(Date),
+              endAt: expect.any(Date),
+            },
+          },
         },
         {
           name: "update `endAt` to be in the future, after `startAt`",
@@ -518,6 +543,12 @@ describe("EventsService", () => {
           act: {
             data: {
               endAt: faker.date.soon({ refDate: startAt }),
+            },
+          },
+          assert: {
+            data: {
+              startAt: expect.any(Date),
+              endAt: expect.any(Date),
             },
           },
         },
@@ -535,7 +566,7 @@ describe("EventsService", () => {
         },
       ];
 
-      test.each(testCases)("$name, $act.data", async ({ arrange, act }) => {
+      test.each(testCases)("$name, $act.data", async ({ arrange, act, assert }) => {
         const { service, eventsRepository, permissionService } = setup();
 
         /**
@@ -558,7 +589,7 @@ describe("EventsService", () => {
          * Assert
          */
         await expect(result).resolves.not.toThrow();
-        expect(eventsRepository.update).toHaveBeenCalledWith(expect.any(String), act.data);
+        expect(eventsRepository.update).toHaveBeenCalledWith(expect.any(String), assert?.data ?? act.data);
       });
     });
   });

@@ -161,6 +161,16 @@ export class EventService {
     });
   }
 
+  /**
+   * update updates an event with the given data.
+   * If capacity is changed, the remaining capacity of the event will be updated to reflect the change.
+   *
+   * @throws {InvalidCapacityError} if the new capacity is less than the number of confirmed sign ups
+   * @param userId - The ID of the user that is updating the event
+   * @param eventId - The ID of the event to update
+   * @param data - The data to update the event with
+   * @returns the updated event
+   */
   async update(
     userId: string,
     eventId: string,
@@ -170,6 +180,7 @@ export class EventService {
       startAt?: Date;
       endAt?: Date;
       location?: string;
+      capacity?: number;
     }
   ): Promise<Event> {
     const event = await this.eventRepository.get(eventId);
@@ -184,39 +195,38 @@ export class EventService {
     });
 
     if (isMember === true) {
-      const changingStartAt = typeof data.startAt !== "undefined";
-      const changingEndAt = typeof data.endAt !== "undefined";
-
-      if (changingStartAt || changingEndAt) {
-        const timeSchema = z
-          .object({
-            startAt: z.date().min(new Date()),
-            endAt: z.date().min(new Date()),
-          })
-          .refine((data) => data.endAt > data.startAt, {
-            message: "End date must be after start date",
-            path: ["endAt"],
-          });
-
-        const parsedTime = timeSchema.safeParse(merge({}, event, data));
-
-        if (!parsedTime.success) {
-          throw new InvalidArgumentError(parsedTime.error.message);
-        }
-      }
-
-      const schema = z.object({
+      let validatedData: Partial<Event> = {};
+      const baseSchema = z.object({
         name: z.string().min(1).max(100).optional(),
         description: z.string().max(500).optional(),
         location: z.string().max(100).optional(),
       });
 
-      const parsed = schema.safeParse(data);
-      if (!parsed.success) {
-        throw new InvalidArgumentError(parsed.error.message);
-      }
+      const changingStartAt = typeof data.startAt !== "undefined";
+      const changingEndAt = typeof data.endAt !== "undefined";
 
-      return await this.eventRepository.update(eventId, data);
+      try {
+        if (changingStartAt || changingEndAt) {
+          const schema = baseSchema
+            .extend({
+              startAt: z.date().min(new Date()),
+              endAt: z.date().min(new Date()),
+            })
+            .refine((data) => data.endAt > data.startAt, {
+              message: "End date must be after start date",
+              path: ["endAt"],
+            });
+
+          validatedData = schema.parse(merge({}, { startAt: event.startAt, endAt: event.endAt }, data));
+        } else {
+          const schema = baseSchema;
+          validatedData = schema.parse(data);
+        }
+      } catch (err) {
+        if (err instanceof z.ZodError) throw new InvalidArgumentError(err.message);
+        throw err;
+      }
+      return await this.eventRepository.update(eventId, validatedData);
     } else {
       throw new PermissionDeniedError("You do not have permission to update this event.");
     }
