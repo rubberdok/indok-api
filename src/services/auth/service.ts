@@ -1,18 +1,20 @@
-import crypto from "crypto";
-
 import { FastifyRequest } from "fastify";
+import type { TokenSet, UserinfoResponse } from "openid-client";
+import { generators } from "openid-client";
 
 import { env } from "@/config.js";
 import { AuthenticationError, BadRequestError } from "@/domain/errors.js";
 import { User } from "@/domain/users.js";
 
-export interface AuthProvider {
-  baseUrl: string;
-  token: string;
-  authorization: string;
-  redirectURL: string;
-  clientId: string;
-  userInfo: string;
+export interface OpenIDClient {
+  authorizationUrl(options: {
+    scope: string;
+    code_challenge_method: string;
+    code_challenge: string;
+    state?: string;
+  }): string;
+  callback(redirectUrl: string, params: { code: string }, options: { code_verifier: string }): Promise<TokenSet>;
+  userinfo(tokenSet: TokenSet): Promise<UserinfoResponse<FeideUserInfo, Record<string, never>>>;
 }
 
 export interface UserService {
@@ -27,121 +29,142 @@ export interface UserService {
   getByFeideID(feideId: string): Promise<User | null>;
 }
 
-interface AuthClient {
-  fetchUserInfo(params: { url: string; accessToken: string }): Promise<UserInfo>;
-  fetchAccessToken(params: { url: string; body: URLSearchParams; authorization: string }): Promise<string>;
-}
-
-interface UserInfo {
-  sub: string;
+export interface FeideUserInfo {
   name: string;
-  "dataporten-userid_sec": string[];
   email: string;
+  "https://n.feide.no/claims/eduPersonPrincipalName"?: string;
+  "https://n.feide.no/claims/userid_sec": string[];
 }
 
 export class AuthService {
+  private scope = ["openid", "userid", "userid-feide", "userinfo-name", "email", "groups-edu"].join(" ");
+
   constructor(
     private userService: UserService,
-    private authClient: AuthClient,
-    private authProvider: AuthProvider
+    private openIDClient: OpenIDClient,
+    private callbackUrl: string | URL = new URL("/auth/authenticate", env.SERVER_URL)
   ) {}
 
-  private scope = ["openid", "userid", "userid-feide", "userinfo-name", "userinfo-photo", "email", "groups-edu"].join(
-    " "
-  );
-
-  getOAuthLoginUrl(
-    req: FastifyRequest,
-    state?: string | null
-  ): {
-    url: string;
-    codeChallenge: string;
-    codeVerifier: string;
-  } {
+  /**
+   * authorizationUrl returns the url to redirect the user to in order to authenticate with the OpenID Provider
+   * which in our case (for now) is Feide. For Feide, we use the Authorization Code Flow with proof key for code exchange (PKCE).
+   * This means that we generate a code verifier, and a code challenge based on the code verifier. The challenge is
+   * sent to the OpenID Provider, and the verifier is stored in the session. When the user is redirected back to us, we
+   * send the verifier along with the code, and the OpenID Provider will verify that the verifier matches the challenge.
+   *
+   * @param req - the fastify request
+   * @param redirect - the url to redirect the user to after authentication is complete
+   * @returns the url to redirect the user to
+   */
+  authorizationUrl(req: FastifyRequest, redirect?: string | null): string {
     const { codeVerifier, codeChallenge } = this.pkce();
     req.session.set("codeVerifier", codeVerifier);
 
-    const url = new URL(this.authProvider.authorization, this.authProvider.baseUrl);
-    const searchParams = new URLSearchParams({
-      client_id: this.authProvider.clientId,
+    const url = this.openIDClient.authorizationUrl({
       scope: this.scope,
-      response_type: "code",
       code_challenge_method: "S256",
       code_challenge: codeChallenge,
-      redirect_uri: this.authProvider.redirectURL,
-      ...(state ? { state } : {}),
+      state: redirect ?? undefined,
     });
 
-    url.search = searchParams.toString();
-
-    return {
-      url: url.toString(),
-      codeVerifier,
-      codeChallenge,
-    };
+    return url;
   }
 
-  async getOrCreateUser(req: FastifyRequest, params: { code: string }): Promise<User> {
+  /**
+   * authorizationCallback is the callback handler for the OpenID Provider. Using the code, we will fetch
+   * an access token and an id token from the OpenID Provider. The id token contains information about the user,
+   * and we use this to create a new user in our database if it does not already exist.
+   *
+   * The openid-client library handles JWT verification of the ID token for us. The access token is used to fetch
+   * additional information about the user from the OpenID Provider.
+   *
+   * When making the access token request, we send the code verifier along with the code. The OpenID Provider will
+   * verify that the verifier matches the challenge.
+   *
+   * If the user already exists, we return the user without changes.
+   *
+   * @throws {BadRequestError} - if no code verifier is found in the session
+   * @throws {AuthenticationError} - if no username is found for the user.
+   * @param req - the fastify request
+   * @param params.code - the authorization code from the OpenID Provider as a result of the user authenticating
+   * @returns the user
+   */
+  async authorizationCallback(req: FastifyRequest, params: { code: string }): Promise<User> {
     const codeVerifier = req.session.get("codeVerifier");
-    if (!codeVerifier) {
-      throw new BadRequestError("Missing code verifier");
-    }
+    if (!codeVerifier) throw new BadRequestError("No code verifier found in session");
+
     const { code } = params;
-    const accessToken = await this.getAccessToken(code, codeVerifier);
-    const userInfo = await this.getUserInfo(accessToken);
-    const { email, sub: feideId, name } = userInfo;
+    const tokenSet = await this.openIDClient.callback(
+      this.callbackUrl.toString(),
+      {
+        code,
+      },
+      {
+        code_verifier: codeVerifier,
+      }
+    );
 
-    const user = await this.userService.getByFeideID(feideId);
-    if (!user) {
-      const [firstName, lastName] = name.split(" ");
-      const userId = userInfo["dataporten-userid_sec"].find((id) => id.endsWith("@ntnu.no")) ?? userInfo.email;
-      const username = userId.slice(userId.indexOf(":") + 1, userId.indexOf("@"));
+    const {
+      sub,
+      name,
+      email,
+      "https://n.feide.no/claims/userid_sec": userid_sec,
+      "https://n.feide.no/claims/eduPersonPrincipalName": ntnuId,
+    } = await this.openIDClient.userinfo(tokenSet);
 
-      return this.userService.create({
-        email,
-        firstName: firstName ?? "",
-        lastName: lastName ?? "",
-        feideId,
-        username,
-      });
-    } else {
-      return user;
+    const existingUser = await this.userService.getByFeideID(sub);
+    if (existingUser) {
+      req.log.info(
+        {
+          userId: existingUser.id,
+        },
+        "User already exists"
+      );
+      return existingUser;
     }
+
+    req.log.info("Creating new user", sub);
+
+    let eduUsername: string;
+    if (ntnuId) {
+      eduUsername = ntnuId.slice(0, ntnuId.indexOf("@"));
+    } else {
+      const feideUserIdSec = userid_sec.find((id) => id.startsWith("feide:"));
+      if (!feideUserIdSec) throw new AuthenticationError(`No username found for user with feideId ${sub}`);
+      eduUsername = feideUserIdSec.slice(feideUserIdSec.indexOf(":") + 1, feideUserIdSec.indexOf("@"));
+    }
+
+    const [firstName, lastName] = name.split(" ");
+    const user = await this.userService.create({
+      email,
+      firstName: firstName ?? "",
+      lastName: lastName ?? "",
+      feideId: sub,
+      username: eduUsername,
+    });
+    return user;
   }
 
-  private async getUserInfo(accessToken: string): Promise<UserInfo> {
-    const url = new URL(this.authProvider.userInfo, this.authProvider.baseUrl).toString();
-
-    return await this.authClient.fetchUserInfo({ url, accessToken });
-  }
-
-  private async getAccessToken(code: string, codeVerifier: string): Promise<string> {
-    const url = new URL(this.authProvider.token, this.authProvider.baseUrl).toString();
-
-    // https://en.wikipedia.org/wiki/Basic_access_authentication
-    const authorization =
-      "Basic " + Buffer.from(`${env.FEIDE_CLIENT_ID}:${env.FEIDE_CLIENT_SECRET}`).toString("base64url");
-
-    const data = {
-      grant_type: "authorization_code",
-      code_verifier: codeVerifier,
-      code,
-      redirect_uri: this.authProvider.redirectURL,
-      client_id: this.authProvider.clientId,
-    };
-
-    const body = new URLSearchParams(data);
-
-    return await this.authClient.fetchAccessToken({ url, body, authorization });
-  }
-
+  /**
+   * pkce generates a code verifier and a code challenge based on the code verifier.
+   *
+   * @returns the code verifier and the code challenge
+   */
   private pkce(): { codeVerifier: string; codeChallenge: string } {
-    const codeVerifier = crypto.randomBytes(32).toString("base64url");
-    const codeChallenge = crypto.createHash("sha256").update(codeVerifier).digest("base64url");
+    const codeVerifier = generators.codeVerifier();
+    const codeChallenge = generators.codeChallenge(codeVerifier);
 
     return { codeVerifier, codeChallenge };
   }
 
+  /**
+   * login logs in the user by setting the authenticated flag in the session to true, and setting the userId in the session.
+   * It also regenerates the session to prevent session fixation attacks.
+   *
+   * @param req - the fasitfy request
+   * @param user - the user to log in
+   * @returns
+   */
   async login(req: FastifyRequest, user: User): Promise<User> {
     req.session.set("authenticated", true);
     req.session.set("userId", user.id);
@@ -150,6 +173,13 @@ export class AuthService {
     return updatedUser;
   }
 
+  /**
+   * logout logs out the user by destroying the session.
+   *
+   * @throws {AuthenticationError} - if the user is not logged in
+   * @param req - the fastify request
+   * @returns
+   */
   async logout(req: FastifyRequest): Promise<void> {
     if (req.session.get("authenticated")) {
       await req.session.destroy();

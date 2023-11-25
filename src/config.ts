@@ -18,6 +18,7 @@ const envVarsSchema = z.object({
     .string()
     .transform((val) => Number.parseInt(val))
     .default("4000"),
+  SERVER_URL: z.string(),
   SENTRY_DSN: z.string().optional(),
   SENTRY_TRACES_SAMPLE_RATE: z
     .string()
@@ -26,7 +27,6 @@ const envVarsSchema = z.object({
   SENTRY_RELEASE: z.string().optional(),
   FEIDE_CLIENT_ID: z.string(),
   FEIDE_CLIENT_SECRET: z.string(),
-  FEIDE_REDIRECT_URI: z.string(),
   FEIDE_BASE_URL: z.string().url(),
   POSTMARK_API_TOKEN: z.string(),
   SESSION_SECRET: z.string(),

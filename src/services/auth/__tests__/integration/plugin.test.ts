@@ -1,51 +1,34 @@
 import assert from "assert";
 
-import { faker } from "@faker-js/faker";
 import { FastifyInstance, InjectOptions } from "fastify";
 
 import { defaultTestDependenciesFactory } from "@/__tests__/dependencies-factory.js";
+import { MockOpenIdClient } from "@/__tests__/mocks/openIdClient.js";
 import { env } from "@/config.js";
 import { errorCodes } from "@/domain/errors.js";
 import { initServer } from "@/server.js";
 
-import { AuthClient, UserInfo } from "../../clients.js";
-
-class MockFeideClient implements AuthClient {
-  fetchUserInfo(): Promise<UserInfo> {
-    return Promise.resolve({
-      sub: faker.string.uuid(),
-      name: faker.person.fullName(),
-      "dataporten-userid_sec": [faker.internet.email()],
-      email: faker.internet.email(),
-    });
-  }
-  fetchAccessToken(): Promise<string> {
-    return Promise.resolve(faker.string.uuid());
-  }
-}
-
 describe("AuthPlugin", () => {
   let app: FastifyInstance;
+  let mockOpenIdClient: MockOpenIdClient;
 
   beforeAll(async () => {
-    const dependencies = defaultTestDependenciesFactory({
-      feideClient: new MockFeideClient(),
-    });
+    const dependencies = defaultTestDependenciesFactory();
+    ({ mockOpenIdClient } = dependencies);
     app = await initServer(dependencies, { port: 4001, host: "0.0.0.0" });
   });
 
-  describe("GET /auth/login", () => {
-    it("should generate a login url with PKCE params", async () => {
-      const result = await performSSORedirect(app);
+  describe("GET /auth/login?redirect=123", () => {
+    it("should perform a request to the open ID provider with the correct parameters", async () => {
+      const result = await performSSORedirect(app, "123");
+      expect(mockOpenIdClient.authorizationUrl).toHaveBeenCalledWith({
+        scope: expect.any(String),
+        code_challenge: expect.any(String),
+        code_challenge_method: "S256",
+        state: "123",
+      });
 
       expect(result.statusCode).toBe(303);
-      expect(result.headers.location).toContain("code_challenge=");
-      expect(result.headers.location).toContain("code_challenge_method=S256");
-    });
-
-    it("should include the state from the original request", async () => {
-      const result = await performSSORedirect(app, "https://example.com");
-      expect(result.headers.location).toContain(encodeURIComponent("https://example.com"));
     });
 
     it("should set session cookie", async () => {
@@ -71,7 +54,7 @@ describe("AuthPlugin", () => {
       expect(result.json()).toEqual({
         code: errorCodes.ERR_BAD_REQUEST,
         error: "Bad Request",
-        message: "Missing code verifier",
+        message: expect.stringContaining("code verifier"),
         statusCode: 400,
       });
     });
@@ -133,11 +116,11 @@ describe("AuthPlugin", () => {
   });
 });
 
-function performSSORedirect(app: FastifyInstance, state?: string) {
-  if (state) {
+function performSSORedirect(app: FastifyInstance, redirect?: string) {
+  if (redirect) {
     return app.inject({
       method: "GET",
-      url: `/auth/login?state=${encodeURIComponent(state)}`,
+      url: `/auth/login?redirect=${encodeURIComponent(redirect)}`,
     });
   }
   return app.inject({
