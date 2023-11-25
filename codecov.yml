@@ -1,0 +1,11 @@
+codecov:
+  require_ci_to_pass: true
+  notify:
+    wait_for_ci: true
+
+coverage:
+  range: "70...90"
+  status:
+    project:
+      default:
+        target: 90

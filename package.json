@@ -11,7 +11,7 @@
   "scripts": {
     "setup": "run-p generate",
     "build:production": "run-s setup swc",
-    "build": "swc",
+    "build": "pnpm run swc",
     "studio": "prisma studio",
     "db:migrate:dev": "dotenv -e .env.development -- prisma migrate dev",
     "db:migrate:status": "prisma migrate status",
