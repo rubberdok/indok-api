@@ -1,15 +1,13 @@
-import { faker } from "@faker-js/faker";
 import { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
 import { PrismaClient } from "@prisma/client";
 import { FastifyInstance, InjectOptions, LightMyRequestResponse } from "fastify";
 import { GraphQLError } from "graphql";
-import { DeepMockProxy, mockDeep } from "jest-mock-extended";
 
 import { defaultTestDependenciesFactory } from "@/__tests__/dependencies-factory.js";
+import { MockOpenIdClient, newMockOpenIdClient } from "@/__tests__/mocks/openIdClient.js";
 import { env } from "@/config.js";
 import { ApolloServerDependencies } from "@/lib/apollo-server.js";
 import { initServer } from "@/server.js";
-import { AuthClient } from "@/services/auth/clients.js";
 
 /**
  * A test client for integration testing GraphQL resolvers.
@@ -51,28 +49,26 @@ import { AuthClient } from "@/services/auth/clients.js";
  * ```
  */
 export class GraphQLTestClient {
-  public mockFeideClient: DeepMockProxy<AuthClient>;
+  public mockOpenIdClient: MockOpenIdClient;
   public dependencies: ReturnType<typeof defaultTestDependenciesFactory>;
   public app: FastifyInstance;
 
   constructor(options: {
     app: FastifyInstance;
     dependencies: ReturnType<typeof defaultTestDependenciesFactory>;
-    mockFeideClient: DeepMockProxy<AuthClient>;
+    mockOpenIdClient: MockOpenIdClient;
   }) {
     this.app = options.app;
     this.dependencies = options.dependencies;
-    this.mockFeideClient = options.mockFeideClient;
+    this.mockOpenIdClient = options.mockOpenIdClient;
   }
 
   public async performMockedLogin(userId: string): Promise<{ cookies: Record<string, string>; userId: string }> {
     const user = await this.dependencies?.apolloServerDependencies.userService.get(userId);
-    this.mockFeideClient.fetchAccessToken.mockResolvedValue(faker.string.uuid());
-    this.mockFeideClient.fetchUserInfo.mockResolvedValue({
-      sub: user.feideId,
-      name: `${user.firstName} ${user.lastName}`,
-      "dataporten-userid_sec": [user.email],
+    this.mockOpenIdClient.updateUserResponseMock({
+      id: user.feideId,
       email: user.email,
+      name: `${user.firstName} ${user.lastName}`,
     });
     return await this.performLogin();
   }
@@ -262,17 +258,17 @@ export async function newGraphQLTestClient(
   options: { port: number },
   overrideDependencies: Partial<{
     apolloServerDependencies: Partial<ApolloServerDependencies>;
-    feideClient: AuthClient;
+    openIdClient: MockOpenIdClient;
     prismaClient: PrismaClient;
   }> = {}
 ): Promise<GraphQLTestClient> {
-  const mockFeideClient = mockDeep<AuthClient>();
+  const mockOpenIdClient = newMockOpenIdClient();
   const dependencies = defaultTestDependenciesFactory({
-    feideClient: mockFeideClient,
+    openIdClient: mockOpenIdClient,
     ...overrideDependencies,
   });
 
   const { port } = options;
   const app = await initServer(dependencies, { port, host: "0.0.0.0" });
-  return new GraphQLTestClient({ app, dependencies, mockFeideClient });
+  return new GraphQLTestClient({ app, dependencies, mockOpenIdClient });
 }

@@ -30,12 +30,12 @@ environment_variables = [
     value = 4000
   },
   {
-    name  = "FEIDE_CLIENT_ID"
-    value = "fcaa9e30-a6d3-4809-8fea-cdd7b3de1c98"
+    name  = "SERVER_URL"
+    value = "https://server-3b8qd1il.whiteflower-a46872f4.norwayeast.azurecontainerapps.io"
   },
   {
-    name  = "FEIDE_REDIRECT_URI"
-    value = "https://server-3b8qd1il.whiteflower-a46872f4.norwayeast.azurecontainerapps.io/auth/authenticate"
+    name  = "FEIDE_CLIENT_ID"
+    value = "fcaa9e30-a6d3-4809-8fea-cdd7b3de1c98"
   },
   {
     name  = "FEIDE_BASE_URL"

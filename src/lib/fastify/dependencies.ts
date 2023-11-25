@@ -10,7 +10,6 @@ import { MemberRepository } from "@/repositories/organizations/members.js";
 import { OrganizationRepository } from "@/repositories/organizations/organizations.js";
 import { UserRepository } from "@/repositories/users/index.js";
 import { feideClient } from "@/services/auth/clients.js";
-import { FeideProvider } from "@/services/auth/providers.js";
 import { AuthService } from "@/services/auth/service.js";
 import { CabinService } from "@/services/cabins/service.js";
 import { EventService } from "@/services/events/service.js";
@@ -26,13 +25,8 @@ import prisma from "../prisma.js";
 import { createRedisClient } from "../redis.js";
 
 interface IAuthService {
-  getOrCreateUser(req: FastifyRequest, data: { code: string }): Promise<User>;
-  getOAuthLoginUrl(
-    req: FastifyRequest,
-    state?: string | null
-  ): {
-    url: string;
-  };
+  authorizationCallback(req: FastifyRequest, data: { code: string }): Promise<User>;
+  authorizationUrl(req: FastifyRequest, state?: string | null): string;
   logout(req: FastifyRequest): Promise<void>;
   login(req: FastifyRequest, user: User): Promise<User>;
 }
@@ -64,7 +58,7 @@ export function dependenciesFactory(): ServerDependencies {
   const cabinService = new CabinService(cabinRepository, mailService, permissionService);
   const eventService = new EventService(eventRepository, permissionService);
   const userService = new UserService(userRepository, permissionService);
-  const authService = new AuthService(userService, feideClient, FeideProvider);
+  const authService = new AuthService(userService, feideClient);
 
   const apolloServerDependencies: ApolloServerDependencies = {
     cabinService,

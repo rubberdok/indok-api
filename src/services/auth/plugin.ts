@@ -3,9 +3,9 @@ import { FastifyPluginAsync, FastifyRequest } from "fastify";
 import { BadRequestError, InternalServerError, PermissionDeniedError } from "@/domain/errors.js";
 import { User } from "@/domain/users.js";
 
-interface AuthService {
-  getOAuthLoginUrl(req: FastifyRequest, state?: string | null): { url: string };
-  getOrCreateUser(req: FastifyRequest, data: { code: string }): Promise<User>;
+export interface AuthService {
+  authorizationUrl(req: FastifyRequest, state?: string | null): string;
+  authorizationCallback(req: FastifyRequest, data: { code: string }): Promise<User>;
   login(req: FastifyRequest, user: User): Promise<User>;
   logout(req: FastifyRequest): Promise<void>;
 }
@@ -14,7 +14,7 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
   return async (app) => {
     app.route<{
       Querystring: {
-        state?: string;
+        redirect?: string;
       };
     }>({
       url: "/login",
@@ -23,13 +23,13 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
         querystring: {
           type: "object",
           properties: {
-            state: { type: "string" },
+            redirect: { type: "string" },
           },
         },
       },
       handler: async (req, reply) => {
-        const { state } = req.query;
-        const { url } = authService.getOAuthLoginUrl(req, state);
+        const { redirect } = req.query;
+        const url = authService.authorizationUrl(req, redirect);
 
         return reply.redirect(303, url);
       },
@@ -56,7 +56,8 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
       handler: async (req, reply) => {
         const { code, state } = req.query;
         try {
-          const user = await authService.getOrCreateUser(req, { code });
+          const user = await authService.authorizationCallback(req, { code });
+
           await authService.login(req, user);
 
           return reply.redirect(303, state ?? "/");
@@ -83,7 +84,7 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
       url: "/me",
       handler: async (req, reply) => {
         if (req.session.authenticated) {
-          return { user: req.session.userId };
+          return reply.status(200).send({ user: req.session.userId });
         }
         return reply.status(401).send(new PermissionDeniedError("Unauthorized"));
       },
