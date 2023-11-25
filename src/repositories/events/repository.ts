@@ -2,7 +2,7 @@ import { Event, EventSignUp, EventSlot, ParticipationStatus, PrismaClient } from
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 
 import { InternalServerError, InvalidArgumentError, NotFoundError } from "@/domain/errors.js";
-import { AlreadySignedUpError } from "@/domain/events.js";
+import { AlreadySignedUpError, InvalidCapacityError } from "@/domain/events.js";
 import { prismaKnownErrorCodes } from "@/lib/prisma.js";
 
 export class EventRepository {
@@ -101,12 +101,18 @@ export class EventRepository {
   }
 
   /**
+   * updateWithCapacity updates an event with a capacity. If the capacity is increased, the remaining capacity is incremented by the difference.
+   * If the capacity is decreased, the remaining capacity is decremented by the difference. If the resulting
+   * remaining capacity would be less than 0, an InvalidCapacityError is thrown.
+   * If the event does not exist, a NotFoundError is thrown.
+   * If the event does not have a capacity, we set the capacity and remaining capacity to the given capacity.
    *
-   * @param id
-   * @param data
-   * @returns
+   *
+   * @param id - The ID of the event to update
+   * @param data - The data to update the event with
+   * @returns The updated event
    */
-  async updateWithCapacity(id: string, data: UpdateData & { capacity: number }) {
+  private async updateWithCapacity(id: string, data: UpdateData & { capacity: number }) {
     const { name, description, startAt, endAt, capacity } = data;
 
     const previousEvent = await this.db.event.findUnique({
@@ -180,7 +186,10 @@ export class EventRepository {
       });
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError) {
-        if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) throw new NotFoundError(err.message);
+        if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND)
+          throw new InvalidCapacityError(
+            "Cannot reduce capacity below the number of existing sign ups. If this is unexpected, it is likely that the event has been updated by another user. Please try again."
+          );
       }
       throw err;
     }

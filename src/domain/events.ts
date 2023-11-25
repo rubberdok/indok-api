@@ -5,3 +5,9 @@ export class AlreadySignedUpError extends KnownDomainError {
     super("AlreadySignedUpError", description, errorCodes.ERR_BAD_USER_INPUT);
   }
 }
+
+export class InvalidCapacityError extends KnownDomainError {
+  constructor(description: string) {
+    super("InvalidCapacityError", description, errorCodes.ERR_BAD_USER_INPUT);
+  }
+}

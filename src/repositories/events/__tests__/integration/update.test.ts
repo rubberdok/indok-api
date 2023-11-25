@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 import { range } from "lodash-es";
 
-import { NotFoundError } from "@/domain/errors.js";
+import { InvalidCapacityError } from "@/domain/events.js";
 import prisma from "@/lib/prisma.js";
 
 import { EventRepository } from "../../repository.js";
@@ -203,7 +203,7 @@ describe("EventRepository", () => {
         range(arrange.signUps).map(async () => {
           const user = await prisma.user.create({
             data: {
-              email: faker.internet.email(),
+              email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
               firstName: faker.person.firstName(),
               lastName: faker.person.lastName(),
               username: faker.string.sample(20),
@@ -298,7 +298,7 @@ describe("EventRepository", () => {
          *
          * 1. The update should raise
          */
-        await expect(actual).rejects.toThrow(NotFoundError);
+        await expect(actual).rejects.toThrow(InvalidCapacityError);
       });
     });
 
@@ -371,6 +371,8 @@ describe("EventRepository", () => {
           expect(result.value.capacity).toBe(capacity);
           expect(result.value.remainingCapacity).toBe(capacity - 1);
           expect(capacity).toBeGreaterThanOrEqual(1);
+        } else {
+          expect(result.reason).toBeInstanceOf(InvalidCapacityError);
         }
       });
     });

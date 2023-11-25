@@ -155,7 +155,7 @@ describe("EventsRepository", () => {
        */
       const organization = await prisma.organization.create({
         data: {
-          name: faker.company.name(),
+          name: faker.string.sample(20),
         },
       });
 
