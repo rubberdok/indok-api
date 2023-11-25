@@ -60,6 +60,7 @@ model Event {
 
   // Versioning for optimistic concurrency control
   version           Int  @default(0)
+  capacity          Int?
   // Current remaining capacity for the event
   remainingCapacity Int?
 
@@ -72,6 +73,7 @@ model EventSlot {
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   version           Int           @default(0)
+  capacity          Int           @default(0)
   remainingCapacity Int
   eventId           String        @db.Uuid
   event             Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
