@@ -167,6 +167,18 @@ interface IEventService {
       slots?: { capacity: number }[] | null;
     }
   ): Promise<Event>;
+  update(
+    userId: string,
+    id: string,
+    data: Partial<{
+      name: string | null;
+      description: string | null;
+      startAt: Date | null;
+      endAt: Date | null;
+      location: string | null;
+      capacity: number | null;
+    }>
+  ): Promise<Event>;
   get(id: string): Promise<Event>;
   findMany(data?: { onlyFutureEvents?: boolean | null }): Promise<Event[]>;
   signUp(userId: string, eventId: string): Promise<EventSignUp>;

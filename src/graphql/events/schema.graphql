@@ -167,7 +167,44 @@ type RetractSignUpResponse {
   signUp: SignUp!
 }
 
+type UpdateEventResponse {
+  event: Event!
+}
+
+input UpdateEventInput {
+  """
+  The name of the event, this will be displayed to users
+  """
+  name: String
+  """
+  The description of the event, defaults to "". We support markdown on the client, so this can be markdown.
+  This will be displayed to users.
+  """
+  description: String
+  """
+  The start time of the event. Must be before endAt and after the current time.
+  """
+  startAt: DateTime
+  """
+  The end time of the event, must be after startAt.
+  """
+  endAt: DateTime
+  """
+  Total capacity for the event, regardless of the capacity in each slot.
+  This number takes precedence over the capacity in each slot, so if the remaining capacity on the event is 0
+  no more users can be registered as attending. Cannot be less than the number of users currently signed up for the event.
+  """
+  capacity: Int
+  """
+  location of the event
+  """
+  location: String
+}
+
 type Mutation {
+  """
+  """
+  updateEvent(id: ID!, data: UpdateEventInput!): UpdateEventResponse!
   """
   Retract an active sign up for an event, requires that the user is logged in
   """
