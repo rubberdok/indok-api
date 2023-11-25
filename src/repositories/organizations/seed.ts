@@ -52,6 +52,19 @@ export const load = async (db: PrismaClient) => {
     },
   });
 
+  await db.organization.upsert({
+    where: {
+      name: "Rubberdøk",
+    },
+    update: {
+      featurePermissions: [FeaturePermission.CABIN_BOOKING],
+    },
+    create: {
+      name: "Rubberdøk",
+      featurePermissions: [FeaturePermission.CABIN_BOOKING],
+    },
+  });
+
   const organizations = await db.organization.findMany({
     select: {
       name: true,

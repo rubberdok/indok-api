@@ -4,7 +4,7 @@ import { BadRequestError, InternalServerError, PermissionDeniedError } from "@/d
 import { User } from "@/domain/users.js";
 
 export interface AuthService {
-  authorizationUrl(req: FastifyRequest, state?: string | null): string;
+  authorizationUrl(req: FastifyRequest, redirect?: string | null): string;
   authorizationCallback(req: FastifyRequest, data: { code: string }): Promise<User>;
   login(req: FastifyRequest, user: User): Promise<User>;
   logout(req: FastifyRequest): Promise<void>;

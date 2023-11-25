@@ -12,6 +12,8 @@ import RedisStore from "connect-redis";
 import fastify, { FastifyInstance } from "fastify";
 
 import { env } from "./config.js";
+import { NotFoundError } from "./domain/errors.js";
+import { User } from "./domain/users.js";
 import { resolvers } from "./graphql/resolvers.generated.js";
 import { typeDefs } from "./graphql/type-defs.generated.js";
 import { ApolloContext, getFormatErrorHandler } from "./lib/apollo-server.js";
@@ -167,8 +169,24 @@ export async function initServer(dependencies: ServerDependencies, opts: Options
 
   // Custom context function to inject dependencies into the Apollo Context
   const contextFunction: ApolloFastifyContextFunction<ApolloContext> = async (req, res) => {
+    const { userId, authenticated } = req.session;
+    let user: User | null = null;
+    if (userId !== undefined && authenticated) {
+      try {
+        user = await apolloServerDependencies.userService.get(userId);
+      } catch (err) {
+        if (err instanceof NotFoundError) {
+          req.log.info({ userId }, "User not found, logging out");
+          authService.logout(req);
+        } else {
+          throw err;
+        }
+      }
+    }
+
     return {
       ...apolloServerDependencies,
+      user,
       req,
       res,
     };

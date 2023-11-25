@@ -7,6 +7,7 @@ import { FastifyBaseLogger, FastifyReply, FastifyRequest } from "fastify";
 import { GraphQLFormattedError } from "graphql";
 import { mock, mockDeep } from "jest-mock-extended";
 
+import { User } from "@/domain/users.js";
 import { ApolloContext, getFormatErrorHandler } from "@/lib/apollo-server.js";
 
 import { resolvers } from "../resolvers.generated.js";
@@ -20,7 +21,7 @@ interface QueryResult<T extends TypedDocumentNode<ResultOf<T>, VariablesOf<T>>> 
 class ApolloServerClient {
   constructor(
     public server: ApolloServer<ApolloContext>,
-    private createMockContext: (session: Partial<FastifySessionObject>) => ApolloContext
+    private createMockContext: (data?: CreateMockContextData) => ApolloContext
   ) {}
 
   async query<T extends TypedDocumentNode<ResultOf<T>, VariablesOf<T>>>(
@@ -78,7 +79,24 @@ export const createMockApolloServer = (logger?: Partial<FastifyBaseLogger>) => {
   const listingService = mockDeep<ApolloContext["listingService"]>();
   const permissionService = mockDeep<ApolloContext["permissionService"]>();
 
-  function createMockContext(session: Partial<FastifySessionObject>): ApolloContext {
+  function createMockContext(data: CreateMockContextData = {}): ApolloContext {
+    let session: Partial<FastifySessionObject> = {};
+    let user: Partial<User> = {};
+    if ("user" in data && data.user) {
+      user = data.user;
+      session = {
+        authenticated: true,
+        userId: user.id,
+      };
+    } else if ("userId" in data || "authenticated" in data) {
+      const { userId, authenticated } = data;
+      session = {
+        authenticated: authenticated ?? false,
+        userId,
+      };
+      user = { id: userId };
+    }
+
     const contextValue = {
       req: mock<FastifyRequest>({
         log: mock<FastifyBaseLogger>(logger),
@@ -91,6 +109,7 @@ export const createMockApolloServer = (logger?: Partial<FastifyBaseLogger>) => {
       eventService,
       listingService,
       permissionService,
+      user: mock<User>(user),
     };
     return contextValue;
   }
@@ -109,3 +128,10 @@ export const createMockApolloServer = (logger?: Partial<FastifyBaseLogger>) => {
     client,
   };
 };
+
+type CreateMockContextData = { user?: Partial<User> & { id: string } } | DeprectatedCreateMockContextData;
+
+type DeprectatedCreateMockContextData = Partial<{
+  userId: string;
+  authenticated: boolean;
+}>;
