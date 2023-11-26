@@ -6,7 +6,7 @@ export const updateListing: NonNullable<MutationResolvers["updateListing"]> = as
   const { closesAt: rawClosesAt, ...rest } = data;
   let closesAt: Date | undefined;
   if (rawClosesAt) closesAt = new Date(rawClosesAt);
-  const listing = await ctx.listingService.update(ctx.req.session.userId, id, {
+  const listing = await ctx.listingService.update(ctx.user.id, id, {
     closesAt,
     ...rest,
   });

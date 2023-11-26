@@ -7,7 +7,7 @@ export const Event: EventResolvers = {
   canSignUp: (parent, _args, ctx) => {
     try {
       assertIsAuthenticated(ctx);
-      const canSignUp = ctx.eventService.canSignUpForEvent(ctx.req.session.userId, parent.id);
+      const canSignUp = ctx.eventService.canSignUpForEvent(ctx.user.id, parent.id);
       return canSignUp;
     } catch (err) {
       if (err instanceof AuthenticationError) return false;
