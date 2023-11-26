@@ -1,3 +1,4 @@
+import { faker } from "@faker-js/faker";
 import { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
 import { PrismaClient } from "@prisma/client";
 import { FastifyInstance, InjectOptions, LightMyRequestResponse } from "fastify";
@@ -8,7 +9,6 @@ import { MockOpenIdClient, newMockOpenIdClient } from "@/__tests__/mocks/openIdC
 import { env } from "@/config.js";
 import { ApolloServerDependencies } from "@/lib/apollo-server.js";
 import { initServer } from "@/server.js";
-import { faker } from "@faker-js/faker";
 
 /**
  * A test client for integration testing GraphQL resolvers.
