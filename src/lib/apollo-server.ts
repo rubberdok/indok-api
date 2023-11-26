@@ -65,6 +65,7 @@ export function getFormatErrorHandler(log?: Partial<FastifyInstance["log"]>) {
 export interface ApolloContext extends ApolloServerDependencies {
   res: FastifyReply;
   req: FastifyRequest;
+  user: User | null;
 }
 
 declare module "graphql" {
@@ -223,4 +224,5 @@ export interface ApolloServerDependencies {
 
 interface IPermissionService {
   isSuperUser(userId: string): Promise<{ isSuperUser: boolean }>;
+  hasFeaturePermission(data: { userId: string; featurePermission: FeaturePermission }): Promise<boolean>;
 }

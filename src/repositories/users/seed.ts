@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { Prisma, PrismaClient } from "@prisma/client";
+import { FeaturePermission, Prisma, PrismaClient } from "@prisma/client";
 import dayjs from "dayjs";
 import { DateTime } from "luxon";
 
@@ -56,6 +56,7 @@ function makeUserWithMemberships(data: Prisma.UserCreateInput): Prisma.UserCreat
                 id: organizationId,
                 name: "Rubberdøk",
                 description: "Rubberdøk er en gjeng som lager gummibåter",
+                featurePermissions: [FeaturePermission.CABIN_BOOKING],
               },
             },
           },

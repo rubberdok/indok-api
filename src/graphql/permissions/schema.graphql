@@ -1,0 +1,17 @@
+enum FeaturePermission {
+  CABIN_BOOKING
+  ARCHIVE
+}
+
+type HasFeaturePermissionResponse {
+  id: FeaturePermission!
+  hasFeaturePermission: Boolean!
+}
+
+input HasFeaturePermissionInput {
+  featurePermission: FeaturePermission!
+}
+
+type Query {
+  hasFeaturePermission(data: HasFeaturePermissionInput!): HasFeaturePermissionResponse!
+}

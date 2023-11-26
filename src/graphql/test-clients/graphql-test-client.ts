@@ -1,3 +1,4 @@
+import { faker } from "@faker-js/faker";
 import { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
 import { PrismaClient } from "@prisma/client";
 import { FastifyInstance, InjectOptions, LightMyRequestResponse } from "fastify";
@@ -63,12 +64,22 @@ export class GraphQLTestClient {
     this.mockOpenIdClient = options.mockOpenIdClient;
   }
 
-  public async performMockedLogin(userId: string): Promise<{ cookies: Record<string, string>; userId: string }> {
-    const user = await this.dependencies?.apolloServerDependencies.userService.get(userId);
+  public async performMockedLogin(
+    data: { userId: string } | { feideId: string; email?: string; name?: string }
+  ): Promise<{ cookies: Record<string, string>; userId: string }> {
+    if ("userId" in data) {
+      const user = await this.dependencies?.apolloServerDependencies.userService.get(data.userId);
+      this.mockOpenIdClient.updateUserResponseMock({
+        id: user.feideId,
+        email: user.email,
+        name: `${user.firstName} ${user.lastName}`,
+      });
+      return await this.performLogin();
+    }
     this.mockOpenIdClient.updateUserResponseMock({
-      id: user.feideId,
-      email: user.email,
-      name: `${user.firstName} ${user.lastName}`,
+      id: data.feideId,
+      email: data.email ?? faker.internet.email(),
+      name: data.name ?? faker.person.fullName(),
     });
     return await this.performLogin();
   }
@@ -136,6 +147,7 @@ export class GraphQLTestClient {
     },
     options?: {
       userId?: string;
+      user?: { feideId: string; email?: string; name?: string };
       request?: InjectOptions;
     }
   ): Promise<{
@@ -144,12 +156,16 @@ export class GraphQLTestClient {
     response: LightMyRequestResponse;
   }> {
     const { query, variables } = queryData;
-    const { request, userId } = options ?? {};
+    const { request, userId, user } = options ?? {};
     let cookies: Record<string, string> | undefined;
     if (userId) {
-      const res = await this.performMockedLogin(userId);
+      const res = await this.performMockedLogin({ userId });
       cookies = res.cookies;
       this.app.log.info("Logged in as user", { userId });
+    } else if (user) {
+      const res = await this.performMockedLogin(user);
+      cookies = res.cookies;
+      this.app.log.info("Logged in as user", { userId: user.feideId });
     }
 
     const response = await this.app.inject({

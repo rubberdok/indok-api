@@ -262,6 +262,15 @@ enum FeaturePermission {
   CABIN_BOOKING
 }
 
+input HasFeaturePermissionInput {
+  featurePermission: FeaturePermission!
+}
+
+type HasFeaturePermissionResponse {
+  hasFeaturePermission: Boolean!
+  id: FeaturePermission!
+}
+
 type Listing {
   """
   An optional URL to the application form for the listing, defaults to ""
@@ -527,6 +536,7 @@ type Query {
   cabins: CabinsResponse!
   event(data: EventInput!): EventResponse!
   events(data: EventsInput): EventsResponse!
+  hasFeaturePermission(data: HasFeaturePermissionInput!): HasFeaturePermissionResponse!
   listing(data: ListingInput!): ListingResponse!
   listings: ListingsResponse!
 

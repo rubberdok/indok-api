@@ -205,6 +205,7 @@ export class UserService {
     const user = await this.usersRepository.get(id);
     return this.toDomainUser(user);
   }
+
   async getAll(): Promise<User[]> {
     const users = await this.usersRepository.getAll();
     return users.map((user) => this.toDomainUser(user));
