@@ -9,7 +9,7 @@ export const updateBookingContact: NonNullable<MutationResolvers["updateBookingC
   assertIsAuthenticated(ctx);
 
   const { name, email, phoneNumber } = data;
-  const bookingContact = await ctx.cabinService.updateBookingContact(ctx.req.session.userId, {
+  const bookingContact = await ctx.cabinService.updateBookingContact(ctx.user.id, {
     name,
     email,
     phoneNumber,

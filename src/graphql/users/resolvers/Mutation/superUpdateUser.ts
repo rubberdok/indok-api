@@ -8,7 +8,7 @@ export const superUpdateUser: NonNullable<MutationResolvers["superUpdateUser"]> 
 ) => {
   assertIsAuthenticated(ctx);
 
-  const user = await ctx.userService.superUpdateUser(ctx.req.session.userId, id, {
+  const user = await ctx.userService.superUpdateUser(ctx.user.id, id, {
     firstName: data.firstName,
     lastName: data.lastName,
     allergies: data.allergies ?? undefined,

@@ -19,7 +19,7 @@ export const createEvent: NonNullable<MutationResolvers["createEvent"]> = async 
     endAt = rawEndAt;
   }
 
-  const event = await ctx.eventService.create(ctx.req.session.userId, organizationId, {
+  const event = await ctx.eventService.create(ctx.user.id, organizationId, {
     name,
     description,
     startAt,

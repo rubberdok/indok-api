@@ -12,7 +12,7 @@ export const updateBookingSemester: NonNullable<MutationResolvers["updateBooking
   const startAt = rawStartAt ? new Date(rawStartAt) : null;
   const endAt = rawEndAt ? new Date(rawEndAt) : null;
 
-  const bookingSemester = await ctx.cabinService.updateBookingSemester(ctx.req.session.userId, {
+  const bookingSemester = await ctx.cabinService.updateBookingSemester(ctx.user.id, {
     semester,
     startAt,
     endAt,
