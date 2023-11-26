@@ -56,7 +56,7 @@ type BookingSemester {
 }
 
 type BookingSemestersResponse {
-  autumn: BookingSemester
+  fall: BookingSemester
   spring: BookingSemester
 }
 
@@ -582,7 +582,7 @@ enum Role {
 }
 
 enum Semester {
-  AUTUMN
+  FALL
   SPRING
 }
 

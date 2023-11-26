@@ -27,7 +27,7 @@ type BookingContact {
 
 enum Semester {
   SPRING
-  AUTUMN
+  FALL
 }
 
 type BookingSemester {
@@ -63,7 +63,7 @@ type UpdateBookingSemesterResponse {
 
 type BookingSemestersResponse {
   spring: BookingSemester
-  autumn: BookingSemester
+  fall: BookingSemester
 }
 
 input NewBookingInput {

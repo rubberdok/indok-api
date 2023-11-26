@@ -144,7 +144,7 @@ model Booking {
 
 enum Semester {
   SPRING
-  AUTUMN
+  FALL
 }
 
 model BookingSemester {
