@@ -49,10 +49,10 @@ describe("CabinRepository", () => {
       /**
        * Act
        *
-       * Create a booking semester for "AUTUMN"
+       * Create a booking semester for "FALL"
        */
       const bookingSemester = await cabinRepository.createBookingSemester({
-        semester: "AUTUMN",
+        semester: "FALL",
         startAt: new Date(2020, 0, 1),
         endAt: new Date(2020, 0, 2),
         bookingsEnabled: true,
@@ -64,7 +64,7 @@ describe("CabinRepository", () => {
        * Expect the booking semester to be created
        */
       expect(bookingSemester).toEqual({
-        semester: "AUTUMN",
+        semester: "FALL",
         startAt: new Date(2020, 0, 1),
         endAt: new Date(2020, 0, 2),
         bookingsEnabled: true,

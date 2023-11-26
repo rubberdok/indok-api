@@ -199,7 +199,7 @@ describe("CabinService", () => {
         });
       });
 
-      it("should default `startAt` and `endAt` to sensible values for the AUTUMN semester if they are not provided", async () => {
+      it("should default `startAt` and `endAt` to sensible values for the FALL semester if they are not provided", async () => {
         /**
          * Arrange
          *
@@ -218,7 +218,7 @@ describe("CabinService", () => {
          * Call updateBookingSemester
          */
         await cabinService.updateBookingSemester(userId, {
-          semester: Semester.AUTUMN,
+          semester: Semester.FALL,
           bookingsEnabled: true,
         });
 
@@ -228,7 +228,7 @@ describe("CabinService", () => {
          * Expect cabinRepository.updateBookingSemester to be called with the correct arguments
          */
         expect(cabinRepository.createBookingSemester).toHaveBeenCalledWith({
-          semester: Semester.AUTUMN,
+          semester: Semester.FALL,
           startAt: DateTime.fromObject({ month: 8, day: 1 }).toJSDate(),
           endAt: DateTime.fromObject({ month: 12, day: 31 }).toJSDate(),
           bookingsEnabled: true,

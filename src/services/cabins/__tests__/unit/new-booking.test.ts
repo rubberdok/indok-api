@@ -26,7 +26,7 @@ describe("CabinService", () => {
         name: string;
         arrange: {
           bookingSemesters: {
-            autumn: BookingSemester | null;
+            fall: BookingSemester | null;
             spring: BookingSemester | null;
           };
         };
@@ -45,7 +45,7 @@ describe("CabinService", () => {
          * Mock the cabinRepository.getBookingSemesters method to return the bookingSemesters from the test case.
          */
         cabinRepository.getBookingSemester.mockImplementation(async (semester: Semester) => {
-          if (semester === Semester.AUTUMN) return arrange.bookingSemesters.autumn;
+          if (semester === Semester.FALL) return arrange.bookingSemesters.fall;
           if (semester === Semester.SPRING) return arrange.bookingSemesters.spring;
           throw new Error(`Unexpected semester: ${semester}`);
         });
@@ -73,7 +73,7 @@ describe("CabinService", () => {
             name: "email is invalid",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester(),
+                fall: makeBookingSemester(),
                 spring: makeBookingSemester(),
               },
             },
@@ -90,7 +90,7 @@ describe("CabinService", () => {
             name: "phone number is invalid",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester(),
+                fall: makeBookingSemester(),
                 spring: makeBookingSemester(),
               },
             },
@@ -107,7 +107,7 @@ describe("CabinService", () => {
             name: "cabinId is not a UUID",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester(),
+                fall: makeBookingSemester(),
                 spring: makeBookingSemester(),
               },
             },
@@ -124,7 +124,7 @@ describe("CabinService", () => {
             name: "firstName is blank",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester(),
+                fall: makeBookingSemester(),
                 spring: makeBookingSemester(),
               },
             },
@@ -141,7 +141,7 @@ describe("CabinService", () => {
             name: "lastName is blank",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester(),
+                fall: makeBookingSemester(),
                 spring: makeBookingSemester(),
               },
             },
@@ -165,7 +165,7 @@ describe("CabinService", () => {
             name: "booking start date is in the past",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester(),
+                fall: makeBookingSemester(),
                 spring: makeBookingSemester(),
               },
             },
@@ -182,7 +182,7 @@ describe("CabinService", () => {
             name: "booking end date is in the past",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester(),
+                fall: makeBookingSemester(),
                 spring: makeBookingSemester(),
               },
             },
@@ -199,7 +199,7 @@ describe("CabinService", () => {
             name: "booking end date is before booking start date",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester(),
+                fall: makeBookingSemester(),
                 spring: makeBookingSemester(),
               },
             },
@@ -217,7 +217,7 @@ describe("CabinService", () => {
             name: "booking end date is the same as booking start date",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester(),
+                fall: makeBookingSemester(),
                 spring: makeBookingSemester(),
               },
             },
@@ -242,7 +242,7 @@ describe("CabinService", () => {
             name: "no booking semesters are active",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester({ bookingsEnabled: false }),
+                fall: makeBookingSemester({ bookingsEnabled: false }),
                 spring: makeBookingSemester({ bookingsEnabled: false }),
               },
             },
@@ -257,7 +257,7 @@ describe("CabinService", () => {
             name: "no booking semesters exist",
             arrange: {
               bookingSemesters: {
-                autumn: null,
+                fall: null,
                 spring: null,
               },
             },
@@ -272,7 +272,7 @@ describe("CabinService", () => {
             name: "the booking start date is before the active booking semester start date",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester({ startAt: DateTime.now().plus({ days: 2 }).toJSDate() }),
+                fall: makeBookingSemester({ startAt: DateTime.now().plus({ days: 2 }).toJSDate() }),
                 spring: null,
               },
             },
@@ -287,7 +287,7 @@ describe("CabinService", () => {
             name: "the booking end date is after the active booking semester end date",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester({ endAt: DateTime.now().plus({ days: 2 }).toJSDate() }),
+                fall: makeBookingSemester({ endAt: DateTime.now().plus({ days: 2 }).toJSDate() }),
                 spring: null,
               },
             },
@@ -302,7 +302,7 @@ describe("CabinService", () => {
             name: "the booking is contained in a booking semester that is not active",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester({ bookingsEnabled: false }),
+                fall: makeBookingSemester({ bookingsEnabled: false }),
                 spring: makeBookingSemester({
                   bookingsEnabled: true,
                   startAt: DateTime.fromObject({ year: 0 }).toJSDate(),
@@ -322,13 +322,13 @@ describe("CabinService", () => {
         test.each(testCases)("$name", testFn);
       });
 
-      describe("cross-semester booking (Autumn to Spring) and", () => {
+      describe("cross-semester booking (Fall to Spring) and", () => {
         const testCases: TestCase[] = [
           {
             name: "there is more than a day between the booking semesters",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester({ endAt: DateTime.now().plus({ days: 1 }).endOf("day").toJSDate() }),
+                fall: makeBookingSemester({ endAt: DateTime.now().plus({ days: 1 }).endOf("day").toJSDate() }),
                 spring: makeBookingSemester({
                   startAt: DateTime.now().plus({ days: 3 }).startOf("day").toJSDate(),
                 }),
@@ -348,7 +348,7 @@ describe("CabinService", () => {
             name: "the spring semester is not active",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester({ endAt: DateTime.now().plus({ days: 1 }).endOf("day").toJSDate() }),
+                fall: makeBookingSemester({ endAt: DateTime.now().plus({ days: 1 }).endOf("day").toJSDate() }),
                 spring: makeBookingSemester({
                   startAt: DateTime.now().plus({ days: 2 }).startOf("day").toJSDate(),
                   bookingsEnabled: false,
@@ -366,10 +366,10 @@ describe("CabinService", () => {
             },
           },
           {
-            name: "the autumn semester is not active",
+            name: "the fall semester is not active",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester({
+                fall: makeBookingSemester({
                   endAt: DateTime.now().plus({ days: 1 }).endOf("day").toJSDate(),
                   bookingsEnabled: false,
                 }),
@@ -393,13 +393,13 @@ describe("CabinService", () => {
         test.each(testCases)("$name", testFn);
       });
 
-      describe("cross-semester booking (Spring to Autumn) and", () => {
+      describe("cross-semester booking (Spring to Fall) and", () => {
         const testCases: TestCase[] = [
           {
             name: "there is more than a day between the booking semesters",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester({
+                fall: makeBookingSemester({
                   startAt: DateTime.now().plus({ days: 3 }).startOf("day").toJSDate(),
                 }),
                 spring: makeBookingSemester({ endAt: DateTime.now().plus({ days: 1 }).endOf("day").toJSDate() }),
@@ -416,10 +416,10 @@ describe("CabinService", () => {
             },
           },
           {
-            name: "the autumn semester is not active",
+            name: "the fall semester is not active",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester({
+                fall: makeBookingSemester({
                   startAt: DateTime.now().plus({ days: 2 }).startOf("day").toJSDate(),
                   bookingsEnabled: false,
                 }),
@@ -440,7 +440,7 @@ describe("CabinService", () => {
             name: "the spring semester is not active",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester({
+                fall: makeBookingSemester({
                   startAt: DateTime.now().plus({ days: 2 }).startOf("day").toJSDate(),
                 }),
                 spring: makeBookingSemester({
@@ -470,7 +470,7 @@ describe("CabinService", () => {
         name: string;
         arrange: {
           bookingSemesters: {
-            autumn: BookingSemester | null;
+            fall: BookingSemester | null;
             spring: BookingSemester | null;
           };
         };
@@ -488,7 +488,7 @@ describe("CabinService", () => {
          * Mock the mailService.sendBookingConfirmation method to return a promise.
          */
         cabinRepository.getBookingSemester.mockImplementation(async (semester: Semester) => {
-          if (semester === Semester.AUTUMN) return arrange.bookingSemesters.autumn;
+          if (semester === Semester.FALL) return arrange.bookingSemesters.fall;
           if (semester === Semester.SPRING) return arrange.bookingSemesters.spring;
           throw new Error(`Unexpected semester: ${semester}`);
         });
@@ -519,7 +519,7 @@ describe("CabinService", () => {
             name: "the booking start date is the same as the active booking semester start date",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester({ startAt: DateTime.now().plus({ days: 2 }).startOf("day").toJSDate() }),
+                fall: makeBookingSemester({ startAt: DateTime.now().plus({ days: 2 }).startOf("day").toJSDate() }),
                 spring: null,
               },
             },
@@ -531,7 +531,7 @@ describe("CabinService", () => {
             name: "the booking end date is the same as the active booking semester end date",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester({ endAt: DateTime.now().plus({ days: 2 }).startOf("day").toJSDate() }),
+                fall: makeBookingSemester({ endAt: DateTime.now().plus({ days: 2 }).startOf("day").toJSDate() }),
                 spring: null,
               },
             },
@@ -546,7 +546,7 @@ describe("CabinService", () => {
             name: "the booking is contained in a booking semester that is active",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester(),
+                fall: makeBookingSemester(),
                 spring: null,
               },
             },
@@ -562,13 +562,13 @@ describe("CabinService", () => {
         test.each(testCases)("$name", testFn);
       });
 
-      describe("cross-semester booking (Autumn to Spring) and", () => {
+      describe("cross-semester booking (Fall to Spring) and", () => {
         const testCases: TestCase[] = [
           {
             name: "the booking semesters are adjacent",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester({ endAt: DateTime.now().plus({ days: 2 }).startOf("day").toJSDate() }),
+                fall: makeBookingSemester({ endAt: DateTime.now().plus({ days: 2 }).startOf("day").toJSDate() }),
                 spring: makeBookingSemester({
                   startAt: DateTime.now().plus({ days: 3 }).endOf("day").toJSDate(),
                 }),
@@ -585,7 +585,7 @@ describe("CabinService", () => {
             name: "the booking semesters overlap",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester({ endAt: DateTime.now().plus({ days: 10 }).startOf("day").toJSDate() }),
+                fall: makeBookingSemester({ endAt: DateTime.now().plus({ days: 10 }).startOf("day").toJSDate() }),
                 spring: makeBookingSemester({
                   startAt: DateTime.now().plus({ days: 0 }).startOf("day").toJSDate(),
                 }),
@@ -603,13 +603,13 @@ describe("CabinService", () => {
         test.each(testCases)("$name", testFn);
       });
 
-      describe("cross-semester booking (Spring to Autumn) and", () => {
+      describe("cross-semester booking (Spring to Fall) and", () => {
         const testCases: TestCase[] = [
           {
             name: "the booking semesters are adjacent",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester({
+                fall: makeBookingSemester({
                   startAt: DateTime.now().plus({ days: 3 }).endOf("day").toJSDate(),
                 }),
                 spring: makeBookingSemester({ endAt: DateTime.now().plus({ days: 2 }).startOf("day").toJSDate() }),
@@ -626,7 +626,7 @@ describe("CabinService", () => {
             name: "the booking semesters overlap",
             arrange: {
               bookingSemesters: {
-                autumn: makeBookingSemester({
+                fall: makeBookingSemester({
                   startAt: DateTime.now().plus({ days: 0 }).startOf("day").toJSDate(),
                 }),
                 spring: makeBookingSemester({ endAt: DateTime.now().plus({ days: 10 }).startOf("day").toJSDate() }),
@@ -670,7 +670,7 @@ function makeBookingSemester(data: Partial<BookingSemester> = {}): BookingSemest
       id: faker.string.uuid(),
       createdAt: faker.date.past(),
       updatedAt: faker.date.past(),
-      semester: Semester.AUTUMN,
+      semester: Semester.FALL,
       startAt: DateTime.fromObject({ year: 0 }).toJSDate(),
       endAt: DateTime.fromObject({ year: 3000 }).toJSDate(),
       bookingsEnabled: true,

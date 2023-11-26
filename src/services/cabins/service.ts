@@ -101,25 +101,25 @@ export class CabinService {
    * is not before, or the day after the end of the previous semester, there can be no valid cross-semester bookings.
    * @param data.startDate - The start date of the booking
    * @param data.endDate - The end date of the booking
-   * @param bookingSemesters.autumn - The autumn booking semester
+   * @param bookingSemesters.fall - The fall booking semester
    * @param bookingSemesters.spring - The spring booking semester
    * @returns true if the booking is a valid cross-semester booking, false otherwise
    */
   private isCrossSemesterBooking(
     data: { startDate: Date; endDate: Date },
-    bookingSemesters: { autumn: BookingSemester | null; spring: BookingSemester | null }
+    bookingSemesters: { fall: BookingSemester | null; spring: BookingSemester | null }
   ) {
-    const { autumn, spring } = bookingSemesters;
+    const { fall, spring } = bookingSemesters;
     // If one of the booking semeters are disabled, there can be no valid cross-semester bookings.
-    if (!autumn?.bookingsEnabled || !spring?.bookingsEnabled) return false;
+    if (!fall?.bookingsEnabled || !spring?.bookingsEnabled) return false;
 
     const endOfAutumnOverlapsWithStartOfSpring =
-      DateTime.fromJSDate(autumn.endAt).plus({ days: 1 }).startOf("day") >=
+      DateTime.fromJSDate(fall.endAt).plus({ days: 1 }).startOf("day") >=
       DateTime.fromJSDate(spring.startAt).startOf("day");
 
     const endOfSpringOverlapsWithStartOfAutumn =
       DateTime.fromJSDate(spring.endAt).plus({ days: 1 }).startOf("day") >=
-      DateTime.fromJSDate(autumn.startAt).startOf("day");
+      DateTime.fromJSDate(fall.startAt).startOf("day");
 
     // If none of the booking semesters overlap, there can be no valid cross-semester bookings.
     if (!endOfAutumnOverlapsWithStartOfSpring && !endOfSpringOverlapsWithStartOfAutumn) return false;
@@ -127,30 +127,29 @@ export class CabinService {
     const { startDate, endDate } = data;
 
     /**
-     * If the booking starts in autumn and ends in spring, and the end of autumn overlaps with the start of spring,
+     * If the booking starts in fall and ends in spring, and the end of fall overlaps with the start of spring,
      * the booking is valid.
      */
-    const startsInAutumn = startDate >= autumn.startAt && startDate <= autumn.endAt;
+    const startsInAutumn = startDate >= fall.startAt && startDate <= fall.endAt;
     const endsInSpring = endDate >= spring.startAt && endDate <= spring.endAt;
     if (startsInAutumn && endsInSpring && endOfAutumnOverlapsWithStartOfSpring) return true;
 
     /**
-     * If the booking starts in spring and ends in autumn, and the end of spring overlaps with the start of autumn,
+     * If the booking starts in spring and ends in fall, and the end of spring overlaps with the start of fall,
      * the booking is valid.
      */
     const startsInSpring = startDate >= spring.startAt && startDate <= spring.endAt;
-    const endsInAutumn = endDate >= autumn.startAt && endDate <= autumn.endAt;
+    const endsInAutumn = endDate >= fall.startAt && endDate <= fall.endAt;
     return startsInSpring && endsInAutumn && endOfSpringOverlapsWithStartOfAutumn;
   }
 
   private validateBooking(
     data: BookingData,
-    bookingSemesters: { spring: BookingSemester | null; autumn: BookingSemester | null }
+    bookingSemesters: { spring: BookingSemester | null; fall: BookingSemester | null }
   ): BookingData {
-    const { autumn, spring } = bookingSemesters;
+    const { fall, spring } = bookingSemesters;
 
-    if (!autumn?.bookingsEnabled && !spring?.bookingsEnabled)
-      throw new InvalidArgumentError("Bookings are not enabled.");
+    if (!fall?.bookingsEnabled && !spring?.bookingsEnabled) throw new InvalidArgumentError("Bookings are not enabled.");
 
     const bookingSchema = z
       .object({
@@ -169,13 +168,13 @@ export class CabinService {
       })
       .refine(
         (obj) => {
-          const isValidAutumnBooking = this.isInActiveBookingSemester(obj, autumn);
+          const isValidAutumnBooking = this.isInActiveBookingSemester(obj, fall);
           if (isValidAutumnBooking) return true;
 
           const isValidSpringBooking = this.isInActiveBookingSemester(obj, spring);
           if (isValidSpringBooking) return true;
 
-          const isValidCrossSemesterBooking = this.isCrossSemesterBooking(obj, { spring, autumn });
+          const isValidCrossSemesterBooking = this.isCrossSemesterBooking(obj, { spring, fall });
           return isValidCrossSemesterBooking;
         },
         {
@@ -359,10 +358,11 @@ export class CabinService {
     }
   }
 
-  private getBookingSemesters(): Promise<{ spring: BookingSemester | null; autumn: BookingSemester | null }> {
-    return Promise.all([this.getBookingSemester("SPRING"), this.getBookingSemester("AUTUMN")]).then(
-      ([spring, autumn]) => ({ spring, autumn })
-    );
+  private getBookingSemesters(): Promise<{ spring: BookingSemester | null; fall: BookingSemester | null }> {
+    return Promise.all([this.getBookingSemester("SPRING"), this.getBookingSemester("FALL")]).then(([spring, fall]) => ({
+      spring,
+      fall,
+    }));
   }
 
   /**

@@ -6,7 +6,7 @@ import { graphql } from "@/graphql/test-clients/unit/gql.js";
 
 describe("Cabin queries", () => {
   describe("bookingSemesters", () => {
-    it("should resolve for AUTUMN and SPRING, respectively", async () => {
+    it("should resolve for FALL and SPRING, respectively", async () => {
       /**
        * Arrange
        *
@@ -22,7 +22,7 @@ describe("Cabin queries", () => {
         query: graphql(`
           query BookingSemesters {
             bookingSemesters {
-              autumn {
+              fall {
                 semester
               }
               spring {
@@ -35,8 +35,8 @@ describe("Cabin queries", () => {
 
       expect(errors).toBeUndefined();
       expect(data?.bookingSemesters).toEqual({
-        autumn: {
-          semester: Semester.AUTUMN,
+        fall: {
+          semester: Semester.FALL,
         },
         spring: {
           semester: Semester.SPRING,
