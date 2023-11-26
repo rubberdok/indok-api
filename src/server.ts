@@ -173,11 +173,14 @@ export async function initServer(dependencies: ServerDependencies, opts: Options
     let user: User | null = null;
     if (userId !== undefined && authenticated) {
       try {
+        req.log.debug({ userId }, "Fetching user");
         user = await apolloServerDependencies.userService.get(userId);
+        req.log.debug({ user }, "Found user");
       } catch (err) {
+        req.log.info({ userId }, "Error fetching user");
         if (err instanceof NotFoundError) {
           req.log.info({ userId }, "User not found, logging out");
-          authService.logout(req);
+          await authService.logout(req);
         } else {
           throw err;
         }
