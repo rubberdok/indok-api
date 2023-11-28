@@ -139,3 +139,37 @@ resource "azurerm_role_assignment" "key_vault_officer" {
   role_definition_name = "Key Vault Secrets Officer"
   principal_id         = azuread_service_principal.github.object_id
 }
+
+# Service Principal, used Grafana to authenticate with Azure
+resource "azuread_service_principal" "grafana" {
+  client_id                    = azuread_application.grafana.client_id
+  app_role_assignment_required = false
+  owners                       = [local.azure_admin_id]
+  description                  = "Service principal for Grafana"
+}
+
+# Application registration for Grafana
+resource "azuread_application" "grafana" {
+  display_name = "grafana"
+  owners       = [local.azure_admin_id]
+}
+
+# Assign the subscription read role to the Grafana service principal
+resource "azurerm_role_assignment" "grafana_subscription_reader" {
+  scope                = data.azurerm_subscription.current.id
+  role_definition_name = "Reader"
+  principal_id         = azuread_service_principal.grafana.object_id
+}
+
+resource "azuread_application_password" "grafana" {
+  application_id = azuread_application.grafana.id
+  display_name   = "grafana"
+
+  rotate_when_changed = {
+    rotation = time_rotating.yearly.id
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
