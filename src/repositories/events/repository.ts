@@ -8,6 +8,9 @@ import { prismaKnownErrorCodes } from "@/lib/prisma.js";
 export class EventRepository {
   constructor(private db: PrismaClient) {}
 
+  async create(data: CreateEventWithSignUpsData): Promise<Event & { slots: EventSlot[] }>;
+  async create(data: BaseCreateEventData): Promise<Event>;
+
   /**
    * Create a new event.
    *
@@ -19,32 +22,41 @@ export class EventRepository {
    * @param data.contactEamil - The email address of the contact person for the event
    * @returns The created event
    */
-  async create(data: {
-    name: string;
-    description?: string;
-    startAt: Date;
-    endAt: Date;
-    organizationId: string;
-    contactEmail: string;
-    capacity?: number;
-    slots?: { capacity: number }[];
-  }): Promise<Event & { slots: EventSlot[] }> {
-    const { name, description, startAt, organizationId, endAt, contactEmail, capacity } = data;
-    const slots = data.slots?.map((slot) => ({ capacity: slot.capacity, remainingCapacity: slot.capacity }));
-    if (slots && slots.length > 0) {
+  async create(
+    data: CreateEventWithSignUpsData | BaseCreateEventData
+  ): Promise<(Event & { slots: EventSlot[] }) | Event> {
+    if ("capacity" in data) {
+      const {
+        name,
+        description,
+        startAt,
+        organizationId,
+        endAt,
+        contactEmail,
+        location,
+        capacity,
+        signUpsEndAt,
+        signUpsStartAt,
+      } = data;
+
+      const slots = data.slots.map((slot) => ({ capacity: slot.capacity, remainingCapacity: slot.capacity }));
       return this.db.event.create({
         include: {
           slots: true,
         },
         data: {
-          name: name,
+          name,
           description,
           startAt,
           endAt,
           organizationId,
           contactEmail,
+          location,
           capacity,
           remainingCapacity: capacity,
+          signUpsEndAt,
+          signUpsStartAt,
+          signUpsEnabled: true,
           slots: {
             createMany: {
               data: slots,
@@ -52,21 +64,20 @@ export class EventRepository {
           },
         },
       });
+    } else {
+      const { name, description, startAt, organizationId, endAt, contactEmail, location } = data;
+      return this.db.event.create({
+        data: {
+          name: name,
+          description,
+          startAt,
+          endAt,
+          organizationId,
+          contactEmail,
+          location,
+        },
+      });
     }
-    return this.db.event.create({
-      include: {
-        slots: true,
-      },
-      data: {
-        name: name,
-        description,
-        startAt,
-        endAt,
-        organizationId,
-        contactEmail,
-        remainingCapacity: capacity,
-      },
-    });
   }
 
   /**
@@ -851,4 +862,21 @@ interface UpdateData {
   startAt?: Date;
   endAt?: Date;
   capacity?: number;
+}
+
+interface BaseCreateEventData {
+  name: string;
+  startAt: Date;
+  endAt: Date;
+  organizationId: string;
+  contactEmail: string;
+  description?: string;
+  location?: string;
+}
+
+interface CreateEventWithSignUpsData extends BaseCreateEventData {
+  slots: { capacity: number }[];
+  capacity: number;
+  signUpsStartAt: Date;
+  signUpsEndAt: Date;
 }
