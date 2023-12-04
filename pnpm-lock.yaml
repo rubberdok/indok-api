@@ -75,8 +75,8 @@ dependencies:
     specifier: ^5.6.1
     version: 5.6.1
   postmark:
-    specifier: ^3.11.0
-    version: 3.11.0
+    specifier: ^4.0.1
+    version: 4.0.1
   prisma:
     specifier: ^5.6.0
     version: 5.6.0
@@ -3809,14 +3809,6 @@ packages:
       - supports-color
     dev: false
 
-  /axios@0.25.0:
-    resolution: {integrity: sha512-cD8FOb0tRH3uuEe6+evtAbgJtfxr7ly3fQjYcMcuPlgkwVS9xboaVIpcDV+cYQe+yGykgwZCs1pzjntcGa6l5g==}
-    dependencies:
-      follow-redirects: 1.15.3
-    transitivePeerDependencies:
-      - debug
-    dev: false
-
   /axios@1.6.2:
     resolution: {integrity: sha512-7i24Ri4pmDRfJTR7LDBhsOTtcm+9kjX5WiY1X3wIisx6G9So3pfMkEiU7emUBe46oceVImccTEM3k6C5dbVW8A==}
     dependencies:
@@ -3825,7 +3817,6 @@ packages:
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
       - debug
-    dev: true
 
   /babel-jest@29.7.0(@babel/core@7.23.2):
     resolution: {integrity: sha512-BrvGY3xZSwEcCzKvKsCi2GgHqDqsYkOP4/by5xCgIwGXQxIEh+8ew3gmrE1y7XRR6LHZIj6yLYnUi/mm2KXKBg==}
@@ -7933,10 +7924,10 @@ packages:
       find-up: 4.1.0
     dev: true
 
-  /postmark@3.11.0:
-    resolution: {integrity: sha512-asguBQ9M/8ueQMJ1D45iPF+3+T641q8rAU8m8cQSfhDWePw4TVYql9wszjAwSCE93dUonyrF08D8Kvg6USBoFA==}
+  /postmark@4.0.1:
+    resolution: {integrity: sha512-W1SVvjRN7RPf+/G003DWMJt0dH1P05JdhjNkq4R8X9uPS+4fu2G+DnA5Y/C6FDBtjXG08M9kQM6X/UxMq7XXaw==}
     dependencies:
-      axios: 0.25.0
+      axios: 1.6.2
     transitivePeerDependencies:
       - debug
     dev: false
@@ -8009,7 +8000,6 @@ packages:
 
   /proxy-from-env@1.1.0:
     resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
-    dev: true
 
   /pseudomap@1.0.2:
     resolution: {integrity: sha512-b/YwNhb8lk1Zz2+bXXpS/LK9OisiZZ1SNsSLxN1x2OXVEhW2Ckr/7mWE5vrC1ZTiJlD9g19jWszTmJsB+oEpFQ==}
