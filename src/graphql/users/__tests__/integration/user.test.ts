@@ -7,7 +7,7 @@ describe("Users", () => {
   let client: GraphQLTestClient;
 
   beforeAll(async () => {
-    client = await newGraphQLTestClient({ port: 4374 });
+    client = await newGraphQLTestClient({ port: 4222 });
   });
 
   afterAll(() => {
