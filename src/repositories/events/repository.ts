@@ -947,6 +947,28 @@ export class EventRepository {
 
     return signUp;
   }
+
+  async findManySlots(data: { gradeYear?: number; eventId: string }): Promise<EventSlot[]> {
+    const { gradeYear, eventId } = data;
+    if (gradeYear !== undefined) {
+      return this.db.eventSlot.findMany({
+        where: {
+          eventId,
+          gradeYears: {
+            has: gradeYear,
+          },
+        },
+      });
+    }
+    return this.db.eventSlot.findMany({
+      where: {
+        eventId,
+        gradeYears: {
+          hasEvery: [1, 2, 3, 4, 5],
+        },
+      },
+    });
+  }
 }
 
 interface CreateConfirmedSignUpData {

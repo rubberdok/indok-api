@@ -5,6 +5,7 @@ import { DateTime } from "luxon";
 import { z } from "zod";
 
 import { InternalServerError, InvalidArgumentError, NotFoundError, PermissionDeniedError } from "@/domain/errors.js";
+import { signUpAvailability } from "@/domain/events.js";
 import { Role } from "@/domain/organizations.js";
 import { User } from "@/domain/users.js";
 
@@ -66,6 +67,7 @@ export interface EventRepository {
   updateSignUp(
     data: UpdateToConfirmedSignUpData | UpdateToInactiveSignUpData
   ): Promise<{ signUp: EventSignUp; slot?: EventSlot; event: Event }>;
+  findManySlots(data: { gradeYear?: number; eventId: string }): Promise<EventSlot[]>;
 }
 
 export interface UserService {
@@ -638,5 +640,55 @@ export class EventService {
     if (!event.signUpsStartAt || event.signUpsStartAt > DateTime.now().toJSDate()) return false;
     if (!event.signUpsEndAt || event.signUpsEndAt < DateTime.now().toJSDate()) return false;
     return true;
+  }
+
+  async getSignUpAvailability(userId: string | undefined, eventId: string): Promise<keyof typeof signUpAvailability> {
+    const event = await this.eventRepository.getWithSlots(eventId);
+    if (!event.signUpsEnabled) return signUpAvailability.DISABLED;
+
+    /**
+     * User is not signed in
+     */
+    if (!userId) return signUpAvailability.UNAVAILABLE;
+    const user = await this.userService.get(userId);
+
+    try {
+      const signUp = await this.eventRepository.getSignUp(user.id, eventId);
+      if (signUp.participationStatus === ParticipationStatus.CONFIRMED) return signUpAvailability.CONFIRMED;
+      if (signUp.participationStatus === ParticipationStatus.ON_WAITLIST) return signUpAvailability.ON_WAITLIST;
+    } catch (err) {
+      const isNotFoundError = err instanceof NotFoundError;
+      if (!isNotFoundError) throw err;
+    }
+
+    const slots = await this.eventRepository.findManySlots({ gradeYear: user.gradeYear, eventId });
+    /**
+     * There are no slots on the event for this user's grade year, so they cannot sign up
+     */
+    if (slots.length === 0) return signUpAvailability.UNAVAILABLE;
+    /**
+     * Event sign ups have not opened yet
+     */
+    if (!event.signUpsStartAt || event.signUpsStartAt > DateTime.now().toJSDate()) return signUpAvailability.NOT_OPEN;
+    /**
+     * Event sign ups have closed
+     */
+    if (!event.signUpsEndAt || event.signUpsEndAt < DateTime.now().toJSDate()) return signUpAvailability.CLOSED;
+
+    /**
+     * The event is full
+     */
+    if (!event.remainingCapacity) return signUpAvailability.WAITLIST_AVAILABLE;
+
+    const slotWithRemainingCapacity = await this.eventRepository.getSlotWithRemainingCapacity(eventId, user.gradeYear);
+    /**
+     * The slots for the user's grade year are full
+     */
+    if (slotWithRemainingCapacity === null) return signUpAvailability.WAITLIST_AVAILABLE;
+
+    /**
+     * The user can sign up for the event
+     */
+    return signUpAvailability.AVAILABLE;
   }
 }

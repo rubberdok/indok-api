@@ -57,6 +57,25 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
     startAt: DateTime.now().plus({ year: 1 }).toJSDate(),
     endAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
   },
+  {
+    id: faker.string.uuid(),
+    name: fakeName(),
+    startAt: DateTime.now().plus({ year: 1 }).toJSDate(),
+    endAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
+    capacity: 10,
+    remainingCapacity: 10,
+    signUpsEnabled: true,
+    signUpsStartAt: DateTime.now().minus({ day: 1 }).toJSDate(),
+    signUpsEndAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
+    slots: {
+      createMany: {
+        data: [
+          { capacity: 5, remainingCapacity: 5, gradeYears: [1, 2, 3] },
+          { capacity: 5, remainingCapacity: 5, gradeYears: [3, 4, 5] },
+        ],
+      },
+    },
+  },
 ];
 
 export const load = async (db: PrismaClient) => {

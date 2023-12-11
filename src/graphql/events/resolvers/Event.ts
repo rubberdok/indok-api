@@ -14,4 +14,8 @@ export const Event: EventResolvers = {
       throw err;
     }
   },
+  signUpAvailability: async (event, _args, ctx) => {
+    const signUpAvailability = await ctx.eventService.getSignUpAvailability(ctx.user?.id, event.id);
+    return signUpAvailability;
+  },
 };
