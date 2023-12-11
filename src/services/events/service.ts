@@ -5,6 +5,7 @@ import { DateTime } from "luxon";
 import { z } from "zod";
 
 import { InternalServerError, InvalidArgumentError, NotFoundError, PermissionDeniedError } from "@/domain/errors.js";
+import { signUpAvailability } from "@/domain/events.js";
 import { Role } from "@/domain/organizations.js";
 import { User } from "@/domain/users.js";
 
@@ -56,7 +57,7 @@ export interface EventRepository {
   update(id: string, event: Partial<EventData>, signUpDetails?: Partial<SignUpDetails>): Promise<Event>;
   get(id: string): Promise<Event>;
   getWithSlots(id: string): Promise<Event & { slots: EventSlot[] }>;
-  getSlotWithRemainingCapacity(eventId: string): Promise<EventSlot | null>;
+  getSlotWithRemainingCapacity(eventId: string, gradeYear?: number): Promise<EventSlot | null>;
   findMany(data?: { endAtGte?: Date | null }): Promise<Event[]>;
   findManySignUps(data: { eventId: string; status: ParticipationStatus }): Promise<EventSignUp[]>;
   getSignUp(userId: string, eventId: string): Promise<EventSignUp>;
@@ -66,6 +67,7 @@ export interface EventRepository {
   updateSignUp(
     data: UpdateToConfirmedSignUpData | UpdateToInactiveSignUpData
   ): Promise<{ signUp: EventSignUp; slot?: EventSlot; event: Event }>;
+  findManySlots(data: { gradeYear?: number; eventId: string }): Promise<EventSlot[]>;
 }
 
 export interface UserService {
@@ -82,6 +84,7 @@ export class EventService {
   constructor(
     private eventRepository: EventRepository,
     private permissionService: PermissionService,
+    private userService: UserService,
     private logger?: Logger
   ) {}
   /**
@@ -116,7 +119,7 @@ export class EventService {
     signUpDetails?: {
       signUpsEnabled: boolean;
       capacity: number;
-      slots: { capacity: number }[];
+      slots: { capacity: number; gradeYears?: number[] }[];
       signUpsStartAt: Date;
       signUpsEndAt: Date;
     } | null
@@ -136,7 +139,12 @@ export class EventService {
         .object({
           signUpsEnabled: z.boolean(),
           capacity: z.number().int().min(0),
-          slots: z.array(z.object({ capacity: z.number().int().min(0) })),
+          slots: z.array(
+            z.object({
+              capacity: z.number().int().min(0),
+              gradeYears: z.array(z.number().int().min(1).max(5)).optional(),
+            })
+          ),
           signUpsStartAt: z.date(),
           signUpsEndAt: z.date().min(new Date()),
         })
@@ -343,6 +351,8 @@ export class EventService {
    */
   async signUp(userId: string, eventId: string): Promise<EventSignUp> {
     const maxAttempts = 20;
+    const user = await this.userService.get(userId);
+
     /**
      * We may need to retry this multiple times, as we rely on optimistic concurrency control
      * to ensure that that the event and slot have not been updated since we last fetched them.
@@ -350,7 +360,6 @@ export class EventService {
      *
      * This number may need to be tweaked.
      */
-
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       this.logger?.info({ userId, eventId, attempt }, "Attempting to sign up user for event.");
       // Fetch the event to check if it has available slots or not
@@ -371,7 +380,7 @@ export class EventService {
       }
 
       try {
-        const slotToSignUp = await this.eventRepository.getSlotWithRemainingCapacity(eventId);
+        const slotToSignUp = await this.eventRepository.getSlotWithRemainingCapacity(eventId, user.gradeYear);
 
         if (slotToSignUp === null) {
           this.logger?.info({ event }, "Event is full, adding user to wait list.");
@@ -616,7 +625,8 @@ export class EventService {
       if (!isNotFoundError) throw err;
     }
 
-    const slot = await this.eventRepository.getSlotWithRemainingCapacity(eventId);
+    const user = await this.userService.get(userId);
+    const slot = await this.eventRepository.getSlotWithRemainingCapacity(eventId, user.gradeYear);
     return slot !== null;
   }
 
@@ -629,5 +639,55 @@ export class EventService {
     if (!event.signUpsStartAt || event.signUpsStartAt > DateTime.now().toJSDate()) return false;
     if (!event.signUpsEndAt || event.signUpsEndAt < DateTime.now().toJSDate()) return false;
     return true;
+  }
+
+  async getSignUpAvailability(userId: string | undefined, eventId: string): Promise<keyof typeof signUpAvailability> {
+    const event = await this.eventRepository.getWithSlots(eventId);
+    if (!event.signUpsEnabled) return signUpAvailability.DISABLED;
+
+    /**
+     * User is not signed in
+     */
+    if (!userId) return signUpAvailability.UNAVAILABLE;
+    const user = await this.userService.get(userId);
+
+    try {
+      const signUp = await this.eventRepository.getSignUp(user.id, eventId);
+      if (signUp.participationStatus === ParticipationStatus.CONFIRMED) return signUpAvailability.CONFIRMED;
+      if (signUp.participationStatus === ParticipationStatus.ON_WAITLIST) return signUpAvailability.ON_WAITLIST;
+    } catch (err) {
+      const isNotFoundError = err instanceof NotFoundError;
+      if (!isNotFoundError) throw err;
+    }
+
+    const slots = await this.eventRepository.findManySlots({ gradeYear: user.gradeYear, eventId });
+    /**
+     * There are no slots on the event for this user's grade year, so they cannot sign up
+     */
+    if (slots.length === 0) return signUpAvailability.UNAVAILABLE;
+    /**
+     * Event sign ups have not opened yet
+     */
+    if (!event.signUpsStartAt || event.signUpsStartAt > DateTime.now().toJSDate()) return signUpAvailability.NOT_OPEN;
+    /**
+     * Event sign ups have closed
+     */
+    if (!event.signUpsEndAt || event.signUpsEndAt < DateTime.now().toJSDate()) return signUpAvailability.CLOSED;
+
+    /**
+     * The event is full
+     */
+    if (!event.remainingCapacity) return signUpAvailability.WAITLIST_AVAILABLE;
+
+    const slotWithRemainingCapacity = await this.eventRepository.getSlotWithRemainingCapacity(eventId, user.gradeYear);
+    /**
+     * The slots for the user's grade year are full
+     */
+    if (slotWithRemainingCapacity === null) return signUpAvailability.WAITLIST_AVAILABLE;
+
+    /**
+     * The user can sign up for the event
+     */
+    return signUpAvailability.AVAILABLE;
   }
 }

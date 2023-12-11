@@ -21,6 +21,7 @@ import { ZodError } from "zod";
 
 import { BookingStatus } from "@/domain/cabins.js";
 import { KnownDomainError, errorCodes } from "@/domain/errors.js";
+import { SignUpAvailability } from "@/domain/events.js";
 import { Role } from "@/domain/organizations.js";
 import { User } from "@/domain/users.js";
 
@@ -190,6 +191,7 @@ interface IEventService {
   signUp(userId: string, eventId: string): Promise<EventSignUp>;
   retractSignUp(userId: string, eventId: string): Promise<EventSignUp>;
   canSignUpForEvent(userId: string, eventId: string): Promise<boolean>;
+  getSignUpAvailability(userId: string | undefined, eventId: string): Promise<SignUpAvailability>;
 }
 
 interface ListingService {

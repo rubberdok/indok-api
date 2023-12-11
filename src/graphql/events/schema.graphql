@@ -21,6 +21,41 @@ type Event {
   If the user is not logged in, this will be always be false.
   """
   canSignUp: Boolean!
+  """
+  signUpAvailability describes the availability of sign ups for the event for the current user.
+  """
+  signUpAvailability: SignUpAvailability!
+}
+
+enum SignUpAvailability {
+  """
+  There are no slots for the event for the user to sign up for, regardless of their current capacity.
+  If the user is not logged in, the status will always be UNAVAILABLE.
+  """
+  UNAVAILABLE
+  """
+  Sign ups are open, enabled, and there is at least one slot available for the user to sign up for.
+  """
+  AVAILABLE
+
+  """
+  Sign ups have not opened yet
+  """
+  NOT_OPEN
+  """
+  The user is not signed up for the event, and sign ups are closed
+  """
+  CLOSED
+  """
+  All slots are full, and the user is not signed up for the event. The user can sign up for the wait list.
+  """
+  WAITLIST_AVAILABLE
+  """
+  Sign ups are not enabled for the event
+  """
+  DISABLED
+  CONFIRMED
+  ON_WAITLIST
 }
 
 type EventsResponse {

@@ -178,6 +178,11 @@ type Event {
   name: String!
 
   """
+  signUpAvailability describes the availability of sign ups for the event for the current user.
+  """
+  signUpAvailability: SignUpAvailability!
+
+  """
   The start time of the event.
   """
   startAt: DateTime!
@@ -595,6 +600,41 @@ type SignUp {
   The user that signed up for the event
   """
   user: PublicUser!
+}
+
+enum SignUpAvailability {
+  """
+  Sign ups are open, enabled, and there is at least one slot available for the user to sign up for.
+  """
+  AVAILABLE
+
+  """
+  The user is not signed up for the event, and sign ups are closed
+  """
+  CLOSED
+  CONFIRMED
+
+  """
+  Sign ups are not enabled for the event
+  """
+  DISABLED
+
+  """
+  Sign ups have not opened yet
+  """
+  NOT_OPEN
+  ON_WAITLIST
+
+  """
+  There are no slots for the event for the user to sign up for, regardless of their current capacity.
+  If the user is not logged in, the status will always be UNAVAILABLE.
+  """
+  UNAVAILABLE
+
+  """
+  All slots are full, and the user is not signed up for the event. The user can sign up for the wait list.
+  """
+  WAITLIST_AVAILABLE
 }
 
 input SignUpData {

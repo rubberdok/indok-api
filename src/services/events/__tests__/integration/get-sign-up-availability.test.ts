@@ -2,6 +2,7 @@ import { faker } from "@faker-js/faker";
 import { Organization, ParticipationStatus, User } from "@prisma/client";
 import { DateTime } from "luxon";
 
+import { SignUpAvailability } from "@/domain/events.js";
 import prisma from "@/lib/prisma.js";
 
 import { EventService } from "../../service.js";
@@ -15,7 +16,7 @@ describe("EventService", () => {
     ({ eventService } = makeDependencies());
   });
 
-  describe("canSignUpForEvent", () => {
+  describe("#getSignUpAvailability", () => {
     interface TestCase {
       name: string;
       arrange: {
@@ -34,12 +35,12 @@ describe("EventService", () => {
         };
         signUp?: { participationStatus: ParticipationStatus; active: boolean };
       };
-      expected: boolean;
+      expected: SignUpAvailability;
     }
 
     const testCases: TestCase[] = [
       {
-        name: "if the user does not have a sign up for the event, and there is capacity on the event and a slot",
+        name: "if the user is `null`, and sign ups are enabled",
         arrange: {
           signUpDetails: {
             signUpsEnabled: true,
@@ -53,69 +54,10 @@ describe("EventService", () => {
             ],
           },
         },
-        expected: true,
+        expected: "UNAVAILABLE",
       },
       {
-        name: "if the user has an inactive sign up for the event, and there is capacity on the event and a slot",
-        arrange: {
-          signUpDetails: {
-            signUpsEnabled: true,
-            signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-            signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-            capacity: 1,
-            slots: [
-              {
-                capacity: 1,
-              },
-            ],
-          },
-          signUp: {
-            participationStatus: ParticipationStatus.ON_WAITLIST,
-            active: false,
-          },
-        },
-        expected: true,
-      },
-      {
-        name: "if the user has an active sign up for the event, even if there is capacity on the event and slot",
-        arrange: {
-          signUpDetails: {
-            signUpsEnabled: true,
-            signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-            signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-            capacity: 1,
-            slots: [
-              {
-                capacity: 1,
-              },
-            ],
-          },
-          signUp: {
-            participationStatus: ParticipationStatus.CONFIRMED,
-            active: true,
-          },
-        },
-        expected: false,
-      },
-      {
-        name: "if there is no capacity on the event, even if there is capacity in a slot",
-        arrange: {
-          signUpDetails: {
-            signUpsEnabled: true,
-            signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-            signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-            capacity: 0,
-            slots: [
-              {
-                capacity: 1,
-              },
-            ],
-          },
-        },
-        expected: false,
-      },
-      {
-        name: "if signUpsEnabled: false, even if there is capacity",
+        name: "if sign ups are disabled",
         arrange: {
           signUpDetails: {
             signUpsEnabled: false,
@@ -129,28 +71,12 @@ describe("EventService", () => {
             ],
           },
         },
-        expected: false,
+        expected: "DISABLED",
       },
       {
-        name: "if there is no slot with capacity on the event, even if there is capacity on the event",
+        name: "if sign ups have not started yet",
         arrange: {
-          signUpDetails: {
-            signUpsEnabled: true,
-            signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-            signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-            capacity: 1,
-            slots: [
-              {
-                capacity: 0,
-              },
-            ],
-          },
-        },
-        expected: false,
-      },
-      {
-        name: "if sign ups have not started",
-        arrange: {
+          user: { graduationYear: DateTime.now().year + 1 },
           signUpDetails: {
             signUpsEnabled: true,
             signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
@@ -163,10 +89,74 @@ describe("EventService", () => {
             ],
           },
         },
-        expected: false,
+        expected: "NOT_OPEN",
       },
       {
-        name: "if a slot is available for the user's grade year",
+        name: "if there are no slots for this user's grade year, regardless of capacity",
+        arrange: {
+          user: { graduationYear: DateTime.now().year + 1 },
+          signUpDetails: {
+            signUpsEnabled: true,
+            signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+            signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+            capacity: 0,
+            slots: [
+              {
+                capacity: 1,
+                gradeYears: [1],
+              },
+              {
+                capacity: 100,
+                gradeYears: [2],
+              },
+            ],
+          },
+        },
+        expected: "UNAVAILABLE",
+      },
+      {
+        name: "if the event is full, and the user is not signed up",
+        arrange: {
+          user: { graduationYear: DateTime.now().year + 1 },
+          signUpDetails: {
+            signUpsEnabled: true,
+            signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+            signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+            capacity: 0,
+            slots: [
+              {
+                capacity: 1,
+              },
+            ],
+          },
+        },
+        expected: "WAITLIST_AVAILABLE",
+      },
+      {
+        name: "if all slots for the user's grade year are full, and the user is not signed up",
+        arrange: {
+          user: { graduationYear: DateTime.now().year + 1 },
+          signUpDetails: {
+            signUpsEnabled: true,
+            signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+            signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+            capacity: 1,
+            slots: [
+              {
+                gradeYears: [4, 5],
+                capacity: 0,
+              },
+              {
+                gradeYears: [1, 2],
+                capacity: 10,
+              },
+            ],
+          },
+        },
+        expected: "WAITLIST_AVAILABLE",
+      },
+      {
+        name: "if the user can sign up for the event as a confirmed sign up",
         arrange: {
           user: {
             graduationYear: DateTime.now().year + 1,
@@ -175,70 +165,66 @@ describe("EventService", () => {
             signUpsEnabled: true,
             signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
             signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-            capacity: 1,
+            capacity: 10,
             slots: [
               {
-                gradeYears: [1, 2, 3, 4, 5],
-                capacity: 1,
+                gradeYears: [4, 5],
+                capacity: 10,
               },
             ],
           },
         },
-        expected: true,
+        expected: "AVAILABLE",
       },
       {
-        name: "if a slot is not available for the user's grade year",
+        name: "if the user already has a confirmed sign up for the event",
         arrange: {
           user: {
             graduationYear: DateTime.now().year + 3,
+          },
+          signUp: {
+            participationStatus: "CONFIRMED",
+            active: true,
           },
           signUpDetails: {
             signUpsEnabled: true,
             signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
             signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-            capacity: 1,
+            capacity: 10,
             slots: [
               {
-                gradeYears: [1],
-                capacity: 1,
+                gradeYears: [1, 2, 3, 4, 5],
+                capacity: 10,
               },
             ],
           },
         },
-        expected: false,
+        expected: "CONFIRMED",
       },
       {
-        name: "if at least one slot is available for the user's grade year",
+        name: "if the user already has a wait list sign up for the event",
         arrange: {
           user: {
             graduationYear: DateTime.now().year + 3,
+          },
+          signUp: {
+            participationStatus: "ON_WAITLIST",
+            active: true,
           },
           signUpDetails: {
             signUpsEnabled: true,
             signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
             signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-            capacity: 1,
+            capacity: 10,
             slots: [
               {
                 gradeYears: [1, 2, 3, 4, 5],
-                capacity: 1,
-              },
-              {
-                gradeYears: [1, 2, 3, 4, 5],
-                capacity: 1,
-              },
-              {
-                gradeYears: [1, 2, 3, 4, 5],
-                capacity: 1,
-              },
-              {
-                gradeYears: [1, 2, 3, 4, 5],
-                capacity: 1,
+                capacity: 10,
               },
             ],
           },
         },
-        expected: true,
+        expected: "ON_WAITLIST",
       },
       {
         name: "if there is a slot open for all grade years and the user has not set their graduation year",
@@ -257,7 +243,30 @@ describe("EventService", () => {
             ],
           },
         },
-        expected: true,
+        expected: "AVAILABLE",
+      },
+      {
+        name: "if the event is full and the user is signed up",
+        arrange: {
+          user: {},
+          signUp: {
+            participationStatus: "CONFIRMED",
+            active: true,
+          },
+          signUpDetails: {
+            signUpsEnabled: true,
+            signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+            signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+            capacity: 0,
+            slots: [
+              {
+                gradeYears: [2, 3, 4, 5],
+                capacity: 0,
+              },
+            ],
+          },
+        },
+        expected: "CONFIRMED",
       },
       {
         name: "if there is not a slot open for all grade years and the user has not set their graduation year",
@@ -276,7 +285,7 @@ describe("EventService", () => {
             ],
           },
         },
-        expected: false,
+        expected: "UNAVAILABLE",
       },
     ];
 
@@ -290,7 +299,7 @@ describe("EventService", () => {
        * Create a sign up for the user and the event with the participation status specified in the test case
        * if the participation status is CONFIRMED, create a sign up for the user and the slot
        */
-      const { user, organization } = await makeUserWithOrganizationMembership(arrange.user);
+      const { user, organization } = await makeUserWithOrganizationMembership(arrange.user ?? {});
       const event = await eventService.create(
         user.id,
         organization.id,
@@ -317,7 +326,7 @@ describe("EventService", () => {
        *
        * Call the canSignUpForEvent function with the user and the event
        */
-      const actual = await eventService.canSignUpForEvent(user.id, event.id);
+      const actual = await eventService.getSignUpAvailability(arrange.user && user.id, event.id);
 
       /**
        * Assert
@@ -327,7 +336,7 @@ describe("EventService", () => {
       expect(actual).toBe(expected);
     });
 
-    it("should return false if sign ups have ended", async () => {
+    it("should return CLOSED if sign ups have ended", async () => {
       /**
        * Arrange
        *
@@ -361,14 +370,14 @@ describe("EventService", () => {
        *
        * Call the canSignUpForEvent function with the user and the event
        */
-      const actual = await eventService.canSignUpForEvent(user.id, event.id);
+      const actual = await eventService.getSignUpAvailability(user.id, event.id);
 
       /**
        * Assert
        *
        * Assert that the result is the expected result
        */
-      expect(actual).toBe(false);
+      expect(actual).toBe("CLOSED");
     });
   });
 });

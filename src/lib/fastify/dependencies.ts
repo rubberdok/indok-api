@@ -56,8 +56,8 @@ export function dependenciesFactory(): ServerDependencies {
   const organizationService = new OrganizationService(organizationRepository, memberRepository, permissionService);
   const listingService = new ListingService(listingRepository, permissionService);
   const cabinService = new CabinService(cabinRepository, mailService, permissionService);
-  const eventService = new EventService(eventRepository, permissionService);
   const userService = new UserService(userRepository, permissionService);
+  const eventService = new EventService(eventRepository, permissionService, userService);
   const authService = new AuthService(userService, feideClient);
 
   const apolloServerDependencies: ApolloServerDependencies = {

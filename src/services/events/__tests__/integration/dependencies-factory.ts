@@ -4,6 +4,7 @@ import { MemberRepository } from "@/repositories/organizations/members.js";
 import { OrganizationRepository } from "@/repositories/organizations/organizations.js";
 import { UserRepository } from "@/repositories/users/index.js";
 import { PermissionService } from "@/services/permissions/service.js";
+import { UserService } from "@/services/users/service.js";
 
 import { EventService } from "../../service.js";
 
@@ -13,6 +14,7 @@ export function makeDependencies() {
   const memberRepository = new MemberRepository(prisma);
   const userRepository = new UserRepository(prisma);
   const permissionService = new PermissionService(memberRepository, userRepository, organizationRepository);
-  const eventService = new EventService(eventRepository, permissionService);
+  const userService = new UserService(userRepository, permissionService);
+  const eventService = new EventService(eventRepository, permissionService, userService);
   return { eventService };
 }
