@@ -448,11 +448,11 @@ export class EventService {
    */
   async promoteFromWaitList(eventId: string): Promise<EventSignUp | null> {
     const event = await this.eventRepository.get(eventId);
-    if (event.remainingCapacity === null) {
+    if (!event.signUpsEnabled) {
       throw new InvalidArgumentError("This event does does not have sign ups.");
     }
 
-    if (event.remainingCapacity <= 0) {
+    if (!event.remainingCapacity || event.remainingCapacity <= 0) {
       throw new InvalidArgumentError("This event is full.");
     }
 
