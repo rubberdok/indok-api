@@ -124,6 +124,7 @@ input EventData {
 
 input CreateEventSlot {
   capacity: Int!
+  gradeYears: [Int!]
 }
 
 type EventResponse {

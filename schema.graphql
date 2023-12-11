@@ -89,6 +89,7 @@ type CreateEventResponse {
 
 input CreateEventSlot {
   capacity: Int!
+  gradeYears: [Int!]
 }
 
 input CreateListingInput {
