@@ -33,6 +33,41 @@ type CreateEventResponse {
 
 input CreateEventInput {
   """
+  The organization that is hosting the event. Events must be hosted by an organization, and the user
+  creating the event must be a member of the organization.
+  """
+  organizationId: ID!
+  event: EventData!
+  signUpDetails: SignUpData
+}
+
+input SignUpData {
+  """
+  If true, users can sign up for the event. If false, users cannot sign up for the event.
+  """
+  enabled: Boolean!
+  """
+  The time that sign ups open for the event. This must be before the start time of the event.
+  """
+  signUpsStartAt: DateTime!
+  """
+  The time that sign ups close for the event. This must be after signUpsOpenAt.
+  """
+  signUpsEndAt: DateTime!
+  """
+  Total capacity for the event, regardless of the capacity in each slot.
+  This number takes precedence over the capacity in each slot, so if the remaining capacity on the event is 0
+  no more users can be registered as attending.
+  """
+  capacity: Int!
+  """
+  The slots for the event. If this is not provided, but capacity is, then all users can attend the event.
+  """
+  slots: [CreateEventSlot!]!
+}
+
+input EventData {
+  """
   The name of the event, this will be displayed to users
   """
   name: String!
@@ -42,11 +77,6 @@ input CreateEventInput {
   """
   description: String
   """
-  The organization that is hosting the event. Events must be hosted by an organization, and the user
-  creating the event must be a member of the organization.
-  """
-  organizationId: ID!
-  """
   The start time of the event. Events must have a start time.
   """
   startAt: DateTime!
@@ -55,16 +85,6 @@ input CreateEventInput {
   This will be displayed to users.
   """
   endAt: DateTime
-  """
-  Total capacity for the event, regardless of the capacity in each slot.
-  This number takes precedence over the capacity in each slot, so if the remaining capacity on the event is 0
-  no more users can be registered as attending.
-  """
-  capacity: Int
-  """
-  The slots for the event. If this is not provided, but capacity is, then all users can attend the event.
-  """
-  slots: [CreateEventSlot!]
 }
 
 input CreateEventSlot {

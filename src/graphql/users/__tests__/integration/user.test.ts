@@ -10,8 +10,8 @@ describe("Users", () => {
     client = await newGraphQLTestClient({ port: 4142 });
   });
 
-  afterAll(() => {
-    client.close();
+  afterAll(async () => {
+    await client.close();
   });
 
   describe("query user", () => {

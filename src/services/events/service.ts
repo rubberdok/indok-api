@@ -1,6 +1,7 @@
 import { Event, EventSignUp, EventSlot, ParticipationStatus } from "@prisma/client";
 import { FastifyBaseLogger } from "fastify";
 import { merge } from "lodash-es";
+import { DateTime } from "luxon";
 import { z } from "zod";
 
 import { InternalServerError, InvalidArgumentError, NotFoundError, PermissionDeniedError } from "@/domain/errors.js";
@@ -33,29 +34,28 @@ interface UpdateToInactiveSignUpData {
   newParticipationStatus: Extract<ParticipationStatus, "REMOVED" | "RETRACTED">;
 }
 
+interface EventData {
+  name: string;
+  description?: string;
+  startAt: Date;
+  endAt: Date;
+  organizationId: string;
+  contactEmail?: string;
+  location?: string;
+}
+
+interface SignUpDetails {
+  capacity: number;
+  slots: { capacity: number }[];
+  signUpsStartAt: Date;
+  signUpsEndAt: Date;
+}
+
 export interface EventRepository {
-  create(data: {
-    name: string;
-    description?: string;
-    startAt: Date;
-    endAt: Date;
-    organizationId: string;
-    contactEmail?: string;
-    location?: string;
-    capacity?: number;
-    slots?: { capacity: number }[];
-  }): Promise<Event>;
-  update(
-    id: string,
-    data: {
-      name?: string;
-      description?: string;
-      startAt?: Date;
-      endAt?: Date;
-      location?: string;
-    }
-  ): Promise<Event>;
+  create(event: EventData, signUpDetails?: SignUpDetails): Promise<Event>;
+  update(id: string, event: Partial<EventData>, signUpDetails?: Partial<SignUpDetails>): Promise<Event>;
   get(id: string): Promise<Event>;
+  getWithSlots(id: string): Promise<Event & { slots: EventSlot[] }>;
   getSlotWithRemainingCapacity(eventId: string): Promise<EventSlot | null>;
   findMany(data?: { endAtGte?: Date | null }): Promise<Event[]>;
   findManySignUps(data: { eventId: string; status: ParticipationStatus }): Promise<EventSignUp[]>;
@@ -96,21 +96,30 @@ export class EventService {
    * @param data.endAt - The end datetime of the event
    * @param data.location - The location of the event
    * @param data.contactEmail - The email address of the contact person for the event
+   * @param signUps.capacity - The total number of sign ups allowed for the event
+   * @param signUps.slots - The slots for the event
+   * @param signUps.signUpsStartAt - The datetime when sign ups for the event open
+   * @param signUps.signUpsEndAt - The datetime when sign ups for the event close
    * @returns The created event
    */
   async create(
     userId: string,
     organizationId: string,
-    data: {
+    event: {
       name: string;
       description?: string | null;
       startAt: Date;
       endAt?: Date | null;
       location?: string | null;
-      capacity?: number | null;
-      slots?: { capacity: number }[] | null;
       contactEmail?: string | null;
-    }
+    },
+    signUpDetails?: {
+      signUpsEnabled: boolean;
+      capacity: number;
+      slots: { capacity: number }[];
+      signUpsStartAt: Date;
+      signUpsEndAt: Date;
+    } | null
   ) {
     const isMember = await this.permissionService.hasRole({
       userId,
@@ -118,47 +127,148 @@ export class EventService {
       role: Role.MEMBER,
     });
 
-    if (isMember === false) {
+    if (isMember !== true) {
       throw new PermissionDeniedError("You do not have permission to create an event for this organization.");
     }
 
-    const schema = z
-      .object({
-        name: z.string().min(1).max(100),
-        description: z.string().max(500).optional(),
-        startAt: z.date().min(new Date()),
-        endAt: z.date().min(new Date()).optional(),
-        location: z.string().max(100).optional(),
-        capacity: z.number().int().min(0).optional(),
-        slots: z.array(z.object({ capacity: z.number().int().min(0) })).optional(),
-        contactEmail: z.string().email().optional(),
-      })
-      .refine((data) => (data.endAt ? data.startAt < data.endAt : true), {
-        message: "End date must be after start date",
-        path: ["endAt"],
-      });
+    try {
+      const validatedSignUpDetails = z
+        .object({
+          signUpsEnabled: z.boolean(),
+          capacity: z.number().int().min(0),
+          slots: z.array(z.object({ capacity: z.number().int().min(0) })),
+          signUpsStartAt: z.date(),
+          signUpsEndAt: z.date().min(new Date()),
+        })
+        .optional()
+        .transform((data) => data ?? undefined)
+        .refine(
+          (data) => {
+            if (!data) return true;
+            return data.signUpsEndAt > data.signUpsStartAt;
+          },
+          {
+            message: "Sign ups end date must be after sign ups start date",
+            path: ["signUpsEndAt"],
+          }
+        )
+        .parse(signUpDetails);
 
-    const parsed = schema.safeParse(data);
-    if (!parsed.success) {
-      throw new InvalidArgumentError(parsed.error.message);
-    }
+      const {
+        name,
+        description,
+        startAt,
+        endAt = DateTime.fromJSDate(startAt).plus({ hours: 2 }).toJSDate(),
+        location,
+        contactEmail,
+      } = z
+        .object({
+          name: z.string().min(1).max(100),
+          description: z
+            .string()
+            .max(10_000)
+            .optional()
+            .transform((val) => val ?? undefined),
+          startAt: z.date().min(new Date()),
+          endAt: z
+            .date()
+            .min(new Date())
+            .optional()
+            .transform((val) => val ?? undefined),
+          location: z
+            .string()
+            .max(100)
+            .optional()
+            .transform((val) => val ?? undefined),
+          contactEmail: z
+            .string()
+            .email()
+            .optional()
+            .transform((val) => val ?? undefined),
+        })
+        .refine(
+          (data) => {
+            if (data.endAt === undefined) return true;
+            return data.endAt > data.startAt;
+          },
+          {
+            message: "End date must be after start date",
+            path: ["endAt"],
+          }
+        )
+        .parse(event);
 
-    const { name, description, startAt, location, slots, capacity, contactEmail } = parsed.data;
-    let endAt = parsed.data.endAt;
-    if (!endAt) {
-      endAt = new Date(startAt.getTime() + 2 * 60 * 60 * 1000);
+      return await this.eventRepository.create(
+        {
+          name,
+          description,
+          startAt,
+          endAt,
+          location,
+          contactEmail,
+          organizationId,
+        },
+        validatedSignUpDetails
+      );
+    } catch (err) {
+      if (err instanceof z.ZodError) throw new InvalidArgumentError(err.message);
+      throw err;
     }
-    return await this.eventRepository.create({
-      name,
-      description,
-      startAt,
-      endAt,
-      organizationId,
-      location,
-      contactEmail,
-      capacity,
-      slots,
+  }
+
+  private validateUpdateSignUpDetails(
+    data: Partial<SignUpDetails>,
+    existingEvent: Event & { slots: EventSlot[] }
+  ): SignUpDetails {
+    const changingStartAt = data.signUpsStartAt !== undefined;
+    const changingEndAt = data.signUpsEndAt !== undefined;
+
+    const schema = z.object({
+      signUpsEnabled: z.boolean(),
+      capacity: z.number().int().min(0),
+      slots: z.array(z.object({ capacity: z.number().int().min(0) })),
+      signUpsStartAt: z.date(),
+      signUpsEndAt: z.date(),
     });
+
+    if (changingStartAt || changingEndAt) {
+      return schema
+        .extend({
+          signUpsStartAt: z.date(),
+          signUpsEndAt: z.date().min(new Date()),
+        })
+        .refine((data) => data.signUpsEndAt > data.signUpsStartAt, {
+          message: "Sign ups end date must be after sign ups start date",
+          path: ["signUpsEndAt"],
+        })
+        .parse(merge({}, existingEvent, data));
+    }
+    return schema.parse(merge({}, existingEvent, data));
+  }
+
+  private validateUpdateEventData(data: Partial<EventData>, existingEvent: Event): Partial<EventData> {
+    const changingStartAt = data.startAt !== undefined;
+    const changingEndAt = data.endAt !== undefined;
+    const schema = z.object({
+      name: z.string().min(1).max(100).optional(),
+      description: z.string().max(10_000).optional(),
+      location: z.string().max(100).optional(),
+      contactEmail: z.string().email().optional(),
+    });
+
+    if (changingStartAt || changingEndAt) {
+      return schema
+        .extend({
+          startAt: z.date().min(new Date()),
+          endAt: z.date().min(new Date()),
+        })
+        .refine((data) => data.endAt > data.startAt, {
+          message: "End date must be after start date",
+          path: ["endAt"],
+        })
+        .parse(merge({}, existingEvent, data));
+    }
+    return schema.parse(merge({}, existingEvent, data));
   }
 
   /**
@@ -180,10 +290,16 @@ export class EventService {
       startAt?: Date;
       endAt?: Date;
       location?: string;
-      capacity?: number;
-    }
+    },
+    signUpDetails?: Partial<{
+      signUpsEnabled: boolean;
+      capacity: number;
+      slots: { capacity: number }[];
+      signUpsStartAt: Date;
+      signUpsEndAt: Date;
+    }>
   ): Promise<Event> {
-    const event = await this.eventRepository.get(eventId);
+    const event = await this.eventRepository.getWithSlots(eventId);
     if (!event.organizationId) {
       throw new InvalidArgumentError("Events that belong to deleted organizations cannot be updated.");
     }
@@ -194,41 +310,20 @@ export class EventService {
       role: Role.MEMBER,
     });
 
-    if (isMember === true) {
-      let validatedData: Partial<Event> = {};
-      const baseSchema = z.object({
-        name: z.string().min(1).max(100).optional(),
-        description: z.string().max(500).optional(),
-        location: z.string().max(100).optional(),
-      });
-
-      const changingStartAt = typeof data.startAt !== "undefined";
-      const changingEndAt = typeof data.endAt !== "undefined";
-
-      try {
-        if (changingStartAt || changingEndAt) {
-          const schema = baseSchema
-            .extend({
-              startAt: z.date().min(new Date()),
-              endAt: z.date().min(new Date()),
-            })
-            .refine((data) => data.endAt > data.startAt, {
-              message: "End date must be after start date",
-              path: ["endAt"],
-            });
-
-          validatedData = schema.parse(merge({}, { startAt: event.startAt, endAt: event.endAt }, data));
-        } else {
-          const schema = baseSchema;
-          validatedData = schema.parse(data);
-        }
-      } catch (err) {
-        if (err instanceof z.ZodError) throw new InvalidArgumentError(err.message);
-        throw err;
-      }
-      return await this.eventRepository.update(eventId, validatedData);
-    } else {
+    if (isMember !== true) {
       throw new PermissionDeniedError("You do not have permission to update this event.");
+    }
+    try {
+      let validatedSignUpDetails: SignUpDetails | undefined = undefined;
+      if (signUpDetails) {
+        validatedSignUpDetails = this.validateUpdateSignUpDetails(signUpDetails, event);
+      }
+
+      const validatedEvent: Partial<EventData> = this.validateUpdateEventData(data, event);
+      return await this.eventRepository.update(eventId, validatedEvent, validatedSignUpDetails);
+    } catch (err) {
+      if (err instanceof z.ZodError) throw new InvalidArgumentError(err.message);
+      throw err;
     }
   }
 
@@ -260,12 +355,12 @@ export class EventService {
       this.logger?.info({ userId, eventId, attempt }, "Attempting to sign up user for event.");
       // Fetch the event to check if it has available slots or not
       const event = await this.eventRepository.get(eventId);
-      if (event.remainingCapacity === null) {
-        throw new InvalidArgumentError("This event does does not have sign ups.");
+      if (!this.areSignUpsAvailable(event)) {
+        throw new InvalidArgumentError("Cannot sign up for the event.");
       }
 
       // If there is no remaining capacity on the event, it doesn't matter if there is any remaining capacity in slots.
-      if (event.remainingCapacity <= 0) {
+      if (event.remainingCapacity !== null && event.remainingCapacity <= 0) {
         this.logger?.info({ event }, "Event is full, adding user to wait list.");
         const { signUp } = await this.eventRepository.createSignUp({
           userId,
@@ -509,9 +604,9 @@ export class EventService {
    */
   async canSignUpForEvent(userId: string, eventId: string): Promise<boolean> {
     const event = await this.eventRepository.get(eventId);
-    if (event.remainingCapacity === null) return false;
 
-    if (event.remainingCapacity <= 0) return false;
+    if (!this.areSignUpsAvailable(event)) return false;
+    if (!event.remainingCapacity || event.remainingCapacity <= 0) return false;
 
     try {
       const signUp = await this.eventRepository.getSignUp(userId, eventId);
@@ -523,5 +618,16 @@ export class EventService {
 
     const slot = await this.eventRepository.getSlotWithRemainingCapacity(eventId);
     return slot !== null;
+  }
+
+  /**
+   * areSignUpsAvailable returns true if sign ups are available for the event, i.e.
+   * if sign ups are enabled, and the current time is between the start and end date for sign ups.
+   */
+  private areSignUpsAvailable(event: Event): boolean {
+    if (!event.signUpsEnabled) return false;
+    if (!event.signUpsStartAt || event.signUpsStartAt > DateTime.now().toJSDate()) return false;
+    if (!event.signUpsEndAt || event.signUpsEndAt < DateTime.now().toJSDate()) return false;
+    return true;
   }
 }

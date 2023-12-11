@@ -91,4 +91,50 @@ describe("EventRepository", () => {
       events.forEach((event) => expect(event.id).not.toEqual(eventInThePast.id));
     });
   });
+
+  describe("getWithSlots", () => {
+    it("should return an event with slots", async () => {
+      /**
+       * Arrange
+       *
+       * 1. Create an event with slots
+       */
+      const organization = await prisma.organization.create({
+        data: {
+          name: faker.string.sample(20),
+        },
+      });
+      const event = await eventRepository.create(
+        {
+          name: faker.word.adjective(),
+          startAt: new Date(),
+          endAt: new Date(),
+          contactEmail: faker.internet.email(),
+          organizationId: organization.id,
+        },
+        {
+          slots: [{ capacity: 1 }, { capacity: 2 }, { capacity: 3 }],
+          capacity: 5,
+          signUpsEnabled: true,
+          signUpsStartAt: new Date(),
+          signUpsEndAt: new Date(),
+        }
+      );
+
+      /**
+       * Act
+       *
+       * 1. Get the event
+       */
+      const result = await eventRepository.getWithSlots(event.id);
+
+      /**
+       * Assert
+       *
+       * 1. The event should have slots
+       */
+      expect(result.slots).toBeDefined();
+      expect(result.slots.length).toEqual(3);
+    });
+  });
 });
