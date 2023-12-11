@@ -122,7 +122,6 @@ export class EventService {
       slots: { capacity: number; gradeYears?: number[] }[];
       signUpsStartAt: Date;
       signUpsEndAt: Date;
-      gradeYears?: number[] | null;
     } | null
   ) {
     const isMember = await this.permissionService.hasRole({
