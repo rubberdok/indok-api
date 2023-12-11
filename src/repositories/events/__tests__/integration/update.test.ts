@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
-import { range } from "lodash-es";
+import { merge, range } from "lodash-es";
 
 import { InvalidCapacityError } from "@/domain/events.js";
 import prisma from "@/lib/prisma.js";
@@ -14,367 +14,574 @@ describe("EventRepository", () => {
     eventRepository = new EventRepository(prisma);
   });
 
-  describe("update capacity", () => {
-    interface TestCase {
-      name: string;
-      arrange: {
-        capacity?: number;
-      };
-      act: {
-        capacity: number;
-      };
-      assert: {
-        capacity: number;
-        remainingCapacity: number;
-      };
-    }
-
-    const testCases: TestCase[] = [
-      {
-        name: "should update the capacity when the capacity is null",
+  describe("#update", () => {
+    describe("with existing sign ups, updating existing slots", () => {
+      interface TestCase {
+        name: string;
         arrange: {
-          capacity: undefined,
-        },
+          signUps: number;
+          event: {
+            capacity: number;
+          };
+          slots: {
+            capacity: number;
+          }[];
+        };
         act: {
-          capacity: 10,
-        },
+          signUpDetails: {
+            signUpsEnabled: boolean;
+            capacity: number;
+            slots: {
+              capacity: number;
+            }[];
+            signUpsStartAt: Date;
+            signUpsEndAt: Date;
+          };
+        };
         assert: {
-          capacity: 10,
-          remainingCapacity: 10,
-        },
-      },
-      {
-        name: "should increment the remaining capacity when the change is positive",
-        arrange: {
-          capacity: 10,
-        },
-        act: {
-          capacity: 20,
-        },
-        assert: {
-          capacity: 20,
-          remainingCapacity: 20,
-        },
-      },
-      {
-        name: "should decrement the remaining capacity when the change is positive",
-        arrange: {
-          capacity: 20,
-        },
-        act: {
-          capacity: 10,
-        },
-        assert: {
-          capacity: 10,
-          remainingCapacity: 10,
-        },
-      },
-      {
-        name: "should decrement the remaining capacity when the change is positive",
-        arrange: {
-          capacity: 20,
-        },
-        act: {
-          capacity: 10,
-        },
-        assert: {
-          capacity: 10,
-          remainingCapacity: 10,
-        },
-      },
-    ];
-
-    test.each(testCases)("$name", async ({ arrange, act, assert }) => {
-      /**
-       * Arrange
-       *
-       * 1. Create an organization
-       * 2. Create an event with capacity arrange.capacity
-       */
-      const organization = await prisma.organization.create({
-        data: {
-          name: faker.string.sample(20),
-        },
-      });
-
-      const event = await eventRepository.create({
-        name: faker.word.adjective(),
-        description: faker.lorem.paragraph(),
-        capacity: arrange.capacity,
-        startAt: faker.date.past(),
-        endAt: faker.date.future(),
-        organizationId: organization.id,
-        contactEmail: faker.internet.email(),
-      });
-
-      /**
-       *
-       * Act
-       *
-       * 1. Update the event capacity to act.capacity
-       */
-      const actual = await eventRepository.update(event.id, {
-        capacity: act.capacity,
-      });
-
-      /**
-       * Assert
-       *
-       * 1. The remaining capacity should be cahnged
-       * 2. The capacity should be changed
-       */
-      expect(actual.capacity).toBe(assert.capacity);
-      expect(actual.remainingCapacity).toBe(assert.remainingCapacity);
-    });
-  });
-
-  describe("update capacity with sign ups", () => {
-    interface TestCase {
-      name: string;
-      arrange: {
-        capacity: number;
-        signUps: number;
-      };
-      act: {
-        capacity: number;
-      };
-      assert: {
-        capacity: number;
-        remainingCapacity: number;
-      };
-    }
-
-    const testCases: TestCase[] = [
-      {
-        name: "should increment the remaining capacity when the change is positive",
-        arrange: {
-          signUps: 10,
-          capacity: 10,
-        },
-        act: {
-          capacity: 20,
-        },
-        assert: {
-          capacity: 20,
-          remainingCapacity: 10,
-        },
-      },
-      {
-        name: "should decrement the remaining capacity when the change is negative, as long as the remaining capacity remains positive",
-        arrange: {
-          signUps: 10,
-          capacity: 20,
-        },
-        act: {
-          capacity: 10,
-        },
-        assert: {
-          capacity: 10,
-          remainingCapacity: 0,
-        },
-      },
-    ];
-
-    test.each(testCases)("$name", async ({ arrange, act, assert }) => {
-      /**
-       * Arrange
-       *
-       * 1. Create an organization
-       * 2. Create an event with capacity arrange.capacity
-       */
-      const organization = await prisma.organization.create({
-        data: {
-          name: faker.string.sample(20),
-        },
-      });
-
-      const event = await eventRepository.create({
-        name: faker.word.adjective(),
-        description: faker.lorem.paragraph(),
-        capacity: arrange.capacity,
-        startAt: faker.date.past(),
-        endAt: faker.date.future(),
-        organizationId: organization.id,
-        contactEmail: faker.internet.email(),
-        slots: [{ capacity: arrange.capacity }],
-      });
-
-      await Promise.all(
-        range(arrange.signUps).map(async () => {
-          const user = await prisma.user.create({
-            data: {
-              email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
-              firstName: faker.person.firstName(),
-              lastName: faker.person.lastName(),
-              username: faker.string.sample(20),
-              feideId: faker.string.uuid(),
+          slots: {
+            capacity: number;
+            remainingCapacity: number;
+          }[];
+          event: {
+            capacity: number;
+            remainingCapacity: number;
+          };
+        };
+      }
+      const testCases: TestCase[] = [
+        {
+          name: "should update the capacity and remaining capacity of the event and slots when the capacity is increased",
+          arrange: {
+            signUps: 10,
+            event: {
+              capacity: 10,
             },
-          });
-          await eventRepository.createSignUp({
-            userId: user.id,
-            participationStatus: ParticipationStatus.CONFIRMED,
-            // Since we created this slot with the event, we know that it exists for this test
-            slotId: event.slots[0]!.id,
-            eventId: event.id,
-          });
-        })
-      );
+            slots: [
+              {
+                capacity: 10,
+              },
+            ],
+          },
+          act: {
+            signUpDetails: {
+              signUpsEnabled: true,
+              capacity: 20,
+              slots: [
+                {
+                  capacity: 20,
+                },
+              ],
+              signUpsStartAt: new Date(),
+              signUpsEndAt: new Date(),
+            },
+          },
+          assert: {
+            slots: [
+              {
+                capacity: 20,
+                remainingCapacity: 10,
+              },
+            ],
+            event: {
+              capacity: 20,
+              remainingCapacity: 10,
+            },
+          },
+        },
+        {
+          name: "should update the capacity and remaining capacity of the event and slots when capacity is decreased, but there is enough remaining capacity for the existing sign ups",
+          arrange: {
+            signUps: 10,
+            event: {
+              capacity: 20,
+            },
+            slots: [
+              {
+                capacity: 20,
+              },
+            ],
+          },
+          act: {
+            signUpDetails: {
+              signUpsEnabled: true,
+              capacity: 10,
+              slots: [
+                {
+                  capacity: 10,
+                },
+              ],
+              signUpsStartAt: new Date(),
+              signUpsEndAt: new Date(),
+            },
+          },
+          assert: {
+            slots: [
+              {
+                capacity: 10,
+                remainingCapacity: 0,
+              },
+            ],
+            event: {
+              capacity: 10,
+              remainingCapacity: 0,
+            },
+          },
+        },
+      ];
 
-      /**
-       *
-       * Act
-       *
-       * 1. Update the event capacity to act.capacity
-       */
-      const actual = await eventRepository.update(event.id, {
-        capacity: act.capacity,
-      });
-
-      /**
-       * Assert
-       *
-       * 1. The remaining capacity should be cahnged
-       * 2. The capacity should be changed
-       */
-      expect(actual.capacity).toBe(assert.capacity);
-      expect(actual.remainingCapacity).toBe(assert.remainingCapacity);
-    });
-
-    describe("update capacity with sign ups should raise", () => {
-      it("should raise when the remaining capacity would be negative", async () => {
+      test.each(testCases)("$name", async ({ arrange, act, assert }) => {
         /**
          * Arrange
          *
-         * 1. Create an organization
-         * 2. Create an event with capacity 1
-         * 3. Create a sign up for the event
+         * 1. Create an organization to host the event
+         * 2. Create an event with slots and sign ups enabled
          */
         const organization = await prisma.organization.create({
           data: {
             name: faker.string.sample(20),
           },
         });
-
-        const event = await eventRepository.create({
-          name: faker.word.adjective(),
-          description: faker.lorem.paragraph(),
-          capacity: 1,
-          startAt: faker.date.past(),
-          endAt: faker.date.future(),
-          organizationId: organization.id,
-          contactEmail: faker.internet.email(),
-          slots: [{ capacity: 1 }],
-        });
-
-        const user = await prisma.user.create({
-          data: {
-            email: faker.internet.email(),
-            firstName: faker.person.firstName(),
-            lastName: faker.person.lastName(),
-            username: faker.string.sample(20),
-            feideId: faker.string.uuid(),
+        const event = await eventRepository.create(
+          {
+            name: faker.word.adjective(),
+            startAt: faker.date.past(),
+            endAt: faker.date.future(),
+            contactEmail: faker.internet.email(),
+            organizationId: organization.id,
+          },
+          {
+            signUpsEnabled: true,
+            capacity: arrange.event.capacity,
+            slots: arrange.slots,
+            signUpsStartAt: new Date(),
+            signUpsEndAt: new Date(),
+          }
+        );
+        const slots = await prisma.eventSlot.findMany({
+          where: {
+            eventId: event.id,
           },
         });
 
-        await eventRepository.createSignUp({
-          userId: user.id,
-          participationStatus: ParticipationStatus.CONFIRMED,
-          // Since we created this slot with the event, we know that it exists for this test
-          slotId: event.slots[0]!.id,
-          eventId: event.id,
-        });
+        await Promise.all(
+          range(arrange.signUps).map(async () => {
+            const user = await prisma.user.create({
+              data: {
+                email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
+                firstName: faker.person.firstName(),
+                lastName: faker.person.lastName(),
+                username: faker.string.sample(20),
+                feideId: faker.string.uuid(),
+              },
+            });
+            await eventRepository.createSignUp({
+              userId: user.id,
+              participationStatus: ParticipationStatus.CONFIRMED,
+              // Since we created this slot with the event, we know that it exists for this test
+              slotId: slots[0]!.id,
+              eventId: slots[0]!.eventId,
+            });
+          })
+        );
 
         /**
          * Act
          *
-         * 1. Update the event capacity to 0
+         * 1. Update the event with act.signUpDetails
          */
-        const actual = eventRepository.update(event.id, {
-          capacity: 0,
+        const actual = await eventRepository.update(
+          event.id,
+          {},
+          {
+            ...act.signUpDetails,
+            slots: slots.map((slot, index) => merge({}, slot, act.signUpDetails.slots[index])),
+          }
+        );
+        const actualSlots = await prisma.eventSlot.findMany({
+          where: {
+            eventId: event.id,
+          },
         });
 
         /**
          * Assert
          *
-         * 1. The update should raise
+         * 1. The event capacity should be updated
+         * 2. The event remaining capacity should be correctly updated
+         * 3. The slot capacities and remaining capacities should be correctly updated
+         * 4. Any new slots should be created
          */
-        await expect(actual).rejects.toThrow(InvalidCapacityError);
+        expect(actual.capacity).toBe(assert.event.capacity);
+        expect(actual.remainingCapacity).toBe(assert.event.remainingCapacity);
+        expect(
+          actualSlots.map((slot) => ({ capacity: slot.capacity, remainingCapacity: slot.remainingCapacity }))
+        ).toEqual(assert.slots);
       });
     });
 
-    it("stress test should end up with the correct remaining capacity", async () => {
+    it("should create new slots for the event when slots are updated without an ID", async () => {
       /**
        * Arrange
        *
-       * 1. Create an organization
-       * 2. Create an event with capacity 1
-       * 3. Create a sign up for the event
+       * 1. Create an organization to host the event
+       * 2. Create an event with slots and sign ups enabled
        */
       const organization = await prisma.organization.create({
         data: {
           name: faker.string.sample(20),
         },
       });
+      const event = await eventRepository.create(
+        {
+          name: faker.word.adjective(),
+          startAt: faker.date.past(),
+          endAt: faker.date.future(),
+          contactEmail: faker.internet.email(),
+          organizationId: organization.id,
+        },
+        {
+          signUpsEnabled: true,
+          capacity: 1,
+          slots: [{ capacity: 1 }],
+          signUpsStartAt: new Date(),
+          signUpsEndAt: new Date(),
+        }
+      );
+      const existingSlots = await prisma.eventSlot.findMany({
+        where: {
+          eventId: event.id,
+        },
+      });
+      if (existingSlots.length !== 1) fail("Expected to find exactly one slot");
 
-      const event = await eventRepository.create({
-        name: faker.word.adjective(),
-        description: faker.lorem.paragraph(),
-        capacity: 1,
-        startAt: faker.date.past(),
-        endAt: faker.date.future(),
-        organizationId: organization.id,
-        contactEmail: faker.internet.email(),
-        slots: [{ capacity: 1 }],
+      /**
+       * Act
+       *
+       * 1. Update the event with a new slot
+       */
+      const actual = await eventRepository.update(
+        event.id,
+        {},
+        {
+          slots: [{ id: existingSlots[0]!.id, capacity: 2 }, { capacity: 1 }],
+          capacity: 1,
+          signUpsEnabled: true,
+          signUpsStartAt: new Date(),
+          signUpsEndAt: new Date(),
+        }
+      );
+      const actualSlots = await prisma.eventSlot.findMany({
+        where: {
+          eventId: event.id,
+        },
       });
 
+      /**
+       * Assert
+       *
+       * 1. The event capacity should be updated
+       * 2. The event remaining capacity should be correctly updated
+       * 3. The slot capacities and remaining capacities should be correctly updated
+       * 4. Any new slots should be created
+       */
+      expect(actual.capacity).toBe(1);
+      expect(actual.remainingCapacity).toBe(1);
+      expect(actualSlots).toHaveLength(2);
+      expect(actualSlots[0]!.id).toEqual(existingSlots[0]!.id);
+      expect(actualSlots[0]!.capacity).toBe(2);
+    });
+
+    it("should delete any slots that are on the event, but not included in the update method", async () => {
+      /**
+       * Arrange
+       *
+       * 1. Create an organization to host the event
+       * 2. Create an event with slots and sign ups enabled
+       */
+      const organization = await prisma.organization.create({
+        data: {
+          name: faker.string.sample(20),
+        },
+      });
+      const event = await eventRepository.create(
+        {
+          name: faker.word.adjective(),
+          startAt: faker.date.past(),
+          endAt: faker.date.future(),
+          contactEmail: faker.internet.email(),
+          organizationId: organization.id,
+        },
+        {
+          signUpsEnabled: true,
+          capacity: 1,
+          slots: [{ capacity: 1 }],
+          signUpsStartAt: new Date(),
+          signUpsEndAt: new Date(),
+        }
+      );
+      const existingSlots = await prisma.eventSlot.findMany({
+        where: {
+          eventId: event.id,
+        },
+      });
+      if (existingSlots.length !== 1) fail("Expected to find exactly one slot");
+
+      /**
+       * Act
+       *
+       * 1. Update the event with a new slot
+       */
+      await eventRepository.update(
+        event.id,
+        {},
+        {
+          slots: [{ capacity: 10 }],
+          capacity: 1,
+          signUpsEnabled: true,
+          signUpsStartAt: new Date(),
+          signUpsEndAt: new Date(),
+        }
+      );
+      const actualSlots = await prisma.eventSlot.findMany({
+        where: {
+          eventId: event.id,
+        },
+      });
+
+      /**
+       * Assert
+       *
+       * A new slot should be created, and the existing one should be deleted.
+       */
+      expect(actualSlots).toHaveLength(1);
+      expect(actualSlots[0]!.id).not.toEqual(existingSlots[0]!.id);
+      expect(actualSlots[0]!.capacity).toBe(10);
+    });
+
+    it("should raise an InvalidCapacityError if we attempt to delete a slot with sign ups", async () => {
+      /**
+       * Arrange
+       *
+       * 1. Create a user to sign up with
+       * 2. Create an organization to host the event
+       * 3. Create an event with slots and sign ups enabled
+       */
       const user = await prisma.user.create({
         data: {
-          email: faker.internet.email(),
+          email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
           firstName: faker.person.firstName(),
           lastName: faker.person.lastName(),
           username: faker.string.sample(20),
           feideId: faker.string.uuid(),
         },
       });
-
+      const organization = await prisma.organization.create({
+        data: {
+          name: faker.string.sample(20),
+        },
+      });
+      const event = await eventRepository.create(
+        {
+          name: faker.word.adjective(),
+          startAt: faker.date.past(),
+          endAt: faker.date.future(),
+          contactEmail: faker.internet.email(),
+          organizationId: organization.id,
+        },
+        {
+          signUpsEnabled: true,
+          capacity: 1,
+          slots: [{ capacity: 1 }],
+          signUpsStartAt: new Date(),
+          signUpsEndAt: new Date(),
+        }
+      );
+      const existingSlot = await prisma.eventSlot.findFirstOrThrow({
+        where: {
+          eventId: event.id,
+        },
+      });
       await eventRepository.createSignUp({
+        eventId: event.id,
         userId: user.id,
         participationStatus: ParticipationStatus.CONFIRMED,
-        // Since we created this slot with the event, we know that it exists for this test
-        slotId: event.slots[0]!.id,
-        eventId: event.id,
+        slotId: existingSlot.id,
       });
 
       /**
        * Act
        *
-       * 1. Update the event capacity to 0
+       * 1. Update the event with a new slot
        */
-      const capacities = range(-1000, 1000);
-      const actual = await Promise.allSettled(
-        capacities.map(async (capacity) => {
-          return eventRepository.update(event.id, {
-            capacity,
-          });
-        })
+      const actual = eventRepository.update(
+        event.id,
+        {},
+        {
+          slots: [{ capacity: 10 }],
+          capacity: 1,
+          signUpsEnabled: true,
+          signUpsStartAt: new Date(),
+          signUpsEndAt: new Date(),
+        }
       );
 
       /**
        * Assert
        *
-       * All updates where capacity >= 1 should succeed
+       * The update call should raise an InvalidCapacityError
        */
-      capacities.forEach((capacity, index) => {
-        const result = actual[index];
-        if (result === undefined) return fail(`Expected result for index ${index} to be defined`);
-        if (result.status === "fulfilled") {
-          expect(result.value.capacity).toBe(capacity);
-          expect(result.value.remainingCapacity).toBe(capacity - 1);
-          expect(capacity).toBeGreaterThanOrEqual(1);
-        } else {
-          expect(result.reason).toBeInstanceOf(InvalidCapacityError);
-        }
+      await expect(actual).rejects.toThrow(InvalidCapacityError);
+    });
+
+    it("should raise an InvalidCapacityError if we attempt to reduce the capacity of an event below the number of sign ups", async () => {
+      /**
+       * Arrange
+       *
+       * 1. Create a user to sign up with
+       * 2. Create an organization to host the event
+       * 3. Create an event with slots and sign ups enabled
+       */
+      const user = await prisma.user.create({
+        data: {
+          email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
+          firstName: faker.person.firstName(),
+          lastName: faker.person.lastName(),
+          username: faker.string.sample(20),
+          feideId: faker.string.uuid(),
+        },
       });
+      const organization = await prisma.organization.create({
+        data: {
+          name: faker.string.sample(20),
+        },
+      });
+      const event = await eventRepository.create(
+        {
+          name: faker.word.adjective(),
+          startAt: faker.date.past(),
+          endAt: faker.date.future(),
+          contactEmail: faker.internet.email(),
+          organizationId: organization.id,
+        },
+        {
+          signUpsEnabled: true,
+          capacity: 1,
+          slots: [{ capacity: 1 }],
+          signUpsStartAt: new Date(),
+          signUpsEndAt: new Date(),
+        }
+      );
+      const existingSlot = await prisma.eventSlot.findFirstOrThrow({
+        where: {
+          eventId: event.id,
+        },
+      });
+      await eventRepository.createSignUp({
+        eventId: event.id,
+        userId: user.id,
+        participationStatus: ParticipationStatus.CONFIRMED,
+        slotId: existingSlot.id,
+      });
+
+      /**
+       * Act
+       *
+       * 1. Update the event with a new slot
+       */
+      const actual = eventRepository.update(
+        event.id,
+        {},
+        {
+          slots: [{ id: existingSlot.id, capacity: 10 }],
+          capacity: 0,
+          signUpsEnabled: true,
+          signUpsStartAt: new Date(),
+          signUpsEndAt: new Date(),
+        }
+      );
+
+      /**
+       * Assert
+       *
+       * The update call should raise an InvalidCapacityError
+       */
+      await expect(actual).rejects.toThrow(InvalidCapacityError);
+    });
+
+    it("should raise an InvalidCapacityError if we attempt to reduce the capacity of a slot below the number of sign ups for that slot", async () => {
+      /**
+       * Arrange
+       *
+       * 1. Create a user to sign up with
+       * 2. Create an organization to host the event
+       * 3. Create an event with slots and sign ups enabled
+       */
+      const user = await prisma.user.create({
+        data: {
+          email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
+          firstName: faker.person.firstName(),
+          lastName: faker.person.lastName(),
+          username: faker.string.sample(20),
+          feideId: faker.string.uuid(),
+        },
+      });
+      const organization = await prisma.organization.create({
+        data: {
+          name: faker.string.sample(20),
+        },
+      });
+      const event = await eventRepository.create(
+        {
+          name: faker.word.adjective(),
+          startAt: faker.date.past(),
+          endAt: faker.date.future(),
+          contactEmail: faker.internet.email(),
+          organizationId: organization.id,
+        },
+        {
+          signUpsEnabled: true,
+          capacity: 1,
+          slots: [{ capacity: 1 }],
+          signUpsStartAt: new Date(),
+          signUpsEndAt: new Date(),
+        }
+      );
+      const existingSlot = await prisma.eventSlot.findFirstOrThrow({
+        where: {
+          eventId: event.id,
+        },
+      });
+      await eventRepository.createSignUp({
+        eventId: event.id,
+        userId: user.id,
+        participationStatus: ParticipationStatus.CONFIRMED,
+        slotId: existingSlot.id,
+      });
+
+      /**
+       * Act
+       *
+       * 1. Update the event with a new slot
+       */
+      const actual = eventRepository.update(
+        event.id,
+        {},
+        {
+          slots: [{ id: existingSlot.id, capacity: 0 }],
+          capacity: 1,
+          signUpsEnabled: true,
+          signUpsStartAt: new Date(),
+          signUpsEndAt: new Date(),
+        }
+      );
+
+      /**
+       * Assert
+       *
+       * The update call should raise an InvalidCapacityError
+       */
+      await expect(actual).rejects.toThrow(InvalidCapacityError);
     });
   });
 });

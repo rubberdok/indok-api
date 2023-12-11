@@ -1,4 +1,4 @@
-import { Event, EventSignUp, EventSlot, ParticipationStatus, PrismaClient } from "@prisma/client";
+import { Event, EventSignUp, EventSlot, ParticipationStatus, PrismaClient, PrismaPromise } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 
 import { InternalServerError, InvalidArgumentError, NotFoundError } from "@/domain/errors.js";
@@ -7,9 +7,6 @@ import { prismaKnownErrorCodes } from "@/lib/prisma.js";
 
 export class EventRepository {
   constructor(private db: PrismaClient) {}
-
-  async create(data: CreateEventWithSignUpsData): Promise<Event & { slots: EventSlot[] }>;
-  async create(data: BaseCreateEventData): Promise<Event>;
 
   /**
    * Create a new event.
@@ -20,64 +17,46 @@ export class EventRepository {
    * @param data.endAt - The end datetime of the event
    * @param data.organizationId - The ID of the organization that the event belongs to
    * @param data.contactEamil - The email address of the contact person for the event
+   * @param signUpDetails - The sign up details for the event
    * @returns The created event
    */
-  async create(
-    data: CreateEventWithSignUpsData | BaseCreateEventData
-  ): Promise<(Event & { slots: EventSlot[] }) | Event> {
-    if ("capacity" in data) {
-      const {
-        name,
-        description,
-        startAt,
-        organizationId,
-        endAt,
-        contactEmail,
-        location,
-        capacity,
-        signUpsEndAt,
-        signUpsStartAt,
-      } = data;
-
-      const slots = data.slots.map((slot) => ({ capacity: slot.capacity, remainingCapacity: slot.capacity }));
-      return this.db.event.create({
-        include: {
-          slots: true,
-        },
+  async create(event: EventData, signUpDetails?: SignUpData): Promise<Event> {
+    const { name, description, startAt, endAt, contactEmail, location, organizationId } = event;
+    if (signUpDetails) {
+      const slots = signUpDetails.slots.map((slot) => ({ capacity: slot.capacity, remainingCapacity: slot.capacity }));
+      const { signUpsEndAt, signUpsStartAt, capacity, signUpsEnabled } = signUpDetails;
+      return await this.db.event.create({
         data: {
           name,
           description,
           startAt,
           endAt,
-          organizationId,
           contactEmail,
           location,
-          capacity,
-          remainingCapacity: capacity,
-          signUpsEndAt,
-          signUpsStartAt,
-          signUpsEnabled: true,
           slots: {
             createMany: {
               data: slots,
             },
           },
-        },
-      });
-    } else {
-      const { name, description, startAt, organizationId, endAt, contactEmail, location } = data;
-      return this.db.event.create({
-        data: {
-          name: name,
-          description,
-          startAt,
-          endAt,
-          organizationId,
-          contactEmail,
-          location,
+          signUpsEndAt,
+          signUpsStartAt,
+          capacity,
+          remainingCapacity: capacity,
+          signUpsEnabled,
         },
       });
     }
+    return this.db.event.create({
+      data: {
+        name: name,
+        description,
+        startAt,
+        endAt,
+        organizationId,
+        contactEmail,
+        location,
+      },
+    });
   }
 
   /**
@@ -89,22 +68,15 @@ export class EventRepository {
    * @param data.description - The new description of the event
    * @param data.startAt - The new start datetime of the event
    * @param data.endAt - The new end datetime of the event
-   * @param data.capacity - The new capacity of the event
    * @returns The updated event
    */
-  async update(id: string, data: UpdateData) {
-    const { name, description, startAt, endAt, capacity } = data;
-    if (capacity !== undefined) {
-      return this.updateWithCapacity(id, { name, description, startAt, endAt, capacity });
+  async update(id: string, event: Partial<EventData>, signUpDetails?: UpdateSignUpData) {
+    if (signUpDetails !== undefined) {
+      return this.updateWithCapacity(id, event, signUpDetails);
     }
 
     return this.db.event.update({
-      data: {
-        name,
-        description,
-        startAt,
-        endAt,
-      },
+      data: event,
       where: {
         id,
       },
@@ -123,8 +95,18 @@ export class EventRepository {
    * @param data - The data to update the event with
    * @returns The updated event
    */
-  private async updateWithCapacity(id: string, data: UpdateData & { capacity: number }) {
-    const { name, description, startAt, endAt, capacity } = data;
+  private async updateWithCapacity(
+    id: string,
+    event: Partial<EventData>,
+    signUpDetails: UpdateSignUpData
+  ): Promise<Event> {
+    const { signUpsEnabled, signUpsEndAt, signUpsStartAt } = signUpDetails;
+    const updateData = {
+      ...event,
+      signUpsEnabled,
+      signUpsEndAt,
+      signUpsStartAt,
+    };
 
     const previousEvent = await this.db.event.findUnique({
       where: {
@@ -136,74 +118,162 @@ export class EventRepository {
       throw new NotFoundError(`Event { id: ${id} } not found`);
     }
 
-    try {
-      const previousCapacity = previousEvent.capacity;
-      if (previousCapacity === null) {
-        return await this.db.event.update({
-          data: {
-            name,
-            description,
-            startAt,
-            endAt,
-            capacity,
-            remainingCapacity: capacity,
-          },
-          where: {
-            capacity: previousCapacity,
-            id,
-          },
-        });
+    const existingSlots = await this.db.eventSlot.findMany({
+      where: {
+        eventId: id,
+      },
+    });
+    const existingSlotsById = Object.fromEntries(existingSlots.map((slot) => [slot.id, slot]));
+
+    const createOrUpdateSlotPromises = signUpDetails.slots.map((slot) => {
+      const { id: slotId, capacity } = slot;
+      if (slotId) {
+        const existingSlot = existingSlotsById[slotId];
+        if (!existingSlot) throw new NotFoundError(`Event slot { id: ${slotId} } not found`);
+        return this.updateExistingSlot(existingSlot, { id: slotId, capacity });
       }
-
-      const changeInCapacity = capacity - previousCapacity;
-
-      if (changeInCapacity > 0) {
-        return await this.db.event.update({
-          data: {
-            name,
-            description,
-            startAt,
-            endAt,
-            capacity,
-            remainingCapacity: {
-              increment: changeInCapacity,
-            },
-          },
-          where: {
-            capacity: previousCapacity,
-            id,
-          },
-        });
-      }
-
-      return await this.db.event.update({
-        where: {
-          id,
-          capacity: previousCapacity,
-          remainingCapacity: {
-            gte: -changeInCapacity,
-          },
-        },
+      return this.db.eventSlot.create({
         data: {
-          name,
-          description,
-          startAt,
-          endAt,
+          eventId: id,
           capacity,
-          remainingCapacity: {
-            increment: changeInCapacity,
-          },
+          remainingCapacity: capacity,
         },
       });
+    });
+
+    const slotIdsToDelete = Object.keys(existingSlotsById).filter((slotId) =>
+      signUpDetails.slots.every((slot) => slot.id !== slotId)
+    );
+
+    const slotDeletePromises = slotIdsToDelete.map((slotId) => {
+      return this.db.eventSlot.delete({
+        where: {
+          remainingCapacity: {
+            equals: this.db.eventSlot.fields.capacity,
+          },
+          id: slotId,
+        },
+      });
+    });
+
+    const updateEventPromise = this.updateEventWithCapacity(previousEvent, updateData, signUpDetails);
+
+    try {
+      const [event] = await this.db.$transaction([
+        updateEventPromise,
+        ...createOrUpdateSlotPromises,
+        ...slotDeletePromises,
+      ]);
+      return event;
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError) {
         if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND)
           throw new InvalidCapacityError(
-            "Cannot reduce capacity below the number of existing sign ups. If this is unexpected, it is likely that the event has been updated by another user. Please try again."
+            "Cannot delete a slot with sign ups, or cannot update a slot or event to have a capacity less than the number of sign ups"
           );
       }
       throw err;
     }
+  }
+
+  private updateExistingSlot(
+    existingSlot: EventSlot,
+    data: { id: string; capacity: number }
+  ): PrismaPromise<EventSlot> {
+    if (existingSlot === null) {
+      throw new NotFoundError(`Event slot { id: ${data.id} } not found`);
+    }
+
+    const changeInCapacity = data.capacity - existingSlot.capacity;
+
+    if (changeInCapacity > 0) {
+      return this.db.eventSlot.update({
+        where: {
+          id: data.id,
+          capacity: existingSlot.capacity,
+        },
+        data: {
+          remainingCapacity: {
+            increment: changeInCapacity,
+          },
+          capacity: data.capacity,
+        },
+      });
+    }
+
+    return this.db.eventSlot.update({
+      where: {
+        id: data.id,
+        capacity: existingSlot.capacity,
+        remainingCapacity: {
+          gte: -changeInCapacity,
+        },
+      },
+      data: {
+        remainingCapacity: {
+          increment: changeInCapacity,
+        },
+        capacity: data.capacity,
+      },
+    });
+  }
+
+  private updateEventWithCapacity(existingEvent: Event, event: Partial<EventData>, signUpDetails: UpdateSignUpData) {
+    const { capacity, signUpsEnabled, signUpsEndAt, signUpsStartAt } = signUpDetails;
+    const { id } = existingEvent;
+    const updateData = {
+      ...event,
+      capacity,
+      signUpsEnabled,
+      signUpsEndAt,
+      signUpsStartAt,
+    };
+    const previousCapacity = existingEvent.capacity;
+    if (previousCapacity === null) {
+      return this.db.event.update({
+        data: {
+          ...updateData,
+          remainingCapacity: capacity,
+        },
+        where: {
+          capacity: previousCapacity,
+          id,
+        },
+      });
+    }
+
+    const changeInCapacity = capacity - previousCapacity;
+
+    if (changeInCapacity > 0) {
+      return this.db.event.update({
+        data: {
+          ...updateData,
+          remainingCapacity: {
+            increment: changeInCapacity,
+          },
+        },
+        where: {
+          capacity: previousCapacity,
+          id,
+        },
+      });
+    }
+
+    return this.db.event.update({
+      where: {
+        id,
+        capacity: previousCapacity,
+        remainingCapacity: {
+          gte: -changeInCapacity,
+        },
+      },
+      data: {
+        ...updateData,
+        remainingCapacity: {
+          increment: changeInCapacity,
+        },
+      },
+    });
   }
 
   /**
@@ -856,15 +926,18 @@ interface UpdateToInactiveSignUpData {
   newParticipationStatus: Extract<ParticipationStatus, "REMOVED" | "RETRACTED">;
 }
 
-interface UpdateData {
-  name?: string;
-  description?: string;
-  startAt?: Date;
-  endAt?: Date;
-  capacity?: number;
+interface UpdateSignUpData {
+  signUpsEnabled: boolean;
+  signUpsStartAt: Date;
+  signUpsEndAt: Date;
+  capacity: number;
+  slots: {
+    id?: string;
+    capacity: number;
+  }[];
 }
 
-interface BaseCreateEventData {
+interface EventData {
   name: string;
   startAt: Date;
   endAt: Date;
@@ -874,9 +947,12 @@ interface BaseCreateEventData {
   location?: string;
 }
 
-interface CreateEventWithSignUpsData extends BaseCreateEventData {
-  slots: { capacity: number }[];
-  capacity: number;
+interface SignUpData {
+  signUpsEnabled: boolean;
   signUpsStartAt: Date;
   signUpsEndAt: Date;
+  capacity: number;
+  slots: {
+    capacity: number;
+  }[];
 }

@@ -158,15 +158,20 @@ interface IEventService {
   create(
     userId: string,
     organizationId: string,
-    data: {
+    event: {
       name: string;
       description?: string | null;
       startAt: Date;
       endAt?: Date | null;
       location?: string | null;
-      capacity?: number | null;
-      slots?: { capacity: number }[] | null;
-    }
+    },
+    signUpDetails?: {
+      signUpsEnabled: boolean;
+      signUpsStartAt: Date;
+      signUpsEndAt: Date;
+      capacity: number;
+      slots: { capacity: number }[];
+    } | null
   ): Promise<Event>;
   update(
     userId: string,

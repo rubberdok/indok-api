@@ -73,45 +73,14 @@ type CabinsResponse {
 }
 
 input CreateEventInput {
-  """
-  Total capacity for the event, regardless of the capacity in each slot.
-  This number takes precedence over the capacity in each slot, so if the remaining capacity on the event is 0
-  no more users can be registered as attending.
-  """
-  capacity: Int
-
-  """
-  The description of the event, defaults to "". We support markdown on the client, so this can be markdown.
-  This will be displayed to users.
-  """
-  description: String
-
-  """
-  The end time of the event. If this is not provided, the event will be assumed to be two hours long.
-  This will be displayed to users.
-  """
-  endAt: DateTime
-
-  """
-  The name of the event, this will be displayed to users
-  """
-  name: String!
+  event: EventData!
 
   """
   The organization that is hosting the event. Events must be hosted by an organization, and the user
   creating the event must be a member of the organization.
   """
   organizationId: ID!
-
-  """
-  The slots for the event. If this is not provided, but capacity is, then all users can attend the event.
-  """
-  slots: [CreateEventSlot!]
-
-  """
-  The start time of the event. Events must have a start time.
-  """
-  startAt: DateTime!
+  signUpDetails: SignUpData
 }
 
 type CreateEventResponse {
@@ -210,6 +179,30 @@ type Event {
 
   """
   The start time of the event.
+  """
+  startAt: DateTime!
+}
+
+input EventData {
+  """
+  The description of the event, defaults to "". We support markdown on the client, so this can be markdown.
+  This will be displayed to users.
+  """
+  description: String
+
+  """
+  The end time of the event. If this is not provided, the event will be assumed to be two hours long.
+  This will be displayed to users.
+  """
+  endAt: DateTime
+
+  """
+  The name of the event, this will be displayed to users
+  """
+  name: String!
+
+  """
+  The start time of the event. Events must have a start time.
   """
   startAt: DateTime!
 }
@@ -602,6 +595,35 @@ type SignUp {
   The user that signed up for the event
   """
   user: PublicUser!
+}
+
+input SignUpData {
+  """
+  Total capacity for the event, regardless of the capacity in each slot.
+  This number takes precedence over the capacity in each slot, so if the remaining capacity on the event is 0
+  no more users can be registered as attending.
+  """
+  capacity: Int!
+
+  """
+  If true, users can sign up for the event. If false, users cannot sign up for the event.
+  """
+  enabled: Boolean!
+
+  """
+  The time that sign ups close for the event. This must be after signUpsOpenAt.
+  """
+  signUpsEndAt: DateTime!
+
+  """
+  The time that sign ups open for the event. This must be before the start time of the event.
+  """
+  signUpsStartAt: DateTime!
+
+  """
+  The slots for the event. If this is not provided, but capacity is, then all users can attend the event.
+  """
+  slots: [CreateEventSlot!]!
 }
 
 input SignUpInput {

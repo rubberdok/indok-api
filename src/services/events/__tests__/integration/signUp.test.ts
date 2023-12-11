@@ -1,6 +1,8 @@
 import { faker } from "@faker-js/faker";
-import { ParticipationStatus } from "@prisma/client";
+import { Organization, ParticipationStatus, User } from "@prisma/client";
+import { DateTime } from "luxon";
 
+import { InvalidArgumentError } from "@/domain/errors.js";
 import prisma from "@/lib/prisma.js";
 
 import { EventService } from "../../service.js";
@@ -25,38 +27,28 @@ describe("Event Sign Up", () => {
        * 3. Create a slot for the event with capacity.
        * 4. Create a user to sign up for the event.
        */
-      const organization = await prisma.organization.create({
-        data: {
-          name: faker.string.sample(20),
-        },
-      });
-      const event = await prisma.event.create({
-        data: {
-          organizationId: organization.id,
+      const { organization, user } = await makeUserWithOrganizationMembership();
+      const event = await eventService.create(
+        user.id,
+        organization.id,
+        {
           name: faker.color.human(),
           description: faker.lorem.paragraph(),
-          startAt: "2021-01-01T00:00:00.000Z",
-          endAt: "2021-01-01T01:00:00.000Z",
-          remainingCapacity: 1,
+          startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+          endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
         },
-      });
-
-      const slot = await prisma.eventSlot.create({
-        data: {
-          eventId: event.id,
-          remainingCapacity: 1,
-        },
-      });
-
-      const user = await prisma.user.create({
-        data: {
-          firstName: faker.person.firstName(),
-          lastName: faker.person.lastName(),
-          username: faker.string.sample(30),
-          feideId: faker.string.sample(30),
-          email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
-        },
-      });
+        {
+          capacity: 1,
+          signUpsEnabled: true,
+          signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+          signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
+          slots: [
+            {
+              capacity: 1,
+            },
+          ],
+        }
+      );
 
       /**
        * Act.
@@ -73,7 +65,7 @@ describe("Event Sign Up", () => {
       expect(actual.participationStatus).toEqual(ParticipationStatus.CONFIRMED);
       expect(actual.userId).toEqual(user.id);
       expect(actual.eventId).toEqual(event.id);
-      expect(actual.slotId).toEqual(slot.id);
+      expect(actual.slotId).not.toBeNull();
     });
 
     describe("should add the user to wait list when", () => {
@@ -106,38 +98,28 @@ describe("Event Sign Up", () => {
            * 3. Create a slot for the event with capacity.
            * 4. Create a user to sign up for the event.
            */
-          const organization = await prisma.organization.create({
-            data: {
-              name: faker.string.sample(20),
-            },
-          });
-          const event = await prisma.event.create({
-            data: {
-              organizationId: organization.id,
+          const { organization, user } = await makeUserWithOrganizationMembership();
+          const event = await eventService.create(
+            user.id,
+            organization.id,
+            {
               name: faker.color.human(),
               description: faker.lorem.paragraph(),
-              startAt: "2021-01-01T00:00:00.000Z",
-              endAt: "2021-01-01T01:00:00.000Z",
-              remainingCapacity: eventCapacity,
+              startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+              endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
             },
-          });
-
-          await prisma.eventSlot.create({
-            data: {
-              eventId: event.id,
-              remainingCapacity: slotCapacity,
-            },
-          });
-
-          const user = await prisma.user.create({
-            data: {
-              firstName: faker.person.firstName(),
-              lastName: faker.person.lastName(),
-              username: faker.string.sample(30),
-              feideId: faker.string.sample(30),
-              email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
-            },
-          });
+            {
+              capacity: eventCapacity,
+              signUpsEnabled: true,
+              signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+              signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
+              slots: [
+                {
+                  capacity: slotCapacity,
+                },
+              ],
+            }
+          );
 
           /**
            * Act.
@@ -163,35 +145,37 @@ describe("Event Sign Up", () => {
       /**
        * Arrange.
        *
-       * 1. Create an organization to host the event.
-       * 2. Create an event with capacity.
-       * 3. Create a slot for the event with capacity.
-       * 4. Create a user to sign up for the event.
+       * 1. Create a user to create events.
+       * 2. Create an organization to host the event.
+       * 3. Create a membership for the user in the organization
+       * 4. Create an event with capacity.
+       * 5. Create a slot for the event with capacity.
+       * 6. Create a user to sign up for the event.
        */
       const concurrentUsers = 500;
+      const { user, organization } = await makeUserWithOrganizationMembership();
 
-      const organization = await prisma.organization.create({
-        data: {
-          name: faker.string.sample(20),
-        },
-      });
-      const event = await prisma.event.create({
-        data: {
-          organizationId: organization.id,
+      const event = await eventService.create(
+        user.id,
+        organization.id,
+        {
           name: faker.color.human(),
           description: faker.lorem.paragraph(),
-          startAt: "2021-01-01T00:00:00.000Z",
-          endAt: "2021-01-01T01:00:00.000Z",
-          remainingCapacity: concurrentUsers,
+          startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+          endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
         },
-      });
-
-      const slot = await prisma.eventSlot.create({
-        data: {
-          eventId: event.id,
-          remainingCapacity: concurrentUsers,
-        },
-      });
+        {
+          capacity: concurrentUsers,
+          signUpsEnabled: true,
+          signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+          signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
+          slots: [
+            {
+              capacity: concurrentUsers,
+            },
+          ],
+        }
+      );
 
       await prisma.user.createMany({
         data: Array(concurrentUsers)
@@ -223,7 +207,7 @@ describe("Event Sign Up", () => {
       const updatedEvent = await prisma.event.findUniqueOrThrow({ where: { id: event.id } });
       expect(updatedEvent.remainingCapacity).toEqual(0);
 
-      const updatedSlot = await prisma.eventSlot.findUniqueOrThrow({ where: { id: slot.id } });
+      const updatedSlot = await prisma.eventSlot.findFirstOrThrow({ where: { eventId: event.id } });
       expect(updatedSlot.remainingCapacity).toEqual(0);
     });
 
@@ -238,28 +222,29 @@ describe("Event Sign Up", () => {
        */
       const concurrentUsers = 500;
       const capacity = 50;
-      const organization = await prisma.organization.create({
-        data: {
-          name: faker.string.sample(20),
-        },
-      });
-      const event = await prisma.event.create({
-        data: {
-          organizationId: organization.id,
+      const { user, organization } = await makeUserWithOrganizationMembership();
+
+      const event = await eventService.create(
+        user.id,
+        organization.id,
+        {
           name: faker.color.human(),
           description: faker.lorem.paragraph(),
-          startAt: "2021-01-01T00:00:00.000Z",
-          endAt: "2021-01-01T01:00:00.000Z",
-          remainingCapacity: capacity,
+          startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+          endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
         },
-      });
-
-      const slot = await prisma.eventSlot.create({
-        data: {
-          eventId: event.id,
-          remainingCapacity: capacity,
-        },
-      });
+        {
+          capacity,
+          signUpsEnabled: true,
+          signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+          signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
+          slots: [
+            {
+              capacity,
+            },
+          ],
+        }
+      );
 
       await prisma.user.createMany({
         data: Array(concurrentUsers)
@@ -296,8 +281,52 @@ describe("Event Sign Up", () => {
       const updatedEvent = await prisma.event.findUniqueOrThrow({ where: { id: event.id } });
       expect(updatedEvent.remainingCapacity).toEqual(0);
 
-      const updatedSlot = await prisma.eventSlot.findUniqueOrThrow({ where: { id: slot.id } });
+      const updatedSlot = await prisma.eventSlot.findFirstOrThrow({ where: { eventId: event.id } });
       expect(updatedSlot.remainingCapacity).toEqual(0);
+    });
+
+    it("should throw InvalidArgumentError if sign ups are disabled for the event", async () => {
+      /**
+       * Arrange
+       *
+       * 1. Create an organization to host the event.
+       * 2. Create an event with sign ups disabled.
+       * 3. Create a user to sign up for the event.
+       */
+      const { organization, user } = await makeUserWithOrganizationMembership();
+      const event = await eventService.create(
+        user.id,
+        organization.id,
+        {
+          name: faker.word.adjective(),
+          startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+        },
+        {
+          signUpsEnabled: false,
+          signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+          signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+          capacity: 1,
+          slots: [
+            {
+              capacity: 1,
+            },
+          ],
+        }
+      );
+
+      /**
+       * Act
+       *
+       * Sign up for the event with sign ups disabled.
+       */
+      const signUp = eventService.signUp(user.id, event.id);
+
+      /**
+       * Assert
+       *
+       * InvalidArgumentError should be thrown.
+       */
+      expect(signUp).rejects.toThrow(InvalidArgumentError);
     });
   });
 });
@@ -310,4 +339,29 @@ function getCreateUserData() {
     feideId: faker.string.sample(30),
     email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
   };
+}
+
+async function makeUserWithOrganizationMembership(): Promise<{ user: User; organization: Organization }> {
+  const user = await prisma.user.create({
+    data: {
+      firstName: faker.person.firstName(),
+      lastName: faker.person.lastName(),
+      username: faker.string.sample(30),
+      feideId: faker.string.uuid(),
+      email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
+    },
+  });
+  const organization = await prisma.organization.create({
+    data: {
+      name: faker.string.sample(20),
+    },
+  });
+  await prisma.member.create({
+    data: {
+      organizationId: organization.id,
+      userId: user.id,
+      role: "MEMBER",
+    },
+  });
+  return { user, organization };
 }
