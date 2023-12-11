@@ -55,6 +55,7 @@ export interface EventRepository {
   create(event: EventData, signUpDetails?: SignUpDetails): Promise<Event>;
   update(id: string, event: Partial<EventData>, signUpDetails?: Partial<SignUpDetails>): Promise<Event>;
   get(id: string): Promise<Event>;
+  getWithSlots(id: string): Promise<Event & { slots: EventSlot[] }>;
   getSlotWithRemainingCapacity(eventId: string): Promise<EventSlot | null>;
   findMany(data?: { endAtGte?: Date | null }): Promise<Event[]>;
   findManySignUps(data: { eventId: string; status: ParticipationStatus }): Promise<EventSignUp[]>;
@@ -215,21 +216,34 @@ export class EventService {
     }
   }
 
-  private validateUpdateSignUpDetails(data: Partial<SignUpDetails>, existingEvent: Event): SignUpDetails {
-    const validatedData = z
-      .object({
-        signUpsEnabled: z.boolean(),
-        capacity: z.number().int().min(0),
-        slots: z.array(z.object({ capacity: z.number().int().min(0) })),
-        signUpsStartAt: z.date(),
-        signUpsEndAt: z.date().min(new Date()),
-      })
-      .refine((data) => data.signUpsEndAt > data.signUpsStartAt, {
-        message: "Sign ups end date must be after sign ups start date",
-        path: ["signUpsEndAt"],
-      })
-      .parse(merge({}, existingEvent, data));
-    return validatedData;
+  private validateUpdateSignUpDetails(
+    data: Partial<SignUpDetails>,
+    existingEvent: Event & { slots: EventSlot[] }
+  ): SignUpDetails {
+    const changingStartAt = data.signUpsStartAt !== undefined;
+    const changingEndAt = data.signUpsEndAt !== undefined;
+
+    const schema = z.object({
+      signUpsEnabled: z.boolean(),
+      capacity: z.number().int().min(0),
+      slots: z.array(z.object({ capacity: z.number().int().min(0) })),
+      signUpsStartAt: z.date(),
+      signUpsEndAt: z.date(),
+    });
+
+    if (changingStartAt || changingEndAt) {
+      return schema
+        .extend({
+          signUpsStartAt: z.date(),
+          signUpsEndAt: z.date().min(new Date()),
+        })
+        .refine((data) => data.signUpsEndAt > data.signUpsStartAt, {
+          message: "Sign ups end date must be after sign ups start date",
+          path: ["signUpsEndAt"],
+        })
+        .parse(merge({}, existingEvent, data));
+    }
+    return schema.parse(merge({}, existingEvent, data));
   }
 
   private validateUpdateEventData(data: Partial<EventData>, existingEvent: Event): Partial<EventData> {
@@ -285,7 +299,7 @@ export class EventService {
       signUpsEndAt: Date;
     }>
   ): Promise<Event> {
-    const event = await this.eventRepository.get(eventId);
+    const event = await this.eventRepository.getWithSlots(eventId);
     if (!event.organizationId) {
       throw new InvalidArgumentError("Events that belong to deleted organizations cannot be updated.");
     }

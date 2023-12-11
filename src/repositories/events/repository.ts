@@ -318,6 +318,28 @@ export class EventRepository {
   }
 
   /**
+   * get returns the event with the given ID.
+   *
+   * @throws {NotFoundError} If an event with the given ID does not exist
+   */
+  async getWithSlots(id: string): Promise<Event & { slots: EventSlot[] }> {
+    const event = await this.db.event.findUnique({
+      include: {
+        slots: true,
+      },
+      where: {
+        id,
+      },
+    });
+
+    if (event === null) {
+      throw new NotFoundError(`Event { id: ${id} } not found`);
+    }
+
+    return event;
+  }
+
+  /**
    * findMany returns a list of events.
    * @param data.endAtGte - Only return events that end after this date
    * @returns A list of events

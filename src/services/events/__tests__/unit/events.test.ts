@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { Event } from "@prisma/client";
+import { Event, EventSlot } from "@prisma/client";
 import { mock, mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
 
@@ -15,10 +15,10 @@ function setup() {
   return { permissionService, eventsRepository, service };
 }
 
-function mockEvent(data: Partial<Event> = {}): Event {
+function mockEvent(data: Partial<Event & { slots: EventSlot[] }> = {}): Event & { slots: EventSlot[] } {
   const startAt = faker.date.soon();
   const endAt = faker.date.future({ refDate: startAt });
-  return mock<Event>({
+  return mock<Event & { slots: EventSlot[] }>({
     id: faker.string.uuid(),
     name: faker.commerce.productName(),
     description: faker.lorem.paragraph(),
@@ -356,22 +356,29 @@ describe("EventsService", () => {
     });
   });
 
-  describe("update", () => {
+  describe("#update", () => {
     describe("should raise", () => {
       interface TestCase {
         name: string;
         arrange: {
           hasRole: boolean;
-          event: Event;
+          event: Event & { slots: EventSlot[] };
         };
         act: {
-          data: {
-            name?: string;
-            description?: string;
-            startAt?: Date;
-            endAt?: Date;
-            location?: string;
-          };
+          event: Partial<{
+            name: string;
+            description: string;
+            startAt: Date;
+            endAt: Date;
+            location: string;
+          }>;
+          signUpDetails?: Partial<{
+            signUpsEnabled: boolean;
+            signUpsStartAt: Date;
+            signUpsEndAt: Date;
+            capacity: number;
+            slots: { capacity: number }[];
+          }>;
         };
         assert: {
           error: typeof KnownDomainError;
@@ -388,7 +395,7 @@ describe("EventsService", () => {
             event: mockEvent(),
           },
           act: {
-            data: {
+            event: {
               name: "",
             },
           },
@@ -403,7 +410,7 @@ describe("EventsService", () => {
             event: mockEvent({ startAt, endAt }),
           },
           act: {
-            data: {
+            event: {
               endAt: faker.date.recent({ refDate: startAt }),
             },
           },
@@ -418,7 +425,7 @@ describe("EventsService", () => {
             event: mockEvent({ startAt, endAt }),
           },
           act: {
-            data: {
+            event: {
               endAt: faker.date.between({ from: startAt, to: endAt }),
               startAt: faker.date.soon({ refDate: endAt, days: 2 }),
             },
@@ -434,7 +441,7 @@ describe("EventsService", () => {
             event: mockEvent({ startAt, endAt }),
           },
           act: {
-            data: {
+            event: {
               startAt: faker.date.future({ refDate: endAt }),
             },
           },
@@ -449,7 +456,7 @@ describe("EventsService", () => {
             event: mockEvent({ startAt, endAt }),
           },
           act: {
-            data: {
+            event: {
               startAt: faker.date.recent(),
             },
           },
@@ -464,7 +471,7 @@ describe("EventsService", () => {
             event: mockEvent({ startAt, endAt }),
           },
           act: {
-            data: {
+            event: {
               endAt: faker.date.recent(),
             },
           },
@@ -479,7 +486,7 @@ describe("EventsService", () => {
             event: mockEvent({ startAt, endAt }),
           },
           act: {
-            data: {
+            event: {
               endAt: faker.date.recent(),
             },
           },
@@ -494,7 +501,7 @@ describe("EventsService", () => {
             event: mockEvent({ startAt, endAt }),
           },
           act: {
-            data: {
+            event: {
               startAt: faker.date.recent(),
               endAt: faker.date.past(),
             },
@@ -503,9 +510,79 @@ describe("EventsService", () => {
             error: InvalidArgumentError,
           },
         },
+        {
+          name: "endAt < startAt < Date.now(), changing endAt and startAt",
+          arrange: {
+            hasRole: true,
+            event: mockEvent({ startAt, endAt }),
+          },
+          act: {
+            event: {
+              startAt: faker.date.recent(),
+              endAt: faker.date.past(),
+            },
+          },
+          assert: {
+            error: InvalidArgumentError,
+          },
+        },
+        {
+          name: "signUpsEndAt < signUpsStartAt, changing signUpsStartAt",
+          arrange: {
+            hasRole: true,
+            event: mockEvent({ signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate() }),
+          },
+          act: {
+            event: {},
+            signUpDetails: {
+              signUpsStartAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+            },
+          },
+          assert: {
+            error: InvalidArgumentError,
+          },
+        },
+        {
+          name: "signUpsEndAt < signUpsStartAt, changing signUpsEndAt",
+          arrange: {
+            hasRole: true,
+            event: mockEvent({
+              signUpsEndAt: DateTime.now().plus({ days: 3 }).toJSDate(),
+              signUpsStartAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+            }),
+          },
+          act: {
+            event: {},
+            signUpDetails: {
+              signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+            },
+          },
+          assert: {
+            error: InvalidArgumentError,
+          },
+        },
+        {
+          name: "signUpsEndAt in the past, changing signUpsEndAt",
+          arrange: {
+            hasRole: true,
+            event: mockEvent({
+              signUpsEndAt: DateTime.now().plus({ days: 3 }).toJSDate(),
+              signUpsStartAt: DateTime.now().minus({ days: 2 }).toJSDate(),
+            }),
+          },
+          act: {
+            event: {},
+            signUpDetails: {
+              signUpsEndAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+            },
+          },
+          assert: {
+            error: InvalidArgumentError,
+          },
+        },
       ];
 
-      test.each(testCases)("$assert.error.name, $name, $act.data", async ({ assert, arrange, act }) => {
+      test.each(testCases)("$assert.error.name, $name", async ({ assert, arrange, act }) => {
         const { service, eventsRepository, permissionService } = setup();
 
         /**
@@ -515,14 +592,14 @@ describe("EventsService", () => {
          * 2. Set up the mock for `permissionService.hasRole` to return `true`
          */
         // 1.
-        eventsRepository.get.mockResolvedValueOnce(arrange.event);
+        eventsRepository.getWithSlots.mockResolvedValueOnce(arrange.event);
         // 2.
         permissionService.hasRole.mockResolvedValueOnce(arrange.hasRole);
 
         /**
          * Act
          */
-        const result = service.update(faker.string.uuid(), faker.string.uuid(), act.data);
+        const result = service.update(faker.string.uuid(), faker.string.uuid(), act.event, act.signUpDetails);
 
         /**
          * Assert
@@ -535,25 +612,39 @@ describe("EventsService", () => {
       interface TestCase {
         name: string;
         arrange: {
-          event: Event;
+          event: Event & { slots: EventSlot[] };
         };
         act: {
-          data: {
+          event: Partial<{
             name?: string;
             description?: string;
             startAt?: Date;
             endAt?: Date;
             location?: string;
-          };
+          }>;
+          signUpDetails?: Partial<{
+            signUpsEnabled: boolean;
+            signUpsStartAt: Date;
+            signUpsEndAt: Date;
+            capacity: number;
+            slots: { capacity: number }[];
+          }>;
         };
         assert: {
-          data: {
+          event: {
             name?: string;
             description?: string;
             startAt?: Date;
             endAt?: Date;
             location?: string;
           };
+          signUpDetails?: Partial<{
+            signUpsEnabled: boolean;
+            signUpsStartAt: Date;
+            signUpsEndAt: Date;
+            capacity: number;
+            slots: { capacity: number }[];
+          }>;
         };
       }
       const startAt = faker.date.soon();
@@ -566,12 +657,12 @@ describe("EventsService", () => {
             event: mockEvent(),
           },
           act: {
-            data: {
+            event: {
               name: faker.company.name(),
             },
           },
           assert: {
-            data: {},
+            event: {},
           },
         },
         {
@@ -580,7 +671,7 @@ describe("EventsService", () => {
             event: mockEvent({ startAt, endAt }),
           },
           act: {
-            data: {
+            event: {
               name: faker.company.name(),
               description: faker.lorem.paragraph(),
               startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
@@ -589,7 +680,7 @@ describe("EventsService", () => {
             },
           },
           assert: {
-            data: {},
+            event: {},
           },
         },
         {
@@ -598,7 +689,7 @@ describe("EventsService", () => {
             event: mockEvent({ startAt, endAt }),
           },
           act: {
-            data: {
+            event: {
               name: faker.company.name(),
               startAt: undefined,
               endAt: faker.date.future({ refDate: endAt }),
@@ -606,7 +697,7 @@ describe("EventsService", () => {
             },
           },
           assert: {
-            data: {
+            event: {
               location: expect.any(String),
               startAt: expect.any(Date),
               endAt: expect.any(Date),
@@ -620,12 +711,12 @@ describe("EventsService", () => {
             event: mockEvent({ startAt, endAt }),
           },
           act: {
-            data: {
+            event: {
               startAt: faker.date.recent({ refDate: endAt }),
             },
           },
           assert: {
-            data: {
+            event: {
               startAt: expect.any(Date),
               endAt: expect.any(Date),
             },
@@ -637,12 +728,12 @@ describe("EventsService", () => {
             event: mockEvent({ startAt, endAt }),
           },
           act: {
-            data: {
+            event: {
               endAt: faker.date.soon({ refDate: startAt }),
             },
           },
           assert: {
-            data: {
+            event: {
               startAt: expect.any(Date),
               endAt: expect.any(Date),
             },
@@ -654,18 +745,41 @@ describe("EventsService", () => {
             event: mockEvent({ startAt, endAt }),
           },
           act: {
-            data: {
+            event: {
               startAt: faker.date.soon({ refDate: endAt }),
               endAt: faker.date.future({ refDate: endAt }),
             },
           },
           assert: {
-            data: {},
+            event: {},
+          },
+        },
+        {
+          name: "update signUpDetails when signUpsEndAt is in the past",
+          arrange: {
+            event: mockEvent({
+              signUpsEnabled: true,
+              signUpsEndAt: DateTime.now().minus({ days: 2 }).toJSDate(),
+              signUpsStartAt: DateTime.now().minus({ days: 3 }).toJSDate(),
+            }),
+          },
+          act: {
+            event: {},
+            signUpDetails: {
+              slots: [],
+              signUpsEnabled: false,
+            },
+          },
+          assert: {
+            event: {},
+            signUpDetails: {
+              signUpsEnabled: false,
+            },
           },
         },
       ];
 
-      test.each(testCases)("$name, $act.data", async ({ arrange, act, assert }) => {
+      test.each(testCases)("$name", async ({ arrange, act, assert }) => {
         const { service, eventsRepository, permissionService } = setup();
 
         /**
@@ -675,14 +789,14 @@ describe("EventsService", () => {
          * 2. Set up the mock for `permissionService.hasRole` to return `true`
          */
         // 1.
-        eventsRepository.get.mockResolvedValueOnce(arrange.event);
+        eventsRepository.getWithSlots.mockResolvedValueOnce(arrange.event);
         // 2.
         permissionService.hasRole.mockResolvedValueOnce(true);
 
         /**
          * Act
          */
-        const result = service.update(faker.string.uuid(), faker.string.uuid(), act.data);
+        const result = service.update(faker.string.uuid(), faker.string.uuid(), act.event, act.signUpDetails);
 
         /**
          * Assert
@@ -690,8 +804,8 @@ describe("EventsService", () => {
         await expect(result).resolves.not.toThrow();
         expect(eventsRepository.update).toHaveBeenCalledWith(
           expect.any(String),
-          expect.objectContaining(assert?.data),
-          undefined
+          expect.objectContaining(assert.event),
+          assert.signUpDetails && expect.objectContaining(assert.signUpDetails)
         );
       });
     });
