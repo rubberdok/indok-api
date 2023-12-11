@@ -341,8 +341,8 @@ export class EventService {
       this.logger?.info({ userId, eventId, attempt }, "Attempting to sign up user for event.");
       // Fetch the event to check if it has available slots or not
       const event = await this.eventRepository.get(eventId);
-      if (!event.signUpsEnabled) {
-        throw new InvalidArgumentError("This event does does not have sign ups.");
+      if (!this.areSignUpsAvailable(event)) {
+        throw new InvalidArgumentError("Cannot sign up for the event.");
       }
 
       // If there is no remaining capacity on the event, it doesn't matter if there is any remaining capacity in slots.
@@ -590,8 +590,8 @@ export class EventService {
    */
   async canSignUpForEvent(userId: string, eventId: string): Promise<boolean> {
     const event = await this.eventRepository.get(eventId);
-    if (!event.signUpsEnabled) return false;
 
+    if (!this.areSignUpsAvailable(event)) return false;
     if (!event.remainingCapacity || event.remainingCapacity <= 0) return false;
 
     try {
@@ -604,5 +604,12 @@ export class EventService {
 
     const slot = await this.eventRepository.getSlotWithRemainingCapacity(eventId);
     return slot !== null;
+  }
+
+  private areSignUpsAvailable(event: Event): boolean {
+    if (!event.signUpsEnabled) return false;
+    if (!event.signUpsStartAt || event.signUpsStartAt > DateTime.now().toJSDate()) return false;
+    if (!event.signUpsEndAt || event.signUpsEndAt < DateTime.now().toJSDate()) return false;
+    return true;
   }
 }

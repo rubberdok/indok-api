@@ -40,7 +40,7 @@ describe("Event Sign Up", () => {
         {
           capacity: 1,
           signUpsEnabled: true,
-          signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+          signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
           signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
           slots: [
             {
@@ -111,7 +111,7 @@ describe("Event Sign Up", () => {
             {
               capacity: eventCapacity,
               signUpsEnabled: true,
-              signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+              signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
               signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
               slots: [
                 {
@@ -167,7 +167,7 @@ describe("Event Sign Up", () => {
         {
           capacity: concurrentUsers,
           signUpsEnabled: true,
-          signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+          signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
           signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
           slots: [
             {
@@ -236,7 +236,7 @@ describe("Event Sign Up", () => {
         {
           capacity,
           signUpsEnabled: true,
-          signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+          signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
           signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
           slots: [
             {
@@ -326,7 +326,51 @@ describe("Event Sign Up", () => {
        *
        * InvalidArgumentError should be thrown.
        */
-      expect(signUp).rejects.toThrow(InvalidArgumentError);
+      await expect(signUp).rejects.toThrow(InvalidArgumentError);
+    });
+
+    it("should throw InvalidArgumentError if sign ups have not opened", async () => {
+      /**
+       * Arrange
+       *
+       * 1. Create an organization to host the event.
+       * 2. Create an event with sign ups disabled.
+       * 3. Create a user to sign up for the event.
+       */
+      const { organization, user } = await makeUserWithOrganizationMembership();
+      const event = await eventService.create(
+        user.id,
+        organization.id,
+        {
+          name: faker.word.adjective(),
+          startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+        },
+        {
+          signUpsEnabled: true,
+          signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+          signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+          capacity: 1,
+          slots: [
+            {
+              capacity: 1,
+            },
+          ],
+        }
+      );
+
+      /**
+       * Act
+       *
+       * Sign up for the event with sign ups disabled.
+       */
+      const signUp = eventService.signUp(user.id, event.id);
+
+      /**
+       * Assert
+       *
+       * InvalidArgumentError should be thrown.
+       */
+      await expect(signUp).rejects.toThrow(InvalidArgumentError);
     });
   });
 });

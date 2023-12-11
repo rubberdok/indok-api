@@ -144,6 +144,23 @@ describe("EventService", () => {
         },
         expected: false,
       },
+      {
+        name: "if sign ups have not started",
+        arrange: {
+          signUpDetails: {
+            signUpsEnabled: true,
+            signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+            signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+            capacity: 1,
+            slots: [
+              {
+                capacity: 1,
+              },
+            ],
+          },
+        },
+        expected: false,
+      },
     ];
 
     test.each(testCases)("should return $expected $name", async ({ arrange, expected }) => {
@@ -191,6 +208,50 @@ describe("EventService", () => {
        * Assert that the result is the expected result
        */
       expect(actual).toBe(expected);
+    });
+
+    it("should return false if sign ups have ended", async () => {
+      /**
+       * Arrange
+       *
+       * Create a user to create the event
+       * Create an event with the capacity specified in the test case
+       * Create a slot with the capacity specified in the test case
+       */
+      const { user, organization } = await makeUserWithOrganizationMembership();
+      const event = await prisma.event.create({
+        data: {
+          name: faker.word.adjective(),
+          startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+          endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+          organizationId: organization.id,
+          capacity: 1,
+          remainingCapacity: 1,
+          signUpsEnabled: true,
+          signUpsStartAt: DateTime.now().minus({ days: 1, hours: 2 }).toJSDate(),
+          signUpsEndAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+          slots: {
+            create: {
+              capacity: 1,
+              remainingCapacity: 1,
+            },
+          },
+        },
+      });
+
+      /**
+       * Act
+       *
+       * Call the canSignUpForEvent function with the user and the event
+       */
+      const actual = await eventService.canSignUpForEvent(user.id, event.id);
+
+      /**
+       * Assert
+       *
+       * Assert that the result is the expected result
+       */
+      expect(actual).toBe(false);
     });
   });
 });
