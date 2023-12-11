@@ -583,5 +583,59 @@ describe("EventRepository", () => {
        */
       await expect(actual).rejects.toThrow(InvalidCapacityError);
     });
+
+    it("should set capacity for an event that did not previously have it", async () => {
+      /**
+       * Arrange
+       *
+       * 1. Create an organization to host the event
+       * 1. Create an event
+       */
+      const organization = await prisma.organization.create({
+        data: {
+          name: faker.string.sample(20),
+        },
+      });
+      const event = await eventRepository.create({
+        name: faker.word.adjective(),
+        startAt: faker.date.past(),
+        endAt: faker.date.future(),
+        contactEmail: faker.internet.email(),
+        organizationId: organization.id,
+      });
+
+      /**
+       * Act
+       *
+       * 1. Update the event with capacity and slots
+       */
+      const actual = await eventRepository.update(
+        event.id,
+        {},
+        {
+          slots: [{ capacity: 20 }],
+          capacity: 10,
+          signUpsEnabled: true,
+          signUpsStartAt: new Date(),
+          signUpsEndAt: new Date(),
+        }
+      );
+      const slot = await prisma.eventSlot.findFirstOrThrow({
+        where: {
+          eventId: event.id,
+        },
+      });
+
+      /**
+       * Assert
+       *
+       * The event should have capacity
+       */
+      expect(actual.capacity).toBe(10);
+      expect(actual.remainingCapacity).toBe(10);
+      expect(actual.signUpsEnabled).toBe(true);
+      expect(slot.capacity).toBe(20);
+      expect(slot.remainingCapacity).toBe(20);
+    });
   });
 });
