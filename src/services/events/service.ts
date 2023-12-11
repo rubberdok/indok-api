@@ -117,7 +117,7 @@ export class EventService {
     signUpDetails?: {
       signUpsEnabled: boolean;
       capacity: number;
-      slots: { capacity: number }[];
+      slots: { capacity: number; gradeYears?: number[] }[];
       signUpsStartAt: Date;
       signUpsEndAt: Date;
       gradeYears?: number[] | null;
@@ -350,6 +350,8 @@ export class EventService {
    */
   async signUp(userId: string, eventId: string): Promise<EventSignUp> {
     const maxAttempts = 20;
+    const user = await this.userService.get(userId);
+
     /**
      * We may need to retry this multiple times, as we rely on optimistic concurrency control
      * to ensure that that the event and slot have not been updated since we last fetched them.
@@ -377,7 +379,7 @@ export class EventService {
       }
 
       try {
-        const slotToSignUp = await this.eventRepository.getSlotWithRemainingCapacity(eventId);
+        const slotToSignUp = await this.eventRepository.getSlotWithRemainingCapacity(eventId, user.gradeYear);
 
         if (slotToSignUp === null) {
           this.logger?.info({ event }, "Event is full, adding user to wait list.");
