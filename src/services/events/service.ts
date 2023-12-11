@@ -606,6 +606,10 @@ export class EventService {
     return slot !== null;
   }
 
+  /**
+   * areSignUpsAvailable returns true if sign ups are available for the event, i.e.
+   * if sign ups are enabled, and the current time is between the start and end date for sign ups.
+   */
   private areSignUpsAvailable(event: Event): boolean {
     if (!event.signUpsEnabled) return false;
     if (!event.signUpsStartAt || event.signUpsStartAt > DateTime.now().toJSDate()) return false;
