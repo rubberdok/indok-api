@@ -23,7 +23,11 @@ export class EventRepository {
   async create(event: EventData, signUpDetails?: SignUpData): Promise<Event> {
     const { name, description, startAt, endAt, contactEmail, location, organizationId } = event;
     if (signUpDetails) {
-      const slots = signUpDetails.slots.map((slot) => ({ capacity: slot.capacity, remainingCapacity: slot.capacity }));
+      const slots = signUpDetails.slots.map((slot) => ({
+        capacity: slot.capacity,
+        remainingCapacity: slot.capacity,
+        gradeYears: slot.gradeYears,
+      }));
       const { signUpsEndAt, signUpsStartAt, capacity, signUpsEnabled } = signUpDetails;
       return await this.db.event.create({
         data: {
@@ -130,7 +134,7 @@ export class EventRepository {
       if (slotId) {
         const existingSlot = existingSlotsById[slotId];
         if (!existingSlot) throw new NotFoundError(`Event slot { id: ${slotId} } not found`);
-        return this.updateExistingSlot(existingSlot, { id: slotId, capacity });
+        return this.updateExistingSlot(existingSlot, { id: slotId, capacity, gradeYears: slot.gradeYears });
       }
       return this.db.eventSlot.create({
         data: {
@@ -178,7 +182,7 @@ export class EventRepository {
 
   private updateExistingSlot(
     existingSlot: EventSlot,
-    data: { id: string; capacity: number }
+    data: { id: string; capacity: number; gradeYears?: number[] }
   ): PrismaPromise<EventSlot> {
     if (existingSlot === null) {
       throw new NotFoundError(`Event slot { id: ${data.id} } not found`);
@@ -193,6 +197,7 @@ export class EventRepository {
           capacity: existingSlot.capacity,
         },
         data: {
+          gradeYears: data.gradeYears,
           remainingCapacity: {
             increment: changeInCapacity,
           },
@@ -210,6 +215,7 @@ export class EventRepository {
         },
       },
       data: {
+        gradeYears: data.gradeYears,
         remainingCapacity: {
           increment: changeInCapacity,
         },
@@ -280,12 +286,33 @@ export class EventRepository {
    * getSlotWithRemainingCapacity returns the slot with the greatest number of remaining capacity for the given event.
    *
    * @param eventId - The ID of the event to get a slot for
+   * @param gradeYear - The grade year for which the slot should be available
    * @returns The slot with the greatest number of remaining capacity for the given event
    */
-  async getSlotWithRemainingCapacity(eventId: string): Promise<EventSlot | null> {
+  async getSlotWithRemainingCapacity(eventId: string, gradeYear?: number): Promise<EventSlot | null> {
+    if (gradeYear !== undefined) {
+      const slot = await this.db.eventSlot.findFirst({
+        where: {
+          eventId,
+          gradeYears: {
+            has: gradeYear,
+          },
+          remainingCapacity: {
+            gt: 0,
+          },
+        },
+        orderBy: {
+          remainingCapacity: "desc",
+        },
+      });
+      return slot;
+    }
     const slot = await this.db.eventSlot.findFirst({
       where: {
         eventId,
+        gradeYears: {
+          hasEvery: [1, 2, 3, 4, 5],
+        },
         remainingCapacity: {
           gt: 0,
         },
@@ -955,6 +982,7 @@ interface UpdateSignUpData {
   capacity: number;
   slots: {
     id?: string;
+    gradeYears?: number[];
     capacity: number;
   }[];
 }
@@ -976,5 +1004,6 @@ interface SignUpData {
   capacity: number;
   slots: {
     capacity: number;
+    gradeYears?: number[];
   }[];
 }

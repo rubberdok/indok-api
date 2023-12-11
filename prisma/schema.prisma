@@ -83,6 +83,7 @@ model EventSlot {
   eventId           String        @db.Uuid
   event             Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
   signUps           EventSignUp[]
+  gradeYears        Int[]         @default([1, 2, 3, 4, 5])
 }
 
 enum ParticipationStatus {

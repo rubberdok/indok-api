@@ -56,7 +56,7 @@ export interface EventRepository {
   update(id: string, event: Partial<EventData>, signUpDetails?: Partial<SignUpDetails>): Promise<Event>;
   get(id: string): Promise<Event>;
   getWithSlots(id: string): Promise<Event & { slots: EventSlot[] }>;
-  getSlotWithRemainingCapacity(eventId: string): Promise<EventSlot | null>;
+  getSlotWithRemainingCapacity(eventId: string, gradeYear?: number): Promise<EventSlot | null>;
   findMany(data?: { endAtGte?: Date | null }): Promise<Event[]>;
   findManySignUps(data: { eventId: string; status: ParticipationStatus }): Promise<EventSignUp[]>;
   getSignUp(userId: string, eventId: string): Promise<EventSignUp>;
@@ -82,6 +82,7 @@ export class EventService {
   constructor(
     private eventRepository: EventRepository,
     private permissionService: PermissionService,
+    private userService: UserService,
     private logger?: Logger
   ) {}
   /**
@@ -119,6 +120,7 @@ export class EventService {
       slots: { capacity: number }[];
       signUpsStartAt: Date;
       signUpsEndAt: Date;
+      gradeYears?: number[] | null;
     } | null
   ) {
     const isMember = await this.permissionService.hasRole({
@@ -136,7 +138,12 @@ export class EventService {
         .object({
           signUpsEnabled: z.boolean(),
           capacity: z.number().int().min(0),
-          slots: z.array(z.object({ capacity: z.number().int().min(0) })),
+          slots: z.array(
+            z.object({
+              capacity: z.number().int().min(0),
+              gradeYears: z.array(z.number().int().min(1).max(5)).optional(),
+            })
+          ),
           signUpsStartAt: z.date(),
           signUpsEndAt: z.date().min(new Date()),
         })
@@ -350,7 +357,6 @@ export class EventService {
      *
      * This number may need to be tweaked.
      */
-
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       this.logger?.info({ userId, eventId, attempt }, "Attempting to sign up user for event.");
       // Fetch the event to check if it has available slots or not
@@ -616,7 +622,8 @@ export class EventService {
       if (!isNotFoundError) throw err;
     }
 
-    const slot = await this.eventRepository.getSlotWithRemainingCapacity(eventId);
+    const user = await this.userService.get(userId);
+    const slot = await this.eventRepository.getSlotWithRemainingCapacity(eventId, user.gradeYear);
     return slot !== null;
   }
 

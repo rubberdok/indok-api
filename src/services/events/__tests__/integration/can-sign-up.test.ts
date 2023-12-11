@@ -19,6 +19,9 @@ describe("EventService", () => {
     interface TestCase {
       name: string;
       arrange: {
+        user?: {
+          graduationYear?: number;
+        };
         signUpDetails?: {
           capacity: number;
           signUpsEnabled: boolean;
@@ -26,9 +29,10 @@ describe("EventService", () => {
           signUpsEndAt: Date;
           slots: {
             capacity: number;
+            gradeYears?: number[];
           }[];
         };
-        user?: { participationStatus: ParticipationStatus; active: boolean };
+        signUp?: { participationStatus: ParticipationStatus; active: boolean };
       };
       expected: boolean;
     }
@@ -65,7 +69,7 @@ describe("EventService", () => {
               },
             ],
           },
-          user: {
+          signUp: {
             participationStatus: ParticipationStatus.ON_WAITLIST,
             active: false,
           },
@@ -86,7 +90,7 @@ describe("EventService", () => {
               },
             ],
           },
-          user: {
+          signUp: {
             participationStatus: ParticipationStatus.CONFIRMED,
             active: true,
           },
@@ -161,6 +165,119 @@ describe("EventService", () => {
         },
         expected: false,
       },
+      {
+        name: "if a slot is available for the user's grade year",
+        arrange: {
+          user: {
+            graduationYear: DateTime.now().year + 1,
+          },
+          signUpDetails: {
+            signUpsEnabled: true,
+            signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+            signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+            capacity: 1,
+            slots: [
+              {
+                gradeYears: [1, 2, 3, 4, 5],
+                capacity: 1,
+              },
+            ],
+          },
+        },
+        expected: true,
+      },
+      {
+        name: "if a slot is not available for the user's grade year",
+        arrange: {
+          user: {
+            graduationYear: DateTime.now().year + 3,
+          },
+          signUpDetails: {
+            signUpsEnabled: true,
+            signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+            signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+            capacity: 1,
+            slots: [
+              {
+                gradeYears: [1],
+                capacity: 1,
+              },
+            ],
+          },
+        },
+        expected: false,
+      },
+      {
+        name: "if at least one slot is available for the user's grade year",
+        arrange: {
+          user: {
+            graduationYear: DateTime.now().year + 3,
+          },
+          signUpDetails: {
+            signUpsEnabled: true,
+            signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+            signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+            capacity: 1,
+            slots: [
+              {
+                gradeYears: [1, 2, 3, 4, 5],
+                capacity: 1,
+              },
+              {
+                gradeYears: [1, 2, 3, 4, 5],
+                capacity: 1,
+              },
+              {
+                gradeYears: [1, 2, 3, 4, 5],
+                capacity: 1,
+              },
+              {
+                gradeYears: [1, 2, 3, 4, 5],
+                capacity: 1,
+              },
+            ],
+          },
+        },
+        expected: true,
+      },
+      {
+        name: "if there is a slot open for all grade years and the user has not set their graduation year",
+        arrange: {
+          user: {},
+          signUpDetails: {
+            signUpsEnabled: true,
+            signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+            signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+            capacity: 1,
+            slots: [
+              {
+                gradeYears: [1, 2, 3, 4, 5],
+                capacity: 1,
+              },
+            ],
+          },
+        },
+        expected: true,
+      },
+      {
+        name: "if there is not a slot open for all grade years and the user has not set their graduation year",
+        arrange: {
+          user: {},
+          signUpDetails: {
+            signUpsEnabled: true,
+            signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+            signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+            capacity: 1,
+            slots: [
+              {
+                gradeYears: [2, 3, 4, 5],
+                capacity: 1,
+              },
+            ],
+          },
+        },
+        expected: false,
+      },
     ];
 
     test.each(testCases)("should return $expected $name", async ({ arrange, expected }) => {
@@ -173,7 +290,7 @@ describe("EventService", () => {
        * Create a sign up for the user and the event with the participation status specified in the test case
        * if the participation status is CONFIRMED, create a sign up for the user and the slot
        */
-      const { user, organization } = await makeUserWithOrganizationMembership();
+      const { user, organization } = await makeUserWithOrganizationMembership(arrange.user);
       const event = await eventService.create(
         user.id,
         organization.id,
@@ -184,13 +301,13 @@ describe("EventService", () => {
         },
         arrange.signUpDetails
       );
-      if (arrange.user) {
+      if (arrange.signUp) {
         await prisma.eventSignUp.create({
           data: {
             event: { connect: { id: event.id } },
             user: { connect: { id: user.id } },
-            participationStatus: arrange.user.participationStatus,
-            active: arrange.user.active,
+            participationStatus: arrange.signUp.participationStatus,
+            active: arrange.signUp.active,
           },
         });
       }
@@ -256,7 +373,9 @@ describe("EventService", () => {
   });
 });
 
-async function makeUserWithOrganizationMembership(): Promise<{ user: User; organization: Organization }> {
+async function makeUserWithOrganizationMembership(
+  userData: Partial<User> = {}
+): Promise<{ user: User; organization: Organization }> {
   const user = await prisma.user.create({
     data: {
       firstName: faker.person.firstName(),
@@ -264,6 +383,7 @@ async function makeUserWithOrganizationMembership(): Promise<{ user: User; organ
       username: faker.string.sample(30),
       feideId: faker.string.uuid(),
       email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
+      ...userData,
     },
   });
   const organization = await prisma.organization.create({

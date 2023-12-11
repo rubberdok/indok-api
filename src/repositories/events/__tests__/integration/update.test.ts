@@ -24,6 +24,7 @@ describe("EventRepository", () => {
             capacity: number;
           };
           slots: {
+            gradeYears?: number[];
             capacity: number;
           }[];
         };
@@ -33,6 +34,7 @@ describe("EventRepository", () => {
             capacity: number;
             slots: {
               capacity: number;
+              gradeYears?: number[];
             }[];
             signUpsStartAt: Date;
             signUpsEndAt: Date;
@@ -42,6 +44,7 @@ describe("EventRepository", () => {
           slots: {
             capacity: number;
             remainingCapacity: number;
+            gradeYears?: number[];
           }[];
           event: {
             capacity: number;
@@ -81,6 +84,7 @@ describe("EventRepository", () => {
               {
                 capacity: 20,
                 remainingCapacity: 10,
+                gradeYears: [1, 2, 3, 4, 5],
               },
             ],
             event: {
@@ -118,6 +122,49 @@ describe("EventRepository", () => {
           assert: {
             slots: [
               {
+                capacity: 10,
+                remainingCapacity: 0,
+                gradeYears: [1, 2, 3, 4, 5],
+              },
+            ],
+            event: {
+              capacity: 10,
+              remainingCapacity: 0,
+            },
+          },
+        },
+        {
+          name: "should update the grade years of the slot",
+          arrange: {
+            signUps: 10,
+            event: {
+              capacity: 10,
+            },
+            slots: [
+              {
+                gradeYears: [1, 2],
+                capacity: 10,
+              },
+            ],
+          },
+          act: {
+            signUpDetails: {
+              signUpsEnabled: true,
+              capacity: 10,
+              slots: [
+                {
+                  gradeYears: [3, 4],
+                  capacity: 10,
+                },
+              ],
+              signUpsStartAt: new Date(),
+              signUpsEndAt: new Date(),
+            },
+          },
+          assert: {
+            slots: [
+              {
+                gradeYears: [3, 4],
                 capacity: 10,
                 remainingCapacity: 0,
               },
@@ -215,7 +262,11 @@ describe("EventRepository", () => {
         expect(actual.capacity).toBe(assert.event.capacity);
         expect(actual.remainingCapacity).toBe(assert.event.remainingCapacity);
         expect(
-          actualSlots.map((slot) => ({ capacity: slot.capacity, remainingCapacity: slot.remainingCapacity }))
+          actualSlots.map((slot) => ({
+            capacity: slot.capacity,
+            remainingCapacity: slot.remainingCapacity,
+            gradeYears: slot.gradeYears,
+          }))
         ).toEqual(assert.slots);
       });
     });

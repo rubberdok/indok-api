@@ -6,13 +6,14 @@ import { DateTime } from "luxon";
 import { InvalidArgumentError, KnownDomainError, PermissionDeniedError } from "@/domain/errors.js";
 import { Role } from "@/domain/organizations.js";
 
-import { EventRepository, EventService, PermissionService } from "../../service.js";
+import { EventRepository, EventService, PermissionService, UserService } from "../../service.js";
 
 function setup() {
   const permissionService = mockDeep<PermissionService>();
   const eventsRepository = mockDeep<EventRepository>();
-  const service = new EventService(eventsRepository, permissionService);
-  return { permissionService, eventsRepository, service };
+  const userService = mockDeep<UserService>();
+  const service = new EventService(eventsRepository, permissionService, userService);
+  return { permissionService, eventsRepository, service, userService };
 }
 
 function mockEvent(data: Partial<Event & { slots: EventSlot[] }> = {}): Event & { slots: EventSlot[] } {
@@ -241,9 +242,7 @@ describe("EventsService", () => {
     });
 
     it("should create an event without sign up details", async () => {
-      const permissionService = mockDeep<PermissionService>();
-      const eventsRepository = mockDeep<EventRepository>();
-      const service = new EventService(eventsRepository, permissionService);
+      const { service, eventsRepository, permissionService } = setup();
       /**
        * Arrange
        *
@@ -274,9 +273,7 @@ describe("EventsService", () => {
     });
 
     it("should create an event with sign up details", async () => {
-      const permissionService = mockDeep<PermissionService>();
-      const eventsRepository = mockDeep<EventRepository>();
-      const service = new EventService(eventsRepository, permissionService);
+      const { service, eventsRepository, permissionService } = setup();
       /**
        * Arrange
        *
