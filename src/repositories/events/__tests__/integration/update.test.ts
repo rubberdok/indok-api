@@ -259,8 +259,8 @@ describe("EventRepository", () => {
          * 3. The slot capacities and remaining capacities should be correctly updated
          * 4. Any new slots should be created
          */
-        expect(actual.capacity).toBe(assert.event.capacity);
-        expect(actual.remainingCapacity).toBe(assert.event.remainingCapacity);
+        expect(actual.signUpDetails?.capacity).toBe(assert.event.capacity);
+        expect(actual.signUpDetails?.remainingCapacity).toBe(assert.event.remainingCapacity);
         expect(
           actualSlots.map((slot) => ({
             capacity: slot.capacity,
@@ -336,8 +336,8 @@ describe("EventRepository", () => {
        * 3. The slot capacities and remaining capacities should be correctly updated
        * 4. Any new slots should be created
        */
-      expect(actual.capacity).toBe(1);
-      expect(actual.remainingCapacity).toBe(1);
+      expect(actual.signUpDetails?.capacity).toBe(1);
+      expect(actual.signUpDetails?.remainingCapacity).toBe(1);
       expect(actualSlots).toHaveLength(2);
       expect(actualSlots[0]!.id).toEqual(existingSlots[0]!.id);
       expect(actualSlots[0]!.capacity).toBe(2);
@@ -682,8 +682,8 @@ describe("EventRepository", () => {
        *
        * The event should have capacity
        */
-      expect(actual.capacity).toBe(10);
-      expect(actual.remainingCapacity).toBe(10);
+      expect(actual.signUpDetails?.capacity).toBe(10);
+      expect(actual.signUpDetails?.remainingCapacity).toBe(10);
       expect(actual.signUpsEnabled).toBe(true);
       expect(slot.capacity).toBe(20);
       expect(slot.remainingCapacity).toBe(20);

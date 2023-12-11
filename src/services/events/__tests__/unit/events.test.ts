@@ -1,9 +1,10 @@
 import { faker } from "@faker-js/faker";
-import { Event, EventSlot } from "@prisma/client";
+import { EventSlot } from "@prisma/client";
 import { mock, mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
 
 import { InvalidArgumentError, KnownDomainError, PermissionDeniedError } from "@/domain/errors.js";
+import { Event } from "@/domain/events.js";
 import { Role } from "@/domain/organizations.js";
 
 import { EventRepository, EventService, PermissionService, UserService } from "../../service.js";
@@ -14,6 +15,16 @@ function setup() {
   const userService = mockDeep<UserService>();
   const service = new EventService(eventsRepository, permissionService, userService);
   return { permissionService, eventsRepository, service, userService };
+}
+
+function mockSignUpDetails(data: Partial<Event["signUpDetails"]> = {}): Event["signUpDetails"] {
+  return {
+    signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+    signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
+    capacity: 10,
+    remainingCapacity: 10,
+    ...data,
+  };
 }
 
 function mockEvent(data: Partial<Event & { slots: EventSlot[] }> = {}): Event & { slots: EventSlot[] } {
@@ -27,13 +38,16 @@ function mockEvent(data: Partial<Event & { slots: EventSlot[] }> = {}): Event & 
     endAt,
     organizationId: faker.string.uuid(),
     contactEmail: faker.internet.email(),
-    createdAt: faker.date.past(),
-    updatedAt: faker.date.past(),
     location: faker.location.streetAddress(),
-    version: 0,
-    remainingCapacity: 0,
-    capacity: 0,
     ...data,
+    signUpDetails: {
+      remainingCapacity: 0,
+      capacity: 0,
+      signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+      signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+      ...data.signUpDetails,
+    },
+    signUpsEnabled: true,
   });
 }
 
@@ -527,7 +541,9 @@ describe("EventsService", () => {
           name: "signUpsEndAt < signUpsStartAt, changing signUpsStartAt",
           arrange: {
             hasRole: true,
-            event: mockEvent({ signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate() }),
+            event: mockEvent({
+              signUpDetails: mockSignUpDetails({ signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate() }),
+            }),
           },
           act: {
             event: {},
@@ -544,8 +560,10 @@ describe("EventsService", () => {
           arrange: {
             hasRole: true,
             event: mockEvent({
-              signUpsEndAt: DateTime.now().plus({ days: 3 }).toJSDate(),
-              signUpsStartAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+              signUpDetails: mockSignUpDetails({
+                signUpsEndAt: DateTime.now().plus({ days: 3 }).toJSDate(),
+                signUpsStartAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+              }),
             }),
           },
           act: {
@@ -563,8 +581,10 @@ describe("EventsService", () => {
           arrange: {
             hasRole: true,
             event: mockEvent({
-              signUpsEndAt: DateTime.now().plus({ days: 3 }).toJSDate(),
-              signUpsStartAt: DateTime.now().minus({ days: 2 }).toJSDate(),
+              signUpDetails: mockSignUpDetails({
+                signUpsEndAt: DateTime.now().plus({ days: 3 }).toJSDate(),
+                signUpsStartAt: DateTime.now().minus({ days: 2 }).toJSDate(),
+              }),
             }),
           },
           act: {
@@ -756,8 +776,10 @@ describe("EventsService", () => {
           arrange: {
             event: mockEvent({
               signUpsEnabled: true,
-              signUpsEndAt: DateTime.now().minus({ days: 2 }).toJSDate(),
-              signUpsStartAt: DateTime.now().minus({ days: 3 }).toJSDate(),
+              signUpDetails: mockSignUpDetails({
+                signUpsEndAt: DateTime.now().minus({ days: 2 }).toJSDate(),
+                signUpsStartAt: DateTime.now().minus({ days: 3 }).toJSDate(),
+              }),
             }),
           },
           act: {

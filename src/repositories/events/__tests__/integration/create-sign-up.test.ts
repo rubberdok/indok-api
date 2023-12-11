@@ -94,7 +94,7 @@ describe("EventRepository", () => {
        */
       expect(actual.signUp.active).toBe(true);
       expect(actual.slot.remainingCapacity).toBe(slot.remainingCapacity - 1);
-      expect(actual.event.remainingCapacity).toBe((event.remainingCapacity ?? NaN) - 1);
+      expect(actual.event.signUpDetails?.remainingCapacity).toBe((event.remainingCapacity ?? NaN) - 1);
       expect(actual.slot.version).toBe(slot.version + 1);
       expect(actual.event.version).toBe(event.version + 1);
     });
@@ -128,7 +128,7 @@ describe("EventRepository", () => {
        * Should return the sign up with `active: true`
        */
       expect(actual.signUp.active).toBe(true);
-      expect(actual.event.remainingCapacity).toBe(event.remainingCapacity);
+      expect(actual.event.signUpDetails?.remainingCapacity).toBe(event.remainingCapacity);
       expect(actual.event.version).toBe(event.version + 1);
     });
 
@@ -169,7 +169,7 @@ describe("EventRepository", () => {
        */
       expect(actual.signUp.active).toBe(true);
       expect(actual.signUp.id).not.toBe(existingSignUp.id);
-      expect(actual.event.remainingCapacity).toBe((event.remainingCapacity ?? NaN) - 1);
+      expect(actual.event.signUpDetails?.remainingCapacity).toBe((event.remainingCapacity ?? NaN) - 1);
       expect(actual.event.version).toBe(event.version + 1);
     });
 
@@ -202,7 +202,7 @@ describe("EventRepository", () => {
        * Should return the sign up with `active: true`
        */
       expect(actual.signUp.active).toBe(true);
-      expect(actual.event.remainingCapacity).toBe(event.remainingCapacity);
+      expect(actual.event.signUpDetails?.remainingCapacity).toBe(event.remainingCapacity);
     });
 
     describe("should raise", () => {
@@ -293,6 +293,10 @@ function makeEvent(data: { capacity: number }) {
       startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
       endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
       remainingCapacity: data.capacity,
+      capacity: data.capacity,
+      signUpsEnabled: true,
+      signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+      signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
     },
   });
 }

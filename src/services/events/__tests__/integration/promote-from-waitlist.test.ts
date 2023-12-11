@@ -7,7 +7,7 @@ import prisma from "@/lib/prisma.js";
 
 import { EventService } from "../../service.js";
 
-import { makeDependencies } from "./dependencies-factory.js";
+import { makeDependencies, makeUserWithOrganizationMembership } from "./dependencies-factory.js";
 
 describe("EventService", () => {
   let eventService: EventService;
@@ -26,20 +26,31 @@ describe("EventService", () => {
        * 3. Create 3 users
        * 4. Create 3 sign ups for the event, one for each user, with status ON_WAITLIST
        */
-      const event = await prisma.event.create({
-        data: {
-          signUpsEnabled: true,
+      const { user, organization } = await makeUserWithOrganizationMembership();
+      const event = await eventService.create(
+        user.id,
+        organization.id,
+        {
           name: faker.word.adjective(),
           startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
           endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
-          remainingCapacity: 1,
         },
-      });
+        {
+          signUpsEnabled: true,
+          capacity: 1,
+          signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+          signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+          slots: [
+            {
+              capacity: 1,
+            },
+          ],
+        }
+      );
 
-      const slot = await prisma.eventSlot.create({
-        data: {
+      const slot = await prisma.eventSlot.findFirstOrThrow({
+        where: {
           eventId: event.id,
-          remainingCapacity: 1,
         },
       });
 
@@ -95,7 +106,7 @@ describe("EventService", () => {
       const updatedEvent = await prisma.event.findUnique({
         where: { id: event.id },
       });
-      expect(updatedEvent?.remainingCapacity).toBe((event.remainingCapacity ?? NaN) - 1);
+      expect(updatedEvent?.remainingCapacity).toBe((event.signUpDetails?.remainingCapacity ?? NaN) - 1);
     });
   });
 });

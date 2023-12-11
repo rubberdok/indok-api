@@ -1,3 +1,6 @@
+import { faker } from "@faker-js/faker";
+import { Organization, User } from "@prisma/client";
+
 import prisma from "@/lib/prisma.js";
 import { EventRepository } from "@/repositories/events/repository.js";
 import { MemberRepository } from "@/repositories/organizations/members.js";
@@ -17,4 +20,32 @@ export function makeDependencies() {
   const userService = new UserService(userRepository, permissionService);
   const eventService = new EventService(eventRepository, permissionService, userService);
   return { eventService };
+}
+
+export async function makeUserWithOrganizationMembership(
+  userData: Partial<User> = {}
+): Promise<{ user: User; organization: Organization }> {
+  const user = await prisma.user.create({
+    data: {
+      firstName: faker.person.firstName(),
+      lastName: faker.person.lastName(),
+      username: faker.string.sample(30),
+      feideId: faker.string.uuid(),
+      email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
+      ...userData,
+    },
+  });
+  const organization = await prisma.organization.create({
+    data: {
+      name: faker.string.sample(20),
+    },
+  });
+  await prisma.member.create({
+    data: {
+      organizationId: organization.id,
+      userId: user.id,
+      role: "MEMBER",
+    },
+  });
+  return { user, organization };
 }

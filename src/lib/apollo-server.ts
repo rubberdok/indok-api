@@ -4,7 +4,6 @@ import {
   BookingContact,
   BookingSemester,
   Cabin,
-  Event,
   EventSignUp,
   FeaturePermission,
   Listing,
@@ -21,7 +20,7 @@ import { ZodError } from "zod";
 
 import { BookingStatus } from "@/domain/cabins.js";
 import { KnownDomainError, errorCodes } from "@/domain/errors.js";
-import { SignUpAvailability } from "@/domain/events.js";
+import { SignUpAvailability, Event } from "@/domain/events.js";
 import { Role } from "@/domain/organizations.js";
 import { User } from "@/domain/users.js";
 

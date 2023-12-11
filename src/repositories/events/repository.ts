@@ -1,8 +1,10 @@
 import { Event, EventSignUp, EventSlot, ParticipationStatus, PrismaClient, PrismaPromise } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
+import { merge } from "lodash-es";
+import { z } from "zod";
 
 import { InternalServerError, InvalidArgumentError, NotFoundError } from "@/domain/errors.js";
-import { AlreadySignedUpError, InvalidCapacityError } from "@/domain/events.js";
+import { AlreadySignedUpError, Event as DomainEvent, InvalidCapacityError } from "@/domain/events.js";
 import { prismaKnownErrorCodes } from "@/lib/prisma.js";
 
 export class EventRepository {
@@ -20,8 +22,8 @@ export class EventRepository {
    * @param signUpDetails - The sign up details for the event
    * @returns The created event
    */
-  async create(event: EventData, signUpDetails?: SignUpData): Promise<Event> {
-    const { name, description, startAt, endAt, contactEmail, location, organizationId } = event;
+  async create(eventData: EventData, signUpDetails?: SignUpData): Promise<DomainEvent> {
+    const { name, description, startAt, endAt, contactEmail, location, organizationId } = eventData;
     if (signUpDetails) {
       const slots = signUpDetails.slots.map((slot) => ({
         capacity: slot.capacity,
@@ -29,7 +31,7 @@ export class EventRepository {
         gradeYears: slot.gradeYears,
       }));
       const { signUpsEndAt, signUpsStartAt, capacity, signUpsEnabled } = signUpDetails;
-      return await this.db.event.create({
+      const event = await this.db.event.create({
         data: {
           name,
           description,
@@ -49,8 +51,9 @@ export class EventRepository {
           signUpsEnabled,
         },
       });
+      return this.toDomainEvent(event);
     }
-    return this.db.event.create({
+    const event = await this.db.event.create({
       data: {
         name: name,
         description,
@@ -61,6 +64,7 @@ export class EventRepository {
         location,
       },
     });
+    return this.toDomainEvent(event);
   }
 
   /**
@@ -74,17 +78,19 @@ export class EventRepository {
    * @param data.endAt - The new end datetime of the event
    * @returns The updated event
    */
-  async update(id: string, event: Partial<EventData>, signUpDetails?: UpdateSignUpData) {
+  async update(id: string, eventData: Partial<EventData>, signUpDetails?: UpdateSignUpData): Promise<DomainEvent> {
     if (signUpDetails !== undefined) {
-      return this.updateWithCapacity(id, event, signUpDetails);
+      const event = await this.updateWithCapacity(id, eventData, signUpDetails);
+      return this.toDomainEvent(event);
     }
 
-    return this.db.event.update({
-      data: event,
+    const event = await this.db.event.update({
+      data: eventData,
       where: {
         id,
       },
     });
+    return this.toDomainEvent(event);
   }
 
   /**
@@ -330,7 +336,7 @@ export class EventRepository {
    *
    * @throws {NotFoundError} If an event with the given ID does not exist
    */
-  async get(id: string): Promise<Event> {
+  async get(id: string): Promise<DomainEvent> {
     const event = await this.db.event.findUnique({
       where: {
         id,
@@ -341,7 +347,7 @@ export class EventRepository {
       throw new NotFoundError(`Event { id: ${id} } not found`);
     }
 
-    return event;
+    return this.toDomainEvent(event);
   }
 
   /**
@@ -349,7 +355,7 @@ export class EventRepository {
    *
    * @throws {NotFoundError} If an event with the given ID does not exist
    */
-  async getWithSlots(id: string): Promise<Event & { slots: EventSlot[] }> {
+  async getWithSlots(id: string): Promise<DomainEvent & { slots: EventSlot[] }> {
     const event = await this.db.event.findUnique({
       include: {
         slots: true,
@@ -363,7 +369,7 @@ export class EventRepository {
       throw new NotFoundError(`Event { id: ${id} } not found`);
     }
 
-    return event;
+    return merge({}, this.toDomainEvent(event), { slots: event.slots });
   }
 
   /**
@@ -371,19 +377,22 @@ export class EventRepository {
    * @param data.endAtGte - Only return events that end after this date
    * @returns A list of events
    */
-  async findMany(data?: { endAtGte?: Date }): Promise<Event[]> {
+  async findMany(data?: { endAtGte?: Date }): Promise<DomainEvent[]> {
     if (data) {
       const { endAtGte } = data;
-      return this.db.event.findMany({
+      const events = await this.db.event.findMany({
         where: {
           endAt: {
             gte: endAtGte,
           },
         },
       });
+
+      return events.map((event) => this.toDomainEvent(event));
     }
 
-    return this.db.event.findMany();
+    const events = await this.db.event.findMany();
+    return events.map((event) => this.toDomainEvent(event));
   }
 
   /**
@@ -421,7 +430,7 @@ export class EventRepository {
    */
   public async createSignUp(
     data: CreateConfirmedSignUpData
-  ): Promise<{ event: Event; signUp: EventSignUp; slot: EventSlot }>;
+  ): Promise<{ event: DomainEvent; signUp: EventSignUp; slot: EventSlot }>;
   /**
    * Create a new sign up for the event the given participation status. All newly created events are set as active,
    * which is either `ON_WAITLIST` or `CONFIRMED`. Leaves the remaining capacity of the event and slot unchanged.
@@ -433,7 +442,7 @@ export class EventRepository {
    * @param data.eventId - The ID of the event to sign up for
    * @returns The created sign up, and the updated event and slot
    */
-  public async createSignUp(data: CreateOnWaitlistSignUpData): Promise<{ event: Event; signUp: EventSignUp }>;
+  public async createSignUp(data: CreateOnWaitlistSignUpData): Promise<{ event: DomainEvent; signUp: EventSignUp }>;
 
   /**
    * Create a new sign up for the event the given participation status. All newly created events are set as active,
@@ -450,12 +459,14 @@ export class EventRepository {
    */
   public async createSignUp(
     data: CreateConfirmedSignUpData | CreateOnWaitlistSignUpData
-  ): Promise<{ event: Event; signUp: EventSignUp; slot?: EventSlot }> {
+  ): Promise<{ event: DomainEvent; signUp: EventSignUp; slot?: EventSlot }> {
     try {
       if ("slotId" in data) {
-        return await this.createConfirmedSignUp(data);
+        const { event, signUp, slot } = await this.createConfirmedSignUp(data);
+        return { event: this.toDomainEvent(event), signUp, slot };
       } else {
-        return await this.createOnWaitlistSignUp(data);
+        const { event, signUp } = await this.createOnWaitlistSignUp(data);
+        return { event: this.toDomainEvent(event), signUp };
       }
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError) {
@@ -582,7 +593,7 @@ export class EventRepository {
    */
   public async updateSignUp(
     data: UpdateToConfirmedSignUpData
-  ): Promise<{ event: Event; signUp: EventSignUp; slot: EventSlot }>;
+  ): Promise<{ event: DomainEvent; signUp: EventSignUp; slot: EventSlot }>;
   /**
    * updateSignUp - updates the participation status for the active sign up for the given user and event to
    * one of the inactive statuses. If the current participation status CONFIRMED, the sign up is removed from the slot
@@ -598,7 +609,7 @@ export class EventRepository {
    */
   public async updateSignUp(
     data: UpdateToInactiveSignUpData
-  ): Promise<{ event: Event; signUp: EventSignUp; slot: undefined }>;
+  ): Promise<{ event: DomainEvent; signUp: EventSignUp; slot: undefined }>;
   /**
    * updateSignUp - updates the participation status for the active sign up for the given user and event to
    * to data.newParticipationStatus.
@@ -623,7 +634,7 @@ export class EventRepository {
    */
   public async updateSignUp(
     data: UpdateToConfirmedSignUpData | UpdateToInactiveSignUpData
-  ): Promise<{ event: Event; signUp: EventSignUp; slot?: EventSlot | null }> {
+  ): Promise<{ event: DomainEvent; signUp: EventSignUp; slot?: EventSlot | null }> {
     const currentSignUp = await this.db.eventSignUp.findUnique({
       include: {
         event: true,
@@ -648,23 +659,25 @@ export class EventRepository {
     if (currentParticipationStatus === newParticipationStatus) {
       // No change, we can just return.
       const { event, slot, ...signUp } = currentSignUp;
-      return { event, slot, signUp };
+      return { event: this.toDomainEvent(event), slot, signUp };
     }
 
     if (newParticipationStatus === ParticipationStatus.CONFIRMED) {
-      return this.newParticipationStatusConfirmedHandler({
+      const { event, slot, signUp } = await this.newParticipationStatusConfirmedHandler({
         currentSignUp,
         eventId: data.eventId,
         slotId: data.slotId,
       });
+      return { event: this.toDomainEvent(event), slot, signUp };
     }
 
-    return this.newParticipationStatusInactiveHandler({
+    const { event, signUp } = await this.newParticipationStatusInactiveHandler({
       currentSignUp,
       userId: data.userId,
       eventId: data.eventId,
       newParticipationStatus,
     });
+    return { event: this.toDomainEvent(event), signUp };
   }
 
   private async newParticipationStatusConfirmedHandler(data: {
@@ -968,6 +981,55 @@ export class EventRepository {
         },
       },
     });
+  }
+
+  toDomainEvent(event: Event): DomainEvent {
+    const schema = z.object({
+      id: z.string(),
+      name: z.string(),
+      description: z.string(),
+      startAt: z.date(),
+      endAt: z.date(),
+      contactEmail: z.string(),
+      location: z.string(),
+      organizationId: z.string().nullable(),
+      version: z.number(),
+    });
+
+    try {
+      if (event.signUpsEnabled) {
+        const { signUpsEnabled, signUpsStartAt, signUpsEndAt, capacity, remainingCapacity } = event;
+        const signUpDetails = {
+          signUpsEndAt,
+          signUpsStartAt,
+          capacity,
+          signUpsEnabled,
+          remainingCapacity,
+        };
+        return schema
+          .extend({
+            signUpsEnabled: z.literal(true),
+            signUpDetails: z.object({
+              signUpsStartAt: z.date(),
+              signUpsEndAt: z.date(),
+              remainingCapacity: z.number(),
+              capacity: z.number(),
+            }),
+          })
+          .parse(merge({}, event, { signUpDetails }));
+      }
+      return schema
+        .extend({
+          signUpsEnabled: z.literal(false),
+          signUpDetails: z.undefined(),
+        })
+        .parse(event);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        throw new InternalServerError(err.message);
+      }
+      throw err;
+    }
   }
 }
 

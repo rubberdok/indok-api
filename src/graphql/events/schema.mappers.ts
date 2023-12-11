@@ -1,4 +1,4 @@
-import { Event as EventMapper } from "@prisma/client";
+import { BaseEvent as EventMapper } from "@/domain/events.js";
 
 interface EventsResponseMapper {
   events: EventMapper[];

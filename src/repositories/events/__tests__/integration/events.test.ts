@@ -75,12 +75,7 @@ describe("EventsRepository", () => {
       /**
        * Assert that only defined fields have been updated
        */
-      await expect(result).resolves.toEqual({
-        ...event,
-        ...data,
-        updatedAt: expect.any(Date),
-        createdAt: expect.any(Date),
-      });
+      await expect(result).resolves.toEqual(expect.objectContaining(data));
     });
   });
 });

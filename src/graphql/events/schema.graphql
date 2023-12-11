@@ -22,9 +22,29 @@ type Event {
   """
   canSignUp: Boolean!
   """
+  The contact email for the event organizer.
+  """
+  contactEmail: String!
+  """
+  The location of the event
+  """
+  location: String!
+  """
+  The organization that is hosting the event.
+  """
+  organization: Organization
+  """
   signUpAvailability describes the availability of sign ups for the event for the current user.
   """
   signUpAvailability: SignUpAvailability!
+  signUpDetails: EventSignUpDetails
+  signUpsEnabled: Boolean!
+}
+
+type EventSignUpDetails {
+  signUpsStartAt: DateTime!
+  signUpsEndAt: DateTime!
+  capacity: Int!
 }
 
 enum SignUpAvailability {

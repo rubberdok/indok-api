@@ -1,11 +1,11 @@
-import { Event, EventSignUp, EventSlot, ParticipationStatus } from "@prisma/client";
+import { EventSignUp, EventSlot, ParticipationStatus } from "@prisma/client";
 import { FastifyBaseLogger } from "fastify";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
 import { z } from "zod";
 
 import { InternalServerError, InvalidArgumentError, NotFoundError, PermissionDeniedError } from "@/domain/errors.js";
-import { signUpAvailability } from "@/domain/events.js";
+import { Event as DomainEvent, EventWithSignUps, isEventWithSignUps, signUpAvailability } from "@/domain/events.js";
 import { Role } from "@/domain/organizations.js";
 import { User } from "@/domain/users.js";
 
@@ -53,20 +53,20 @@ interface SignUpDetails {
 }
 
 export interface EventRepository {
-  create(event: EventData, signUpDetails?: SignUpDetails): Promise<Event>;
-  update(id: string, event: Partial<EventData>, signUpDetails?: Partial<SignUpDetails>): Promise<Event>;
-  get(id: string): Promise<Event>;
-  getWithSlots(id: string): Promise<Event & { slots: EventSlot[] }>;
+  create(event: EventData, signUpDetails?: SignUpDetails): Promise<DomainEvent>;
+  update(id: string, event: Partial<EventData>, signUpDetails?: Partial<SignUpDetails>): Promise<DomainEvent>;
+  get(id: string): Promise<DomainEvent>;
+  getWithSlots(id: string): Promise<DomainEvent & { slots: EventSlot[] }>;
   getSlotWithRemainingCapacity(eventId: string, gradeYear?: number): Promise<EventSlot | null>;
-  findMany(data?: { endAtGte?: Date | null }): Promise<Event[]>;
+  findMany(data?: { endAtGte?: Date | null }): Promise<DomainEvent[]>;
   findManySignUps(data: { eventId: string; status: ParticipationStatus }): Promise<EventSignUp[]>;
   getSignUp(userId: string, eventId: string): Promise<EventSignUp>;
   createSignUp(
     data: CreateConfirmedSignUpData | CreateOnWaitlistSignUpData
-  ): Promise<{ signUp: EventSignUp; slot?: EventSlot; event: Event }>;
+  ): Promise<{ signUp: EventSignUp; slot?: EventSlot; event: DomainEvent }>;
   updateSignUp(
     data: UpdateToConfirmedSignUpData | UpdateToInactiveSignUpData
-  ): Promise<{ signUp: EventSignUp; slot?: EventSlot; event: Event }>;
+  ): Promise<{ signUp: EventSignUp; slot?: EventSlot; event: DomainEvent }>;
   findManySlots(data: { gradeYear?: number; eventId: string }): Promise<EventSlot[]>;
 }
 
@@ -226,7 +226,7 @@ export class EventService {
 
   private validateUpdateSignUpDetails(
     data: Partial<SignUpDetails>,
-    existingEvent: Event & { slots: EventSlot[] }
+    existingEvent: DomainEvent & { slots: EventSlot[] }
   ): SignUpDetails {
     const changingStartAt = data.signUpsStartAt !== undefined;
     const changingEndAt = data.signUpsEndAt !== undefined;
@@ -249,12 +249,12 @@ export class EventService {
           message: "Sign ups end date must be after sign ups start date",
           path: ["signUpsEndAt"],
         })
-        .parse(merge({}, existingEvent, data));
+        .parse(merge({}, existingEvent.signUpDetails, data));
     }
-    return schema.parse(merge({}, existingEvent, data));
+    return schema.parse(merge({}, existingEvent.signUpDetails, data));
   }
 
-  private validateUpdateEventData(data: Partial<EventData>, existingEvent: Event): Partial<EventData> {
+  private validateUpdateEventData(data: Partial<EventData>, existingEvent: DomainEvent): Partial<EventData> {
     const changingStartAt = data.startAt !== undefined;
     const changingEndAt = data.endAt !== undefined;
     const schema = z.object({
@@ -306,7 +306,7 @@ export class EventService {
       signUpsStartAt: Date;
       signUpsEndAt: Date;
     }>
-  ): Promise<Event> {
+  ): Promise<DomainEvent> {
     const event = await this.eventRepository.getWithSlots(eventId);
     if (!event.organizationId) {
       throw new InvalidArgumentError("Events that belong to deleted organizations cannot be updated.");
@@ -369,7 +369,7 @@ export class EventService {
       }
 
       // If there is no remaining capacity on the event, it doesn't matter if there is any remaining capacity in slots.
-      if (event.remainingCapacity !== null && event.remainingCapacity <= 0) {
+      if (event.signUpDetails.remainingCapacity <= 0) {
         this.logger?.info({ event }, "Event is full, adding user to wait list.");
         const { signUp } = await this.eventRepository.createSignUp({
           userId,
@@ -425,7 +425,7 @@ export class EventService {
    * @param id - The ID of the event to get
    * @returns The event with the specified ID
    */
-  async get(id: string): Promise<Event> {
+  async get(id: string): Promise<DomainEvent> {
     return await this.eventRepository.get(id);
   }
 
@@ -435,7 +435,7 @@ export class EventService {
    * @params data.onlyFutureEvents - If true, only future events that have an `endAt` in the future will be returned
    * @returns All events
    */
-  async findMany(data?: { onlyFutureEvents?: boolean }): Promise<Event[]> {
+  async findMany(data?: { onlyFutureEvents?: boolean }): Promise<DomainEvent[]> {
     if (!data) {
       return await this.eventRepository.findMany();
     }
@@ -461,7 +461,7 @@ export class EventService {
       throw new InvalidArgumentError("This event does does not have sign ups.");
     }
 
-    if (!event.remainingCapacity || event.remainingCapacity <= 0) {
+    if (event.signUpDetails.remainingCapacity <= 0) {
       throw new InvalidArgumentError("This event is full.");
     }
 
@@ -615,7 +615,7 @@ export class EventService {
     const event = await this.eventRepository.get(eventId);
 
     if (!this.areSignUpsAvailable(event)) return false;
-    if (!event.remainingCapacity || event.remainingCapacity <= 0) return false;
+    if (event.signUpDetails.remainingCapacity <= 0) return false;
 
     try {
       const signUp = await this.eventRepository.getSignUp(userId, eventId);
@@ -634,16 +634,16 @@ export class EventService {
    * areSignUpsAvailable returns true if sign ups are available for the event, i.e.
    * if sign ups are enabled, and the current time is between the start and end date for sign ups.
    */
-  private areSignUpsAvailable(event: Event): boolean {
+  private areSignUpsAvailable(event: DomainEvent): event is EventWithSignUps {
     if (!event.signUpsEnabled) return false;
-    if (!event.signUpsStartAt || event.signUpsStartAt > DateTime.now().toJSDate()) return false;
-    if (!event.signUpsEndAt || event.signUpsEndAt < DateTime.now().toJSDate()) return false;
+    if (event.signUpDetails.signUpsStartAt > DateTime.now().toJSDate()) return false;
+    if (event.signUpDetails.signUpsEndAt < DateTime.now().toJSDate()) return false;
     return true;
   }
 
   async getSignUpAvailability(userId: string | undefined, eventId: string): Promise<keyof typeof signUpAvailability> {
     const event = await this.eventRepository.getWithSlots(eventId);
-    if (!event.signUpsEnabled) return signUpAvailability.DISABLED;
+    if (!isEventWithSignUps(event)) return signUpAvailability.DISABLED;
 
     /**
      * User is not signed in
@@ -668,16 +668,16 @@ export class EventService {
     /**
      * Event sign ups have not opened yet
      */
-    if (!event.signUpsStartAt || event.signUpsStartAt > DateTime.now().toJSDate()) return signUpAvailability.NOT_OPEN;
+    if (event.signUpDetails.signUpsStartAt > DateTime.now().toJSDate()) return signUpAvailability.NOT_OPEN;
     /**
      * Event sign ups have closed
      */
-    if (!event.signUpsEndAt || event.signUpsEndAt < DateTime.now().toJSDate()) return signUpAvailability.CLOSED;
+    if (event.signUpDetails.signUpsEndAt < DateTime.now().toJSDate()) return signUpAvailability.CLOSED;
 
     /**
      * The event is full
      */
-    if (!event.remainingCapacity) return signUpAvailability.WAITLIST_AVAILABLE;
+    if (!event.signUpDetails.remainingCapacity) return signUpAvailability.WAITLIST_AVAILABLE;
 
     const slotWithRemainingCapacity = await this.eventRepository.getSlotWithRemainingCapacity(eventId, user.gradeYear);
     /**

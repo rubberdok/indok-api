@@ -1,8 +1,9 @@
 import { faker } from "@faker-js/faker";
-import { Event, EventSignUp, ParticipationStatus } from "@prisma/client";
+import { EventSignUp, ParticipationStatus } from "@prisma/client";
 import { mock } from "jest-mock-extended";
 
 import { errorCodes } from "@/domain/errors.js";
+import { Event } from "@/domain/events.js";
 import { User } from "@/domain/users.js";
 import { createMockApolloServer } from "@/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "@/graphql/test-clients/unit/gql.js";

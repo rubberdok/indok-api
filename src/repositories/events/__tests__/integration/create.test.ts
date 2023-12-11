@@ -60,8 +60,8 @@ describe("EventRepository", () => {
       expect(slots).toHaveLength(1);
       expect(slots[0]!.capacity).toBe(10);
       expect(actual.signUpsEnabled).toBe(true);
-      expect(actual.capacity).toBe(10);
-      expect(actual.remainingCapacity).toBe(10);
+      expect(actual.signUpDetails?.capacity).toBe(10);
+      expect(actual.signUpDetails?.remainingCapacity).toBe(10);
     });
 
     it("with sign ups disabled, should create an event", async () => {
@@ -92,8 +92,7 @@ describe("EventRepository", () => {
       });
 
       expect("slots" in actual).toBe(false);
-      expect(actual.capacity).toBe(null);
-      expect(actual.remainingCapacity).toBe(null);
+      expect(actual.signUpDetails).toBe(undefined);
       expect(actual.signUpsEnabled).toBe(false);
     });
   });

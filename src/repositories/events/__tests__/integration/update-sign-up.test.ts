@@ -57,7 +57,7 @@ describe("EventRepository", () => {
          */
         expect(actual.signUp.participationStatus).toBe(ParticipationStatus.CONFIRMED);
         expect(actual.signUp.version).toBe(signUp.version + 1);
-        expect(actual.event.remainingCapacity).toBe(0);
+        expect(actual.event.signUpDetails?.remainingCapacity).toBe(0);
         expect(actual.slot?.remainingCapacity).toBe(0);
       });
 
@@ -100,7 +100,7 @@ describe("EventRepository", () => {
          * The slot remainingCapacity should remain unchanged
          */
         expect(actual.signUp.version).toBe(signUp.version);
-        expect(actual.event.remainingCapacity).toBe(event.remainingCapacity);
+        expect(actual.event.signUpDetails?.remainingCapacity).toBe(event.remainingCapacity);
         expect(actual.slot?.remainingCapacity).toBe(slot.remainingCapacity);
       });
 
@@ -261,7 +261,7 @@ describe("EventRepository", () => {
          */
         expect(actual.signUp.participationStatus).toBe(ParticipationStatus.REMOVED);
         expect(actual.signUp.version).toBe(signUp.version + 1);
-        expect(actual.event.remainingCapacity).toBe((event.remainingCapacity ?? NaN) + 1);
+        expect(actual.event.signUpDetails?.remainingCapacity).toBe((event.remainingCapacity ?? NaN) + 1);
         const updatedSlot = await prisma.eventSlot.findUnique({
           where: { id: slot.id },
         });
@@ -309,7 +309,7 @@ describe("EventRepository", () => {
         expect(actual.signUp.participationStatus).toBe(ParticipationStatus.REMOVED);
         expect(actual.signUp.active).toBe(false);
         expect(actual.signUp.version).toBe(signUp.version + 1);
-        expect(actual.event.remainingCapacity).toBe(event.remainingCapacity);
+        expect(actual.event.signUpDetails?.remainingCapacity).toBe(event.remainingCapacity);
         const updatedSlot = await prisma.eventSlot.findUnique({
           where: { id: slot.id },
         });
@@ -416,6 +416,10 @@ function makeEvent(data: { capacity: number }) {
       startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
       endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
       remainingCapacity: data.capacity,
+      capacity: data.capacity,
+      signUpsEnabled: true,
+      signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+      signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
     },
   });
 }

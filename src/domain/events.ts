@@ -51,3 +51,37 @@ export const signUpAvailability = {
 } as const;
 
 export type SignUpAvailability = (typeof signUpAvailability)[keyof typeof signUpAvailability];
+
+export type BaseEvent = {
+  id: string;
+  name: string;
+  organizationId: string | null;
+  description: string;
+  location: string;
+  contactEmail: string;
+  startAt: Date;
+  endAt: Date;
+  version: number;
+  signUpsEnabled: boolean;
+};
+
+type EventWithoutSignUps = BaseEvent & {
+  signUpsEnabled: false;
+  signUpDetails?: never;
+};
+
+export type EventWithSignUps = BaseEvent & {
+  signUpsEnabled: true;
+  signUpDetails: {
+    signUpsStartAt: Date;
+    signUpsEndAt: Date;
+    capacity: number;
+    remainingCapacity: number;
+  };
+};
+
+export type Event = EventWithoutSignUps | EventWithSignUps;
+
+export function isEventWithSignUps(event: BaseEvent): event is EventWithSignUps {
+  return event.signUpsEnabled;
+}

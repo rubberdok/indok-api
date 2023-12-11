@@ -163,6 +163,11 @@ type Event {
   canSignUp: Boolean!
 
   """
+  The contact email for the event organizer.
+  """
+  contactEmail: String!
+
+  """
   The description of the event. We support markdown on the client, so this can be markdown.
   """
   description: String!
@@ -174,14 +179,26 @@ type Event {
   id: ID!
 
   """
+  The location of the event
+  """
+  location: String!
+
+  """
   The name of the event.
   """
   name: String!
 
   """
+  The organization that is hosting the event.
+  """
+  organization: Organization
+
+  """
   signUpAvailability describes the availability of sign ups for the event for the current user.
   """
   signUpAvailability: SignUpAvailability!
+  signUpDetails: EventSignUpDetails
+  signUpsEnabled: Boolean!
 
   """
   The start time of the event.
@@ -219,6 +236,12 @@ input EventInput {
 
 type EventResponse {
   event: Event!
+}
+
+type EventSignUpDetails {
+  capacity: Int!
+  signUpsEndAt: DateTime!
+  signUpsStartAt: DateTime!
 }
 
 input EventsInput {

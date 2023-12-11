@@ -138,7 +138,13 @@ export class UserService {
         .string()
         .regex(/^(0047|\+47|47)?[49]\d{7}$/)
         .nullish()
-        .transform((val) => val ?? undefined),
+        .transform((val) => val ?? undefined)
+        .or(
+          z
+            .string()
+            .nullish()
+            .transform((val) => val ?? undefined)
+        ),
     });
     try {
       const user = await this.usersRepository.get(id);
