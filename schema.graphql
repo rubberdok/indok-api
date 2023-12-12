@@ -566,6 +566,7 @@ type Query {
   Get all organizations
   """
   organizations: OrganizationsResponse
+  serverTime: ServerTimeResponse!
   user: UserResponse!
   users: UsersResponse!
 }
@@ -606,6 +607,10 @@ enum Role {
 enum Semester {
   FALL
   SPRING
+}
+
+type ServerTimeResponse {
+  serverTime: DateTime!
 }
 
 type SignUp {
