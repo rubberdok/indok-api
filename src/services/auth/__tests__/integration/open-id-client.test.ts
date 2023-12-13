@@ -19,7 +19,7 @@ describe("AuthService", () => {
     } = defaultTestDependenciesFactory({
       openIdClient: openIdClient,
     });
-    authService = new AuthService(userService, openIdClient, "https://example.com");
+    authService = new AuthService(userService, openIdClient, undefined, "https://example.com");
   });
   describe("authorizationUrl", () => {
     it("should call openIdClient#authorizeUrl with the expected parameters", async () => {

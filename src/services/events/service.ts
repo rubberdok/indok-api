@@ -85,7 +85,7 @@ export class EventService {
     private eventRepository: EventRepository,
     private permissionService: PermissionService,
     private userService: UserService,
-    private logger?: Logger
+    private log?: Logger
   ) {}
   /**
    * Create a new event
@@ -361,7 +361,7 @@ export class EventService {
      * This number may need to be tweaked.
      */
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      this.logger?.info({ userId, eventId, attempt }, "Attempting to sign up user for event.");
+      this.log?.info({ userId, eventId, attempt }, "Attempting to sign up user for event.");
       // Fetch the event to check if it has available slots or not
       const event = await this.eventRepository.get(eventId);
       if (!this.areSignUpsAvailable(event)) {
@@ -370,7 +370,7 @@ export class EventService {
 
       // If there is no remaining capacity on the event, it doesn't matter if there is any remaining capacity in slots.
       if (event.signUpDetails.remainingCapacity <= 0) {
-        this.logger?.info({ event }, "Event is full, adding user to wait list.");
+        this.log?.info({ event }, "Event is full, adding user to wait list.");
         const { signUp } = await this.eventRepository.createSignUp({
           userId,
           participationStatus: ParticipationStatus.ON_WAITLIST,
@@ -383,7 +383,7 @@ export class EventService {
         const slotToSignUp = await this.eventRepository.getSlotWithRemainingCapacity(eventId, user.gradeYear);
 
         if (slotToSignUp === null) {
-          this.logger?.info({ event }, "Event is full, adding user to wait list.");
+          this.log?.info({ event }, "Event is full, adding user to wait list.");
           const { signUp } = await this.eventRepository.createSignUp({
             userId,
             participationStatus: ParticipationStatus.ON_WAITLIST,
@@ -397,7 +397,7 @@ export class EventService {
             eventId,
             slotId: slotToSignUp.id,
           });
-          this.logger?.info({ signUp, attempt }, "Successfully signed up user for event.");
+          this.log?.info({ signUp, attempt }, "Successfully signed up user for event.");
           return signUp;
         }
       } catch (err) {
@@ -412,7 +412,7 @@ export class EventService {
      * Since the user hasn't been added to the wait list, there is likely still remaining capacity on the event,
      * but we have to abort at some point to avoid stalling the request.
      */
-    this.logger?.error(
+    this.log?.error(
       "Failed to sign up user after 20 attempts. If this happens often, consider increasing the number of attempts."
     );
     throw new InternalServerError("Failed to sign up user after 20 attempts");
@@ -480,7 +480,7 @@ export class EventService {
             newParticipationStatus: ParticipationStatus.CONFIRMED,
           });
 
-          this.logger?.info({ confirmedSignUp }, "Promoted from waitlist to confirmed sign up.");
+          this.log?.info({ confirmedSignUp }, "Promoted from waitlist to confirmed sign up.");
           return confirmedSignUp;
         }
       } catch (err) {
@@ -488,7 +488,7 @@ export class EventService {
         throw err;
       }
     }
-    this.logger?.info({ eventId }, "Found no valid sign ups to promote from wait list");
+    this.log?.info({ eventId }, "Found no valid sign ups to promote from wait list");
     return null;
   }
 

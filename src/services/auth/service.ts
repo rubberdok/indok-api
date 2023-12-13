@@ -1,4 +1,4 @@
-import { FastifyRequest } from "fastify";
+import { FastifyBaseLogger, FastifyRequest } from "fastify";
 import type { TokenSet, UserinfoResponse } from "openid-client";
 import { generators } from "openid-client";
 
@@ -42,6 +42,7 @@ export class AuthService {
   constructor(
     private userService: UserService,
     private openIDClient: OpenIDClient,
+    private log?: FastifyBaseLogger,
     private callbackUrl: string | URL = new URL("/auth/authenticate", env.SERVER_URL)
   ) {}
 
@@ -94,6 +95,8 @@ export class AuthService {
     if (!codeVerifier) throw new BadRequestError("No code verifier found in session");
 
     const { code } = params;
+
+    this.log?.info("Fetching access token");
     const tokenSet = await this.openIDClient.callback(
       this.callbackUrl.toString(),
       {
@@ -104,6 +107,7 @@ export class AuthService {
       }
     );
 
+    this.log?.info("Fetching user info");
     const {
       sub,
       name,
@@ -111,10 +115,11 @@ export class AuthService {
       "https://n.feide.no/claims/userid_sec": userid_sec,
       "https://n.feide.no/claims/eduPersonPrincipalName": ntnuId,
     } = await this.openIDClient.userinfo(tokenSet);
+    this.log?.info({ sub }, "Fetched user info");
 
     const existingUser = await this.userService.getByFeideID(sub);
     if (existingUser) {
-      req.log.info(
+      this.log?.info(
         {
           userId: existingUser.id,
         },
@@ -123,7 +128,7 @@ export class AuthService {
       return existingUser;
     }
 
-    req.log.info({ sub }, "Creating new user");
+    this.log?.info({ sub }, "Creating new user");
 
     let eduUsername: string;
     if (ntnuId) {

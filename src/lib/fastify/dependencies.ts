@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { FastifyRequest } from "fastify";
+import fastify, { FastifyInstance, FastifyRequest } from "fastify";
 
 import { env } from "@/config.js";
 import { User } from "@/domain/users.js";
@@ -24,6 +24,8 @@ import postmark from "../postmark.js";
 import prisma from "../prisma.js";
 import { createRedisClient } from "../redis.js";
 
+import { envToLogger } from "./logging.js";
+
 interface IAuthService {
   authorizationCallback(req: FastifyRequest, data: { code: string }): Promise<User>;
   authorizationUrl(req: FastifyRequest, state?: string | null): string;
@@ -36,6 +38,7 @@ export interface ServerDependencies {
   prisma: PrismaClient;
   authService: IAuthService;
   apolloServerDependencies: ApolloServerDependencies;
+  app: FastifyInstance;
 }
 
 /**
@@ -44,6 +47,8 @@ export interface ServerDependencies {
  * @returns A `Dependencies` object with the specified overrides.
  */
 export function dependenciesFactory(): ServerDependencies {
+  const app = fastify({ logger: envToLogger[env.NODE_ENV], ignoreTrailingSlash: true });
+
   const cabinRepository = new CabinRepository(prisma);
   const userRepository = new UserRepository(prisma);
   const memberRepository = new MemberRepository(prisma);
@@ -56,9 +61,14 @@ export function dependenciesFactory(): ServerDependencies {
   const organizationService = new OrganizationService(organizationRepository, memberRepository, permissionService);
   const listingService = new ListingService(listingRepository, permissionService);
   const cabinService = new CabinService(cabinRepository, mailService, permissionService);
-  const userService = new UserService(userRepository, permissionService);
-  const eventService = new EventService(eventRepository, permissionService, userService);
-  const authService = new AuthService(userService, feideClient);
+  const userService = new UserService(userRepository, permissionService, app.log.child({ service: "users" }));
+  const eventService = new EventService(
+    eventRepository,
+    permissionService,
+    userService,
+    app.log.child({ service: "events" })
+  );
+  const authService = new AuthService(userService, feideClient, app.log.child({ service: "auth" }));
 
   const apolloServerDependencies: ApolloServerDependencies = {
     cabinService,
@@ -74,6 +84,7 @@ export function dependenciesFactory(): ServerDependencies {
     apolloServerDependencies,
     prisma: prisma,
     createRedisClient,
+    app,
   };
 
   return defaultDependencies;

@@ -1,4 +1,5 @@
 import { Prisma, User as PrismaUser } from "@prisma/client";
+import { FastifyBaseLogger } from "fastify";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
 import { z } from "zod";
@@ -23,7 +24,8 @@ export interface PermissionService {
 export class UserService {
   constructor(
     private usersRepository: UserRepository,
-    private permissionService: PermissionService
+    private permissionService: PermissionService,
+    private log?: FastifyBaseLogger
   ) {}
 
   /**
@@ -47,8 +49,9 @@ export class UserService {
     }>
   ): Promise<User> {
     const { isSuperUser } = await this.permissionService.isSuperUser(callerId);
-    if (!isSuperUser) throw new PermissionDeniedError("You do not have permission to update this user");
+    if (isSuperUser !== true) throw new PermissionDeniedError("You do not have permission to update this user");
 
+    this.log?.info({ callerId, userToUpdateId }, "super update user");
     const schema = z.object({
       firstName: z
         .string()

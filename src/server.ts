@@ -9,7 +9,7 @@ import fastifySession from "@fastify/session";
 import fastifySentry from "@immobiliarelabs/fastify-sentry";
 import * as Sentry from "@sentry/node";
 import RedisStore from "connect-redis";
-import fastify, { FastifyInstance } from "fastify";
+import { FastifyInstance } from "fastify";
 
 import { env } from "./config.js";
 import { NotFoundError } from "./domain/errors.js";
@@ -20,7 +20,6 @@ import { ApolloContext, getFormatErrorHandler } from "./lib/apollo-server.js";
 import { ServerDependencies } from "./lib/fastify/dependencies.js";
 import { healthCheckPlugin } from "./lib/fastify/health-checks.js";
 import { helmetOptionsByEnv } from "./lib/fastify/helmet.js";
-import { envToLogger } from "./lib/fastify/logging.js";
 import { fastifyApolloSentryPlugin } from "./lib/sentry.js";
 import { getAuthPlugin } from "./services/auth/plugin.js";
 
@@ -70,13 +69,10 @@ interface Options {
  *
  * 7. Start the Fastify server
  *
- * @todo Configure security headers
  * @returns The Fastify server instance
  */
 export async function initServer(dependencies: ServerDependencies, opts: Options): Promise<FastifyInstance> {
-  const { apolloServerDependencies, authService, createRedisClient } = dependencies;
-
-  const app = fastify({ logger: envToLogger[env.NODE_ENV], ignoreTrailingSlash: true });
+  const { apolloServerDependencies, authService, createRedisClient, app } = dependencies;
 
   /**
    * Set up Sentry monitoring before anything else
@@ -175,7 +171,7 @@ export async function initServer(dependencies: ServerDependencies, opts: Options
       try {
         req.log.debug({ userId }, "Fetching user");
         user = await apolloServerDependencies.userService.get(userId);
-        req.log.debug({ user }, "Found user");
+        req.log.debug({ userId }, "Found user");
       } catch (err) {
         req.log.info({ userId }, "Error fetching user");
         if (err instanceof NotFoundError) {
