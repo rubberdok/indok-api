@@ -214,15 +214,17 @@ export async function initServer(dependencies: ServerDependencies, opts: Options
       host,
     });
   } catch (err) {
-    // Log the error
-    app.log.fatal(err);
-    // Capture the error with Sentry and exit the process
-    app.Sentry.captureException(err, {
-      level: "fatal",
-      tags: {
-        kind: "server",
-      },
-    });
+    if (err instanceof Error) {
+      // Log the error
+      app.log.fatal(err, "Error starting server");
+      // Capture the error with Sentry and exit the process
+      app.Sentry.captureException(err, {
+        level: "fatal",
+        tags: {
+          kind: "server",
+        },
+      });
+    }
     process.exit(1);
   }
 
