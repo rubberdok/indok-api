@@ -123,7 +123,7 @@ export class AuthService {
       return existingUser;
     }
 
-    req.log.info("Creating new user", sub);
+    req.log.info({ sub }, "Creating new user");
 
     let eduUsername: string;
     if (ntnuId) {

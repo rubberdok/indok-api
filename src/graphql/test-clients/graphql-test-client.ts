@@ -161,11 +161,11 @@ export class GraphQLTestClient {
     if (userId) {
       const res = await this.performMockedLogin({ userId });
       cookies = res.cookies;
-      this.app.log.info("Logged in as user", { userId });
+      this.app.log.info({ userId }, "Logged in as user");
     } else if (user) {
       const res = await this.performMockedLogin(user);
       cookies = res.cookies;
-      this.app.log.info("Logged in as user", { userId: user.feideId });
+      this.app.log.info({ userId: user.feideId }, "Logged in as user");
     }
 
     const response = await this.app.inject({

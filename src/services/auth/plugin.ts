@@ -62,9 +62,11 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
 
           return reply.redirect(303, state ?? "/");
         } catch (err) {
-          req.log.error(err, "Authentication failed");
-          if (err instanceof BadRequestError) return reply.status(400).send(err);
-          return reply.send(new InternalServerError("Authentication failed"));
+          if (err instanceof Error) {
+            req.log.error(err, "Authentication failed");
+            if (err instanceof BadRequestError) return reply.status(400).send(err);
+            return reply.send(new InternalServerError("Authentication failed"));
+          }
         }
       },
     });
