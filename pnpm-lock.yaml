@@ -97,8 +97,8 @@ optionalDependencies:
 
 devDependencies:
   '@eddeee888/gcg-typescript-resolver-files':
-    specifier: ^0.7.1
-    version: 0.7.1(graphql@16.8.1)
+    specifier: ^0.7.2
+    version: 0.7.2(graphql@16.8.1)
   '@faker-js/faker':
     specifier: ^8.3.1
     version: 8.3.1
@@ -1138,8 +1138,8 @@ packages:
       - supports-color
     dev: true
 
-  /@eddeee888/gcg-typescript-resolver-files@0.7.1(graphql@16.8.1):
-    resolution: {integrity: sha512-2dppOIlLkBdd1k+LmjnRj3Ud808IXqpTfPzVNn6ZfmP4KwG2516rFuOH0IT1BW63GWgvyXIhbg4D9wmUbq4aIg==}
+  /@eddeee888/gcg-typescript-resolver-files@0.7.2(graphql@16.8.1):
+    resolution: {integrity: sha512-9LBkn6pGtXSQmH9rLoF/CkUUlsNwX4A539pRolr/yS++arGN871IptmZ89ezM4iGbbW/OPwp+Zp7AmNTgBExmA==}
     peerDependencies:
       graphql: ^15.0.0 || ^16.0.0
     dependencies:
@@ -1150,6 +1150,7 @@ packages:
       '@graphql-codegen/typescript-resolvers': 4.0.1(graphql@16.8.1)
       graphql: 16.8.1
       ts-morph: 19.0.0
+      tslib: 2.6.2
     transitivePeerDependencies:
       - encoding
       - supports-color
