@@ -92,8 +92,8 @@ dependencies:
 
 optionalDependencies:
   '@swc/core-linux-x64-musl':
-    specifier: ^1.3.100
-    version: 1.3.100
+    specifier: ^1.3.101
+    version: 1.3.101
 
 devDependencies:
   '@eddeee888/gcg-typescript-resolver-files':
@@ -3014,6 +3014,16 @@ packages:
     cpu: [x64]
     os: [linux]
     requiresBuild: true
+    dev: true
+    optional: true
+
+  /@swc/core-linux-x64-musl@1.3.101:
+    resolution: {integrity: sha512-kDN8lm4Eew0u1p+h1l3JzoeGgZPQ05qDE0czngnjmfpsH2sOZxVj1hdiCwS5lArpy7ktaLu5JdRnx70MkUzhXw==}
+    engines: {node: '>=10'}
+    cpu: [x64]
+    os: [linux]
+    requiresBuild: true
+    dev: false
     optional: true
 
   /@swc/core-win32-arm64-msvc@1.3.100:
