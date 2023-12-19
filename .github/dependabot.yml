@@ -18,6 +18,8 @@ updates:
     labels:
       - dependencies
 
+    open-pull-requests-limit: 10
+
     groups:
       # @swc/core and @swc/core-linux-x64-musl versions should be kept in sync
       swc:
@@ -27,3 +29,29 @@ updates:
         patterns:
           - "@prisma/client*"
           - "prisma*"
+
+  - package-ecosystem: github-actions
+    directory: "/.github/workflows"
+
+    schedule:
+      interval: daily
+
+    commit-message:
+      prefix: chore
+      include: scope
+
+    labels:
+      - dependencies
+
+  - package-ecosystem: docker
+    directory: "/"
+
+    schedule:
+      interval: daily
+
+    commit-message:
+      prefix: chore
+      include: scope
+
+    labels:
+      - dependencies
