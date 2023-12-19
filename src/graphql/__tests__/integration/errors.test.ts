@@ -13,7 +13,7 @@ describe("GraphQL error handling", () => {
   let mockOrganizationService: DeepMockProxy<OrganizationService>;
 
   afterAll(async () => {
-    await client.app.close();
+    await client.close();
   });
 
   beforeAll(async () => {

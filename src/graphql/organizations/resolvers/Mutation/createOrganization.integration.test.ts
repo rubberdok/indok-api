@@ -12,7 +12,7 @@ describe("Organization mutations", () => {
   });
 
   afterAll(async () => {
-    await client.app.close();
+    await client.close();
   });
 
   describe("createOrganization", () => {

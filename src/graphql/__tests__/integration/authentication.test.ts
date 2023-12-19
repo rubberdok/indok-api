@@ -12,7 +12,7 @@ describe("Apollo Context Authentication", () => {
   let mockUserService: DeepMockProxy<UserService>;
 
   afterAll(async () => {
-    await client.app.close();
+    await client.close();
   });
 
   beforeAll(async () => {
