@@ -5,7 +5,7 @@ require("yargs")
   .usage("$0 <cmd> [args]")
   .command(
     "make-super [userId]",
-    "welcome ter yargs!",
+    "make an existing user a super user",
     (yargs) => {
       yargs.positional("userId", {
         type: "string",
