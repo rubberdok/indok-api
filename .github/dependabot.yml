@@ -17,3 +17,9 @@ updates:
 
     labels:
       - dependencies
+
+    groups:
+      # @swc/core and @swc/core-linux-x64-musl versions should be kept in sync
+      swc:
+        patterns:
+          - "@swc/core*"
