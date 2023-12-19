@@ -2,13 +2,9 @@ name: Continuous Integration
 
 on:
   pull_request:
-    paths-ignore:
-      - infrastructure/**
   push:
     branches:
       - main
-    paths-ignore:
-      - infrastructure/**
 
 permissions:
   contents: read
