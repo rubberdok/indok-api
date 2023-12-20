@@ -25,7 +25,7 @@ const config = {
   schema: "src/graphql/**/schema.graphql",
   emitLegacyCommonJSImports: false,
   hooks: {
-    afterAllFileWrite: ["pnpm format:write"],
+    afterAllFileWrite: ["pnpm format:write --vcs-use-ignore-file=false"],
   },
   ignoreNoDocuments: true,
   generates: {
