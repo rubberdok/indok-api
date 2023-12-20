@@ -7,6 +7,7 @@ import fastifyCors from "@fastify/cors";
 import fastifyHelmet from "@fastify/helmet";
 import fastifySession from "@fastify/session";
 import fastifySentry from "@immobiliarelabs/fastify-sentry";
+import fastifyRateLimit from "@fastify/rate-limit";
 import * as Sentry from "@sentry/node";
 import RedisStore from "connect-redis";
 import { FastifyInstance } from "fastify";
@@ -43,6 +44,7 @@ interface Options {
  *    - Set up CORS, which we use to allow requests from the client
  *    - Set up cookies, which we use to store the session ID on the client
  *    - Set up sessions, which we use for authentication so that we can identify the user making the request
+ *    - Set up rate limits, which we use to prevent brute force attacks
  *
  * 3. Set up and connect to Redis, which is a key-value store that we use to store session data
  *
@@ -111,7 +113,6 @@ export async function initServer(dependencies: ServerDependencies, opts: Options
 
   // Must be called after `Sentry` is registered
   const redisClient = createRedisClient(app);
-  await redisClient.connect();
 
   // Regsiter session plugin
   await app.register(fastifySession, {
@@ -128,6 +129,13 @@ export async function initServer(dependencies: ServerDependencies, opts: Options
       sameSite: "none",
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     },
+  });
+
+  // Rate limit plugin
+  await app.register(fastifyRateLimit, {
+    max: env.RATE_LIMIT_MAX,
+    redis: redisClient,
+    nameSpace: "rate-limit",
   });
 
   /**
