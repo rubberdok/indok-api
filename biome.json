@@ -13,5 +13,9 @@
 		"rules": {
 			"recommended": true
 		}
+	},
+	"formatter": {
+		"indentWidth": 2,
+		"indentStyle": "space"
 	}
 }

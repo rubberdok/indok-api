@@ -1,9 +1,9 @@
 import type { QueryResolvers } from "./../../../types.generated.js";
 export const event: NonNullable<QueryResolvers["event"]> = async (
-	_parent,
-	{ data },
-	ctx,
+  _parent,
+  { data },
+  ctx,
 ) => {
-	const event = await ctx.eventService.get(data.id);
-	return { event };
+  const event = await ctx.eventService.get(data.id);
+  return { event };
 };

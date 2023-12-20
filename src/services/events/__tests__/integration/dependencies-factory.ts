@@ -10,48 +10,48 @@ import { UserService } from "~/services/users/service.js";
 import { EventService } from "../../service.js";
 
 export function makeDependencies() {
-	const eventRepository = new EventRepository(prisma);
-	const organizationRepository = new OrganizationRepository(prisma);
-	const memberRepository = new MemberRepository(prisma);
-	const userRepository = new UserRepository(prisma);
-	const permissionService = new PermissionService(
-		memberRepository,
-		userRepository,
-		organizationRepository,
-	);
-	const userService = new UserService(userRepository, permissionService);
-	const eventService = new EventService(
-		eventRepository,
-		permissionService,
-		userService,
-	);
-	return { eventService };
+  const eventRepository = new EventRepository(prisma);
+  const organizationRepository = new OrganizationRepository(prisma);
+  const memberRepository = new MemberRepository(prisma);
+  const userRepository = new UserRepository(prisma);
+  const permissionService = new PermissionService(
+    memberRepository,
+    userRepository,
+    organizationRepository,
+  );
+  const userService = new UserService(userRepository, permissionService);
+  const eventService = new EventService(
+    eventRepository,
+    permissionService,
+    userService,
+  );
+  return { eventService };
 }
 
 export async function makeUserWithOrganizationMembership(
-	userData: Partial<User> = {},
+  userData: Partial<User> = {},
 ): Promise<{ user: User; organization: Organization }> {
-	const user = await prisma.user.create({
-		data: {
-			firstName: faker.person.firstName(),
-			lastName: faker.person.lastName(),
-			username: faker.string.sample(30),
-			feideId: faker.string.uuid(),
-			email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
-			...userData,
-		},
-	});
-	const organization = await prisma.organization.create({
-		data: {
-			name: faker.string.sample(20),
-		},
-	});
-	await prisma.member.create({
-		data: {
-			organizationId: organization.id,
-			userId: user.id,
-			role: "MEMBER",
-		},
-	});
-	return { user, organization };
+  const user = await prisma.user.create({
+    data: {
+      firstName: faker.person.firstName(),
+      lastName: faker.person.lastName(),
+      username: faker.string.sample(30),
+      feideId: faker.string.uuid(),
+      email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
+      ...userData,
+    },
+  });
+  const organization = await prisma.organization.create({
+    data: {
+      name: faker.string.sample(20),
+    },
+  });
+  await prisma.member.create({
+    data: {
+      organizationId: organization.id,
+      userId: user.id,
+      role: "MEMBER",
+    },
+  });
+  return { user, organization };
 }

@@ -3,8 +3,8 @@ import { User } from "~/domain/users.js";
 import { ApolloContext } from "~/lib/apollo-server.js";
 
 type AuthenticatedContext = ApolloContext & {
-	req: { session: { userId: string; authenticated: true } };
-	user: User;
+  req: { session: { userId: string; authenticated: true } };
+  user: User;
 };
 
 /**
@@ -15,17 +15,17 @@ type AuthenticatedContext = ApolloContext & {
  * @returns void, narrows the type of ctx to AuthenticatedContext
  */
 export function assertIsAuthenticated(
-	ctx: ApolloContext,
+  ctx: ApolloContext,
 ): asserts ctx is AuthenticatedContext {
-	const { authenticated, userId } = ctx.req.session;
-	if (
-		authenticated &&
-		typeof userId === "string" &&
-		userId !== "" &&
-		ctx.user !== null
-	)
-		return;
-	throw new AuthenticationError(
-		"You must be logged in to perform this action.",
-	);
+  const { authenticated, userId } = ctx.req.session;
+  if (
+    authenticated &&
+    typeof userId === "string" &&
+    userId !== "" &&
+    ctx.user !== null
+  )
+    return;
+  throw new AuthenticationError(
+    "You must be logged in to perform this action.",
+  );
 }

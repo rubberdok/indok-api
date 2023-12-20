@@ -6,12 +6,12 @@ import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-serve
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
 describe("Cabin mutations", () => {
-	describe("updateBookingStatus", () => {
-		it("should raise PermissionDeniedError if the user is not authenticated", async () => {
-			const { client } = createMockApolloServer();
+  describe("updateBookingStatus", () => {
+    it("should raise PermissionDeniedError if the user is not authenticated", async () => {
+      const { client } = createMockApolloServer();
 
-			const { errors } = await client.mutate({
-				mutation: graphql(`
+      const { errors } = await client.mutate({
+        mutation: graphql(`
           mutation UpdateBookingStatus($data: UpdateBookingStatusInput!) {
             updateBookingStatus(data: $data) {
               booking {
@@ -20,35 +20,35 @@ describe("Cabin mutations", () => {
             }
           }
         `),
-				variables: {
-					data: {
-						id: faker.string.uuid(),
-						status: "PENDING",
-					},
-				},
-			});
-			expect(errors).toBeDefined();
-			expect(
-				errors?.some(
-					(err) => err.extensions?.code === errorCodes.ERR_PERMISSION_DENIED,
-				),
-			).toBe(true);
-		});
+        variables: {
+          data: {
+            id: faker.string.uuid(),
+            status: "PENDING",
+          },
+        },
+      });
+      expect(errors).toBeDefined();
+      expect(
+        errors?.some(
+          (err) => err.extensions?.code === errorCodes.ERR_PERMISSION_DENIED,
+        ),
+      ).toBe(true);
+    });
 
-		it("should call updateBookingStatus with the correct arugments if authenticated", async () => {
-			const { client, cabinService, createMockContext } =
-				createMockApolloServer();
+    it("should call updateBookingStatus with the correct arugments if authenticated", async () => {
+      const { client, cabinService, createMockContext } =
+        createMockApolloServer();
 
-			const id = faker.string.uuid();
-			const userId = faker.string.uuid();
-			const authenticatedContext = createMockContext({ user: { id: userId } });
-			cabinService.updateBookingStatus.mockResolvedValueOnce(
-				mock<Booking>({ id }),
-			);
+      const id = faker.string.uuid();
+      const userId = faker.string.uuid();
+      const authenticatedContext = createMockContext({ user: { id: userId } });
+      cabinService.updateBookingStatus.mockResolvedValueOnce(
+        mock<Booking>({ id }),
+      );
 
-			const { errors } = await client.mutate(
-				{
-					mutation: graphql(`
+      const { errors } = await client.mutate(
+        {
+          mutation: graphql(`
             mutation UpdateBookingStatus($data: UpdateBookingStatusInput!) {
               updateBookingStatus(data: $data) {
                 booking {
@@ -57,24 +57,24 @@ describe("Cabin mutations", () => {
               }
             }
           `),
-					variables: {
-						data: {
-							id,
-							status: "PENDING",
-						},
-					},
-				},
-				{
-					contextValue: authenticatedContext,
-				},
-			);
+          variables: {
+            data: {
+              id,
+              status: "PENDING",
+            },
+          },
+        },
+        {
+          contextValue: authenticatedContext,
+        },
+      );
 
-			expect(errors).toBeUndefined();
-			expect(cabinService.updateBookingStatus).toHaveBeenCalledWith(
-				userId,
-				id,
-				"PENDING",
-			);
-		});
-	});
+      expect(errors).toBeUndefined();
+      expect(cabinService.updateBookingStatus).toHaveBeenCalledWith(
+        userId,
+        id,
+        "PENDING",
+      );
+    });
+  });
 });

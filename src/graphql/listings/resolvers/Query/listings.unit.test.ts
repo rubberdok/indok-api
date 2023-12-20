@@ -5,16 +5,16 @@ import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-serve
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
 describe("Listing queries", () => {
-	describe("listings", () => {
-		it("should return listings", async () => {
-			const { client, listingService } = createMockApolloServer();
-			listingService.findMany.mockResolvedValue([
-				mock<Listing>({ id: faker.string.uuid() }),
-				mock<Listing>({ id: faker.string.uuid() }),
-			]);
+  describe("listings", () => {
+    it("should return listings", async () => {
+      const { client, listingService } = createMockApolloServer();
+      listingService.findMany.mockResolvedValue([
+        mock<Listing>({ id: faker.string.uuid() }),
+        mock<Listing>({ id: faker.string.uuid() }),
+      ]);
 
-			const { errors } = await client.query({
-				query: graphql(`
+      const { errors } = await client.query({
+        query: graphql(`
           query listings {
             listings {
               listings {
@@ -23,10 +23,10 @@ describe("Listing queries", () => {
             }
           }
         `),
-			});
+      });
 
-			expect(errors).toBeUndefined();
-			expect(listingService.findMany).toHaveBeenCalled();
-		});
-	});
+      expect(errors).toBeUndefined();
+      expect(listingService.findMany).toHaveBeenCalled();
+    });
+  });
 });

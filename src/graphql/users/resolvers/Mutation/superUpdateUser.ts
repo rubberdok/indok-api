@@ -1,18 +1,18 @@
 import { assertIsAuthenticated } from "~/graphql/auth.js";
 import type { MutationResolvers } from "./../../../types.generated.js";
 export const superUpdateUser: NonNullable<
-	MutationResolvers["superUpdateUser"]
+  MutationResolvers["superUpdateUser"]
 > = async (_parent, { id, data }, ctx) => {
-	assertIsAuthenticated(ctx);
+  assertIsAuthenticated(ctx);
 
-	const user = await ctx.userService.superUpdateUser(ctx.user.id, id, {
-		firstName: data.firstName,
-		lastName: data.lastName,
-		allergies: data.allergies ?? undefined,
-		phoneNumber: data.phoneNumber ?? undefined,
-		graduationYear: data.graduationYear,
-		isSuperUser: data.isSuperUser,
-	});
+  const user = await ctx.userService.superUpdateUser(ctx.user.id, id, {
+    firstName: data.firstName,
+    lastName: data.lastName,
+    allergies: data.allergies ?? undefined,
+    phoneNumber: data.phoneNumber ?? undefined,
+    graduationYear: data.graduationYear,
+    isSuperUser: data.isSuperUser,
+  });
 
-	return { user };
+  return { user };
 };

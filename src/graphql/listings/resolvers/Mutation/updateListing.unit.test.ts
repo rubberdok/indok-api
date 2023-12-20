@@ -6,21 +6,21 @@ import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-serve
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
 describe("Listing mutations", () => {
-	describe("updateListing", () => {
-		it("should attempt to update a listing", async () => {
-			const { client, listingService, createMockContext } =
-				createMockApolloServer();
-			const authenticatedContext = createMockContext({
-				userId: faker.string.uuid(),
-				authenticated: true,
-			});
-			listingService.update.mockResolvedValue(
-				mock<Listing>({ id: faker.string.uuid() }),
-			);
+  describe("updateListing", () => {
+    it("should attempt to update a listing", async () => {
+      const { client, listingService, createMockContext } =
+        createMockApolloServer();
+      const authenticatedContext = createMockContext({
+        userId: faker.string.uuid(),
+        authenticated: true,
+      });
+      listingService.update.mockResolvedValue(
+        mock<Listing>({ id: faker.string.uuid() }),
+      );
 
-			const { errors } = await client.mutate(
-				{
-					mutation: graphql(`
+      const { errors } = await client.mutate(
+        {
+          mutation: graphql(`
             mutation updateListing($id: ID!, $data: UpdateListingInput!) {
               updateListing(id: $id, data: $data) {
                 listing {
@@ -29,36 +29,36 @@ describe("Listing mutations", () => {
               }
             }
           `),
-					variables: {
-						id: faker.string.uuid(),
-						data: {
-							name: faker.lorem.sentence(),
-						},
-					},
-				},
-				{ contextValue: authenticatedContext },
-			);
+          variables: {
+            id: faker.string.uuid(),
+            data: {
+              name: faker.lorem.sentence(),
+            },
+          },
+        },
+        { contextValue: authenticatedContext },
+      );
 
-			expect(errors).toBeUndefined();
-			expect(listingService.update).toHaveBeenCalledWith(
-				authenticatedContext.req.session.userId,
-				expect.any(String),
-				{
-					name: expect.any(String),
-				},
-			);
-		});
+      expect(errors).toBeUndefined();
+      expect(listingService.update).toHaveBeenCalledWith(
+        authenticatedContext.req.session.userId,
+        expect.any(String),
+        {
+          name: expect.any(String),
+        },
+      );
+    });
 
-		it("should raise permission denied if not authenticated", async () => {
-			const { client, listingService, createMockContext } =
-				createMockApolloServer();
-			const unauthenticatedContext = createMockContext({
-				authenticated: false,
-			});
+    it("should raise permission denied if not authenticated", async () => {
+      const { client, listingService, createMockContext } =
+        createMockApolloServer();
+      const unauthenticatedContext = createMockContext({
+        authenticated: false,
+      });
 
-			const { errors } = await client.mutate(
-				{
-					mutation: graphql(`
+      const { errors } = await client.mutate(
+        {
+          mutation: graphql(`
             mutation updateListing($id: ID!, $data: UpdateListingInput!) {
               updateListing(id: $id, data: $data) {
                 listing {
@@ -67,23 +67,23 @@ describe("Listing mutations", () => {
               }
             }
           `),
-					variables: {
-						id: faker.string.uuid(),
-						data: {
-							name: faker.lorem.sentence(),
-						},
-					},
-				},
-				{ contextValue: unauthenticatedContext },
-			);
+          variables: {
+            id: faker.string.uuid(),
+            data: {
+              name: faker.lorem.sentence(),
+            },
+          },
+        },
+        { contextValue: unauthenticatedContext },
+      );
 
-			expect(errors).toBeDefined();
-			expect(
-				errors?.some(
-					(err) => err.extensions?.code === errorCodes.ERR_PERMISSION_DENIED,
-				),
-			).toBe(true);
-			expect(listingService.update).not.toHaveBeenCalled();
-		});
-	});
+      expect(errors).toBeDefined();
+      expect(
+        errors?.some(
+          (err) => err.extensions?.code === errorCodes.ERR_PERMISSION_DENIED,
+        ),
+      ).toBe(true);
+      expect(listingService.update).not.toHaveBeenCalled();
+    });
+  });
 });

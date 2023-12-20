@@ -1,8 +1,8 @@
 import type { QueryResolvers } from "./../../../types.generated.js";
 export const bookingSemesters: NonNullable<QueryResolvers["bookingSemesters"]> =
-	async () => {
-		/**
-		 * No-op, resolution is handled by BookingSemestersResponse resolver
-		 */
-		return {};
-	};
+  async () => {
+    /**
+     * No-op, resolution is handled by BookingSemestersResponse resolver
+     */
+    return {};
+  };
