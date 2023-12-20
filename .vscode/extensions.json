@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "GraphQL.vscode-graphql-syntax",
+    "GraphQL.vscode-graphql",
+    "biomejs.biome",
+    "redhat.vscode-yaml"
+  ]
+}

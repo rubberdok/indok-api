@@ -1,15 +1,15 @@
-import { createMockApolloServer } from "@/graphql/test-clients/mock-apollo-server.js";
-import { graphql } from "@/graphql/test-clients/unit/gql.js";
+import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
+import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
 describe("Organization queries", () => {
-  describe("organizations", () => {
-    it("should not throw PermissionDeniedError for unauthenticated users", async () => {
-      const { client, organizationService } = createMockApolloServer();
+	describe("organizations", () => {
+		it("should not throw PermissionDeniedError for unauthenticated users", async () => {
+			const { client, organizationService } = createMockApolloServer();
 
-      organizationService.findMany.mockResolvedValue([]);
+			organizationService.findMany.mockResolvedValue([]);
 
-      const { errors } = await client.query({
-        query: graphql(`
+			const { errors } = await client.query({
+				query: graphql(`
           query organizations {
             organizations {
               organizations {
@@ -18,10 +18,10 @@ describe("Organization queries", () => {
             }
           }
         `),
-      });
+			});
 
-      expect(errors).toBeUndefined();
-      expect(organizationService.findMany).toHaveBeenCalled();
-    });
-  });
+			expect(errors).toBeUndefined();
+			expect(organizationService.findMany).toHaveBeenCalled();
+		});
+	});
 });

@@ -8,105 +8,115 @@
  * @param code - A code that can be used to identify the error, e.g. "BAD_USER_INPUT", should be one of `codes`
  */
 export class KnownDomainError extends Error {
-  constructor(
-    name: string,
-    public description: string,
-    public code: ErrorCode = errorCodes.ERR_INTERNAL_SERVER_ERROR
-  ) {
-    super(description);
-    this.name = name;
-    Error.captureStackTrace(this);
-  }
+	constructor(
+		name: string,
+		public description: string,
+		public code: ErrorCode = errorCodes.ERR_INTERNAL_SERVER_ERROR,
+	) {
+		super(description);
+		this.name = name;
+		Error.captureStackTrace(this);
+	}
 }
 
 export class InvalidArgumentError extends KnownDomainError {
-  constructor(description: string) {
-    super("InvalidArgumentError", description, errorCodes.ERR_BAD_USER_INPUT);
-  }
+	constructor(description: string) {
+		super("InvalidArgumentError", description, errorCodes.ERR_BAD_USER_INPUT);
+	}
 }
 
 export class InternalServerError extends KnownDomainError {
-  constructor(description: string) {
-    super("InternalServerError", description, errorCodes.ERR_INTERNAL_SERVER_ERROR);
-  }
+	constructor(description: string) {
+		super(
+			"InternalServerError",
+			description,
+			errorCodes.ERR_INTERNAL_SERVER_ERROR,
+		);
+	}
 }
 
 export class PermissionDeniedError extends KnownDomainError {
-  constructor(description: string) {
-    super("PermissionDeniedError", description, errorCodes.ERR_PERMISSION_DENIED);
-  }
+	constructor(description: string) {
+		super(
+			"PermissionDeniedError",
+			description,
+			errorCodes.ERR_PERMISSION_DENIED,
+		);
+	}
 }
 
 export class AuthenticationError extends KnownDomainError {
-  constructor(description: string) {
-    super("AuthenticationError", description, errorCodes.ERR_PERMISSION_DENIED);
-  }
+	constructor(description: string) {
+		super("AuthenticationError", description, errorCodes.ERR_PERMISSION_DENIED);
+	}
 }
 
 export class NotFoundError extends KnownDomainError {
-  constructor(description: string) {
-    super("NotFoundError", description, errorCodes.ERR_NOT_FOUND);
-  }
+	constructor(description: string) {
+		super("NotFoundError", description, errorCodes.ERR_NOT_FOUND);
+	}
 }
 
 export class BadRequestError extends KnownDomainError {
-  constructor(description: string) {
-    super("BadRequestError", description, errorCodes.ERR_BAD_REQUEST);
-  }
+	constructor(description: string) {
+		super("BadRequestError", description, errorCodes.ERR_BAD_REQUEST);
+	}
 }
 
 export const errorCodes = {
-  /**
-   * ERR_NOT_FOUND should be used for errors that arise as a result of a resource not being found,
-   * e.g. trying to get an organization that doesn't exist, trying to get a user that doesn't exist.
-   */
-  ERR_NOT_FOUND: "NOT_FOUND",
-  /**
-   * ERR_BAD_USER_INPUT should be used for errors that arise as a result of user input
-   * that is invalid, e.g. an invalid email address, duplicate username, trying to delete
-   * an organization that doesn't exist, etc.
-   *
-   * These errors are typically caused by the user, and as a consequence, are not tracked
-   * as closely as other errors, i.e., not sent to Sentry.
-   */
-  ERR_BAD_USER_INPUT: "BAD_USER_INPUT",
-  /**
-   * ERR_BAD_REQUEST should be used for errors that arise as a result of a malformed request,
-   */
-  ERR_BAD_REQUEST: "BAD_REQUEST",
-  /**
-   * ERR_PERMISSION_DENIED should be used for errors that arise as a result of a user trying
-   * to access a resource that they do not have permission to access, e.g. trying to delete
-   * an organization where the user is not an admin.
-   */
-  ERR_PERMISSION_DENIED: "PERMISSION_DENIED",
-  /**
-   * ERR_INTERNAL_SERVER_ERROR is a generic error that should be used for all errors that
-   * arise as a result of an internal server error, e.g. a database query failing, a network
-   * request failing, buggy code, etc.
-   */
-  ERR_INTERNAL_SERVER_ERROR: "INTERNAL_SERVER_ERROR",
+	/**
+	 * ERR_NOT_FOUND should be used for errors that arise as a result of a resource not being found,
+	 * e.g. trying to get an organization that doesn't exist, trying to get a user that doesn't exist.
+	 */
+	ERR_NOT_FOUND: "NOT_FOUND",
+	/**
+	 * ERR_BAD_USER_INPUT should be used for errors that arise as a result of user input
+	 * that is invalid, e.g. an invalid email address, duplicate username, trying to delete
+	 * an organization that doesn't exist, etc.
+	 *
+	 * These errors are typically caused by the user, and as a consequence, are not tracked
+	 * as closely as other errors, i.e., not sent to Sentry.
+	 */
+	ERR_BAD_USER_INPUT: "BAD_USER_INPUT",
+	/**
+	 * ERR_BAD_REQUEST should be used for errors that arise as a result of a malformed request,
+	 */
+	ERR_BAD_REQUEST: "BAD_REQUEST",
+	/**
+	 * ERR_PERMISSION_DENIED should be used for errors that arise as a result of a user trying
+	 * to access a resource that they do not have permission to access, e.g. trying to delete
+	 * an organization where the user is not an admin.
+	 */
+	ERR_PERMISSION_DENIED: "PERMISSION_DENIED",
+	/**
+	 * ERR_INTERNAL_SERVER_ERROR is a generic error that should be used for all errors that
+	 * arise as a result of an internal server error, e.g. a database query failing, a network
+	 * request failing, buggy code, etc.
+	 */
+	ERR_INTERNAL_SERVER_ERROR: "INTERNAL_SERVER_ERROR",
 } as const;
 
 export type ErrorCode = (typeof errorCodes)[keyof typeof errorCodes];
 
 const USER_FACING_ERRORS = new Set<string>([
-  errorCodes.ERR_BAD_REQUEST,
-  errorCodes.ERR_BAD_USER_INPUT,
-  errorCodes.ERR_PERMISSION_DENIED,
-  errorCodes.ERR_NOT_FOUND,
+	errorCodes.ERR_BAD_REQUEST,
+	errorCodes.ERR_BAD_USER_INPUT,
+	errorCodes.ERR_PERMISSION_DENIED,
+	errorCodes.ERR_NOT_FOUND,
 ]);
 
-export function isErrorWithCode(error: unknown): error is Error & { code: string } {
-  if (!error) return false;
-  if (!(error instanceof Error)) return false;
-  if (!("code" in error)) return false;
-  return typeof error.code === "string";
+export function isErrorWithCode(
+	error: unknown,
+): error is Error & { code: string } {
+	if (!error) return false;
+	if (!(error instanceof Error)) return false;
+	if (!("code" in error)) return false;
+	return typeof error.code === "string";
 }
 
 export function isUserFacingError(error?: unknown): boolean {
-  if (isErrorWithCode(error)) {
-    return USER_FACING_ERRORS.has(error.code);
-  }
-  return false;
+	if (isErrorWithCode(error)) {
+		return USER_FACING_ERRORS.has(error.code);
+	}
+	return false;
 }

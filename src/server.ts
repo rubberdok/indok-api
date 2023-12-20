@@ -1,7 +1,10 @@
 import { ApolloServer } from "@apollo/server";
 import { ApolloServerPluginLandingPageDisabled } from "@apollo/server/plugin/disabled";
 import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
-import fastifyApollo, { ApolloFastifyContextFunction, fastifyApolloDrainPlugin } from "@as-integrations/fastify";
+import fastifyApollo, {
+	ApolloFastifyContextFunction,
+	fastifyApolloDrainPlugin,
+} from "@as-integrations/fastify";
 import fastifyCookie from "@fastify/cookie";
 import fastifyCors from "@fastify/cors";
 import fastifyHelmet from "@fastify/helmet";
@@ -11,7 +14,6 @@ import fastifySentry from "@immobiliarelabs/fastify-sentry";
 import * as Sentry from "@sentry/node";
 import RedisStore from "connect-redis";
 import { FastifyInstance } from "fastify";
-
 import { env } from "./config.js";
 import { NotFoundError } from "./domain/errors.js";
 import { User } from "./domain/users.js";
@@ -25,8 +27,8 @@ import { fastifyApolloSentryPlugin } from "./lib/sentry.js";
 import { getAuthPlugin } from "./services/auth/plugin.js";
 
 interface Options {
-  port: number;
-  host: string;
+	port: number;
+	host: string;
 }
 
 /**
@@ -73,164 +75,177 @@ interface Options {
  *
  * @returns The Fastify server instance
  */
-export async function initServer(dependencies: ServerDependencies, opts: Options): Promise<FastifyInstance> {
-  const { apolloServerDependencies, authService, createRedisClient, app } = dependencies;
+export async function initServer(
+	dependencies: ServerDependencies,
+	opts: Options,
+): Promise<FastifyInstance> {
+	const { apolloServerDependencies, authService, createRedisClient, app } =
+		dependencies;
 
-  /**
-   * Set up Sentry monitoring before anything else
-   * so that we can monitor the server for errors and performance issues, even during
-   * the initial setup.
-   */
-  app.register(fastifySentry, {
-    dsn: env.SENTRY_DSN,
-    environment: env.NODE_ENV,
-    tracesSampleRate: env.SENTRY_TRACES_SAMPLE_RATE,
-    release: env.SENTRY_RELEASE,
-    integrations: [
-      new Sentry.Integrations.Prisma({ client: dependencies.prisma }),
-      new Sentry.Integrations.GraphQL(),
-      new Sentry.Integrations.Apollo(),
-    ],
-  });
+	/**
+	 * Set up Sentry monitoring before anything else
+	 * so that we can monitor the server for errors and performance issues, even during
+	 * the initial setup.
+	 */
+	app.register(fastifySentry, {
+		dsn: env.SENTRY_DSN,
+		environment: env.NODE_ENV,
+		tracesSampleRate: env.SENTRY_TRACES_SAMPLE_RATE,
+		release: env.SENTRY_RELEASE,
+		integrations: [
+			new Sentry.Integrations.Prisma({ client: dependencies.prisma }),
+			new Sentry.Integrations.GraphQL(),
+			new Sentry.Integrations.Apollo(),
+		],
+	});
 
-  // Security headers
-  app.register(fastifyHelmet, helmetOptionsByEnv[env.NODE_ENV]);
+	// Security headers
+	app.register(fastifyHelmet, helmetOptionsByEnv[env.NODE_ENV]);
 
-  /**
-   * Register plugins
-   *
-   * CORS:
-   *   - credentials: allow cookies to be sent to the server
-   *   - origin: allow requests from the specified origins
-   */
-  await app.register(fastifyCors, {
-    credentials: env.CORS_CREDENTIALS,
-    origin: env.CORS_ORIGINS,
-  });
+	/**
+	 * Register plugins
+	 *
+	 * CORS:
+	 *   - credentials: allow cookies to be sent to the server
+	 *   - origin: allow requests from the specified origins
+	 */
+	await app.register(fastifyCors, {
+		credentials: env.CORS_CREDENTIALS,
+		origin: env.CORS_ORIGINS,
+	});
 
-  // Cookie parser, dependency of fastifySession
-  await app.register(fastifyCookie);
+	// Cookie parser, dependency of fastifySession
+	await app.register(fastifyCookie);
 
-  // Must be called after `Sentry` is registered
-  const redisClient = createRedisClient(app);
+	// Must be called after `Sentry` is registered
+	const redisClient = createRedisClient(app);
 
-  // Regsiter session plugin
-  await app.register(fastifySession, {
-    secret: env.SESSION_SECRET,
-    cookieName: env.SESSION_COOKIE_NAME,
-    saveUninitialized: true,
-    store: new RedisStore({
-      client: redisClient,
-    }),
-    cookie: {
-      httpOnly: env.SESSION_COOKIE_HTTP_ONLY,
-      secure: env.SESSION_COOKIE_SECURE,
-      domain: env.SESSION_COOKIE_DOMAIN,
-      sameSite: "none",
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-    },
-  });
+	// Regsiter session plugin
+	await app.register(fastifySession, {
+		secret: env.SESSION_SECRET,
+		cookieName: env.SESSION_COOKIE_NAME,
+		saveUninitialized: true,
+		store: new RedisStore({
+			client: redisClient,
+		}),
+		cookie: {
+			httpOnly: env.SESSION_COOKIE_HTTP_ONLY,
+			secure: env.SESSION_COOKIE_SECURE,
+			domain: env.SESSION_COOKIE_DOMAIN,
+			sameSite: "none",
+			maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+		},
+	});
 
-  // Rate limit plugin
-  await app.register(fastifyRateLimit, {
-    max: env.RATE_LIMIT_MAX,
-    redis: redisClient,
-    nameSpace: "rate-limit",
-  });
+	// Rate limit plugin
+	await app.register(fastifyRateLimit, {
+		max: env.RATE_LIMIT_MAX,
+		redis: redisClient,
+		nameSpace: "rate-limit",
+	});
 
-  /**
-   * Default `authenticated` session variable to false if it is undefined
-   */
-  app.addHook("preHandler", async (request) => {
-    if (typeof request.session.get("authenticated") === "undefined") {
-      request.session.set("authenticated", false);
-    }
-  });
+	/**
+	 * Default `authenticated` session variable to false if it is undefined
+	 */
+	app.addHook("preHandler", async (request) => {
+		if (typeof request.session.get("authenticated") === "undefined") {
+			request.session.set("authenticated", false);
+		}
+	});
 
-  /**
-   * Close Redis connection when the server closes
-   */
-  app.addHook("onClose", async () => {
-    await redisClient.quit();
-  });
+	/**
+	 * Close Redis connection when the server closes
+	 */
+	app.addHook("onClose", async () => {
+		await redisClient.quit();
+	});
 
-  // Initialize Apollo Server
-  const apollo = new ApolloServer<ApolloContext>({
-    typeDefs: typeDefs,
-    csrfPrevention: true,
-    introspection: true,
-    resolvers: resolvers,
-    formatError: getFormatErrorHandler(app.log.child({ service: "apollo-server" })),
-    includeStacktraceInErrorResponses: env.NODE_ENV !== "production",
-    plugins: [
-      fastifyApolloDrainPlugin(app),
-      fastifyApolloSentryPlugin(app),
-      env.NODE_ENV === "production"
-        ? ApolloServerPluginLandingPageDisabled()
-        : ApolloServerPluginLandingPageLocalDefault({ footer: false, includeCookies: true, embed: true }),
-    ],
-  });
+	// Initialize Apollo Server
+	const apollo = new ApolloServer<ApolloContext>({
+		typeDefs: typeDefs,
+		csrfPrevention: true,
+		introspection: true,
+		resolvers: resolvers,
+		formatError: getFormatErrorHandler(
+			app.log.child({ service: "apollo-server" }),
+		),
+		includeStacktraceInErrorResponses: env.NODE_ENV !== "production",
+		plugins: [
+			fastifyApolloDrainPlugin(app),
+			fastifyApolloSentryPlugin(app),
+			env.NODE_ENV === "production"
+				? ApolloServerPluginLandingPageDisabled()
+				: ApolloServerPluginLandingPageLocalDefault({
+						footer: false,
+						includeCookies: true,
+						embed: true,
+				  }),
+		],
+	});
 
-  // Custom context function to inject dependencies into the Apollo Context
-  const contextFunction: ApolloFastifyContextFunction<ApolloContext> = async (req, res) => {
-    const { userId, authenticated } = req.session;
-    let user: User | null = null;
-    if (userId !== undefined && authenticated) {
-      try {
-        req.log.debug({ userId }, "Fetching user");
-        user = await apolloServerDependencies.userService.get(userId);
-        req.log.debug({ userId }, "Found user");
-      } catch (err) {
-        req.log.info({ userId }, "Error fetching user");
-        if (err instanceof NotFoundError) {
-          req.log.info({ userId }, "User not found, logging out");
-          await authService.logout(req);
-        } else {
-          throw err;
-        }
-      }
-    }
+	// Custom context function to inject dependencies into the Apollo Context
+	const contextFunction: ApolloFastifyContextFunction<ApolloContext> = async (
+		req,
+		res,
+	) => {
+		const { userId, authenticated } = req.session;
+		let user: User | null = null;
+		if (userId !== undefined && authenticated) {
+			try {
+				req.log.debug({ userId }, "Fetching user");
+				user = await apolloServerDependencies.userService.get(userId);
+				req.log.debug({ userId }, "Found user");
+			} catch (err) {
+				req.log.info({ userId }, "Error fetching user");
+				if (err instanceof NotFoundError) {
+					req.log.info({ userId }, "User not found, logging out");
+					await authService.logout(req);
+				} else {
+					throw err;
+				}
+			}
+		}
 
-    return {
-      ...apolloServerDependencies,
-      user,
-      req,
-      res,
-    };
-  };
+		return {
+			...apolloServerDependencies,
+			user,
+			req,
+			res,
+		};
+	};
 
-  await apollo.start();
-  await app.register(fastifyApollo(apollo), {
-    context: contextFunction,
-  });
+	await apollo.start();
+	await app.register(fastifyApollo(apollo), {
+		context: contextFunction,
+	});
 
-  await app.register(healthCheckPlugin, { prefix: "/-" });
-  await app.register(getAuthPlugin(authService), { prefix: "/auth" });
+	await app.register(healthCheckPlugin, { prefix: "/-" });
+	await app.register(getAuthPlugin(authService), { prefix: "/auth" });
 
-  const { port, host } = opts;
+	const { port, host } = opts;
 
-  /**
-   * Start the Fastify server
-   */
-  try {
-    await app.listen({
-      port,
-      host,
-    });
-  } catch (err) {
-    if (err instanceof Error) {
-      // Log the error
-      app.log.fatal(err, "Error starting server");
-      // Capture the error with Sentry and exit the process
-      app.Sentry.captureException(err, {
-        level: "fatal",
-        tags: {
-          kind: "server",
-        },
-      });
-    }
-    process.exit(1);
-  }
+	/**
+	 * Start the Fastify server
+	 */
+	try {
+		await app.listen({
+			port,
+			host,
+		});
+	} catch (err) {
+		if (err instanceof Error) {
+			// Log the error
+			app.log.fatal(err, "Error starting server");
+			// Capture the error with Sentry and exit the process
+			app.Sentry.captureException(err, {
+				level: "fatal",
+				tags: {
+					kind: "server",
+				},
+			});
+		}
+		process.exit(1);
+	}
 
-  return app;
+	return app;
 }

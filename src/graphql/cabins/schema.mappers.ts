@@ -1,11 +1,10 @@
 export {
-  Booking as BookingMapper,
-  Cabin as CabinMapper,
-  BookingSemester as BookingSemesterMapper,
+	Booking as BookingMapper,
+	Cabin as CabinMapper,
+	BookingSemester as BookingSemesterMapper,
 } from "@prisma/client";
 
-// this is intentionally empty as we want the field resolvers to return the two semesters
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface BookingSemestersResponseMapper {}
+// biome-ignore lint/complexity/noBannedTypes: this is intentionally empty as we want the field resolvers to return the two semesters
+type BookingSemestersResponseMapper = {};
 
 export { BookingSemestersResponseMapper };
