@@ -60,7 +60,11 @@ environment_variables = [
   {
     name  = "SENTRY_DSN"
     value = "https://3e8801d618184101b5d2c6b7b4da6f0b@o514678.ingest.sentry.io/6553834"
-  }
+  },
+  {
+    name  = "RATE_LIMIT_MAX",
+    value = 1000
+  },
 ]
 
 

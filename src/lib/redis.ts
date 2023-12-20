@@ -1,9 +1,9 @@
 import { FastifyInstance } from "fastify";
-import { createClient } from "redis";
+import { Redis } from "ioredis";
 
 import { env } from "@/config.js";
 
-export function createRedisClient(app: FastifyInstance): ReturnType<typeof createClient> {
+export function createRedisClient(app: FastifyInstance): Redis {
   /**
    * Configure session plugin with Redis as session store
    *
@@ -14,12 +14,8 @@ export function createRedisClient(app: FastifyInstance): ReturnType<typeof creat
    *
    * @todo figure out if we have some way of using tcp.keepalive, otherwise use ping
    */
-  const redisClient = createClient({
-    url: env.REDIS_CONNECTION_STRING,
-    pingInterval: 1_000 * 60 * 3, // 3 minutes
-    socket: {
-      keepAlive: 1_000 * 60 * 3, // 3 minutes
-    },
+  const redisClient = new Redis(env.REDIS_CONNECTION_STRING, {
+    keepAlive: 1_000 * 60 * 3, // 3 minutes
   });
 
   redisClient.on("connect", () => {
