@@ -22,7 +22,10 @@ const envVarsSchema = z.object({
     .transform((val) => Number.parseInt(val))
     .default("4000"),
   POSTMARK_API_TOKEN: z.string(),
-  RATE_LIMIT_MAX: z.number().default(1000),
+  RATE_LIMIT_MAX: z
+    .string()
+    .transform((val) => Number.parseInt(val))
+    .default("1000"),
   REDIS_CONNECTION_STRING: z.string(),
   SENTRY_DSN: z.string().optional(),
   SENTRY_RELEASE: z.string().optional(),
