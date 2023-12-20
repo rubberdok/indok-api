@@ -27,8 +27,8 @@ dependencies:
     specifier: ^9.0.1
     version: 9.0.1(graphql@16.8.1)
   '@immobiliarelabs/fastify-sentry':
-    specifier: ^7.1.1
-    version: 7.1.1
+    specifier: ^8.0.0
+    version: 8.0.0
   '@prisma/client':
     specifier: ^5.7.1
     version: 5.7.1(prisma@5.7.1)
@@ -2321,14 +2321,14 @@ packages:
     resolution: {integrity: sha512-dvuCeX5fC9dXgJn9t+X5atfmgQAzUOWqS1254Gh0m6i8wKd10ebXkfNKiRK+1GWi/yTvvLDHpoxLr0xxxeslWw==}
     dev: true
 
-  /@immobiliarelabs/fastify-sentry@7.1.1:
-    resolution: {integrity: sha512-V6cIMLhufo81td6nPP7Y/ISgh+MaxH/FXQ7VfGnsPBq6l/B6L2d00mcOe7ER0oHfm0bIwGQa/KdvaGyz5nEVbw==}
-    engines: {node: '>=16', npm: '>=8'}
+  /@immobiliarelabs/fastify-sentry@8.0.0:
+    resolution: {integrity: sha512-W2T7dTIxctBo70vFDjknsQeaITKyY7YmL4OJHV79Qotm0CCcQ8DHW+dJvCOYDOnFrNo92mf73pdC/M2NvDzi+Q==}
+    engines: {node: '>=18'}
     dependencies:
       '@sentry/node': 7.89.0
       '@sentry/tracing': 7.77.0
-      '@sentry/utils': 7.77.0
-      cookie: 0.5.0
+      '@sentry/utils': 7.89.0
+      cookie: 0.6.0
       fastify-plugin: 4.5.1
     transitivePeerDependencies:
       - supports-color
@@ -4615,6 +4615,11 @@ packages:
 
   /cookie@0.5.0:
     resolution: {integrity: sha512-YZ3GUyn/o8gfKJlnlX7g7xq4gyO6OSuhGPKaaGssGB2qgDUS0gPgtTvoyZLTt9Ab6dC4hfc9dV5arkvc/OCmrw==}
+    engines: {node: '>= 0.6'}
+    dev: false
+
+  /cookie@0.6.0:
+    resolution: {integrity: sha512-U71cyTamuh1CRNCfpGY6to28lxvNwPG4Guz/EVjgf3Jmzv0vlDp1atT9eS5dDjMYHucpHbWns6Lwf3BKz6svdw==}
     engines: {node: '>= 0.6'}
     dev: false
 
