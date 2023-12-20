@@ -322,7 +322,7 @@ export class OrganizationService {
 	/**
 	 * Get members for an organization
 	 *
-	 * @requires The user must be a member of the organization
+	 * The user must be a member of the organization
 	 * @param organizationId - The ID of the organization
 	 * @param userId - The ID of the user making the request
 	 * @returns
@@ -333,6 +333,11 @@ export class OrganizationService {
 			organizationId,
 			role: Role.MEMBER,
 		});
+		if (!isMember) {
+			throw new PermissionDeniedError(
+				"You must be a member of the organization to get its members.",
+			);
+		}
 		return await this.memberRepository.findMany({ organizationId });
 	}
 
