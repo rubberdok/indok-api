@@ -218,3 +218,8 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/node,macos,windows,linux
 
 dump.rdb
+
+# GraphQL Codegen
+src/graphql/test-clients/integration/**
+src/graphql/test-clients/unit/**
+*.generated.ts
