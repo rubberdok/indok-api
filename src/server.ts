@@ -5,9 +5,9 @@ import fastifyApollo, { ApolloFastifyContextFunction, fastifyApolloDrainPlugin }
 import fastifyCookie from "@fastify/cookie";
 import fastifyCors from "@fastify/cors";
 import fastifyHelmet from "@fastify/helmet";
+import fastifyRateLimit from "@fastify/rate-limit";
 import fastifySession from "@fastify/session";
 import fastifySentry from "@immobiliarelabs/fastify-sentry";
-import fastifyRateLimit from "@fastify/rate-limit";
 import * as Sentry from "@sentry/node";
 import RedisStore from "connect-redis";
 import { FastifyInstance } from "fastify";

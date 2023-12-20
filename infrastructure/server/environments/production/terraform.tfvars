@@ -42,6 +42,10 @@ environment_variables = [
     value = "https://auth.dataporten.no"
   },
   {
+    name  = "RATE_LIMIT_MAX",
+    value = 1000
+  },
+  {
     name  = "SESSION_COOKIE_NAME"
     value = "sessionid"
   },
