@@ -24,10 +24,7 @@ import { createRedisClient } from "../redis.js";
 import { envToLogger } from "./logging.js";
 
 interface IAuthService {
-  authorizationCallback(
-    req: FastifyRequest,
-    data: { code: string },
-  ): Promise<User>;
+  authorizationCallback(req: FastifyRequest, data: { code: string }): Promise<User>;
   authorizationUrl(req: FastifyRequest, state?: string | null): string;
   logout(req: FastifyRequest): Promise<void>;
   login(req: FastifyRequest, user: User): Promise<User>;
@@ -60,41 +57,18 @@ export function dependenciesFactory(): ServerDependencies {
   const listingRepository = new ListingRepository(prisma);
 
   const mailService = new MailService(postmark, env.NO_REPLY_EMAIL);
-  const permissionService = new PermissionService(
-    memberRepository,
-    userRepository,
-    organizationRepository,
-  );
-  const organizationService = new OrganizationService(
-    organizationRepository,
-    memberRepository,
-    permissionService,
-  );
-  const listingService = new ListingService(
-    listingRepository,
-    permissionService,
-  );
-  const cabinService = new CabinService(
-    cabinRepository,
-    mailService,
-    permissionService,
-  );
-  const userService = new UserService(
-    userRepository,
-    permissionService,
-    app.log.child({ service: "users" }),
-  );
+  const permissionService = new PermissionService(memberRepository, userRepository, organizationRepository);
+  const organizationService = new OrganizationService(organizationRepository, memberRepository, permissionService);
+  const listingService = new ListingService(listingRepository, permissionService);
+  const cabinService = new CabinService(cabinRepository, mailService, permissionService);
+  const userService = new UserService(userRepository, permissionService, app.log.child({ service: "users" }));
   const eventService = new EventService(
     eventRepository,
     permissionService,
     userService,
     app.log.child({ service: "events" }),
   );
-  const authService = new AuthService(
-    userService,
-    feideClient,
-    app.log.child({ service: "auth" }),
-  );
+  const authService = new AuthService(userService, feideClient, app.log.child({ service: "auth" }));
 
   const apolloServerDependencies: ApolloServerDependencies = {
     cabinService,

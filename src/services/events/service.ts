@@ -3,18 +3,8 @@ import { FastifyBaseLogger } from "fastify";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
 import { z } from "zod";
-import {
-  InternalServerError,
-  InvalidArgumentError,
-  NotFoundError,
-  PermissionDeniedError,
-} from "~/domain/errors.js";
-import {
-  Event as DomainEvent,
-  EventWithSignUps,
-  isEventWithSignUps,
-  signUpAvailability,
-} from "~/domain/events.js";
+import { InternalServerError, InvalidArgumentError, NotFoundError, PermissionDeniedError } from "~/domain/errors.js";
+import { Event as DomainEvent, EventWithSignUps, isEventWithSignUps, signUpAvailability } from "~/domain/events.js";
 import { Role } from "~/domain/organizations.js";
 import { User } from "~/domain/users.js";
 
@@ -63,17 +53,10 @@ interface SignUpDetails {
 
 export interface EventRepository {
   create(event: EventData, signUpDetails?: SignUpDetails): Promise<DomainEvent>;
-  update(
-    id: string,
-    event: Partial<EventData>,
-    signUpDetails?: Partial<SignUpDetails>,
-  ): Promise<DomainEvent>;
+  update(id: string, event: Partial<EventData>, signUpDetails?: Partial<SignUpDetails>): Promise<DomainEvent>;
   get(id: string): Promise<DomainEvent>;
   getWithSlots(id: string): Promise<DomainEvent & { slots: EventSlot[] }>;
-  getSlotWithRemainingCapacity(
-    eventId: string,
-    gradeYear?: number,
-  ): Promise<EventSlot | null>;
+  getSlotWithRemainingCapacity(eventId: string, gradeYear?: number): Promise<EventSlot | null>;
   findMany(data?: { endAtGte?: Date | null }): Promise<DomainEvent[]>;
   findManySignUps(data: {
     eventId: string;
@@ -86,9 +69,7 @@ export interface EventRepository {
   updateSignUp(
     data: UpdateToConfirmedSignUpData | UpdateToInactiveSignUpData,
   ): Promise<{ signUp: EventSignUp; slot?: EventSlot; event: DomainEvent }>;
-  findManySlots(data: { gradeYear?: number; eventId: string }): Promise<
-    EventSlot[]
-  >;
+  findManySlots(data: { gradeYear?: number; eventId: string }): Promise<EventSlot[]>;
 }
 
 export interface UserService {
@@ -156,9 +137,7 @@ export class EventService {
     });
 
     if (isMember !== true) {
-      throw new PermissionDeniedError(
-        "You do not have permission to create an event for this organization.",
-      );
+      throw new PermissionDeniedError("You do not have permission to create an event for this organization.");
     }
 
     try {
@@ -246,8 +225,7 @@ export class EventService {
         validatedSignUpDetails,
       );
     } catch (err) {
-      if (err instanceof z.ZodError)
-        throw new InvalidArgumentError(err.message);
+      if (err instanceof z.ZodError) throw new InvalidArgumentError(err.message);
       throw err;
     }
   }
@@ -282,10 +260,7 @@ export class EventService {
     return schema.parse(merge({}, existingEvent.signUpDetails, data));
   }
 
-  private validateUpdateEventData(
-    data: Partial<EventData>,
-    existingEvent: DomainEvent,
-  ): Partial<EventData> {
+  private validateUpdateEventData(data: Partial<EventData>, existingEvent: DomainEvent): Partial<EventData> {
     const changingStartAt = data.startAt !== undefined;
     const changingEndAt = data.endAt !== undefined;
     const schema = z.object({
@@ -340,9 +315,7 @@ export class EventService {
   ): Promise<DomainEvent> {
     const event = await this.eventRepository.getWithSlots(eventId);
     if (!event.organizationId) {
-      throw new InvalidArgumentError(
-        "Events that belong to deleted organizations cannot be updated.",
-      );
+      throw new InvalidArgumentError("Events that belong to deleted organizations cannot be updated.");
     }
 
     const isMember = await this.permissionService.hasRole({
@@ -352,31 +325,18 @@ export class EventService {
     });
 
     if (isMember !== true) {
-      throw new PermissionDeniedError(
-        "You do not have permission to update this event.",
-      );
+      throw new PermissionDeniedError("You do not have permission to update this event.");
     }
     try {
       let validatedSignUpDetails: SignUpDetails | undefined = undefined;
       if (signUpDetails) {
-        validatedSignUpDetails = this.validateUpdateSignUpDetails(
-          signUpDetails,
-          event,
-        );
+        validatedSignUpDetails = this.validateUpdateSignUpDetails(signUpDetails, event);
       }
 
-      const validatedEvent: Partial<EventData> = this.validateUpdateEventData(
-        data,
-        event,
-      );
-      return await this.eventRepository.update(
-        eventId,
-        validatedEvent,
-        validatedSignUpDetails,
-      );
+      const validatedEvent: Partial<EventData> = this.validateUpdateEventData(data, event);
+      return await this.eventRepository.update(eventId, validatedEvent, validatedSignUpDetails);
     } catch (err) {
-      if (err instanceof z.ZodError)
-        throw new InvalidArgumentError(err.message);
+      if (err instanceof z.ZodError) throw new InvalidArgumentError(err.message);
       throw err;
     }
   }
@@ -407,10 +367,7 @@ export class EventService {
      * This number may need to be tweaked.
      */
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      this.log?.info(
-        { userId, eventId, attempt },
-        "Attempting to sign up user for event.",
-      );
+      this.log?.info({ userId, eventId, attempt }, "Attempting to sign up user for event.");
       // Fetch the event to check if it has available slots or not
       const event = await this.eventRepository.get(eventId);
       if (!this.areSignUpsAvailable(event)) {
@@ -429,11 +386,7 @@ export class EventService {
       }
 
       try {
-        const slotToSignUp =
-          await this.eventRepository.getSlotWithRemainingCapacity(
-            eventId,
-            user.gradeYear,
-          );
+        const slotToSignUp = await this.eventRepository.getSlotWithRemainingCapacity(eventId, user.gradeYear);
 
         if (slotToSignUp === null) {
           this.log?.info({ event }, "Event is full, adding user to wait list.");
@@ -450,10 +403,7 @@ export class EventService {
           eventId,
           slotId: slotToSignUp.id,
         });
-        this.log?.info(
-          { signUp, attempt },
-          "Successfully signed up user for event.",
-        );
+        this.log?.info({ signUp, attempt }, "Successfully signed up user for event.");
         return signUp;
       } catch (err) {
         // If there are no slots with remaining capacity, we add the user to the wait list.
@@ -490,9 +440,7 @@ export class EventService {
    * @params data.onlyFutureEvents - If true, only future events that have an `endAt` in the future will be returned
    * @returns All events
    */
-  async findMany(data?: { onlyFutureEvents?: boolean }): Promise<
-    DomainEvent[]
-  > {
+  async findMany(data?: { onlyFutureEvents?: boolean }): Promise<DomainEvent[]> {
     if (!data) {
       return await this.eventRepository.findMany();
     }
@@ -528,21 +476,16 @@ export class EventService {
     });
     for (const waitlistSignUp of signUpsOnWaitlist) {
       try {
-        const slot =
-          await this.eventRepository.getSlotWithRemainingCapacity(eventId);
+        const slot = await this.eventRepository.getSlotWithRemainingCapacity(eventId);
         if (slot !== null) {
-          const { signUp: confirmedSignUp } =
-            await this.eventRepository.updateSignUp({
-              userId: waitlistSignUp.userId,
-              eventId,
-              slotId: slot.id,
-              newParticipationStatus: ParticipationStatus.CONFIRMED,
-            });
+          const { signUp: confirmedSignUp } = await this.eventRepository.updateSignUp({
+            userId: waitlistSignUp.userId,
+            eventId,
+            slotId: slot.id,
+            newParticipationStatus: ParticipationStatus.CONFIRMED,
+          });
 
-          this.log?.info(
-            { confirmedSignUp },
-            "Promoted from waitlist to confirmed sign up.",
-          );
+          this.log?.info({ confirmedSignUp }, "Promoted from waitlist to confirmed sign up.");
           return confirmedSignUp;
         }
       } catch (err) {
@@ -550,10 +493,7 @@ export class EventService {
         throw err;
       }
     }
-    this.log?.info(
-      { eventId },
-      "Found no valid sign ups to promote from wait list",
-    );
+    this.log?.info({ eventId }, "Found no valid sign ups to promote from wait list");
     return null;
   }
 
@@ -571,10 +511,7 @@ export class EventService {
   private async demoteConfirmedSignUp(data: {
     userId: string;
     eventId: string;
-    newParticipationStatus: Extract<
-      ParticipationStatus,
-      "RETRACTED" | "REMOVED"
-    >;
+    newParticipationStatus: Extract<ParticipationStatus, "RETRACTED" | "REMOVED">;
   }): Promise<EventSignUp> {
     const { userId, eventId, newParticipationStatus } = data;
 
@@ -586,9 +523,7 @@ export class EventService {
     }
 
     if (signUp.slotId === null) {
-      throw new InternalServerError(
-        "Sign up is missing slot ID, but has ParticipationStatus.CONFIRMED",
-      );
+      throw new InternalServerError("Sign up is missing slot ID, but has ParticipationStatus.CONFIRMED");
     }
 
     const { signUp: demotedSignUp } = await this.eventRepository.updateSignUp({
@@ -602,17 +537,12 @@ export class EventService {
   private async demoteOnWaitlistSignUp(data: {
     userId: string;
     eventId: string;
-    newParticipationStatus: Exclude<
-      ParticipationStatus,
-      "CONFIRMED" | "ON_WAITLIST"
-    >;
+    newParticipationStatus: Exclude<ParticipationStatus, "CONFIRMED" | "ON_WAITLIST">;
   }) {
     const { userId, eventId } = data;
     const signUp = await this.eventRepository.getSignUp(userId, eventId);
     if (signUp.participationStatus !== ParticipationStatus.ON_WAITLIST) {
-      throw new InvalidArgumentError(
-        "Can only demote sign ups with with participation status ON_WAITLIST",
-      );
+      throw new InvalidArgumentError("Can only demote sign ups with with participation status ON_WAITLIST");
     }
 
     const { signUp: updatedSignUp } = await this.eventRepository.updateSignUp({
@@ -701,10 +631,7 @@ export class EventService {
     }
 
     const user = await this.userService.get(userId);
-    const slot = await this.eventRepository.getSlotWithRemainingCapacity(
-      eventId,
-      user.gradeYear,
-    );
+    const slot = await this.eventRepository.getSlotWithRemainingCapacity(eventId, user.gradeYear);
     return slot !== null;
   }
 
@@ -714,17 +641,12 @@ export class EventService {
    */
   private areSignUpsAvailable(event: DomainEvent): event is EventWithSignUps {
     if (!event.signUpsEnabled) return false;
-    if (event.signUpDetails.signUpsStartAt > DateTime.now().toJSDate())
-      return false;
-    if (event.signUpDetails.signUpsEndAt < DateTime.now().toJSDate())
-      return false;
+    if (event.signUpDetails.signUpsStartAt > DateTime.now().toJSDate()) return false;
+    if (event.signUpDetails.signUpsEndAt < DateTime.now().toJSDate()) return false;
     return true;
   }
 
-  async getSignUpAvailability(
-    userId: string | undefined,
-    eventId: string,
-  ): Promise<keyof typeof signUpAvailability> {
+  async getSignUpAvailability(userId: string | undefined, eventId: string): Promise<keyof typeof signUpAvailability> {
     const event = await this.eventRepository.getWithSlots(eventId);
     if (!isEventWithSignUps(event)) return signUpAvailability.DISABLED;
 
@@ -736,10 +658,8 @@ export class EventService {
 
     try {
       const signUp = await this.eventRepository.getSignUp(user.id, eventId);
-      if (signUp.participationStatus === ParticipationStatus.CONFIRMED)
-        return signUpAvailability.CONFIRMED;
-      if (signUp.participationStatus === ParticipationStatus.ON_WAITLIST)
-        return signUpAvailability.ON_WAITLIST;
+      if (signUp.participationStatus === ParticipationStatus.CONFIRMED) return signUpAvailability.CONFIRMED;
+      if (signUp.participationStatus === ParticipationStatus.ON_WAITLIST) return signUpAvailability.ON_WAITLIST;
     } catch (err) {
       const isNotFoundError = err instanceof NotFoundError;
       if (!isNotFoundError) throw err;
@@ -756,30 +676,22 @@ export class EventService {
     /**
      * Event sign ups have not opened yet
      */
-    if (event.signUpDetails.signUpsStartAt > DateTime.now().toJSDate())
-      return signUpAvailability.NOT_OPEN;
+    if (event.signUpDetails.signUpsStartAt > DateTime.now().toJSDate()) return signUpAvailability.NOT_OPEN;
     /**
      * Event sign ups have closed
      */
-    if (event.signUpDetails.signUpsEndAt < DateTime.now().toJSDate())
-      return signUpAvailability.CLOSED;
+    if (event.signUpDetails.signUpsEndAt < DateTime.now().toJSDate()) return signUpAvailability.CLOSED;
 
     /**
      * The event is full
      */
-    if (!event.signUpDetails.remainingCapacity)
-      return signUpAvailability.WAITLIST_AVAILABLE;
+    if (!event.signUpDetails.remainingCapacity) return signUpAvailability.WAITLIST_AVAILABLE;
 
-    const slotWithRemainingCapacity =
-      await this.eventRepository.getSlotWithRemainingCapacity(
-        eventId,
-        user.gradeYear,
-      );
+    const slotWithRemainingCapacity = await this.eventRepository.getSlotWithRemainingCapacity(eventId, user.gradeYear);
     /**
      * The slots for the user's grade year are full
      */
-    if (slotWithRemainingCapacity === null)
-      return signUpAvailability.WAITLIST_AVAILABLE;
+    if (slotWithRemainingCapacity === null) return signUpAvailability.WAITLIST_AVAILABLE;
 
     /**
      * The user can sign up for the event

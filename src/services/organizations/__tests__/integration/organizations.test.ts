@@ -1,11 +1,7 @@
 import assert from "assert";
 import { faker } from "@faker-js/faker";
 import { Prisma } from "@prisma/client";
-import {
-  InvalidArgumentError,
-  KnownDomainError,
-  PermissionDeniedError,
-} from "~/domain/errors.js";
+import { InvalidArgumentError, KnownDomainError, PermissionDeniedError } from "~/domain/errors.js";
 import { Role } from "~/domain/organizations.js";
 import prisma from "~/lib/prisma.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
@@ -21,16 +17,8 @@ describe("OrganizationsService", () => {
     const userRepository = new UserRepository(prisma);
     const memberRepository = new MemberRepository(prisma);
     const organizationRepository = new OrganizationRepository(prisma);
-    const permissionService = new PermissionService(
-      memberRepository,
-      userRepository,
-      organizationRepository,
-    );
-    organizationService = new OrganizationService(
-      organizationRepository,
-      memberRepository,
-      permissionService,
-    );
+    const permissionService = new PermissionService(memberRepository, userRepository, organizationRepository);
+    organizationService = new OrganizationService(organizationRepository, memberRepository, permissionService);
   });
 
   describe("removeMember", () => {
@@ -180,101 +168,92 @@ describe("OrganizationsService", () => {
         },
       ];
 
-      test.concurrent.each(testCases)(
-        "$name",
-        async ({ arrange, act, expected }) => {
-          /**
-           * Arrange
-           *
-           * 1. Create a user with userId {userId} based on the arrange.user object
-           * which is the user making the request
-           * 2. Create an organization with organizationId {organizationId} based on the arrange.organization object
-           * which is the organization with members, including the user making the request
-           * 3. Create a member with userId {userId} and organizationId {organizationId} based on the arrange.member object
-           * for the user making the request
-           * 4. Create a set of members with userIds in the organization with {organizationId}
-           */
-          // 1.
-          const userMakingRequest = await prisma.user.create({
-            data: arrange.user,
-          });
+      test.concurrent.each(testCases)("$name", async ({ arrange, act, expected }) => {
+        /**
+         * Arrange
+         *
+         * 1. Create a user with userId {userId} based on the arrange.user object
+         * which is the user making the request
+         * 2. Create an organization with organizationId {organizationId} based on the arrange.organization object
+         * which is the organization with members, including the user making the request
+         * 3. Create a member with userId {userId} and organizationId {organizationId} based on the arrange.member object
+         * for the user making the request
+         * 4. Create a set of members with userIds in the organization with {organizationId}
+         */
+        // 1.
+        const userMakingRequest = await prisma.user.create({
+          data: arrange.user,
+        });
 
-          // 2.
-          const organization = await prisma.organization.create({
-            data: arrange.organization,
-          });
+        // 2.
+        const organization = await prisma.organization.create({
+          data: arrange.organization,
+        });
 
-          // 3.
-          await prisma.member.create({
-            data: {
-              role: arrange.member.role,
-              userId: userMakingRequest.id,
-              organizationId: organization.id,
-            },
-          });
-
-          // 4.
-          const members = await Promise.all(
-            arrange.members.map(async (member) => {
-              return prisma.member.upsert({
-                where: {
-                  userId_organizationId: {
-                    userId: member.userId,
-                    organizationId: organization.id,
-                  },
-                },
-                create: {
-                  user: {
-                    create: {
-                      id: member.userId,
-                      email: faker.internet.email(),
-                      feideId: faker.string.uuid(),
-                      firstName: faker.person.firstName(),
-                      lastName: faker.person.lastName(),
-                      username: faker.string.sample(20),
-                    },
-                  },
-                  role: member.role,
-                  organization: {
-                    connect: {
-                      id: organization.id,
-                    },
-                  },
-                },
-                update: {},
-              });
-            }),
-          );
-
-          /**
-           * Act
-           *
-           * 1. Call the removeMember method on the organizationService with the userId and organizationId
-           */
-          const userToRemove = members[act.memberIndex];
-          assert(
-            typeof userToRemove !== "undefined",
-            "The user to remove must be defined",
-          );
-
-          const result = organizationService.removeMember(
-            userMakingRequest.id,
-            {
-              userId: userToRemove.userId,
-              organizationId: organization.id,
-            },
-          );
-
-          await expect(result).resolves.toEqual({
-            id: userToRemove.id,
+        // 3.
+        await prisma.member.create({
+          data: {
+            role: arrange.member.role,
+            userId: userMakingRequest.id,
             organizationId: organization.id,
-            userId: userToRemove.userId,
-            createdAt: expect.any(Date),
-            updatedAt: expect.any(Date),
-            ...expected,
-          });
-        },
-      );
+          },
+        });
+
+        // 4.
+        const members = await Promise.all(
+          arrange.members.map(async (member) => {
+            return prisma.member.upsert({
+              where: {
+                userId_organizationId: {
+                  userId: member.userId,
+                  organizationId: organization.id,
+                },
+              },
+              create: {
+                user: {
+                  create: {
+                    id: member.userId,
+                    email: faker.internet.email(),
+                    feideId: faker.string.uuid(),
+                    firstName: faker.person.firstName(),
+                    lastName: faker.person.lastName(),
+                    username: faker.string.sample(20),
+                  },
+                },
+                role: member.role,
+                organization: {
+                  connect: {
+                    id: organization.id,
+                  },
+                },
+              },
+              update: {},
+            });
+          }),
+        );
+
+        /**
+         * Act
+         *
+         * 1. Call the removeMember method on the organizationService with the userId and organizationId
+         */
+        const userToRemove = members[act.memberIndex];
+        assert(typeof userToRemove !== "undefined", "The user to remove must be defined");
+
+        const result = organizationService.removeMember(userMakingRequest.id, {
+          userId: userToRemove.userId,
+          organizationId: organization.id,
+        });
+
+        await expect(result).resolves.toEqual({
+          id: userToRemove.id,
+          organizationId: organization.id,
+          userId: userToRemove.userId,
+          createdAt: expect.any(Date),
+          updatedAt: expect.any(Date),
+          ...expected,
+        });
+      });
     });
 
     describe("should raise:", () => {
@@ -386,94 +365,85 @@ describe("OrganizationsService", () => {
         },
       ];
 
-      test.concurrent.each(testCases)(
-        "$expected.name $name",
-        async ({ arrange, act, expected }) => {
-          /**
-           * Arrange
-           *
-           * 1. Create a user with userId {userId} based on the arrange.user object
-           * which is the user making the request
-           * 2. Create an organization with organizationId {organizationId} based on the arrange.organization object
-           * which is the organization with members, including the user making the request
-           * 3. Create a member with userId {userId} and organizationId {organizationId} based on the arrange.member object
-           * for the user making the request
-           * 4. Create a set of members with userIds in the organization with {organizationId}
-           */
-          // 1.
-          const userMakingRequest = await prisma.user.create({
-            data: arrange.user,
-          });
+      test.concurrent.each(testCases)("$expected.name $name", async ({ arrange, act, expected }) => {
+        /**
+         * Arrange
+         *
+         * 1. Create a user with userId {userId} based on the arrange.user object
+         * which is the user making the request
+         * 2. Create an organization with organizationId {organizationId} based on the arrange.organization object
+         * which is the organization with members, including the user making the request
+         * 3. Create a member with userId {userId} and organizationId {organizationId} based on the arrange.member object
+         * for the user making the request
+         * 4. Create a set of members with userIds in the organization with {organizationId}
+         */
+        // 1.
+        const userMakingRequest = await prisma.user.create({
+          data: arrange.user,
+        });
 
-          // 2.
-          const organization = await prisma.organization.create({
-            data: arrange.organization,
-          });
+        // 2.
+        const organization = await prisma.organization.create({
+          data: arrange.organization,
+        });
 
-          // 3.
-          await prisma.member.create({
-            data: {
-              role: arrange.member.role,
-              userId: userMakingRequest.id,
-              organizationId: organization.id,
-            },
-          });
+        // 3.
+        await prisma.member.create({
+          data: {
+            role: arrange.member.role,
+            userId: userMakingRequest.id,
+            organizationId: organization.id,
+          },
+        });
 
-          // 4.
-          const members = await Promise.all(
-            arrange.members.map(async (member) => {
-              return prisma.member.upsert({
-                where: {
-                  userId_organizationId: {
-                    userId: member.userId,
-                    organizationId: organization.id,
+        // 4.
+        const members = await Promise.all(
+          arrange.members.map(async (member) => {
+            return prisma.member.upsert({
+              where: {
+                userId_organizationId: {
+                  userId: member.userId,
+                  organizationId: organization.id,
+                },
+              },
+              create: {
+                user: {
+                  create: {
+                    id: member.userId,
+                    email: faker.internet.email(),
+                    feideId: faker.string.uuid(),
+                    firstName: faker.person.firstName(),
+                    lastName: faker.person.lastName(),
+                    username: faker.string.sample(20),
                   },
                 },
-                create: {
-                  user: {
-                    create: {
-                      id: member.userId,
-                      email: faker.internet.email(),
-                      feideId: faker.string.uuid(),
-                      firstName: faker.person.firstName(),
-                      lastName: faker.person.lastName(),
-                      username: faker.string.sample(20),
-                    },
-                  },
-                  role: member.role,
-                  organization: {
-                    connect: {
-                      id: organization.id,
-                    },
+                role: member.role,
+                organization: {
+                  connect: {
+                    id: organization.id,
                   },
                 },
-                update: {},
-              });
-            }),
-          );
+              },
+              update: {},
+            });
+          }),
+        );
 
-          /**
-           * Act
-           *
-           * 1. Call the removeMember method on the organizationService with the userId and organizationId
-           */
-          const userToRemove = members[act.memberIndex];
-          assert(
-            typeof userToRemove !== "undefined",
-            "The user to remove must be defined",
-          );
+        /**
+         * Act
+         *
+         * 1. Call the removeMember method on the organizationService with the userId and organizationId
+         */
+        const userToRemove = members[act.memberIndex];
+        assert(typeof userToRemove !== "undefined", "The user to remove must be defined");
 
-          const result = organizationService.removeMember(
-            userMakingRequest.id,
-            {
-              userId: userToRemove.userId,
-              organizationId: organization.id,
-            },
-          );
+        const result = organizationService.removeMember(userMakingRequest.id, {
+          userId: userToRemove.userId,
+          organizationId: organization.id,
+        });
 
-          await expect(result).rejects.toThrow(expected);
-        },
-      );
+        await expect(result).rejects.toThrow(expected);
+      });
     });
   });
 });

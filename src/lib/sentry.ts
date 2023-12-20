@@ -22,9 +22,7 @@ import { ApolloContext } from "./apollo-server.js";
  * @param app - The fastify app instance
  * @returns The Apollo Server plugin
  */
-export const fastifyApolloSentryPlugin = (
-  app: FastifyInstance,
-): ApolloServerPlugin<ApolloContext> => {
+export const fastifyApolloSentryPlugin = (app: FastifyInstance): ApolloServerPlugin<ApolloContext> => {
   return {
     async requestDidStart() {
       return {
@@ -58,10 +56,7 @@ export const fastifyApolloSentryPlugin = (
               // Annotate with user ID
               if (ctx.contextValue.req.session.userId) {
                 scope.setUser({ id: ctx.contextValue.req.session.userId });
-                scope.setExtra(
-                  "authenticated",
-                  ctx.contextValue.req.session.authenticated,
-                );
+                scope.setExtra("authenticated", ctx.contextValue.req.session.authenticated);
               }
 
               // Log query and variables as extras

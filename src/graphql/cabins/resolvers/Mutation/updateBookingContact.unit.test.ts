@@ -31,16 +31,11 @@ describe("Cabin mutations", () => {
         },
       });
       expect(errors).toBeDefined();
-      expect(
-        errors?.some(
-          (err) => err.extensions?.code === errorCodes.ERR_PERMISSION_DENIED,
-        ),
-      ).toBe(true);
+      expect(errors?.some((err) => err.extensions?.code === errorCodes.ERR_PERMISSION_DENIED)).toBe(true);
     });
 
     it("should call updateBookingContact with the correct arugments if authenticated", async () => {
-      const { client, cabinService, createMockContext } =
-        createMockApolloServer();
+      const { client, cabinService, createMockContext } = createMockApolloServer();
 
       const name = faker.person.fullName();
       const email = faker.internet.email();

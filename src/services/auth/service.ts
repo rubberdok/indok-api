@@ -12,14 +12,8 @@ export interface OpenIDClient {
     code_challenge: string;
     state?: string;
   }): string;
-  callback(
-    redirectUrl: string,
-    params: { code: string },
-    options: { code_verifier: string },
-  ): Promise<TokenSet>;
-  userinfo(
-    tokenSet: TokenSet,
-  ): Promise<UserinfoResponse<FeideUserInfo, Record<string, never>>>;
+  callback(redirectUrl: string, params: { code: string }, options: { code_verifier: string }): Promise<TokenSet>;
+  userinfo(tokenSet: TokenSet): Promise<UserinfoResponse<FeideUserInfo, Record<string, never>>>;
 }
 
 export interface UserService {
@@ -42,23 +36,13 @@ export interface FeideUserInfo {
 }
 
 export class AuthService {
-  private scope = [
-    "openid",
-    "userid",
-    "userid-feide",
-    "userinfo-name",
-    "email",
-    "groups-edu",
-  ].join(" ");
+  private scope = ["openid", "userid", "userid-feide", "userinfo-name", "email", "groups-edu"].join(" ");
 
   constructor(
     private userService: UserService,
     private openIDClient: OpenIDClient,
     private log?: FastifyBaseLogger,
-    private callbackUrl: string | URL = new URL(
-      "/auth/authenticate",
-      env.SERVER_URL,
-    ),
+    private callbackUrl: string | URL = new URL("/auth/authenticate", env.SERVER_URL),
   ) {}
 
   /**
@@ -105,13 +89,9 @@ export class AuthService {
    * @param params.code - the authorization code from the OpenID Provider as a result of the user authenticating
    * @returns the user
    */
-  async authorizationCallback(
-    req: FastifyRequest,
-    params: { code: string },
-  ): Promise<User> {
+  async authorizationCallback(req: FastifyRequest, params: { code: string }): Promise<User> {
     const codeVerifier = req.session.get("codeVerifier");
-    if (!codeVerifier)
-      throw new BadRequestError("No code verifier found in session");
+    if (!codeVerifier) throw new BadRequestError("No code verifier found in session");
 
     const { code } = params;
 
@@ -154,14 +134,8 @@ export class AuthService {
       eduUsername = ntnuId.slice(0, ntnuId.indexOf("@"));
     } else {
       const feideUserIdSec = userid_sec.find((id) => id.startsWith("feide:"));
-      if (!feideUserIdSec)
-        throw new AuthenticationError(
-          `No username found for user with feideId ${sub}`,
-        );
-      eduUsername = feideUserIdSec.slice(
-        feideUserIdSec.indexOf(":") + 1,
-        feideUserIdSec.indexOf("@"),
-      );
+      if (!feideUserIdSec) throw new AuthenticationError(`No username found for user with feideId ${sub}`);
+      eduUsername = feideUserIdSec.slice(feideUserIdSec.indexOf(":") + 1, feideUserIdSec.indexOf("@"));
     }
 
     const [firstName, lastName] = name.split(" ");
@@ -215,8 +189,6 @@ export class AuthService {
       await req.session.destroy();
       return;
     }
-    throw new AuthenticationError(
-      "You need to be logged in to perform this action.",
-    );
+    throw new AuthenticationError("You need to be logged in to perform this action.");
   }
 }

@@ -3,10 +3,7 @@ import { FastifyBaseLogger } from "fastify";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
 import { z } from "zod";
-import {
-  InvalidArgumentError,
-  PermissionDeniedError,
-} from "~/domain/errors.js";
+import { InvalidArgumentError, PermissionDeniedError } from "~/domain/errors.js";
 import { User } from "~/domain/users.js";
 import { createUserSchema } from "./validation.js";
 
@@ -50,10 +47,7 @@ export class UserService {
     }>,
   ): Promise<User> {
     const { isSuperUser } = await this.permissionService.isSuperUser(callerId);
-    if (isSuperUser !== true)
-      throw new PermissionDeniedError(
-        "You do not have permission to update this user",
-      );
+    if (isSuperUser !== true) throw new PermissionDeniedError("You do not have permission to update this user");
 
     this.log?.info({ callerId, userToUpdateId }, "super update user");
     const schema = z.object({
@@ -93,10 +87,7 @@ export class UserService {
     });
     const validatedData = schema.parse(data);
 
-    const user = await this.usersRepository.update(
-      userToUpdateId,
-      validatedData,
-    );
+    const user = await this.usersRepository.update(userToUpdateId, validatedData);
     return this.toDomainUser(user);
   }
 
@@ -159,22 +150,14 @@ export class UserService {
     try {
       const user = await this.usersRepository.get(id);
 
-      const {
-        firstName,
-        lastName,
-        email,
-        phoneNumber,
-        allergies,
-        graduationYear,
-      } = schema.parse(data);
+      const { firstName, lastName, email, phoneNumber, allergies, graduationYear } = schema.parse(data);
       let firstLogin: boolean | undefined;
       let newGraduationYear: number | undefined = graduationYear;
       let graduationYearUpdatedAt: Date | undefined = undefined;
 
       if (user.firstLogin) firstLogin = false;
       else if (!this.canUpdateYear(user)) newGraduationYear = undefined;
-      else if (graduationYear && graduationYear !== user.graduationYear)
-        graduationYearUpdatedAt = new Date();
+      else if (graduationYear && graduationYear !== user.graduationYear) graduationYearUpdatedAt = new Date();
 
       const updatedUser = await this.usersRepository.update(id, {
         firstName,
@@ -189,8 +172,7 @@ export class UserService {
 
       return this.toDomainUser(updatedUser);
     } catch (err) {
-      if (err instanceof z.ZodError)
-        throw new InvalidArgumentError(err.message);
+      if (err instanceof z.ZodError) throw new InvalidArgumentError(err.message);
       throw err;
     }
   }
@@ -198,8 +180,7 @@ export class UserService {
   canUpdateYear(user: Pick<User, "graduationYearUpdatedAt">): boolean {
     return (
       user.graduationYearUpdatedAt === null ||
-      DateTime.fromJSDate(user.graduationYearUpdatedAt).plus({ years: 1 }) <
-        DateTime.now()
+      DateTime.fromJSDate(user.graduationYearUpdatedAt).plus({ years: 1 }) < DateTime.now()
     );
   }
 

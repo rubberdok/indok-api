@@ -9,9 +9,7 @@ describe("Cabin mutations", () => {
   describe("newBooking", () => {
     it("should create a new booking", async () => {
       const { client, cabinService } = createMockApolloServer();
-      cabinService.newBooking.mockResolvedValue(
-        mock<Booking>({ id: faker.string.uuid() }),
-      );
+      cabinService.newBooking.mockResolvedValue(mock<Booking>({ id: faker.string.uuid() }));
 
       const data: NewBookingMutationVariables["data"] = {
         cabinId: faker.string.uuid(),

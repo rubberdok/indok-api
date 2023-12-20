@@ -10,9 +10,7 @@ const toTitleCase = (str: string) => {
 };
 
 const fakeName = () => {
-  return toTitleCase(
-    `${faker.word.adjective()} ${faker.word.verb()} ${faker.word.adverb()}`,
-  );
+  return toTitleCase(`${faker.word.adjective()} ${faker.word.verb()} ${faker.word.adverb()}`);
 };
 
 const eventCreateInput: Prisma.EventCreateInput[] = [
@@ -169,10 +167,7 @@ export const load = async (db: PrismaClient) => {
 };
 
 function fakeMarkdown() {
-  const fakeHeader = () =>
-    `${"#".repeat(faker.number.int({ min: 1, max: 6 }))} ${toTitleCase(
-      faker.lorem.words(3),
-    )}`;
+  const fakeHeader = () => `${"#".repeat(faker.number.int({ min: 1, max: 6 }))} ${toTitleCase(faker.lorem.words(3))}`;
   const fakeParagraph = () => faker.lorem.paragraph().split("\n").join("\n\n");
   const fakeList = () => {
     const listItems = faker.lorem.paragraphs(3).split("\n");

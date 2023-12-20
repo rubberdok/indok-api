@@ -1,9 +1,6 @@
 import { Listing } from "@prisma/client";
 import { ZodError, z } from "zod";
-import {
-  InvalidArgumentError,
-  PermissionDeniedError,
-} from "~/domain/errors.js";
+import { InvalidArgumentError, PermissionDeniedError } from "~/domain/errors.js";
 import { Role } from "~/domain/organizations.js";
 
 export interface ListingRepository {
@@ -167,10 +164,7 @@ export class ListingService {
     return this.listingRepository.delete(id);
   }
 
-  private async assertHasPermission(
-    userId: string,
-    organizationId: string,
-  ): Promise<void> {
+  private async assertHasPermission(userId: string, organizationId: string): Promise<void> {
     const isMember = await this.permissionService.hasRole({
       organizationId,
       userId,
@@ -178,9 +172,7 @@ export class ListingService {
     });
 
     if (isMember === false) {
-      throw new PermissionDeniedError(
-        "You do not have permission to update this listing.",
-      );
+      throw new PermissionDeniedError("You do not have permission to update this listing.");
     }
   }
 }

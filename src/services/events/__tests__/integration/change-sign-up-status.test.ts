@@ -138,9 +138,7 @@ describe("EventService", () => {
        * 3. version should be incremented
        * 4. remainingCapacity for evnet and slot should match the expected remainingCapacity
        */
-      expect(actual.participationStatus).toBe(
-        expected.participationStatus ?? ParticipationStatus.RETRACTED,
-      );
+      expect(actual.participationStatus).toBe(expected.participationStatus ?? ParticipationStatus.RETRACTED);
       expect(actual.slotId).toBe(expected.slotId);
       expect(actual.version).toBe(expected.version ?? signUp.version + 1);
 
@@ -284,9 +282,7 @@ describe("EventService", () => {
        * 3. version should be incremented
        * 4. remainingCapacity for evnet and slot should match the expected remainingCapacity
        */
-      expect(actual.participationStatus).toBe(
-        expected.participationStatus ?? ParticipationStatus.REMOVED,
-      );
+      expect(actual.participationStatus).toBe(expected.participationStatus ?? ParticipationStatus.REMOVED);
       expect(actual.slotId).toBe(expected.slotId);
       expect(actual.version).toBe(expected.version ?? signUp.version + 1);
 

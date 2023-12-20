@@ -1,10 +1,7 @@
 import { FastifyHelmetOptions } from "@fastify/helmet/types";
 import { env } from "~/config.js";
 
-export const helmetOptionsByEnv: Record<
-  typeof env.NODE_ENV,
-  FastifyHelmetOptions
-> = {
+export const helmetOptionsByEnv: Record<typeof env.NODE_ENV, FastifyHelmetOptions> = {
   development: {
     contentSecurityPolicy: false,
   },

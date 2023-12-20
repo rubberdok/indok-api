@@ -6,9 +6,7 @@ import { prismaKnownErrorCodes } from "~/lib/prisma.js";
 export class MemberRepository {
   constructor(private db: PrismaClient) {}
 
-  async findMany(where?: { organizationId?: string; userId?: string }): Promise<
-    Member[]
-  > {
+  async findMany(where?: { organizationId?: string; userId?: string }): Promise<Member[]> {
     return this.db.member.findMany({
       where,
     });
@@ -39,9 +37,7 @@ export class MemberRepository {
    * @param data.organizationId - The ID of the organization to fetch the membership for
    * @returns Membership
    */
-  async get(
-    data: { id: string } | { userId: string; organizationId: string },
-  ): Promise<Member> {
+  async get(data: { id: string } | { userId: string; organizationId: string }): Promise<Member> {
     try {
       let promise: Promise<Member>;
       if ("id" in data) {
@@ -59,8 +55,7 @@ export class MemberRepository {
       return await promise;
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError) {
-        if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND)
-          throw new NotFoundError("The membership does not exist.");
+        if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) throw new NotFoundError("The membership does not exist.");
       }
       throw err;
     }
@@ -82,9 +77,7 @@ export class MemberRepository {
     return this.db.member.create({ data }).catch((err) => {
       if (err instanceof PrismaClientKnownRequestError) {
         if (err.code === "P2002") {
-          throw new InvalidArgumentError(
-            "The user is already a member of the organization.",
-          );
+          throw new InvalidArgumentError("The user is already a member of the organization.");
         }
       }
       throw err;
@@ -102,9 +95,7 @@ export class MemberRepository {
    * @param data.organizationId - The ID of the organization to remove the user from
    * @returns The removed membership
    */
-  async remove(
-    data: { id: string } | { userId: string; organizationId: string },
-  ): Promise<Member> {
+  async remove(data: { id: string } | { userId: string; organizationId: string }): Promise<Member> {
     if ("id" in data) {
       return this.db.member.delete({ where: { id: data.id } });
     }

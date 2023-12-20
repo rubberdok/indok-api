@@ -4,10 +4,7 @@ import { merge } from "lodash-es";
 import { DateTime } from "luxon";
 import prisma from "~/lib/prisma.js";
 import { EventService } from "../../service.js";
-import {
-  makeDependencies,
-  makeUserWithOrganizationMembership,
-} from "./dependencies-factory.js";
+import { makeDependencies, makeUserWithOrganizationMembership } from "./dependencies-factory.js";
 
 describe("EventService", () => {
   let eventService: EventService;
@@ -106,9 +103,7 @@ describe("EventService", () => {
       const updatedEvent = await prisma.event.findUnique({
         where: { id: event.id },
       });
-      expect(updatedEvent?.remainingCapacity).toBe(
-        (event.signUpDetails?.remainingCapacity ?? NaN) - 1,
-      );
+      expect(updatedEvent?.remainingCapacity).toBe((event.signUpDetails?.remainingCapacity ?? NaN) - 1);
     });
   });
 });

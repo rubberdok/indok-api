@@ -19,9 +19,7 @@ export const EventsResponse: EventsResponseResolvers = {
     const endOfNextWeek = DateTime.now().plus({ weeks: 1 }).endOf("week");
     const predicate = (startAt: Date) => {
       const startAtDateTime = DateTime.fromJSDate(startAt);
-      return (
-        startOfNextWeek <= startAtDateTime && startAtDateTime <= endOfNextWeek
-      );
+      return startOfNextWeek <= startAtDateTime && startAtDateTime <= endOfNextWeek;
     };
     return events.filter((event) => predicate(event.startAt));
   },

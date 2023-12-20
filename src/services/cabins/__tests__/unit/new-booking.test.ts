@@ -5,13 +5,7 @@ import { merge } from "lodash-es";
 import { DateTime } from "luxon";
 import { MessageSendingResponse } from "postmark/dist/client/models/index.js";
 import { InvalidArgumentError } from "~/domain/errors.js";
-import {
-  BookingData,
-  CabinRepository,
-  CabinService,
-  IMailService,
-  PermissionService,
-} from "../../service.js";
+import { BookingData, CabinRepository, CabinService, IMailService, PermissionService } from "../../service.js";
 
 describe("CabinService", () => {
   let cabinService: CabinService;
@@ -21,11 +15,7 @@ describe("CabinService", () => {
   beforeAll(() => {
     cabinRepository = mockDeep<CabinRepository>();
     mailService = mockDeep<IMailService>();
-    cabinService = new CabinService(
-      cabinRepository,
-      mailService,
-      mockDeep<PermissionService>(),
-    );
+    cabinService = new CabinService(cabinRepository, mailService, mockDeep<PermissionService>());
   });
 
   describe("newBooking", () => {
@@ -52,15 +42,11 @@ describe("CabinService", () => {
          *
          * Mock the cabinRepository.getBookingSemesters method to return the bookingSemesters from the test case.
          */
-        cabinRepository.getBookingSemester.mockImplementation(
-          async (semester: Semester) => {
-            if (semester === Semester.FALL)
-              return arrange.bookingSemesters.fall;
-            if (semester === Semester.SPRING)
-              return arrange.bookingSemesters.spring;
-            throw new Error(`Unexpected semester: ${semester}`);
-          },
-        );
+        cabinRepository.getBookingSemester.mockImplementation(async (semester: Semester) => {
+          if (semester === Semester.FALL) return arrange.bookingSemesters.fall;
+          if (semester === Semester.SPRING) return arrange.bookingSemesters.spring;
+          throw new Error(`Unexpected semester: ${semester}`);
+        });
 
         /**
          * Act
@@ -235,14 +221,8 @@ describe("CabinService", () => {
             },
             act: {
               input: makeCabinInput({
-                startDate: DateTime.now()
-                  .plus({ days: 2 })
-                  .startOf("day")
-                  .toJSDate(),
-                endDate: DateTime.now()
-                  .plus({ days: 2 })
-                  .startOf("day")
-                  .toJSDate(),
+                startDate: DateTime.now().plus({ days: 2 }).startOf("day").toJSDate(),
+                endDate: DateTime.now().plus({ days: 2 }).startOf("day").toJSDate(),
               }),
             },
             expected: {
@@ -302,8 +282,7 @@ describe("CabinService", () => {
               }),
             },
             expected: {
-              error:
-                "booking is not in an active booking semester, and is not a valid cross-semester booking",
+              error: "booking is not in an active booking semester, and is not a valid cross-semester booking",
             },
           },
           {
@@ -322,8 +301,7 @@ describe("CabinService", () => {
               }),
             },
             expected: {
-              error:
-                "booking is not in an active booking semester, and is not a valid cross-semester booking",
+              error: "booking is not in an active booking semester, and is not a valid cross-semester booking",
             },
           },
           {
@@ -344,8 +322,7 @@ describe("CabinService", () => {
               }),
             },
             expected: {
-              error:
-                "booking is not in an active booking semester, and is not a valid cross-semester booking",
+              error: "booking is not in an active booking semester, and is not a valid cross-semester booking",
             },
           },
         ];
@@ -360,16 +337,10 @@ describe("CabinService", () => {
             arrange: {
               bookingSemesters: {
                 fall: makeBookingSemester({
-                  endAt: DateTime.now()
-                    .plus({ days: 1 })
-                    .endOf("day")
-                    .toJSDate(),
+                  endAt: DateTime.now().plus({ days: 1 }).endOf("day").toJSDate(),
                 }),
                 spring: makeBookingSemester({
-                  startAt: DateTime.now()
-                    .plus({ days: 3 })
-                    .startOf("day")
-                    .toJSDate(),
+                  startAt: DateTime.now().plus({ days: 3 }).startOf("day").toJSDate(),
                 }),
               },
             },
@@ -380,8 +351,7 @@ describe("CabinService", () => {
               }),
             },
             expected: {
-              error:
-                "booking is not in an active booking semester, and is not a valid cross-semester booking",
+              error: "booking is not in an active booking semester, and is not a valid cross-semester booking",
             },
           },
           {
@@ -389,16 +359,10 @@ describe("CabinService", () => {
             arrange: {
               bookingSemesters: {
                 fall: makeBookingSemester({
-                  endAt: DateTime.now()
-                    .plus({ days: 1 })
-                    .endOf("day")
-                    .toJSDate(),
+                  endAt: DateTime.now().plus({ days: 1 }).endOf("day").toJSDate(),
                 }),
                 spring: makeBookingSemester({
-                  startAt: DateTime.now()
-                    .plus({ days: 2 })
-                    .startOf("day")
-                    .toJSDate(),
+                  startAt: DateTime.now().plus({ days: 2 }).startOf("day").toJSDate(),
                   bookingsEnabled: false,
                 }),
               },
@@ -410,8 +374,7 @@ describe("CabinService", () => {
               }),
             },
             expected: {
-              error:
-                "booking is not in an active booking semester, and is not a valid cross-semester booking",
+              error: "booking is not in an active booking semester, and is not a valid cross-semester booking",
             },
           },
           {
@@ -419,17 +382,11 @@ describe("CabinService", () => {
             arrange: {
               bookingSemesters: {
                 fall: makeBookingSemester({
-                  endAt: DateTime.now()
-                    .plus({ days: 1 })
-                    .endOf("day")
-                    .toJSDate(),
+                  endAt: DateTime.now().plus({ days: 1 }).endOf("day").toJSDate(),
                   bookingsEnabled: false,
                 }),
                 spring: makeBookingSemester({
-                  startAt: DateTime.now()
-                    .plus({ days: 2 })
-                    .startOf("day")
-                    .toJSDate(),
+                  startAt: DateTime.now().plus({ days: 2 }).startOf("day").toJSDate(),
                 }),
               },
             },
@@ -440,8 +397,7 @@ describe("CabinService", () => {
               }),
             },
             expected: {
-              error:
-                "booking is not in an active booking semester, and is not a valid cross-semester booking",
+              error: "booking is not in an active booking semester, and is not a valid cross-semester booking",
             },
           },
         ];
@@ -456,16 +412,10 @@ describe("CabinService", () => {
             arrange: {
               bookingSemesters: {
                 fall: makeBookingSemester({
-                  startAt: DateTime.now()
-                    .plus({ days: 3 })
-                    .startOf("day")
-                    .toJSDate(),
+                  startAt: DateTime.now().plus({ days: 3 }).startOf("day").toJSDate(),
                 }),
                 spring: makeBookingSemester({
-                  endAt: DateTime.now()
-                    .plus({ days: 1 })
-                    .endOf("day")
-                    .toJSDate(),
+                  endAt: DateTime.now().plus({ days: 1 }).endOf("day").toJSDate(),
                 }),
               },
             },
@@ -476,8 +426,7 @@ describe("CabinService", () => {
               }),
             },
             expected: {
-              error:
-                "booking is not in an active booking semester, and is not a valid cross-semester booking",
+              error: "booking is not in an active booking semester, and is not a valid cross-semester booking",
             },
           },
           {
@@ -485,17 +434,11 @@ describe("CabinService", () => {
             arrange: {
               bookingSemesters: {
                 fall: makeBookingSemester({
-                  startAt: DateTime.now()
-                    .plus({ days: 2 })
-                    .startOf("day")
-                    .toJSDate(),
+                  startAt: DateTime.now().plus({ days: 2 }).startOf("day").toJSDate(),
                   bookingsEnabled: false,
                 }),
                 spring: makeBookingSemester({
-                  endAt: DateTime.now()
-                    .plus({ days: 1 })
-                    .endOf("day")
-                    .toJSDate(),
+                  endAt: DateTime.now().plus({ days: 1 }).endOf("day").toJSDate(),
                 }),
               },
             },
@@ -506,8 +449,7 @@ describe("CabinService", () => {
               }),
             },
             expected: {
-              error:
-                "booking is not in an active booking semester, and is not a valid cross-semester booking",
+              error: "booking is not in an active booking semester, and is not a valid cross-semester booking",
             },
           },
           {
@@ -515,16 +457,10 @@ describe("CabinService", () => {
             arrange: {
               bookingSemesters: {
                 fall: makeBookingSemester({
-                  startAt: DateTime.now()
-                    .plus({ days: 2 })
-                    .startOf("day")
-                    .toJSDate(),
+                  startAt: DateTime.now().plus({ days: 2 }).startOf("day").toJSDate(),
                 }),
                 spring: makeBookingSemester({
-                  endAt: DateTime.now()
-                    .plus({ days: 1 })
-                    .endOf("day")
-                    .toJSDate(),
+                  endAt: DateTime.now().plus({ days: 1 }).endOf("day").toJSDate(),
                   bookingsEnabled: false,
                 }),
               },
@@ -536,8 +472,7 @@ describe("CabinService", () => {
               }),
             },
             expected: {
-              error:
-                "booking is not in an active booking semester, and is not a valid cross-semester booking",
+              error: "booking is not in an active booking semester, and is not a valid cross-semester booking",
             },
           },
         ];
@@ -568,19 +503,13 @@ describe("CabinService", () => {
          * Mock the cabinRepository.createBooking method to return a booking.
          * Mock the mailService.sendBookingConfirmation method to return a promise.
          */
-        cabinRepository.getBookingSemester.mockImplementation(
-          async (semester: Semester) => {
-            if (semester === Semester.FALL)
-              return arrange.bookingSemesters.fall;
-            if (semester === Semester.SPRING)
-              return arrange.bookingSemesters.spring;
-            throw new Error(`Unexpected semester: ${semester}`);
-          },
-        );
+        cabinRepository.getBookingSemester.mockImplementation(async (semester: Semester) => {
+          if (semester === Semester.FALL) return arrange.bookingSemesters.fall;
+          if (semester === Semester.SPRING) return arrange.bookingSemesters.spring;
+          throw new Error(`Unexpected semester: ${semester}`);
+        });
         cabinRepository.createBooking.mockResolvedValueOnce(mock<Booking>());
-        mailService.send.mockImplementationOnce(() =>
-          Promise.resolve(mock<MessageSendingResponse>()),
-        );
+        mailService.send.mockImplementationOnce(() => Promise.resolve(mock<MessageSendingResponse>()));
 
         /**
          * Act
@@ -607,20 +536,14 @@ describe("CabinService", () => {
             arrange: {
               bookingSemesters: {
                 fall: makeBookingSemester({
-                  startAt: DateTime.now()
-                    .plus({ days: 2 })
-                    .startOf("day")
-                    .toJSDate(),
+                  startAt: DateTime.now().plus({ days: 2 }).startOf("day").toJSDate(),
                 }),
                 spring: null,
               },
             },
             act: {
               input: makeCabinInput({
-                startDate: DateTime.now()
-                  .plus({ days: 2 })
-                  .startOf("day")
-                  .toJSDate(),
+                startDate: DateTime.now().plus({ days: 2 }).startOf("day").toJSDate(),
               }),
             },
           },
@@ -629,24 +552,15 @@ describe("CabinService", () => {
             arrange: {
               bookingSemesters: {
                 fall: makeBookingSemester({
-                  endAt: DateTime.now()
-                    .plus({ days: 2 })
-                    .startOf("day")
-                    .toJSDate(),
+                  endAt: DateTime.now().plus({ days: 2 }).startOf("day").toJSDate(),
                 }),
                 spring: null,
               },
             },
             act: {
               input: makeCabinInput({
-                startDate: DateTime.now()
-                  .plus({ days: 1 })
-                  .startOf("day")
-                  .toJSDate(),
-                endDate: DateTime.now()
-                  .plus({ days: 2 })
-                  .startOf("day")
-                  .toJSDate(),
+                startDate: DateTime.now().plus({ days: 1 }).startOf("day").toJSDate(),
+                endDate: DateTime.now().plus({ days: 2 }).startOf("day").toJSDate(),
               }),
             },
           },
@@ -660,14 +574,8 @@ describe("CabinService", () => {
             },
             act: {
               input: makeCabinInput({
-                startDate: DateTime.now()
-                  .plus({ days: 1 })
-                  .startOf("day")
-                  .toJSDate(),
-                endDate: DateTime.now()
-                  .plus({ days: 2 })
-                  .startOf("day")
-                  .toJSDate(),
+                startDate: DateTime.now().plus({ days: 1 }).startOf("day").toJSDate(),
+                endDate: DateTime.now().plus({ days: 2 }).startOf("day").toJSDate(),
               }),
             },
           },
@@ -683,29 +591,17 @@ describe("CabinService", () => {
             arrange: {
               bookingSemesters: {
                 fall: makeBookingSemester({
-                  endAt: DateTime.now()
-                    .plus({ days: 2 })
-                    .startOf("day")
-                    .toJSDate(),
+                  endAt: DateTime.now().plus({ days: 2 }).startOf("day").toJSDate(),
                 }),
                 spring: makeBookingSemester({
-                  startAt: DateTime.now()
-                    .plus({ days: 3 })
-                    .endOf("day")
-                    .toJSDate(),
+                  startAt: DateTime.now().plus({ days: 3 }).endOf("day").toJSDate(),
                 }),
               },
             },
             act: {
               input: makeCabinInput({
-                startDate: DateTime.now()
-                  .plus({ days: 1 })
-                  .startOf("day")
-                  .toJSDate(),
-                endDate: DateTime.now()
-                  .plus({ days: 4 })
-                  .startOf("day")
-                  .toJSDate(),
+                startDate: DateTime.now().plus({ days: 1 }).startOf("day").toJSDate(),
+                endDate: DateTime.now().plus({ days: 4 }).startOf("day").toJSDate(),
               }),
             },
           },
@@ -714,16 +610,10 @@ describe("CabinService", () => {
             arrange: {
               bookingSemesters: {
                 fall: makeBookingSemester({
-                  endAt: DateTime.now()
-                    .plus({ days: 10 })
-                    .startOf("day")
-                    .toJSDate(),
+                  endAt: DateTime.now().plus({ days: 10 }).startOf("day").toJSDate(),
                 }),
                 spring: makeBookingSemester({
-                  startAt: DateTime.now()
-                    .plus({ days: 0 })
-                    .startOf("day")
-                    .toJSDate(),
+                  startAt: DateTime.now().plus({ days: 0 }).startOf("day").toJSDate(),
                 }),
               },
             },
@@ -746,29 +636,17 @@ describe("CabinService", () => {
             arrange: {
               bookingSemesters: {
                 fall: makeBookingSemester({
-                  startAt: DateTime.now()
-                    .plus({ days: 3 })
-                    .endOf("day")
-                    .toJSDate(),
+                  startAt: DateTime.now().plus({ days: 3 }).endOf("day").toJSDate(),
                 }),
                 spring: makeBookingSemester({
-                  endAt: DateTime.now()
-                    .plus({ days: 2 })
-                    .startOf("day")
-                    .toJSDate(),
+                  endAt: DateTime.now().plus({ days: 2 }).startOf("day").toJSDate(),
                 }),
               },
             },
             act: {
               input: makeCabinInput({
-                startDate: DateTime.now()
-                  .plus({ days: 1 })
-                  .startOf("day")
-                  .toJSDate(),
-                endDate: DateTime.now()
-                  .plus({ days: 4 })
-                  .startOf("day")
-                  .toJSDate(),
+                startDate: DateTime.now().plus({ days: 1 }).startOf("day").toJSDate(),
+                endDate: DateTime.now().plus({ days: 4 }).startOf("day").toJSDate(),
               }),
             },
           },
@@ -777,16 +655,10 @@ describe("CabinService", () => {
             arrange: {
               bookingSemesters: {
                 fall: makeBookingSemester({
-                  startAt: DateTime.now()
-                    .plus({ days: 0 })
-                    .startOf("day")
-                    .toJSDate(),
+                  startAt: DateTime.now().plus({ days: 0 }).startOf("day").toJSDate(),
                 }),
                 spring: makeBookingSemester({
-                  endAt: DateTime.now()
-                    .plus({ days: 10 })
-                    .startOf("day")
-                    .toJSDate(),
+                  endAt: DateTime.now().plus({ days: 10 }).startOf("day").toJSDate(),
                 }),
               },
             },
@@ -822,9 +694,7 @@ function makeCabinInput(data: Partial<BookingData> = {}): BookingData {
   );
 }
 
-function makeBookingSemester(
-  data: Partial<BookingSemester> = {},
-): BookingSemester {
+function makeBookingSemester(data: Partial<BookingSemester> = {}): BookingSemester {
   return merge<BookingSemester, Partial<BookingSemester>>(
     {
       id: faker.string.uuid(),

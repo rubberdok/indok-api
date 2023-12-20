@@ -11,9 +11,7 @@ describe("UserRepository", () => {
   });
   describe("#get", () => {
     it("should raise NotFoundError if user does not exist", async () => {
-      await expect(userRepository.get(faker.string.uuid())).rejects.toThrow(
-        NotFoundError,
-      );
+      await expect(userRepository.get(faker.string.uuid())).rejects.toThrow(NotFoundError);
     });
 
     it("should return user if it exists", async () => {

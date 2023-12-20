@@ -286,60 +286,52 @@ describe("EventService", () => {
       },
     ];
 
-    test.each(testCases)(
-      "should return $expected $name",
-      async ({ arrange, expected }) => {
-        /**
-         * Arrange
-         *
-         * Create a user to create the event
-         * Create an event with the capacity specified in the test case
-         * Create a slot with the capacity specified in the test case
-         * Create a sign up for the user and the event with the participation status specified in the test case
-         * if the participation status is CONFIRMED, create a sign up for the user and the slot
-         */
-        const { user, organization } = await makeUserWithOrganizationMembership(
-          arrange.user ?? {},
-        );
-        const event = await eventService.create(
-          user.id,
-          organization.id,
-          {
-            name: faker.word.adjective(),
-            startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-            endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+    test.each(testCases)("should return $expected $name", async ({ arrange, expected }) => {
+      /**
+       * Arrange
+       *
+       * Create a user to create the event
+       * Create an event with the capacity specified in the test case
+       * Create a slot with the capacity specified in the test case
+       * Create a sign up for the user and the event with the participation status specified in the test case
+       * if the participation status is CONFIRMED, create a sign up for the user and the slot
+       */
+      const { user, organization } = await makeUserWithOrganizationMembership(arrange.user ?? {});
+      const event = await eventService.create(
+        user.id,
+        organization.id,
+        {
+          name: faker.word.adjective(),
+          startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+          endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+        },
+        arrange.signUpDetails,
+      );
+      if (arrange.signUp) {
+        await prisma.eventSignUp.create({
+          data: {
+            event: { connect: { id: event.id } },
+            user: { connect: { id: user.id } },
+            participationStatus: arrange.signUp.participationStatus,
+            active: arrange.signUp.active,
           },
-          arrange.signUpDetails,
-        );
-        if (arrange.signUp) {
-          await prisma.eventSignUp.create({
-            data: {
-              event: { connect: { id: event.id } },
-              user: { connect: { id: user.id } },
-              participationStatus: arrange.signUp.participationStatus,
-              active: arrange.signUp.active,
-            },
-          });
-        }
+        });
+      }
 
-        /**
-         * Act
-         *
-         * Call the canSignUpForEvent function with the user and the event
-         */
-        const actual = await eventService.getSignUpAvailability(
-          arrange.user && user.id,
-          event.id,
-        );
+      /**
+       * Act
+       *
+       * Call the canSignUpForEvent function with the user and the event
+       */
+      const actual = await eventService.getSignUpAvailability(arrange.user && user.id, event.id);
 
-        /**
-         * Assert
-         *
-         * Assert that the result is the expected result
-         */
-        expect(actual).toBe(expected);
-      },
-    );
+      /**
+       * Assert
+       *
+       * Assert that the result is the expected result
+       */
+      expect(actual).toBe(expected);
+    });
 
     it("should return CLOSED if sign ups have ended", async () => {
       /**
@@ -359,9 +351,7 @@ describe("EventService", () => {
           capacity: 1,
           remainingCapacity: 1,
           signUpsEnabled: true,
-          signUpsStartAt: DateTime.now()
-            .minus({ days: 1, hours: 2 })
-            .toJSDate(),
+          signUpsStartAt: DateTime.now().minus({ days: 1, hours: 2 }).toJSDate(),
           signUpsEndAt: DateTime.now().minus({ days: 1 }).toJSDate(),
           slots: {
             create: {
@@ -377,10 +367,7 @@ describe("EventService", () => {
        *
        * Call the canSignUpForEvent function with the user and the event
        */
-      const actual = await eventService.getSignUpAvailability(
-        user.id,
-        event.id,
-      );
+      const actual = await eventService.getSignUpAvailability(user.id, event.id);
 
       /**
        * Assert

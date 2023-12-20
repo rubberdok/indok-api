@@ -13,8 +13,7 @@ describe("Cabin mutations", () => {
        *
        * Mock the cabinService and create a context with an authenticated user.
        */
-      const { client, cabinService, createMockContext } =
-        createMockApolloServer();
+      const { client, cabinService, createMockContext } = createMockApolloServer();
       cabinService.updateBookingSemester.mockResolvedValue(
         mock<BookingSemester>({
           id: faker.string.uuid(),
@@ -56,15 +55,12 @@ describe("Cabin mutations", () => {
        * Verify that the cabinService was called with the correct arguments, and no errors were raised.
        */
       expect(errors).toBeUndefined();
-      expect(cabinService.updateBookingSemester).toHaveBeenCalledWith(
-        authenticatedContext.req.session.userId,
-        {
-          semester: data.semester,
-          startAt: data.startAt,
-          endAt: data.endAt,
-          bookingsEnabled: data.bookingsEnabled,
-        },
-      );
+      expect(cabinService.updateBookingSemester).toHaveBeenCalledWith(authenticatedContext.req.session.userId, {
+        semester: data.semester,
+        startAt: data.startAt,
+        endAt: data.endAt,
+        bookingsEnabled: data.bookingsEnabled,
+      });
     });
   });
 });

@@ -8,17 +8,14 @@ import { graphql } from "~/graphql/test-clients/unit/gql.js";
 describe("Event queries", () => {
   describe("event", () => {
     it("should return an event", async () => {
-      const { client, eventService, organizationService } =
-        createMockApolloServer();
+      const { client, eventService, organizationService } = createMockApolloServer();
       eventService.get.mockResolvedValue(
         mock<Event>({
           id: faker.string.uuid(),
           organizationId: faker.string.uuid(),
         }),
       );
-      organizationService.get.mockResolvedValue(
-        mock<Organization>({ id: faker.string.uuid() }),
-      );
+      organizationService.get.mockResolvedValue(mock<Organization>({ id: faker.string.uuid() }));
 
       const { errors } = await client.query({
         query: graphql(`
@@ -45,8 +42,7 @@ describe("Event queries", () => {
 
     describe("canSignUp", () => {
       it("should return true if the user is authenticated and can sign up for the event", async () => {
-        const { client, eventService, createMockContext } =
-          createMockApolloServer();
+        const { client, eventService, createMockContext } = createMockApolloServer();
         const eventId = faker.string.uuid();
         const userId = faker.string.uuid();
         eventService.get.mockResolvedValue(mock<Event>({ id: eventId }));
@@ -73,18 +69,13 @@ describe("Event queries", () => {
         );
 
         expect(errors).toBeUndefined();
-        expect(eventService.canSignUpForEvent).toHaveBeenCalledWith(
-          userId,
-          eventId,
-        );
+        expect(eventService.canSignUpForEvent).toHaveBeenCalledWith(userId, eventId);
         expect(data?.event.event.canSignUp).toBe(true);
       });
 
       it("should return false if the user is not authenticated", async () => {
         const { client, eventService } = createMockApolloServer();
-        eventService.get.mockResolvedValue(
-          mock<Event>({ id: faker.string.uuid() }),
-        );
+        eventService.get.mockResolvedValue(mock<Event>({ id: faker.string.uuid() }));
 
         const { errors, data } = await client.query({
           query: graphql(`
@@ -107,9 +98,7 @@ describe("Event queries", () => {
 
       it("should return false if canSignUpForEvent returns false", async () => {
         const { client, eventService } = createMockApolloServer();
-        eventService.get.mockResolvedValue(
-          mock<Event>({ id: faker.string.uuid() }),
-        );
+        eventService.get.mockResolvedValue(mock<Event>({ id: faker.string.uuid() }));
         eventService.canSignUpForEvent.mockResolvedValue(false);
 
         const { errors, data } = await client.query({

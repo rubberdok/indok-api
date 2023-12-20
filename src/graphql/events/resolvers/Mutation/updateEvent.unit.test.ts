@@ -34,23 +34,16 @@ describe("Event mutations", () => {
       });
 
       expect(errors).toBeDefined();
-      expect(
-        errors?.every(
-          (e) => e.extensions?.code === errorCodes.ERR_PERMISSION_DENIED,
-        ),
-      ).toBe(true);
+      expect(errors?.every((e) => e.extensions?.code === errorCodes.ERR_PERMISSION_DENIED)).toBe(true);
     });
 
     it("should pass all arugments to update if authenticated", async () => {
-      const { client, createMockContext, eventService } =
-        createMockApolloServer();
+      const { client, createMockContext, eventService } = createMockApolloServer();
       const authenticatedContext = createMockContext({
         userId: faker.string.uuid(),
         authenticated: true,
       });
-      eventService.update.mockResolvedValueOnce(
-        mock<Event>({ id: faker.string.uuid() }),
-      );
+      eventService.update.mockResolvedValueOnce(mock<Event>({ id: faker.string.uuid() }));
       const eventId = faker.string.uuid();
 
       const { errors } = await client.mutate(
@@ -82,18 +75,14 @@ describe("Event mutations", () => {
       );
 
       expect(errors).toBeUndefined();
-      expect(eventService.update).toHaveBeenCalledWith(
-        authenticatedContext.req.session.userId,
-        eventId,
-        {
-          name: expect.any(String),
-          description: expect.any(String),
-          startAt: expect.any(Date),
-          endAt: expect.any(Date),
-          location: expect.any(String),
-          capacity: expect.any(Number),
-        },
-      );
+      expect(eventService.update).toHaveBeenCalledWith(authenticatedContext.req.session.userId, eventId, {
+        name: expect.any(String),
+        description: expect.any(String),
+        startAt: expect.any(Date),
+        endAt: expect.any(Date),
+        location: expect.any(String),
+        capacity: expect.any(Number),
+      });
     });
   });
 });

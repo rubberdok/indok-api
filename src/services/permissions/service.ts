@@ -121,8 +121,7 @@ export class PermissionService {
     if (!featurePermission) return true;
 
     const organization = await this.organizationRepository.get(organizationId);
-    const hasFeaturePermission =
-      organization.featurePermissions.includes(featurePermission);
+    const hasFeaturePermission = organization.featurePermissions.includes(featurePermission);
     return hasFeaturePermission;
   }
 

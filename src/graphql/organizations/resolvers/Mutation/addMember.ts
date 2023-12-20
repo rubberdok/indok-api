@@ -1,11 +1,7 @@
 import { Role } from "~/domain/organizations.js";
 import { assertIsAuthenticated } from "~/graphql/auth.js";
 import type { MutationResolvers } from "./../../../types.generated.js";
-export const addMember: NonNullable<MutationResolvers["addMember"]> = async (
-  _parent,
-  { data },
-  ctx,
-) => {
+export const addMember: NonNullable<MutationResolvers["addMember"]> = async (_parent, { data }, ctx) => {
   assertIsAuthenticated(ctx);
   const { userId } = ctx.req.session;
 

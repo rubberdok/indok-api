@@ -2,10 +2,7 @@ import { faker } from "@faker-js/faker";
 import { GraphQLError } from "graphql";
 import { DeepMockProxy, mockDeep, mockFn } from "jest-mock-extended";
 import { InternalServerError, errorCodes } from "~/domain/errors.js";
-import {
-  GraphQLTestClient,
-  newGraphQLTestClient,
-} from "~/graphql/test-clients/graphql-test-client.js";
+import { GraphQLTestClient, newGraphQLTestClient } from "~/graphql/test-clients/graphql-test-client.js";
 import { graphql } from "~/graphql/test-clients/integration/gql.js";
 import prisma from "~/lib/prisma.js";
 import { OrganizationService } from "~/services/organizations/service.js";
@@ -91,9 +88,7 @@ describe("GraphQL error handling", () => {
     });
     const mockSentryErrorHandler = mockFn();
     client.app.Sentry.captureException = mockSentryErrorHandler;
-    mockOrganizationService.findMany.mockRejectedValue(
-      new InternalServerError("Test Internal Server Error"),
-    );
+    mockOrganizationService.findMany.mockRejectedValue(new InternalServerError("Test Internal Server Error"));
 
     const { errors } = await client.mutate(
       {
@@ -112,14 +107,7 @@ describe("GraphQL error handling", () => {
 
     expect(mockOrganizationService.findMany).toHaveBeenCalled();
     expect(errors).toHaveLength(1);
-    expect(
-      errors?.some(
-        (error) =>
-          error.extensions.code === errorCodes.ERR_INTERNAL_SERVER_ERROR,
-      ),
-    ).toBe(true);
-    expect(mockSentryErrorHandler).toHaveBeenCalledWith(
-      new GraphQLError("Test Internal Server Error"),
-    );
+    expect(errors?.some((error) => error.extensions.code === errorCodes.ERR_INTERNAL_SERVER_ERROR)).toBe(true);
+    expect(mockSentryErrorHandler).toHaveBeenCalledWith(new GraphQLError("Test Internal Server Error"));
   });
 });

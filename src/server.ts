@@ -1,10 +1,7 @@
 import { ApolloServer } from "@apollo/server";
 import { ApolloServerPluginLandingPageDisabled } from "@apollo/server/plugin/disabled";
 import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
-import fastifyApollo, {
-  ApolloFastifyContextFunction,
-  fastifyApolloDrainPlugin,
-} from "@as-integrations/fastify";
+import fastifyApollo, { ApolloFastifyContextFunction, fastifyApolloDrainPlugin } from "@as-integrations/fastify";
 import fastifyCookie from "@fastify/cookie";
 import fastifyCors from "@fastify/cors";
 import fastifyHelmet from "@fastify/helmet";
@@ -75,12 +72,8 @@ interface Options {
  *
  * @returns The Fastify server instance
  */
-export async function initServer(
-  dependencies: ServerDependencies,
-  opts: Options,
-): Promise<FastifyInstance> {
-  const { apolloServerDependencies, authService, createRedisClient, app } =
-    dependencies;
+export async function initServer(dependencies: ServerDependencies, opts: Options): Promise<FastifyInstance> {
+  const { apolloServerDependencies, authService, createRedisClient, app } = dependencies;
 
   /**
    * Set up Sentry monitoring before anything else
@@ -166,9 +159,7 @@ export async function initServer(
     csrfPrevention: true,
     introspection: true,
     resolvers: resolvers,
-    formatError: getFormatErrorHandler(
-      app.log.child({ service: "apollo-server" }),
-    ),
+    formatError: getFormatErrorHandler(app.log.child({ service: "apollo-server" })),
     includeStacktraceInErrorResponses: env.NODE_ENV !== "production",
     plugins: [
       fastifyApolloDrainPlugin(app),
@@ -184,10 +175,7 @@ export async function initServer(
   });
 
   // Custom context function to inject dependencies into the Apollo Context
-  const contextFunction: ApolloFastifyContextFunction<ApolloContext> = async (
-    req,
-    res,
-  ) => {
+  const contextFunction: ApolloFastifyContextFunction<ApolloContext> = async (req, res) => {
     const { userId, authenticated } = req.session;
     let user: User | null = null;
     if (userId !== undefined && authenticated) {

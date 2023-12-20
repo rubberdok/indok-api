@@ -8,9 +8,7 @@ describe("Listing queries", () => {
   describe("listing", () => {
     it("should return an listing", async () => {
       const { client, listingService } = createMockApolloServer();
-      listingService.get.mockResolvedValue(
-        mock<Listing>({ id: faker.string.uuid() }),
-      );
+      listingService.get.mockResolvedValue(mock<Listing>({ id: faker.string.uuid() }));
 
       const { errors } = await client.query({
         query: graphql(`
@@ -32,17 +30,14 @@ describe("Listing queries", () => {
     });
 
     it("should resolve additional attributes", async () => {
-      const { client, listingService, organizationService } =
-        createMockApolloServer();
+      const { client, listingService, organizationService } = createMockApolloServer();
       listingService.get.mockResolvedValue(
         mock<Listing>({
           id: faker.string.uuid(),
           organizationId: faker.string.uuid(),
         }),
       );
-      organizationService.get.mockResolvedValue(
-        mock<Organization>({ id: faker.string.uuid() }),
-      );
+      organizationService.get.mockResolvedValue(mock<Organization>({ id: faker.string.uuid() }));
 
       const { errors, data } = await client.query({
         query: graphql(`

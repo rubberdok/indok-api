@@ -165,9 +165,7 @@ describe("Event Sign Up", () => {
        *
        * 1. User should be signed up for the event with status CONFIRMED
        */
-      expect(actual.participationStatus).toEqual(
-        ParticipationStatus.ON_WAITLIST,
-      );
+      expect(actual.participationStatus).toEqual(ParticipationStatus.ON_WAITLIST);
       expect(actual.userId).toEqual(user.id);
       expect(actual.eventId).toEqual(event.id);
       expect(actual.slotId).toBeNull();
@@ -203,8 +201,7 @@ describe("Event Sign Up", () => {
            * 3. Create a slot for the event with capacity.
            * 4. Create a user to sign up for the event.
            */
-          const { organization, user } =
-            await makeUserWithOrganizationMembership();
+          const { organization, user } = await makeUserWithOrganizationMembership();
           const event = await eventService.create(
             user.id,
             organization.id,
@@ -218,9 +215,7 @@ describe("Event Sign Up", () => {
               capacity: eventCapacity,
               signUpsEnabled: true,
               signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-              signUpsEndAt: DateTime.now()
-                .plus({ days: 1, hours: 2 })
-                .toJSDate(),
+              signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
               slots: [
                 {
                   capacity: slotCapacity,
@@ -241,9 +236,7 @@ describe("Event Sign Up", () => {
            *
            * 1. User should be signed up for the event with status CONFIRMED
            */
-          expect(actual.participationStatus).toEqual(
-            ParticipationStatus.ON_WAITLIST,
-          );
+          expect(actual.participationStatus).toEqual(ParticipationStatus.ON_WAITLIST);
           expect(actual.userId).toEqual(user.id);
           expect(actual.eventId).toEqual(event.id);
           expect(actual.slotId).toBeNull();
@@ -301,9 +294,7 @@ describe("Event Sign Up", () => {
        *
        * Sign up all users for the event.
        */
-      const promises = users.map((user) =>
-        eventService.signUp(user.id, event.id),
-      );
+      const promises = users.map((user) => eventService.signUp(user.id, event.id));
       const actual = await Promise.all(promises);
 
       /**
@@ -314,12 +305,7 @@ describe("Event Sign Up", () => {
        * The slot should have 0 remaining capacity left.
        */
       expect(actual.length).toEqual(concurrentUsers);
-      expect(
-        actual.every(
-          (signUp) =>
-            signUp.participationStatus === ParticipationStatus.CONFIRMED,
-        ),
-      ).toBe(true);
+      expect(actual.every((signUp) => signUp.participationStatus === ParticipationStatus.CONFIRMED)).toBe(true);
 
       const updatedEvent = await prisma.event.findUniqueOrThrow({
         where: { id: event.id },
@@ -381,9 +367,7 @@ describe("Event Sign Up", () => {
        *
        * Sign up all users for the event.
        */
-      const promises = users.map((user) =>
-        eventService.signUp(user.id, event.id),
-      );
+      const promises = users.map((user) => eventService.signUp(user.id, event.id));
       const actual = await Promise.all(promises);
 
       /**
@@ -394,18 +378,12 @@ describe("Event Sign Up", () => {
        * The slot should have 0 remaining capacity.
        */
       expect(actual.length).toEqual(concurrentUsers);
-      expect(
-        actual.filter(
-          (signUp) =>
-            signUp.participationStatus === ParticipationStatus.CONFIRMED,
-        ).length,
-      ).toEqual(capacity);
-      expect(
-        actual.filter(
-          (signUp) =>
-            signUp.participationStatus === ParticipationStatus.ON_WAITLIST,
-        ).length,
-      ).toEqual(concurrentUsers - capacity);
+      expect(actual.filter((signUp) => signUp.participationStatus === ParticipationStatus.CONFIRMED).length).toEqual(
+        capacity,
+      );
+      expect(actual.filter((signUp) => signUp.participationStatus === ParticipationStatus.ON_WAITLIST).length).toEqual(
+        concurrentUsers - capacity,
+      );
 
       const updatedEvent = await prisma.event.findUniqueOrThrow({
         where: { id: event.id },

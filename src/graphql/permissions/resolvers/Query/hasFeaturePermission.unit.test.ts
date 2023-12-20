@@ -26,16 +26,11 @@ describe("Permission queries", () => {
 
       expect(errors).toBeDefined();
       expect(errors).toHaveLength(1);
-      expect(
-        errors?.every(
-          (err) => err.extensions?.code === errorCodes.ERR_PERMISSION_DENIED,
-        ),
-      ).toBe(true);
+      expect(errors?.every((err) => err.extensions?.code === errorCodes.ERR_PERMISSION_DENIED)).toBe(true);
     });
 
     it("should call hasFeaturePermission with the correct parameters", async () => {
-      const { client, createMockContext, permissionService } =
-        createMockApolloServer();
+      const { client, createMockContext, permissionService } = createMockApolloServer();
       const authenticatedContext = createMockContext({
         user: {
           id: faker.string.uuid(),

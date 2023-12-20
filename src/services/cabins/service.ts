@@ -10,11 +10,7 @@ import { DateTime } from "luxon";
 import { MessageSendingResponse } from "postmark/dist/client/models/index.js";
 import { z } from "zod";
 import { BookingStatus } from "~/domain/cabins.js";
-import {
-  InvalidArgumentError,
-  NotFoundError,
-  PermissionDeniedError,
-} from "~/domain/errors.js";
+import { InvalidArgumentError, NotFoundError, PermissionDeniedError } from "~/domain/errors.js";
 import { EmailContent, TemplateAlias } from "~/lib/postmark.js";
 
 export interface BookingData {
@@ -27,10 +23,7 @@ export interface BookingData {
   cabinId: string;
 }
 
-type BookingContact = Pick<
-  PrismaBookingContact,
-  "email" | "name" | "phoneNumber" | "id"
->;
+type BookingContact = Pick<PrismaBookingContact, "email" | "name" | "phoneNumber" | "id">;
 
 export interface CabinRepository {
   getCabinById(id: string): Promise<Cabin>;
@@ -101,16 +94,10 @@ export class CabinService {
    * @param bookingSemester - The booking semester to check against
    * @returns true if the booking is in the given booking semester, and bookings are enabled, false otherwise
    */
-  private isInActiveBookingSemester(
-    data: { startDate: Date; endDate: Date },
-    bookingSemester: BookingSemester | null,
-  ) {
+  private isInActiveBookingSemester(data: { startDate: Date; endDate: Date }, bookingSemester: BookingSemester | null) {
     if (bookingSemester === null) return false;
     if (!bookingSemester.bookingsEnabled) return false;
-    return (
-      data.startDate >= bookingSemester.startAt &&
-      data.endDate <= bookingSemester.endAt
-    );
+    return data.startDate >= bookingSemester.startAt && data.endDate <= bookingSemester.endAt;
   }
 
   /**
@@ -144,11 +131,7 @@ export class CabinService {
       DateTime.fromJSDate(fall.startAt).startOf("day");
 
     // If none of the booking semesters overlap, there can be no valid cross-semester bookings.
-    if (
-      !endOfAutumnOverlapsWithStartOfSpring &&
-      !endOfSpringOverlapsWithStartOfAutumn
-    )
-      return false;
+    if (!endOfAutumnOverlapsWithStartOfSpring && !endOfSpringOverlapsWithStartOfAutumn) return false;
 
     const { startDate, endDate } = data;
 
@@ -158,19 +141,15 @@ export class CabinService {
      */
     const startsInAutumn = startDate >= fall.startAt && startDate <= fall.endAt;
     const endsInSpring = endDate >= spring.startAt && endDate <= spring.endAt;
-    if (startsInAutumn && endsInSpring && endOfAutumnOverlapsWithStartOfSpring)
-      return true;
+    if (startsInAutumn && endsInSpring && endOfAutumnOverlapsWithStartOfSpring) return true;
 
     /**
      * If the booking starts in spring and ends in fall, and the end of spring overlaps with the start of fall,
      * the booking is valid.
      */
-    const startsInSpring =
-      startDate >= spring.startAt && startDate <= spring.endAt;
+    const startsInSpring = startDate >= spring.startAt && startDate <= spring.endAt;
     const endsInAutumn = endDate >= fall.startAt && endDate <= fall.endAt;
-    return (
-      startsInSpring && endsInAutumn && endOfSpringOverlapsWithStartOfAutumn
-    );
+    return startsInSpring && endsInAutumn && endOfSpringOverlapsWithStartOfAutumn;
   }
 
   private validateBooking(
@@ -182,19 +161,14 @@ export class CabinService {
   ): BookingData {
     const { fall, spring } = bookingSemesters;
 
-    if (!fall?.bookingsEnabled && !spring?.bookingsEnabled)
-      throw new InvalidArgumentError("Bookings are not enabled.");
+    if (!fall?.bookingsEnabled && !spring?.bookingsEnabled) throw new InvalidArgumentError("Bookings are not enabled.");
 
     const bookingSchema = z
       .object({
         firstName: z.string().min(1, "first name must be at least 1 character"),
         lastName: z.string().min(1, "last name must be at least 1 character"),
-        startDate: z
-          .date()
-          .min(new Date(), { message: "start date must be in the future" }),
-        endDate: z
-          .date()
-          .min(new Date(), { message: "end date must be in the future" }),
+        startDate: z.date().min(new Date(), { message: "start date must be in the future" }),
+        endDate: z.date().min(new Date(), { message: "end date must be in the future" }),
         email: z.string().email({ message: "invalid email" }),
         phoneNumber: z.string().regex(/^(0047|\+47|47)?\d{8}$/, {
           message: "invalid phone number",
@@ -206,16 +180,10 @@ export class CabinService {
       })
       .refine(
         (obj) => {
-          const isValidAutumnBooking = this.isInActiveBookingSemester(
-            obj,
-            fall,
-          );
+          const isValidAutumnBooking = this.isInActiveBookingSemester(obj, fall);
           if (isValidAutumnBooking) return true;
 
-          const isValidSpringBooking = this.isInActiveBookingSemester(
-            obj,
-            spring,
-          );
+          const isValidSpringBooking = this.isInActiveBookingSemester(obj, spring);
           if (isValidSpringBooking) return true;
 
           const isValidCrossSemesterBooking = this.isCrossSemesterBooking(obj, {
@@ -225,8 +193,7 @@ export class CabinService {
           return isValidCrossSemesterBooking;
         },
         {
-          message:
-            "booking is not in an active booking semester, and is not a valid cross-semester booking",
+          message: "booking is not in an active booking semester, and is not a valid cross-semester booking",
           path: ["startDate", "endDate"],
         },
       );
@@ -278,20 +245,13 @@ export class CabinService {
    * @param status - The new status of the booking
    * @returns The updated booking
    */
-  async updateBookingStatus(
-    userId: string,
-    id: string,
-    status: BookingStatus,
-  ): Promise<Booking> {
+  async updateBookingStatus(userId: string, id: string, status: BookingStatus): Promise<Booking> {
     const hasPermission = await this.permissionService.hasFeaturePermission({
       userId,
       featurePermission: FeaturePermission.CABIN_BOOKING,
     });
 
-    if (!hasPermission)
-      throw new PermissionDeniedError(
-        "You do not have permission to update this booking.",
-      );
+    if (!hasPermission) throw new PermissionDeniedError("You do not have permission to update this booking.");
 
     if (status === BookingStatus.CONFIRMED) {
       const booking = await this.cabinRepository.getBookingById(id);
@@ -302,9 +262,7 @@ export class CabinService {
         status,
       });
       if (overlapping.length > 0) {
-        throw new InvalidArgumentError(
-          "this booking overlaps with another confirmed booking",
-        );
+        throw new InvalidArgumentError("this booking overlaps with another confirmed booking");
       }
     }
     return this.cabinRepository.updateBooking(id, { status });
@@ -342,10 +300,7 @@ export class CabinService {
       featurePermission: FeaturePermission.CABIN_BOOKING,
     });
 
-    if (!hasPermission)
-      throw new PermissionDeniedError(
-        "You do not have permission to update the booking semester.",
-      );
+    if (!hasPermission) throw new PermissionDeniedError("You do not have permission to update the booking semester.");
 
     const schema = z.object({
       semester: z.nativeEnum(Semester),
@@ -433,21 +388,18 @@ export class CabinService {
     spring: BookingSemester | null;
     fall: BookingSemester | null;
   }> {
-    return Promise.all([
-      this.getBookingSemester("SPRING"),
-      this.getBookingSemester("FALL"),
-    ]).then(([spring, fall]) => ({
-      spring,
-      fall,
-    }));
+    return Promise.all([this.getBookingSemester("SPRING"), this.getBookingSemester("FALL")]).then(
+      ([spring, fall]) => ({
+        spring,
+        fall,
+      }),
+    );
   }
 
   /**
    * getBookingSemester returns the booking semester for the given semester, or null if it does not exist.
    */
-  async getBookingSemester(
-    semester: Semester,
-  ): Promise<BookingSemester | null> {
+  async getBookingSemester(semester: Semester): Promise<BookingSemester | null> {
     return this.cabinRepository.getBookingSemester(semester);
   }
 
@@ -473,10 +425,7 @@ export class CabinService {
       featurePermission: FeaturePermission.CABIN_BOOKING,
     });
 
-    if (!hasPermission)
-      throw new PermissionDeniedError(
-        "You do not have permission to update the booking contact.",
-      );
+    if (!hasPermission) throw new PermissionDeniedError("You do not have permission to update the booking contact.");
 
     const schema = z.object({
       name: z

@@ -2,10 +2,7 @@ import { faker } from "@faker-js/faker";
 import { DeepMockProxy, mock, mockDeep, mockFn } from "jest-mock-extended";
 import { NotFoundError } from "~/domain/errors.js";
 import { User } from "~/domain/users.js";
-import {
-  GraphQLTestClient,
-  newGraphQLTestClient,
-} from "~/graphql/test-clients/graphql-test-client.js";
+import { GraphQLTestClient, newGraphQLTestClient } from "~/graphql/test-clients/graphql-test-client.js";
 import { graphql } from "~/graphql/test-clients/integration/gql.js";
 import { UserService } from "~/services/users/service.js";
 
@@ -19,10 +16,7 @@ describe("Apollo Context Authentication", () => {
 
   beforeAll(async () => {
     mockUserService = mockDeep<UserService>();
-    client = await newGraphQLTestClient(
-      { port: 4389 },
-      { apolloServerDependencies: { userService: mockUserService } },
-    );
+    client = await newGraphQLTestClient({ port: 4389 }, { apolloServerDependencies: { userService: mockUserService } });
   });
 
   it("should set ctx.user if a user with the userId in session exists", async () => {

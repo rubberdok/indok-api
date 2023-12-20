@@ -451,15 +451,11 @@ describe("MembersRepository", () => {
       });
 
       // Act and assert
-      await expect(
-        repo.get({ userId: user.id, organizationId: organization.id }),
-      ).resolves.toEqual(member);
+      await expect(repo.get({ userId: user.id, organizationId: organization.id })).resolves.toEqual(member);
     });
 
     it("should raise a NotFoundError if the membership does not exist", async () => {
-      await expect(repo.get({ id: faker.string.uuid() })).rejects.toThrow(
-        NotFoundError,
-      );
+      await expect(repo.get({ id: faker.string.uuid() })).rejects.toThrow(NotFoundError);
     });
   });
 });

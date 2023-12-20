@@ -28,10 +28,7 @@ export function newMockOpenIdClient(): MockOpenIdClient {
   return mockClientWithUpdateUserResponseMock;
 }
 
-function updateUserResponseMock(
-  mockOpenIdClient: DeepMockProxy<OpenIDClient>,
-  user: UserResponse,
-) {
+function updateUserResponseMock(mockOpenIdClient: DeepMockProxy<OpenIDClient>, user: UserResponse) {
   mockOpenIdClient.callback.mockResolvedValue({
     id_token: "id_token",
     access_token: "access_token",

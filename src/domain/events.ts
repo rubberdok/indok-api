@@ -50,8 +50,7 @@ export const signUpAvailability = {
   ON_WAITLIST: "ON_WAITLIST",
 } as const;
 
-export type SignUpAvailability =
-  (typeof signUpAvailability)[keyof typeof signUpAvailability];
+export type SignUpAvailability = (typeof signUpAvailability)[keyof typeof signUpAvailability];
 
 export type BaseEvent = {
   id: string;
@@ -83,8 +82,6 @@ export type EventWithSignUps = BaseEvent & {
 
 export type Event = EventWithoutSignUps | EventWithSignUps;
 
-export function isEventWithSignUps(
-  event: BaseEvent,
-): event is EventWithSignUps {
+export function isEventWithSignUps(event: BaseEvent): event is EventWithSignUps {
   return event.signUpsEnabled;
 }

@@ -8,11 +8,7 @@
  * @param code - A code that can be used to identify the error, e.g. "BAD_USER_INPUT", should be one of `codes`
  */
 export class KnownDomainError extends Error {
-  constructor(
-    name: string,
-    public description: string,
-    public code: ErrorCode = errorCodes.ERR_INTERNAL_SERVER_ERROR,
-  ) {
+  constructor(name: string, public description: string, public code: ErrorCode = errorCodes.ERR_INTERNAL_SERVER_ERROR) {
     super(description);
     this.name = name;
     Error.captureStackTrace(this);
@@ -27,21 +23,13 @@ export class InvalidArgumentError extends KnownDomainError {
 
 export class InternalServerError extends KnownDomainError {
   constructor(description: string) {
-    super(
-      "InternalServerError",
-      description,
-      errorCodes.ERR_INTERNAL_SERVER_ERROR,
-    );
+    super("InternalServerError", description, errorCodes.ERR_INTERNAL_SERVER_ERROR);
   }
 }
 
 export class PermissionDeniedError extends KnownDomainError {
   constructor(description: string) {
-    super(
-      "PermissionDeniedError",
-      description,
-      errorCodes.ERR_PERMISSION_DENIED,
-    );
+    super("PermissionDeniedError", description, errorCodes.ERR_PERMISSION_DENIED);
   }
 }
 
@@ -105,9 +93,7 @@ const USER_FACING_ERRORS = new Set<string>([
   errorCodes.ERR_NOT_FOUND,
 ]);
 
-export function isErrorWithCode(
-  error: unknown,
-): error is Error & { code: string } {
+export function isErrorWithCode(error: unknown): error is Error & { code: string } {
   if (!error) return false;
   if (!(error instanceof Error)) return false;
   if (!("code" in error)) return false;

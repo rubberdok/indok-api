@@ -1,10 +1,6 @@
 import type { QueryResolvers } from "./../../../types.generated.js";
 
-export const events: NonNullable<QueryResolvers["events"]> = async (
-  _parent,
-  { data },
-  { eventService },
-) => {
+export const events: NonNullable<QueryResolvers["events"]> = async (_parent, { data }, { eventService }) => {
   if (!data) {
     const events = await eventService.findMany();
     return { events };

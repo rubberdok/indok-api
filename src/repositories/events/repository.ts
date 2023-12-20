@@ -1,24 +1,9 @@
-import {
-  Event,
-  EventSignUp,
-  EventSlot,
-  ParticipationStatus,
-  PrismaClient,
-  PrismaPromise,
-} from "@prisma/client";
+import { Event, EventSignUp, EventSlot, ParticipationStatus, PrismaClient, PrismaPromise } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 import { merge } from "lodash-es";
 import { z } from "zod";
-import {
-  InternalServerError,
-  InvalidArgumentError,
-  NotFoundError,
-} from "~/domain/errors.js";
-import {
-  AlreadySignedUpError,
-  Event as DomainEvent,
-  InvalidCapacityError,
-} from "~/domain/events.js";
+import { InternalServerError, InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
+import { AlreadySignedUpError, Event as DomainEvent, InvalidCapacityError } from "~/domain/events.js";
 import { prismaKnownErrorCodes } from "~/lib/prisma.js";
 
 export class EventRepository {
@@ -36,27 +21,15 @@ export class EventRepository {
    * @param signUpDetails - The sign up details for the event
    * @returns The created event
    */
-  async create(
-    eventData: EventData,
-    signUpDetails?: SignUpData,
-  ): Promise<DomainEvent> {
-    const {
-      name,
-      description,
-      startAt,
-      endAt,
-      contactEmail,
-      location,
-      organizationId,
-    } = eventData;
+  async create(eventData: EventData, signUpDetails?: SignUpData): Promise<DomainEvent> {
+    const { name, description, startAt, endAt, contactEmail, location, organizationId } = eventData;
     if (signUpDetails) {
       const slots = signUpDetails.slots.map((slot) => ({
         capacity: slot.capacity,
         remainingCapacity: slot.capacity,
         gradeYears: slot.gradeYears,
       }));
-      const { signUpsEndAt, signUpsStartAt, capacity, signUpsEnabled } =
-        signUpDetails;
+      const { signUpsEndAt, signUpsStartAt, capacity, signUpsEnabled } = signUpDetails;
       const event = await this.db.event.create({
         data: {
           name,
@@ -104,11 +77,7 @@ export class EventRepository {
    * @param data.endAt - The new end datetime of the event
    * @returns The updated event
    */
-  async update(
-    id: string,
-    eventData: Partial<EventData>,
-    signUpDetails?: UpdateSignUpData,
-  ): Promise<DomainEvent> {
+  async update(id: string, eventData: Partial<EventData>, signUpDetails?: UpdateSignUpData): Promise<DomainEvent> {
     if (signUpDetails !== undefined) {
       const event = await this.updateWithCapacity(id, eventData, signUpDetails);
       return this.toDomainEvent(event);
@@ -163,16 +132,13 @@ export class EventRepository {
         eventId: id,
       },
     });
-    const existingSlotsById = Object.fromEntries(
-      existingSlots.map((slot) => [slot.id, slot]),
-    );
+    const existingSlotsById = Object.fromEntries(existingSlots.map((slot) => [slot.id, slot]));
 
     const createOrUpdateSlotPromises = signUpDetails.slots.map((slot) => {
       const { id: slotId, capacity } = slot;
       if (slotId) {
         const existingSlot = existingSlotsById[slotId];
-        if (!existingSlot)
-          throw new NotFoundError(`Event slot { id: ${slotId} } not found`);
+        if (!existingSlot) throw new NotFoundError(`Event slot { id: ${slotId} } not found`);
         return this.updateExistingSlot(existingSlot, {
           id: slotId,
           capacity,
@@ -203,11 +169,7 @@ export class EventRepository {
       });
     });
 
-    const updateEventPromise = this.updateEventWithCapacity(
-      previousEvent,
-      updateData,
-      signUpDetails,
-    );
+    const updateEventPromise = this.updateEventWithCapacity(previousEvent, updateData, signUpDetails);
 
     try {
       const [event] = await this.db.$transaction([
@@ -271,13 +233,8 @@ export class EventRepository {
     });
   }
 
-  private updateEventWithCapacity(
-    existingEvent: Event,
-    event: Partial<EventData>,
-    signUpDetails: UpdateSignUpData,
-  ) {
-    const { capacity, signUpsEnabled, signUpsEndAt, signUpsStartAt } =
-      signUpDetails;
+  private updateEventWithCapacity(existingEvent: Event, event: Partial<EventData>, signUpDetails: UpdateSignUpData) {
+    const { capacity, signUpsEnabled, signUpsEndAt, signUpsStartAt } = signUpDetails;
     const { id } = existingEvent;
     const updateData = {
       ...event,
@@ -341,10 +298,7 @@ export class EventRepository {
    * @param gradeYear - The grade year for which the slot should be available
    * @returns The slot with the greatest number of remaining capacity for the given event
    */
-  async getSlotWithRemainingCapacity(
-    eventId: string,
-    gradeYear?: number,
-  ): Promise<EventSlot | null> {
+  async getSlotWithRemainingCapacity(eventId: string, gradeYear?: number): Promise<EventSlot | null> {
     if (gradeYear !== undefined) {
       const slot = await this.db.eventSlot.findFirst({
         where: {
@@ -404,9 +358,7 @@ export class EventRepository {
    *
    * @throws {NotFoundError} If an event with the given ID does not exist
    */
-  async getWithSlots(
-    id: string,
-  ): Promise<DomainEvent & { slots: EventSlot[] }> {
+  async getWithSlots(id: string): Promise<DomainEvent & { slots: EventSlot[] }> {
     const event = await this.db.event.findUnique({
       include: {
         slots: true,
@@ -496,9 +448,7 @@ export class EventRepository {
    * @param data.eventId - The ID of the event to sign up for
    * @returns The created sign up, and the updated event and slot
    */
-  public async createSignUp(
-    data: CreateOnWaitlistSignUpData,
-  ): Promise<{ event: DomainEvent; signUp: EventSignUp }>;
+  public async createSignUp(data: CreateOnWaitlistSignUpData): Promise<{ event: DomainEvent; signUp: EventSignUp }>;
 
   /**
    * Create a new sign up for the event the given participation status. All newly created events are set as active,
@@ -594,12 +544,8 @@ export class EventRepository {
     const { slots, signUps, ...event } = updatedEvent;
     const [slot] = slots;
     const [signUp] = signUps;
-    if (slot === undefined)
-      throw new InternalServerError("Expected exactly one slot to be updated");
-    if (signUp === undefined)
-      throw new InternalServerError(
-        "Expected exactly one sign up to be created",
-      );
+    if (slot === undefined) throw new InternalServerError("Expected exactly one slot to be updated");
+    if (signUp === undefined) throw new InternalServerError("Expected exactly one sign up to be created");
     return { event, slot, signUp };
   }
 
@@ -634,10 +580,7 @@ export class EventRepository {
 
     const { signUps, ...event } = updatedEvent;
     const [signUp] = signUps;
-    if (signUp === undefined)
-      throw new InternalServerError(
-        "Expected exactly one sign up to be created",
-      );
+    if (signUp === undefined) throw new InternalServerError("Expected exactly one sign up to be created");
     return { event, signUp };
   }
 
@@ -694,9 +637,7 @@ export class EventRepository {
    * @param data.newParticipationStatus - The new participation status of the sign up
    * @returns The updated sign up, event and slot
    */
-  public async updateSignUp(
-    data: UpdateToConfirmedSignUpData | UpdateToInactiveSignUpData,
-  ): Promise<{
+  public async updateSignUp(data: UpdateToConfirmedSignUpData | UpdateToInactiveSignUpData): Promise<{
     event: DomainEvent;
     signUp: EventSignUp;
     slot?: EventSlot | null;
@@ -716,9 +657,7 @@ export class EventRepository {
     });
 
     if (currentSignUp === null) {
-      throw new InvalidArgumentError(
-        "Can only change the status of an active sign up, and none were found",
-      );
+      throw new InvalidArgumentError("Can only change the status of an active sign up, and none were found");
     }
 
     const currentParticipationStatus = currentSignUp.participationStatus;
@@ -731,12 +670,11 @@ export class EventRepository {
     }
 
     if (newParticipationStatus === ParticipationStatus.CONFIRMED) {
-      const { event, slot, signUp } =
-        await this.newParticipationStatusConfirmedHandler({
-          currentSignUp,
-          eventId: data.eventId,
-          slotId: data.slotId,
-        });
+      const { event, slot, signUp } = await this.newParticipationStatusConfirmedHandler({
+        currentSignUp,
+        eventId: data.eventId,
+        slotId: data.slotId,
+      });
       return { event: this.toDomainEvent(event), slot, signUp };
     }
 
@@ -774,8 +712,7 @@ export class EventRepository {
           });
         } catch (err) {
           if (err instanceof PrismaClientKnownRequestError) {
-            if (err.code === "P2002")
-              throw new AlreadySignedUpError(err.message);
+            if (err.code === "P2002") throw new AlreadySignedUpError(err.message);
             if (err.code === "P2025") throw new NotFoundError(err.message);
           }
           throw err;
@@ -786,18 +723,13 @@ export class EventRepository {
       case ParticipationStatus.RETRACTED:
       // fallthrough
       case ParticipationStatus.CONFIRMED: {
-        throw new InvalidArgumentError(
-          "Only sign ups on the wait list can be changed to confirmed",
-        );
+        throw new InvalidArgumentError("Only sign ups on the wait list can be changed to confirmed");
       }
     }
   }
 
   private async newParticipationStatusInactiveHandler(data: {
-    newParticipationStatus: Extract<
-      ParticipationStatus,
-      "REMOVED" | "RETRACTED"
-    >;
+    newParticipationStatus: Extract<ParticipationStatus, "REMOVED" | "RETRACTED">;
     userId: string;
     eventId: string;
     currentSignUp: {
@@ -827,8 +759,7 @@ export class EventRepository {
         } catch (err) {
           if (err instanceof PrismaClientKnownRequestError) {
             // This would occur if we fail to delete an existing inactive sign up, which should not happen
-            if (err.code === "P2002")
-              throw new InternalServerError("Failed to demote sign up");
+            if (err.code === "P2002") throw new InternalServerError("Failed to demote sign up");
             if (err.code === "P2025") throw new NotFoundError(err.message);
           }
           throw err;
@@ -923,17 +854,11 @@ export class EventRepository {
     currentSignUp: {
       id: string;
       version: number;
-      participationStatus: Extract<
-        ParticipationStatus,
-        "ON_WAITLIST" | "CONFIRMED"
-      >;
+      participationStatus: Extract<ParticipationStatus, "ON_WAITLIST" | "CONFIRMED">;
     };
     userId: string;
     eventId: string;
-    newParticipationStatus: Extract<
-      ParticipationStatus,
-      "REMOVED" | "RETRACTED"
-    >;
+    newParticipationStatus: Extract<ParticipationStatus, "REMOVED" | "RETRACTED">;
   }) {
     const { userId, eventId, currentSignUp, newParticipationStatus } = data;
 
@@ -1049,17 +974,13 @@ export class EventRepository {
     });
 
     if (signUp === null) {
-      throw new NotFoundError(
-        `Event sign up { userId: ${userId}, eventId: ${eventId} } not found`,
-      );
+      throw new NotFoundError(`Event sign up { userId: ${userId}, eventId: ${eventId} } not found`);
     }
 
     return signUp;
   }
 
-  async findManySlots(data: { gradeYear?: number; eventId: string }): Promise<
-    EventSlot[]
-  > {
+  async findManySlots(data: { gradeYear?: number; eventId: string }): Promise<EventSlot[]> {
     const { gradeYear, eventId } = data;
     if (gradeYear !== undefined) {
       return this.db.eventSlot.findMany({
@@ -1096,13 +1017,7 @@ export class EventRepository {
 
     try {
       if (event.signUpsEnabled) {
-        const {
-          signUpsEnabled,
-          signUpsStartAt,
-          signUpsEndAt,
-          capacity,
-          remainingCapacity,
-        } = event;
+        const { signUpsEnabled, signUpsStartAt, signUpsEndAt, capacity, remainingCapacity } = event;
         const signUpDetails = {
           signUpsEndAt,
           signUpsStartAt,

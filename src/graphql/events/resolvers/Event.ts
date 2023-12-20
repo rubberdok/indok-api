@@ -7,10 +7,7 @@ export const Event: EventResolvers = {
   canSignUp: (parent, _args, ctx) => {
     try {
       assertIsAuthenticated(ctx);
-      const canSignUp = ctx.eventService.canSignUpForEvent(
-        ctx.user.id,
-        parent.id,
-      );
+      const canSignUp = ctx.eventService.canSignUpForEvent(ctx.user.id, parent.id);
       return canSignUp;
     } catch (err) {
       if (err instanceof AuthenticationError) return false;
@@ -19,18 +16,13 @@ export const Event: EventResolvers = {
   },
 
   signUpAvailability: async (event, _args, ctx) => {
-    const signUpAvailability = await ctx.eventService.getSignUpAvailability(
-      ctx.user?.id,
-      event.id,
-    );
+    const signUpAvailability = await ctx.eventService.getSignUpAvailability(ctx.user?.id, event.id);
     return signUpAvailability;
   },
 
   organization: async (event, _args, ctx) => {
     if (!event.organizationId) return null;
-    const organization = await ctx.organizationService.get(
-      event.organizationId,
-    );
+    const organization = await ctx.organizationService.get(event.organizationId);
     return organization;
   },
 

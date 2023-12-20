@@ -8,15 +8,12 @@ import { graphql } from "~/graphql/test-clients/unit/gql.js";
 describe("Listing mutations", () => {
   describe("updateListing", () => {
     it("should attempt to update a listing", async () => {
-      const { client, listingService, createMockContext } =
-        createMockApolloServer();
+      const { client, listingService, createMockContext } = createMockApolloServer();
       const authenticatedContext = createMockContext({
         userId: faker.string.uuid(),
         authenticated: true,
       });
-      listingService.update.mockResolvedValue(
-        mock<Listing>({ id: faker.string.uuid() }),
-      );
+      listingService.update.mockResolvedValue(mock<Listing>({ id: faker.string.uuid() }));
 
       const { errors } = await client.mutate(
         {
@@ -40,18 +37,13 @@ describe("Listing mutations", () => {
       );
 
       expect(errors).toBeUndefined();
-      expect(listingService.update).toHaveBeenCalledWith(
-        authenticatedContext.req.session.userId,
-        expect.any(String),
-        {
-          name: expect.any(String),
-        },
-      );
+      expect(listingService.update).toHaveBeenCalledWith(authenticatedContext.req.session.userId, expect.any(String), {
+        name: expect.any(String),
+      });
     });
 
     it("should raise permission denied if not authenticated", async () => {
-      const { client, listingService, createMockContext } =
-        createMockApolloServer();
+      const { client, listingService, createMockContext } = createMockApolloServer();
       const unauthenticatedContext = createMockContext({
         authenticated: false,
       });
@@ -78,11 +70,7 @@ describe("Listing mutations", () => {
       );
 
       expect(errors).toBeDefined();
-      expect(
-        errors?.some(
-          (err) => err.extensions?.code === errorCodes.ERR_PERMISSION_DENIED,
-        ),
-      ).toBe(true);
+      expect(errors?.some((err) => err.extensions?.code === errorCodes.ERR_PERMISSION_DENIED)).toBe(true);
       expect(listingService.update).not.toHaveBeenCalled();
     });
   });

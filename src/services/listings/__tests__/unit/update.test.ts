@@ -1,16 +1,9 @@
 import { faker } from "@faker-js/faker";
 import { Listing } from "@prisma/client";
 import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
-import {
-  InvalidArgumentError,
-  PermissionDeniedError,
-} from "~/domain/errors.js";
+import { InvalidArgumentError, PermissionDeniedError } from "~/domain/errors.js";
 import { Role } from "~/domain/organizations.js";
-import {
-  ListingRepository,
-  ListingService,
-  PermissionService,
-} from "../../service.js";
+import { ListingRepository, ListingService, PermissionService } from "../../service.js";
 
 describe("ListingService", () => {
   let listingService: ListingService;
@@ -62,14 +55,12 @@ describe("ListingService", () => {
       ];
 
       test.each(testCases)("$name", async ({ data }) => {
-        listingRepository.get.mockResolvedValueOnce(
-          mock<Listing>({ organizationId: faker.string.uuid() }),
-        );
+        listingRepository.get.mockResolvedValueOnce(mock<Listing>({ organizationId: faker.string.uuid() }));
         permissionService.hasRole.mockResolvedValueOnce(true);
 
-        await expect(
-          listingService.update(faker.string.uuid(), faker.string.uuid(), data),
-        ).rejects.toThrow(InvalidArgumentError);
+        await expect(listingService.update(faker.string.uuid(), faker.string.uuid(), data)).rejects.toThrow(
+          InvalidArgumentError,
+        );
       });
     });
 
@@ -137,25 +128,18 @@ describe("ListingService", () => {
          *
          * Set up the permission checks
          */
-        listingRepository.get.mockResolvedValueOnce(
-          mock<Listing>({ organizationId: faker.string.uuid() }),
-        );
+        listingRepository.get.mockResolvedValueOnce(mock<Listing>({ organizationId: faker.string.uuid() }));
         permissionService.hasRole.mockResolvedValueOnce(true);
 
         // Act
-        await expect(
-          listingService.update(faker.string.uuid(), faker.string.uuid(), data),
-        ).resolves.not.toThrow();
+        await expect(listingService.update(faker.string.uuid(), faker.string.uuid(), data)).resolves.not.toThrow();
 
         /**
          * Assert
          *
          * Ensure that the permission check has been called with the correct arguments
          */
-        expect(listingRepository.update).toHaveBeenCalledWith(
-          expect.any(String),
-          expected,
-        );
+        expect(listingRepository.update).toHaveBeenCalledWith(expect.any(String), expected);
       });
     });
 
@@ -173,18 +157,14 @@ describe("ListingService", () => {
           closesAt: faker.date.future(),
         };
         permissionService.hasRole.mockResolvedValue(true);
-        listingRepository.get.mockResolvedValueOnce(
-          mock<Listing>({ organizationId }),
-        );
+        listingRepository.get.mockResolvedValueOnce(mock<Listing>({ organizationId }));
 
         /**
          * Act
          *
          * Call update
          */
-        await expect(
-          listingService.update(userId, faker.string.uuid(), data),
-        ).resolves.not.toThrow();
+        await expect(listingService.update(userId, faker.string.uuid(), data)).resolves.not.toThrow();
 
         /**
          * Assert
@@ -210,18 +190,14 @@ describe("ListingService", () => {
           closesAt: faker.date.future(),
         };
         permissionService.hasRole.mockResolvedValue(false);
-        listingRepository.get.mockResolvedValueOnce(
-          mock<Listing>({ organizationId: faker.string.uuid() }),
-        );
+        listingRepository.get.mockResolvedValueOnce(mock<Listing>({ organizationId: faker.string.uuid() }));
 
         /**
          * Act
          *
          * Call update, assert that it throws
          */
-        await expect(
-          listingService.update(userId, faker.string.uuid(), data),
-        ).rejects.toThrow(PermissionDeniedError);
+        await expect(listingService.update(userId, faker.string.uuid(), data)).rejects.toThrow(PermissionDeniedError);
 
         /**
          * Assert

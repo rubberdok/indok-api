@@ -245,9 +245,7 @@ describe("EventRepository", () => {
           {},
           {
             ...act.signUpDetails,
-            slots: slots.map((slot, index) =>
-              merge({}, slot, act.signUpDetails.slots[index]),
-            ),
+            slots: slots.map((slot, index) => merge({}, slot, act.signUpDetails.slots[index])),
           },
         );
         const actualSlots = await prisma.eventSlot.findMany({
@@ -265,9 +263,7 @@ describe("EventRepository", () => {
          * 4. Any new slots should be created
          */
         expect(actual.signUpDetails?.capacity).toBe(assert.event.capacity);
-        expect(actual.signUpDetails?.remainingCapacity).toBe(
-          assert.event.remainingCapacity,
-        );
+        expect(actual.signUpDetails?.remainingCapacity).toBe(assert.event.remainingCapacity);
         expect(
           actualSlots.map((slot) => ({
             capacity: slot.capacity,

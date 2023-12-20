@@ -1,12 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { FeaturePermission, Organization } from "@prisma/client";
 import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
-import {
-  MemberRepository,
-  OrganizationRepository,
-  OrganizationService,
-  PermissionService,
-} from "../../service.js";
+import { MemberRepository, OrganizationRepository, OrganizationService, PermissionService } from "../../service.js";
 
 describe("OrganizationService", () => {
   let organizationService: OrganizationService;
@@ -18,11 +13,7 @@ describe("OrganizationService", () => {
     permissionService = mockDeep<PermissionService>();
     organizationRepository = mockDeep<OrganizationRepository>();
     memberRepository = mockDeep<MemberRepository>();
-    organizationService = new OrganizationService(
-      organizationRepository,
-      memberRepository,
-      permissionService,
-    );
+    organizationService = new OrganizationService(organizationRepository, memberRepository, permissionService);
   });
   describe("create", () => {
     describe("as a super user", () => {
@@ -36,9 +27,7 @@ describe("OrganizationService", () => {
         /**
          * Mock the organization repository to return
          */
-        organizationRepository.create.mockResolvedValueOnce(
-          mock<Organization>(),
-        );
+        organizationRepository.create.mockResolvedValueOnce(mock<Organization>());
         const callerUserId = faker.string.uuid();
 
         /**
@@ -47,10 +36,7 @@ describe("OrganizationService", () => {
         const actual = organizationService.create(callerUserId, {
           name: faker.company.name(),
           description: faker.lorem.paragraph(),
-          featurePermissions: [
-            FeaturePermission.CABIN_BOOKING,
-            FeaturePermission.ARCHIVE,
-          ],
+          featurePermissions: [FeaturePermission.CABIN_BOOKING, FeaturePermission.ARCHIVE],
         });
 
         /**
@@ -61,14 +47,9 @@ describe("OrganizationService", () => {
           userId: expect.any(String),
           name: expect.any(String),
           description: expect.any(String),
-          featurePermissions: [
-            FeaturePermission.CABIN_BOOKING,
-            FeaturePermission.ARCHIVE,
-          ],
+          featurePermissions: [FeaturePermission.CABIN_BOOKING, FeaturePermission.ARCHIVE],
         });
-        expect(permissionService.isSuperUser).toHaveBeenCalledWith(
-          callerUserId,
-        );
+        expect(permissionService.isSuperUser).toHaveBeenCalledWith(callerUserId);
       });
     });
 
@@ -83,9 +64,7 @@ describe("OrganizationService", () => {
         /**
          * Mock the organization repository to return
          */
-        organizationRepository.create.mockResolvedValueOnce(
-          mock<Organization>(),
-        );
+        organizationRepository.create.mockResolvedValueOnce(mock<Organization>());
         /**
          * Mock hasRole to return true
          */
@@ -97,10 +76,7 @@ describe("OrganizationService", () => {
         const actual = organizationService.create(callerUserId, {
           name: faker.company.name(),
           description: faker.lorem.paragraph(),
-          featurePermissions: [
-            FeaturePermission.CABIN_BOOKING,
-            FeaturePermission.ARCHIVE,
-          ],
+          featurePermissions: [FeaturePermission.CABIN_BOOKING, FeaturePermission.ARCHIVE],
         });
 
         /**
@@ -113,9 +89,7 @@ describe("OrganizationService", () => {
           description: expect.any(String),
           featurePermissions: undefined,
         });
-        expect(permissionService.isSuperUser).toHaveBeenCalledWith(
-          callerUserId,
-        );
+        expect(permissionService.isSuperUser).toHaveBeenCalledWith(callerUserId);
       });
     });
   });
@@ -132,41 +106,26 @@ describe("OrganizationService", () => {
         /**
          * Mock the organization repository to return
          */
-        organizationRepository.update.mockResolvedValueOnce(
-          mock<Organization>(),
-        );
+        organizationRepository.update.mockResolvedValueOnce(mock<Organization>());
 
         /**
          * Act
          */
-        const actual = organizationService.update(
-          faker.string.uuid(),
-          faker.string.uuid(),
-          {
-            name: faker.company.name(),
-            description: null,
-            featurePermissions: [
-              FeaturePermission.CABIN_BOOKING,
-              FeaturePermission.ARCHIVE,
-            ],
-          },
-        );
+        const actual = organizationService.update(faker.string.uuid(), faker.string.uuid(), {
+          name: faker.company.name(),
+          description: null,
+          featurePermissions: [FeaturePermission.CABIN_BOOKING, FeaturePermission.ARCHIVE],
+        });
 
         /**
          * Assert
          */
         await expect(actual).resolves.not.toThrow();
-        expect(organizationRepository.update).toHaveBeenCalledWith(
-          expect.any(String),
-          {
-            name: expect.any(String),
-            description: undefined,
-            featurePermissions: [
-              FeaturePermission.CABIN_BOOKING,
-              FeaturePermission.ARCHIVE,
-            ],
-          },
-        );
+        expect(organizationRepository.update).toHaveBeenCalledWith(expect.any(String), {
+          name: expect.any(String),
+          description: undefined,
+          featurePermissions: [FeaturePermission.CABIN_BOOKING, FeaturePermission.ARCHIVE],
+        });
       });
     });
 
@@ -181,9 +140,7 @@ describe("OrganizationService", () => {
         /**
          * Mock the organization repository to return
          */
-        organizationRepository.update.mockResolvedValueOnce(
-          mock<Organization>(),
-        );
+        organizationRepository.update.mockResolvedValueOnce(mock<Organization>());
         /**
          * Mock hasRole to return true
          */
@@ -192,31 +149,21 @@ describe("OrganizationService", () => {
         /**
          * Act
          */
-        const actual = organizationService.update(
-          faker.string.uuid(),
-          faker.string.uuid(),
-          {
-            name: faker.company.name(),
-            description: null,
-            featurePermissions: [
-              FeaturePermission.CABIN_BOOKING,
-              FeaturePermission.ARCHIVE,
-            ],
-          },
-        );
+        const actual = organizationService.update(faker.string.uuid(), faker.string.uuid(), {
+          name: faker.company.name(),
+          description: null,
+          featurePermissions: [FeaturePermission.CABIN_BOOKING, FeaturePermission.ARCHIVE],
+        });
 
         /**
          * Assert
          */
         await expect(actual).resolves.not.toThrow();
-        expect(organizationRepository.update).toHaveBeenCalledWith(
-          expect.any(String),
-          {
-            name: expect.any(String),
-            description: undefined,
-            featurePermissions: undefined,
-          },
-        );
+        expect(organizationRepository.update).toHaveBeenCalledWith(expect.any(String), {
+          name: expect.any(String),
+          description: undefined,
+          featurePermissions: undefined,
+        });
       });
     });
   });

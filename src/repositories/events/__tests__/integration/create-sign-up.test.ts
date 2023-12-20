@@ -92,9 +92,7 @@ describe("EventRepository", () => {
        */
       expect(actual.signUp.active).toBe(true);
       expect(actual.slot.remainingCapacity).toBe(slot.remainingCapacity - 1);
-      expect(actual.event.signUpDetails?.remainingCapacity).toBe(
-        (event.remainingCapacity ?? NaN) - 1,
-      );
+      expect(actual.event.signUpDetails?.remainingCapacity).toBe((event.remainingCapacity ?? NaN) - 1);
       expect(actual.slot.version).toBe(slot.version + 1);
       expect(actual.event.version).toBe(event.version + 1);
     });
@@ -128,9 +126,7 @@ describe("EventRepository", () => {
        * Should return the sign up with `active: true`
        */
       expect(actual.signUp.active).toBe(true);
-      expect(actual.event.signUpDetails?.remainingCapacity).toBe(
-        event.remainingCapacity,
-      );
+      expect(actual.event.signUpDetails?.remainingCapacity).toBe(event.remainingCapacity);
       expect(actual.event.version).toBe(event.version + 1);
     });
 
@@ -171,9 +167,7 @@ describe("EventRepository", () => {
        */
       expect(actual.signUp.active).toBe(true);
       expect(actual.signUp.id).not.toBe(existingSignUp.id);
-      expect(actual.event.signUpDetails?.remainingCapacity).toBe(
-        (event.remainingCapacity ?? NaN) - 1,
-      );
+      expect(actual.event.signUpDetails?.remainingCapacity).toBe((event.remainingCapacity ?? NaN) - 1);
       expect(actual.event.version).toBe(event.version + 1);
     });
 
@@ -206,9 +200,7 @@ describe("EventRepository", () => {
        * Should return the sign up with `active: true`
        */
       expect(actual.signUp.active).toBe(true);
-      expect(actual.event.signUpDetails?.remainingCapacity).toBe(
-        event.remainingCapacity,
-      );
+      expect(actual.event.signUpDetails?.remainingCapacity).toBe(event.remainingCapacity);
     });
 
     describe("should raise", () => {
@@ -245,46 +237,40 @@ describe("EventRepository", () => {
         },
       ];
 
-      test.each(testCases)(
-        "$assertion.errorCode $name",
-        async ({ assertion, arrange }) => {
-          /**
-           * Arrange
-           *
-           * 1. Create a user
-           * 2. Create an event with remainingCapacity from test case
-           * 3. Create a slot with remainingCapacity from test case
-           */
-          const user = await makeUser();
-          const event = await makeEvent({ capacity: arrange.eventCapacity });
-          const slot = await makeSlot({
-            eventId: event.id,
-            capacity: arrange.slotCapacity,
-          });
+      test.each(testCases)("$assertion.errorCode $name", async ({ assertion, arrange }) => {
+        /**
+         * Arrange
+         *
+         * 1. Create a user
+         * 2. Create an event with remainingCapacity from test case
+         * 3. Create a slot with remainingCapacity from test case
+         */
+        const user = await makeUser();
+        const event = await makeEvent({ capacity: arrange.eventCapacity });
+        const slot = await makeSlot({
+          eventId: event.id,
+          capacity: arrange.slotCapacity,
+        });
 
-          /**
-           * Act
-           *
-           * Call makeConfirmedSignUp where the sign up version is from test case
-           */
-          const actual = eventRepository.createSignUp({
-            userId: user.id,
-            participationStatus: ParticipationStatus.CONFIRMED,
-            slotId: slot.id,
-            eventId: event.id,
-          });
+        /**
+         * Act
+         *
+         * Call makeConfirmedSignUp where the sign up version is from test case
+         */
+        const actual = eventRepository.createSignUp({
+          userId: user.id,
+          participationStatus: ParticipationStatus.CONFIRMED,
+          slotId: slot.id,
+          eventId: event.id,
+        });
 
-          /**
-           * Assert
-           *
-           * The error code should match the expected error code
-           */
-          await expect(actual).rejects.toHaveProperty(
-            "code",
-            assertion.errorCode,
-          );
-        },
-      );
+        /**
+         * Assert
+         *
+         * The error code should match the expected error code
+         */
+        await expect(actual).rejects.toHaveProperty("code", assertion.errorCode);
+      });
     });
   });
 });

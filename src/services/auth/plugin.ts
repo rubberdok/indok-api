@@ -1,17 +1,10 @@
 import { FastifyPluginAsync, FastifyRequest } from "fastify";
-import {
-  BadRequestError,
-  InternalServerError,
-  PermissionDeniedError,
-} from "~/domain/errors.js";
+import { BadRequestError, InternalServerError, PermissionDeniedError } from "~/domain/errors.js";
 import { User } from "~/domain/users.js";
 
 export interface AuthService {
   authorizationUrl(req: FastifyRequest, redirect?: string | null): string;
-  authorizationCallback(
-    req: FastifyRequest,
-    data: { code: string },
-  ): Promise<User>;
+  authorizationCallback(req: FastifyRequest, data: { code: string }): Promise<User>;
   login(req: FastifyRequest, user: User): Promise<User>;
   logout(req: FastifyRequest): Promise<void>;
 }
@@ -70,8 +63,7 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
         } catch (err) {
           if (err instanceof Error) {
             req.log.error(err, "Authentication failed");
-            if (err instanceof BadRequestError)
-              return reply.status(400).send(err);
+            if (err instanceof BadRequestError) return reply.status(400).send(err);
             return reply.send(new InternalServerError("Authentication failed"));
           }
         }
@@ -95,9 +87,7 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
         if (req.session.authenticated) {
           return reply.status(200).send({ user: req.session.userId });
         }
-        return reply
-          .status(401)
-          .send(new PermissionDeniedError("Unauthorized"));
+        return reply.status(401).send(new PermissionDeniedError("Unauthorized"));
       },
     });
   };

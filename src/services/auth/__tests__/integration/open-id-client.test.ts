@@ -3,10 +3,7 @@ import { FastifyRequest } from "fastify";
 import { mockDeep } from "jest-mock-extended";
 import { defaultTestDependenciesFactory } from "~/__tests__/dependencies-factory.js";
 import prisma from "~/lib/prisma.js";
-import {
-  MockOpenIdClient,
-  newMockOpenIdClient,
-} from "../../../../__tests__/mocks/openIdClient.js";
+import { MockOpenIdClient, newMockOpenIdClient } from "../../../../__tests__/mocks/openIdClient.js";
 import { AuthService } from "../../service.js";
 
 describe("AuthService", () => {
@@ -20,12 +17,7 @@ describe("AuthService", () => {
     } = defaultTestDependenciesFactory({
       openIdClient: openIdClient,
     });
-    authService = new AuthService(
-      userService,
-      openIdClient,
-      undefined,
-      "https://example.com",
-    );
+    authService = new AuthService(userService, openIdClient, undefined, "https://example.com");
   });
   describe("authorizationUrl", () => {
     it("should call openIdClient#authorizeUrl with the expected parameters", async () => {
@@ -38,10 +30,7 @@ describe("AuthService", () => {
         code_challenge_method: "S256",
         state: "redirectionUrl",
       });
-      expect(req.session.set).toHaveBeenCalledWith(
-        "codeVerifier",
-        expect.any(String),
-      );
+      expect(req.session.set).toHaveBeenCalledWith("codeVerifier", expect.any(String));
     });
   });
 
@@ -67,13 +56,9 @@ describe("AuthService", () => {
 
       await authService.authorizationCallback(req, data);
 
-      expect(openIdClient.callback).toHaveBeenCalledWith(
-        "https://example.com",
-        data,
-        {
-          code_verifier: "codeVerifier",
-        },
-      );
+      expect(openIdClient.callback).toHaveBeenCalledWith("https://example.com", data, {
+        code_verifier: "codeVerifier",
+      });
       expect(openIdClient.userinfo).toHaveBeenCalled();
     });
 

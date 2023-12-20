@@ -17,8 +17,7 @@ describe("Event mutations", () => {
        * and set up the mock return value for the eventService.signUp method,
        * and mock return values for eventSerivce.get and userService.get to test the resolvers.
        */
-      const { client, createMockContext, eventService, userService } =
-        createMockApolloServer();
+      const { client, createMockContext, eventService, userService } = createMockApolloServer();
 
       const contextValue = createMockContext({
         authenticated: true,
@@ -31,12 +30,8 @@ describe("Event mutations", () => {
           participationStatus: ParticipationStatus.CONFIRMED,
         }),
       );
-      eventService.get.mockResolvedValue(
-        mock<Event>({ id: faker.string.uuid() }),
-      );
-      userService.get.mockResolvedValue(
-        mock<User>({ id: faker.string.uuid() }),
-      );
+      eventService.get.mockResolvedValue(mock<Event>({ id: faker.string.uuid() }));
+      userService.get.mockResolvedValue(mock<User>({ id: faker.string.uuid() }));
 
       /**
        * Act
@@ -89,10 +84,7 @@ describe("Event mutations", () => {
         },
         participationStatus: "CONFIRMED",
       });
-      expect(eventService.signUp).toHaveBeenCalledWith(
-        contextValue.req.session.userId,
-        expect.any(String),
-      );
+      expect(eventService.signUp).toHaveBeenCalledWith(contextValue.req.session.userId, expect.any(String));
     });
 
     it("should err if not logged in", async () => {
@@ -101,8 +93,7 @@ describe("Event mutations", () => {
        *
        * Create an unauthenticated context,
        */
-      const { client, createMockContext, eventService } =
-        createMockApolloServer();
+      const { client, createMockContext, eventService } = createMockApolloServer();
 
       const contextValue = createMockContext({
         authenticated: false,
@@ -148,12 +139,7 @@ describe("Event mutations", () => {
        * Ensure that the sign up was not performed and that a permission denied error was returned.
        */
       expect(errors).toBeDefined();
-      expect(
-        errors?.every(
-          (error) =>
-            error.extensions?.code === errorCodes.ERR_PERMISSION_DENIED,
-        ),
-      ).toBe(true);
+      expect(errors?.every((error) => error.extensions?.code === errorCodes.ERR_PERMISSION_DENIED)).toBe(true);
       expect(eventService.signUp).not.toHaveBeenCalled();
     });
   });

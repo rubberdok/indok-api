@@ -1,13 +1,7 @@
 import { PrismaClient } from "@prisma/client";
-import {
-  MockOpenIdClient,
-  newMockOpenIdClient,
-} from "~/__tests__/mocks/openIdClient.js";
+import { MockOpenIdClient, newMockOpenIdClient } from "~/__tests__/mocks/openIdClient.js";
 import { ApolloServerDependencies } from "~/lib/apollo-server.js";
-import {
-  ServerDependencies,
-  dependenciesFactory,
-} from "~/lib/fastify/dependencies.js";
+import { ServerDependencies, dependenciesFactory } from "~/lib/fastify/dependencies.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
 import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
 import { UserRepository } from "~/repositories/users/index.js";
@@ -24,10 +18,7 @@ export function defaultTestDependenciesFactory(
   }> = {},
 ): ServerDependencies & { mockOpenIdClient: MockOpenIdClient } {
   const defaultDependencies = dependenciesFactory();
-  const {
-    prismaClient: prismaOverride,
-    apolloServerDependencies: apolloServerOverrides,
-  } = overrides;
+  const { prismaClient: prismaOverride, apolloServerDependencies: apolloServerOverrides } = overrides;
   const prismaClient = prismaOverride ?? defaultDependencies.prisma;
 
   const { openIdClient = newMockOpenIdClient() } = overrides;
@@ -36,17 +27,10 @@ export function defaultTestDependenciesFactory(
   const memberRepository = new MemberRepository(prismaClient);
   const organizationRepository = new OrganizationRepository(prismaClient);
   const userRepository = new UserRepository(prismaClient);
-  const {
-    permissionService = new PermissionService(
-      memberRepository,
-      userRepository,
-      organizationRepository,
-    ),
-  } = serviceOverrides;
-  const { userService = new UserService(userRepository, permissionService) } =
+  const { permissionService = new PermissionService(memberRepository, userRepository, organizationRepository) } =
     serviceOverrides;
-  const { authService = new AuthService(userService, openIdClient) } =
-    overrides;
+  const { userService = new UserService(userRepository, permissionService) } = serviceOverrides;
+  const { authService = new AuthService(userService, openIdClient) } = overrides;
 
   const defaultApolloServerOverrides: Partial<ApolloServerDependencies> = {
     userService,

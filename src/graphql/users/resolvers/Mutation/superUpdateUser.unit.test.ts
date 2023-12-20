@@ -8,17 +8,14 @@ import { graphql } from "~/graphql/test-clients/unit/gql.js";
 describe("User mutations", () => {
   describe("superUpdateUser", () => {
     it("should update the user with ID passed as argument and authenticated user as caller", async () => {
-      const { client, createMockContext, userService } =
-        createMockApolloServer();
+      const { client, createMockContext, userService } = createMockApolloServer();
       const callerUserId = faker.string.uuid();
       const updateUserId = faker.string.uuid();
       const contextValue = createMockContext({
         userId: callerUserId,
         authenticated: true,
       });
-      userService.superUpdateUser.mockResolvedValue(
-        mock<User>({ id: updateUserId }),
-      );
+      userService.superUpdateUser.mockResolvedValue(mock<User>({ id: updateUserId }));
 
       const { errors } = await client.mutate(
         {
@@ -44,13 +41,9 @@ describe("User mutations", () => {
       );
 
       expect(errors).toBeUndefined();
-      expect(userService.superUpdateUser).toHaveBeenCalledWith(
-        callerUserId,
-        updateUserId,
-        {
-          isSuperUser: true,
-        },
-      );
+      expect(userService.superUpdateUser).toHaveBeenCalledWith(callerUserId, updateUserId, {
+        isSuperUser: true,
+      });
     });
 
     it("should raise PermissionDeniedError if not authenticated", async () => {
@@ -75,12 +68,7 @@ describe("User mutations", () => {
       });
 
       expect(errors).toBeDefined();
-      expect(
-        errors?.some(
-          (error) =>
-            error.extensions?.code === errorCodes.ERR_PERMISSION_DENIED,
-        ),
-      ).toBe(true);
+      expect(errors?.some((error) => error.extensions?.code === errorCodes.ERR_PERMISSION_DENIED)).toBe(true);
       expect(userService.superUpdateUser).not.toHaveBeenCalled();
     });
   });

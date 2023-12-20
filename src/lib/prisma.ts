@@ -29,9 +29,7 @@ interface MigrationHealthCheckReturnType {
  * @returns status - `true` if the migrations are reflected in the database, `false` otherwise
  * @returns message - The error message if the migrations are not reflected in the database
  */
-export async function migrationHealthCheck(
-  app: FastifyInstance,
-): Promise<MigrationHealthCheckReturnType> {
+export async function migrationHealthCheck(app: FastifyInstance): Promise<MigrationHealthCheckReturnType> {
   try {
     app.log.info("Running migration health check");
     await execa("pnpm", ["exec", "prisma", "migrate", "status"], {

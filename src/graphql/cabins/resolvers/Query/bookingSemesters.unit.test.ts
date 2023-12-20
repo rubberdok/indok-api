@@ -13,11 +13,9 @@ describe("Cabin queries", () => {
        */
       const { client, cabinService } = createMockApolloServer();
 
-      cabinService.getBookingSemester.mockImplementation(
-        async (semester: Semester) => {
-          return mock<BookingSemester>({ semester });
-        },
-      );
+      cabinService.getBookingSemester.mockImplementation(async (semester: Semester) => {
+        return mock<BookingSemester>({ semester });
+      });
 
       const { data, errors } = await client.query({
         query: graphql(`

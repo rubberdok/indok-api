@@ -1,8 +1,5 @@
 import { faker } from "@faker-js/faker";
-import {
-  GraphQLTestClient,
-  newGraphQLTestClient,
-} from "~/graphql/test-clients/graphql-test-client.js";
+import { GraphQLTestClient, newGraphQLTestClient } from "~/graphql/test-clients/graphql-test-client.js";
 import { graphql } from "~/graphql/test-clients/integration/gql.js";
 import prisma from "~/lib/prisma.js";
 
@@ -75,12 +72,8 @@ describe("Organization mutations", () => {
          */
         expect(errors).toBeUndefined();
         expect(data).toBeDefined();
-        expect(data?.createOrganization.organization.name).toEqual(
-          expect.any(String),
-        );
-        expect(
-          data?.createOrganization.organization.featurePermissions,
-        ).toEqual(["CABIN_BOOKING"]);
+        expect(data?.createOrganization.organization.name).toEqual(expect.any(String));
+        expect(data?.createOrganization.organization.featurePermissions).toEqual(["CABIN_BOOKING"]);
       });
     });
   });

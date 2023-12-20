@@ -3,11 +3,7 @@ import { Listing } from "@prisma/client";
 import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { PermissionDeniedError } from "~/domain/errors.js";
 import { Role } from "~/domain/organizations.js";
-import {
-  ListingRepository,
-  ListingService,
-  PermissionService,
-} from "../../service.js";
+import { ListingRepository, ListingService, PermissionService } from "../../service.js";
 
 describe("ListingService", () => {
   let listingService: ListingService;
@@ -31,9 +27,7 @@ describe("ListingService", () => {
       const userId = faker.string.uuid();
       const listingId = faker.string.uuid();
       const organizationId = faker.string.uuid();
-      listingRepository.get.mockResolvedValueOnce(
-        mock<Listing>({ organizationId }),
-      );
+      listingRepository.get.mockResolvedValueOnce(mock<Listing>({ organizationId }));
       listingRepository.delete.mockResolvedValueOnce(mock<Listing>());
       permissionService.hasRole.mockResolvedValueOnce(true);
 
@@ -42,9 +36,7 @@ describe("ListingService", () => {
        *
        * Call delete and assert that it does not throw
        */
-      await expect(
-        listingService.delete(userId, listingId),
-      ).resolves.not.toThrow();
+      await expect(listingService.delete(userId, listingId)).resolves.not.toThrow();
       expect(listingRepository.delete).toHaveBeenCalledWith(listingId);
     });
 
@@ -58,18 +50,14 @@ describe("ListingService", () => {
         const userId = faker.string.uuid();
         const organizationId = faker.string.uuid();
         permissionService.hasRole.mockResolvedValue(true);
-        listingRepository.get.mockResolvedValueOnce(
-          mock<Listing>({ organizationId }),
-        );
+        listingRepository.get.mockResolvedValueOnce(mock<Listing>({ organizationId }));
 
         /**
          * Act
          *
          * Call delete and assert that it does not throw
          */
-        await expect(
-          listingService.delete(userId, faker.string.uuid()),
-        ).resolves.not.toThrow();
+        await expect(listingService.delete(userId, faker.string.uuid())).resolves.not.toThrow();
 
         /**
          * Assert
@@ -91,18 +79,14 @@ describe("ListingService", () => {
          */
         const userId = faker.string.uuid();
         permissionService.hasRole.mockResolvedValue(false);
-        listingRepository.get.mockResolvedValueOnce(
-          mock<Listing>({ organizationId: faker.string.uuid() }),
-        );
+        listingRepository.get.mockResolvedValueOnce(mock<Listing>({ organizationId: faker.string.uuid() }));
 
         /**
          * Act
          *
          * Call delete, assert that it throws
          */
-        await expect(
-          listingService.delete(userId, faker.string.uuid()),
-        ).rejects.toThrow(PermissionDeniedError);
+        await expect(listingService.delete(userId, faker.string.uuid())).rejects.toThrow(PermissionDeniedError);
 
         /**
          * Assert

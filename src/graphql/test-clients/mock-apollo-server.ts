@@ -1,11 +1,7 @@
 import assert from "assert";
 import { ApolloServer } from "@apollo/server";
 import { FastifySessionObject } from "@fastify/session";
-import {
-  ResultOf,
-  TypedDocumentNode,
-  VariablesOf,
-} from "@graphql-typed-document-node/core";
+import { ResultOf, TypedDocumentNode, VariablesOf } from "@graphql-typed-document-node/core";
 import { FastifyBaseLogger, FastifyReply, FastifyRequest } from "fastify";
 import { GraphQLFormattedError } from "graphql";
 import { mock, mockDeep } from "jest-mock-extended";
@@ -14,9 +10,7 @@ import { ApolloContext, getFormatErrorHandler } from "~/lib/apollo-server.js";
 import { resolvers } from "../resolvers.generated.js";
 import { typeDefs } from "../type-defs.generated.js";
 
-interface QueryResult<
-  T extends TypedDocumentNode<ResultOf<T>, VariablesOf<T>>,
-> {
+interface QueryResult<T extends TypedDocumentNode<ResultOf<T>, VariablesOf<T>>> {
   data?: ResultOf<T>;
   errors?: readonly GraphQLFormattedError[];
 }
@@ -132,9 +126,7 @@ export const createMockApolloServer = (logger?: Partial<FastifyBaseLogger>) => {
   };
 };
 
-type CreateMockContextData =
-  | { user?: Partial<User> & { id: string } }
-  | DeprectatedCreateMockContextData;
+type CreateMockContextData = { user?: Partial<User> & { id: string } } | DeprectatedCreateMockContextData;
 
 type DeprectatedCreateMockContextData = Partial<{
   userId: string;

@@ -44,10 +44,7 @@ describe("AuthService", () => {
         }),
       );
 
-      expect(req.session.regenerate).toHaveBeenCalledWith([
-        "authenticated",
-        "userId",
-      ]);
+      expect(req.session.regenerate).toHaveBeenCalledWith(["authenticated", "userId"]);
       expect(req.session.set).toHaveBeenCalledWith("authenticated", true);
       expect(req.session.set).toHaveBeenCalledWith("userId", user.id);
       expect(actual.id).toEqual(user.id);

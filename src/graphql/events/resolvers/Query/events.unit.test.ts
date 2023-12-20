@@ -9,9 +9,7 @@ describe("Event queries", () => {
   describe("events", () => {
     it("should return a list of events", async () => {
       const { client, eventService } = createMockApolloServer();
-      eventService.findMany.mockResolvedValue([
-        mock<Event>({ id: faker.string.uuid() }),
-      ]);
+      eventService.findMany.mockResolvedValue([mock<Event>({ id: faker.string.uuid() })]);
 
       const { errors, data } = await client.query({
         query: graphql(`
@@ -32,9 +30,7 @@ describe("Event queries", () => {
 
     it("should filter on only future events with { futureEventsOnly: true }", async () => {
       const { client, eventService } = createMockApolloServer();
-      eventService.findMany.mockResolvedValue([
-        mock<Event>({ id: faker.string.uuid() }),
-      ]);
+      eventService.findMany.mockResolvedValue([mock<Event>({ id: faker.string.uuid() })]);
 
       const { errors } = await client.query({
         query: graphql(`
@@ -134,12 +130,8 @@ describe("Event queries", () => {
       expect(data?.events.nextWeek[0]?.id).toEqual(eventNextWeek.id);
 
       expect(data?.events.twoWeeksOrLater).toHaveLength(4);
-      expect(data?.events.twoWeeksOrLater.map((event) => event.id)).toContain(
-        eventInTwoWeeks.id,
-      );
-      expect(data?.events.twoWeeksOrLater.map((event) => event.id)).toContain(
-        eventFarInTheFuture.id,
-      );
+      expect(data?.events.twoWeeksOrLater.map((event) => event.id)).toContain(eventInTwoWeeks.id);
+      expect(data?.events.twoWeeksOrLater.map((event) => event.id)).toContain(eventFarInTheFuture.id);
     });
   });
 });

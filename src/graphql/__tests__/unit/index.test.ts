@@ -11,9 +11,7 @@ describe("GraphQL", () => {
 
     userService.getAll.mockResolvedValue([]);
 
-    const res = await server.executeOperation<
-      ResultOf<typeof GetUsersDocument>
-    >(
+    const res = await server.executeOperation<ResultOf<typeof GetUsersDocument>>(
       {
         query: graphql(`
           query getUsers {

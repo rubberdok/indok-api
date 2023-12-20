@@ -30,12 +30,7 @@ export class CabinRepository {
     });
   }
 
-  getOverlappingBookings({
-    bookingId,
-    endDate,
-    startDate,
-    status,
-  }: OverlappingBookingsData): Promise<Booking[]> {
+  getOverlappingBookings({ bookingId, endDate, startDate, status }: OverlappingBookingsData): Promise<Booking[]> {
     return this.db.booking.findMany({
       where: {
         AND: [
@@ -147,9 +142,7 @@ export class CabinRepository {
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError) {
         if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND)
-          throw new NotFoundError(
-            `No booking semester for ${data.semester} found, please create one first`,
-          );
+          throw new NotFoundError(`No booking semester for ${data.semester} found, please create one first`);
       }
       throw err;
     }
@@ -177,9 +170,7 @@ export class CabinRepository {
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError) {
         if (err.code === prismaKnownErrorCodes.ERR_UNIQUE_CONSTRAINT_VIOLATION)
-          throw new InvalidArgumentError(
-            `A booking semester for ${data.semester} already exists`,
-          );
+          throw new InvalidArgumentError(`A booking semester for ${data.semester} already exists`);
       }
       throw err;
     }
@@ -188,9 +179,7 @@ export class CabinRepository {
   /**
    * getBookingSemester returns the booking semester for the given semester, or null if it does not exist.
    */
-  async getBookingSemester(
-    semester: Semester,
-  ): Promise<BookingSemester | null> {
+  async getBookingSemester(semester: Semester): Promise<BookingSemester | null> {
     const bookingSemester = await this.db.bookingSemester.findUnique({
       where: {
         semester,
@@ -230,9 +219,7 @@ export class CabinRepository {
   /**
    * getBookingContact returns the booking contact information. If it does not exist, blank strings will be returned.
    */
-  async getBookingContact(): Promise<
-    Pick<BookingContact, "email" | "id" | "name" | "phoneNumber">
-  > {
+  async getBookingContact(): Promise<Pick<BookingContact, "email" | "id" | "name" | "phoneNumber">> {
     const bookingContact = await this.db.bookingContact.findUnique({
       select: {
         id: true,

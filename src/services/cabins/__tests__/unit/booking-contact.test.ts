@@ -1,16 +1,8 @@
 import { faker } from "@faker-js/faker";
 import { BookingContact, FeaturePermission } from "@prisma/client";
 import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
-import {
-  InvalidArgumentError,
-  PermissionDeniedError,
-} from "~/domain/errors.js";
-import {
-  CabinRepository,
-  CabinService,
-  IMailService,
-  PermissionService,
-} from "../../service.js";
+import { InvalidArgumentError, PermissionDeniedError } from "~/domain/errors.js";
+import { CabinRepository, CabinService, IMailService, PermissionService } from "../../service.js";
 
 describe("CabinService", () => {
   let cabinService: CabinService;
@@ -22,11 +14,7 @@ describe("CabinService", () => {
     cabinRepository = mockDeep<CabinRepository>();
     permissionService = mockDeep<PermissionService>();
     mailService = mockDeep<IMailService>();
-    cabinService = new CabinService(
-      cabinRepository,
-      mailService,
-      permissionService,
-    );
+    cabinService = new CabinService(cabinRepository, mailService, permissionService);
   });
 
   describe("updateBookingContact", () => {
@@ -73,9 +61,7 @@ describe("CabinService", () => {
        */
       const userId = faker.string.uuid();
       permissionService.hasFeaturePermission.mockResolvedValueOnce(true);
-      cabinRepository.updateBookingContact.mockResolvedValueOnce(
-        mock<BookingContact>(),
-      );
+      cabinRepository.updateBookingContact.mockResolvedValueOnce(mock<BookingContact>());
 
       /**
        * Act
@@ -113,9 +99,7 @@ describe("CabinService", () => {
        */
       const userId = faker.string.uuid();
       permissionService.hasFeaturePermission.mockResolvedValueOnce(true);
-      cabinRepository.updateBookingContact.mockResolvedValueOnce(
-        mock<BookingContact>(),
-      );
+      cabinRepository.updateBookingContact.mockResolvedValueOnce(mock<BookingContact>());
 
       /**
        * Act
@@ -149,9 +133,7 @@ describe("CabinService", () => {
        */
       const userId = faker.string.uuid();
       permissionService.hasFeaturePermission.mockResolvedValueOnce(true);
-      cabinRepository.updateBookingContact.mockResolvedValueOnce(
-        mock<BookingContact>(),
-      );
+      cabinRepository.updateBookingContact.mockResolvedValueOnce(mock<BookingContact>());
 
       /**
        * Act
@@ -180,9 +162,7 @@ describe("CabinService", () => {
        * Mock the cabinRepository.getBookingContact method to return a booking contact.
        */
       permissionService.hasFeaturePermission.mockResolvedValueOnce(false);
-      cabinRepository.getBookingContact.mockResolvedValueOnce(
-        mock<BookingContact>(),
-      );
+      cabinRepository.getBookingContact.mockResolvedValueOnce(mock<BookingContact>());
 
       /**
        * Act

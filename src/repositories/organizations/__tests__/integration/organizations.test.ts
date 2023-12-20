@@ -193,40 +193,37 @@ describe("OrganizationsRepository", () => {
         },
       },
     ];
-    test.concurrent.each(testCases)(
-      "$name, $data",
-      async ({ data, expected }) => {
-        /**
-         * Arrange
-         *
-         * 1. Create an organization random {name} and random {description}
-         */
-        const organization = await prisma.organization.create({
-          data: {
-            name: faker.string.sample(),
-            description: faker.lorem.paragraph(),
-          },
-        });
+    test.concurrent.each(testCases)("$name, $data", async ({ data, expected }) => {
+      /**
+       * Arrange
+       *
+       * 1. Create an organization random {name} and random {description}
+       */
+      const organization = await prisma.organization.create({
+        data: {
+          name: faker.string.sample(),
+          description: faker.lorem.paragraph(),
+        },
+      });
 
-        /**
-         * Act
-         *
-         * Update the organization with {data}
-         */
-        const result = organizationRepository.update(organization.id, data);
+      /**
+       * Act
+       *
+       * Update the organization with {data}
+       */
+      const result = organizationRepository.update(organization.id, data);
 
-        /**
-         * Assert
-         *
-         * Check that the organization has been updated with {data} and now matches
-         * {expected}, leaving undefined values unchanged.
-         */
-        await expect(result).resolves.toEqual({
-          ...expected,
-          ...data,
-        });
-      },
-    );
+      /**
+       * Assert
+       *
+       * Check that the organization has been updated with {data} and now matches
+       * {expected}, leaving undefined values unchanged.
+       */
+      await expect(result).resolves.toEqual({
+        ...expected,
+        ...data,
+      });
+    });
   });
 
   describe("get", () => {

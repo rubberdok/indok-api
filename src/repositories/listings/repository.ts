@@ -89,8 +89,7 @@ export class ListingRepository {
         id,
       },
     });
-    if (listing === null)
-      throw new NotFoundError(`Listing with id ${id} not found`);
+    if (listing === null) throw new NotFoundError(`Listing with id ${id} not found`);
     return listing;
   }
 

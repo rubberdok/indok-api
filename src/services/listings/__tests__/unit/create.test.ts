@@ -1,15 +1,8 @@
 import { faker } from "@faker-js/faker";
 import { DeepMockProxy, mockDeep } from "jest-mock-extended";
-import {
-  InvalidArgumentError,
-  PermissionDeniedError,
-} from "~/domain/errors.js";
+import { InvalidArgumentError, PermissionDeniedError } from "~/domain/errors.js";
 import { Role } from "~/domain/organizations.js";
-import {
-  ListingRepository,
-  ListingService,
-  PermissionService,
-} from "../../service.js";
+import { ListingRepository, ListingService, PermissionService } from "../../service.js";
 
 describe("ListingService", () => {
   let listingService: ListingService;
@@ -86,9 +79,7 @@ describe("ListingService", () => {
          */
         permissionService.hasRole.mockResolvedValue(true);
 
-        await expect(
-          listingService.create(faker.string.uuid(), data),
-        ).rejects.toThrow(InvalidArgumentError);
+        await expect(listingService.create(faker.string.uuid(), data)).rejects.toThrow(InvalidArgumentError);
       });
     });
 
@@ -179,9 +170,7 @@ describe("ListingService", () => {
          */
         permissionService.hasRole.mockResolvedValue(true);
 
-        await expect(
-          listingService.create(faker.string.uuid(), data),
-        ).resolves.not.toThrow();
+        await expect(listingService.create(faker.string.uuid(), data)).resolves.not.toThrow();
         expect(listingRepository.create).toHaveBeenCalledWith(expected);
       });
     });
@@ -207,9 +196,7 @@ describe("ListingService", () => {
          *
          * Call create
          */
-        await expect(
-          listingService.create(userId, data),
-        ).resolves.not.toThrow();
+        await expect(listingService.create(userId, data)).resolves.not.toThrow();
 
         /**
          * Assert
@@ -243,9 +230,7 @@ describe("ListingService", () => {
          *
          * Call create
          */
-        await expect(listingService.create(userId, data)).rejects.toThrow(
-          PermissionDeniedError,
-        );
+        await expect(listingService.create(userId, data)).rejects.toThrow(PermissionDeniedError);
 
         /**
          * Assert

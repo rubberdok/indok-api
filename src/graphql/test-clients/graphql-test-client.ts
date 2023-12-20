@@ -1,17 +1,10 @@
 import { faker } from "@faker-js/faker";
 import { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
 import { PrismaClient } from "@prisma/client";
-import {
-  FastifyInstance,
-  InjectOptions,
-  LightMyRequestResponse,
-} from "fastify";
+import { FastifyInstance, InjectOptions, LightMyRequestResponse } from "fastify";
 import { GraphQLError } from "graphql";
 import { defaultTestDependenciesFactory } from "~/__tests__/dependencies-factory.js";
-import {
-  MockOpenIdClient,
-  newMockOpenIdClient,
-} from "~/__tests__/mocks/openIdClient.js";
+import { MockOpenIdClient, newMockOpenIdClient } from "~/__tests__/mocks/openIdClient.js";
 import { env } from "~/config.js";
 import { ApolloServerDependencies } from "~/lib/apollo-server.js";
 import { initServer } from "~/server.js";
@@ -71,15 +64,10 @@ export class GraphQLTestClient {
   }
 
   public async performMockedLogin(
-    data:
-      | { userId: string }
-      | { feideId: string; email?: string; name?: string },
+    data: { userId: string } | { feideId: string; email?: string; name?: string },
   ): Promise<{ cookies: Record<string, string>; userId: string }> {
     if ("userId" in data) {
-      const user =
-        await this.dependencies?.apolloServerDependencies.userService.get(
-          data.userId,
-        );
+      const user = await this.dependencies?.apolloServerDependencies.userService.get(data.userId);
       this.mockOpenIdClient.updateUserResponseMock({
         id: user.feideId,
         email: user.email,

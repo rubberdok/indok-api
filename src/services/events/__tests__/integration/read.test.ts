@@ -81,11 +81,7 @@ describe("EventService", () => {
        *
        * 1. Create several events
        */
-      const eventIds = [
-        faker.string.uuid(),
-        faker.string.uuid(),
-        faker.string.uuid(),
-      ];
+      const eventIds = [faker.string.uuid(), faker.string.uuid(), faker.string.uuid()];
       await Promise.all(
         eventIds.map((id) =>
           prisma.event.create({

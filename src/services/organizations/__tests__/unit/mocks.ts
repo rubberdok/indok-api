@@ -23,8 +23,7 @@ export function getMockHasRoleImplementation(state: {
     userId: string;
     role: Role;
   }): Promise<boolean> {
-    if (data.organizationId !== state.organizationId)
-      return Promise.resolve(false);
+    if (data.organizationId !== state.organizationId) return Promise.resolve(false);
     if (data.userId !== state.userId) return Promise.resolve(false);
     if (data.role !== state.role) return Promise.resolve(false);
     return Promise.resolve(true);
@@ -33,22 +32,17 @@ export function getMockHasRoleImplementation(state: {
 }
 
 export function getMockGetImplementation(state: { members: Member[] }) {
-  function get(
-    data: { id: string } | { userId: string; organizationId: string },
-  ): Promise<Member> {
+  function get(data: { id: string } | { userId: string; organizationId: string }): Promise<Member> {
     let result: Member | undefined;
     if ("id" in data) {
       result = state.members.find((member) => member.id === data.id);
     } else {
       result = state.members.find(
-        (member) =>
-          member.userId === data.userId &&
-          member.organizationId === data.organizationId,
+        (member) => member.userId === data.userId && member.organizationId === data.organizationId,
       );
     }
 
-    if (typeof result === "undefined")
-      throw new NotFoundError("Member not found");
+    if (typeof result === "undefined") throw new NotFoundError("Member not found");
 
     return Promise.resolve(result);
   }

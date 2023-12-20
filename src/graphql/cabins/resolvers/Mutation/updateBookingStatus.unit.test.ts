@@ -28,23 +28,16 @@ describe("Cabin mutations", () => {
         },
       });
       expect(errors).toBeDefined();
-      expect(
-        errors?.some(
-          (err) => err.extensions?.code === errorCodes.ERR_PERMISSION_DENIED,
-        ),
-      ).toBe(true);
+      expect(errors?.some((err) => err.extensions?.code === errorCodes.ERR_PERMISSION_DENIED)).toBe(true);
     });
 
     it("should call updateBookingStatus with the correct arugments if authenticated", async () => {
-      const { client, cabinService, createMockContext } =
-        createMockApolloServer();
+      const { client, cabinService, createMockContext } = createMockApolloServer();
 
       const id = faker.string.uuid();
       const userId = faker.string.uuid();
       const authenticatedContext = createMockContext({ user: { id: userId } });
-      cabinService.updateBookingStatus.mockResolvedValueOnce(
-        mock<Booking>({ id }),
-      );
+      cabinService.updateBookingStatus.mockResolvedValueOnce(mock<Booking>({ id }));
 
       const { errors } = await client.mutate(
         {
@@ -70,11 +63,7 @@ describe("Cabin mutations", () => {
       );
 
       expect(errors).toBeUndefined();
-      expect(cabinService.updateBookingStatus).toHaveBeenCalledWith(
-        userId,
-        id,
-        "PENDING",
-      );
+      expect(cabinService.updateBookingStatus).toHaveBeenCalledWith(userId, id, "PENDING");
     });
   });
 });

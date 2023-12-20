@@ -1,10 +1,6 @@
 import { FeaturePermission, Organization, PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
-import {
-  InternalServerError,
-  InvalidArgumentError,
-  NotFoundError,
-} from "~/domain/errors.js";
+import { InternalServerError, InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
 import { Role } from "~/domain/organizations.js";
 import { prismaKnownErrorCodes } from "~/lib/prisma.js";
 
@@ -47,12 +43,8 @@ export class OrganizationRepository {
       })
       .catch((err) => {
         if (err instanceof PrismaClientKnownRequestError) {
-          if (
-            err.code === prismaKnownErrorCodes.ERR_UNIQUE_CONSTRAINT_VIOLATION
-          ) {
-            throw new InvalidArgumentError(
-              "The organization name is already taken.",
-            );
+          if (err.code === prismaKnownErrorCodes.ERR_UNIQUE_CONSTRAINT_VIOLATION) {
+            throw new InvalidArgumentError("The organization name is already taken.");
           }
         }
         throw err;
@@ -95,21 +87,19 @@ export class OrganizationRepository {
    * @returns Organization
    */
   async get(id: string): Promise<Organization> {
-    return this.db.organization
-      .findUniqueOrThrow({ where: { id } })
-      .catch((err) => {
-        if (err instanceof PrismaClientKnownRequestError) {
-          /**
-           * "An operation failed because it depends on one or more records that were required but not found. {cause}"
-           * https://www.prisma.io/docs/reference/api-reference/error-reference#p2025
-           */
-          if (err.code === "P2025") {
-            throw new NotFoundError("The organization does not exist.");
-          }
-          throw err;
+    return this.db.organization.findUniqueOrThrow({ where: { id } }).catch((err) => {
+      if (err instanceof PrismaClientKnownRequestError) {
+        /**
+         * "An operation failed because it depends on one or more records that were required but not found. {cause}"
+         * https://www.prisma.io/docs/reference/api-reference/error-reference#p2025
+         */
+        if (err.code === "P2025") {
+          throw new NotFoundError("The organization does not exist.");
         }
-        throw new InternalServerError(err.message);
-      });
+        throw err;
+      }
+      throw new InternalServerError(err.message);
+    });
   }
 
   /**

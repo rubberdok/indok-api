@@ -14,17 +14,9 @@ export function makeDependencies() {
   const organizationRepository = new OrganizationRepository(prisma);
   const memberRepository = new MemberRepository(prisma);
   const userRepository = new UserRepository(prisma);
-  const permissionService = new PermissionService(
-    memberRepository,
-    userRepository,
-    organizationRepository,
-  );
+  const permissionService = new PermissionService(memberRepository, userRepository, organizationRepository);
   const userService = new UserService(userRepository, permissionService);
-  const eventService = new EventService(
-    eventRepository,
-    permissionService,
-    userService,
-  );
+  const eventService = new EventService(eventRepository, permissionService, userService);
   return { eventService };
 }
 

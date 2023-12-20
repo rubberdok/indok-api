@@ -3,11 +3,7 @@ import { User } from "@prisma/client";
 import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
 import { PermissionDeniedError } from "~/domain/errors.js";
-import {
-  PermissionService,
-  UserRepository,
-  UserService,
-} from "../../service.js";
+import { PermissionService, UserRepository, UserService } from "../../service.js";
 
 describe("UserService", () => {
   let userService: UserService;
@@ -52,9 +48,7 @@ describe("UserService", () => {
         expect(userRepository.update).toHaveBeenCalledWith(updateUserId, {
           isSuperUser: true,
         });
-        expect(permissionService.isSuperUser).toHaveBeenCalledWith(
-          callerUserId,
-        );
+        expect(permissionService.isSuperUser).toHaveBeenCalledWith(callerUserId);
       });
 
       it("should set graduationYearUpdatedAt or firstLogin", async () => {
@@ -107,11 +101,7 @@ describe("UserService", () => {
          * Call update with isSuperUser set to true
          */
         const callerUserId = faker.string.uuid();
-        const actual = userService.superUpdateUser(
-          callerUserId,
-          faker.string.uuid(),
-          { isSuperUser: true },
-        );
+        const actual = userService.superUpdateUser(callerUserId, faker.string.uuid(), { isSuperUser: true });
 
         /**
          * Assert
@@ -120,9 +110,7 @@ describe("UserService", () => {
          */
         expect(actual).rejects.toThrow(PermissionDeniedError);
         expect(userRepository.update).not.toHaveBeenCalled();
-        expect(permissionService.isSuperUser).toHaveBeenCalledWith(
-          callerUserId,
-        );
+        expect(permissionService.isSuperUser).toHaveBeenCalledWith(callerUserId);
       });
     });
   });

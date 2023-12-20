@@ -2,16 +2,8 @@ import { faker } from "@faker-js/faker";
 import { Booking, Cabin, FeaturePermission } from "@prisma/client";
 import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { BookingStatus } from "~/domain/cabins.js";
-import {
-  InvalidArgumentError,
-  PermissionDeniedError,
-} from "~/domain/errors.js";
-import {
-  CabinRepository,
-  CabinService,
-  IMailService,
-  PermissionService,
-} from "../../service.js";
+import { InvalidArgumentError, PermissionDeniedError } from "~/domain/errors.js";
+import { CabinRepository, CabinService, IMailService, PermissionService } from "../../service.js";
 
 describe("CabinService", () => {
   let cabinRepository: DeepMockProxy<CabinRepository>;
@@ -23,11 +15,7 @@ describe("CabinService", () => {
     cabinRepository = mockDeep<CabinRepository>();
     mailService = mockDeep<IMailService>();
     permissionService = mockDeep<PermissionService>();
-    cabinService = new CabinService(
-      cabinRepository,
-      mailService,
-      permissionService,
-    );
+    cabinService = new CabinService(cabinRepository, mailService, permissionService);
   });
 
   describe("updateBookingStatus", () => {
@@ -85,9 +73,7 @@ describe("CabinService", () => {
           endDate: faker.date.future(),
         }),
       );
-      cabinRepository.getOverlappingBookings.mockResolvedValueOnce([
-        mock<Booking>({ id: faker.string.uuid() }),
-      ]);
+      cabinRepository.getOverlappingBookings.mockResolvedValueOnce([mock<Booking>({ id: faker.string.uuid() })]);
 
       /**
        * Act

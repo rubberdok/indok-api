@@ -14,11 +14,7 @@ describe("OrganizationsService", () => {
     const userRepository = new UserRepository(prisma);
     const memberRepository = new MemberRepository(prisma);
     const organizationRepository = new OrganizationRepository(prisma);
-    permissionService = new PermissionService(
-      memberRepository,
-      userRepository,
-      organizationRepository,
-    );
+    permissionService = new PermissionService(memberRepository, userRepository, organizationRepository);
   });
 
   describe("hasRole", () => {
@@ -156,10 +152,7 @@ describe("OrganizationsService", () => {
           user: makeUser({ isSuperUser: false }),
           organization: {
             name: faker.string.sample(20),
-            featurePermissions: [
-              FeaturePermission.CABIN_BOOKING,
-              FeaturePermission.ARCHIVE,
-            ],
+            featurePermissions: [FeaturePermission.CABIN_BOOKING, FeaturePermission.ARCHIVE],
           },
           member: {
             role: Role.ADMIN,
@@ -188,12 +181,7 @@ describe("OrganizationsService", () => {
 
     test.concurrent.each(testCases)(
       "should return $expected for requiredRole: $requiredRole, requiredFeaturePermission $requiredFeaturePermission with: [isSuperUser: $arrange.user.isSuperUser], [role: $arrange.member.role], [featurePermissions: $arrange.organization.featurePermissions]",
-      async ({
-        arrange,
-        expected,
-        requiredRole,
-        requiredFeaturePermission,
-      }) => {
+      async ({ arrange, expected, requiredRole, requiredFeaturePermission }) => {
         /**
          * Arrange
          *
@@ -432,10 +420,7 @@ describe("OrganizationsService", () => {
       });
       const organizationWithoutFeaturePermission = await makeOrganization({});
       const organizationWithFeaturePermission = await makeOrganization({
-        featurePermissions: [
-          FeaturePermission.CABIN_BOOKING,
-          FeaturePermission.ARCHIVE,
-        ],
+        featurePermissions: [FeaturePermission.CABIN_BOOKING, FeaturePermission.ARCHIVE],
       });
       await makeMember({
         userId: user.id,

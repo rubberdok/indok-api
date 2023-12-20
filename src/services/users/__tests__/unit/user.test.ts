@@ -2,11 +2,7 @@ import { jest } from "@jest/globals";
 import { Prisma, User } from "@prisma/client";
 import dayjs from "dayjs";
 import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
-import {
-  PermissionService,
-  UserRepository,
-  UserService,
-} from "../../service.js";
+import { PermissionService, UserRepository, UserService } from "../../service.js";
 
 const dummyUser = mockDeep<User>();
 
@@ -112,10 +108,7 @@ describe("UserService", () => {
         id: "1",
         firstLogin: false,
         graduationYear: dayjs().year(),
-        graduationYearUpdatedAt: dayjs(time)
-          .subtract(1, "year")
-          .add(1, "minute")
-          .toDate(),
+        graduationYearUpdatedAt: dayjs(time).subtract(1, "year").add(1, "minute").toDate(),
       },
       expected: {
         ...dummyUser,
@@ -137,10 +130,7 @@ describe("UserService", () => {
         id: "1",
         firstLogin: false,
         graduationYear: dayjs().year(),
-        graduationYearUpdatedAt: dayjs(time)
-          .subtract(1, "year")
-          .subtract(1, "minute")
-          .toDate(),
+        graduationYearUpdatedAt: dayjs(time).subtract(1, "year").subtract(1, "minute").toDate(),
       },
       expected: {
         ...dummyUser,
@@ -150,24 +140,19 @@ describe("UserService", () => {
     },
   ];
 
-  test.each(testCases)(
-    "should $name",
-    async ({ existing, expected, input, updateInput }) => {
-      repo.get.mockReturnValueOnce(Promise.resolve(existing));
-      repo.update.mockReturnValueOnce(Promise.resolve(expected));
-      permissionService.isSuperUser.mockResolvedValue({ isSuperUser: false });
+  test.each(testCases)("should $name", async ({ existing, expected, input, updateInput }) => {
+    repo.get.mockReturnValueOnce(Promise.resolve(existing));
+    repo.update.mockReturnValueOnce(Promise.resolve(expected));
+    permissionService.isSuperUser.mockResolvedValue({ isSuperUser: false });
 
-      await service.update(existing.id, input);
+    await service.update(existing.id, input);
 
-      expect(repo.get).toHaveBeenCalledWith(existing.id);
-      expect(repo.update).toHaveBeenCalledWith(existing.id, updateInput);
-    },
-  );
+    expect(repo.get).toHaveBeenCalledWith(existing.id);
+    expect(repo.update).toHaveBeenCalledWith(existing.id, updateInput);
+  });
 
   it("logging in should set lastLogin", async () => {
-    repo.update.mockReturnValueOnce(
-      Promise.resolve(mock<User>({ graduationYearUpdatedAt: null })),
-    );
+    repo.update.mockReturnValueOnce(Promise.resolve(mock<User>({ graduationYearUpdatedAt: null })));
 
     await service.login(dummyUser.id);
 

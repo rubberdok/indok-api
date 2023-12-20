@@ -24,10 +24,7 @@ import { Role } from "~/domain/organizations.js";
 import { User } from "~/domain/users.js";
 
 export function getFormatErrorHandler(log?: Partial<FastifyInstance["log"]>) {
-  const formatError = (
-    formattedError: GraphQLFormattedError,
-    error: unknown,
-  ): GraphQLFormattedError => {
+  const formatError = (formattedError: GraphQLFormattedError, error: unknown): GraphQLFormattedError => {
     if (error instanceof ZodError) {
       return {
         ...formattedError,
@@ -94,14 +91,8 @@ interface IOrganizationService {
       featurePermissions?: FeaturePermission[] | null;
     },
   ): Promise<Organization>;
-  addMember(
-    userId: string,
-    data: { userId: string; organizationId: string; role: Role },
-  ): Promise<Member>;
-  removeMember(
-    userId: string,
-    data: { userId: string; organizationId: string } | { id: string },
-  ): Promise<Member>;
+  addMember(userId: string, data: { userId: string; organizationId: string; role: Role }): Promise<Member>;
+  removeMember(userId: string, data: { userId: string; organizationId: string } | { id: string }): Promise<Member>;
   getMembers(userId: string, organizationId: string): Promise<Member[]>;
   get(id: string): Promise<Organization>;
   findMany(data?: { userId?: string }): Promise<Organization[]>;
@@ -150,11 +141,7 @@ export interface BookingData {
 
 export interface ICabinService {
   newBooking(data: BookingData): Promise<Booking>;
-  updateBookingStatus(
-    userId: string,
-    id: string,
-    status: BookingStatus,
-  ): Promise<Booking>;
+  updateBookingStatus(userId: string, id: string, status: BookingStatus): Promise<Booking>;
   getCabin(id: string): Promise<Cabin>;
   getCabinByBookingId(bookingId: string): Promise<Cabin>;
   findManyCabins(): Promise<Cabin[]>;
@@ -168,9 +155,7 @@ export interface ICabinService {
     },
   ): Promise<BookingSemester>;
   getBookingSemester(semester: Semester): Promise<BookingSemester | null>;
-  getBookingContact(): Promise<
-    Pick<BookingContact, "email" | "name" | "phoneNumber" | "id">
-  >;
+  getBookingContact(): Promise<Pick<BookingContact, "email" | "name" | "phoneNumber" | "id">>;
   updateBookingContact(
     userId: string,
     data: Partial<{
@@ -217,10 +202,7 @@ interface IEventService {
   signUp(userId: string, eventId: string): Promise<EventSignUp>;
   retractSignUp(userId: string, eventId: string): Promise<EventSignUp>;
   canSignUpForEvent(userId: string, eventId: string): Promise<boolean>;
-  getSignUpAvailability(
-    userId: string | undefined,
-    eventId: string,
-  ): Promise<SignUpAvailability>;
+  getSignUpAvailability(userId: string | undefined, eventId: string): Promise<SignUpAvailability>;
 }
 
 interface ListingService {

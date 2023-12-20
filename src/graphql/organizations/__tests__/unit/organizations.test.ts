@@ -7,10 +7,7 @@ import { errorCodes } from "~/domain/errors.js";
 import { Role } from "~/domain/organizations.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
-import {
-  AddMember2Document,
-  RemoveMember2Document,
-} from "~/graphql/test-clients/unit/graphql.js";
+import { AddMember2Document, RemoveMember2Document } from "~/graphql/test-clients/unit/graphql.js";
 
 describe("OrganizationResolvers", () => {
   describe("Mutation", () => {
@@ -47,9 +44,7 @@ describe("OrganizationResolvers", () => {
           },
         );
         assert(typeof errors !== "undefined");
-        expect(errors[0]?.extensions?.code).toBe(
-          errorCodes.ERR_PERMISSION_DENIED,
-        );
+        expect(errors[0]?.extensions?.code).toBe(errorCodes.ERR_PERMISSION_DENIED);
       });
 
       it("should call createOrganization if the user is authenticated", async () => {
@@ -59,8 +54,7 @@ describe("OrganizationResolvers", () => {
          * 1. Create a mock ApolloServer
          * 2. Create the mock context without a userId in session
          */
-        const { createMockContext, client, organizationService } =
-          createMockApolloServer();
+        const { createMockContext, client, organizationService } = createMockApolloServer();
         const contextValue = createMockContext({
           userId: faker.string.uuid(),
           authenticated: true,
@@ -143,9 +137,7 @@ describe("OrganizationResolvers", () => {
           },
         );
         assert(typeof errors !== "undefined");
-        expect(errors[0]?.extensions?.code).toBe(
-          errorCodes.ERR_PERMISSION_DENIED,
-        );
+        expect(errors[0]?.extensions?.code).toBe(errorCodes.ERR_PERMISSION_DENIED);
       });
 
       it("should call updateOrganization if the user is authenticated", async () => {
@@ -155,8 +147,7 @@ describe("OrganizationResolvers", () => {
          * 1. Create a mock ApolloServer
          * 2. Create the mock context without a userId in session
          */
-        const { createMockContext, client, organizationService } =
-          createMockApolloServer();
+        const { createMockContext, client, organizationService } = createMockApolloServer();
         const contextValue = createMockContext({
           userId: faker.string.uuid(),
           authenticated: true,
@@ -244,9 +235,7 @@ describe("OrganizationResolvers", () => {
           },
         );
         assert(typeof errors !== "undefined");
-        expect(errors[0]?.extensions?.code).toBe(
-          errorCodes.ERR_PERMISSION_DENIED,
-        );
+        expect(errors[0]?.extensions?.code).toBe(errorCodes.ERR_PERMISSION_DENIED);
       });
 
       it("should call addMember if the user is authenticated", async () => {
@@ -256,8 +245,7 @@ describe("OrganizationResolvers", () => {
          * 1. Create a mock ApolloServer
          * 2. Create the mock context without a userId in session
          */
-        const { createMockContext, client, organizationService } =
-          createMockApolloServer();
+        const { createMockContext, client, organizationService } = createMockApolloServer();
         const contextValue = createMockContext({
           userId: faker.string.uuid(),
           authenticated: true,
@@ -375,9 +363,7 @@ describe("OrganizationResolvers", () => {
           },
         );
         assert(typeof errors !== "undefined");
-        expect(errors[0]?.extensions?.code).toBe(
-          errorCodes.ERR_PERMISSION_DENIED,
-        );
+        expect(errors[0]?.extensions?.code).toBe(errorCodes.ERR_PERMISSION_DENIED);
       });
 
       it("should call removeMember if the user is authenticated", async () => {
@@ -388,8 +374,7 @@ describe("OrganizationResolvers", () => {
          * 2. Create the mock context without a userId in session
          */
         const userId = faker.string.uuid();
-        const { createMockContext, client, organizationService } =
-          createMockApolloServer();
+        const { createMockContext, client, organizationService } = createMockApolloServer();
         const contextValue = createMockContext({ userId, authenticated: true });
         organizationService.removeMember.mockResolvedValueOnce({
           id: faker.string.uuid(),

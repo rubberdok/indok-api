@@ -84,11 +84,7 @@ describe("AuthPlugin", () => {
        * Assert that the session cookie is regenerated on login
        * to prevent session fixation attacks.
        */
-      const authenticateResult = await performOAuthAuthentication(
-        app,
-        "code",
-        sessionCookie,
-      );
+      const authenticateResult = await performOAuthAuthentication(app, "code", sessionCookie);
       const authenticatedSessionCookie = authenticateResult.cookies[0]?.value;
       assert(authenticatedSessionCookie !== undefined);
       expect(authenticatedSessionCookie).not.toEqual(sessionCookie);
@@ -138,11 +134,7 @@ async function performLogin(app: FastifyInstance) {
   return performOAuthAuthentication(app, "code", sessionCookie);
 }
 
-function performOAuthAuthentication(
-  app: FastifyInstance,
-  code?: string,
-  sessionCookie?: string,
-) {
+function performOAuthAuthentication(app: FastifyInstance, code?: string, sessionCookie?: string) {
   let cookies: InjectOptions["cookies"] = {};
   if (sessionCookie) {
     cookies = {

@@ -3,12 +3,7 @@ import { FeaturePermission, Semester } from "@prisma/client";
 import { DeepMockProxy, mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
 import { NotFoundError, PermissionDeniedError } from "~/domain/errors.js";
-import {
-  CabinRepository,
-  CabinService,
-  IMailService,
-  PermissionService,
-} from "../../service.js";
+import { CabinRepository, CabinService, IMailService, PermissionService } from "../../service.js";
 
 describe("CabinService", () => {
   let cabinRepository: DeepMockProxy<CabinRepository>;
@@ -18,11 +13,7 @@ describe("CabinService", () => {
   beforeAll(() => {
     cabinRepository = mockDeep<CabinRepository>();
     permissionSerivce = mockDeep<PermissionService>();
-    cabinService = new CabinService(
-      cabinRepository,
-      mockDeep<IMailService>(),
-      permissionSerivce,
-    );
+    cabinService = new CabinService(cabinRepository, mockDeep<IMailService>(), permissionSerivce);
   });
 
   describe("updateBookingSemester", () => {
@@ -54,9 +45,7 @@ describe("CabinService", () => {
        * Expect updateBookingSemester to throw a PermissionDeniedError
        * Expect permissionService.hasFeaturePermission to be called with the correct arguments
        */
-      await expect(updateBookingSemester).rejects.toThrow(
-        PermissionDeniedError,
-      );
+      await expect(updateBookingSemester).rejects.toThrow(PermissionDeniedError);
       expect(permissionSerivce.hasFeaturePermission).toHaveBeenCalledWith({
         userId: userId,
         featurePermission: FeaturePermission.CABIN_BOOKING,

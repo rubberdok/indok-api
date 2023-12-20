@@ -14,8 +14,7 @@ describe("Event mutations", () => {
        * Create an authenticated context,
        * and set up the mock return value for the eventService.create method.
        */
-      const { client, createMockContext, eventService } =
-        createMockApolloServer();
+      const { client, createMockContext, eventService } = createMockApolloServer();
 
       const contextValue = createMockContext({
         authenticated: true,
@@ -70,14 +69,10 @@ describe("Event mutations", () => {
        * and that no errors were returned.
        */
       expect(errors).toBeUndefined();
-      expect(eventService.create).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.any(String),
-        {
-          name: expect.any(String),
-          startAt: expect.any(Date),
-        },
-      );
+      expect(eventService.create).toHaveBeenCalledWith(expect.any(String), expect.any(String), {
+        name: expect.any(String),
+        startAt: expect.any(Date),
+      });
     });
 
     it("should create an event with sign up details", async () => {
@@ -87,8 +82,7 @@ describe("Event mutations", () => {
        * Create an authenticated context,
        * and set up the mock return value for the eventService.create method.
        */
-      const { client, createMockContext, eventService } =
-        createMockApolloServer();
+      const { client, createMockContext, eventService } = createMockApolloServer();
 
       const contextValue = createMockContext({
         authenticated: true,
@@ -168,8 +162,7 @@ describe("Event mutations", () => {
     });
 
     it("should err if not logged in", async () => {
-      const { client, createMockContext, eventService } =
-        createMockApolloServer();
+      const { client, createMockContext, eventService } = createMockApolloServer();
 
       const contextValue = createMockContext({
         authenticated: false,
@@ -211,12 +204,7 @@ describe("Event mutations", () => {
        * Event creation was not attempted, and the mutation returned an error.
        */
       expect(errors).toBeDefined();
-      expect(
-        errors?.every(
-          (error) =>
-            error.extensions?.code === errorCodes.ERR_PERMISSION_DENIED,
-        ),
-      ).toBe(true);
+      expect(errors?.every((error) => error.extensions?.code === errorCodes.ERR_PERMISSION_DENIED)).toBe(true);
       expect(eventService.create).not.toHaveBeenCalled();
     });
   });

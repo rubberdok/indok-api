@@ -32,9 +32,7 @@ const userData: Prisma.UserCreateInput[] = [
   }),
 ];
 
-function makeUserWithMemberships(
-  data: Prisma.UserCreateInput,
-): Prisma.UserCreateInput {
+function makeUserWithMemberships(data: Prisma.UserCreateInput): Prisma.UserCreateInput {
   const organizationId = faker.string.uuid();
   const userId = faker.string.uuid();
   return {

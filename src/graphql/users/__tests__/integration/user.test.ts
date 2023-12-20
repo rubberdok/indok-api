@@ -1,8 +1,5 @@
 import { faker } from "@faker-js/faker";
-import {
-  GraphQLTestClient,
-  newGraphQLTestClient,
-} from "~/graphql/test-clients/graphql-test-client.js";
+import { GraphQLTestClient, newGraphQLTestClient } from "~/graphql/test-clients/graphql-test-client.js";
 import { graphql } from "~/graphql/test-clients/integration/gql.js";
 
 describe("Users", () => {
@@ -39,14 +36,13 @@ describe("Users", () => {
        *
        * Create a user
        */
-      const user =
-        await client.dependencies.apolloServerDependencies.userService.create({
-          feideId: faker.string.uuid(),
-          firstName: faker.person.firstName(),
-          lastName: faker.person.lastName(),
-          email: faker.internet.email(),
-          username: faker.string.sample(20),
-        });
+      const user = await client.dependencies.apolloServerDependencies.userService.create({
+        feideId: faker.string.uuid(),
+        firstName: faker.person.firstName(),
+        lastName: faker.person.lastName(),
+        email: faker.internet.email(),
+        username: faker.string.sample(20),
+      });
 
       const { data } = await client.query(
         {

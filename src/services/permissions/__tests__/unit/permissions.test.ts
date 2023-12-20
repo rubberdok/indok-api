@@ -3,12 +3,7 @@ import { FeaturePermission, Organization } from "@prisma/client";
 import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { Role } from "~/domain/organizations.js";
 import { User } from "~/domain/users.js";
-import {
-  MemberRepository,
-  OrganizationRepository,
-  PermissionService,
-  UserRepository,
-} from "../../service.js";
+import { MemberRepository, OrganizationRepository, PermissionService, UserRepository } from "../../service.js";
 
 describe("PermissionService", () => {
   let permissionService: PermissionService;
@@ -20,11 +15,7 @@ describe("PermissionService", () => {
     UserRepository = mockDeep<UserRepository>();
     memberRepository = mockDeep<MemberRepository>();
     organizationRepository = mockDeep<OrganizationRepository>();
-    permissionService = new PermissionService(
-      memberRepository,
-      UserRepository,
-      organizationRepository,
-    );
+    permissionService = new PermissionService(memberRepository, UserRepository, organizationRepository);
   });
 
   describe("hasRole should return", () => {
@@ -204,42 +195,37 @@ describe("PermissionService", () => {
       },
     ];
 
-    test.each(testCases)(
-      "$expected $name",
-      async ({ arrange, act, expected }) => {
-        /**
-         * Arrange
-         *
-         * Set up mocks for user service and member repository according to the
-         * test case.
-         */
-        UserRepository.get.mockResolvedValueOnce(mock<User>(arrange.user));
-        memberRepository.hasRole.mockImplementation(async (data) => {
-          return arrange.organizationRole === data.role;
-        });
-        organizationRepository.get.mockResolvedValue(
-          mock<Organization>(arrange.organization),
-        );
+    test.each(testCases)("$expected $name", async ({ arrange, act, expected }) => {
+      /**
+       * Arrange
+       *
+       * Set up mocks for user service and member repository according to the
+       * test case.
+       */
+      UserRepository.get.mockResolvedValueOnce(mock<User>(arrange.user));
+      memberRepository.hasRole.mockImplementation(async (data) => {
+        return arrange.organizationRole === data.role;
+      });
+      organizationRepository.get.mockResolvedValue(mock<Organization>(arrange.organization));
 
-        /**
-         * Act
-         *
-         * Call hasRole with the given arguments
-         */
-        const result = permissionService.hasRole({
-          userId: arrange.user.id,
-          organizationId: faker.string.uuid(),
-          role: act.requiredRole,
-          featurePermission: act.requiredFeaturePermission,
-        });
+      /**
+       * Act
+       *
+       * Call hasRole with the given arguments
+       */
+      const result = permissionService.hasRole({
+        userId: arrange.user.id,
+        organizationId: faker.string.uuid(),
+        role: act.requiredRole,
+        featurePermission: act.requiredFeaturePermission,
+      });
 
-        /**
-         * Assert
-         *
-         * Check that the result is as expected
-         */
-        await expect(result).resolves.toBe(expected);
-      },
-    );
+      /**
+       * Assert
+       *
+       * Check that the result is as expected
+       */
+      await expect(result).resolves.toBe(expected);
+    });
   });
 });

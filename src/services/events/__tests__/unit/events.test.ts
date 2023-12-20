@@ -2,35 +2,20 @@ import { faker } from "@faker-js/faker";
 import { EventSlot } from "@prisma/client";
 import { mock, mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
-import {
-  InvalidArgumentError,
-  KnownDomainError,
-  PermissionDeniedError,
-} from "~/domain/errors.js";
+import { InvalidArgumentError, KnownDomainError, PermissionDeniedError } from "~/domain/errors.js";
 import { Event } from "~/domain/events.js";
 import { Role } from "~/domain/organizations.js";
-import {
-  EventRepository,
-  EventService,
-  PermissionService,
-  UserService,
-} from "../../service.js";
+import { EventRepository, EventService, PermissionService, UserService } from "../../service.js";
 
 function setup() {
   const permissionService = mockDeep<PermissionService>();
   const eventsRepository = mockDeep<EventRepository>();
   const userService = mockDeep<UserService>();
-  const service = new EventService(
-    eventsRepository,
-    permissionService,
-    userService,
-  );
+  const service = new EventService(eventsRepository, permissionService, userService);
   return { permissionService, eventsRepository, service, userService };
 }
 
-function mockSignUpDetails(
-  data: Partial<Event["signUpDetails"]> = {},
-): Event["signUpDetails"] {
+function mockSignUpDetails(data: Partial<Event["signUpDetails"]> = {}): Event["signUpDetails"] {
   return {
     signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
     signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
@@ -40,9 +25,7 @@ function mockSignUpDetails(
   };
 }
 
-function mockEvent(
-  data: Partial<Event & { slots: EventSlot[] }> = {},
-): Event & { slots: EventSlot[] } {
+function mockEvent(data: Partial<Event & { slots: EventSlot[] }> = {}): Event & { slots: EventSlot[] } {
   const startAt = faker.date.soon();
   const endAt = faker.date.future({ refDate: startAt });
   return mock<Event & { slots: EventSlot[] }>({
@@ -188,9 +171,7 @@ describe("EventsService", () => {
             signUpDetails: {
               signUpsEnabled: true,
               signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-              signUpsEndAt: DateTime.now()
-                .plus({ days: 1, hours: 2 })
-                .toJSDate(),
+              signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
               capacity: -1,
               slots: [{ capacity: 1 }],
             },
@@ -210,9 +191,7 @@ describe("EventsService", () => {
             signUpDetails: {
               signUpsEnabled: true,
               signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-              signUpsEndAt: DateTime.now()
-                .plus({ days: 1, hours: 2 })
-                .toJSDate(),
+              signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
               capacity: 1,
               slots: [{ capacity: -1 }, { capacity: 1 }],
             },
@@ -232,9 +211,7 @@ describe("EventsService", () => {
             signUpDetails: {
               signUpsEnabled: true,
               signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-              signUpsEndAt: DateTime.now()
-                .plus({ days: 1, hours: -2 })
-                .toJSDate(),
+              signUpsEndAt: DateTime.now().plus({ days: 1, hours: -2 }).toJSDate(),
               capacity: 1,
               slots: [{ capacity: 1 }],
             },
@@ -256,34 +233,24 @@ describe("EventsService", () => {
         },
       ];
 
-      test.each(testCases)(
-        "$expectedError.name, $name",
-        async ({ act, expectedError }) => {
-          const { service, permissionService } = setup();
-          /**
-           * Arrange
-           * 1. Set up the mock repository to handle the create method
-           */
-          permissionService.hasRole.mockResolvedValueOnce(
-            act.role !== null && act.role !== undefined,
-          );
+      test.each(testCases)("$expectedError.name, $name", async ({ act, expectedError }) => {
+        const { service, permissionService } = setup();
+        /**
+         * Arrange
+         * 1. Set up the mock repository to handle the create method
+         */
+        permissionService.hasRole.mockResolvedValueOnce(act.role !== null && act.role !== undefined);
 
-          /**
-           * Act
-           */
-          const result = service.create(
-            act.userId,
-            act.organizationId,
-            act.event,
-            act.signUpDetails,
-          );
+        /**
+         * Act
+         */
+        const result = service.create(act.userId, act.organizationId, act.event, act.signUpDetails);
 
-          /**
-           * Assert that the expected error is thrown
-           */
-          await expect(result).rejects.toThrow(expectedError);
-        },
-      );
+        /**
+         * Assert that the expected error is thrown
+         */
+        await expect(result).rejects.toThrow(expectedError);
+      });
     });
 
     it("should create an event without sign up details", async () => {
@@ -314,10 +281,7 @@ describe("EventsService", () => {
        * Assert that the event is created
        */
       await expect(result).resolves.not.toThrow();
-      expect(eventsRepository.create).toHaveBeenCalledWith(
-        expect.objectContaining({ organizationId }),
-        undefined,
-      );
+      expect(eventsRepository.create).toHaveBeenCalledWith(expect.objectContaining({ organizationId }), undefined);
     });
 
     it("should create an event with sign up details", async () => {
@@ -349,12 +313,7 @@ describe("EventsService", () => {
         capacity: 10,
         slots: [{ capacity: 10 }],
       };
-      const result = service.create(
-        userId,
-        organizationId,
-        event,
-        signUpDetails,
-      );
+      const result = service.create(userId, organizationId, event, signUpDetails);
 
       /**
        * Assert that the event is created
@@ -643,39 +602,31 @@ describe("EventsService", () => {
         },
       ];
 
-      test.each(testCases)(
-        "$assert.error.name, $name",
-        async ({ assert, arrange, act }) => {
-          const { service, eventsRepository, permissionService } = setup();
+      test.each(testCases)("$assert.error.name, $name", async ({ assert, arrange, act }) => {
+        const { service, eventsRepository, permissionService } = setup();
 
-          /**
-           * Arrange
-           *
-           * 1. Set up the mock for `eventsRepository.get` to return the event in {arrange.event}
-           * 2. Set up the mock for `permissionService.hasRole` to return `true`
-           */
-          // 1.
-          eventsRepository.getWithSlots.mockResolvedValueOnce(arrange.event);
-          // 2.
-          permissionService.hasRole.mockResolvedValueOnce(arrange.hasRole);
+        /**
+         * Arrange
+         *
+         * 1. Set up the mock for `eventsRepository.get` to return the event in {arrange.event}
+         * 2. Set up the mock for `permissionService.hasRole` to return `true`
+         */
+        // 1.
+        eventsRepository.getWithSlots.mockResolvedValueOnce(arrange.event);
+        // 2.
+        permissionService.hasRole.mockResolvedValueOnce(arrange.hasRole);
 
-          /**
-           * Act
-           */
-          const result = service.update(
-            faker.string.uuid(),
-            faker.string.uuid(),
-            act.event,
-            act.signUpDetails,
-          );
+        /**
+         * Act
+         */
+        const result = service.update(faker.string.uuid(), faker.string.uuid(), act.event, act.signUpDetails);
 
-          /**
-           * Assert
-           */
-          await expect(result).rejects.toThrow(assert.error);
-          expect(eventsRepository.update).not.toHaveBeenCalled();
-        },
-      );
+        /**
+         * Assert
+         */
+        await expect(result).rejects.toThrow(assert.error);
+        expect(eventsRepository.update).not.toHaveBeenCalled();
+      });
     });
     describe("should update", () => {
       interface TestCase {
@@ -867,12 +818,7 @@ describe("EventsService", () => {
         /**
          * Act
          */
-        const result = service.update(
-          faker.string.uuid(),
-          faker.string.uuid(),
-          act.event,
-          act.signUpDetails,
-        );
+        const result = service.update(faker.string.uuid(), faker.string.uuid(), act.event, act.signUpDetails);
 
         /**
          * Assert
