@@ -90,7 +90,6 @@
     "connect-redis": "^7.1.0",
     "dayjs": "^1.11.10",
     "dotenv": "^16.3.1",
-    "execa": "^8.0.1",
     "fastify": "^4.25.1",
     "graphql": "^16.8.1",
     "graphql-scalars": "^1.22.4",
@@ -107,9 +106,18 @@
   },
   "pnpm": {
     "supportedArchitectures": {
-      "os": ["current", "linux"],
-      "cpu": ["current", "x64"],
-      "libc": ["current", "glibc"]
+      "os": [
+        "current",
+        "linux"
+      ],
+      "cpu": [
+        "current",
+        "x64"
+      ],
+      "libc": [
+        "current",
+        "glibc"
+      ]
     }
   }
 }

@@ -60,16 +60,6 @@ interface Options {
  *
  * 6. Set up two health check routes:
  *    - `/-/health` - returns `200: {"status": "ok"}` if the server is running.
- *    - `/-/migration-health` - returns `200: {"status": "ok"}` if the Prisma migrations in `prisma/migrations`
- *      are reflected in the database, `503: { "status": "error", "message": "Missing migrations" }` otherwise.
- *      This health check is used by the StartupProbe for the server container to check if the server is ready to
- *      receive connections. See `infrastructure/modules/server/server_app.tf` for details.
- *
- *      The deployment flow is as follows:
- *      1. The server container is started, but the StartupProbe fails because the migrations are not reflected in the database.
- *      2. A separate, but identical, container is started, with `command: ["npm", "run", "db:migrate"]`
- *      3. The migration container runs the migrations, and then exits.
- *      4. The migrations are now reflected in the database, and the StartupProbe succeeds, allowing the server container to receive connections.
  *
  * 7. Start the Fastify server
  *
