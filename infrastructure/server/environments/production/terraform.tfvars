@@ -47,7 +47,7 @@ environment_variables = [
   },
   {
     name  = "SESSION_COOKIE_DOMAIN"
-    value = "server-17vie6z9.blacksea-cdec4a8e.norwayeast.azurecontainerapps.io/"
+    value = "server-17vie6z9.blacksea-cdec4a8e.norwayeast.azurecontainerapps.io"
   },
   {
     name  = "SESSION_COOKIE_HTTP_ONLY"
