@@ -18,5 +18,15 @@
     "indentWidth": 2,
     "indentStyle": "space",
     "lineWidth": 120
+  },
+  "files": {
+    "ignore": [
+      "node_modules",
+      "dist",
+      "pnpm-lock.yaml",
+      "src/graphql/test-clients/integration/**/*.ts",
+      "src/graphql/test-clients/unit/**/*.ts",
+      "*.generated.ts"
+    ]
   }
 }
