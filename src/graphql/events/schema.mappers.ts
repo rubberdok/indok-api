@@ -1,7 +1,7 @@
 import { BaseEvent as EventMapper } from "~/domain/events.js";
 
 interface EventsResponseMapper {
-  events: EventMapper[];
+	events: EventMapper[];
 }
 
 export { EventMapper, EventsResponseMapper };

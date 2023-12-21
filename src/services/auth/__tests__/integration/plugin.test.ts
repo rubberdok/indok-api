@@ -7,179 +7,187 @@ import { errorCodes } from "~/domain/errors.js";
 import { initServer } from "~/server.js";
 
 describe("AuthPlugin", () => {
-  let app: FastifyInstance;
-  let mockOpenIdClient: MockOpenIdClient;
+	let app: FastifyInstance;
+	let mockOpenIdClient: MockOpenIdClient;
 
-  beforeAll(async () => {
-    const dependencies = defaultTestDependenciesFactory();
-    ({ mockOpenIdClient } = dependencies);
-    app = await initServer(dependencies, { port: 4001, host: "0.0.0.0" });
-  });
+	beforeAll(async () => {
+		const dependencies = defaultTestDependenciesFactory();
+		({ mockOpenIdClient } = dependencies);
+		app = await initServer(dependencies, { port: 4001, host: "0.0.0.0" });
+	});
 
-  describe("GET /auth/login?redirect=123", () => {
-    it("should perform a request to the open ID provider with the correct parameters", async () => {
-      const result = await performSSORedirect(app, "123");
-      expect(mockOpenIdClient.authorizationUrl).toHaveBeenCalledWith({
-        scope: expect.any(String),
-        code_challenge: expect.any(String),
-        code_challenge_method: "S256",
-        state: "123",
-      });
+	describe("GET /auth/login?redirect=123", () => {
+		it("should perform a request to the open ID provider with the correct parameters", async () => {
+			const result = await performSSORedirect(app, "123");
+			expect(mockOpenIdClient.authorizationUrl).toHaveBeenCalledWith({
+				scope: expect.any(String),
+				code_challenge: expect.any(String),
+				code_challenge_method: "S256",
+				state: "123",
+			});
 
-      expect(result.statusCode).toBe(303);
-    });
+			expect(result.statusCode).toBe(303);
+		});
 
-    it("should set session cookie", async () => {
-      const result = await performSSORedirect(app);
+		it("should set session cookie", async () => {
+			const result = await performSSORedirect(app);
 
-      expect(result.cookies).toContainEqual({
-        domain: env.SESSION_COOKIE_DOMAIN,
-        name: env.SESSION_COOKIE_NAME,
-        value: expect.any(String),
-        path: "/",
-        httpOnly: env.SESSION_COOKIE_HTTP_ONLY,
-        sameSite: "None",
-        expires: expect.any(Date),
-      });
-    });
-  });
+			expect(result.cookies).toContainEqual({
+				domain: env.SESSION_COOKIE_DOMAIN,
+				name: env.SESSION_COOKIE_NAME,
+				value: expect.any(String),
+				path: "/",
+				httpOnly: env.SESSION_COOKIE_HTTP_ONLY,
+				sameSite: "None",
+				expires: expect.any(Date),
+			});
+		});
+	});
 
-  describe("GET /auth/authenticate", () => {
-    it("should error if code verifier is not found in session", async () => {
-      const result = await performOAuthAuthentication(app, "code");
+	describe("GET /auth/authenticate", () => {
+		it("should error if code verifier is not found in session", async () => {
+			const result = await performOAuthAuthentication(app, "code");
 
-      expect(result.statusCode).toBe(400);
-      expect(result.json()).toEqual({
-        code: errorCodes.ERR_BAD_REQUEST,
-        error: "Bad Request",
-        message: expect.stringContaining("code verifier"),
-        statusCode: 400,
-      });
-    });
+			expect(result.statusCode).toBe(400);
+			expect(result.json()).toEqual({
+				code: errorCodes.ERR_BAD_REQUEST,
+				error: "Bad Request",
+				message: expect.stringContaining("code verifier"),
+				statusCode: 400,
+			});
+		});
 
-    it("should use the code verifier from the session to validate the response", async () => {
-      const result = await performLogin(app);
-      expect(result.statusCode).toBe(303);
-    });
+		it("should use the code verifier from the session to validate the response", async () => {
+			const result = await performLogin(app);
+			expect(result.statusCode).toBe(303);
+		});
 
-    it("should require code in query params", async () => {
-      const result = await performOAuthAuthentication(app);
+		it("should require code in query params", async () => {
+			const result = await performOAuthAuthentication(app);
 
-      expect(result.statusCode).toBe(400);
-      expect(await result.json()).toEqual({
-        statusCode: 400,
-        code: "FST_ERR_VALIDATION",
-        error: "Bad Request",
-        message: expect.any(String),
-      });
-    });
+			expect(result.statusCode).toBe(400);
+			expect(await result.json()).toEqual({
+				statusCode: 400,
+				code: "FST_ERR_VALIDATION",
+				error: "Bad Request",
+				message: expect.any(String),
+			});
+		});
 
-    it("should regenerate session on login", async () => {
-      const redirectResult = await performSSORedirect(app);
+		it("should regenerate session on login", async () => {
+			const redirectResult = await performSSORedirect(app);
 
-      const sessionCookie = redirectResult.cookies[0]?.value;
-      assert(sessionCookie !== undefined);
+			const sessionCookie = redirectResult.cookies[0]?.value;
+			assert(sessionCookie !== undefined);
 
-      /**
-       * Assert that the session cookie is regenerated on login
-       * to prevent session fixation attacks.
-       */
-      const authenticateResult = await performOAuthAuthentication(app, "code", sessionCookie);
-      const authenticatedSessionCookie = authenticateResult.cookies[0]?.value;
-      assert(authenticatedSessionCookie !== undefined);
-      expect(authenticatedSessionCookie).not.toEqual(sessionCookie);
+			/**
+			 * Assert that the session cookie is regenerated on login
+			 * to prevent session fixation attacks.
+			 */
+			const authenticateResult = await performOAuthAuthentication(
+				app,
+				"code",
+				sessionCookie,
+			);
+			const authenticatedSessionCookie = authenticateResult.cookies[0]?.value;
+			assert(authenticatedSessionCookie !== undefined);
+			expect(authenticatedSessionCookie).not.toEqual(sessionCookie);
 
-      const unauthenticatedMeResult = await performMe(app, sessionCookie);
-      expect(unauthenticatedMeResult.statusCode).toBe(401);
+			const unauthenticatedMeResult = await performMe(app, sessionCookie);
+			expect(unauthenticatedMeResult.statusCode).toBe(401);
 
-      const meResult = await performMe(app, authenticatedSessionCookie);
-      expect(meResult.statusCode).toBe(200);
-    });
-  });
+			const meResult = await performMe(app, authenticatedSessionCookie);
+			expect(meResult.statusCode).toBe(200);
+		});
+	});
 
-  describe("POST /auth/logout", () => {
-    it("should clear session", async () => {
-      const loginResult = await performLogin(app);
-      const authenticatedSessionCookie = loginResult.cookies[0]?.value;
+	describe("POST /auth/logout", () => {
+		it("should clear session", async () => {
+			const loginResult = await performLogin(app);
+			const authenticatedSessionCookie = loginResult.cookies[0]?.value;
 
-      const logoutResult = await performLogout(app, authenticatedSessionCookie);
-      const meResult = await performMe(app, authenticatedSessionCookie);
-      expect(logoutResult.statusCode).toBe(303);
-      expect(meResult.statusCode).toBe(401);
-    });
-  });
+			const logoutResult = await performLogout(app, authenticatedSessionCookie);
+			const meResult = await performMe(app, authenticatedSessionCookie);
+			expect(logoutResult.statusCode).toBe(303);
+			expect(meResult.statusCode).toBe(401);
+		});
+	});
 
-  afterAll(async () => {
-    await app.close();
-  });
+	afterAll(async () => {
+		await app.close();
+	});
 });
 
 function performSSORedirect(app: FastifyInstance, redirect?: string) {
-  if (redirect) {
-    return app.inject({
-      method: "GET",
-      url: `/auth/login?redirect=${encodeURIComponent(redirect)}`,
-    });
-  }
-  return app.inject({
-    method: "GET",
-    url: "/auth/login",
-  });
+	if (redirect) {
+		return app.inject({
+			method: "GET",
+			url: `/auth/login?redirect=${encodeURIComponent(redirect)}`,
+		});
+	}
+	return app.inject({
+		method: "GET",
+		url: "/auth/login",
+	});
 }
 
 async function performLogin(app: FastifyInstance) {
-  const ssoRedirect = await performSSORedirect(app);
-  const sessionCookie = ssoRedirect.cookies[0]?.value;
+	const ssoRedirect = await performSSORedirect(app);
+	const sessionCookie = ssoRedirect.cookies[0]?.value;
 
-  return performOAuthAuthentication(app, "code", sessionCookie);
+	return performOAuthAuthentication(app, "code", sessionCookie);
 }
 
-function performOAuthAuthentication(app: FastifyInstance, code?: string, sessionCookie?: string) {
-  let cookies: InjectOptions["cookies"] = {};
-  if (sessionCookie) {
-    cookies = {
-      [env.SESSION_COOKIE_NAME]: sessionCookie,
-    };
-  }
+function performOAuthAuthentication(
+	app: FastifyInstance,
+	code?: string,
+	sessionCookie?: string,
+) {
+	let cookies: InjectOptions["cookies"] = {};
+	if (sessionCookie) {
+		cookies = {
+			[env.SESSION_COOKIE_NAME]: sessionCookie,
+		};
+	}
 
-  if (code) {
-    return app.inject({
-      method: "GET",
-      url: `/auth/authenticate?code=${code}`,
-      cookies,
-    });
-  }
-  return app.inject({
-    method: "GET",
-    url: "/auth/authenticate",
-    cookies,
-  });
+	if (code) {
+		return app.inject({
+			method: "GET",
+			url: `/auth/authenticate?code=${code}`,
+			cookies,
+		});
+	}
+	return app.inject({
+		method: "GET",
+		url: "/auth/authenticate",
+		cookies,
+	});
 }
 
 function performLogout(app: FastifyInstance, sessionCookie?: string) {
-  let cookies: InjectOptions["cookies"] = {};
-  if (sessionCookie) {
-    cookies = {
-      [env.SESSION_COOKIE_NAME]: sessionCookie,
-    };
-  }
-  return app.inject({
-    method: "POST",
-    url: "/auth/logout",
-    cookies,
-  });
+	let cookies: InjectOptions["cookies"] = {};
+	if (sessionCookie) {
+		cookies = {
+			[env.SESSION_COOKIE_NAME]: sessionCookie,
+		};
+	}
+	return app.inject({
+		method: "POST",
+		url: "/auth/logout",
+		cookies,
+	});
 }
 
 function performMe(app: FastifyInstance, sessionCookie?: string) {
-  let cookies: InjectOptions["cookies"] = {};
-  if (sessionCookie) {
-    cookies = {
-      [env.SESSION_COOKIE_NAME]: sessionCookie,
-    };
-  }
-  return app.inject({
-    method: "GET",
-    url: "/auth/me",
-    cookies,
-  });
+	let cookies: InjectOptions["cookies"] = {};
+	if (sessionCookie) {
+		cookies = {
+			[env.SESSION_COOKIE_NAME]: sessionCookie,
+		};
+	}
+	return app.inject({
+		method: "GET",
+		url: "/auth/me",
+		cookies,
+	});
 }

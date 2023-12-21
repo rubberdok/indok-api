@@ -4,16 +4,16 @@ import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-serve
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
 describe("Cabin mutations", () => {
-  describe("updateBookingContact", () => {
-    it("should raise PermissionDeniedError if the user is not authenticated", async () => {
-      const { client } = createMockApolloServer();
+	describe("updateBookingContact", () => {
+		it("should raise PermissionDeniedError if the user is not authenticated", async () => {
+			const { client } = createMockApolloServer();
 
-      const name = faker.person.fullName();
-      const email = faker.internet.email();
-      const phoneNumber = faker.phone.number();
+			const name = faker.person.fullName();
+			const email = faker.internet.email();
+			const phoneNumber = faker.phone.number();
 
-      const { errors } = await client.mutate({
-        mutation: graphql(`
+			const { errors } = await client.mutate({
+				mutation: graphql(`
           mutation UpdateBookingContact($data: UpdateBookingContactInput!) {
             updateBookingContact(data: $data) {
               bookingContact {
@@ -22,39 +22,44 @@ describe("Cabin mutations", () => {
             }
           }
         `),
-        variables: {
-          data: {
-            name,
-            email,
-            phoneNumber,
-          },
-        },
-      });
-      expect(errors).toBeDefined();
-      expect(errors?.some((err) => err.extensions?.code === errorCodes.ERR_PERMISSION_DENIED)).toBe(true);
-    });
+				variables: {
+					data: {
+						name,
+						email,
+						phoneNumber,
+					},
+				},
+			});
+			expect(errors).toBeDefined();
+			expect(
+				errors?.some(
+					(err) => err.extensions?.code === errorCodes.ERR_PERMISSION_DENIED,
+				),
+			).toBe(true);
+		});
 
-    it("should call updateBookingContact with the correct arugments if authenticated", async () => {
-      const { client, cabinService, createMockContext } = createMockApolloServer();
+		it("should call updateBookingContact with the correct arugments if authenticated", async () => {
+			const { client, cabinService, createMockContext } =
+				createMockApolloServer();
 
-      const name = faker.person.fullName();
-      const email = faker.internet.email();
-      const phoneNumber = faker.phone.number();
-      const userId = faker.string.uuid();
-      const authenticatedContext = createMockContext({
-        userId,
-        authenticated: true,
-      });
-      cabinService.updateBookingContact.mockResolvedValueOnce({
-        id: "booking-contact",
-        name,
-        email,
-        phoneNumber,
-      });
+			const name = faker.person.fullName();
+			const email = faker.internet.email();
+			const phoneNumber = faker.phone.number();
+			const userId = faker.string.uuid();
+			const authenticatedContext = createMockContext({
+				userId,
+				authenticated: true,
+			});
+			cabinService.updateBookingContact.mockResolvedValueOnce({
+				id: "booking-contact",
+				name,
+				email,
+				phoneNumber,
+			});
 
-      const { errors } = await client.mutate(
-        {
-          mutation: graphql(`
+			const { errors } = await client.mutate(
+				{
+					mutation: graphql(`
             mutation UpdateBookingContact($data: UpdateBookingContactInput!) {
               updateBookingContact(data: $data) {
                 bookingContact {
@@ -63,23 +68,23 @@ describe("Cabin mutations", () => {
               }
             }
           `),
-          variables: {
-            data: {
-              name,
-              email,
-              phoneNumber,
-            },
-          },
-        },
-        { contextValue: authenticatedContext },
-      );
+					variables: {
+						data: {
+							name,
+							email,
+							phoneNumber,
+						},
+					},
+				},
+				{ contextValue: authenticatedContext },
+			);
 
-      expect(errors).toBeUndefined();
-      expect(cabinService.updateBookingContact).toHaveBeenCalledWith(userId, {
-        name,
-        email,
-        phoneNumber,
-      });
-    });
-  });
+			expect(errors).toBeUndefined();
+			expect(cabinService.updateBookingContact).toHaveBeenCalledWith(userId, {
+				name,
+				email,
+				phoneNumber,
+			});
+		});
+	});
 });

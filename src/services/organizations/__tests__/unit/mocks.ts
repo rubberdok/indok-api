@@ -10,41 +10,47 @@ import { NotFoundError } from "~/domain/errors.js";
  * @returns A mock implementation of the hasRole method on the MemberRepository
  */
 export function getMockHasRoleImplementation(state: {
-  organizationId: string;
-  userId: string;
-  role: Role | null;
+	organizationId: string;
+	userId: string;
+	role: Role | null;
 }): (data: {
-  organizationId: string;
-  userId: string;
-  role: Role;
+	organizationId: string;
+	userId: string;
+	role: Role;
 }) => Promise<boolean> {
-  function hasRole(data: {
-    organizationId: string;
-    userId: string;
-    role: Role;
-  }): Promise<boolean> {
-    if (data.organizationId !== state.organizationId) return Promise.resolve(false);
-    if (data.userId !== state.userId) return Promise.resolve(false);
-    if (data.role !== state.role) return Promise.resolve(false);
-    return Promise.resolve(true);
-  }
-  return hasRole;
+	function hasRole(data: {
+		organizationId: string;
+		userId: string;
+		role: Role;
+	}): Promise<boolean> {
+		if (data.organizationId !== state.organizationId)
+			return Promise.resolve(false);
+		if (data.userId !== state.userId) return Promise.resolve(false);
+		if (data.role !== state.role) return Promise.resolve(false);
+		return Promise.resolve(true);
+	}
+	return hasRole;
 }
 
 export function getMockGetImplementation(state: { members: Member[] }) {
-  function get(data: { id: string } | { userId: string; organizationId: string }): Promise<Member> {
-    let result: Member | undefined;
-    if ("id" in data) {
-      result = state.members.find((member) => member.id === data.id);
-    } else {
-      result = state.members.find(
-        (member) => member.userId === data.userId && member.organizationId === data.organizationId,
-      );
-    }
+	function get(
+		data: { id: string } | { userId: string; organizationId: string },
+	): Promise<Member> {
+		let result: Member | undefined;
+		if ("id" in data) {
+			result = state.members.find((member) => member.id === data.id);
+		} else {
+			result = state.members.find(
+				(member) =>
+					member.userId === data.userId &&
+					member.organizationId === data.organizationId,
+			);
+		}
 
-    if (typeof result === "undefined") throw new NotFoundError("Member not found");
+		if (typeof result === "undefined")
+			throw new NotFoundError("Member not found");
 
-    return Promise.resolve(result);
-  }
-  return get;
+		return Promise.resolve(result);
+	}
+	return get;
 }

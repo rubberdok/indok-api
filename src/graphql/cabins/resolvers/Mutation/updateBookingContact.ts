@@ -1,20 +1,21 @@
 import { assertIsAuthenticated } from "~/graphql/auth.js";
 import type { MutationResolvers } from "./../../../types.generated.js";
-export const updateBookingContact: NonNullable<MutationResolvers["updateBookingContact"]> = async (
-  _parent,
-  { data },
-  ctx,
-) => {
-  assertIsAuthenticated(ctx);
+export const updateBookingContact: NonNullable<
+	MutationResolvers["updateBookingContact"]
+> = async (_parent, { data }, ctx) => {
+	assertIsAuthenticated(ctx);
 
-  const { name, email, phoneNumber } = data;
-  const bookingContact = await ctx.cabinService.updateBookingContact(ctx.user.id, {
-    name,
-    email,
-    phoneNumber,
-  });
+	const { name, email, phoneNumber } = data;
+	const bookingContact = await ctx.cabinService.updateBookingContact(
+		ctx.user.id,
+		{
+			name,
+			email,
+			phoneNumber,
+		},
+	);
 
-  return {
-    bookingContact,
-  };
+	return {
+		bookingContact,
+	};
 };
