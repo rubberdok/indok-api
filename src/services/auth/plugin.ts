@@ -4,7 +4,6 @@ import {
 	BadRequestError,
 	InternalServerError,
 	InvalidArgumentError,
-	PermissionDeniedError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
 import { User } from "~/domain/users.js";
