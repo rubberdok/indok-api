@@ -63,6 +63,12 @@ export class BadRequestError extends KnownDomainError {
 	}
 }
 
+export class UnauthorizedError extends KnownDomainError {
+	constructor(description: string) {
+		super("UnauthorizedError", description, errorCodes.ERR_UNAUTHORIZED);
+	}
+}
+
 export const errorCodes = {
 	/**
 	 * ERR_NOT_FOUND should be used for errors that arise as a result of a resource not being found,
@@ -94,6 +100,7 @@ export const errorCodes = {
 	 * request failing, buggy code, etc.
 	 */
 	ERR_INTERNAL_SERVER_ERROR: "INTERNAL_SERVER_ERROR",
+	ERR_UNAUTHORIZED: "UNAUTHORIZED",
 } as const;
 
 export type ErrorCode = (typeof errorCodes)[keyof typeof errorCodes];
@@ -103,7 +110,17 @@ const USER_FACING_ERRORS = new Set<string>([
 	errorCodes.ERR_BAD_USER_INPUT,
 	errorCodes.ERR_PERMISSION_DENIED,
 	errorCodes.ERR_NOT_FOUND,
+	errorCodes.ERR_UNAUTHORIZED,
 ]);
+
+type UserFacingErrorCode = Extract<
+	ErrorCode,
+	| "BAD_REQUEST"
+	| "BAD_USER_INPUT"
+	| "PERMISSION_DENIED"
+	| "NOT_FOUND"
+	| "UNAUTHORIZED"
+>;
 
 export function isErrorWithCode(
 	error: unknown,
@@ -114,7 +131,9 @@ export function isErrorWithCode(
 	return typeof error.code === "string";
 }
 
-export function isUserFacingError(error?: unknown): boolean {
+export function isUserFacingError(
+	error?: unknown,
+): error is Error & { code: UserFacingErrorCode } {
 	if (isErrorWithCode(error)) {
 		return USER_FACING_ERRORS.has(error.code);
 	}

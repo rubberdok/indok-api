@@ -156,7 +156,23 @@ export async function initServer(
 	 */
 	app.setErrorHandler((error, _request, reply) => {
 		if (isUserFacingError(error)) {
-			reply.status(400).send({ message: error.message, code: error.code });
+			switch (error.code) {
+				// fallthrough
+				case "BAD_REQUEST":
+				case "BAD_USER_INPUT":
+					reply.status(400);
+					break;
+				case "PERMISSION_DENIED":
+					reply.status(403);
+					break;
+				case "UNAUTHORIZED":
+					reply.status(401);
+					break;
+				case "NOT_FOUND":
+					reply.status(404);
+					break;
+			}
+			reply.send({ message: error.message, code: error.code });
 		} else {
 			// Handle these errors with the default error handler
 			reply.send(error);

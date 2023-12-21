@@ -5,6 +5,7 @@ import {
 	InternalServerError,
 	InvalidArgumentError,
 	PermissionDeniedError,
+	UnauthorizedError,
 } from "~/domain/errors.js";
 import { User } from "~/domain/users.js";
 
@@ -95,8 +96,9 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
 				} catch (err) {
 					if (err instanceof Error) {
 						req.log.error(err, "Authentication failed");
-						if (err instanceof BadRequestError)
-							return reply.status(400).send(err);
+						if (err instanceof BadRequestError) {
+							return reply.status(400).send({ message: err.message });
+						}
 						return reply.send(new InternalServerError("Authentication failed"));
 					}
 				}
@@ -120,9 +122,7 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
 				if (req.session.authenticated) {
 					return reply.status(200).send({ user: req.session.userId });
 				}
-				return reply
-					.status(401)
-					.send(new PermissionDeniedError("Unauthorized"));
+				return reply.send(new UnauthorizedError("Unauthorized"));
 			},
 		});
 	};
