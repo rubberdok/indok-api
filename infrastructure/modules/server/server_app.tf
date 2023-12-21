@@ -83,6 +83,28 @@ resource "azurerm_container_app" "server" {
         initial_delay    = 5
       }
 
+      liveness_probe {
+        failure_count_threshold = 3
+        interval_seconds = 10
+        path = "/-/health"
+        port = 4000
+        transport = "HTTP"
+        initial_delay = 5
+      }
+
+      readiness_probe {
+        failure_count_threshold = 3
+        header {
+          name  = "apollo-require-preflight"
+          value = true
+        }
+
+        interval_seconds = 10
+        path             = "/graphql?query=%7B__typename%7D"
+        port             = 4000
+        transport        = "HTTP"
+      }
+
       dynamic "env" {
         for_each = var.environment_variables
         content {
