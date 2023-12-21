@@ -99,6 +99,10 @@ export async function initServer(
 		],
 	});
 
+	// Enable Application Not Responding detection
+	// https://docs.sentry.io/platforms/node/configuration/application-not-responding/
+	await app.Sentry.enableAnrDetection({ captureStackTrace: true });
+
 	// Security headers
 	app.register(fastifyHelmet, helmetOptionsByEnv[env.NODE_ENV]);
 
