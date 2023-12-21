@@ -31,7 +31,7 @@ environment_variables = [
   },
   {
     name  = "SERVER_URL"
-    value = "https://server-3b8qd1il.whiteflower-a46872f4.norwayeast.azurecontainerapps.io"
+    value = "https://server-17vie6z9.blacksea-cdec4a8e.norwayeast.azurecontainerapps.io/"
   },
   {
     name  = "FEIDE_CLIENT_ID"
@@ -47,7 +47,7 @@ environment_variables = [
   },
   {
     name  = "SESSION_COOKIE_DOMAIN"
-    value = "server-3b8qd1il.whiteflower-a46872f4.norwayeast.azurecontainerapps.io"
+    value = "server-17vie6z9.blacksea-cdec4a8e.norwayeast.azurecontainerapps.io/"
   },
   {
     name  = "SESSION_COOKIE_HTTP_ONLY"
