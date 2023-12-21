@@ -1,20 +1,20 @@
 {
-  "$schema": "https://json.schemastore.org/swcrc",
-  "module": {
-    "type": "es6",
-    "resolveFully": true
-  },
-  "jsc": {
-    "target": "es2022",
+	"$schema": "https://json.schemastore.org/swcrc",
+	"module": {
+		"type": "es6",
+		"resolveFully": true
+	},
+	"jsc": {
+		"target": "es2022",
 
-    "parser": {
-      "syntax": "typescript",
-      "decorators": true
-    },
+		"parser": {
+			"syntax": "typescript",
+			"decorators": true
+		},
 
-    "paths": {
-      "~/*": ["./src/*"]
-    },
-    "baseUrl": "."
-  }
+		"paths": {
+			"~/*": ["./src/*"]
+		},
+		"baseUrl": "."
+	}
 }
