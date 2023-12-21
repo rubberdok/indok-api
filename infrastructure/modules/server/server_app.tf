@@ -54,10 +54,10 @@ resource "azurerm_container_app" "server" {
   template {
     init_container {
       command = ["pnpm", "run", "db:migrate"]
-      cpu = 0.25
-      memory = "0.5Gi"
-      name = "migrate"
-      image = var.image_tag
+      cpu     = 0.25
+      memory  = "0.5Gi"
+      name    = "migrate"
+      image   = var.image_tag
 
       dynamic "env" {
         for_each = var.environment_variables
@@ -68,7 +68,7 @@ resource "azurerm_container_app" "server" {
         }
       }
 
-            env {
+      env {
         name        = "REDIS_CONNECTION_STRING"
         secret_name = "redis-connection-string"
       }
@@ -126,11 +126,11 @@ resource "azurerm_container_app" "server" {
 
       liveness_probe {
         failure_count_threshold = 3
-        interval_seconds = 10
-        path = "/-/health"
-        port = 4000
-        transport = "HTTP"
-        initial_delay = 5
+        interval_seconds        = 10
+        path                    = "/-/health"
+        port                    = 4000
+        transport               = "HTTP"
+        initial_delay           = 5
       }
 
       readiness_probe {
