@@ -31,7 +31,7 @@ environment_variables = [
   },
   {
     name  = "SERVER_URL"
-    value = "https://server-17vie6z9.blacksea-cdec4a8e.norwayeast.azurecontainerapps.io/"
+    value = "https://server-17vie6z9.blacksea-cdec4a8e.norwayeast.azurecontainerapps.io"
   },
   {
     name  = "FEIDE_CLIENT_ID"
@@ -65,6 +65,10 @@ environment_variables = [
     name  = "RATE_LIMIT_MAX",
     value = 1000
   },
+  {
+    name = "REDIRECT_ORIGINS",
+    value = "https://server-17vie6z9.blacksea-cdec4a8e.norwayeast.azurecontainerapps.io,https://indokntnu.no,https://indøkntnu.no"
+  }
 ]
 
 

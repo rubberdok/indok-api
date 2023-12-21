@@ -17,6 +17,7 @@ const envVarsSchema = z.object({
 		.transform((v) => v === "true"),
 	NO_REPLY_EMAIL: z.string().email(),
 	NODE_ENV: z.enum(["development", "production", "test"]),
+	REDIRECT_ORIGINS: z.string().transform((v) => v.split(",")),
 	PORT: z
 		.string()
 		.transform((val) => Number.parseInt(val))

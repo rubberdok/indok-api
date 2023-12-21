@@ -15,7 +15,11 @@ import * as Sentry from "@sentry/node";
 import RedisStore from "connect-redis";
 import { FastifyInstance } from "fastify";
 import { env } from "./config.js";
-import { NotFoundError } from "./domain/errors.js";
+import {
+	KnownDomainError,
+	NotFoundError,
+	isUserFacingError,
+} from "./domain/errors.js";
 import { User } from "./domain/users.js";
 import { resolvers } from "./graphql/resolvers.generated.js";
 import { typeDefs } from "./graphql/type-defs.generated.js";
@@ -144,6 +148,18 @@ export async function initServer(
 	app.addHook("preHandler", async (request) => {
 		if (typeof request.session.get("authenticated") === "undefined") {
 			request.session.set("authenticated", false);
+		}
+	});
+
+	/**
+	 * Set custom error handler to handle user-facing errors
+	 */
+	app.setErrorHandler((error, _request, reply) => {
+		if (isUserFacingError(error)) {
+			reply.status(400).send({ message: error.message, code: error.code });
+		} else {
+			// Handle these errors with the default error handler
+			reply.send(error);
 		}
 	});
 

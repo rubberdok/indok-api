@@ -1,7 +1,9 @@
 import { FastifyPluginAsync, FastifyRequest } from "fastify";
+import { env } from "~/config.js";
 import {
 	BadRequestError,
 	InternalServerError,
+	InvalidArgumentError,
 	PermissionDeniedError,
 } from "~/domain/errors.js";
 import { User } from "~/domain/users.js";
@@ -14,6 +16,15 @@ export interface AuthService {
 	): Promise<User>;
 	login(req: FastifyRequest, user: User): Promise<User>;
 	logout(req: FastifyRequest): Promise<void>;
+}
+
+function assertValidRedirectUrl(url: string): void {
+	const parsedUrl = new URL(url);
+	if (!env.REDIRECT_ORIGINS.some((origin) => origin === parsedUrl.origin)) {
+		throw new InvalidArgumentError(
+			`Invalid redirect URL. Must be one of ${env.REDIRECT_ORIGINS.join(", ")}`,
+		);
+	}
 }
 
 function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
@@ -35,7 +46,14 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
 			},
 			handler: async (req, reply) => {
 				const { redirect } = req.query;
-				const url = authService.authorizationUrl(req, redirect);
+				let redirectUrl = new URL("/auth/me", env.SERVER_URL);
+
+				if (redirect) {
+					assertValidRedirectUrl(redirect);
+					redirectUrl = new URL(redirect);
+				}
+
+				const url = authService.authorizationUrl(req, redirectUrl.toString());
 
 				return reply.redirect(303, url);
 			},
@@ -61,12 +79,19 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
 			},
 			handler: async (req, reply) => {
 				const { code, state } = req.query;
+				let redirectUrl = new URL("/auth/me", env.SERVER_URL);
+
+				if (state) {
+					assertValidRedirectUrl(state);
+					redirectUrl = new URL(state);
+				}
+
 				try {
 					const user = await authService.authorizationCallback(req, { code });
 
 					await authService.login(req, user);
 
-					return reply.redirect(303, state ?? "/");
+					return reply.redirect(303, redirectUrl.toString());
 				} catch (err) {
 					if (err instanceof Error) {
 						req.log.error(err, "Authentication failed");
