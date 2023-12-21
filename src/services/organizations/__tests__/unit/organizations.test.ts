@@ -581,7 +581,7 @@ describe("OrganizationService", () => {
 					 * We call the addMember method with the user ID, organization ID, and the
 					 * new member's user ID and role.
 					 */
-					expect(
+					await expect(
 						organizationService.addMember(state.user.id, input),
 					).rejects.toThrow(expectedError);
 				},

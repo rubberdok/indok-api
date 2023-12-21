@@ -145,7 +145,7 @@ export async function initServer(
 	/**
 	 * Default `authenticated` session variable to false if it is undefined
 	 */
-	app.addHook("preHandler", async (request) => {
+	app.addHook("preHandler", (request) => {
 		if (typeof request.session.get("authenticated") === "undefined") {
 			request.session.set("authenticated", false);
 		}

@@ -118,7 +118,7 @@ describe("UserService", () => {
 				 *
 				 * Expect the update call to throw PermissionDeniedError
 				 */
-				expect(actual).rejects.toThrow(PermissionDeniedError);
+				await expect(actual).rejects.toThrow(PermissionDeniedError);
 				expect(userRepository.update).not.toHaveBeenCalled();
 				expect(permissionService.isSuperUser).toHaveBeenCalledWith(
 					callerUserId,

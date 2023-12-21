@@ -44,7 +44,7 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
 					},
 				},
 			},
-			handler: async (req, reply) => {
+			handler: (req, reply) => {
 				const { redirect } = req.query;
 				let redirectUrl = new URL("/auth/me", env.SERVER_URL);
 
@@ -117,7 +117,7 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
 		app.route({
 			method: "GET",
 			url: "/me",
-			handler: async (req, reply) => {
+			handler: (req, reply) => {
 				if (req.session.authenticated) {
 					return reply.status(200).send({ user: req.session.userId });
 				}

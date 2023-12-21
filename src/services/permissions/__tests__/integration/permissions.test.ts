@@ -10,7 +10,7 @@ import { PermissionService } from "../../service.js";
 let permissionService: PermissionService;
 
 describe("OrganizationsService", () => {
-	beforeAll(async () => {
+	beforeAll(() => {
 		const userRepository = new UserRepository(prisma);
 		const memberRepository = new MemberRepository(prisma);
 		const organizationRepository = new OrganizationRepository(prisma);

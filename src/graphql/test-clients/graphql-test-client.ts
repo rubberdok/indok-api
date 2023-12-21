@@ -113,7 +113,7 @@ export class GraphQLTestClient {
 	 * @param options.request - The request options to pass to Fastify
 	 * @param options.userId - The ID of the user to perform the mutation as
 	 */
-	public async mutate<T>(
+	public mutate<T>(
 		queryData: {
 			mutation: T;
 			variables?: VariablesOf<T>;

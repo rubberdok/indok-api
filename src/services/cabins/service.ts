@@ -86,11 +86,11 @@ export class CabinService {
 		private permissionService: PermissionService,
 	) {}
 
-	async getCabinByBookingId(bookingId: string): Promise<Cabin> {
+	getCabinByBookingId(bookingId: string): Promise<Cabin> {
 		return this.cabinRepository.getCabinByBookingId(bookingId);
 	}
 
-	async getCabin(id: string): Promise<Cabin> {
+	getCabin(id: string): Promise<Cabin> {
 		return this.cabinRepository.getCabinById(id);
 	}
 
@@ -313,7 +313,7 @@ export class CabinService {
 	/**
 	 * findManyCabins returns all cabins.
 	 */
-	async findManyCabins(): Promise<Cabin[]> {
+	findManyCabins(): Promise<Cabin[]> {
 		return this.cabinRepository.findManyCabins();
 	}
 
@@ -445,9 +445,7 @@ export class CabinService {
 	/**
 	 * getBookingSemester returns the booking semester for the given semester, or null if it does not exist.
 	 */
-	async getBookingSemester(
-		semester: Semester,
-	): Promise<BookingSemester | null> {
+	getBookingSemester(semester: Semester): Promise<BookingSemester | null> {
 		return this.cabinRepository.getBookingSemester(semester);
 	}
 

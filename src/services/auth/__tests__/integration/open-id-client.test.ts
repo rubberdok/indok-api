@@ -28,7 +28,7 @@ describe("AuthService", () => {
 		);
 	});
 	describe("authorizationUrl", () => {
-		it("should call openIdClient#authorizeUrl with the expected parameters", async () => {
+		it("should call openIdClient#authorizeUrl with the expected parameters", () => {
 			const req = mockDeep<FastifyRequest>();
 			authService.authorizationUrl(req, "redirectionUrl");
 

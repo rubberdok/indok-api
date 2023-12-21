@@ -6,7 +6,7 @@ import { prismaKnownErrorCodes } from "~/lib/prisma.js";
 export class MemberRepository {
 	constructor(private db: PrismaClient) {}
 
-	async findMany(where?: { organizationId?: string; userId?: string }): Promise<
+	findMany(where?: { organizationId?: string; userId?: string }): Promise<
 		Member[]
 	> {
 		return this.db.member.findMany({
@@ -102,7 +102,7 @@ export class MemberRepository {
 	 * @param data.organizationId - The ID of the organization to remove the user from
 	 * @returns The removed membership
 	 */
-	async remove(
+	remove(
 		data: { id: string } | { userId: string; organizationId: string },
 	): Promise<Member> {
 		if ("id" in data) {

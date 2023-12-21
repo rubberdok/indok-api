@@ -7,7 +7,7 @@ import { MemberRepository } from "../../members.js";
 let repo: MemberRepository;
 
 describe("MembersRepository", () => {
-	beforeAll(async () => {
+	beforeAll(() => {
 		repo = new MemberRepository(prisma);
 	});
 

@@ -31,7 +31,7 @@ describe("ListingRepository", () => {
 			expect(actual).toBeDefined();
 		});
 
-		it("raises an error if organization ID is not valid", async () => {
+		it("raises an error if organization ID is not valid", () => {
 			const actual = listingRepository.create({
 				name: faker.word.adjective(),
 				closesAt: faker.date.future(),

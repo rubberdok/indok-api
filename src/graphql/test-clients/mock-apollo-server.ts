@@ -58,7 +58,7 @@ class ApolloServerClient {
 		return { data, errors };
 	}
 
-	public async mutate<T extends TypedDocumentNode<ResultOf<T>, VariablesOf<T>>>(
+	public mutate<T extends TypedDocumentNode<ResultOf<T>, VariablesOf<T>>>(
 		request: { mutation: T; variables?: VariablesOf<T> },
 		options?: { contextValue?: ApolloContext },
 	): Promise<QueryResult<T>> {

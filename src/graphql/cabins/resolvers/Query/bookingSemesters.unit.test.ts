@@ -14,8 +14,8 @@ describe("Cabin queries", () => {
 			const { client, cabinService } = createMockApolloServer();
 
 			cabinService.getBookingSemester.mockImplementation(
-				async (semester: Semester) => {
-					return mock<BookingSemester>({ semester });
+				(semester: Semester) => {
+					return Promise.resolve(mock<BookingSemester>({ semester }));
 				},
 			);
 

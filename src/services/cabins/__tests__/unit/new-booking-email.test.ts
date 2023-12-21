@@ -60,8 +60,8 @@ describe("newBooking", () => {
 	test.each(testCase)(
 		"$name",
 		async ({ input, expectedConfirmationEmail }) => {
-			repo.getBookingSemester.mockImplementation(async (semester: Semester) => {
-				return {
+			repo.getBookingSemester.mockImplementation((semester: Semester) => {
+				return Promise.resolve({
 					bookingsEnabled: true,
 					semester: semester,
 					startAt: DateTime.fromObject({ year: 0 }).toJSDate(),
@@ -69,7 +69,7 @@ describe("newBooking", () => {
 					createdAt: new Date(),
 					updatedAt: new Date(),
 					id: randomUUID(),
-				};
+				});
 			});
 
 			repo.createBooking.mockReturnValueOnce(

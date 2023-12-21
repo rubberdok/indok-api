@@ -7,7 +7,7 @@ const healthCheckPlugin: FastifyPluginAsync = async (app) => {
 	app.route({
 		url: "/health",
 		method: "GET",
-		handler: async (req, reply) => {
+		handler: (req, reply) => {
 			reply.statusCode = 200;
 			return reply.send({ status: "ok" });
 		},

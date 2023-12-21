@@ -16,7 +16,7 @@ describe("PermissionService", () => {
 	let memberRepository: DeepMockProxy<MemberRepository>;
 	let organizationRepository: DeepMockProxy<OrganizationRepository>;
 
-	beforeAll(async () => {
+	beforeAll(() => {
 		UserRepository = mockDeep<UserRepository>();
 		memberRepository = mockDeep<MemberRepository>();
 		organizationRepository = mockDeep<OrganizationRepository>();
@@ -214,8 +214,8 @@ describe("PermissionService", () => {
 				 * test case.
 				 */
 				UserRepository.get.mockResolvedValueOnce(mock<User>(arrange.user));
-				memberRepository.hasRole.mockImplementation(async (data) => {
-					return arrange.organizationRole === data.role;
+				memberRepository.hasRole.mockImplementation((data) => {
+					return Promise.resolve(arrange.organizationRole === data.role);
 				});
 				organizationRepository.get.mockResolvedValue(
 					mock<Organization>(arrange.organization),

@@ -453,7 +453,7 @@ export class EventRepository {
 	 * @param status - The status of the sign ups to get
 	 * @returns A list of event sign ups
 	 */
-	async findManySignUps(data: {
+	findManySignUps(data: {
 		eventId: string;
 		status: ParticipationStatus;
 	}): Promise<EventSignUp[]> {
@@ -1057,7 +1057,7 @@ export class EventRepository {
 		return signUp;
 	}
 
-	async findManySlots(data: { gradeYear?: number; eventId: string }): Promise<
+	findManySlots(data: { gradeYear?: number; eventId: string }): Promise<
 		EventSlot[]
 	> {
 		const { gradeYear, eventId } = data;

@@ -53,11 +53,11 @@ describe("CabinService", () => {
 				 * Mock the cabinRepository.getBookingSemesters method to return the bookingSemesters from the test case.
 				 */
 				cabinRepository.getBookingSemester.mockImplementation(
-					async (semester: Semester) => {
+					(semester: Semester) => {
 						if (semester === Semester.FALL)
-							return arrange.bookingSemesters.fall;
+							return Promise.resolve(arrange.bookingSemesters.fall);
 						if (semester === Semester.SPRING)
-							return arrange.bookingSemesters.spring;
+							return Promise.resolve(arrange.bookingSemesters.spring);
 						throw new Error(`Unexpected semester: ${semester}`);
 					},
 				);
@@ -569,11 +569,11 @@ describe("CabinService", () => {
 				 * Mock the mailService.sendBookingConfirmation method to return a promise.
 				 */
 				cabinRepository.getBookingSemester.mockImplementation(
-					async (semester: Semester) => {
+					(semester: Semester) => {
 						if (semester === Semester.FALL)
-							return arrange.bookingSemesters.fall;
+							return Promise.resolve(arrange.bookingSemesters.fall);
 						if (semester === Semester.SPRING)
-							return arrange.bookingSemesters.spring;
+							return Promise.resolve(arrange.bookingSemesters.spring);
 						throw new Error(`Unexpected semester: ${semester}`);
 					},
 				);
