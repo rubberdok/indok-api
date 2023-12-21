@@ -21,6 +21,6 @@ require("yargs")
         data: { isSuperUser: true },
       });
       console.log(`Successfully promoted ${updatedUser.id} to a super user!`);
-    }
+    },
   )
   .help().argv;

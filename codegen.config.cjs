@@ -112,7 +112,7 @@ const config = {
           contextType: "~/lib/apollo-server.js#ApolloContext",
         },
       },
-      { schema: "src/graphql/**/*.{graphql}" }
+      { schema: "src/graphql/**/*.{graphql}" },
     ),
   },
 };
