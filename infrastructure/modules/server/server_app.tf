@@ -124,15 +124,6 @@ resource "azurerm_container_app" "server" {
         initial_delay    = 5
       }
 
-      liveness_probe {
-        failure_count_threshold = 3
-        interval_seconds        = 10
-        path                    = "/-/health"
-        port                    = 4000
-        transport               = "HTTP"
-        initial_delay           = 5
-      }
-
       readiness_probe {
         failure_count_threshold = 3
         header {
