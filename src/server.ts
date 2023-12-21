@@ -15,11 +15,7 @@ import * as Sentry from "@sentry/node";
 import RedisStore from "connect-redis";
 import { FastifyInstance } from "fastify";
 import { env } from "./config.js";
-import {
-	KnownDomainError,
-	NotFoundError,
-	isUserFacingError,
-} from "./domain/errors.js";
+import { NotFoundError, isUserFacingError } from "./domain/errors.js";
 import { User } from "./domain/users.js";
 import { resolvers } from "./graphql/resolvers.generated.js";
 import { typeDefs } from "./graphql/type-defs.generated.js";
