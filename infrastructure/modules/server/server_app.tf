@@ -52,6 +52,48 @@ resource "azurerm_container_app" "server" {
   }
 
   template {
+    init_container {
+      command = ["pnpm", "run", "db:migrate"]
+      cpu     = 0.25
+      memory  = "0.5Gi"
+      name    = "migrate"
+      image   = var.image_tag
+
+      dynamic "env" {
+        for_each = var.environment_variables
+        content {
+          name        = env.value.name
+          secret_name = try(env.value.secret_name, null)
+          value       = try(env.value.value, null)
+        }
+      }
+
+      env {
+        name        = "REDIS_CONNECTION_STRING"
+        secret_name = "redis-connection-string"
+      }
+
+      env {
+        name        = "DATABASE_CONNECTION_STRING"
+        secret_name = "database-connection-string"
+      }
+
+      env {
+        name        = "FEIDE_CLIENT_SECRET"
+        secret_name = "feide-client-secret"
+      }
+
+      env {
+        name        = "SESSION_SECRET"
+        secret_name = "session-secret"
+      }
+
+      env {
+        name        = "POSTMARK_API_TOKEN"
+        secret_name = "postmark-api-token"
+      }
+    }
+
     min_replicas = 1
     container {
       cpu    = 0.25
@@ -62,12 +104,11 @@ resource "azurerm_container_app" "server" {
       startup_probe {
         failure_count_threshold = 10
         interval_seconds        = 10
-        path                    = "/-/migration-health"
+        path                    = "/-/health"
         port                    = 4000
         transport               = "HTTP"
         timeout                 = 30
       }
-
 
       liveness_probe {
         failure_count_threshold = 3
@@ -85,11 +126,11 @@ resource "azurerm_container_app" "server" {
 
       liveness_probe {
         failure_count_threshold = 3
-        interval_seconds = 10
-        path = "/-/health"
-        port = 4000
-        transport = "HTTP"
-        initial_delay = 5
+        interval_seconds        = 10
+        path                    = "/-/health"
+        port                    = 4000
+        transport               = "HTTP"
+        initial_delay           = 5
       }
 
       readiness_probe {
@@ -150,108 +191,6 @@ resource "azurerm_container_app" "server" {
     }
   }
 
-
-  tags = local.tags
-}
-
-# https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/container_app
-resource "azurerm_container_app" "migrator" {
-  name = "migrate-${var.suffix}"
-
-  container_app_environment_id = module.container_app_environment.id
-
-  resource_group_name = module.resource_group.name
-  revision_mode       = "Single"
-
-  dynamic "secret" {
-    for_each = var.secrets
-    content {
-      name  = secret.value.name
-      value = secret.value.value
-    }
-  }
-
-  secret {
-    name  = "feide-client-secret"
-    value = data.azurerm_key_vault_secret.feide_client_secret.value
-  }
-
-  secret {
-    name  = "docker-registry-password"
-    value = var.docker_registry_password
-  }
-
-  secret {
-    name  = "redis-connection-string"
-    value = azurerm_key_vault_secret.redis_connection_string.value
-  }
-
-  secret {
-    name  = "database-connection-string"
-    value = azurerm_key_vault_secret.db_connection_string.value
-  }
-
-  secret {
-    name  = "session-secret"
-    value = azurerm_key_vault_secret.session_secret.value
-  }
-
-  secret {
-    name  = "postmark-api-token"
-    value = data.azurerm_key_vault_secret.postmark_api_token.value
-  }
-
-  registry {
-    username             = "USERNAME"
-    password_secret_name = "docker-registry-password"
-    server               = "ghcr.io"
-  }
-
-  template {
-    min_replicas = 0
-    max_replicas = 1
-    container {
-      cpu     = 0.25
-      memory  = "0.5Gi"
-      name    = "migrate"
-      image   = var.image_tag
-      command = ["npm", "run", "db:migrate"]
-
-      dynamic "env" {
-        for_each = var.environment_variables
-        content {
-          name        = env.value.name
-          secret_name = try(env.value.secret_name, null)
-          value       = try(env.value.value, null)
-        }
-      }
-
-      env {
-        name        = "REDIS_CONNECTION_STRING"
-        secret_name = "redis-connection-string"
-      }
-
-      env {
-        name        = "DATABASE_CONNECTION_STRING"
-        secret_name = "database-connection-string"
-      }
-
-      env {
-        name        = "FEIDE_CLIENT_SECRET"
-        secret_name = "feide-client-secret"
-      }
-
-      env {
-        name        = "SESSION_SECRET"
-        secret_name = "session-secret"
-      }
-
-      env {
-        name        = "POSTMARK_API_TOKEN"
-        secret_name = "postmark-api-token"
-      }
-    }
-  }
 
   tags = local.tags
 }
