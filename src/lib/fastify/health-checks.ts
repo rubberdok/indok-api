@@ -1,5 +1,4 @@
 import { FastifyPluginAsync } from "fastify";
-
 import { migrationHealthCheck } from "../prisma.js";
 
 const healthCheckPlugin: FastifyPluginAsync = async (app) => {
@@ -30,11 +29,10 @@ const healthCheckPlugin: FastifyPluginAsync = async (app) => {
         req.log.info("Health check failed");
         reply.statusCode = 503;
         return reply.send({ message, status: "error" });
-      } else {
-        req.log.info("Health check succeeded");
-        reply.statusCode = 200;
-        return reply.send({ statusCode: 200, status: "ok" });
       }
+      req.log.info("Health check succeeded");
+      reply.statusCode = 200;
+      return reply.send({ statusCode: 200, status: "ok" });
     },
   });
 };

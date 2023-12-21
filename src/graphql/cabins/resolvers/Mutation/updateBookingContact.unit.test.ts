@@ -1,17 +1,16 @@
 import { faker } from "@faker-js/faker";
-
-import { errorCodes } from "@/domain/errors.js";
-import { createMockApolloServer } from "@/graphql/test-clients/mock-apollo-server.js";
-import { graphql } from "@/graphql/test-clients/unit/gql.js";
+import { errorCodes } from "~/domain/errors.js";
+import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
+import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
 describe("Cabin mutations", () => {
   describe("updateBookingContact", () => {
     it("should raise PermissionDeniedError if the user is not authenticated", async () => {
       const { client } = createMockApolloServer();
 
-      const name = faker.person.fullName(),
-        email = faker.internet.email(),
-        phoneNumber = faker.phone.number();
+      const name = faker.person.fullName();
+      const email = faker.internet.email();
+      const phoneNumber = faker.phone.number();
 
       const { errors } = await client.mutate({
         mutation: graphql(`
@@ -38,11 +37,14 @@ describe("Cabin mutations", () => {
     it("should call updateBookingContact with the correct arugments if authenticated", async () => {
       const { client, cabinService, createMockContext } = createMockApolloServer();
 
-      const name = faker.person.fullName(),
-        email = faker.internet.email(),
-        phoneNumber = faker.phone.number();
+      const name = faker.person.fullName();
+      const email = faker.internet.email();
+      const phoneNumber = faker.phone.number();
       const userId = faker.string.uuid();
-      const authenticatedContext = createMockContext({ userId, authenticated: true });
+      const authenticatedContext = createMockContext({
+        userId,
+        authenticated: true,
+      });
       cabinService.updateBookingContact.mockResolvedValueOnce({
         id: "booking-contact",
         name,
@@ -69,7 +71,7 @@ describe("Cabin mutations", () => {
             },
           },
         },
-        { contextValue: authenticatedContext }
+        { contextValue: authenticatedContext },
       );
 
       expect(errors).toBeUndefined();

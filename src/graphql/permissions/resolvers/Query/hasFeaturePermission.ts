@@ -1,10 +1,9 @@
-import { assertIsAuthenticated } from "@/graphql/auth.js";
-
+import { assertIsAuthenticated } from "~/graphql/auth.js";
 import type { QueryResolvers } from "./../../../types.generated.js";
 export const hasFeaturePermission: NonNullable<QueryResolvers["hasFeaturePermission"]> = async (
   _parent,
   { data },
-  ctx
+  ctx,
 ) => {
   assertIsAuthenticated(ctx);
 
@@ -12,6 +11,10 @@ export const hasFeaturePermission: NonNullable<QueryResolvers["hasFeaturePermiss
     userId: ctx.user.id,
     featurePermission: data.featurePermission,
   });
-  ctx.req.log.info({ userId: ctx.user.id, featurePermission: data.featurePermission, hasFeaturePermission });
+  ctx.req.log.info({
+    userId: ctx.user.id,
+    featurePermission: data.featurePermission,
+    hasFeaturePermission,
+  });
   return { hasFeaturePermission, id: data.featurePermission };
 };

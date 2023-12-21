@@ -1,10 +1,8 @@
 import { faker } from "@faker-js/faker";
 import { Listing } from "@prisma/client";
 import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
-
-import { PermissionDeniedError } from "@/domain/errors.js";
-import { Role } from "@/domain/organizations.js";
-
+import { PermissionDeniedError } from "~/domain/errors.js";
+import { Role } from "~/domain/organizations.js";
 import { ListingRepository, ListingService, PermissionService } from "../../service.js";
 
 describe("ListingService", () => {
@@ -66,7 +64,11 @@ describe("ListingService", () => {
          *
          * Has role should have been called with userId and organizationId
          */
-        expect(permissionService.hasRole).toHaveBeenCalledWith({ userId, organizationId, role: Role.MEMBER });
+        expect(permissionService.hasRole).toHaveBeenCalledWith({
+          userId,
+          organizationId,
+          role: Role.MEMBER,
+        });
       });
 
       it("should raise PermissionDeniedError if the user does not have the role", async () => {

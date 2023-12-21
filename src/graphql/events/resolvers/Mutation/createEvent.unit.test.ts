@@ -1,10 +1,9 @@
 import { faker } from "@faker-js/faker";
 import { mock } from "jest-mock-extended";
-
-import { errorCodes } from "@/domain/errors.js";
-import { Event } from "@/domain/events.js";
-import { createMockApolloServer } from "@/graphql/test-clients/mock-apollo-server.js";
-import { graphql } from "@/graphql/test-clients/unit/gql.js";
+import { errorCodes } from "~/domain/errors.js";
+import { Event } from "~/domain/events.js";
+import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
+import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
 describe("Event mutations", () => {
   describe("createEvent", () => {
@@ -23,7 +22,11 @@ describe("Event mutations", () => {
       });
 
       eventService.create.mockResolvedValue(
-        mock<Event>({ id: faker.string.uuid(), name: faker.person.fullName(), description: faker.lorem.paragraph() })
+        mock<Event>({
+          id: faker.string.uuid(),
+          name: faker.person.fullName(),
+          description: faker.lorem.paragraph(),
+        }),
       );
 
       /**
@@ -56,7 +59,7 @@ describe("Event mutations", () => {
         },
         {
           contextValue,
-        }
+        },
       );
 
       /**
@@ -87,7 +90,11 @@ describe("Event mutations", () => {
       });
 
       eventService.create.mockResolvedValue(
-        mock<Event>({ id: faker.string.uuid(), name: faker.person.fullName(), description: faker.lorem.paragraph() })
+        mock<Event>({
+          id: faker.string.uuid(),
+          name: faker.person.fullName(),
+          description: faker.lorem.paragraph(),
+        }),
       );
 
       /**
@@ -127,7 +134,7 @@ describe("Event mutations", () => {
         },
         {
           contextValue,
-        }
+        },
       );
 
       /**
@@ -150,7 +157,7 @@ describe("Event mutations", () => {
           signUpsEndAt: expect.any(Date),
           capacity: 1,
           slots: [{ capacity: 1 }],
-        }
+        },
       );
     });
 
@@ -188,7 +195,7 @@ describe("Event mutations", () => {
         },
         {
           contextValue,
-        }
+        },
       );
 
       /**

@@ -3,11 +3,9 @@ import { jest } from "@jest/globals";
 import { FastifyRequest } from "fastify";
 import { mock, mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
-
-import { defaultTestDependenciesFactory } from "@/__tests__/dependencies-factory.js";
-import { AuthenticationError } from "@/domain/errors.js";
-import { User } from "@/domain/users.js";
-
+import { defaultTestDependenciesFactory } from "~/__tests__/dependencies-factory.js";
+import { AuthenticationError } from "~/domain/errors.js";
+import { User } from "~/domain/users.js";
 import { AuthService, UserService } from "../../service.js";
 
 describe("AuthService", () => {
@@ -43,7 +41,7 @@ describe("AuthService", () => {
         req,
         mock<User>({
           id: user.id,
-        })
+        }),
       );
 
       expect(req.session.regenerate).toHaveBeenCalledWith(["authenticated", "userId"]);
@@ -56,7 +54,9 @@ describe("AuthService", () => {
 
   describe("logout", () => {
     it("should destroy the session if authenticated", async () => {
-      const req = mockDeep<FastifyRequest>({ session: { authenticated: true, userId: faker.string.uuid() } });
+      const req = mockDeep<FastifyRequest>({
+        session: { authenticated: true, userId: faker.string.uuid() },
+      });
       req.session.get.mockImplementation((key) => req.session[key]);
       await authService.logout(req);
 
@@ -64,7 +64,9 @@ describe("AuthService", () => {
     });
 
     it("should throw AuthenticationError if not logged in", async () => {
-      const req = mockDeep<FastifyRequest>({ session: { authenticated: false } });
+      const req = mockDeep<FastifyRequest>({
+        session: { authenticated: false },
+      });
       req.session.get.mockImplementation((key) => req.session[key]);
 
       const actual = authService.logout(req);

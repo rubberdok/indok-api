@@ -1,7 +1,5 @@
 import { faker } from "@faker-js/faker";
-
-import prisma from "@/lib/prisma.js";
-
+import prisma from "~/lib/prisma.js";
 import { CabinRepository } from "../../repository.js";
 
 describe("CabinRepository", () => {

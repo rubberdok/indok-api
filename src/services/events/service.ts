@@ -3,11 +3,10 @@ import { FastifyBaseLogger } from "fastify";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
 import { z } from "zod";
-
-import { InternalServerError, InvalidArgumentError, NotFoundError, PermissionDeniedError } from "@/domain/errors.js";
-import { Event as DomainEvent, EventWithSignUps, isEventWithSignUps, signUpAvailability } from "@/domain/events.js";
-import { Role } from "@/domain/organizations.js";
-import { User } from "@/domain/users.js";
+import { InternalServerError, InvalidArgumentError, NotFoundError, PermissionDeniedError } from "~/domain/errors.js";
+import { Event as DomainEvent, EventWithSignUps, isEventWithSignUps, signUpAvailability } from "~/domain/events.js";
+import { Role } from "~/domain/organizations.js";
+import { User } from "~/domain/users.js";
 
 interface CreateConfirmedSignUpData {
   userId: string;
@@ -59,13 +58,16 @@ export interface EventRepository {
   getWithSlots(id: string): Promise<DomainEvent & { slots: EventSlot[] }>;
   getSlotWithRemainingCapacity(eventId: string, gradeYear?: number): Promise<EventSlot | null>;
   findMany(data?: { endAtGte?: Date | null }): Promise<DomainEvent[]>;
-  findManySignUps(data: { eventId: string; status: ParticipationStatus }): Promise<EventSignUp[]>;
+  findManySignUps(data: {
+    eventId: string;
+    status: ParticipationStatus;
+  }): Promise<EventSignUp[]>;
   getSignUp(userId: string, eventId: string): Promise<EventSignUp>;
   createSignUp(
-    data: CreateConfirmedSignUpData | CreateOnWaitlistSignUpData
+    data: CreateConfirmedSignUpData | CreateOnWaitlistSignUpData,
   ): Promise<{ signUp: EventSignUp; slot?: EventSlot; event: DomainEvent }>;
   updateSignUp(
-    data: UpdateToConfirmedSignUpData | UpdateToInactiveSignUpData
+    data: UpdateToConfirmedSignUpData | UpdateToInactiveSignUpData,
   ): Promise<{ signUp: EventSignUp; slot?: EventSlot; event: DomainEvent }>;
   findManySlots(data: { gradeYear?: number; eventId: string }): Promise<EventSlot[]>;
 }
@@ -74,10 +76,14 @@ export interface UserService {
   get(id: string): Promise<User>;
 }
 
-interface Logger extends FastifyBaseLogger {}
+type Logger = FastifyBaseLogger;
 
 export interface PermissionService {
-  hasRole(data: { userId: string; organizationId: string; role: Role }): Promise<boolean>;
+  hasRole(data: {
+    userId: string;
+    organizationId: string;
+    role: Role;
+  }): Promise<boolean>;
 }
 
 export class EventService {
@@ -85,7 +91,7 @@ export class EventService {
     private eventRepository: EventRepository,
     private permissionService: PermissionService,
     private userService: UserService,
-    private log?: Logger
+    private log?: Logger,
   ) {}
   /**
    * Create a new event
@@ -122,7 +128,7 @@ export class EventService {
       slots: { capacity: number; gradeYears?: number[] }[];
       signUpsStartAt: Date;
       signUpsEndAt: Date;
-    } | null
+    } | null,
   ) {
     const isMember = await this.permissionService.hasRole({
       userId,
@@ -143,7 +149,7 @@ export class EventService {
             z.object({
               capacity: z.number().int().min(0),
               gradeYears: z.array(z.number().int().min(1).max(5)).optional(),
-            })
+            }),
           ),
           signUpsStartAt: z.date(),
           signUpsEndAt: z.date().min(new Date()),
@@ -158,7 +164,7 @@ export class EventService {
           {
             message: "Sign ups end date must be after sign ups start date",
             path: ["signUpsEndAt"],
-          }
+          },
         )
         .parse(signUpDetails);
 
@@ -202,7 +208,7 @@ export class EventService {
           {
             message: "End date must be after start date",
             path: ["endAt"],
-          }
+          },
         )
         .parse(event);
 
@@ -216,7 +222,7 @@ export class EventService {
           contactEmail,
           organizationId,
         },
-        validatedSignUpDetails
+        validatedSignUpDetails,
       );
     } catch (err) {
       if (err instanceof z.ZodError) throw new InvalidArgumentError(err.message);
@@ -226,7 +232,7 @@ export class EventService {
 
   private validateUpdateSignUpDetails(
     data: Partial<SignUpDetails>,
-    existingEvent: DomainEvent & { slots: EventSlot[] }
+    existingEvent: DomainEvent & { slots: EventSlot[] },
   ): SignUpDetails {
     const changingStartAt = data.signUpsStartAt !== undefined;
     const changingEndAt = data.signUpsEndAt !== undefined;
@@ -305,7 +311,7 @@ export class EventService {
       slots: { capacity: number }[];
       signUpsStartAt: Date;
       signUpsEndAt: Date;
-    }>
+    }>,
   ): Promise<DomainEvent> {
     const event = await this.eventRepository.getWithSlots(eventId);
     if (!event.organizationId) {
@@ -390,16 +396,15 @@ export class EventService {
             eventId,
           });
           return signUp;
-        } else {
-          const { signUp } = await this.eventRepository.createSignUp({
-            userId,
-            participationStatus: ParticipationStatus.CONFIRMED,
-            eventId,
-            slotId: slotToSignUp.id,
-          });
-          this.log?.info({ signUp, attempt }, "Successfully signed up user for event.");
-          return signUp;
         }
+        const { signUp } = await this.eventRepository.createSignUp({
+          userId,
+          participationStatus: ParticipationStatus.CONFIRMED,
+          eventId,
+          slotId: slotToSignUp.id,
+        });
+        this.log?.info({ signUp, attempt }, "Successfully signed up user for event.");
+        return signUp;
       } catch (err) {
         // If there are no slots with remaining capacity, we add the user to the wait list.
         if (err instanceof NotFoundError) continue;
@@ -413,7 +418,7 @@ export class EventService {
      * but we have to abort at some point to avoid stalling the request.
      */
     this.log?.error(
-      "Failed to sign up user after 20 attempts. If this happens often, consider increasing the number of attempts."
+      "Failed to sign up user after 20 attempts. If this happens often, consider increasing the number of attempts.",
     );
     throw new InternalServerError("Failed to sign up user after 20 attempts");
   }
@@ -513,7 +518,7 @@ export class EventService {
     const signUp = await this.eventRepository.getSignUp(userId, eventId);
     if (signUp.participationStatus !== ParticipationStatus.CONFIRMED) {
       throw new InvalidArgumentError(
-        `Can only demote sign ups with status confirmed, got, {signUp.participationStatus}`
+        `Can only demote sign ups with status confirmed, got, ${signUp.participationStatus}`,
       );
     }
 
@@ -660,7 +665,10 @@ export class EventService {
       if (!isNotFoundError) throw err;
     }
 
-    const slots = await this.eventRepository.findManySlots({ gradeYear: user.gradeYear, eventId });
+    const slots = await this.eventRepository.findManySlots({
+      gradeYear: user.gradeYear,
+      eventId,
+    });
     /**
      * There are no slots on the event for this user's grade year, so they cannot sign up
      */

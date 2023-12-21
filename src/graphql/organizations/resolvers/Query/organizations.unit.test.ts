@@ -1,5 +1,5 @@
-import { createMockApolloServer } from "@/graphql/test-clients/mock-apollo-server.js";
-import { graphql } from "@/graphql/test-clients/unit/gql.js";
+import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
+import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
 describe("Organization queries", () => {
   describe("organizations", () => {

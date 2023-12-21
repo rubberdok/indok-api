@@ -17,12 +17,11 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { GraphQLFormattedError } from "graphql";
 import { merge } from "lodash-es";
 import { ZodError } from "zod";
-
-import { BookingStatus } from "@/domain/cabins.js";
-import { KnownDomainError, errorCodes } from "@/domain/errors.js";
-import { SignUpAvailability, Event } from "@/domain/events.js";
-import { Role } from "@/domain/organizations.js";
-import { User } from "@/domain/users.js";
+import { BookingStatus } from "~/domain/cabins.js";
+import { KnownDomainError, errorCodes } from "~/domain/errors.js";
+import { Event, SignUpAvailability } from "~/domain/events.js";
+import { Role } from "~/domain/organizations.js";
+import { User } from "~/domain/users.js";
 
 export function getFormatErrorHandler(log?: Partial<FastifyInstance["log"]>) {
   const formatError = (formattedError: GraphQLFormattedError, error: unknown): GraphQLFormattedError => {
@@ -81,12 +80,16 @@ interface IOrganizationService {
       name: string;
       description?: string | null;
       featurePermissions?: FeaturePermission[] | null;
-    }
+    },
   ): Promise<Organization>;
   update(
     userId: string,
     organizationId: string,
-    data: { name?: string | null; description?: string | null; featurePermissions?: FeaturePermission[] | null }
+    data: {
+      name?: string | null;
+      description?: string | null;
+      featurePermissions?: FeaturePermission[] | null;
+    },
   ): Promise<Organization>;
   addMember(userId: string, data: { userId: string; organizationId: string; role: Role }): Promise<Member>;
   removeMember(userId: string, data: { userId: string; organizationId: string } | { id: string }): Promise<Member>;
@@ -107,7 +110,7 @@ interface IUserService {
       phoneNumber?: string | null;
       graduationYear?: number | null;
       allergies?: string | null;
-    }
+    },
   ): Promise<User>;
   superUpdateUser(
     callerId: string,
@@ -119,7 +122,7 @@ interface IUserService {
       graduationYear?: number | null;
       allergies?: string | null;
       isSuperUser?: boolean | null;
-    }
+    },
   ): Promise<User>;
   login(id: string): Promise<User>;
   create(data: Prisma.UserCreateInput): Promise<User>;
@@ -144,13 +147,22 @@ export interface ICabinService {
   findManyCabins(): Promise<Cabin[]>;
   updateBookingSemester(
     userId: string,
-    data: { semester: Semester; startAt?: Date | null; endAt?: Date | null; bookingsEnabled?: boolean | null }
+    data: {
+      semester: Semester;
+      startAt?: Date | null;
+      endAt?: Date | null;
+      bookingsEnabled?: boolean | null;
+    },
   ): Promise<BookingSemester>;
   getBookingSemester(semester: Semester): Promise<BookingSemester | null>;
   getBookingContact(): Promise<Pick<BookingContact, "email" | "name" | "phoneNumber" | "id">>;
   updateBookingContact(
     userId: string,
-    data: Partial<{ name: string | null; phoneNumber: string | null; email: string | null }>
+    data: Partial<{
+      name: string | null;
+      phoneNumber: string | null;
+      email: string | null;
+    }>,
   ): Promise<Pick<BookingContact, "email" | "name" | "phoneNumber" | "id">>;
 }
 
@@ -171,7 +183,7 @@ interface IEventService {
       signUpsEndAt: Date;
       capacity: number;
       slots: { capacity: number }[];
-    } | null
+    } | null,
   ): Promise<Event>;
   update(
     userId: string,
@@ -183,7 +195,7 @@ interface IEventService {
       endAt: Date | null;
       location: string | null;
       capacity: number | null;
-    }>
+    }>,
   ): Promise<Event>;
   get(id: string): Promise<Event>;
   findMany(data?: { onlyFutureEvents?: boolean | null }): Promise<Event[]>;
@@ -204,7 +216,7 @@ interface ListingService {
       applicationUrl?: string | null;
       closesAt: Date;
       organizationId: string;
-    }
+    },
   ): Promise<Listing>;
   update(
     userId: string,
@@ -214,7 +226,7 @@ interface ListingService {
       description: string | null;
       applicationUrl: string | null;
       closesAt: Date | null;
-    }>
+    }>,
   ): Promise<Listing>;
   delete(userId: string, id: string): Promise<Listing>;
 }
@@ -230,5 +242,8 @@ export interface ApolloServerDependencies {
 
 interface IPermissionService {
   isSuperUser(userId: string): Promise<{ isSuperUser: boolean }>;
-  hasFeaturePermission(data: { userId: string; featurePermission: FeaturePermission }): Promise<boolean>;
+  hasFeaturePermission(data: {
+    userId: string;
+    featurePermission: FeaturePermission;
+  }): Promise<boolean>;
 }

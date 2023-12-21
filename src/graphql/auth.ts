@@ -1,8 +1,11 @@
-import { AuthenticationError } from "@/domain/errors.js";
-import { User } from "@/domain/users.js";
-import { ApolloContext } from "@/lib/apollo-server.js";
+import { AuthenticationError } from "~/domain/errors.js";
+import { User } from "~/domain/users.js";
+import { ApolloContext } from "~/lib/apollo-server.js";
 
-type AuthenticatedContext = ApolloContext & { req: { session: { userId: string; authenticated: true } }; user: User };
+type AuthenticatedContext = ApolloContext & {
+  req: { session: { userId: string; authenticated: true } };
+  user: User;
+};
 
 /**
  * Assert that the user is authenticated

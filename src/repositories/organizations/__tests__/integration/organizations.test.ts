@@ -1,10 +1,8 @@
 import { faker } from "@faker-js/faker";
 import { FeaturePermission, Organization } from "@prisma/client";
-
-import { InvalidArgumentError, NotFoundError } from "@/domain/errors.js";
-import { Role } from "@/domain/organizations.js";
-import prisma from "@/lib/prisma.js";
-
+import { InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
+import { Role } from "~/domain/organizations.js";
+import prisma from "~/lib/prisma.js";
 import { OrganizationRepository } from "../../organizations.js";
 
 let organizationRepository: OrganizationRepository;
@@ -91,7 +89,7 @@ describe("OrganizationsRepository", () => {
         organizationRepository.create({
           name: duplicateName,
           userId: user.id,
-        })
+        }),
       ).rejects.toThrow(InvalidArgumentError);
     });
 
@@ -370,7 +368,9 @@ describe("OrganizationsRepository", () => {
        *
        * Get all organizations that the user is a member of
        */
-      const result = await organizationRepository.findManyByUserId({ userId: user.id });
+      const result = await organizationRepository.findManyByUserId({
+        userId: user.id,
+      });
 
       /**
        * Assert

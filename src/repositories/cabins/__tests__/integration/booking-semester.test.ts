@@ -1,6 +1,5 @@
-import { InvalidArgumentError, NotFoundError } from "@/domain/errors.js";
-import prisma from "@/lib/prisma.js";
-
+import { InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
+import prisma from "~/lib/prisma.js";
 import { CabinRepository } from "../../repository.js";
 
 describe("CabinRepository", () => {

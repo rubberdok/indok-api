@@ -1,8 +1,7 @@
 import { faker } from "@faker-js/faker";
-
-import { GraphQLTestClient, newGraphQLTestClient } from "@/graphql/test-clients/graphql-test-client.js";
-import { graphql } from "@/graphql/test-clients/integration/gql.js";
-import prisma from "@/lib/prisma.js";
+import { GraphQLTestClient, newGraphQLTestClient } from "~/graphql/test-clients/graphql-test-client.js";
+import { graphql } from "~/graphql/test-clients/integration/gql.js";
+import prisma from "~/lib/prisma.js";
 
 describe("Organization mutations", () => {
   let client: GraphQLTestClient;
@@ -63,7 +62,7 @@ describe("Organization mutations", () => {
           },
           {
             userId: user.id,
-          }
+          },
         );
 
         /**

@@ -1,7 +1,6 @@
 import { FastifyPluginAsync, FastifyRequest } from "fastify";
-
-import { BadRequestError, InternalServerError, PermissionDeniedError } from "@/domain/errors.js";
-import { User } from "@/domain/users.js";
+import { BadRequestError, InternalServerError, PermissionDeniedError } from "~/domain/errors.js";
+import { User } from "~/domain/users.js";
 
 export interface AuthService {
   authorizationUrl(req: FastifyRequest, redirect?: string | null): string;

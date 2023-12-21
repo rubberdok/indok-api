@@ -1,7 +1,6 @@
 import { Listing, PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
-
-import { NotFoundError } from "@/domain/errors.js";
+import { NotFoundError } from "~/domain/errors.js";
 
 export class ListingRepository {
   constructor(private db: PrismaClient) {}
@@ -36,7 +35,7 @@ export class ListingRepository {
       closesAt: Date;
       description: string;
       applicationUrl: string;
-    }>
+    }>,
   ): Promise<Listing> {
     try {
       return await this.db.listing.update({

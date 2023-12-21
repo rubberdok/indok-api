@@ -1,11 +1,8 @@
 import { faker } from "@faker-js/faker";
 import dayjs from "dayjs";
-
-import { NotFoundError } from "@/domain/errors.js";
-import prisma from "@/lib/prisma.js";
-
+import { NotFoundError } from "~/domain/errors.js";
+import prisma from "~/lib/prisma.js";
 import { EventService } from "../../service.js";
-
 import { makeDependencies } from "./dependencies-factory.js";
 
 let eventService: EventService;
@@ -91,11 +88,17 @@ describe("EventService", () => {
             data: {
               id,
               name: faker.person.firstName(),
-              startAt: faker.date.soon({ refDate: new Date(2021, 0, 1), days: 1 }),
-              endAt: faker.date.soon({ refDate: new Date(2021, 0, 3), days: 1 }),
+              startAt: faker.date.soon({
+                refDate: new Date(2021, 0, 1),
+                days: 1,
+              }),
+              endAt: faker.date.soon({
+                refDate: new Date(2021, 0, 3),
+                days: 1,
+              }),
             },
-          })
-        )
+          }),
+        ),
       );
 
       /**
@@ -111,7 +114,9 @@ describe("EventService", () => {
        * 1. The events should be returned
        */
       expect(events.length).toBeGreaterThanOrEqual(3);
-      eventIds.forEach((id) => expect(events.map((event) => event.id)).toContainEqual(id));
+      for (const evnetId of eventIds) {
+        expect(events.map((event) => event.id)).toContainEqual(evnetId);
+      }
     });
 
     it("{ onlyFutureEvents: true } should only return events in the future", async () => {

@@ -12,7 +12,7 @@ require("yargs")
         describe: "the user id to promote to a super user",
       });
     },
-    async function (argv) {
+    async (argv) => {
       console.log("Promoting user to a super user...");
       const { PrismaClient } = require("@prisma/client");
       const prismaClient = new PrismaClient();
@@ -21,6 +21,6 @@ require("yargs")
         data: { isSuperUser: true },
       });
       console.log(`Successfully promoted ${updatedUser.id} to a super user!`);
-    }
+    },
   )
   .help().argv;

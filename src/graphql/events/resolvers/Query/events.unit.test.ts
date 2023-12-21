@@ -1,10 +1,9 @@
 import { faker } from "@faker-js/faker";
 import { mock } from "jest-mock-extended";
 import { DateTime } from "luxon";
-
-import { Event } from "@/domain/events.js";
-import { createMockApolloServer } from "@/graphql/test-clients/mock-apollo-server.js";
-import { graphql } from "@/graphql/test-clients/unit/gql.js";
+import { Event } from "~/domain/events.js";
+import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
+import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
 describe("Event queries", () => {
   describe("events", () => {
@@ -51,7 +50,9 @@ describe("Event queries", () => {
         },
       });
       expect(errors).toBeUndefined();
-      expect(eventService.findMany).toHaveBeenCalledWith({ onlyFutureEvents: true });
+      expect(eventService.findMany).toHaveBeenCalledWith({
+        onlyFutureEvents: true,
+      });
     });
 
     it("should split events into this week, next week, and two weeks ahead or more", async () => {

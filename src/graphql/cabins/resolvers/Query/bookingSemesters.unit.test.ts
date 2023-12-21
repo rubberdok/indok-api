@@ -1,8 +1,7 @@
 import { BookingSemester, Semester } from "@prisma/client";
 import { mock } from "jest-mock-extended";
-
-import { createMockApolloServer } from "@/graphql/test-clients/mock-apollo-server.js";
-import { graphql } from "@/graphql/test-clients/unit/gql.js";
+import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
+import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
 describe("Cabin queries", () => {
   describe("bookingSemesters", () => {

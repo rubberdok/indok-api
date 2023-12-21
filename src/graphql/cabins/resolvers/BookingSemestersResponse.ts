@@ -1,5 +1,4 @@
 import { Semester } from "@prisma/client";
-
 import type { BookingSemestersResponseResolvers } from "./../../types.generated.js";
 export const BookingSemestersResponse: BookingSemestersResponseResolvers = {
   /* Implement BookingSemestersResponse resolver logic here */

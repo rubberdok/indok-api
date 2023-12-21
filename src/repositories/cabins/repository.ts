@@ -9,9 +9,8 @@ import {
   Semester,
 } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
-
-import { InvalidArgumentError, NotFoundError } from "@/domain/errors.js";
-import { prismaKnownErrorCodes } from "@/lib/prisma.js";
+import { InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
+import { prismaKnownErrorCodes } from "~/lib/prisma.js";
 
 type OverlappingBookingsData = {
   bookingId: string;
@@ -195,7 +194,7 @@ export class CabinRepository {
    * If the booking contact does not already exist, it will be created.
    */
   async updateBookingContact(
-    data: Partial<{ name: string; email: string; phoneNumber: string }>
+    data: Partial<{ name: string; email: string; phoneNumber: string }>,
   ): Promise<Pick<BookingContact, "email" | "name" | "id" | "phoneNumber">> {
     return await this.db.bookingContact.upsert({
       select: {

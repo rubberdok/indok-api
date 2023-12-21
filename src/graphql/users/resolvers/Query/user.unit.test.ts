@@ -1,10 +1,9 @@
 import { faker } from "@faker-js/faker";
 import { Organization } from "@prisma/client";
 import { mock } from "jest-mock-extended";
-
-import { User } from "@/domain/users.js";
-import { createMockApolloServer } from "@/graphql/test-clients/mock-apollo-server.js";
-import { graphql } from "@/graphql/test-clients/unit/gql.js";
+import { User } from "~/domain/users.js";
+import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
+import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
 describe("User queries", () => {
   describe("user", () => {
@@ -16,7 +15,10 @@ describe("User queries", () => {
        */
       const { client, createMockContext, organizationService, userService } = createMockApolloServer();
       const userId = faker.string.uuid();
-      const authenticatedContext = createMockContext({ userId, authenticated: true });
+      const authenticatedContext = createMockContext({
+        userId,
+        authenticated: true,
+      });
       const user = mock<User>({ id: userId });
       userService.get.mockResolvedValue(user);
       organizationService.findMany.mockResolvedValue([mock<Organization>({ id: faker.string.uuid() })]);
@@ -43,7 +45,7 @@ describe("User queries", () => {
         },
         {
           contextValue: authenticatedContext,
-        }
+        },
       );
 
       /**

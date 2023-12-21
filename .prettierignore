@@ -1,3 +1,0 @@
-src/graphql/test-clients/integration/**/*.ts
-src/graphql/test-clients/unit/**/*.ts
-src/graphql/*.generated.ts

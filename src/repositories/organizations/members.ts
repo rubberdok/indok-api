@@ -1,8 +1,7 @@
 import type { Member, PrismaClient, Role } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
-
-import { InvalidArgumentError, NotFoundError } from "@/domain/errors.js";
-import { prismaKnownErrorCodes } from "@/lib/prisma.js";
+import { InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
+import { prismaKnownErrorCodes } from "~/lib/prisma.js";
 
 export class MemberRepository {
   constructor(private db: PrismaClient) {}
@@ -13,7 +12,11 @@ export class MemberRepository {
     });
   }
 
-  async hasRole(data: { userId: string; organizationId: string; role: Role }): Promise<boolean> {
+  async hasRole(data: {
+    userId: string;
+    organizationId: string;
+    role: Role;
+  }): Promise<boolean> {
     const { userId, organizationId, role } = data;
     const result = await this.db.member.findFirst({
       where: {
@@ -41,7 +44,12 @@ export class MemberRepository {
         promise = this.db.member.findUniqueOrThrow({ where: { id: data.id } });
       } else {
         promise = this.db.member.findUniqueOrThrow({
-          where: { userId_organizationId: { userId: data.userId, organizationId: data.organizationId } },
+          where: {
+            userId_organizationId: {
+              userId: data.userId,
+              organizationId: data.organizationId,
+            },
+          },
         });
       }
       return await promise;
@@ -61,7 +69,11 @@ export class MemberRepository {
    * @param {string} data.organizationId - The ID of the organization to add the user to
    * @param {Role} data.role - The role of the user in the organization, defaults to Role.MEMBER
    */
-  async create(data: { userId: string; organizationId: string; role?: Role }): Promise<Member> {
+  async create(data: {
+    userId: string;
+    organizationId: string;
+    role?: Role;
+  }): Promise<Member> {
     return this.db.member.create({ data }).catch((err) => {
       if (err instanceof PrismaClientKnownRequestError) {
         if (err.code === "P2002") {
@@ -86,9 +98,10 @@ export class MemberRepository {
   async remove(data: { id: string } | { userId: string; organizationId: string }): Promise<Member> {
     if ("id" in data) {
       return this.db.member.delete({ where: { id: data.id } });
-    } else {
-      const { userId, organizationId } = data;
-      return this.db.member.delete({ where: { userId_organizationId: { userId, organizationId } } });
     }
+    const { userId, organizationId } = data;
+    return this.db.member.delete({
+      where: { userId_organizationId: { userId, organizationId } },
+    });
   }
 }

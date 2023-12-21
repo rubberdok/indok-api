@@ -1,18 +1,17 @@
 import {
   Booking,
+  BookingContact as PrismaBookingContact,
   BookingSemester,
   Cabin,
   FeaturePermission,
-  BookingContact as PrismaBookingContact,
   Semester,
 } from "@prisma/client";
 import { DateTime } from "luxon";
 import { MessageSendingResponse } from "postmark/dist/client/models/index.js";
 import { z } from "zod";
-
-import { BookingStatus } from "@/domain/cabins.js";
-import { InvalidArgumentError, NotFoundError, PermissionDeniedError } from "@/domain/errors.js";
-import { EmailContent, TemplateAlias } from "@/lib/postmark.js";
+import { BookingStatus } from "~/domain/cabins.js";
+import { InvalidArgumentError, NotFoundError, PermissionDeniedError } from "~/domain/errors.js";
+import { EmailContent, TemplateAlias } from "~/lib/postmark.js";
 
 export interface BookingData {
   email: string;
@@ -54,12 +53,19 @@ export interface CabinRepository {
   getBookingSemester(semester: Semester): Promise<BookingSemester | null>;
   getBookingContact(): Promise<BookingContact>;
   updateBookingContact(
-    data: Partial<{ name: string | null; phoneNumber: string | null; email?: string | null }>
+    data: Partial<{
+      name: string | null;
+      phoneNumber: string | null;
+      email?: string | null;
+    }>,
   ): Promise<BookingContact>;
 }
 
 export interface PermissionService {
-  hasFeaturePermission(data: { userId: string; featurePermission: FeaturePermission }): Promise<boolean>;
+  hasFeaturePermission(data: {
+    userId: string;
+    featurePermission: FeaturePermission;
+  }): Promise<boolean>;
 }
 
 export interface IMailService {
@@ -70,7 +76,7 @@ export class CabinService {
   constructor(
     private cabinRepository: CabinRepository,
     private mailService: IMailService,
-    private permissionService: PermissionService
+    private permissionService: PermissionService,
   ) {}
 
   async getCabinByBookingId(bookingId: string): Promise<Cabin> {
@@ -107,7 +113,10 @@ export class CabinService {
    */
   private isCrossSemesterBooking(
     data: { startDate: Date; endDate: Date },
-    bookingSemesters: { fall: BookingSemester | null; spring: BookingSemester | null }
+    bookingSemesters: {
+      fall: BookingSemester | null;
+      spring: BookingSemester | null;
+    },
   ) {
     const { fall, spring } = bookingSemesters;
     // If one of the booking semeters are disabled, there can be no valid cross-semester bookings.
@@ -145,7 +154,10 @@ export class CabinService {
 
   private validateBooking(
     data: BookingData,
-    bookingSemesters: { spring: BookingSemester | null; fall: BookingSemester | null }
+    bookingSemesters: {
+      spring: BookingSemester | null;
+      fall: BookingSemester | null;
+    },
   ): BookingData {
     const { fall, spring } = bookingSemesters;
 
@@ -174,13 +186,16 @@ export class CabinService {
           const isValidSpringBooking = this.isInActiveBookingSemester(obj, spring);
           if (isValidSpringBooking) return true;
 
-          const isValidCrossSemesterBooking = this.isCrossSemesterBooking(obj, { spring, fall });
+          const isValidCrossSemesterBooking = this.isCrossSemesterBooking(obj, {
+            spring,
+            fall,
+          });
           return isValidCrossSemesterBooking;
         },
         {
           message: "booking is not in an active booking semester, and is not a valid cross-semester booking",
           path: ["startDate", "endDate"],
-        }
+        },
       );
     try {
       return bookingSchema.parse(data);
@@ -273,7 +288,12 @@ export class CabinService {
    */
   async updateBookingSemester(
     userId: string,
-    data: { semester: Semester; startAt?: Date | null; endAt?: Date | null; bookingsEnabled?: boolean | null }
+    data: {
+      semester: Semester;
+      startAt?: Date | null;
+      endAt?: Date | null;
+      bookingsEnabled?: boolean | null;
+    },
   ) {
     const hasPermission = await this.permissionService.hasFeaturePermission({
       userId,
@@ -333,12 +353,18 @@ export class CabinService {
     try {
       const schema = z.object({
         semester: z.nativeEnum(Semester),
-        startAt: z
-          .date()
-          .default(DateTime.fromObject({ month: data.semester === "SPRING" ? 1 : 8, day: 1 }).toJSDate()),
-        endAt: z
-          .date()
-          .default(DateTime.fromObject({ month: data.semester === "SPRING" ? 7 : 12, day: 31 }).toJSDate()),
+        startAt: z.date().default(
+          DateTime.fromObject({
+            month: data.semester === "SPRING" ? 1 : 8,
+            day: 1,
+          }).toJSDate(),
+        ),
+        endAt: z.date().default(
+          DateTime.fromObject({
+            month: data.semester === "SPRING" ? 7 : 12,
+            day: 31,
+          }).toJSDate(),
+        ),
         bookingsEnabled: z.boolean().default(false),
       });
 
@@ -358,11 +384,16 @@ export class CabinService {
     }
   }
 
-  private getBookingSemesters(): Promise<{ spring: BookingSemester | null; fall: BookingSemester | null }> {
-    return Promise.all([this.getBookingSemester("SPRING"), this.getBookingSemester("FALL")]).then(([spring, fall]) => ({
-      spring,
-      fall,
-    }));
+  private getBookingSemesters(): Promise<{
+    spring: BookingSemester | null;
+    fall: BookingSemester | null;
+  }> {
+    return Promise.all([this.getBookingSemester("SPRING"), this.getBookingSemester("FALL")]).then(
+      ([spring, fall]) => ({
+        spring,
+        fall,
+      }),
+    );
   }
 
   /**
@@ -387,7 +418,7 @@ export class CabinService {
       name: string | null;
       email: string | null;
       phoneNumber: string | null;
-    }>
+    }>,
   ): Promise<BookingContact> {
     const hasPermission = await this.permissionService.hasFeaturePermission({
       userId,

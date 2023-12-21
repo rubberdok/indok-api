@@ -1,15 +1,13 @@
 import assert from "assert";
-
 import { faker } from "@faker-js/faker";
 import { ResultOf } from "@graphql-typed-document-node/core";
 import { Organization } from "@prisma/client";
 import { mock } from "jest-mock-extended";
-
-import { errorCodes } from "@/domain/errors.js";
-import { Role } from "@/domain/organizations.js";
-import { createMockApolloServer } from "@/graphql/test-clients/mock-apollo-server.js";
-import { graphql } from "@/graphql/test-clients/unit/gql.js";
-import { AddMember2Document, RemoveMember2Document } from "@/graphql/test-clients/unit/graphql.js";
+import { errorCodes } from "~/domain/errors.js";
+import { Role } from "~/domain/organizations.js";
+import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
+import { graphql } from "~/graphql/test-clients/unit/gql.js";
+import { AddMember2Document, RemoveMember2Document } from "~/graphql/test-clients/unit/graphql.js";
 
 describe("OrganizationResolvers", () => {
   describe("Mutation", () => {
@@ -43,7 +41,7 @@ describe("OrganizationResolvers", () => {
           },
           {
             contextValue,
-          }
+          },
         );
         assert(typeof errors !== "undefined");
         expect(errors[0]?.extensions?.code).toBe(errorCodes.ERR_PERMISSION_DENIED);
@@ -57,7 +55,10 @@ describe("OrganizationResolvers", () => {
          * 2. Create the mock context without a userId in session
          */
         const { createMockContext, client, organizationService } = createMockApolloServer();
-        const contextValue = createMockContext({ userId: faker.string.uuid(), authenticated: true });
+        const contextValue = createMockContext({
+          userId: faker.string.uuid(),
+          authenticated: true,
+        });
         organizationService.create.mockResolvedValueOnce(
           mock<Organization>({
             id: faker.string.uuid(),
@@ -65,7 +66,7 @@ describe("OrganizationResolvers", () => {
             createdAt: new Date(),
             updatedAt: new Date(),
             description: "",
-          })
+          }),
         );
 
         /**
@@ -88,7 +89,7 @@ describe("OrganizationResolvers", () => {
           },
           {
             contextValue,
-          }
+          },
         );
         expect(errors).toBeUndefined();
         expect(data).toBeDefined();
@@ -133,7 +134,7 @@ describe("OrganizationResolvers", () => {
           },
           {
             contextValue,
-          }
+          },
         );
         assert(typeof errors !== "undefined");
         expect(errors[0]?.extensions?.code).toBe(errorCodes.ERR_PERMISSION_DENIED);
@@ -147,7 +148,10 @@ describe("OrganizationResolvers", () => {
          * 2. Create the mock context without a userId in session
          */
         const { createMockContext, client, organizationService } = createMockApolloServer();
-        const contextValue = createMockContext({ userId: faker.string.uuid(), authenticated: true });
+        const contextValue = createMockContext({
+          userId: faker.string.uuid(),
+          authenticated: true,
+        });
         organizationService.update.mockResolvedValueOnce(
           mock<Organization>({
             id: faker.string.uuid(),
@@ -155,7 +159,7 @@ describe("OrganizationResolvers", () => {
             createdAt: new Date(),
             updatedAt: new Date(),
             description: "",
-          })
+          }),
         );
 
         /**
@@ -178,7 +182,7 @@ describe("OrganizationResolvers", () => {
           },
           {
             contextValue,
-          }
+          },
         );
         expect(errors).toBeUndefined();
         expect(data).toBeDefined();
@@ -228,7 +232,7 @@ describe("OrganizationResolvers", () => {
           },
           {
             contextValue,
-          }
+          },
         );
         assert(typeof errors !== "undefined");
         expect(errors[0]?.extensions?.code).toBe(errorCodes.ERR_PERMISSION_DENIED);
@@ -242,7 +246,10 @@ describe("OrganizationResolvers", () => {
          * 2. Create the mock context without a userId in session
          */
         const { createMockContext, client, organizationService } = createMockApolloServer();
-        const contextValue = createMockContext({ userId: faker.string.uuid(), authenticated: true });
+        const contextValue = createMockContext({
+          userId: faker.string.uuid(),
+          authenticated: true,
+        });
         organizationService.addMember.mockResolvedValueOnce({
           id: faker.string.uuid(),
           createdAt: new Date(),
@@ -258,7 +265,7 @@ describe("OrganizationResolvers", () => {
             updatedAt: new Date(),
             name: "test",
             description: "",
-          })
+          }),
         );
         organizationService.getMembers.mockResolvedValueOnce([
           {
@@ -296,7 +303,7 @@ describe("OrganizationResolvers", () => {
           },
           {
             contextValue,
-          }
+          },
         );
         expect(errors).toBeUndefined();
         expect(data).toBeDefined();
@@ -353,7 +360,7 @@ describe("OrganizationResolvers", () => {
           },
           {
             contextValue,
-          }
+          },
         );
         assert(typeof errors !== "undefined");
         expect(errors[0]?.extensions?.code).toBe(errorCodes.ERR_PERMISSION_DENIED);
@@ -384,7 +391,7 @@ describe("OrganizationResolvers", () => {
             updatedAt: new Date(),
             name: "test",
             description: "",
-          })
+          }),
         );
         organizationService.getMembers.mockResolvedValueOnce([
           {
@@ -422,11 +429,13 @@ describe("OrganizationResolvers", () => {
           },
           {
             contextValue,
-          }
+          },
         );
         expect(errors).toBeUndefined();
         expect(data).toBeDefined();
-        expect(organizationService.removeMember).toHaveBeenCalledWith(userId, { id: "id" });
+        expect(organizationService.removeMember).toHaveBeenCalledWith(userId, {
+          id: "id",
+        });
         expect(data).toEqual<ResultOf<typeof RemoveMember2Document>>({
           removeMember: {
             member: {

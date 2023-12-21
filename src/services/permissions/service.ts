@@ -1,9 +1,12 @@
 import { FeaturePermission, Organization, User } from "@prisma/client";
-
-import { Role } from "@/domain/organizations.js";
+import { Role } from "~/domain/organizations.js";
 
 export interface MemberRepository {
-  hasRole(data: { userId: string; organizationId: string; role: Role }): Promise<boolean>;
+  hasRole(data: {
+    userId: string;
+    organizationId: string;
+    role: Role;
+  }): Promise<boolean>;
 }
 
 export interface UserRepository {
@@ -19,7 +22,7 @@ export class PermissionService {
   constructor(
     private memberRepository: MemberRepository,
     private userRepository: UserRepository,
-    private organizationRepository: OrganizationRepository
+    private organizationRepository: OrganizationRepository,
   ) {}
 
   /**
@@ -44,21 +47,33 @@ export class PermissionService {
    * @param data.role - The required role of the user in the organization
    * @returns true if the user has at least the given role in the organization, false otherwise
    */
-  private async hasOrganizationRole(data: { userId: string; organizationId: string; role: Role }): Promise<boolean> {
+  private async hasOrganizationRole(data: {
+    userId: string;
+    organizationId: string;
+    role: Role;
+  }): Promise<boolean> {
     const { userId, organizationId, role } = data;
 
     /**
      * Check if the user has the admin role in the organization. Admins can perform
      * all actions in the organization, so we can return true immediately.
      */
-    const isAdmin = await this.memberRepository.hasRole({ userId, organizationId, role: Role.ADMIN });
+    const isAdmin = await this.memberRepository.hasRole({
+      userId,
+      organizationId,
+      role: Role.ADMIN,
+    });
     if (isAdmin === true) return true;
 
     /**
      * If the user is not an admin, check if they have the required role in the
      * organization.
      */
-    return await this.memberRepository.hasRole({ userId, organizationId, role });
+    return await this.memberRepository.hasRole({
+      userId,
+      organizationId,
+      role,
+    });
   }
 
   /**
@@ -97,7 +112,11 @@ export class PermissionService {
     const { isSuperUser } = await this.isSuperUser(userId);
     if (isSuperUser) return true;
 
-    const hasRole = await this.hasOrganizationRole({ userId, organizationId, role });
+    const hasRole = await this.hasOrganizationRole({
+      userId,
+      organizationId,
+      role,
+    });
     if (hasRole === false) return false;
     if (!featurePermission) return true;
 
@@ -119,15 +138,20 @@ export class PermissionService {
    * @param data.featurePermission - The required feature permission for the organization
    * @returns true if the user has a membership in an organization with the given feature permission, or is a super user, false otherwise
    */
-  async hasFeaturePermission(data: { userId: string; featurePermission: FeaturePermission }): Promise<boolean> {
+  async hasFeaturePermission(data: {
+    userId: string;
+    featurePermission: FeaturePermission;
+  }): Promise<boolean> {
     const { userId, featurePermission } = data;
 
     const { isSuperUser } = await this.isSuperUser(userId);
     if (isSuperUser) return true;
 
-    const organizations = await this.organizationRepository.findManyByUserId({ userId });
+    const organizations = await this.organizationRepository.findManyByUserId({
+      userId,
+    });
     const hasFeaturePermission = organizations.some((organization) =>
-      organization.featurePermissions.includes(featurePermission)
+      organization.featurePermissions.includes(featurePermission),
     );
     return hasFeaturePermission;
   }

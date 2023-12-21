@@ -1,14 +1,13 @@
 import { PrismaClient } from "@prisma/client";
-
-import { MockOpenIdClient, newMockOpenIdClient } from "@/__tests__/mocks/openIdClient.js";
-import { ApolloServerDependencies } from "@/lib/apollo-server.js";
-import { ServerDependencies, dependenciesFactory } from "@/lib/fastify/dependencies.js";
-import { MemberRepository } from "@/repositories/organizations/members.js";
-import { OrganizationRepository } from "@/repositories/organizations/organizations.js";
-import { UserRepository } from "@/repositories/users/index.js";
-import { AuthService } from "@/services/auth/service.js";
-import { PermissionService } from "@/services/permissions/service.js";
-import { UserService } from "@/services/users/service.js";
+import { MockOpenIdClient, newMockOpenIdClient } from "~/__tests__/mocks/openIdClient.js";
+import { ApolloServerDependencies } from "~/lib/apollo-server.js";
+import { ServerDependencies, dependenciesFactory } from "~/lib/fastify/dependencies.js";
+import { MemberRepository } from "~/repositories/organizations/members.js";
+import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
+import { UserRepository } from "~/repositories/users/index.js";
+import { AuthService } from "~/services/auth/service.js";
+import { PermissionService } from "~/services/permissions/service.js";
+import { UserService } from "~/services/users/service.js";
 
 export function defaultTestDependenciesFactory(
   overrides: Partial<{
@@ -16,7 +15,7 @@ export function defaultTestDependenciesFactory(
     authService: AuthService;
     prismaClient: PrismaClient;
     openIdClient: MockOpenIdClient;
-  }> = {}
+  }> = {},
 ): ServerDependencies & { mockOpenIdClient: MockOpenIdClient } {
   const defaultDependencies = dependenciesFactory();
   const { prismaClient: prismaOverride, apolloServerDependencies: apolloServerOverrides } = overrides;

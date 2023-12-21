@@ -1,7 +1,5 @@
 import { faker } from "@faker-js/faker";
-
-import prisma from "@/lib/prisma.js";
-
+import prisma from "~/lib/prisma.js";
 import { EventRepository } from "../../repository.js";
 
 describe("EventRepository", () => {
@@ -24,11 +22,17 @@ describe("EventRepository", () => {
             data: {
               id,
               name: faker.person.firstName(),
-              startAt: faker.date.soon({ refDate: new Date(2021, 0, 1), days: 1 }),
-              endAt: faker.date.soon({ refDate: new Date(2021, 0, 3), days: 1 }),
+              startAt: faker.date.soon({
+                refDate: new Date(2021, 0, 1),
+                days: 1,
+              }),
+              endAt: faker.date.soon({
+                refDate: new Date(2021, 0, 3),
+                days: 1,
+              }),
             },
-          })
-        )
+          }),
+        ),
       );
 
       /**
@@ -44,7 +48,9 @@ describe("EventRepository", () => {
        * 1. The events should be returned
        */
       expect(events.length).toBeGreaterThanOrEqual(3);
-      eventIds.forEach((id) => expect(events.map((event) => event.id)).toContainEqual(id));
+      for (const evnetId of eventIds) {
+        expect(events.map((event) => event.id)).toContainEqual(evnetId);
+      }
     });
 
     it("should only return events after endAtGte", async () => {
@@ -60,11 +66,17 @@ describe("EventRepository", () => {
             data: {
               id,
               name: faker.person.firstName(),
-              startAt: faker.date.soon({ refDate: new Date(2021, 0, 1), days: 1 }),
-              endAt: faker.date.soon({ refDate: new Date(2021, 0, 3), days: 1 }),
+              startAt: faker.date.soon({
+                refDate: new Date(2021, 0, 1),
+                days: 1,
+              }),
+              endAt: faker.date.soon({
+                refDate: new Date(2021, 0, 3),
+                days: 1,
+              }),
             },
-          })
-        )
+          }),
+        ),
       );
 
       const eventInThePast = await prisma.event.create({
@@ -81,14 +93,18 @@ describe("EventRepository", () => {
        *
        * 1. Get the event
        */
-      const events = await eventRepository.findMany({ endAtGte: new Date(2021, 0, 1) });
+      const events = await eventRepository.findMany({
+        endAtGte: new Date(2021, 0, 1),
+      });
 
       /**
        * Assert
        *
        * 1. The event in the past should not have been returned
        */
-      events.forEach((event) => expect(event.id).not.toEqual(eventInThePast.id));
+      for (const event of events) {
+        expect(event.id).not.toEqual(eventInThePast.id);
+      }
     });
   });
 
@@ -118,7 +134,7 @@ describe("EventRepository", () => {
           signUpsEnabled: true,
           signUpsStartAt: new Date(),
           signUpsEndAt: new Date(),
-        }
+        },
       );
 
       /**

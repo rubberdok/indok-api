@@ -1,14 +1,11 @@
 import { randomUUID } from "crypto";
-
 import { faker } from "@faker-js/faker";
 import { Semester } from "@prisma/client";
 import dayjs from "dayjs";
 import { DeepMockProxy, mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
-
-import { BookingStatus } from "@/domain/cabins.js";
-import { TemplateAlias } from "@/lib/postmark.js";
-
+import { BookingStatus } from "~/domain/cabins.js";
+import { TemplateAlias } from "~/lib/postmark.js";
 import { BookingData, CabinRepository, CabinService, IMailService, PermissionService } from "../../service.js";
 
 const validBooking: BookingData = {
@@ -77,7 +74,7 @@ describe("newBooking", () => {
         updatedAt: new Date(),
         status: BookingStatus.PENDING,
         cabinId: faker.string.uuid(),
-      })
+      }),
     );
 
     await cabinService.newBooking(input);

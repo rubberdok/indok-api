@@ -1,10 +1,7 @@
-import { EmailContent, IMailClient } from "@/lib/postmark.js";
+import { EmailContent, IMailClient } from "~/lib/postmark.js";
 
 export class MailService {
-  constructor(
-    private client: IMailClient,
-    private noReplyEmail: string
-  ) {}
+  constructor(private client: IMailClient, private noReplyEmail: string) {}
 
   send(template: EmailContent) {
     return this.client.sendEmailWithTemplate({

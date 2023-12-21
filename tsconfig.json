@@ -20,7 +20,7 @@
     "outDir": "dist",
     "noEmit": true,
     "paths": {
-      "@/*": ["src/*"]
+      "~/*": ["src/*"]
     },
     "baseUrl": "./"
   },

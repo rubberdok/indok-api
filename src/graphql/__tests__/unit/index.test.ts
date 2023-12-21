@@ -1,11 +1,9 @@
 import assert from "assert";
-
 import { faker } from "@faker-js/faker";
 import { ResultOf } from "@graphql-typed-document-node/core";
-
-import { createMockApolloServer } from "@/graphql/test-clients/mock-apollo-server.js";
-import { graphql } from "@/graphql/test-clients/unit/gql.js";
-import { GetUsersDocument } from "@/graphql/test-clients/unit/graphql.js";
+import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
+import { graphql } from "~/graphql/test-clients/unit/gql.js";
+import { GetUsersDocument } from "~/graphql/test-clients/unit/graphql.js";
 
 describe("GraphQL", () => {
   it("server should be correctly defined", async () => {
@@ -28,7 +26,7 @@ describe("GraphQL", () => {
       },
       {
         contextValue: createMockContext({ userId: faker.string.uuid() }),
-      }
+      },
     );
 
     assert(res.body.kind === "single");

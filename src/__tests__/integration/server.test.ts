@@ -2,7 +2,7 @@ import { initServer } from "../../server.js";
 import { defaultTestDependenciesFactory } from "../dependencies-factory.js";
 
 describe("Server", () => {
-  let server: Awaited<ReturnType<typeof initServer>> | void;
+  let server: Awaited<ReturnType<typeof initServer>> | undefined;
 
   beforeAll(async () => {
     const dependencies = defaultTestDependenciesFactory();

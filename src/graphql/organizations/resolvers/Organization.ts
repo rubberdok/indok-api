@@ -1,5 +1,4 @@
-import { assertIsAuthenticated } from "@/graphql/auth.js";
-
+import { assertIsAuthenticated } from "~/graphql/auth.js";
 import type { OrganizationResolvers } from "./../../types.generated.js";
 export const Organization: OrganizationResolvers = {
   /* Implement Organization resolver logic here */

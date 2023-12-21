@@ -1,11 +1,10 @@
 import { faker } from "@faker-js/faker";
 import { DeepMockProxy, mock, mockDeep, mockFn } from "jest-mock-extended";
-
-import { NotFoundError } from "@/domain/errors.js";
-import { User } from "@/domain/users.js";
-import { GraphQLTestClient, newGraphQLTestClient } from "@/graphql/test-clients/graphql-test-client.js";
-import { graphql } from "@/graphql/test-clients/integration/gql.js";
-import { UserService } from "@/services/users/service.js";
+import { NotFoundError } from "~/domain/errors.js";
+import { User } from "~/domain/users.js";
+import { GraphQLTestClient, newGraphQLTestClient } from "~/graphql/test-clients/graphql-test-client.js";
+import { graphql } from "~/graphql/test-clients/integration/gql.js";
+import { UserService } from "~/services/users/service.js";
 
 describe("Apollo Context Authentication", () => {
   let client: GraphQLTestClient;
@@ -38,7 +37,7 @@ describe("Apollo Context Authentication", () => {
           }
         `),
       },
-      { user: { feideId: userId } }
+      { user: { feideId: userId } },
     );
 
     expect(errors).toBeUndefined();
@@ -67,7 +66,7 @@ describe("Apollo Context Authentication", () => {
           }
         `),
       },
-      { user: { feideId: userId } }
+      { user: { feideId: userId } },
     );
 
     expect(errors).toBeUndefined();
@@ -76,7 +75,7 @@ describe("Apollo Context Authentication", () => {
     expect(client.dependencies.authService.logout).toHaveBeenCalledWith(
       expect.objectContaining({
         session: expect.objectContaining({ authenticated: true, userId }),
-      })
+      }),
     );
   });
 });

@@ -1,8 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { Prisma, PrismaClient } from "@prisma/client";
 import { DateTime } from "luxon";
-
-import { BookingStatus } from "@/domain/cabins.js";
+import { BookingStatus } from "~/domain/cabins.js";
 
 faker.seed(312849038190);
 

@@ -1,7 +1,6 @@
-import { AuthenticationError } from "@/domain/errors.js";
-import { isEventWithSignUps } from "@/domain/events.js";
-import { assertIsAuthenticated } from "@/graphql/auth.js";
-
+import { AuthenticationError } from "~/domain/errors.js";
+import { isEventWithSignUps } from "~/domain/events.js";
+import { assertIsAuthenticated } from "~/graphql/auth.js";
 import type { EventResolvers } from "./../../types.generated.js";
 export const Event: EventResolvers = {
   /* Implement Event resolver logic here */

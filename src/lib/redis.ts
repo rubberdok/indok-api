@@ -1,7 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { Redis } from "ioredis";
-
-import { env } from "@/config.js";
+import { env } from "~/config.js";
 
 export function createRedisClient(app: FastifyInstance): Redis {
   /**

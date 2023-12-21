@@ -1,9 +1,8 @@
 import { faker } from "@faker-js/faker";
 import { BookingContact } from "@prisma/client";
 import { mock } from "jest-mock-extended";
-
-import { createMockApolloServer } from "@/graphql/test-clients/mock-apollo-server.js";
-import { graphql } from "@/graphql/test-clients/unit/gql.js";
+import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
+import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
 describe("Cabin queries", () => {
   describe("bookingContact", () => {
@@ -15,7 +14,7 @@ describe("Cabin queries", () => {
           name: faker.person.fullName(),
           email: faker.internet.email(),
           phoneNumber: faker.phone.number(),
-        })
+        }),
       );
 
       const { errors } = await client.query({

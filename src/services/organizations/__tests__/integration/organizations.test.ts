@@ -1,16 +1,13 @@
 import assert from "assert";
-
 import { faker } from "@faker-js/faker";
 import { Prisma } from "@prisma/client";
-
-import { KnownDomainError, InvalidArgumentError, PermissionDeniedError } from "@/domain/errors.js";
-import { Role } from "@/domain/organizations.js";
-import prisma from "@/lib/prisma.js";
-import { MemberRepository } from "@/repositories/organizations/members.js";
-import { OrganizationRepository } from "@/repositories/organizations/organizations.js";
-import { UserRepository } from "@/repositories/users/index.js";
-import { PermissionService } from "@/services/permissions/service.js";
-
+import { InvalidArgumentError, KnownDomainError, PermissionDeniedError } from "~/domain/errors.js";
+import { Role } from "~/domain/organizations.js";
+import prisma from "~/lib/prisma.js";
+import { MemberRepository } from "~/repositories/organizations/members.js";
+import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
+import { UserRepository } from "~/repositories/users/index.js";
+import { PermissionService } from "~/services/permissions/service.js";
 import { OrganizationService } from "../../service.js";
 
 let organizationService: OrganizationService;
@@ -232,7 +229,7 @@ describe("OrganizationsService", () => {
               },
               update: {},
             });
-          })
+          }),
         );
 
         /**
@@ -429,7 +426,7 @@ describe("OrganizationsService", () => {
               },
               update: {},
             });
-          })
+          }),
         );
 
         /**

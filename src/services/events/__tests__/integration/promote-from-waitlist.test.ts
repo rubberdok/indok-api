@@ -2,11 +2,8 @@ import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
-
-import prisma from "@/lib/prisma.js";
-
+import prisma from "~/lib/prisma.js";
 import { EventService } from "../../service.js";
-
 import { makeDependencies, makeUserWithOrganizationMembership } from "./dependencies-factory.js";
 
 describe("EventService", () => {
@@ -45,7 +42,7 @@ describe("EventService", () => {
               capacity: 1,
             },
           ],
-        }
+        },
       );
 
       const slot = await prisma.eventSlot.findFirstOrThrow({
@@ -96,7 +93,7 @@ describe("EventService", () => {
           participationStatus: ParticipationStatus.CONFIRMED,
           version: 1,
           updatedAt: expect.any(Date),
-        })
+        }),
       );
 
       const updatedSlot = await prisma.eventSlot.findUnique({

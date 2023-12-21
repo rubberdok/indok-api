@@ -1,15 +1,12 @@
 import assert from "assert";
-
 import { ApolloServer } from "@apollo/server";
 import { FastifySessionObject } from "@fastify/session";
 import { ResultOf, TypedDocumentNode, VariablesOf } from "@graphql-typed-document-node/core";
 import { FastifyBaseLogger, FastifyReply, FastifyRequest } from "fastify";
 import { GraphQLFormattedError } from "graphql";
 import { mock, mockDeep } from "jest-mock-extended";
-
-import { User } from "@/domain/users.js";
-import { ApolloContext, getFormatErrorHandler } from "@/lib/apollo-server.js";
-
+import { User } from "~/domain/users.js";
+import { ApolloContext, getFormatErrorHandler } from "~/lib/apollo-server.js";
 import { resolvers } from "../resolvers.generated.js";
 import { typeDefs } from "../type-defs.generated.js";
 
@@ -21,12 +18,12 @@ interface QueryResult<T extends TypedDocumentNode<ResultOf<T>, VariablesOf<T>>> 
 class ApolloServerClient {
   constructor(
     public server: ApolloServer<ApolloContext>,
-    private createMockContext: (data?: CreateMockContextData) => ApolloContext
+    private createMockContext: (data?: CreateMockContextData) => ApolloContext,
   ) {}
 
   async query<T extends TypedDocumentNode<ResultOf<T>, VariablesOf<T>>>(
     request: { query: T; variables?: VariablesOf<T> },
-    options?: { contextValue?: ApolloContext }
+    options?: { contextValue?: ApolloContext },
   ): Promise<QueryResult<T>> {
     // @ts-expect-error We can get more accurate typing for variables by using the `VariablesOf` helper
     // so we ignore the TS error raised here.
@@ -37,7 +34,7 @@ class ApolloServerClient {
       },
       {
         contextValue: options?.contextValue ?? this.createMockContext({}),
-      }
+      },
     );
 
     assert(res.body.kind === "single");
@@ -57,7 +54,7 @@ class ApolloServerClient {
 
   public async mutate<T extends TypedDocumentNode<ResultOf<T>, VariablesOf<T>>>(
     request: { mutation: T; variables?: VariablesOf<T> },
-    options?: { contextValue?: ApolloContext }
+    options?: { contextValue?: ApolloContext },
   ): Promise<QueryResult<T>> {
     const { mutation, variables } = request;
     return this.query({ query: mutation, variables }, options);

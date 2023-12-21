@@ -8,11 +8,7 @@
  * @param code - A code that can be used to identify the error, e.g. "BAD_USER_INPUT", should be one of `codes`
  */
 export class KnownDomainError extends Error {
-  constructor(
-    name: string,
-    public description: string,
-    public code: ErrorCode = errorCodes.ERR_INTERNAL_SERVER_ERROR
-  ) {
+  constructor(name: string, public description: string, public code: ErrorCode = errorCodes.ERR_INTERNAL_SERVER_ERROR) {
     super(description);
     this.name = name;
     Error.captureStackTrace(this);

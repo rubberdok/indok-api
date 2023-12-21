@@ -1,5 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-
 import * as Cabins from "./cabins/seed.js";
 import * as Events from "./events/seed.js";
 import * as Listings from "./listings/seed.js";

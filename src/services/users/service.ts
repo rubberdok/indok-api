@@ -3,10 +3,8 @@ import { FastifyBaseLogger } from "fastify";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
 import { z } from "zod";
-
-import { InvalidArgumentError, PermissionDeniedError } from "@/domain/errors.js";
-import { User } from "@/domain/users.js";
-
+import { InvalidArgumentError, PermissionDeniedError } from "~/domain/errors.js";
+import { User } from "~/domain/users.js";
 import { createUserSchema } from "./validation.js";
 
 export interface UserRepository {
@@ -25,7 +23,7 @@ export class UserService {
   constructor(
     private usersRepository: UserRepository,
     private permissionService: PermissionService,
-    private log?: FastifyBaseLogger
+    private log?: FastifyBaseLogger,
   ) {}
 
   /**
@@ -46,7 +44,7 @@ export class UserService {
       allergies: string | null;
       phoneNumber: string | null;
       isSuperUser?: boolean | null;
-    }>
+    }>,
   ): Promise<User> {
     const { isSuperUser } = await this.permissionService.isSuperUser(callerId);
     if (isSuperUser !== true) throw new PermissionDeniedError("You do not have permission to update this user");
@@ -110,7 +108,7 @@ export class UserService {
       graduationYear: number | null;
       allergies: string | null;
       phoneNumber: string | null;
-    }>
+    }>,
   ): Promise<User> {
     const schema = z.object({
       firstName: z
@@ -146,7 +144,7 @@ export class UserService {
           z
             .string()
             .nullish()
-            .transform((val) => val ?? undefined)
+            .transform((val) => val ?? undefined),
         ),
     });
     try {
@@ -187,7 +185,9 @@ export class UserService {
   }
 
   async login(id: string): Promise<User> {
-    const user = await this.usersRepository.update(id, { lastLogin: new Date() });
+    const user = await this.usersRepository.update(id, {
+      lastLogin: new Date(),
+    });
     return this.toDomainUser(user);
   }
 

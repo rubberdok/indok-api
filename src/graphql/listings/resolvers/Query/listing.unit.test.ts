@@ -1,9 +1,8 @@
 import { faker } from "@faker-js/faker";
 import { Listing, Organization } from "@prisma/client";
 import { mock } from "jest-mock-extended";
-
-import { createMockApolloServer } from "@/graphql/test-clients/mock-apollo-server.js";
-import { graphql } from "@/graphql/test-clients/unit/gql.js";
+import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
+import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
 describe("Listing queries", () => {
   describe("listing", () => {
@@ -33,7 +32,10 @@ describe("Listing queries", () => {
     it("should resolve additional attributes", async () => {
       const { client, listingService, organizationService } = createMockApolloServer();
       listingService.get.mockResolvedValue(
-        mock<Listing>({ id: faker.string.uuid(), organizationId: faker.string.uuid() })
+        mock<Listing>({
+          id: faker.string.uuid(),
+          organizationId: faker.string.uuid(),
+        }),
       );
       organizationService.get.mockResolvedValue(mock<Organization>({ id: faker.string.uuid() }));
 

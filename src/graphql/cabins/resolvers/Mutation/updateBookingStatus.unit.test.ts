@@ -1,10 +1,9 @@
 import { faker } from "@faker-js/faker";
 import { Booking } from "@prisma/client";
 import { mock } from "jest-mock-extended";
-
-import { errorCodes } from "@/domain/errors.js";
-import { createMockApolloServer } from "@/graphql/test-clients/mock-apollo-server.js";
-import { graphql } from "@/graphql/test-clients/unit/gql.js";
+import { errorCodes } from "~/domain/errors.js";
+import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
+import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
 describe("Cabin mutations", () => {
   describe("updateBookingStatus", () => {
@@ -60,7 +59,7 @@ describe("Cabin mutations", () => {
         },
         {
           contextValue: authenticatedContext,
-        }
+        },
       );
 
       expect(errors).toBeUndefined();

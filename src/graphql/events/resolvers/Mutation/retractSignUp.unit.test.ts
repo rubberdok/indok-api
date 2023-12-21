@@ -1,12 +1,11 @@
 import { faker } from "@faker-js/faker";
 import { EventSignUp, ParticipationStatus } from "@prisma/client";
 import { mock } from "jest-mock-extended";
-
-import { errorCodes } from "@/domain/errors.js";
-import { Event } from "@/domain/events.js";
-import { User } from "@/domain/users.js";
-import { createMockApolloServer } from "@/graphql/test-clients/mock-apollo-server.js";
-import { graphql } from "@/graphql/test-clients/unit/gql.js";
+import { errorCodes } from "~/domain/errors.js";
+import { Event } from "~/domain/events.js";
+import { User } from "~/domain/users.js";
+import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
+import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
 describe("Event mutations", () => {
   describe("retractSignUp", () => {
@@ -26,7 +25,10 @@ describe("Event mutations", () => {
       });
 
       eventService.retractSignUp.mockResolvedValue(
-        mock<EventSignUp>({ id: faker.string.uuid(), participationStatus: ParticipationStatus.RETRACTED })
+        mock<EventSignUp>({
+          id: faker.string.uuid(),
+          participationStatus: ParticipationStatus.RETRACTED,
+        }),
       );
       eventService.get.mockResolvedValue(mock<Event>({ id: faker.string.uuid() }));
       userService.get.mockResolvedValue(mock<User>({ id: faker.string.uuid() }));
@@ -62,7 +64,7 @@ describe("Event mutations", () => {
         },
         {
           contextValue,
-        }
+        },
       );
 
       /**
@@ -128,7 +130,7 @@ describe("Event mutations", () => {
         },
         {
           contextValue,
-        }
+        },
       );
 
       /**

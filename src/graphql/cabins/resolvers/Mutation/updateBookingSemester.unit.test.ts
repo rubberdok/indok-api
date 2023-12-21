@@ -1,10 +1,9 @@
 import { faker } from "@faker-js/faker";
 import { BookingSemester } from "@prisma/client";
 import { mock } from "jest-mock-extended";
-
-import { createMockApolloServer } from "@/graphql/test-clients/mock-apollo-server.js";
-import { graphql } from "@/graphql/test-clients/unit/gql.js";
-import { UpdateBookingSemesterInput } from "@/graphql/test-clients/unit/graphql.js";
+import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
+import { graphql } from "~/graphql/test-clients/unit/gql.js";
+import { UpdateBookingSemesterInput } from "~/graphql/test-clients/unit/graphql.js";
 
 describe("Cabin mutations", () => {
   describe("updateBookingSemester", () => {
@@ -18,9 +17,12 @@ describe("Cabin mutations", () => {
       cabinService.updateBookingSemester.mockResolvedValue(
         mock<BookingSemester>({
           id: faker.string.uuid(),
-        })
+        }),
       );
-      const authenticatedContext = createMockContext({ userId: faker.string.uuid(), authenticated: true });
+      const authenticatedContext = createMockContext({
+        userId: faker.string.uuid(),
+        authenticated: true,
+      });
       const data: UpdateBookingSemesterInput = {
         semester: "SPRING",
         startAt: new Date(2020, 0, 1),
@@ -44,7 +46,7 @@ describe("Cabin mutations", () => {
             data,
           },
         },
-        { contextValue: authenticatedContext }
+        { contextValue: authenticatedContext },
       );
 
       /**

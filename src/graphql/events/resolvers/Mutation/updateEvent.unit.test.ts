@@ -1,10 +1,9 @@
 import { faker } from "@faker-js/faker";
 import { mock } from "jest-mock-extended";
-
-import { errorCodes } from "@/domain/errors.js";
-import { Event } from "@/domain/events.js";
-import { createMockApolloServer } from "@/graphql/test-clients/mock-apollo-server.js";
-import { graphql } from "@/graphql/test-clients/unit/gql.js";
+import { errorCodes } from "~/domain/errors.js";
+import { Event } from "~/domain/events.js";
+import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
+import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
 describe("Event mutations", () => {
   describe("updateEvent", () => {
@@ -40,7 +39,10 @@ describe("Event mutations", () => {
 
     it("should pass all arugments to update if authenticated", async () => {
       const { client, createMockContext, eventService } = createMockApolloServer();
-      const authenticatedContext = createMockContext({ userId: faker.string.uuid(), authenticated: true });
+      const authenticatedContext = createMockContext({
+        userId: faker.string.uuid(),
+        authenticated: true,
+      });
       eventService.update.mockResolvedValueOnce(mock<Event>({ id: faker.string.uuid() }));
       const eventId = faker.string.uuid();
 
@@ -69,7 +71,7 @@ describe("Event mutations", () => {
         },
         {
           contextValue: authenticatedContext,
-        }
+        },
       );
 
       expect(errors).toBeUndefined();

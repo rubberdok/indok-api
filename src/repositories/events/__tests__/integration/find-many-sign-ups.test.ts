@@ -1,9 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
-
-import prisma from "@/lib/prisma.js";
-
+import prisma from "~/lib/prisma.js";
 import { EventRepository } from "../../repository.js";
 
 describe("EventRepository", () => {
@@ -33,13 +31,19 @@ describe("EventRepository", () => {
         },
       });
 
-      const signUp1 = await makeWaitlistSignUp({ userId: user1.id, eventId: event.id });
+      const signUp1 = await makeWaitlistSignUp({
+        userId: user1.id,
+        eventId: event.id,
+      });
       await makeWaitlistSignUp({
         userId: user2.id,
         eventId: event.id,
         status: ParticipationStatus.CONFIRMED,
       });
-      const signUp3 = await makeWaitlistSignUp({ userId: user3.id, eventId: event.id });
+      const signUp3 = await makeWaitlistSignUp({
+        userId: user3.id,
+        eventId: event.id,
+      });
 
       /**
        * Act

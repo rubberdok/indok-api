@@ -1,6 +1,5 @@
 import type { Member, Role } from "@prisma/client";
-
-import { NotFoundError } from "@/domain/errors.js";
+import { NotFoundError } from "~/domain/errors.js";
 
 /**
  * Create a mock implementation of the hasRole method on the MemberRepository.
@@ -14,8 +13,16 @@ export function getMockHasRoleImplementation(state: {
   organizationId: string;
   userId: string;
   role: Role | null;
-}): (data: { organizationId: string; userId: string; role: Role }) => Promise<boolean> {
-  function hasRole(data: { organizationId: string; userId: string; role: Role }): Promise<boolean> {
+}): (data: {
+  organizationId: string;
+  userId: string;
+  role: Role;
+}) => Promise<boolean> {
+  function hasRole(data: {
+    organizationId: string;
+    userId: string;
+    role: Role;
+  }): Promise<boolean> {
     if (data.organizationId !== state.organizationId) return Promise.resolve(false);
     if (data.userId !== state.userId) return Promise.resolve(false);
     if (data.role !== state.role) return Promise.resolve(false);
@@ -31,7 +38,7 @@ export function getMockGetImplementation(state: { members: Member[] }) {
       result = state.members.find((member) => member.id === data.id);
     } else {
       result = state.members.find(
-        (member) => member.userId === data.userId && member.organizationId === data.organizationId
+        (member) => member.userId === data.userId && member.organizationId === data.organizationId,
       );
     }
 

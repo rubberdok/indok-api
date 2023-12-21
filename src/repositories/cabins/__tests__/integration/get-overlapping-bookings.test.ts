@@ -1,13 +1,10 @@
 import { randomUUID } from "crypto";
-
 import { faker } from "@faker-js/faker";
 import { jest } from "@jest/globals";
 import { Cabin, PrismaClient } from "@prisma/client";
 import dayjs from "dayjs";
-
-import { BookingStatus } from "@/domain/cabins.js";
-import prisma from "@/lib/prisma.js";
-
+import { BookingStatus } from "~/domain/cabins.js";
+import prisma from "~/lib/prisma.js";
 import { CabinRepository } from "../../index.js";
 
 const systemTime = dayjs().add(50, "years").toDate();
@@ -59,7 +56,7 @@ describe("Overlapping bookings", () => {
         externalPrice: 20,
       },
     });
-    cabins["Oksen"] = cabin;
+    cabins.Oksen = cabin;
 
     await db.booking.createMany({
       data: [

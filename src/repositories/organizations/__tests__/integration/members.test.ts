@@ -1,9 +1,7 @@
 import { faker } from "@faker-js/faker";
-
-import { NotFoundError } from "@/domain/errors.js";
-import { Role } from "@/domain/organizations.js";
-import prisma from "@/lib/prisma.js";
-
+import { NotFoundError } from "~/domain/errors.js";
+import { Role } from "~/domain/organizations.js";
+import prisma from "~/lib/prisma.js";
 import { MemberRepository } from "../../members.js";
 
 let repo: MemberRepository;
@@ -92,7 +90,11 @@ describe("MembersRepository", () => {
        *
        * The membership should be created
        */
-      const actual = repo.create({ userId: user.id, organizationId: org.id, role: Role.ADMIN });
+      const actual = repo.create({
+        userId: user.id,
+        organizationId: org.id,
+        role: Role.ADMIN,
+      });
       expect(actual).resolves.toEqual(expected);
     });
 
@@ -134,7 +136,11 @@ describe("MembersRepository", () => {
        *
        * The membership should not be created
        */
-      const actual = repo.create({ userId: user.id, organizationId: org.id, role: Role.ADMIN });
+      const actual = repo.create({
+        userId: user.id,
+        organizationId: org.id,
+        role: Role.ADMIN,
+      });
       expect(actual).rejects.toThrow();
     });
   });
@@ -312,7 +318,7 @@ describe("MembersRepository", () => {
           userId: user.id,
           organizationId: org.id,
           role: member.role,
-        })
+        }),
       ).resolves.toBe(true);
     });
 
@@ -368,7 +374,7 @@ describe("MembersRepository", () => {
           userId: user.id,
           organizationId: org2.id,
           role: member.role,
-        })
+        }),
       ).resolves.toBe(false);
     });
   });

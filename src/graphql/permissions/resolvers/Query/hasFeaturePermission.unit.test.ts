@@ -1,8 +1,7 @@
 import { faker } from "@faker-js/faker";
-
-import { errorCodes } from "@/domain/errors.js";
-import { createMockApolloServer } from "@/graphql/test-clients/mock-apollo-server.js";
-import { graphql } from "@/graphql/test-clients/unit/gql.js";
+import { errorCodes } from "~/domain/errors.js";
+import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
+import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
 describe("Permission queries", () => {
   describe("#hasFeaturePermission", () => {
@@ -57,7 +56,7 @@ describe("Permission queries", () => {
         },
         {
           contextValue: authenticatedContext,
-        }
+        },
       );
 
       expect(errors).toBeUndefined();

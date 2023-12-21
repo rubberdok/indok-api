@@ -2,9 +2,7 @@ import { faker } from "@faker-js/faker";
 import { FeaturePermission, Semester } from "@prisma/client";
 import { DeepMockProxy, mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
-
-import { NotFoundError, PermissionDeniedError } from "@/domain/errors.js";
-
+import { NotFoundError, PermissionDeniedError } from "~/domain/errors.js";
 import { CabinRepository, CabinService, IMailService, PermissionService } from "../../service.js";
 
 describe("CabinService", () => {
@@ -135,7 +133,7 @@ describe("CabinService", () => {
         const userId = faker.string.uuid();
         permissionSerivce.hasFeaturePermission.mockResolvedValueOnce(true);
         cabinRepository.updateBookingSemester.mockRejectedValue(
-          new NotFoundError("No matching booking semester found")
+          new NotFoundError("No matching booking semester found"),
         );
 
         /**
@@ -173,7 +171,7 @@ describe("CabinService", () => {
         const userId = faker.string.uuid();
         permissionSerivce.hasFeaturePermission.mockResolvedValueOnce(true);
         cabinRepository.updateBookingSemester.mockRejectedValue(
-          new NotFoundError("No matching booking semester found")
+          new NotFoundError("No matching booking semester found"),
         );
 
         /**
@@ -209,7 +207,7 @@ describe("CabinService", () => {
         const userId = faker.string.uuid();
         permissionSerivce.hasFeaturePermission.mockResolvedValueOnce(true);
         cabinRepository.updateBookingSemester.mockRejectedValue(
-          new NotFoundError("No matching booking semester found")
+          new NotFoundError("No matching booking semester found"),
         );
 
         /**
@@ -245,7 +243,7 @@ describe("CabinService", () => {
         const userId = faker.string.uuid();
         permissionSerivce.hasFeaturePermission.mockResolvedValueOnce(true);
         cabinRepository.updateBookingSemester.mockRejectedValue(
-          new NotFoundError("No matching booking semester found")
+          new NotFoundError("No matching booking semester found"),
         );
 
         /**

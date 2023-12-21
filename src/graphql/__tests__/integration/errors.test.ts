@@ -1,12 +1,11 @@
 import { faker } from "@faker-js/faker";
 import { GraphQLError } from "graphql";
 import { DeepMockProxy, mockDeep, mockFn } from "jest-mock-extended";
-
-import { InternalServerError, errorCodes } from "@/domain/errors.js";
-import { GraphQLTestClient, newGraphQLTestClient } from "@/graphql/test-clients/graphql-test-client.js";
-import { graphql } from "@/graphql/test-clients/integration/gql.js";
-import prisma from "@/lib/prisma.js";
-import { OrganizationService } from "@/services/organizations/service.js";
+import { InternalServerError, errorCodes } from "~/domain/errors.js";
+import { GraphQLTestClient, newGraphQLTestClient } from "~/graphql/test-clients/graphql-test-client.js";
+import { graphql } from "~/graphql/test-clients/integration/gql.js";
+import prisma from "~/lib/prisma.js";
+import { OrganizationService } from "~/services/organizations/service.js";
 
 describe("GraphQL error handling", () => {
   let client: GraphQLTestClient;
@@ -20,7 +19,11 @@ describe("GraphQL error handling", () => {
     mockOrganizationService = mockDeep<OrganizationService>();
     client = await newGraphQLTestClient(
       { port: 4388 },
-      { apolloServerDependencies: { organizationService: mockOrganizationService } }
+      {
+        apolloServerDependencies: {
+          organizationService: mockOrganizationService,
+        },
+      },
     );
   });
 
@@ -99,7 +102,7 @@ describe("GraphQL error handling", () => {
           }
         `),
       },
-      { userId }
+      { userId },
     );
 
     expect(mockOrganizationService.findMany).toHaveBeenCalled();

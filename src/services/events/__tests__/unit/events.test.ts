@@ -2,11 +2,9 @@ import { faker } from "@faker-js/faker";
 import { EventSlot } from "@prisma/client";
 import { mock, mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
-
-import { InvalidArgumentError, KnownDomainError, PermissionDeniedError } from "@/domain/errors.js";
-import { Event } from "@/domain/events.js";
-import { Role } from "@/domain/organizations.js";
-
+import { InvalidArgumentError, KnownDomainError, PermissionDeniedError } from "~/domain/errors.js";
+import { Event } from "~/domain/events.js";
+import { Role } from "~/domain/organizations.js";
 import { EventRepository, EventService, PermissionService, UserService } from "../../service.js";
 
 function setup() {
@@ -328,7 +326,7 @@ describe("EventsService", () => {
           signUpsEndAt: signUpDetails.signUpsEndAt,
           capacity: signUpDetails.capacity,
           slots: signUpDetails.slots,
-        })
+        }),
       );
     });
 
@@ -361,8 +359,11 @@ describe("EventsService", () => {
        */
       await expect(result).resolves.not.toThrow();
       expect(eventsRepository.create).toHaveBeenCalledWith(
-        expect.objectContaining({ endAt: new Date(startAt.getTime() + 2 * 60 * 60 * 1000), organizationId }),
-        undefined
+        expect.objectContaining({
+          endAt: new Date(startAt.getTime() + 2 * 60 * 60 * 1000),
+          organizationId,
+        }),
+        undefined,
       );
     });
   });
@@ -542,7 +543,9 @@ describe("EventsService", () => {
           arrange: {
             hasRole: true,
             event: mockEvent({
-              signUpDetails: mockSignUpDetails({ signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate() }),
+              signUpDetails: mockSignUpDetails({
+                signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+              }),
             }),
           },
           act: {
@@ -824,7 +827,7 @@ describe("EventsService", () => {
         expect(eventsRepository.update).toHaveBeenCalledWith(
           expect.any(String),
           expect.objectContaining(assert.event),
-          assert.signUpDetails && expect.objectContaining(assert.signUpDetails)
+          assert.signUpDetails && expect.objectContaining(assert.signUpDetails),
         );
       });
     });

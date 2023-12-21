@@ -1,9 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { Organization } from "@prisma/client";
-
-import { NotFoundError } from "@/domain/errors.js";
-import prisma from "@/lib/prisma.js";
-
+import { NotFoundError } from "~/domain/errors.js";
+import prisma from "~/lib/prisma.js";
 import { ListingRepository } from "../../repository.js";
 
 describe("ListingRepository", () => {

@@ -1,9 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { BookingContact, FeaturePermission } from "@prisma/client";
 import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
-
-import { PermissionDeniedError, InvalidArgumentError } from "@/domain/errors.js";
-
+import { InvalidArgumentError, PermissionDeniedError } from "~/domain/errors.js";
 import { CabinRepository, CabinService, IMailService, PermissionService } from "../../service.js";
 
 describe("CabinService", () => {

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.4.1/schema.json",
+  "vcs": {
+    "enabled": true,
+    "useIgnoreFile": true,
+    "clientKind": "git"
+  },
+  "organizeImports": {
+    "enabled": true
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true
+    }
+  },
+  "formatter": {
+    "indentWidth": 2,
+    "indentStyle": "space",
+    "lineWidth": 120
+  },
+  "files": {
+    "ignore": [
+      "node_modules",
+      "dist",
+      "pnpm-lock.yaml",
+      "src/graphql/test-clients/integration/**/*.ts",
+      "src/graphql/test-clients/unit/**/*.ts",
+      "*.generated.ts"
+    ]
+  }
+}

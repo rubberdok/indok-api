@@ -3,12 +3,11 @@ import { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
 import { PrismaClient } from "@prisma/client";
 import { FastifyInstance, InjectOptions, LightMyRequestResponse } from "fastify";
 import { GraphQLError } from "graphql";
-
-import { defaultTestDependenciesFactory } from "@/__tests__/dependencies-factory.js";
-import { MockOpenIdClient, newMockOpenIdClient } from "@/__tests__/mocks/openIdClient.js";
-import { env } from "@/config.js";
-import { ApolloServerDependencies } from "@/lib/apollo-server.js";
-import { initServer } from "@/server.js";
+import { defaultTestDependenciesFactory } from "~/__tests__/dependencies-factory.js";
+import { MockOpenIdClient, newMockOpenIdClient } from "~/__tests__/mocks/openIdClient.js";
+import { env } from "~/config.js";
+import { ApolloServerDependencies } from "~/lib/apollo-server.js";
+import { initServer } from "~/server.js";
 
 /**
  * A test client for integration testing GraphQL resolvers.
@@ -18,9 +17,9 @@ import { initServer } from "@/server.js";
  * ### Example
  *
  * ```ts
- * import { GraphQLTestClient } from "@/graphql/test-clients/graphqlTestClient.js";
- * import { graphql } from "@/graphql/test-clients/gql.js"
- * import { initServer } from "@/server.js";
+ * import { GraphQLTestClient } from "~/graphql/test-clients/graphqlTestClient.js";
+ * import { graphql } from "~/graphql/test-clients/gql.js"
+ * import { initServer } from "~/server.js";
  *
  * describe("GraphQL", () => {
  *  let server: Awaited<ReturnType<typeof initServer>>;
@@ -65,7 +64,7 @@ export class GraphQLTestClient {
   }
 
   public async performMockedLogin(
-    data: { userId: string } | { feideId: string; email?: string; name?: string }
+    data: { userId: string } | { feideId: string; email?: string; name?: string },
   ): Promise<{ cookies: Record<string, string>; userId: string }> {
     if ("userId" in data) {
       const user = await this.dependencies?.apolloServerDependencies.userService.get(data.userId);
@@ -110,7 +109,7 @@ export class GraphQLTestClient {
     options?: {
       request?: InjectOptions;
       userId?: string;
-    }
+    },
   ): Promise<{
     data?: ResultOf<T>;
     errors?: GraphQLError[];
@@ -122,7 +121,7 @@ export class GraphQLTestClient {
         query,
         variables,
       },
-      options
+      options,
     );
   }
 
@@ -149,7 +148,7 @@ export class GraphQLTestClient {
       userId?: string;
       user?: { feideId: string; email?: string; name?: string };
       request?: InjectOptions;
-    }
+    },
   ): Promise<{
     data?: ResultOf<T>;
     errors?: GraphQLError[];
@@ -184,8 +183,11 @@ export class GraphQLTestClient {
     const parsedBody = JSON.parse(response.body);
     if ("errors" in parsedBody) {
       errors = parsedBody.errors.map(
-        (err: { message: string; path?: string[]; extensions?: { code: string } }) =>
-          new GraphQLError(err.message, { ...err })
+        (err: {
+          message: string;
+          path?: string[];
+          extensions?: { code: string };
+        }) => new GraphQLError(err.message, { ...err }),
       );
     }
 
@@ -193,7 +195,10 @@ export class GraphQLTestClient {
     return { errors, data, response };
   }
 
-  async performLogin(): Promise<{ cookies: Record<string, string>; userId: string }> {
+  async performLogin(): Promise<{
+    cookies: Record<string, string>;
+    userId: string;
+  }> {
     const redirectUrl = await this.app.inject({
       method: "GET",
       url: "/auth/login",
@@ -220,7 +225,10 @@ export class GraphQLTestClient {
       },
     });
     const { user } = await userInfo.json();
-    return { cookies: { [env.SESSION_COOKIE_NAME]: authenticatedCookie }, userId: user };
+    return {
+      cookies: { [env.SESSION_COOKIE_NAME]: authenticatedCookie },
+      userId: user,
+    };
   }
 }
 
@@ -236,9 +244,9 @@ export class GraphQLTestClient {
  * ### Example
  *
  * ```ts
- * import { newGraphqlTestClient } from "@/graphql/test-clients/graphqlTestClient.js";
- * import { graphql } from "@/graphql/test-clients/gql.js"
- * import { initServer } from "@/server.js";
+ * import { newGraphqlTestClient } from "~/graphql/test-clients/graphqlTestClient.js";
+ * import { graphql } from "~/graphql/test-clients/gql.js"
+ * import { initServer } from "~/server.js";
  *
  * describe("GraphQL", () => {
  *  let client: GraphQLTestClient;
@@ -276,7 +284,7 @@ export async function newGraphQLTestClient(
     apolloServerDependencies: Partial<ApolloServerDependencies>;
     openIdClient: MockOpenIdClient;
     prismaClient: PrismaClient;
-  }> = {}
+  }> = {},
 ): Promise<GraphQLTestClient> {
   const mockOpenIdClient = newMockOpenIdClient();
   const dependencies = defaultTestDependenciesFactory({

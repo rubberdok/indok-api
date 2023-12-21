@@ -1,12 +1,10 @@
 import { faker } from "@faker-js/faker";
 import { FeaturePermission, Prisma } from "@prisma/client";
-
-import { Role } from "@/domain/organizations.js";
-import prisma from "@/lib/prisma.js";
-import { MemberRepository } from "@/repositories/organizations/members.js";
-import { OrganizationRepository } from "@/repositories/organizations/organizations.js";
-import { UserRepository } from "@/repositories/users/index.js";
-
+import { Role } from "~/domain/organizations.js";
+import prisma from "~/lib/prisma.js";
+import { MemberRepository } from "~/repositories/organizations/members.js";
+import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
+import { UserRepository } from "~/repositories/users/index.js";
 import { PermissionService } from "../../service.js";
 
 let permissionService: PermissionService;
@@ -227,7 +225,7 @@ describe("OrganizationsService", () => {
          * Assert that the user has the expected role
          */
         await expect(result).resolves.toEqual(expected);
-      }
+      },
     );
   });
 
@@ -238,7 +236,9 @@ describe("OrganizationsService", () => {
        *
        * 1. Create a user with isSuperUser set to true
        */
-      const user = await prisma.user.create({ data: makeUser({ isSuperUser: true }) });
+      const user = await prisma.user.create({
+        data: makeUser({ isSuperUser: true }),
+      });
 
       /**
        * Act
@@ -259,7 +259,9 @@ describe("OrganizationsService", () => {
        *
        * 1. Create a user with isSuperUser set to true
        */
-      const user = await prisma.user.create({ data: makeUser({ isSuperUser: false }) });
+      const user = await prisma.user.create({
+        data: makeUser({ isSuperUser: false }),
+      });
 
       /**
        * Act
@@ -282,7 +284,9 @@ describe("OrganizationsService", () => {
        *
        * 1. Create a user with isSuperUser set to true
        */
-      const user = await prisma.user.create({ data: makeUser({ isSuperUser: true }) });
+      const user = await prisma.user.create({
+        data: makeUser({ isSuperUser: true }),
+      });
 
       /**
        * Act
@@ -305,7 +309,9 @@ describe("OrganizationsService", () => {
        *
        * 1. Create a user with isSuperUser set to true
        */
-      const user = await prisma.user.create({ data: makeUser({ isSuperUser: false }) });
+      const user = await prisma.user.create({
+        data: makeUser({ isSuperUser: false }),
+      });
 
       /**
        * Act
@@ -332,13 +338,21 @@ describe("OrganizationsService", () => {
        * 4. Create an organization without the feature permission
        *
        */
-      const user = await prisma.user.create({ data: makeUser({ isSuperUser: false }) });
+      const user = await prisma.user.create({
+        data: makeUser({ isSuperUser: false }),
+      });
       const organizationWithoutFeaturePermission = await makeOrganization({});
       const organizationWithFeaturePermission = await makeOrganization({
         featurePermissions: [FeaturePermission.CABIN_BOOKING],
       });
-      await makeMember({ userId: user.id, organizationId: organizationWithoutFeaturePermission.id });
-      await makeMember({ userId: user.id, organizationId: organizationWithFeaturePermission.id });
+      await makeMember({
+        userId: user.id,
+        organizationId: organizationWithoutFeaturePermission.id,
+      });
+      await makeMember({
+        userId: user.id,
+        organizationId: organizationWithFeaturePermission.id,
+      });
 
       /**
        * Act
@@ -365,12 +379,17 @@ describe("OrganizationsService", () => {
        * 4. Create an organization without the feature permission
        *
        */
-      const user = await prisma.user.create({ data: makeUser({ isSuperUser: false }) });
+      const user = await prisma.user.create({
+        data: makeUser({ isSuperUser: false }),
+      });
       const organizationWithoutFeaturePermission = await makeOrganization({});
       await makeOrganization({
         featurePermissions: [FeaturePermission.CABIN_BOOKING],
       });
-      await makeMember({ userId: user.id, organizationId: organizationWithoutFeaturePermission.id });
+      await makeMember({
+        userId: user.id,
+        organizationId: organizationWithoutFeaturePermission.id,
+      });
 
       /**
        * Act
@@ -396,13 +415,21 @@ describe("OrganizationsService", () => {
        * 3. Create a member with the user and organization
        * 4. Create an organization without the feature permission
        */
-      const user = await prisma.user.create({ data: makeUser({ isSuperUser: false }) });
+      const user = await prisma.user.create({
+        data: makeUser({ isSuperUser: false }),
+      });
       const organizationWithoutFeaturePermission = await makeOrganization({});
       const organizationWithFeaturePermission = await makeOrganization({
         featurePermissions: [FeaturePermission.CABIN_BOOKING, FeaturePermission.ARCHIVE],
       });
-      await makeMember({ userId: user.id, organizationId: organizationWithoutFeaturePermission.id });
-      await makeMember({ userId: user.id, organizationId: organizationWithFeaturePermission.id });
+      await makeMember({
+        userId: user.id,
+        organizationId: organizationWithoutFeaturePermission.id,
+      });
+      await makeMember({
+        userId: user.id,
+        organizationId: organizationWithFeaturePermission.id,
+      });
 
       /**
        * Act
@@ -441,7 +468,11 @@ function makeOrganization(data: { featurePermissions?: FeaturePermission[] }) {
   });
 }
 
-function makeMember(data: { userId: string; organizationId: string; role?: Role }) {
+function makeMember(data: {
+  userId: string;
+  organizationId: string;
+  role?: Role;
+}) {
   return prisma.member.create({
     data: {
       userId: data.userId,

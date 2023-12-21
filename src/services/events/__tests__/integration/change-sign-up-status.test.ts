@@ -1,11 +1,8 @@
 import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
-
-import prisma from "@/lib/prisma.js";
-
+import prisma from "~/lib/prisma.js";
 import { EventService } from "../../service.js";
-
 import { makeDependencies } from "./dependencies-factory.js";
 
 describe("EventService", () => {
@@ -251,7 +248,9 @@ describe("EventService", () => {
       });
       const user = await prisma.user.create({
         data: {
-          email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
+          email: faker.internet.exampleEmail({
+            firstName: faker.string.uuid(),
+          }),
           firstName: faker.person.firstName(),
           lastName: faker.person.lastName(),
           username: faker.string.sample(20),

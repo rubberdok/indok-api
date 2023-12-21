@@ -1,8 +1,7 @@
 import { faker } from "@faker-js/faker";
-
-import { User } from "@/domain/users.js";
-import { GraphQLTestClient, newGraphQLTestClient } from "@/graphql/test-clients/graphql-test-client.js";
-import { graphql } from "@/graphql/test-clients/integration/gql.js";
+import { User } from "~/domain/users.js";
+import { GraphQLTestClient, newGraphQLTestClient } from "~/graphql/test-clients/graphql-test-client.js";
+import { graphql } from "~/graphql/test-clients/integration/gql.js";
 
 describe("User queries", () => {
   let client: GraphQLTestClient;
@@ -52,7 +51,7 @@ describe("User queries", () => {
           },
           {
             userId: superUser.id,
-          }
+          },
         );
 
         /**

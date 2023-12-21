@@ -1,7 +1,6 @@
 import { faker } from "@faker-js/faker";
-
-import { GraphQLTestClient, newGraphQLTestClient } from "@/graphql/test-clients/graphql-test-client.js";
-import { graphql } from "@/graphql/test-clients/integration/gql.js";
+import { GraphQLTestClient, newGraphQLTestClient } from "~/graphql/test-clients/graphql-test-client.js";
+import { graphql } from "~/graphql/test-clients/integration/gql.js";
 
 describe("Users", () => {
   let client: GraphQLTestClient;
@@ -59,7 +58,7 @@ describe("Users", () => {
         },
         {
           userId: user.id,
-        }
+        },
       );
 
       expect(data).toBeDefined();

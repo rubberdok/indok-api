@@ -1,10 +1,9 @@
 import { FastifyBaseLogger, FastifyRequest } from "fastify";
 import type { TokenSet, UserinfoResponse } from "openid-client";
 import { generators } from "openid-client";
-
-import { env } from "@/config.js";
-import { AuthenticationError, BadRequestError } from "@/domain/errors.js";
-import { User } from "@/domain/users.js";
+import { env } from "~/config.js";
+import { AuthenticationError, BadRequestError } from "~/domain/errors.js";
+import { User } from "~/domain/users.js";
 
 export interface OpenIDClient {
   authorizationUrl(options: {
@@ -43,7 +42,7 @@ export class AuthService {
     private userService: UserService,
     private openIDClient: OpenIDClient,
     private log?: FastifyBaseLogger,
-    private callbackUrl: string | URL = new URL("/auth/authenticate", env.SERVER_URL)
+    private callbackUrl: string | URL = new URL("/auth/authenticate", env.SERVER_URL),
   ) {}
 
   /**
@@ -104,7 +103,7 @@ export class AuthService {
       },
       {
         code_verifier: codeVerifier,
-      }
+      },
     );
 
     this.log?.info("Fetching user info");
@@ -123,7 +122,7 @@ export class AuthService {
         {
           userId: existingUser.id,
         },
-        "User already exists"
+        "User already exists",
       );
       return existingUser;
     }

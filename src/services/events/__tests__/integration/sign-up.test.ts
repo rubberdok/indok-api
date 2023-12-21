@@ -1,12 +1,9 @@
 import { faker } from "@faker-js/faker";
 import { Organization, ParticipationStatus, User } from "@prisma/client";
 import { DateTime } from "luxon";
-
-import { InvalidArgumentError } from "@/domain/errors.js";
-import prisma from "@/lib/prisma.js";
-
+import { InvalidArgumentError } from "~/domain/errors.js";
+import prisma from "~/lib/prisma.js";
 import { EventService } from "../../service.js";
-
 import { makeDependencies } from "./dependencies-factory.js";
 
 describe("Event Sign Up", () => {
@@ -47,7 +44,7 @@ describe("Event Sign Up", () => {
               capacity: 1,
             },
           ],
-        }
+        },
       );
 
       /**
@@ -100,7 +97,7 @@ describe("Event Sign Up", () => {
               capacity: 1,
             },
           ],
-        }
+        },
       );
 
       /**
@@ -153,7 +150,7 @@ describe("Event Sign Up", () => {
               capacity: 1,
             },
           ],
-        }
+        },
       );
 
       /**
@@ -224,7 +221,7 @@ describe("Event Sign Up", () => {
                   capacity: slotCapacity,
                 },
               ],
-            }
+            },
           );
 
           /**
@@ -243,7 +240,7 @@ describe("Event Sign Up", () => {
           expect(actual.userId).toEqual(user.id);
           expect(actual.eventId).toEqual(event.id);
           expect(actual.slotId).toBeNull();
-        }
+        },
       );
     });
 
@@ -280,7 +277,7 @@ describe("Event Sign Up", () => {
               capacity: concurrentUsers,
             },
           ],
-        }
+        },
       );
 
       await prisma.user.createMany({
@@ -310,10 +307,14 @@ describe("Event Sign Up", () => {
       expect(actual.length).toEqual(concurrentUsers);
       expect(actual.every((signUp) => signUp.participationStatus === ParticipationStatus.CONFIRMED)).toBe(true);
 
-      const updatedEvent = await prisma.event.findUniqueOrThrow({ where: { id: event.id } });
+      const updatedEvent = await prisma.event.findUniqueOrThrow({
+        where: { id: event.id },
+      });
       expect(updatedEvent.remainingCapacity).toEqual(0);
 
-      const updatedSlot = await prisma.eventSlot.findFirstOrThrow({ where: { eventId: event.id } });
+      const updatedSlot = await prisma.eventSlot.findFirstOrThrow({
+        where: { eventId: event.id },
+      });
       expect(updatedSlot.remainingCapacity).toEqual(0);
     });
 
@@ -349,7 +350,7 @@ describe("Event Sign Up", () => {
               capacity,
             },
           ],
-        }
+        },
       );
 
       await prisma.user.createMany({
@@ -378,16 +379,20 @@ describe("Event Sign Up", () => {
        */
       expect(actual.length).toEqual(concurrentUsers);
       expect(actual.filter((signUp) => signUp.participationStatus === ParticipationStatus.CONFIRMED).length).toEqual(
-        capacity
+        capacity,
       );
       expect(actual.filter((signUp) => signUp.participationStatus === ParticipationStatus.ON_WAITLIST).length).toEqual(
-        concurrentUsers - capacity
+        concurrentUsers - capacity,
       );
 
-      const updatedEvent = await prisma.event.findUniqueOrThrow({ where: { id: event.id } });
+      const updatedEvent = await prisma.event.findUniqueOrThrow({
+        where: { id: event.id },
+      });
       expect(updatedEvent.remainingCapacity).toEqual(0);
 
-      const updatedSlot = await prisma.eventSlot.findFirstOrThrow({ where: { eventId: event.id } });
+      const updatedSlot = await prisma.eventSlot.findFirstOrThrow({
+        where: { eventId: event.id },
+      });
       expect(updatedSlot.remainingCapacity).toEqual(0);
     });
 
@@ -417,7 +422,7 @@ describe("Event Sign Up", () => {
               capacity: 1,
             },
           ],
-        }
+        },
       );
 
       /**
@@ -461,7 +466,7 @@ describe("Event Sign Up", () => {
               capacity: 1,
             },
           ],
-        }
+        },
       );
 
       /**
@@ -492,7 +497,7 @@ function getCreateUserData() {
 }
 
 async function makeUserWithOrganizationMembership(
-  userData: Partial<User> = {}
+  userData: Partial<User> = {},
 ): Promise<{ user: User; organization: Organization }> {
   const user = await prisma.user.create({
     data: {

@@ -2,9 +2,7 @@ import { faker } from "@faker-js/faker";
 import { User } from "@prisma/client";
 import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
-
-import { PermissionDeniedError } from "@/domain/errors.js";
-
+import { PermissionDeniedError } from "~/domain/errors.js";
 import { PermissionService, UserRepository, UserService } from "../../service.js";
 
 describe("UserService", () => {
@@ -37,7 +35,9 @@ describe("UserService", () => {
          */
         const callerUserId = faker.string.uuid();
         const updateUserId = faker.string.uuid();
-        const actual = userService.superUpdateUser(callerUserId, updateUserId, { isSuperUser: true });
+        const actual = userService.superUpdateUser(callerUserId, updateUserId, {
+          isSuperUser: true,
+        });
 
         /**
          * Assert
@@ -45,7 +45,9 @@ describe("UserService", () => {
          * Expect the update call to include isSuperUser
          */
         await expect(actual).resolves.not.toThrow();
-        expect(userRepository.update).toHaveBeenCalledWith(updateUserId, { isSuperUser: true });
+        expect(userRepository.update).toHaveBeenCalledWith(updateUserId, {
+          isSuperUser: true,
+        });
         expect(permissionService.isSuperUser).toHaveBeenCalledWith(callerUserId);
       });
 
@@ -66,7 +68,9 @@ describe("UserService", () => {
          */
         const callerUserId = faker.string.uuid();
         const updateUserId = faker.string.uuid();
-        const actual = userService.superUpdateUser(callerUserId, updateUserId, { graduationYear: DateTime.now().year });
+        const actual = userService.superUpdateUser(callerUserId, updateUserId, {
+          graduationYear: DateTime.now().year,
+        });
 
         /**
          * Assert

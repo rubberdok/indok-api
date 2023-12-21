@@ -1,10 +1,9 @@
 import { faker } from "@faker-js/faker";
 import { mock } from "jest-mock-extended";
-
-import { errorCodes } from "@/domain/errors.js";
-import { User } from "@/domain/users.js";
-import { createMockApolloServer } from "@/graphql/test-clients/mock-apollo-server.js";
-import { graphql } from "@/graphql/test-clients/unit/gql.js";
+import { errorCodes } from "~/domain/errors.js";
+import { User } from "~/domain/users.js";
+import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
+import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
 describe("User mutations", () => {
   describe("superUpdateUser", () => {
@@ -12,7 +11,10 @@ describe("User mutations", () => {
       const { client, createMockContext, userService } = createMockApolloServer();
       const callerUserId = faker.string.uuid();
       const updateUserId = faker.string.uuid();
-      const contextValue = createMockContext({ userId: callerUserId, authenticated: true });
+      const contextValue = createMockContext({
+        userId: callerUserId,
+        authenticated: true,
+      });
       userService.superUpdateUser.mockResolvedValue(mock<User>({ id: updateUserId }));
 
       const { errors } = await client.mutate(
@@ -35,7 +37,7 @@ describe("User mutations", () => {
         },
         {
           contextValue,
-        }
+        },
       );
 
       expect(errors).toBeUndefined();

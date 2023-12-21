@@ -1,4 +1,4 @@
-import { User } from "@/domain/users.js";
+import { User } from "~/domain/users.js";
 
 export type PrivateUserMapper = User;
 export type PublicUserMapper = User;

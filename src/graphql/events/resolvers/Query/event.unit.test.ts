@@ -1,16 +1,20 @@
 import { faker } from "@faker-js/faker";
 import { Organization } from "@prisma/client";
 import { mock } from "jest-mock-extended";
-
-import { Event } from "@/domain/events.js";
-import { createMockApolloServer } from "@/graphql/test-clients/mock-apollo-server.js";
-import { graphql } from "@/graphql/test-clients/unit/gql.js";
+import { Event } from "~/domain/events.js";
+import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
+import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
 describe("Event queries", () => {
   describe("event", () => {
     it("should return an event", async () => {
       const { client, eventService, organizationService } = createMockApolloServer();
-      eventService.get.mockResolvedValue(mock<Event>({ id: faker.string.uuid(), organizationId: faker.string.uuid() }));
+      eventService.get.mockResolvedValue(
+        mock<Event>({
+          id: faker.string.uuid(),
+          organizationId: faker.string.uuid(),
+        }),
+      );
       organizationService.get.mockResolvedValue(mock<Organization>({ id: faker.string.uuid() }));
 
       const { errors } = await client.query({
@@ -61,7 +65,7 @@ describe("Event queries", () => {
           },
           {
             contextValue: createMockContext({ userId, authenticated: true }),
-          }
+          },
         );
 
         expect(errors).toBeUndefined();

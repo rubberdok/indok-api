@@ -1,8 +1,6 @@
 import { faker } from "@faker-js/faker";
 import { DateTime } from "luxon";
-
-import prisma from "@/lib/prisma.js";
-
+import prisma from "~/lib/prisma.js";
 import { EventRepository } from "../../repository.js";
 
 describe("EventRepository", () => {
@@ -50,7 +48,7 @@ describe("EventRepository", () => {
               capacity: 10,
             },
           ],
-        }
+        },
       );
       const slots = await prisma.eventSlot.findMany({
         where: {
@@ -58,7 +56,7 @@ describe("EventRepository", () => {
         },
       });
       expect(slots).toHaveLength(1);
-      expect(slots[0]!.capacity).toBe(10);
+      expect(slots[0]?.capacity).toBe(10);
       expect(actual.signUpsEnabled).toBe(true);
       expect(actual.signUpDetails?.capacity).toBe(10);
       expect(actual.signUpDetails?.remainingCapacity).toBe(10);

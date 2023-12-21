@@ -1,8 +1,7 @@
 import { Listing } from "@prisma/client";
 import { ZodError, z } from "zod";
-
-import { InvalidArgumentError, PermissionDeniedError } from "@/domain/errors.js";
-import { Role } from "@/domain/organizations.js";
+import { InvalidArgumentError, PermissionDeniedError } from "~/domain/errors.js";
+import { Role } from "~/domain/organizations.js";
 
 export interface ListingRepository {
   get(id: string): Promise<Listing>;
@@ -20,20 +19,24 @@ export interface ListingRepository {
       description: string;
       closesAt: Date;
       applicationUrl: string;
-    }>
+    }>,
   ): Promise<Listing>;
   findMany(): Promise<Listing[]>;
   delete(id: string): Promise<Listing>;
 }
 
 export interface PermissionService {
-  hasRole(data: { userId: string; organizationId: string; role: Role }): Promise<boolean>;
+  hasRole(data: {
+    userId: string;
+    organizationId: string;
+    role: Role;
+  }): Promise<boolean>;
 }
 
 export class ListingService {
   constructor(
     private readonly listingRepository: ListingRepository,
-    private readonly permissionService: PermissionService
+    private readonly permissionService: PermissionService,
   ) {}
 
   /**
@@ -65,7 +68,7 @@ export class ListingService {
       closesAt: Date;
       applicationUrl?: string | null;
       organizationId: string;
-    }
+    },
   ): Promise<Listing> {
     await this.assertHasPermission(userId, data.organizationId);
 
@@ -110,7 +113,7 @@ export class ListingService {
       description?: string | null;
       closesAt?: Date | null;
       applicationUrl?: string | null;
-    }
+    },
   ): Promise<Listing> {
     const listing = await this.listingRepository.get(id);
     await this.assertHasPermission(userId, listing.organizationId);

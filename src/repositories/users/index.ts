@@ -1,8 +1,7 @@
 import { Prisma, PrismaClient, User } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
-
-import { NotFoundError } from "@/domain/errors.js";
-import { prismaKnownErrorCodes } from "@/lib/prisma.js";
+import { NotFoundError } from "~/domain/errors.js";
+import { prismaKnownErrorCodes } from "~/lib/prisma.js";
 
 export class UserRepository {
   constructor(private db: PrismaClient) {}

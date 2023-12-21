@@ -1,8 +1,6 @@
 import { faker } from "@faker-js/faker";
-
-import { NotFoundError } from "@/domain/errors.js";
-import prisma from "@/lib/prisma.js";
-
+import { NotFoundError } from "~/domain/errors.js";
+import prisma from "~/lib/prisma.js";
 import { UserRepository } from "../../index.js";
 
 describe("UserRepository", () => {
@@ -18,7 +16,9 @@ describe("UserRepository", () => {
 
     it("should return user if it exists", async () => {
       const user = await userRepository.create({
-        username: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
+        username: faker.internet.exampleEmail({
+          firstName: faker.string.uuid(),
+        }),
         email: faker.internet.email(),
         feideId: faker.string.uuid(),
         firstName: faker.person.firstName(),

@@ -1,8 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { execa } from "execa";
 import { FastifyInstance } from "fastify";
-
-import { env } from "@/config.js";
+import { env } from "~/config.js";
 
 /**
  * This is done to prevent hot reloading from creating new instances of PrismaClient in development
@@ -33,7 +32,9 @@ interface MigrationHealthCheckReturnType {
 export async function migrationHealthCheck(app: FastifyInstance): Promise<MigrationHealthCheckReturnType> {
   try {
     app.log.info("Running migration health check");
-    await execa("pnpm", ["exec", "prisma", "migrate", "status"], { timeout: 15_000 }).catch((err) => {
+    await execa("pnpm", ["exec", "prisma", "migrate", "status"], {
+      timeout: 15_000,
+    }).catch((err) => {
       if (err.timedOut) app.log.error(err, "Migration health check timed out");
       else app.log.error(err, "Migration health check failed");
       throw err;

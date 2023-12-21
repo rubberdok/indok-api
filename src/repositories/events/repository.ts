@@ -2,10 +2,9 @@ import { Event, EventSignUp, EventSlot, ParticipationStatus, PrismaClient, Prism
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 import { merge } from "lodash-es";
 import { z } from "zod";
-
-import { InternalServerError, InvalidArgumentError, NotFoundError } from "@/domain/errors.js";
-import { AlreadySignedUpError, Event as DomainEvent, InvalidCapacityError } from "@/domain/events.js";
-import { prismaKnownErrorCodes } from "@/lib/prisma.js";
+import { InternalServerError, InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
+import { AlreadySignedUpError, Event as DomainEvent, InvalidCapacityError } from "~/domain/events.js";
+import { prismaKnownErrorCodes } from "~/lib/prisma.js";
 
 export class EventRepository {
   constructor(private db: PrismaClient) {}
@@ -108,7 +107,7 @@ export class EventRepository {
   private async updateWithCapacity(
     id: string,
     event: Partial<EventData>,
-    signUpDetails: UpdateSignUpData
+    signUpDetails: UpdateSignUpData,
   ): Promise<Event> {
     const { signUpsEnabled, signUpsEndAt, signUpsStartAt } = signUpDetails;
     const updateData = {
@@ -140,7 +139,11 @@ export class EventRepository {
       if (slotId) {
         const existingSlot = existingSlotsById[slotId];
         if (!existingSlot) throw new NotFoundError(`Event slot { id: ${slotId} } not found`);
-        return this.updateExistingSlot(existingSlot, { id: slotId, capacity, gradeYears: slot.gradeYears });
+        return this.updateExistingSlot(existingSlot, {
+          id: slotId,
+          capacity,
+          gradeYears: slot.gradeYears,
+        });
       }
       return this.db.eventSlot.create({
         data: {
@@ -152,7 +155,7 @@ export class EventRepository {
     });
 
     const slotIdsToDelete = Object.keys(existingSlotsById).filter((slotId) =>
-      signUpDetails.slots.every((slot) => slot.id !== slotId)
+      signUpDetails.slots.every((slot) => slot.id !== slotId),
     );
 
     const slotDeletePromises = slotIdsToDelete.map((slotId) => {
@@ -179,7 +182,7 @@ export class EventRepository {
       if (err instanceof PrismaClientKnownRequestError) {
         if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND)
           throw new InvalidCapacityError(
-            "Cannot delete a slot with sign ups, or cannot update a slot or event to have a capacity less than the number of sign ups"
+            "Cannot delete a slot with sign ups, or cannot update a slot or event to have a capacity less than the number of sign ups",
           );
       }
       throw err;
@@ -188,7 +191,7 @@ export class EventRepository {
 
   private updateExistingSlot(
     existingSlot: EventSlot,
-    data: { id: string; capacity: number; gradeYears?: number[] }
+    data: { id: string; capacity: number; gradeYears?: number[] },
   ): PrismaPromise<EventSlot> {
     if (existingSlot === null) {
       throw new NotFoundError(`Event slot { id: ${data.id} } not found`);
@@ -402,7 +405,10 @@ export class EventRepository {
    * @param status - The status of the sign ups to get
    * @returns A list of event sign ups
    */
-  async findManySignUps(data: { eventId: string; status: ParticipationStatus }): Promise<EventSignUp[]> {
+  async findManySignUps(data: {
+    eventId: string;
+    status: ParticipationStatus;
+  }): Promise<EventSignUp[]> {
     const { eventId, status } = data;
     return this.db.eventSignUp.findMany({
       where: {
@@ -429,7 +435,7 @@ export class EventRepository {
    * @returns The created sign up, and the updated event and slot
    */
   public async createSignUp(
-    data: CreateConfirmedSignUpData
+    data: CreateConfirmedSignUpData,
   ): Promise<{ event: DomainEvent; signUp: EventSignUp; slot: EventSlot }>;
   /**
    * Create a new sign up for the event the given participation status. All newly created events are set as active,
@@ -458,16 +464,15 @@ export class EventRepository {
    * @returns The created sign up, and the updated event and slot
    */
   public async createSignUp(
-    data: CreateConfirmedSignUpData | CreateOnWaitlistSignUpData
+    data: CreateConfirmedSignUpData | CreateOnWaitlistSignUpData,
   ): Promise<{ event: DomainEvent; signUp: EventSignUp; slot?: EventSlot }> {
     try {
       if ("slotId" in data) {
         const { event, signUp, slot } = await this.createConfirmedSignUp(data);
         return { event: this.toDomainEvent(event), signUp, slot };
-      } else {
-        const { event, signUp } = await this.createOnWaitlistSignUp(data);
-        return { event: this.toDomainEvent(event), signUp };
       }
+      const { event, signUp } = await this.createOnWaitlistSignUp(data);
+      return { event: this.toDomainEvent(event), signUp };
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError) {
         if (err.code === "P2002") throw new AlreadySignedUpError(err.message);
@@ -592,7 +597,7 @@ export class EventRepository {
    * @returns The updated sign up, event and slot
    */
   public async updateSignUp(
-    data: UpdateToConfirmedSignUpData
+    data: UpdateToConfirmedSignUpData,
   ): Promise<{ event: DomainEvent; signUp: EventSignUp; slot: EventSlot }>;
   /**
    * updateSignUp - updates the participation status for the active sign up for the given user and event to
@@ -608,7 +613,7 @@ export class EventRepository {
    * @returns The updated sign up and event
    */
   public async updateSignUp(
-    data: UpdateToInactiveSignUpData
+    data: UpdateToInactiveSignUpData,
   ): Promise<{ event: DomainEvent; signUp: EventSignUp; slot: undefined }>;
   /**
    * updateSignUp - updates the participation status for the active sign up for the given user and event to
@@ -632,9 +637,11 @@ export class EventRepository {
    * @param data.newParticipationStatus - The new participation status of the sign up
    * @returns The updated sign up, event and slot
    */
-  public async updateSignUp(
-    data: UpdateToConfirmedSignUpData | UpdateToInactiveSignUpData
-  ): Promise<{ event: DomainEvent; signUp: EventSignUp; slot?: EventSlot | null }> {
+  public async updateSignUp(data: UpdateToConfirmedSignUpData | UpdateToInactiveSignUpData): Promise<{
+    event: DomainEvent;
+    signUp: EventSignUp;
+    slot?: EventSlot | null;
+  }> {
     const currentSignUp = await this.db.eventSignUp.findUnique({
       include: {
         event: true,
@@ -683,7 +690,11 @@ export class EventRepository {
   private async newParticipationStatusConfirmedHandler(data: {
     eventId: string;
     slotId: string;
-    currentSignUp: { id: string; version: number; participationStatus: ParticipationStatus };
+    currentSignUp: {
+      id: string;
+      version: number;
+      participationStatus: ParticipationStatus;
+    };
   }) {
     const { currentSignUp, eventId, slotId } = data;
     switch (currentSignUp.participationStatus) {
@@ -721,7 +732,11 @@ export class EventRepository {
     newParticipationStatus: Extract<ParticipationStatus, "REMOVED" | "RETRACTED">;
     userId: string;
     eventId: string;
-    currentSignUp: { id: string; version: number; participationStatus: ParticipationStatus };
+    currentSignUp: {
+      id: string;
+      version: number;
+      participationStatus: ParticipationStatus;
+    };
   }) {
     const { currentSignUp, userId, eventId, newParticipationStatus } = data;
     switch (currentSignUp.participationStatus) {
@@ -754,7 +769,7 @@ export class EventRepository {
       // fallthrough
       case ParticipationStatus.RETRACTED: {
         throw new InvalidArgumentError(
-          "Only sign ups on the wait list or confirmed can be changed to removed or retracted"
+          "Only sign ups on the wait list or confirmed can be changed to removed or retracted",
         );
       }
     }
@@ -767,7 +782,11 @@ export class EventRepository {
    * @returns
    */
   private async makeOnWaitlistSignUpConfirmed(data: {
-    signUp: { id: string; version: number; participationSatus: Extract<ParticipationStatus, "ON_WAITLIST"> };
+    signUp: {
+      id: string;
+      version: number;
+      participationSatus: Extract<ParticipationStatus, "ON_WAITLIST">;
+    };
     eventId: string;
     slotId: string;
   }) {

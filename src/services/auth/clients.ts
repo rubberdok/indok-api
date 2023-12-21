@@ -1,6 +1,5 @@
 import { Issuer } from "openid-client";
-
-import { env } from "@/config.js";
+import { env } from "~/config.js";
 
 const feideIssuer = await Issuer.discover(env.FEIDE_BASE_URL);
 

@@ -1,8 +1,7 @@
 import { FeaturePermission, Member, Organization } from "@prisma/client";
 import { z } from "zod";
-
-import { InvalidArgumentError, PermissionDeniedError } from "@/domain/errors.js";
-import { Role } from "@/domain/organizations.js";
+import { InvalidArgumentError, PermissionDeniedError } from "~/domain/errors.js";
+import { Role } from "~/domain/organizations.js";
 
 export interface OrganizationRepository {
   create(data: {
@@ -13,7 +12,11 @@ export interface OrganizationRepository {
   }): Promise<Organization>;
   update(
     id: string,
-    data: { name?: string; description?: string; featurePermissions?: FeaturePermission[] }
+    data: {
+      name?: string;
+      description?: string;
+      featurePermissions?: FeaturePermission[];
+    },
   ): Promise<Organization>;
   get(id: string): Promise<Organization>;
   findMany(): Promise<Organization[]>;
@@ -21,14 +24,22 @@ export interface OrganizationRepository {
 }
 
 export interface MemberRepository {
-  create(data: { userId: string; organizationId: string; role?: string }): Promise<Member>;
+  create(data: {
+    userId: string;
+    organizationId: string;
+    role?: string;
+  }): Promise<Member>;
   remove(data: { id: string } | { userId: string; organizationId: string }): Promise<Member>;
   findMany(data: { organizationId: string; role?: Role }): Promise<Member[]>;
   get(data: { userId: string; organizationId: string } | { id: string }): Promise<Member>;
 }
 
 export interface PermissionService {
-  hasRole(data: { userId: string; organizationId: string; role: Role }): Promise<boolean>;
+  hasRole(data: {
+    userId: string;
+    organizationId: string;
+    role: Role;
+  }): Promise<boolean>;
   isSuperUser(userId: string): Promise<{ isSuperUser: boolean }>;
 }
 
@@ -36,7 +47,7 @@ export class OrganizationService {
   constructor(
     private organizationRepository: OrganizationRepository,
     private memberRepository: MemberRepository,
-    private permissionService: PermissionService
+    private permissionService: PermissionService,
   ) {}
 
   /**
@@ -57,7 +68,7 @@ export class OrganizationService {
       name: string;
       description?: string | null;
       featurePermissions?: FeaturePermission[] | null;
-    }
+    },
   ): Promise<Organization> {
     const { isSuperUser } = await this.permissionService.isSuperUser(userId);
 
@@ -85,12 +96,15 @@ export class OrganizationService {
           featurePermissions,
         });
         return organization;
-      } else {
-        const schema = baseSchema;
-        const { name, description } = schema.parse(data);
-        const organization = await this.organizationRepository.create({ name, description, userId });
-        return organization;
       }
+      const schema = baseSchema;
+      const { name, description } = schema.parse(data);
+      const organization = await this.organizationRepository.create({
+        name,
+        description,
+        userId,
+      });
+      return organization;
     } catch (err) {
       if (err instanceof z.ZodError) throw new InvalidArgumentError(err.message);
       throw err;
@@ -113,7 +127,11 @@ export class OrganizationService {
   async update(
     userId: string,
     organizationId: string,
-    data: Partial<{ name: string | null; description: string | null; featurePermissions: FeaturePermission[] | null }>
+    data: Partial<{
+      name: string | null;
+      description: string | null;
+      featurePermissions: FeaturePermission[] | null;
+    }>,
   ): Promise<Organization> {
     const baseSchema = z.object({
       name: z
@@ -146,20 +164,23 @@ export class OrganizationService {
           description,
           featurePermissions,
         });
-      } else {
-        const isMember = await this.permissionService.hasRole({ userId, organizationId, role: Role.MEMBER });
-        if (isMember !== true) {
-          throw new PermissionDeniedError("You must be a member of the organization to update it.");
-        }
-
-        const schema = baseSchema;
-        const { name, description } = schema.parse(data);
-
-        return await this.organizationRepository.update(organizationId, {
-          name,
-          description,
-        });
       }
+      const isMember = await this.permissionService.hasRole({
+        userId,
+        organizationId,
+        role: Role.MEMBER,
+      });
+      if (isMember !== true) {
+        throw new PermissionDeniedError("You must be a member of the organization to update it.");
+      }
+
+      const schema = baseSchema;
+      const { name, description } = schema.parse(data);
+
+      return await this.organizationRepository.update(organizationId, {
+        name,
+        description,
+      });
     } catch (err) {
       if (err instanceof z.ZodError) throw new InvalidArgumentError(err.message);
       throw err;
@@ -185,11 +206,10 @@ export class OrganizationService {
      * We explicitly check that the value is `true` to avoid any potential situations
      * where this.permissionService.hasRole() returns a truthy value that is not a boolean.
      */
-    if (isAdmin === true) {
-      return await this.memberRepository.create(data);
-    } else {
+    if (isAdmin !== true) {
       throw new PermissionDeniedError("You must be an admin of the organization to add a member.");
     }
+    return await this.memberRepository.create(data);
   }
 
   /**
@@ -230,69 +250,71 @@ export class OrganizationService {
      * We explicitly check that the value is `true` to avoid any potential situations
      * where this.permissionService.hasRole() returns a truthy value that is not a boolean.
      */
-    if (hasRequiredRole === true) {
-      const memberToRemove = await this.memberRepository.get({
-        userId: data.userId,
-        organizationId: data.organizationId,
-      });
+    if (hasRequiredRole !== true) {
+      throw new PermissionDeniedError("You must be an admin of the organization to remove a member.");
+    }
+    const memberToRemove = await this.memberRepository.get({
+      userId: data.userId,
+      organizationId: data.organizationId,
+    });
 
+    /**
+     * We have to take extra care when removing admins, as we
+     * cannot remove the last admin of an organization.
+     */
+    const removingAnAdmin = memberToRemove.role === Role.ADMIN;
+    if (!removingAnAdmin) {
       /**
-       * We have to take extra care when removing admins, as we
-       * cannot remove the last admin of an organization.
+       * If we're not removing an admin, we're safe to go ahead, as
+       * a member cannot be the last remaining admin of an organization.
        */
-      const removingAnAdmin = memberToRemove.role === Role.ADMIN;
-      if (!removingAnAdmin) {
-        /**
-         * If we're not removing an admin, we're safe to go ahead, as
-         * a member cannot be the last remaining admin of an organization.
-         */
-        return await this.memberRepository.remove(data);
-      }
+      return await this.memberRepository.remove(data);
+    }
 
-      // Find all admins in the organization
-      const adminsInTheOrganization = await this.memberRepository.findMany({
-        organizationId: data.organizationId,
-        role: Role.ADMIN,
-      });
+    // Find all admins in the organization
+    const adminsInTheOrganization = await this.memberRepository.findMany({
+      organizationId: data.organizationId,
+      role: Role.ADMIN,
+    });
 
-      /**
-       * We know that if we've reached this point, we're removing an admin.
-       *
-       * If there is only one admin left in the organization, that must necessarily be
-       * the admin we're removing. As such, we cannot remove them
-       * as that would leave the organization without any members.
-       * So if the length here is 1, we abort.
-       */
-      if (adminsInTheOrganization.length === 1) {
-        throw new InvalidArgumentError(`
+    /**
+     * We know that if we've reached this point, we're removing an admin.
+     *
+     * If there is only one admin left in the organization, that must necessarily be
+     * the admin we're removing. As such, we cannot remove them
+     * as that would leave the organization without any members.
+     * So if the length here is 1, we abort.
+     */
+    if (adminsInTheOrganization.length === 1) {
+      throw new InvalidArgumentError(`
           Cannot remove the last admin of an organization.
           To remove yourself as an admin, first add another admin to the organization.
        `);
-      }
-
-      // If we've reached this point, we have more than one admin left, and
-      // we can safely remove this admin.
-      return await this.memberRepository.remove(data);
-    } else {
-      throw new PermissionDeniedError("You must be an admin of the organization to remove a member.");
     }
+
+    // If we've reached this point, we have more than one admin left, and
+    // we can safely remove this admin.
+    return await this.memberRepository.remove(data);
   }
 
   /**
    * Get members for an organization
    *
-   * @requires The user must be a member of the organization
+   * The user must be a member of the organization
    * @param organizationId - The ID of the organization
    * @param userId - The ID of the user making the request
    * @returns
    */
   async getMembers(userId: string, organizationId: string): Promise<Member[]> {
-    const isMember = await this.permissionService.hasRole({ userId, organizationId, role: Role.MEMBER });
-    if (isMember === true) {
-      return await this.memberRepository.findMany({ organizationId });
-    } else {
+    const isMember = await this.permissionService.hasRole({
+      userId,
+      organizationId,
+      role: Role.MEMBER,
+    });
+    if (!isMember) {
       throw new PermissionDeniedError("You must be a member of the organization to get its members.");
     }
+    return await this.memberRepository.findMany({ organizationId });
   }
 
   /**

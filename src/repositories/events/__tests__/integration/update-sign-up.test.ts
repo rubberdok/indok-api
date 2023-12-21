@@ -1,10 +1,8 @@
 import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
-
-import { InvalidArgumentError, NotFoundError } from "@/domain/errors.js";
-import prisma from "@/lib/prisma.js";
-
+import { InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
+import prisma from "~/lib/prisma.js";
 import { EventRepository } from "../../repository.js";
 
 describe("EventRepository", () => {

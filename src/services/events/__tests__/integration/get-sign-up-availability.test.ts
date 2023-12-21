@@ -1,12 +1,9 @@
 import { faker } from "@faker-js/faker";
 import { Organization, ParticipationStatus, User } from "@prisma/client";
 import { DateTime } from "luxon";
-
-import { SignUpAvailability } from "@/domain/events.js";
-import prisma from "@/lib/prisma.js";
-
+import { SignUpAvailability } from "~/domain/events.js";
+import prisma from "~/lib/prisma.js";
 import { EventService } from "../../service.js";
-
 import { makeDependencies } from "./dependencies-factory.js";
 
 describe("EventService", () => {
@@ -308,7 +305,7 @@ describe("EventService", () => {
           startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
           endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
         },
-        arrange.signUpDetails
+        arrange.signUpDetails,
       );
       if (arrange.signUp) {
         await prisma.eventSignUp.create({
@@ -383,7 +380,7 @@ describe("EventService", () => {
 });
 
 async function makeUserWithOrganizationMembership(
-  userData: Partial<User> = {}
+  userData: Partial<User> = {},
 ): Promise<{ user: User; organization: Organization }> {
   const user = await prisma.user.create({
     data: {

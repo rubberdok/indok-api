@@ -1,12 +1,11 @@
 import { ServerClient, TemplatedMessage } from "postmark";
-
-import { env } from "@/config.js";
+import { env } from "~/config.js";
 
 export default new ServerClient(env.POSTMARK_API_TOKEN);
 
 type Modify<M, N> = Omit<M, Extract<keyof M, keyof N>> & N;
 
-export interface IMailClient extends ServerClient {}
+export type IMailClient = ServerClient;
 
 export const TemplateAlias = {
   EVENT_WAIT_LIST: "event-wait-list",

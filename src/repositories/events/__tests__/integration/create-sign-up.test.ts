@@ -1,11 +1,9 @@
 import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
-
-import { ErrorCode, errorCodes } from "@/domain/errors.js";
-import { AlreadySignedUpError } from "@/domain/events.js";
-import prisma from "@/lib/prisma.js";
-
+import { ErrorCode, errorCodes } from "~/domain/errors.js";
+import { AlreadySignedUpError } from "~/domain/events.js";
+import prisma from "~/lib/prisma.js";
 import { EventRepository } from "../../repository.js";
 
 describe("EventRepository", () => {
@@ -249,7 +247,10 @@ describe("EventRepository", () => {
          */
         const user = await makeUser();
         const event = await makeEvent({ capacity: arrange.eventCapacity });
-        const slot = await makeSlot({ eventId: event.id, capacity: arrange.slotCapacity });
+        const slot = await makeSlot({
+          eventId: event.id,
+          capacity: arrange.slotCapacity,
+        });
 
         /**
          * Act

@@ -1,10 +1,9 @@
-import { assertIsAuthenticated } from "@/graphql/auth.js";
-
+import { assertIsAuthenticated } from "~/graphql/auth.js";
 import type { MutationResolvers } from "./../../../types.generated.js";
 export const updateOrganization: NonNullable<MutationResolvers["updateOrganization"]> = async (
   _parent,
   { data },
-  ctx
+  ctx,
 ) => {
   assertIsAuthenticated(ctx);
   const { userId } = ctx.req.session;

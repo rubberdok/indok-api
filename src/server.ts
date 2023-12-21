@@ -11,7 +11,6 @@ import fastifySentry from "@immobiliarelabs/fastify-sentry";
 import * as Sentry from "@sentry/node";
 import RedisStore from "connect-redis";
 import { FastifyInstance } from "fastify";
-
 import { env } from "./config.js";
 import { NotFoundError } from "./domain/errors.js";
 import { User } from "./domain/users.js";
@@ -167,7 +166,11 @@ export async function initServer(dependencies: ServerDependencies, opts: Options
       fastifyApolloSentryPlugin(app),
       env.NODE_ENV === "production"
         ? ApolloServerPluginLandingPageDisabled()
-        : ApolloServerPluginLandingPageLocalDefault({ footer: false, includeCookies: true, embed: true }),
+        : ApolloServerPluginLandingPageLocalDefault({
+            footer: false,
+            includeCookies: true,
+            embed: true,
+          }),
     ],
   });
 
