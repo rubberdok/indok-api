@@ -1,4 +1,4 @@
-FROM public.ecr.aws/docker/library/node:lts-alpine AS base
+FROM public.ecr.aws/docker/library/node:lts-slim AS base
 WORKDIR /usr/src/app
 
 LABEL org.opencontainers.image.source https://github.com/rubberdok/indok-api
@@ -9,33 +9,27 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 
-COPY . ./
+# Required for Prisma
+RUN apt-get update -y \
+    && apt-get install -y openssl \
+    && apt-get clean
 
 FROM base AS prod-deps
 ENV NODE_ENV production
 
-WORKDIR /usr/src/app
-
-RUN apk add --no-cache libc6-compat
+COPY . .
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --frozen-lockfile
 RUN pnpm run generate:prisma
 
 FROM base AS build
 
-WORKDIR /usr/src/app
-
+COPY . .
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 RUN pnpm build:production
 
-FROM public.ecr.aws/docker/library/node:lts-alpine AS runner
+FROM base AS runner
 
 ENV NODE_ENV production
-
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable
-
-WORKDIR /usr/src/app
 
 COPY --chown=node:node --from=build /usr/src/app/certs /etc/ssl/certs
 COPY --chown=node:node --from=build /usr/src/app/package.json ./package.json
