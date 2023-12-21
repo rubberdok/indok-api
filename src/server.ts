@@ -87,7 +87,7 @@ export async function initServer(
 	 * so that we can monitor the server for errors and performance issues, even during
 	 * the initial setup.
 	 */
-	app.register(fastifySentry, {
+	await app.register(fastifySentry, {
 		dsn: env.SENTRY_DSN,
 		environment: env.NODE_ENV,
 		tracesSampleRate: env.SENTRY_TRACES_SAMPLE_RATE,
