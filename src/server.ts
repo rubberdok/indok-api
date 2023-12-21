@@ -140,8 +140,10 @@ export async function initServer(
 
 	/**
 	 * Default `authenticated` session variable to false if it is undefined
+	 *
+	 * biome-ignore lint/nursery/useAwait: Fastify hooks are either sync with callback, or async. Prefer async.
 	 */
-	app.addHook("preHandler", (request) => {
+	app.addHook("preHandler", async (request) => {
 		if (typeof request.session.get("authenticated") === "undefined") {
 			request.session.set("authenticated", false);
 		}
@@ -168,7 +170,11 @@ export async function initServer(
 					reply.status(404);
 					break;
 			}
-			reply.send({ message: error.message, code: error.code });
+			reply.send({
+				message: error.message,
+				code: error.code,
+				error: error.name,
+			});
 		} else {
 			// Handle these errors with the default error handler
 			reply.send(error);

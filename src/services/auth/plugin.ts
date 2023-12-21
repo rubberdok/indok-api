@@ -1,11 +1,6 @@
 import { FastifyPluginAsync, FastifyRequest } from "fastify";
 import { env } from "~/config.js";
-import {
-	BadRequestError,
-	InternalServerError,
-	InvalidArgumentError,
-	UnauthorizedError,
-} from "~/domain/errors.js";
+import { InvalidArgumentError, UnauthorizedError } from "~/domain/errors.js";
 import { User } from "~/domain/users.js";
 
 export interface AuthService {
@@ -49,8 +44,12 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
 				let redirectUrl = new URL("/auth/me", env.SERVER_URL);
 
 				if (redirect) {
-					assertValidRedirectUrl(redirect);
-					redirectUrl = new URL(redirect);
+					try {
+						assertValidRedirectUrl(redirect);
+						redirectUrl = new URL(redirect);
+					} catch (err) {
+						return reply.send(err);
+					}
 				}
 
 				const url = authService.authorizationUrl(req, redirectUrl.toString());
@@ -82,8 +81,12 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
 				let redirectUrl = new URL("/auth/me", env.SERVER_URL);
 
 				if (state) {
-					assertValidRedirectUrl(state);
-					redirectUrl = new URL(state);
+					try {
+						assertValidRedirectUrl(state);
+						redirectUrl = new URL(state);
+					} catch (err) {
+						return reply.send(err);
+					}
 				}
 
 				try {
@@ -95,10 +98,7 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
 				} catch (err) {
 					if (err instanceof Error) {
 						req.log.error(err, "Authentication failed");
-						if (err instanceof BadRequestError) {
-							return reply.status(400).send({ message: err.message });
-						}
-						return reply.send(new InternalServerError("Authentication failed"));
+						return reply.send(err);
 					}
 				}
 			},
