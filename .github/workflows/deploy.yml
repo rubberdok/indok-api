@@ -26,7 +26,7 @@ jobs:
 
       - name: Set Image Tag
         id: image-tag
-        run: echo "image-tag=ghcr.io/rubberdok/server:latest" >> "$GITHUB_OUTPUT"
+        run: echo "image-tag=ghcr.io/rubberdok/server:${{ github.sha }}" >> "$GITHUB_OUTPUT"
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
