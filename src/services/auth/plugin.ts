@@ -44,12 +44,8 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
 				let redirectUrl = new URL("/auth/me", env.SERVER_URL);
 
 				if (redirect) {
-					try {
-						assertValidRedirectUrl(redirect);
-						redirectUrl = new URL(redirect);
-					} catch (err) {
-						return reply.send(err);
-					}
+					assertValidRedirectUrl(redirect);
+					redirectUrl = new URL(redirect);
 				}
 
 				const url = authService.authorizationUrl(req, redirectUrl.toString());
@@ -81,12 +77,8 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
 				let redirectUrl = new URL("/auth/me", env.SERVER_URL);
 
 				if (state) {
-					try {
-						assertValidRedirectUrl(state);
-						redirectUrl = new URL(state);
-					} catch (err) {
-						return reply.send(err);
-					}
+					assertValidRedirectUrl(state);
+					redirectUrl = new URL(state);
 				}
 
 				try {
@@ -98,8 +90,8 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
 				} catch (err) {
 					if (err instanceof Error) {
 						req.log.error(err, "Authentication failed");
-						return reply.send(err);
 					}
+					throw err;
 				}
 			},
 		});
