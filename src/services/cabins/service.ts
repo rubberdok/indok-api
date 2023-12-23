@@ -429,17 +429,18 @@ export class CabinService {
 		}
 	}
 
-	private getBookingSemesters(): Promise<{
+	private async getBookingSemesters(): Promise<{
 		spring: BookingSemester | null;
 		fall: BookingSemester | null;
 	}> {
-		return Promise.all([
+		const [spring, fall] = await Promise.all([
 			this.getBookingSemester("SPRING"),
 			this.getBookingSemester("FALL"),
-		]).then(([spring, fall]) => ({
+		]);
+		return {
 			spring,
 			fall,
-		}));
+		};
 	}
 
 	/**
