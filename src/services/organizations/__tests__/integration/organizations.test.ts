@@ -17,7 +17,7 @@ import { OrganizationService } from "../../service.js";
 let organizationService: OrganizationService;
 
 describe("OrganizationsService", () => {
-	beforeAll(async () => {
+	beforeAll(() => {
 		const userRepository = new UserRepository(prisma);
 		const memberRepository = new MemberRepository(prisma);
 		const organizationRepository = new OrganizationRepository(prisma);
@@ -215,7 +215,7 @@ describe("OrganizationsService", () => {
 
 					// 4.
 					const members = await Promise.all(
-						arrange.members.map(async (member) => {
+						arrange.members.map((member) => {
 							return prisma.member.upsert({
 								where: {
 									userId_organizationId: {
@@ -421,7 +421,7 @@ describe("OrganizationsService", () => {
 
 					// 4.
 					const members = await Promise.all(
-						arrange.members.map(async (member) => {
+						arrange.members.map((member) => {
 							return prisma.member.upsert({
 								where: {
 									userId_organizationId: {

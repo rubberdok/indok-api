@@ -8,7 +8,7 @@ import { OrganizationRepository } from "../../organizations.js";
 let organizationRepository: OrganizationRepository;
 
 describe("OrganizationsRepository", () => {
-	beforeAll(async () => {
+	beforeAll(() => {
 		organizationRepository = new OrganizationRepository(prisma);
 	});
 

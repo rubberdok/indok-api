@@ -15,7 +15,7 @@ import * as Sentry from "@sentry/node";
 import RedisStore from "connect-redis";
 import { FastifyInstance } from "fastify";
 import { env } from "./config.js";
-import { NotFoundError } from "./domain/errors.js";
+import { NotFoundError, isUserFacingError } from "./domain/errors.js";
 import { User } from "./domain/users.js";
 import { resolvers } from "./graphql/resolvers.generated.js";
 import { typeDefs } from "./graphql/type-defs.generated.js";
@@ -140,10 +140,44 @@ export async function initServer(
 
 	/**
 	 * Default `authenticated` session variable to false if it is undefined
+	 *
+	 * biome-ignore lint/nursery/useAwait: Fastify hooks are either sync with callback, or async. Prefer async.
 	 */
 	app.addHook("preHandler", async (request) => {
 		if (typeof request.session.get("authenticated") === "undefined") {
 			request.session.set("authenticated", false);
+		}
+	});
+
+	/**
+	 * Set custom error handler to handle user-facing errors
+	 */
+	app.setErrorHandler((error, _request, reply) => {
+		if (isUserFacingError(error)) {
+			switch (error.code) {
+				// fallthrough
+				case "BAD_REQUEST":
+				case "BAD_USER_INPUT":
+					reply.status(400);
+					break;
+				case "PERMISSION_DENIED":
+					reply.status(403);
+					break;
+				case "UNAUTHORIZED":
+					reply.status(401);
+					break;
+				case "NOT_FOUND":
+					reply.status(404);
+					break;
+			}
+			reply.send({
+				message: error.message,
+				code: error.code,
+				error: error.name,
+			});
+		} else {
+			// Handle these errors with the default error handler
+			reply.send(error);
 		}
 	});
 

@@ -46,14 +46,14 @@ export class ListingService {
 	 * get returns a listing by id
 	 * @param id - the id of the listing
 	 */
-	async get(id: string): Promise<Listing> {
+	get(id: string): Promise<Listing> {
 		return this.listingRepository.get(id);
 	}
 
 	/**
 	 * findMany returns all listings
 	 */
-	async findMany(): Promise<Listing[]> {
+	findMany(): Promise<Listing[]> {
 		return this.listingRepository.findMany();
 	}
 

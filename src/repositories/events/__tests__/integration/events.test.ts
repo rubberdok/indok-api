@@ -5,7 +5,7 @@ import { EventRepository } from "../../repository.js";
 let eventsRepository: EventRepository;
 
 describe("EventsRepository", () => {
-	beforeAll(async () => {
+	beforeAll(() => {
 		eventsRepository = new EventRepository(prisma);
 	});
 

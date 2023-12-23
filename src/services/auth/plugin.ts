@@ -1,9 +1,6 @@
 import { FastifyPluginAsync, FastifyRequest } from "fastify";
-import {
-	BadRequestError,
-	InternalServerError,
-	PermissionDeniedError,
-} from "~/domain/errors.js";
+import { env } from "~/config.js";
+import { InvalidArgumentError, UnauthorizedError } from "~/domain/errors.js";
 import { User } from "~/domain/users.js";
 
 export interface AuthService {
@@ -14,6 +11,15 @@ export interface AuthService {
 	): Promise<User>;
 	login(req: FastifyRequest, user: User): Promise<User>;
 	logout(req: FastifyRequest): Promise<void>;
+}
+
+function assertValidRedirectUrl(url: string): void {
+	const parsedUrl = new URL(url);
+	if (!env.REDIRECT_ORIGINS.some((origin) => origin === parsedUrl.origin)) {
+		throw new InvalidArgumentError(
+			`Invalid redirect URL. Must be one of ${env.REDIRECT_ORIGINS.join(", ")}`,
+		);
+	}
 }
 
 function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
@@ -33,9 +39,16 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
 					},
 				},
 			},
-			handler: async (req, reply) => {
+			handler: (req, reply) => {
 				const { redirect } = req.query;
-				const url = authService.authorizationUrl(req, redirect);
+				let redirectUrl = new URL("/auth/me", env.SERVER_URL);
+
+				if (redirect) {
+					assertValidRedirectUrl(redirect);
+					redirectUrl = new URL(redirect);
+				}
+
+				const url = authService.authorizationUrl(req, redirectUrl.toString());
 
 				return reply.redirect(303, url);
 			},
@@ -61,19 +74,24 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
 			},
 			handler: async (req, reply) => {
 				const { code, state } = req.query;
+				let redirectUrl = new URL("/auth/me", env.SERVER_URL);
+
+				if (state) {
+					assertValidRedirectUrl(state);
+					redirectUrl = new URL(state);
+				}
+
 				try {
 					const user = await authService.authorizationCallback(req, { code });
 
 					await authService.login(req, user);
 
-					return reply.redirect(303, state ?? "/");
+					return reply.redirect(303, redirectUrl.toString());
 				} catch (err) {
 					if (err instanceof Error) {
 						req.log.error(err, "Authentication failed");
-						if (err instanceof BadRequestError)
-							return reply.status(400).send(err);
-						return reply.send(new InternalServerError("Authentication failed"));
 					}
+					throw err;
 				}
 			},
 		});
@@ -91,13 +109,11 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
 		app.route({
 			method: "GET",
 			url: "/me",
-			handler: async (req, reply) => {
+			handler: (req, reply) => {
 				if (req.session.authenticated) {
 					return reply.status(200).send({ user: req.session.userId });
 				}
-				return reply
-					.status(401)
-					.send(new PermissionDeniedError("Unauthorized"));
+				return reply.send(new UnauthorizedError("Unauthorized"));
 			},
 		});
 	};

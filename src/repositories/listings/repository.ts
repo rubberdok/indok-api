@@ -10,7 +10,7 @@ export class ListingRepository {
 	 * @param data - the data to create a listing
 	 * @returns the created listing
 	 */
-	async create(data: {
+	create(data: {
 		name: string;
 		closesAt: Date;
 		organizationId: string;
@@ -98,7 +98,7 @@ export class ListingRepository {
 	 * findMany returns all listings
 	 * @returns all listings
 	 */
-	async findMany(): Promise<Listing[]> {
+	findMany(): Promise<Listing[]> {
 		return this.db.listing.findMany();
 	}
 }

@@ -16,14 +16,14 @@ describe("AuthPlugin", () => {
 		app = await initServer(dependencies, { port: 4001, host: "0.0.0.0" });
 	});
 
-	describe("GET /auth/login?redirect=123", () => {
+	describe("GET /auth/login?redirect=https://example.com/", () => {
 		it("should perform a request to the open ID provider with the correct parameters", async () => {
-			const result = await performSSORedirect(app, "123");
+			const result = await performSSORedirect(app, "https://example.com/");
 			expect(mockOpenIdClient.authorizationUrl).toHaveBeenCalledWith({
 				scope: expect.any(String),
 				code_challenge: expect.any(String),
 				code_challenge_method: "S256",
-				state: "123",
+				state: "https://example.com/",
 			});
 
 			expect(result.statusCode).toBe(303);
@@ -51,9 +51,8 @@ describe("AuthPlugin", () => {
 			expect(result.statusCode).toBe(400);
 			expect(result.json()).toEqual({
 				code: errorCodes.ERR_BAD_REQUEST,
-				error: "Bad Request",
+				error: "BadRequestError",
 				message: expect.stringContaining("code verifier"),
-				statusCode: 400,
 			});
 		});
 

@@ -11,7 +11,7 @@ import { prismaKnownErrorCodes } from "~/lib/prisma.js";
 export class OrganizationRepository {
 	constructor(private db: PrismaClient) {}
 
-	async findMany(): Promise<Organization[]> {
+	findMany(): Promise<Organization[]> {
 		return this.db.organization.findMany();
 	}
 
@@ -68,7 +68,7 @@ export class OrganizationRepository {
 	 * @param data.description - The new description of the organization
 	 * @returns
 	 */
-	async update(
+	update(
 		id: string,
 		data: {
 			name?: string;
@@ -121,7 +121,7 @@ export class OrganizationRepository {
 	 * @param data.userId - The ID of the user to find organizations for
 	 * @returns Organization[]
 	 */
-	async findManyByUserId(data?: { userId?: string }): Promise<Organization[]> {
+	findManyByUserId(data?: { userId?: string }): Promise<Organization[]> {
 		const { userId } = data ?? {};
 		if (userId === undefined) {
 			return this.findMany();
