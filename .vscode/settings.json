@@ -1,6 +1,12 @@
 {
-	"editor.defaultFormatter": "biomejs.biome",
-	"editor.codeActionsOnSave": {
-		"source.organizeImports.biome": "explicit"
+	"editor.formatOnSave": true,
+	"[typescript][javascript][json][typescriptreact]": {
+		"editor.defaultFormatter": "biomejs.biome",
+		"editor.codeActionsOnSave": {
+			"source.organizeImports.biome": "explicit"
+		}
+	},
+	"[prisma]": {
+		"editor.defaultFormatter": "Prisma.prisma"
 	}
 }
