@@ -701,5 +701,52 @@ describe("EventRepository", () => {
 			expect(slot.capacity).toBe(20);
 			expect(slot.remainingCapacity).toBe(20);
 		});
+
+		it("should set new categories for an event", async () => {
+			/**
+			 * Arrange
+			 *
+			 * 1. Create an organization to host the event
+			 * 2. Create an event
+			 */
+			const organization = await prisma.organization.create({
+				data: {
+					name: faker.string.sample(20),
+				},
+			});
+			const event = await eventRepository.create({
+				name: faker.word.adjective(),
+				startAt: faker.date.past(),
+				endAt: faker.date.future(),
+				contactEmail: faker.internet.email(),
+				organizationId: organization.id,
+			});
+			const newCategory = await prisma.eventCategory.create({
+				data: {
+					name: faker.string.sample(20),
+				},
+			});
+
+			/**
+			 * Act
+			 *
+			 * 1. Update the event with categories
+			 */
+			const actual = await eventRepository.update(event.id, {
+				categories: [newCategory.id],
+			});
+
+			/**
+			 * Assert
+			 *
+			 * The event should have categories
+			 */
+			expect(actual.categories).toEqual([
+				{
+					id: newCategory.id,
+					name: newCategory.name,
+				},
+			]);
+		});
 	});
 });

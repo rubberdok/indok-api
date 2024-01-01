@@ -68,6 +68,14 @@ type CabinsResponse {
   cabins: [Cabin!]!
 }
 
+input CreateEventCategoryInput {
+  name: String!
+}
+
+type CreateEventCategoryResponse {
+  category: EventCategory!
+}
+
 input CreateEventInput {
   event: EventData!
 
@@ -133,6 +141,14 @@ type CreateOrganizationResponse {
 
 scalar DateTime
 
+input DeleteEventCategoryInput {
+  id: ID!
+}
+
+type DeleteEventCategoryResponse {
+  category: EventCategory!
+}
+
 input DeleteListingInput {
   id: ID!
 }
@@ -147,6 +163,9 @@ type Event {
   If the user is not logged in, this will be always be false.
   """
   canSignUp: Boolean!
+
+  """categories describes the categories that the event belongs to."""
+  categories: [EventCategory!]
 
   """The contact email for the event organizer."""
   contactEmail: String!
@@ -180,7 +199,19 @@ type Event {
   startAt: DateTime!
 }
 
+type EventCategoriesResponse {
+  categories: [EventCategory!]!
+}
+
+type EventCategory {
+  id: ID!
+  name: String!
+}
+
 input EventData {
+  """categories is a list of cateogry IDs to which the event belongs"""
+  categories: [ID!]
+
   """
   The description of the event, defaults to "". We support markdown on the client, so this can be markdown.
   This will be displayed to users.
@@ -308,12 +339,18 @@ type Mutation {
   Create an event, requires that the user is logged in, and is a member of the organization that is hosting the event
   """
   createEvent(data: CreateEventInput!): CreateEventResponse!
+
+  """Create a new event category, requires super user status"""
+  createEventCategory(data: CreateEventCategoryInput!): CreateEventCategoryResponse!
   createListing(data: CreateListingInput!): CreateListingResponse!
 
   """
   Create a new organization, and add the current user as an admin of the organization.
   """
   createOrganization(data: CreateOrganizationInput!): CreateOrganizationResponse!
+
+  """Delete an event category, requires super user status"""
+  deleteEventCategory(data: DeleteEventCategoryInput!): DeleteEventCategoryResponse!
   deleteListing(data: DeleteListingInput!): DeleteListingResponse!
   newBooking(data: NewBookingInput!): NewBookingResponse!
 
@@ -348,6 +385,9 @@ type Mutation {
 
   """"""
   updateEvent(data: UpdateEventInput!, id: ID!): UpdateEventResponse!
+
+  """Update an event category, requires super user status"""
+  updateEventCategory(data: UpdateEventCategoryInput!): UpdateEventCategoryResponse!
   updateListing(data: UpdateListingInput!, id: ID!): UpdateListingResponse!
 
   """
@@ -467,6 +507,7 @@ type Query {
   bookingContact: BookingContactResponse!
   bookingSemesters: BookingSemestersResponse!
   cabins: CabinsResponse!
+  categories: EventCategoriesResponse!
   event(data: EventInput!): EventResponse!
   events(data: EventsInput): EventsResponse!
   hasFeaturePermission(data: HasFeaturePermissionInput!): HasFeaturePermissionResponse!
@@ -669,6 +710,15 @@ input UpdateBookingStatusInput {
   status: Status!
 }
 
+input UpdateEventCategoryInput {
+  id: ID!
+  name: String!
+}
+
+type UpdateEventCategoryResponse {
+  category: EventCategory!
+}
+
 input UpdateEventInput {
   """
   Total capacity for the event, regardless of the capacity in each slot.
@@ -676,6 +726,9 @@ input UpdateEventInput {
   no more users can be registered as attending. Cannot be less than the number of users currently signed up for the event.
   """
   capacity: Int
+
+  """categories is a list of cateogry IDs to which the event belongs"""
+  categories: [ID!]
 
   """
   The description of the event, defaults to "". We support markdown on the client, so this can be markdown.

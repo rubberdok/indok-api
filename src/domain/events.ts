@@ -1,4 +1,7 @@
-import { KnownDomainError, errorCodes } from "./errors.js";
+import { Event as DataStorageEvent } from "@prisma/client";
+import { merge } from "lodash-es";
+import { z } from "zod";
+import { InternalServerError, KnownDomainError, errorCodes } from "./errors.js";
 
 export class AlreadySignedUpError extends KnownDomainError {
 	constructor(description: string) {
@@ -64,6 +67,7 @@ export type BaseEvent = {
 	endAt: Date;
 	version: number;
 	signUpsEnabled: boolean;
+	categories?: Category[];
 };
 
 type EventWithoutSignUps = BaseEvent & {
@@ -88,3 +92,73 @@ export function isEventWithSignUps(
 ): event is EventWithSignUps {
 	return event.signUpsEnabled;
 }
+
+export function eventFromDataStorage(
+	event: DataStorageEvent & { categories?: { id: string; name: string }[] },
+): Event {
+	const schema = z.object({
+		id: z.string(),
+		name: z.string(),
+		description: z.string(),
+		startAt: z.date(),
+		endAt: z.date(),
+		contactEmail: z.string(),
+		location: z.string(),
+		organizationId: z.string().nullable(),
+		version: z.number(),
+		categories: z
+			.array(
+				z.object({
+					id: z.string(),
+					name: z.string(),
+				}),
+			)
+			.optional(),
+	});
+
+	try {
+		if (event.signUpsEnabled) {
+			const {
+				signUpsEnabled,
+				signUpsStartAt,
+				signUpsEndAt,
+				capacity,
+				remainingCapacity,
+			} = event;
+			const signUpDetails = {
+				signUpsEndAt,
+				signUpsStartAt,
+				capacity,
+				signUpsEnabled,
+				remainingCapacity,
+			};
+			return schema
+				.extend({
+					signUpsEnabled: z.literal(true),
+					signUpDetails: z.object({
+						signUpsStartAt: z.date(),
+						signUpsEndAt: z.date(),
+						remainingCapacity: z.number(),
+						capacity: z.number(),
+					}),
+				})
+				.parse(merge({}, event, { signUpDetails }));
+		}
+		return schema
+			.extend({
+				signUpsEnabled: z.literal(false),
+				signUpDetails: z.undefined(),
+			})
+			.parse(event);
+	} catch (err) {
+		if (err instanceof z.ZodError) {
+			throw new InternalServerError(err.message);
+		}
+		throw err;
+	}
+}
+
+export type Category = {
+	id: string;
+	name: string;
+};

@@ -8,7 +8,6 @@ import {
 } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 import { merge } from "lodash-es";
-import { z } from "zod";
 import {
 	InternalServerError,
 	InvalidArgumentError,
@@ -16,8 +15,10 @@ import {
 } from "~/domain/errors.js";
 import {
 	AlreadySignedUpError,
+	Category,
 	Event as DomainEvent,
 	InvalidCapacityError,
+	eventFromDataStorage,
 } from "~/domain/events.js";
 import { prismaKnownErrorCodes } from "~/lib/prisma.js";
 
@@ -48,6 +49,7 @@ export class EventRepository {
 			contactEmail,
 			location,
 			organizationId,
+			categories,
 		} = eventData;
 		if (signUpDetails) {
 			const slots = signUpDetails.slots.map((slot) => ({
@@ -58,12 +60,20 @@ export class EventRepository {
 			const { signUpsEndAt, signUpsStartAt, capacity, signUpsEnabled } =
 				signUpDetails;
 			const event = await this.db.event.create({
+				include: {
+					categories: true,
+				},
 				data: {
 					name,
 					description,
 					startAt,
 					endAt,
 					contactEmail,
+					categories: {
+						connect: categories?.map((category) => ({
+							id: category,
+						})),
+					},
 					location,
 					slots: {
 						createMany: {
@@ -77,9 +87,12 @@ export class EventRepository {
 					signUpsEnabled,
 				},
 			});
-			return this.toDomainEvent(event);
+			return eventFromDataStorage(event);
 		}
 		const event = await this.db.event.create({
+			include: {
+				categories: true,
+			},
 			data: {
 				name: name,
 				description,
@@ -88,9 +101,14 @@ export class EventRepository {
 				organizationId,
 				contactEmail,
 				location,
+				categories: {
+					connect: categories?.map((category) => ({
+						id: category,
+					})),
+				},
 			},
 		});
-		return this.toDomainEvent(event);
+		return eventFromDataStorage(event);
 	}
 
 	/**
@@ -111,16 +129,41 @@ export class EventRepository {
 	): Promise<DomainEvent> {
 		if (signUpDetails !== undefined) {
 			const event = await this.updateWithCapacity(id, eventData, signUpDetails);
-			return this.toDomainEvent(event);
+			return eventFromDataStorage(event);
 		}
 
+		const {
+			name,
+			description,
+			startAt,
+			endAt,
+			contactEmail,
+			location,
+			categories,
+		} = eventData;
+
 		const event = await this.db.event.update({
-			data: eventData,
+			include: {
+				categories: true,
+			},
+			data: {
+				name,
+				description,
+				startAt,
+				endAt,
+				contactEmail,
+				location,
+				categories: {
+					set: categories?.map((category) => ({
+						id: category,
+					})),
+				},
+			},
 			where: {
 				id,
 			},
 		});
-		return this.toDomainEvent(event);
+		return eventFromDataStorage(event);
 	}
 
 	/**
@@ -285,6 +328,11 @@ export class EventRepository {
 			signUpsEnabled,
 			signUpsEndAt,
 			signUpsStartAt,
+			categories: {
+				set: event.categories?.map((category) => ({
+					id: category,
+				})),
+			},
 		};
 		const previousCapacity = existingEvent.capacity;
 		if (previousCapacity === null) {
@@ -396,7 +444,14 @@ export class EventRepository {
 			throw new NotFoundError(`Event { id: ${id} } not found`);
 		}
 
-		return this.toDomainEvent(event);
+		return eventFromDataStorage(event);
+	}
+
+	/**
+	 * getCategories returns a list of all event categories
+	 */
+	getCategories(): Promise<Category[]> {
+		return this.db.eventCategory.findMany();
 	}
 
 	/**
@@ -420,7 +475,7 @@ export class EventRepository {
 			throw new NotFoundError(`Event { id: ${id} } not found`);
 		}
 
-		return merge({}, this.toDomainEvent(event), { slots: event.slots });
+		return merge({}, eventFromDataStorage(event), { slots: event.slots });
 	}
 
 	/**
@@ -439,11 +494,11 @@ export class EventRepository {
 				},
 			});
 
-			return events.map((event) => this.toDomainEvent(event));
+			return events.map((event) => eventFromDataStorage(event));
 		}
 
 		const events = await this.db.event.findMany();
-		return events.map((event) => this.toDomainEvent(event));
+		return events.map((event) => eventFromDataStorage(event));
 	}
 
 	/**
@@ -519,10 +574,10 @@ export class EventRepository {
 		try {
 			if ("slotId" in data) {
 				const { event, signUp, slot } = await this.createConfirmedSignUp(data);
-				return { event: this.toDomainEvent(event), signUp, slot };
+				return { event: eventFromDataStorage(event), signUp, slot };
 			}
 			const { event, signUp } = await this.createOnWaitlistSignUp(data);
-			return { event: this.toDomainEvent(event), signUp };
+			return { event: eventFromDataStorage(event), signUp };
 		} catch (err) {
 			if (err instanceof PrismaClientKnownRequestError) {
 				if (err.code === "P2002") throw new AlreadySignedUpError(err.message);
@@ -727,7 +782,7 @@ export class EventRepository {
 		if (currentParticipationStatus === newParticipationStatus) {
 			// No change, we can just return.
 			const { event, slot, ...signUp } = currentSignUp;
-			return { event: this.toDomainEvent(event), slot, signUp };
+			return { event: eventFromDataStorage(event), slot, signUp };
 		}
 
 		if (newParticipationStatus === ParticipationStatus.CONFIRMED) {
@@ -737,7 +792,7 @@ export class EventRepository {
 					eventId: data.eventId,
 					slotId: data.slotId,
 				});
-			return { event: this.toDomainEvent(event), slot, signUp };
+			return { event: eventFromDataStorage(event), slot, signUp };
 		}
 
 		const { event, signUp } = await this.newParticipationStatusInactiveHandler({
@@ -746,7 +801,7 @@ export class EventRepository {
 			eventId: data.eventId,
 			newParticipationStatus,
 		});
-		return { event: this.toDomainEvent(event), signUp };
+		return { event: eventFromDataStorage(event), signUp };
 	}
 
 	private async newParticipationStatusConfirmedHandler(data: {
@@ -1081,56 +1136,68 @@ export class EventRepository {
 		});
 	}
 
-	toDomainEvent(event: Event): DomainEvent {
-		const schema = z.object({
-			id: z.string(),
-			name: z.string(),
-			description: z.string(),
-			startAt: z.date(),
-			endAt: z.date(),
-			contactEmail: z.string(),
-			location: z.string(),
-			organizationId: z.string().nullable(),
-			version: z.number(),
-		});
-
+	/**
+	 * createCategory creates a new event category
+	 * @throws {InvalidArgumentError} If a category with the given name already exists
+	 */
+	async createCategory(data: { name: string }): Promise<Category> {
+		const { name } = data;
 		try {
-			if (event.signUpsEnabled) {
-				const {
-					signUpsEnabled,
-					signUpsStartAt,
-					signUpsEndAt,
-					capacity,
-					remainingCapacity,
-				} = event;
-				const signUpDetails = {
-					signUpsEndAt,
-					signUpsStartAt,
-					capacity,
-					signUpsEnabled,
-					remainingCapacity,
-				};
-				return schema
-					.extend({
-						signUpsEnabled: z.literal(true),
-						signUpDetails: z.object({
-							signUpsStartAt: z.date(),
-							signUpsEndAt: z.date(),
-							remainingCapacity: z.number(),
-							capacity: z.number(),
-						}),
-					})
-					.parse(merge({}, event, { signUpDetails }));
-			}
-			return schema
-				.extend({
-					signUpsEnabled: z.literal(false),
-					signUpDetails: z.undefined(),
-				})
-				.parse(event);
+			return await this.db.eventCategory.create({
+				data: {
+					name,
+				},
+			});
 		} catch (err) {
-			if (err instanceof z.ZodError) {
-				throw new InternalServerError(err.message);
+			if (err instanceof PrismaClientKnownRequestError) {
+				if (
+					err.code === prismaKnownErrorCodes.ERR_UNIQUE_CONSTRAINT_VIOLATION
+				) {
+					throw new InvalidArgumentError(err.message);
+				}
+			}
+			throw err;
+		}
+	}
+
+	/**
+	 * updateCategory updates an event category
+	 * @throws {NotFoundError} If a category with the given ID does not exist
+	 * @throws {InvalidArgumentError} If a category with the given name already exists
+	 */
+	async updateCategory(category: Category): Promise<Category> {
+		try {
+			return await this.db.eventCategory.update({
+				where: {
+					id: category.id,
+				},
+				data: {
+					name: category.name,
+				},
+			});
+		} catch (err) {
+			if (err instanceof PrismaClientKnownRequestError) {
+				if (
+					err.code === prismaKnownErrorCodes.ERR_UNIQUE_CONSTRAINT_VIOLATION
+				) {
+					throw new InvalidArgumentError(err.message);
+				}
+				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) {
+					throw new NotFoundError(err.message);
+				}
+			}
+			throw err;
+		}
+	}
+
+	public async deleteCategory(category: { id: string }): Promise<Category> {
+		try {
+			return await this.db.eventCategory.delete({ where: { id: category.id } });
+		} catch (err) {
+			if (err instanceof PrismaClientKnownRequestError) {
+				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) {
+					throw new NotFoundError(err.message);
+				}
 			}
 			throw err;
 		}
@@ -1183,6 +1250,7 @@ interface EventData {
 	contactEmail: string;
 	description?: string;
 	location?: string;
+	categories?: string[];
 }
 
 interface SignUpData {

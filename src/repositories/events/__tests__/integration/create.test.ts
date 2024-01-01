@@ -93,5 +93,47 @@ describe("EventRepository", () => {
 			expect(actual.signUpDetails).toBe(undefined);
 			expect(actual.signUpsEnabled).toBe(false);
 		});
+
+		it("with categories", async () => {
+			/**
+			 * Arrange
+			 *
+			 * 1. Create an organization with organizationId {organizationId} to act as the organization that the event belongs to
+			 * 2. Create a category
+			 */
+			const organization = await prisma.organization.create({
+				data: {
+					name: faker.string.sample(20),
+				},
+			});
+			const category = await prisma.eventCategory.create({
+				data: {
+					name: faker.string.sample(20),
+				},
+			});
+
+			/**
+			 * Act
+			 *
+			 * Create an event without sign ups enabled
+			 */
+			const actual = await eventRepository.create({
+				name: faker.string.sample(),
+				description: faker.lorem.paragraph(),
+				startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+				endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
+				contactEmail: faker.internet.email(),
+				organizationId: organization.id,
+				location: faker.location.streetAddress(),
+				categories: [category.id],
+			});
+
+			expect(actual.categories).toEqual([
+				{
+					id: category.id,
+					name: category.name,
+				},
+			]);
+		});
 	});
 });

@@ -39,6 +39,15 @@ type Event {
   signUpAvailability: SignUpAvailability!
   signUpDetails: EventSignUpDetails
   signUpsEnabled: Boolean!
+  """
+  categories describes the categories that the event belongs to.
+  """
+  categories: [EventCategory!]
+}
+
+type EventCategory {
+  id: ID!
+  name: String!
 }
 
 type EventSignUpDetails {
@@ -140,6 +149,10 @@ input EventData {
   This will be displayed to users.
   """
   endAt: DateTime
+  """
+  categories is a list of cateogry IDs to which the event belongs
+  """
+  categories: [ID!]
 }
 
 input CreateEventSlot {
@@ -275,6 +288,39 @@ input UpdateEventInput {
   location of the event
   """
   location: String
+  """
+  categories is a list of cateogry IDs to which the event belongs
+  """
+  categories: [ID!]
+}
+
+input CreateEventCategoryInput {
+  name: String!
+}
+
+type CreateEventCategoryResponse {
+  category: EventCategory!
+}
+
+input UpdateEventCategoryInput {
+  id: ID!
+  name: String!
+}
+
+type UpdateEventCategoryResponse {
+  category: EventCategory!
+}
+
+input DeleteEventCategoryInput {
+  id: ID!
+}
+
+type DeleteEventCategoryResponse {
+  category: EventCategory!
+}
+
+type EventCategoriesResponse {
+  categories: [EventCategory!]!
 }
 
 type Mutation {
@@ -293,9 +339,22 @@ type Mutation {
   Create an event, requires that the user is logged in, and is a member of the organization that is hosting the event
   """
   createEvent(data: CreateEventInput!): CreateEventResponse!
+  """
+  Create a new event category, requires super user status
+  """
+  createEventCategory(data: CreateEventCategoryInput!): CreateEventCategoryResponse!
+  """
+  Update an event category, requires super user status
+  """
+  updateEventCategory(data: UpdateEventCategoryInput!): UpdateEventCategoryResponse!
+  """
+  Delete an event category, requires super user status
+  """
+  deleteEventCategory(data: DeleteEventCategoryInput!): DeleteEventCategoryResponse!
 }
 
 type Query {
   event(data: EventInput!): EventResponse!
   events(data: EventsInput): EventsResponse!
+  categories: EventCategoriesResponse!
 }
