@@ -946,6 +946,64 @@ describe("EventsService", () => {
 			await expect(result).rejects.toThrow(PermissionDeniedError);
 			expect(eventsRepository.createCategory).not.toHaveBeenCalled();
 		});
+
+		it("should raise InvalidArgumentError if the name is too long", async () => {
+			const { service, eventsRepository, permissionService } = setup();
+
+			/**
+			 * Arrange
+			 *
+			 * 1. Set up the mock for `permissionService.isSuperUser` to return `true`
+			 */
+			permissionService.isSuperUser.mockResolvedValueOnce({
+				isSuperUser: true,
+			});
+
+			/**
+			 * Act
+			 */
+			const result = service.createCategory(
+				{ user: mock<User>({ id: faker.string.uuid() }) },
+				{
+					name: faker.string.sample(101),
+				},
+			);
+
+			/**
+			 * Assert
+			 */
+			await expect(result).rejects.toThrow(InvalidArgumentError);
+			expect(eventsRepository.createCategory).not.toHaveBeenCalled();
+		});
+
+		it("should raise InvalidArgumentError if the name is too short", async () => {
+			const { service, eventsRepository, permissionService } = setup();
+
+			/**
+			 * Arrange
+			 *
+			 * 1. Set up the mock for `permissionService.isSuperUser` to return `true`
+			 */
+			permissionService.isSuperUser.mockResolvedValueOnce({
+				isSuperUser: true,
+			});
+
+			/**
+			 * Act
+			 */
+			const result = service.createCategory(
+				{ user: mock<User>({ id: faker.string.uuid() }) },
+				{
+					name: "",
+				},
+			);
+
+			/**
+			 * Assert
+			 */
+			await expect(result).rejects.toThrow(InvalidArgumentError);
+			expect(eventsRepository.createCategory).not.toHaveBeenCalled();
+		});
 	});
 
 	describe("#updateCategory", () => {
@@ -1006,6 +1064,66 @@ describe("EventsService", () => {
 			 * Assert
 			 */
 			await expect(result).rejects.toThrow(PermissionDeniedError);
+			expect(eventsRepository.updateCategory).not.toHaveBeenCalled();
+		});
+
+		it("should raise InvalidArgumentError if the name is too long", async () => {
+			const { service, eventsRepository, permissionService } = setup();
+
+			/**
+			 * Arrange
+			 *
+			 * 1. Set up the mock for `permissionService.isSuperUser` to return `true`
+			 */
+			permissionService.isSuperUser.mockResolvedValueOnce({
+				isSuperUser: true,
+			});
+
+			/**
+			 * Act
+			 */
+			const result = service.updateCategory(
+				{ user: mock<User>({ id: faker.string.uuid() }) },
+				{
+					id: faker.string.uuid(),
+					name: faker.string.sample(101),
+				},
+			);
+
+			/**
+			 * Assert
+			 */
+			await expect(result).rejects.toThrow(InvalidArgumentError);
+			expect(eventsRepository.updateCategory).not.toHaveBeenCalled();
+		});
+
+		it("should raise InvalidArgumentError if the name is too short", async () => {
+			const { service, eventsRepository, permissionService } = setup();
+
+			/**
+			 * Arrange
+			 *
+			 * 1. Set up the mock for `permissionService.isSuperUser` to return `true`
+			 */
+			permissionService.isSuperUser.mockResolvedValueOnce({
+				isSuperUser: true,
+			});
+
+			/**
+			 * Act
+			 */
+			const result = service.updateCategory(
+				{ user: mock<User>({ id: faker.string.uuid() }) },
+				{
+					id: faker.string.uuid(),
+					name: "",
+				},
+			);
+
+			/**
+			 * Assert
+			 */
+			await expect(result).rejects.toThrow(InvalidArgumentError);
 			expect(eventsRepository.updateCategory).not.toHaveBeenCalled();
 		});
 	});
