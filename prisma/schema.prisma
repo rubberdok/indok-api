@@ -68,6 +68,7 @@ model Event {
   capacity          Int?
   // Current remaining capacity for the event
   remainingCapacity Int?
+  categories       EventCategory[]
 
   slots   EventSlot[]
   signUps EventSignUp[]
@@ -112,6 +113,14 @@ model EventSignUp {
   active              Boolean             @default(true)
 
   @@unique([userId, eventId, active])
+}
+
+model EventCategory {
+  id        String   @id @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name      String   @unique
+  events    Event[]
 }
 
 // Cabins

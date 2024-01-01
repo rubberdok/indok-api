@@ -241,7 +241,7 @@ describe("OrganizationsService", () => {
 		);
 	});
 
-	describe("isSuperUser", () => {
+	describe("#isSuperUser", () => {
 		it("should return true if the user is a super user", async () => {
 			/**
 			 * Arrange
@@ -281,6 +281,20 @@ describe("OrganizationsService", () => {
 			 * 1. Call the isSuperUser method on the permissionService with the userId
 			 */
 			const { isSuperUser } = await permissionService.isSuperUser(user.id);
+
+			/**
+			 * Assert that the user is a super user
+			 */
+			expect(isSuperUser).toEqual(false);
+		});
+
+		it("should return false if user is undefined", async () => {
+			/**
+			 * Act
+			 *
+			 * 1. Call the isSuperUser method on the permissionService with the userId
+			 */
+			const { isSuperUser } = await permissionService.isSuperUser(undefined);
 
 			/**
 			 * Assert that the user is a super user

@@ -10,6 +10,7 @@ import {
 	PermissionDeniedError,
 } from "~/domain/errors.js";
 import {
+	Category,
 	Event as DomainEvent,
 	EventWithSignUps,
 	isEventWithSignUps,
@@ -89,6 +90,10 @@ export interface EventRepository {
 	findManySlots(data: { gradeYear?: number; eventId: string }): Promise<
 		EventSlot[]
 	>;
+	getCategories(): Promise<Category[]>;
+	createCategory(data: { name: string }): Promise<Category>;
+	updateCategory(data: Category): Promise<Category>;
+	deleteCategory(data: { id: string }): Promise<Category>;
 }
 
 export interface UserService {
@@ -103,6 +108,7 @@ export interface PermissionService {
 		organizationId: string;
 		role: Role;
 	}): Promise<boolean>;
+	isSuperUser(userId: string | undefined): Promise<{ isSuperUser: boolean }>;
 }
 
 export class EventService {
@@ -124,6 +130,7 @@ export class EventService {
 	 * @param data.endAt - The end datetime of the event
 	 * @param data.location - The location of the event
 	 * @param data.contactEmail - The email address of the contact person for the event
+	 * @param data.categories - A list of category IDs that the event belongs to
 	 * @param signUps.capacity - The total number of sign ups allowed for the event
 	 * @param signUps.slots - The slots for the event
 	 * @param signUps.signUpsStartAt - The datetime when sign ups for the event open
@@ -140,6 +147,7 @@ export class EventService {
 			endAt?: Date | null;
 			location?: string | null;
 			contactEmail?: string | null;
+			categories?: string[] | null;
 		},
 		signUpDetails?: {
 			signUpsEnabled: boolean;
@@ -148,7 +156,7 @@ export class EventService {
 			signUpsStartAt: Date;
 			signUpsEndAt: Date;
 		} | null,
-	) {
+	): Promise<DomainEvent> {
 		const isMember = await this.permissionService.hasRole({
 			userId,
 			organizationId,
@@ -218,6 +226,10 @@ export class EventService {
 					contactEmail: z
 						.string()
 						.email()
+						.optional()
+						.transform((val) => val ?? undefined),
+					categories: z
+						.array(z.string())
 						.optional()
 						.transform((val) => val ?? undefined),
 				})
@@ -786,4 +798,88 @@ export class EventService {
 		 */
 		return signUpAvailability.AVAILABLE;
 	}
+
+	public async createCategory(
+		ctx: Context,
+		data: { name: string },
+	): Promise<Category> {
+		const { isSuperUser } = await this.permissionService.isSuperUser(
+			ctx.user?.id,
+		);
+		if (isSuperUser !== true) {
+			throw new PermissionDeniedError(
+				"You do not have permission to create a category.",
+			);
+		}
+
+		const schema = z.object({
+			name: z.string().min(1).max(100),
+		});
+		try {
+			const category = schema.parse(data);
+			return this.eventRepository.createCategory(category);
+		} catch (err) {
+			if (err instanceof z.ZodError)
+				throw new InvalidArgumentError(err.message);
+			throw err;
+		}
+	}
+
+	public async updateCategory(ctx: Context, data: Category): Promise<Category> {
+		const { isSuperUser } = await this.permissionService.isSuperUser(
+			ctx.user?.id,
+		);
+		if (isSuperUser !== true) {
+			throw new PermissionDeniedError(
+				"You do not have permission to create a category.",
+			);
+		}
+
+		const schema = z.object({
+			id: z.string().uuid(),
+			name: z.string().min(1).max(100),
+		});
+		try {
+			const category = schema.parse(data);
+			return this.eventRepository.updateCategory(category);
+		} catch (err) {
+			if (err instanceof z.ZodError)
+				throw new InvalidArgumentError(err.message);
+			throw err;
+		}
+	}
+
+	public async deleteCategory(
+		ctx: Context,
+		data: { id: string },
+	): Promise<Category> {
+		const { isSuperUser } = await this.permissionService.isSuperUser(
+			ctx.user?.id,
+		);
+		if (isSuperUser !== true) {
+			throw new PermissionDeniedError(
+				"You do not have permission to create a category.",
+			);
+		}
+
+		const schema = z.object({
+			id: z.string().uuid(),
+		});
+		try {
+			const category = schema.parse(data);
+			return this.eventRepository.deleteCategory(category);
+		} catch (err) {
+			if (err instanceof z.ZodError)
+				throw new InvalidArgumentError(err.message);
+			throw err;
+		}
+	}
+
+	public getCategories(_ctx: Context): Promise<Category[]> {
+		return this.eventRepository.getCategories();
+	}
+}
+
+interface Context {
+	user: User | null;
 }

@@ -19,7 +19,7 @@ import { merge } from "lodash-es";
 import { ZodError } from "zod";
 import { BookingStatus } from "~/domain/cabins.js";
 import { KnownDomainError, errorCodes } from "~/domain/errors.js";
-import { Event, SignUpAvailability } from "~/domain/events.js";
+import { Category, Event, SignUpAvailability } from "~/domain/events.js";
 import { Role } from "~/domain/organizations.js";
 import { User } from "~/domain/users.js";
 
@@ -221,6 +221,10 @@ interface IEventService {
 		userId: string | undefined,
 		eventId: string,
 	): Promise<SignUpAvailability>;
+	createCategory(ctx: UserContext, data: { name: string }): Promise<Category>;
+	updateCategory(ctx: UserContext, data: Category): Promise<Category>;
+	getCategories(ctx: UserContext): Promise<Category[]>;
+	deleteCategory(ctx: UserContext, data: { id: string }): Promise<Category>;
 }
 
 interface ListingService {
@@ -265,3 +269,7 @@ interface IPermissionService {
 		featurePermission: FeaturePermission;
 	}): Promise<boolean>;
 }
+
+type UserContext = {
+	user: User | null;
+};

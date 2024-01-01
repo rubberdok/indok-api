@@ -8,7 +8,7 @@ describe("EventRepository", () => {
 		eventRepository = new EventRepository(prisma);
 	});
 
-	describe("findMany", () => {
+	describe("#findMany", () => {
 		it("should return a list of events", async () => {
 			/**
 			 * Arrange
@@ -116,7 +116,7 @@ describe("EventRepository", () => {
 		});
 	});
 
-	describe("getWithSlots", () => {
+	describe("#getWithSlots", () => {
 		it("should return an event with slots", async () => {
 			/**
 			 * Arrange
@@ -159,6 +159,50 @@ describe("EventRepository", () => {
 			 */
 			expect(result.slots).toBeDefined();
 			expect(result.slots.length).toEqual(3);
+		});
+	});
+
+	describe("#getCategories", () => {
+		it("should return a list of categories", async () => {
+			/**
+			 * Arrange
+			 *
+			 * 1. Create several categories
+			 */
+			const categoryIds = [
+				faker.string.uuid(),
+				faker.string.uuid(),
+				faker.string.uuid(),
+			];
+			await Promise.all(
+				categoryIds.map((id) =>
+					prisma.eventCategory.create({
+						data: {
+							id,
+							name: faker.person.firstName(),
+						},
+					}),
+				),
+			);
+
+			/**
+			 * Act
+			 *
+			 * 1. Get the categories
+			 */
+			const categories = await eventRepository.getCategories();
+
+			/**
+			 * Assert
+			 *
+			 * 1. The categories should be returned
+			 */
+			expect(categories.length).toBeGreaterThanOrEqual(3);
+			for (const categoryId of categoryIds) {
+				expect(categories.map((category) => category.id)).toContainEqual(
+					categoryId,
+				);
+			}
 		});
 	});
 });

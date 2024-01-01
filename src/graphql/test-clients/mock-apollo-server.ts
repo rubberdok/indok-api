@@ -1,5 +1,6 @@
 import assert from "assert";
 import { ApolloServer } from "@apollo/server";
+import { faker } from "@faker-js/faker";
 import { FastifySessionObject } from "@fastify/session";
 import {
 	ResultOf,
@@ -31,6 +32,7 @@ class ApolloServerClient {
 		request: { query: T; variables?: VariablesOf<T> },
 		options?: { contextValue?: ApolloContext },
 	): Promise<QueryResult<T>> {
+		const contextValue = options?.contextValue ?? this.createMockContext({});
 		// @ts-expect-error We can get more accurate typing for variables by using the `VariablesOf` helper
 		// so we ignore the TS error raised here.
 		const res = await this.server.executeOperation<ResultOf<T>, VariablesOf<T>>(
@@ -39,7 +41,7 @@ class ApolloServerClient {
 				variables: request.variables,
 			},
 			{
-				contextValue: options?.contextValue ?? this.createMockContext({}),
+				contextValue,
 			},
 		);
 
@@ -84,20 +86,20 @@ export const createMockApolloServer = (logger?: Partial<FastifyBaseLogger>) => {
 
 	function createMockContext(data: CreateMockContextData = {}): ApolloContext {
 		let session: Partial<FastifySessionObject> = {};
-		let user: Partial<User> = {};
+		let user: User | null = null;
 		if ("user" in data && data.user) {
-			user = data.user;
+			user = { ...mock<User>(), ...data.user };
 			session = {
 				authenticated: true,
 				userId: user.id,
 			};
-		} else if ("userId" in data || "authenticated" in data) {
+		} else if (("userId" in data && data.userId) || "authenticated" in data) {
 			const { userId, authenticated } = data;
 			session = {
 				authenticated: authenticated ?? false,
 				userId,
 			};
-			user = { id: userId };
+			user = { ...mock<User>(), id: userId ?? faker.string.uuid() };
 		}
 
 		const contextValue = {
@@ -112,8 +114,9 @@ export const createMockApolloServer = (logger?: Partial<FastifyBaseLogger>) => {
 			eventService,
 			listingService,
 			permissionService,
-			user: mock<User>(user),
+			user,
 		};
+
 		return contextValue;
 	}
 
@@ -133,7 +136,7 @@ export const createMockApolloServer = (logger?: Partial<FastifyBaseLogger>) => {
 };
 
 type CreateMockContextData =
-	| { user?: Partial<User> & { id: string } }
+	| { user?: (Partial<User> & { id: string }) | null }
 	| DeprectatedCreateMockContextData;
 
 type DeprectatedCreateMockContextData = Partial<{
