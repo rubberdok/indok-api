@@ -4,3 +4,8 @@ export interface User extends PrismaUser {
 	gradeYear?: number;
 	canUpdateYear: boolean;
 }
+
+export type StudyProgram = {
+	id: string;
+	name: string;
+};
