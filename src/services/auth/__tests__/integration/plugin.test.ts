@@ -4,7 +4,7 @@ import { defaultTestDependenciesFactory } from "~/__tests__/dependencies-factory
 import { MockOpenIdClient } from "~/__tests__/mocks/openIdClient.js";
 import { env } from "~/config.js";
 import { errorCodes } from "~/domain/errors.js";
-import { initServer } from "~/server.js";
+import { createServer } from "~/server.js";
 
 describe("AuthPlugin", () => {
 	let app: FastifyInstance;
@@ -13,7 +13,7 @@ describe("AuthPlugin", () => {
 	beforeAll(async () => {
 		const dependencies = defaultTestDependenciesFactory();
 		({ mockOpenIdClient } = dependencies);
-		app = await initServer(dependencies, { port: 4001, host: "0.0.0.0" });
+		app = await createServer(dependencies);
 	});
 
 	describe("GET /auth/login?redirect=https://example.com/", () => {

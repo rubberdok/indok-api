@@ -14,7 +14,7 @@ import {
 } from "~/__tests__/mocks/openIdClient.js";
 import { env } from "~/config.js";
 import { ApolloServerDependencies } from "~/lib/apollo-server.js";
-import { initServer } from "~/server.js";
+import { createServer } from "~/server.js";
 
 /**
  * A test client for integration testing GraphQL resolvers.
@@ -265,7 +265,7 @@ export class GraphQLTestClient {
  *
  *  beforeAll(async () => {
  *      // initialize the test client
- *     client = await newGraphQLTestClient({ port: <SOME PORT NUMBER> });
+ *     client = await newGraphQLTestClient();
  *  });
  *
  *  it("example test", () => {
@@ -291,7 +291,6 @@ export class GraphQLTestClient {
  * ```
  */
 export async function newGraphQLTestClient(
-	options: { port: number },
 	overrideDependencies: Partial<{
 		apolloServerDependencies: Partial<ApolloServerDependencies>;
 		openIdClient: MockOpenIdClient;
@@ -304,7 +303,6 @@ export async function newGraphQLTestClient(
 		...overrideDependencies,
 	});
 
-	const { port } = options;
-	const app = await initServer(dependencies, { port, host: "0.0.0.0" });
+	const app = await createServer(dependencies);
 	return new GraphQLTestClient({ app, dependencies, mockOpenIdClient });
 }

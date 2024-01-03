@@ -1,4 +1,4 @@
-import { initServer } from "../../server.js";
+import { createServer, initServer } from "../../server.js";
 import { defaultTestDependenciesFactory } from "../dependencies-factory.js";
 
 describe("Server", () => {
@@ -6,7 +6,7 @@ describe("Server", () => {
 
 	beforeAll(async () => {
 		const dependencies = defaultTestDependenciesFactory();
-		server = await initServer(dependencies, { port: 4003, host: "0.0.0.0" });
+		server = await createServer(dependencies);
 	});
 
 	test("Get data from server", async () => {
