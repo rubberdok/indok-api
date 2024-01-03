@@ -7,7 +7,7 @@ import {
 	InvalidArgumentError,
 	PermissionDeniedError,
 } from "~/domain/errors.js";
-import type { User } from "~/domain/users.js";
+import type { StudyProgram, User } from "~/domain/users.js";
 import { createUserSchema } from "./validation.js";
 
 export interface UserRepository {
@@ -16,6 +16,13 @@ export interface UserRepository {
 	getByFeideId(feideId: string): Promise<PrismaUser>;
 	update(id: string, data: Prisma.UserUpdateInput): Promise<PrismaUser>;
 	create(data: Prisma.UserCreateInput): Promise<PrismaUser>;
+	createStudyProgram(studyProgram: {
+		name: string;
+		externalId: string;
+	}): Promise<StudyProgram>;
+	getStudyProgram(
+		by: { id: string } | { externalId: string },
+	): Promise<StudyProgram>;
 }
 
 export interface PermissionService {
@@ -267,5 +274,25 @@ export class UserService {
 		const offset = now.month >= 7 ? 1 : 0;
 
 		return merge({}, user, { gradeYear: gradeYear + offset, canUpdateYear });
+	}
+
+	/**
+	 * createStudyProgram creates a new study program if it does not exist.
+	 */
+	async createStudyProgram(data: {
+		name: string;
+		externalId: string;
+	}): Promise<StudyProgram> {
+		const studyProgram = newStudyProgram(data);
+		return await this.usersRepository.createStudyProgram(studyProgram);
+	}
+
+	/**
+	 * getStudyProgram returns a study program by id or external id.
+	 */
+	getStudyProgram(
+		by: { id: string } | { externalId: string },
+	): Promise<StudyProgram> {
+		return this.usersRepository.getStudyProgram(by);
 	}
 }
