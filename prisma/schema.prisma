@@ -41,6 +41,17 @@ model User {
   memberships             Member[]
   eventSignUps            EventSignUp[]
   orders                  Order[]
+  studyProgram            StudyProgram? @relation(fields: [studyProgramId], references: [id], onDelete: SetNull)
+  studyProgramId          String?       @db.Uuid
+}
+
+model StudyProgram {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String   @unique
+  externalId String   @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  users      User[]
 }
 
 // Events
@@ -64,11 +75,11 @@ model Event {
   signUpsEndAt   DateTime?
 
   // Versioning for optimistic concurrency control
-  version           Int  @default(0)
+  version           Int             @default(0)
   capacity          Int?
   // Current remaining capacity for the event
   remainingCapacity Int?
-  categories       EventCategory[]
+  categories        EventCategory[]
 
   slots   EventSlot[]
   signUps EventSignUp[]
