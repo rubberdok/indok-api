@@ -20,14 +20,11 @@ describe("GraphQL error handling", () => {
 
 	beforeAll(async () => {
 		mockOrganizationService = mockDeep<OrganizationService>();
-		client = await newGraphQLTestClient(
-			{ port: 4388 },
-			{
-				apolloServerDependencies: {
-					organizationService: mockOrganizationService,
-				},
+		client = await newGraphQLTestClient({
+			apolloServerDependencies: {
+				organizationService: mockOrganizationService,
 			},
-		);
+		});
 	});
 
 	it("should not report bad GraphQL request errors to Sentry", async () => {

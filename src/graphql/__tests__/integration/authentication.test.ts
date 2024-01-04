@@ -19,10 +19,9 @@ describe("Apollo Context Authentication", () => {
 
 	beforeAll(async () => {
 		mockUserService = mockDeep<UserService>();
-		client = await newGraphQLTestClient(
-			{ port: 4389 },
-			{ apolloServerDependencies: { userService: mockUserService } },
-		);
+		client = await newGraphQLTestClient({
+			apolloServerDependencies: { userService: mockUserService },
+		});
 	});
 
 	it("should set ctx.user if a user with the userId in session exists", async () => {

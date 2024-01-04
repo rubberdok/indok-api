@@ -69,6 +69,70 @@ export async function initServer(
 	dependencies: ServerDependencies,
 	opts: Options,
 ): Promise<FastifyInstance> {
+	const app = await createServer(dependencies);
+
+	const { port, host } = opts;
+	/**
+	 * Start the Fastify server
+	 */
+	try {
+		await app.listen({
+			port,
+			host,
+		});
+	} catch (err) {
+		if (err instanceof Error) {
+			// Log the error
+			app.log.fatal(err, "Error starting server");
+			// Capture the error with Sentry and exit the process
+			app.Sentry.captureException(err, {
+				level: "fatal",
+				tags: {
+					kind: "server",
+				},
+			});
+		}
+		process.exit(1);
+	}
+
+	return app;
+}
+
+/**
+ * Create the Fastify server with an Apollo Server instance and register plugins.
+ *
+ * This function is rarely called directly, only in test code and `initServer`.
+ * Roughly speaking, this function performs the following steps:
+ * 1. Set up and inject dependencies
+ *    - PrismaClient (database client)
+ *    - Services and Repositories (business logic, data access, and external services)
+ *
+ * 2. Set up a Fastify server instance
+ *    - Set up Sentry monitoring, which we use to monitor the server for errors and performance issues
+ *    - Set up security headers, which we use to prevent some common attacks
+ *    - Set up CORS, which we use to allow requests from the client
+ *    - Set up cookies, which we use to store the session ID on the client
+ *    - Set up sessions, which we use for authentication so that we can identify the user making the request
+ *    - Set up rate limits, which we use to prevent brute force attacks
+ *
+ * 3. Set up and connect to Redis, which is a key-value store that we use to store session data
+ *
+ * 4. Add some lifecycle hooks to the Fastify server, for instance to close the Redis connection when the server closes
+ *
+ * 5. Set up Apollo Server
+ *    - Set up the Apollo Server instance
+ *    - Set up the Apollo Server context function, which is used to inject dependencies into the Apollo Server context
+ *    - Set up the Apollo Server plugin, which is used to drain the Fastify request and response objects from the Apollo Server context
+ *    - Set up the Apollo Server landing page plugin, which is used to display the Apollo Server landing page
+ *
+ * 6. Set up two health check routes:
+ *    - `/-/health` - returns `200: {"status": "ok"}` if the server is running.
+ *
+ * @returns The Fastify server instance
+ */
+export async function createServer(
+	dependencies: ServerDependencies,
+): Promise<FastifyInstance> {
 	const { apolloServerDependencies, authService, createRedisClient, app } =
 		dependencies;
 
@@ -249,31 +313,6 @@ export async function initServer(
 
 	await app.register(healthCheckPlugin, { prefix: "/-" });
 	await app.register(getAuthPlugin(authService), { prefix: "/auth" });
-
-	const { port, host } = opts;
-
-	/**
-	 * Start the Fastify server
-	 */
-	try {
-		await app.listen({
-			port,
-			host,
-		});
-	} catch (err) {
-		if (err instanceof Error) {
-			// Log the error
-			app.log.fatal(err, "Error starting server");
-			// Capture the error with Sentry and exit the process
-			app.Sentry.captureException(err, {
-				level: "fatal",
-				tags: {
-					kind: "server",
-				},
-			});
-		}
-		process.exit(1);
-	}
 
 	return app;
 }

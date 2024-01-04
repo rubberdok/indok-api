@@ -10,7 +10,7 @@ describe("Organization mutations", () => {
 	let client: GraphQLTestClient;
 
 	beforeAll(async () => {
-		client = await newGraphQLTestClient({ port: 4142 });
+		client = await newGraphQLTestClient();
 	});
 
 	afterAll(async () => {
