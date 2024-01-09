@@ -4,6 +4,7 @@
 		"type": "es6",
 		"resolveFully": true
 	},
+	"sourceMaps": true,
 	"jsc": {
 		"target": "es2022",
 
