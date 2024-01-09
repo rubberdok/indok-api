@@ -16,7 +16,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type { GraphQLFormattedError } from "graphql";
 import { merge } from "lodash-es";
 import type { BookingStatus } from "~/domain/cabins.js";
-import { isUserFacingError } from "~/domain/errors.js";
+import { errorCodes, isUserFacingError } from "~/domain/errors.js";
 import type { Category, Event, SignUpAvailability } from "~/domain/events.js";
 import type { Role } from "~/domain/organizations.js";
 import type { User } from "~/domain/users.js";
@@ -44,7 +44,7 @@ export function getFormatErrorHandler(log?: Partial<FastifyInstance["log"]>) {
 		return merge({}, formattedError, {
 			message: "An unexpected error occurred",
 			extensions: {
-				code: "INTERNAL_SERVER_ERROR",
+				code: errorCodes.ERR_INTERNAL_SERVER_ERROR,
 			},
 		});
 	};
