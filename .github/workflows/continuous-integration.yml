@@ -123,6 +123,21 @@ jobs:
 
       - name: Build
         run: pnpm build:production
+      
+      - name: Sentry Release
+        # if: github.ref == 'refs/heads/main'
+        uses: getsentry/action-release@v1
+        env:
+          SENTRY_ORG: rbberdk
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_PROJECT: node
+        with:
+            version: ${{ github.sha }}
+            sourcemaps: './dist'
+            finalize: false
+            environment: production
+            ignore_empty: true
+            ignore_missing: true
 
   integration-test-matrix:
     name: Integration Test
