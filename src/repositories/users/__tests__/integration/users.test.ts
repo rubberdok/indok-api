@@ -1,7 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import prisma from "~/lib/prisma.js";
 import { UserRepository } from "../../index.js";
-import { CreateUserCase } from "./interfaces.js";
+import type { CreateUserCase } from "./interfaces.js";
 
 let db: PrismaClient;
 let userRepository: UserRepository;

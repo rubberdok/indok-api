@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
-import { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
-import { PrismaClient } from "@prisma/client";
-import {
+import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
+import type { PrismaClient } from "@prisma/client";
+import type {
 	FastifyInstance,
 	InjectOptions,
 	LightMyRequestResponse,
@@ -9,11 +9,11 @@ import {
 import { GraphQLError } from "graphql";
 import { defaultTestDependenciesFactory } from "~/__tests__/dependencies-factory.js";
 import {
-	MockOpenIdClient,
+	type MockOpenIdClient,
 	newMockOpenIdClient,
 } from "~/__tests__/mocks/openIdClient.js";
 import { env } from "~/config.js";
-import { ApolloServerDependencies } from "~/lib/apollo-server.js";
+import type { ApolloServerDependencies } from "~/lib/apollo-server.js";
 import { createServer } from "~/server.js";
 
 /**

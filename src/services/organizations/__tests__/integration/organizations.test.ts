@@ -1,9 +1,9 @@
 import assert from "assert";
 import { faker } from "@faker-js/faker";
-import { Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import {
 	InvalidArgumentError,
-	KnownDomainError,
+	type KnownDomainError,
 	PermissionDeniedError,
 } from "~/domain/errors.js";
 import { Role } from "~/domain/organizations.js";

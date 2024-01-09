@@ -1,5 +1,5 @@
-import { Prisma, User as PrismaUser } from "@prisma/client";
-import { FastifyBaseLogger } from "fastify";
+import type { Prisma, User as PrismaUser } from "@prisma/client";
+import type { FastifyBaseLogger } from "fastify";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
 import { z } from "zod";
@@ -7,7 +7,7 @@ import {
 	InvalidArgumentError,
 	PermissionDeniedError,
 } from "~/domain/errors.js";
-import { User } from "~/domain/users.js";
+import type { User } from "~/domain/users.js";
 import { createUserSchema } from "./validation.js";
 
 export interface UserRepository {

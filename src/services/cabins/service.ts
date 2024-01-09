@@ -1,13 +1,13 @@
 import {
-	Booking,
-	BookingContact as PrismaBookingContact,
-	BookingSemester,
-	Cabin,
+	type Booking,
+	type BookingContact as PrismaBookingContact,
+	type BookingSemester,
+	type Cabin,
 	FeaturePermission,
 	Semester,
 } from "@prisma/client";
 import { DateTime } from "luxon";
-import { MessageSendingResponse } from "postmark/dist/client/models/index.js";
+import type { MessageSendingResponse } from "postmark/dist/client/models/index.js";
 import { z } from "zod";
 import { BookingStatus } from "~/domain/cabins.js";
 import {
@@ -15,7 +15,7 @@ import {
 	NotFoundError,
 	PermissionDeniedError,
 } from "~/domain/errors.js";
-import { EmailContent, TemplateAlias } from "~/lib/postmark.js";
+import { type EmailContent, TemplateAlias } from "~/lib/postmark.js";
 
 export interface BookingData {
 	email: string;

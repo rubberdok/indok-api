@@ -1,10 +1,10 @@
 import {
-	Event,
-	EventSignUp,
-	EventSlot,
+	type Event,
+	type EventSignUp,
+	type EventSlot,
 	ParticipationStatus,
-	PrismaClient,
-	PrismaPromise,
+	type PrismaClient,
+	type PrismaPromise,
 } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 import { merge } from "lodash-es";
@@ -15,8 +15,8 @@ import {
 } from "~/domain/errors.js";
 import {
 	AlreadySignedUpError,
-	Category,
-	Event as DomainEvent,
+	type Category,
+	type Event as DomainEvent,
 	InvalidCapacityError,
 	eventFromDataStorage,
 } from "~/domain/events.js";

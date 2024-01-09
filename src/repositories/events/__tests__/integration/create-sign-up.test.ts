@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
-import { ErrorCode, errorCodes } from "~/domain/errors.js";
+import { type ErrorCode, errorCodes } from "~/domain/errors.js";
 import { AlreadySignedUpError } from "~/domain/events.js";
 import prisma from "~/lib/prisma.js";
 import { EventRepository } from "../../repository.js";
@@ -93,7 +93,7 @@ describe("EventRepository", () => {
 			expect(actual.signUp.active).toBe(true);
 			expect(actual.slot.remainingCapacity).toBe(slot.remainingCapacity - 1);
 			expect(actual.event.signUpDetails?.remainingCapacity).toBe(
-				(event.remainingCapacity ?? NaN) - 1,
+				(event.remainingCapacity ?? Number.NaN) - 1,
 			);
 			expect(actual.slot.version).toBe(slot.version + 1);
 			expect(actual.event.version).toBe(event.version + 1);
@@ -172,7 +172,7 @@ describe("EventRepository", () => {
 			expect(actual.signUp.active).toBe(true);
 			expect(actual.signUp.id).not.toBe(existingSignUp.id);
 			expect(actual.event.signUpDetails?.remainingCapacity).toBe(
-				(event.remainingCapacity ?? NaN) - 1,
+				(event.remainingCapacity ?? Number.NaN) - 1,
 			);
 			expect(actual.event.version).toBe(event.version + 1);
 		});

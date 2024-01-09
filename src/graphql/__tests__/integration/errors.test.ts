@@ -1,14 +1,14 @@
 import { faker } from "@faker-js/faker";
 import { GraphQLError } from "graphql";
-import { DeepMockProxy, mockDeep, mockFn } from "jest-mock-extended";
+import { type DeepMockProxy, mockDeep, mockFn } from "jest-mock-extended";
 import { InternalServerError, errorCodes } from "~/domain/errors.js";
 import {
-	GraphQLTestClient,
+	type GraphQLTestClient,
 	newGraphQLTestClient,
 } from "~/graphql/test-clients/graphql-test-client.js";
 import { graphql } from "~/graphql/test-clients/integration/gql.js";
 import prisma from "~/lib/prisma.js";
-import { OrganizationService } from "~/services/organizations/service.js";
+import type { OrganizationService } from "~/services/organizations/service.js";
 
 describe("GraphQL error handling", () => {
 	let client: GraphQLTestClient;

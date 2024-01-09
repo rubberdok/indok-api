@@ -1,7 +1,7 @@
-import { FastifyPluginAsync, FastifyRequest } from "fastify";
+import type { FastifyPluginAsync, FastifyRequest } from "fastify";
 import { env } from "~/config.js";
 import { InvalidArgumentError, UnauthorizedError } from "~/domain/errors.js";
-import { User } from "~/domain/users.js";
+import type { User } from "~/domain/users.js";
 
 export interface AuthService {
 	authorizationUrl(req: FastifyRequest, redirect?: string | null): string;

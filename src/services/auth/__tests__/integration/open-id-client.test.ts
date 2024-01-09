@@ -1,10 +1,10 @@
 import { faker } from "@faker-js/faker";
-import { FastifyRequest } from "fastify";
+import type { FastifyRequest } from "fastify";
 import { mockDeep } from "jest-mock-extended";
 import { defaultTestDependenciesFactory } from "~/__tests__/dependencies-factory.js";
 import prisma from "~/lib/prisma.js";
 import {
-	MockOpenIdClient,
+	type MockOpenIdClient,
 	newMockOpenIdClient,
 } from "../../../../__tests__/mocks/openIdClient.js";
 import { AuthService } from "../../service.js";

@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
-import { User } from "~/domain/users.js";
+import type { User } from "~/domain/users.js";
 import {
-	GraphQLTestClient,
+	type GraphQLTestClient,
 	newGraphQLTestClient,
 } from "~/graphql/test-clients/graphql-test-client.js";
 import { graphql } from "~/graphql/test-clients/integration/gql.js";

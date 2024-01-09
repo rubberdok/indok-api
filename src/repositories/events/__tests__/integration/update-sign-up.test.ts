@@ -266,7 +266,7 @@ describe("EventRepository", () => {
 				);
 				expect(actual.signUp.version).toBe(signUp.version + 1);
 				expect(actual.event.signUpDetails?.remainingCapacity).toBe(
-					(event.remainingCapacity ?? NaN) + 1,
+					(event.remainingCapacity ?? Number.NaN) + 1,
 				);
 				const updatedSlot = await prisma.eventSlot.findUnique({
 					where: { id: slot.id },

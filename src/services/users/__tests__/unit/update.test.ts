@@ -1,11 +1,11 @@
 import { faker } from "@faker-js/faker";
-import { User } from "@prisma/client";
-import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
+import type { User } from "@prisma/client";
+import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
 import { PermissionDeniedError } from "~/domain/errors.js";
 import {
-	PermissionService,
-	UserRepository,
+	type PermissionService,
+	type UserRepository,
 	UserService,
 } from "../../service.js";
 

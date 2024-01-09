@@ -1,4 +1,4 @@
-import { Member, Organization } from "@prisma/client";
+import type { Member, Organization } from "@prisma/client";
 
 export type MemberMapper = Member;
 

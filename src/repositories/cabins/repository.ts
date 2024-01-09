@@ -1,4 +1,4 @@
-import {
+import type {
 	Booking,
 	BookingContact,
 	BookingSemester,

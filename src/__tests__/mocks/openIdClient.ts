@@ -1,9 +1,9 @@
 import { faker } from "@faker-js/faker";
-import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
+import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { merge } from "lodash-es";
 import type { IdTokenClaims } from "openid-client";
-import { User } from "~/domain/users.js";
-import { OpenIDClient } from "../../services/auth/service.js";
+import type { User } from "~/domain/users.js";
+import type { OpenIDClient } from "../../services/auth/service.js";
 
 type UserResponse = Pick<User, "id" | "email"> & { name: string };
 export type MockOpenIdClient = DeepMockProxy<OpenIDClient> & {

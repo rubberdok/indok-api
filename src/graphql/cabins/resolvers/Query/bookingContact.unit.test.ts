@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { BookingContact } from "@prisma/client";
+import type { BookingContact } from "@prisma/client";
 import { mock } from "jest-mock-extended";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "~/graphql/test-clients/unit/gql.js";

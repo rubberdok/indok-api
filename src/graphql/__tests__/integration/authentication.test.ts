@@ -1,13 +1,13 @@
 import { faker } from "@faker-js/faker";
-import { DeepMockProxy, mock, mockDeep, mockFn } from "jest-mock-extended";
+import { type DeepMockProxy, mock, mockDeep, mockFn } from "jest-mock-extended";
 import { NotFoundError } from "~/domain/errors.js";
-import { User } from "~/domain/users.js";
+import type { User } from "~/domain/users.js";
 import {
-	GraphQLTestClient,
+	type GraphQLTestClient,
 	newGraphQLTestClient,
 } from "~/graphql/test-clients/graphql-test-client.js";
 import { graphql } from "~/graphql/test-clients/integration/gql.js";
-import { UserService } from "~/services/users/service.js";
+import type { UserService } from "~/services/users/service.js";
 
 describe("Apollo Context Authentication", () => {
 	let client: GraphQLTestClient;

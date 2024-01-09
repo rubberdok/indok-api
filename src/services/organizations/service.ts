@@ -1,4 +1,8 @@
-import { FeaturePermission, Member, Organization } from "@prisma/client";
+import {
+	FeaturePermission,
+	type Member,
+	type Organization,
+} from "@prisma/client";
 import { z } from "zod";
 import {
 	InvalidArgumentError,

@@ -3,7 +3,7 @@ import { ParticipationStatus } from "@prisma/client";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
 import prisma from "~/lib/prisma.js";
-import { EventService } from "../../service.js";
+import type { EventService } from "../../service.js";
 import {
 	makeDependencies,
 	makeUserWithOrganizationMembership,
@@ -107,7 +107,7 @@ describe("EventService", () => {
 				where: { id: event.id },
 			});
 			expect(updatedEvent?.remainingCapacity).toBe(
-				(event.signUpDetails?.remainingCapacity ?? NaN) - 1,
+				(event.signUpDetails?.remainingCapacity ?? Number.NaN) - 1,
 			);
 		});
 	});

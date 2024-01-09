@@ -1,5 +1,5 @@
-import { FastifyHelmetOptions } from "@fastify/helmet/types";
-import { env } from "~/config.js";
+import type { FastifyHelmetOptions } from "@fastify/helmet/types";
+import type { env } from "~/config.js";
 
 export const helmetOptionsByEnv: Record<
 	typeof env.NODE_ENV,

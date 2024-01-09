@@ -1,4 +1,4 @@
-import { Listing, PrismaClient } from "@prisma/client";
+import type { Listing, PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 import { NotFoundError } from "~/domain/errors.js";
 

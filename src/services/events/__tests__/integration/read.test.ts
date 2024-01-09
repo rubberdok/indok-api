@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 import dayjs from "dayjs";
 import { NotFoundError } from "~/domain/errors.js";
 import prisma from "~/lib/prisma.js";
-import { EventService } from "../../service.js";
+import type { EventService } from "../../service.js";
 import { makeDependencies } from "./dependencies-factory.js";
 
 let eventService: EventService;

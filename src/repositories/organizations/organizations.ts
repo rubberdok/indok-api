@@ -1,4 +1,8 @@
-import { FeaturePermission, Organization, PrismaClient } from "@prisma/client";
+import type {
+	FeaturePermission,
+	Organization,
+	PrismaClient,
+} from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 import {
 	InternalServerError,
