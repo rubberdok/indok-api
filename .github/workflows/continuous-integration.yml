@@ -136,7 +136,6 @@ jobs:
             sourcemaps: './dist'
             finalize: false
             environment: production
-            url_prefix: "/usr/src/app/dist/"
             ignore_empty: true
             ignore_missing: true
 
