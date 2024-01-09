@@ -10,7 +10,7 @@
 	"type": "module",
 	"scripts": {
 		"setup": "run-p generate",
-		"build:production": "run-s setup swc",
+		"build:production": "run-s clean-dist setup swc",
 		"build": "pnpm run swc",
 		"studio": "prisma studio",
 		"db:migrate:dev": "dotenv -e .env.development -- prisma migrate dev",
@@ -31,14 +31,15 @@
 		"biome:ci": "biome ci src",
 		"lint:ci": "run-s setup biome:ci",
 		"setup-integration-test": "run-s docker:up && wait-on tcp:5433 -t 20000",
-		"swc": "swc src -d dist",
+		"swc": "swc src -d dist -s true --source-root src",
 		"test:integration:ci": "run-s setup 'integration-test {@}' --",
 		"test:integration": "pnpm setup-integration-test && pnpm integration-test",
 		"test": "dotenv -e .env.test -- node --experimental-vm-modules --no-warnings=ExperimentalWarning ./node_modules/jest/bin/jest.js",
 		"test:ci": "pnpm run setup && dotenv -e .env.test --  node --experimental-vm-modules --no-warnings=ExperimentalWarning ./node_modules/jest/bin/jest.js",
 		"tsc": "tsc",
 		"tsc:ci": "run-s setup tsc",
-		"check": "run-s setup tsc lint test"
+		"check": "run-s setup tsc lint test",
+		"clean-dist": "rm -rf dist"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.5.0",
