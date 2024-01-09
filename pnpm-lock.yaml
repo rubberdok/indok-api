@@ -38,6 +38,9 @@ dependencies:
   '@sentry/node':
     specifier: ^7.92.0
     version: 7.92.0
+  '@sentry/tracing':
+    specifier: 7.92.0
+    version: 7.92.0
   body-parser:
     specifier: ^1.20.2
     version: 1.20.2
@@ -1950,7 +1953,7 @@ packages:
     engines: {node: '>=18'}
     dependencies:
       '@sentry/node': 7.92.0
-      '@sentry/tracing': 7.77.0
+      '@sentry/tracing': 7.92.0
       '@sentry/utils': 7.89.0
       cookie: 0.6.0
       fastify-plugin: 4.5.1
@@ -2539,15 +2542,6 @@ packages:
     resolution: {integrity: sha512-l3YHBLAol6d/IKnB9LhpD0cEZWAoe3eFKUyTYWmFmCO2Q/WOckxLQAUyMZWwZV2M/m3+4vgRoaolFqaII82/TA==}
     dev: true
 
-  /@sentry-internal/tracing@7.77.0:
-    resolution: {integrity: sha512-8HRF1rdqWwtINqGEdx8Iqs9UOP/n8E0vXUu3Nmbqj4p5sQPA7vvCfq+4Y4rTqZFc7sNdFpDsRION5iQEh8zfZw==}
-    engines: {node: '>=8'}
-    dependencies:
-      '@sentry/core': 7.77.0
-      '@sentry/types': 7.77.0
-      '@sentry/utils': 7.77.0
-    dev: false
-
   /@sentry-internal/tracing@7.92.0:
     resolution: {integrity: sha512-ur55vPcUUUWFUX4eVLNP71ohswK7ZZpleNZw9Y1GfLqyI+0ILQUwjtzqItJrdClvVsdRZJMRmDV40Hp9Lbb9mA==}
     engines: {node: '>=8'}
@@ -2555,14 +2549,6 @@ packages:
       '@sentry/core': 7.92.0
       '@sentry/types': 7.92.0
       '@sentry/utils': 7.92.0
-    dev: false
-
-  /@sentry/core@7.77.0:
-    resolution: {integrity: sha512-Tj8oTYFZ/ZD+xW8IGIsU6gcFXD/gfE+FUxUaeSosd9KHwBQNOLhZSsYo/tTVf/rnQI/dQnsd4onPZLiL+27aTg==}
-    engines: {node: '>=8'}
-    dependencies:
-      '@sentry/types': 7.77.0
-      '@sentry/utils': 7.77.0
     dev: false
 
   /@sentry/core@7.92.0:
@@ -2586,16 +2572,11 @@ packages:
       - supports-color
     dev: false
 
-  /@sentry/tracing@7.77.0:
-    resolution: {integrity: sha512-zr6eSCW3NJ124uj4Fy/6hh77cziy43dpYE1WpgvO/yhl1+kdrY2XVJ0bXGqwHU0KBm/eSgHD7yecUxmZUXiabA==}
+  /@sentry/tracing@7.92.0:
+    resolution: {integrity: sha512-1+TFFPVEdax4dNi68gin6MENiyGe9mOuNXfjulrP5eCzUEByus5HAxeDI/LLQ1hArfn048AzwSwKUsS2fO5sbg==}
     engines: {node: '>=8'}
     dependencies:
-      '@sentry-internal/tracing': 7.77.0
-    dev: false
-
-  /@sentry/types@7.77.0:
-    resolution: {integrity: sha512-nfb00XRJVi0QpDHg+JkqrmEBHsqBnxJu191Ded+Cs1OJ5oPXEW6F59LVcBScGvMqe+WEk1a73eH8XezwfgrTsA==}
-    engines: {node: '>=8'}
+      '@sentry-internal/tracing': 7.92.0
     dev: false
 
   /@sentry/types@7.89.0:
@@ -2606,13 +2587,6 @@ packages:
   /@sentry/types@7.92.0:
     resolution: {integrity: sha512-APmSOuZuoRGpbPpPeYIbMSplPjiWNLZRQa73QiXuTflW4Tu/ItDlU8hOa2+A6JKVkJCuD2EN6yUrxDGSMyNXeg==}
     engines: {node: '>=8'}
-    dev: false
-
-  /@sentry/utils@7.77.0:
-    resolution: {integrity: sha512-NmM2kDOqVchrey3N5WSzdQoCsyDkQkiRxExPaNI2oKQ/jMWHs9yt0tSy7otPBcXs0AP59ihl75Bvm1tDRcsp5g==}
-    engines: {node: '>=8'}
-    dependencies:
-      '@sentry/types': 7.77.0
     dev: false
 
   /@sentry/utils@7.89.0:
