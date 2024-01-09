@@ -76,8 +76,10 @@ export const fastifyApolloSentryPlugin = (
 									level: "debug",
 								});
 							}
-							ctx.contextValue.req.log.error(err);
-							app.Sentry.captureException(err);
+							if (originalError instanceof Error) {
+								ctx.contextValue.req.log.error(originalError);
+								app.Sentry.captureException(originalError);
+							}
 						});
 					}
 				},
