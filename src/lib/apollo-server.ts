@@ -13,7 +13,7 @@ import type {
 	Semester,
 } from "@prisma/client";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import type { GraphQLFormattedError } from "graphql";
+import { GraphQLError, type GraphQLFormattedError } from "graphql";
 import { merge } from "lodash-es";
 import type { BookingStatus } from "~/domain/cabins.js";
 import { errorCodes, isUserFacingError } from "~/domain/errors.js";
@@ -28,6 +28,17 @@ export function getFormatErrorHandler(log?: Partial<FastifyInstance["log"]>) {
 	): GraphQLFormattedError => {
 		const originalError = unwrapResolverError(error);
 
+		/**
+		 * GraphQLErrors include errors such as invalid queries, missing required arguments, etc.
+		 * and should be returned as-is.
+		 */
+		if (originalError instanceof GraphQLError) {
+			return formattedError;
+		}
+
+		/**
+		 * If the error is a user-facing error, we can return it as-is.
+		 */
 		if (isUserFacingError(originalError)) {
 			return merge({}, formattedError, {
 				message: originalError.message,
@@ -41,6 +52,9 @@ export function getFormatErrorHandler(log?: Partial<FastifyInstance["log"]>) {
 			log?.error?.(originalError);
 		}
 
+		/**
+		 * If the error is not a user-facing error, we should mask it and return a generic error message.
+		 */
 		return merge({}, formattedError, {
 			message: "An unexpected error occurred",
 			extensions: {
