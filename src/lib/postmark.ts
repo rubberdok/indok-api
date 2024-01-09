@@ -1,4 +1,4 @@
-import { ServerClient, TemplatedMessage } from "postmark";
+import { ServerClient, type TemplatedMessage } from "postmark";
 import { env } from "~/config.js";
 
 export default new ServerClient(env.POSTMARK_API_TOKEN);

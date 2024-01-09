@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { FeaturePermission, Organization } from "@prisma/client";
+import { FeaturePermission, type Organization } from "@prisma/client";
 import { InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
 import { Role } from "~/domain/organizations.js";
 import prisma from "~/lib/prisma.js";

@@ -1,9 +1,9 @@
 import { faker } from "@faker-js/faker";
-import { Booking } from "@prisma/client";
+import type { Booking } from "@prisma/client";
 import { mock } from "jest-mock-extended";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
-import { NewBookingMutationVariables } from "~/graphql/test-clients/unit/graphql.js";
+import type { NewBookingMutationVariables } from "~/graphql/test-clients/unit/graphql.js";
 
 describe("Cabin mutations", () => {
 	describe("newBooking", () => {

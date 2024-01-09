@@ -1,20 +1,20 @@
 import { faker } from "@faker-js/faker";
-import { EventSlot } from "@prisma/client";
+import type { EventSlot } from "@prisma/client";
 import { mock, mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
 import {
 	InvalidArgumentError,
-	KnownDomainError,
+	type KnownDomainError,
 	PermissionDeniedError,
 } from "~/domain/errors.js";
-import { Event } from "~/domain/events.js";
+import type { Event } from "~/domain/events.js";
 import { Role } from "~/domain/organizations.js";
-import { User } from "~/domain/users.js";
+import type { User } from "~/domain/users.js";
 import {
-	EventRepository,
+	type EventRepository,
 	EventService,
-	PermissionService,
-	UserService,
+	type PermissionService,
+	type UserService,
 } from "../../service.js";
 
 function setup() {

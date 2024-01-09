@@ -1,9 +1,9 @@
-import { ApolloServerPlugin } from "@apollo/server";
+import type { ApolloServerPlugin } from "@apollo/server";
 import { unwrapResolverError } from "@apollo/server/errors";
-import { FastifyInstance } from "fastify";
+import type { FastifyInstance } from "fastify";
 import { GraphQLError } from "graphql";
 import { isErrorWithCode, isUserFacingError } from "~/domain/errors.js";
-import { ApolloContext } from "./apollo-server.js";
+import type { ApolloContext } from "./apollo-server.js";
 
 /**
  * Plugin for Apollo Server that reports errors to Sentry.

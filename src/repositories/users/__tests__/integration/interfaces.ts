@@ -1,4 +1,4 @@
-import { Prisma, User } from "@prisma/client";
+import type { Prisma, User } from "@prisma/client";
 
 export interface CreateUserCase {
 	input: Prisma.UserCreateInput;

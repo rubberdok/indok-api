@@ -1,4 +1,4 @@
-import { FeaturePermission, Organization, User } from "@prisma/client";
+import type { FeaturePermission, Organization, User } from "@prisma/client";
 import { Role } from "~/domain/organizations.js";
 
 export interface MemberRepository {

@@ -1,4 +1,4 @@
-import { Event as DataStorageEvent } from "@prisma/client";
+import type { Event as DataStorageEvent } from "@prisma/client";
 import { merge } from "lodash-es";
 import { z } from "zod";
 import { InternalServerError, KnownDomainError, errorCodes } from "./errors.js";

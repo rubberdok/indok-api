@@ -1,18 +1,18 @@
 import { faker } from "@faker-js/faker";
 import type { Member, Organization } from "@prisma/client";
-import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
+import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import {
 	InvalidArgumentError,
-	KnownDomainError,
+	type KnownDomainError,
 	PermissionDeniedError,
 } from "~/domain/errors.js";
 import { Role } from "~/domain/organizations.js";
-import { User } from "~/domain/users.js";
-import { UserRepository } from "~/repositories/users/index.js";
+import type { User } from "~/domain/users.js";
+import type { UserRepository } from "~/repositories/users/index.js";
 import { PermissionService } from "~/services/permissions/service.js";
 import {
-	MemberRepository,
-	OrganizationRepository,
+	type MemberRepository,
+	type OrganizationRepository,
 	OrganizationService,
 } from "../../service.js";
 import {

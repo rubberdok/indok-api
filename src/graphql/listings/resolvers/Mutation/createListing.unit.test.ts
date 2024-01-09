@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { Listing } from "@prisma/client";
+import type { Listing } from "@prisma/client";
 import { mock } from "jest-mock-extended";
 import { errorCodes } from "~/domain/errors.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";

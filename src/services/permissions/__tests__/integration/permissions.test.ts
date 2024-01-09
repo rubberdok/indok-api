@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { FeaturePermission, Prisma } from "@prisma/client";
+import { FeaturePermission, type Prisma } from "@prisma/client";
 import { Role } from "~/domain/organizations.js";
 import prisma from "~/lib/prisma.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";

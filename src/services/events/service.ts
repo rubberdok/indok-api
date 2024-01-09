@@ -1,5 +1,9 @@
-import { EventSignUp, EventSlot, ParticipationStatus } from "@prisma/client";
-import { FastifyBaseLogger } from "fastify";
+import {
+	type EventSignUp,
+	type EventSlot,
+	ParticipationStatus,
+} from "@prisma/client";
+import type { FastifyBaseLogger } from "fastify";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
 import { z } from "zod";
@@ -10,14 +14,14 @@ import {
 	PermissionDeniedError,
 } from "~/domain/errors.js";
 import {
-	Category,
-	Event as DomainEvent,
-	EventWithSignUps,
+	type Category,
+	type Event as DomainEvent,
+	type EventWithSignUps,
 	isEventWithSignUps,
 	signUpAvailability,
 } from "~/domain/events.js";
 import { Role } from "~/domain/organizations.js";
-import { User } from "~/domain/users.js";
+import type { User } from "~/domain/users.js";
 
 interface CreateConfirmedSignUpData {
 	userId: string;

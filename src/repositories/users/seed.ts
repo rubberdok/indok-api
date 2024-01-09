@@ -1,5 +1,9 @@
 import { faker } from "@faker-js/faker";
-import { FeaturePermission, Prisma, PrismaClient } from "@prisma/client";
+import {
+	FeaturePermission,
+	type Prisma,
+	type PrismaClient,
+} from "@prisma/client";
 import dayjs from "dayjs";
 import { DateTime } from "luxon";
 

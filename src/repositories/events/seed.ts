@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { Prisma, PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 import { startCase, toLower } from "lodash-es";
 import { DateTime } from "luxon";
 

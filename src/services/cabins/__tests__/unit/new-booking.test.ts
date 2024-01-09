@@ -1,16 +1,16 @@
 import { faker } from "@faker-js/faker";
-import { Booking, BookingSemester, Semester } from "@prisma/client";
-import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
+import { type Booking, type BookingSemester, Semester } from "@prisma/client";
+import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
-import { MessageSendingResponse } from "postmark/dist/client/models/index.js";
+import type { MessageSendingResponse } from "postmark/dist/client/models/index.js";
 import { InvalidArgumentError } from "~/domain/errors.js";
 import {
-	BookingData,
-	CabinRepository,
+	type BookingData,
+	type CabinRepository,
 	CabinService,
-	IMailService,
-	PermissionService,
+	type IMailService,
+	type PermissionService,
 } from "../../service.js";
 
 describe("CabinService", () => {

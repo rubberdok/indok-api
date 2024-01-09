@@ -1,5 +1,5 @@
 import { unwrapResolverError } from "@apollo/server/errors";
-import {
+import type {
 	Booking,
 	BookingContact,
 	BookingSemester,
@@ -13,15 +13,15 @@ import {
 	Semester,
 } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
-import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { GraphQLFormattedError } from "graphql";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import type { GraphQLFormattedError } from "graphql";
 import { merge } from "lodash-es";
 import { ZodError } from "zod";
-import { BookingStatus } from "~/domain/cabins.js";
+import type { BookingStatus } from "~/domain/cabins.js";
 import { KnownDomainError, errorCodes } from "~/domain/errors.js";
-import { Category, Event, SignUpAvailability } from "~/domain/events.js";
-import { Role } from "~/domain/organizations.js";
-import { User } from "~/domain/users.js";
+import type { Category, Event, SignUpAvailability } from "~/domain/events.js";
+import type { Role } from "~/domain/organizations.js";
+import type { User } from "~/domain/users.js";
 
 export function getFormatErrorHandler(log?: Partial<FastifyInstance["log"]>) {
 	const formatError = (

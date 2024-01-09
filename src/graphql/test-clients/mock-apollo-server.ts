@@ -1,17 +1,20 @@
 import assert from "assert";
 import { ApolloServer } from "@apollo/server";
 import { faker } from "@faker-js/faker";
-import { FastifySessionObject } from "@fastify/session";
-import {
+import type { FastifySessionObject } from "@fastify/session";
+import type {
 	ResultOf,
 	TypedDocumentNode,
 	VariablesOf,
 } from "@graphql-typed-document-node/core";
-import { FastifyBaseLogger, FastifyReply, FastifyRequest } from "fastify";
-import { GraphQLFormattedError } from "graphql";
+import type { FastifyBaseLogger, FastifyReply, FastifyRequest } from "fastify";
+import type { GraphQLFormattedError } from "graphql";
 import { mock, mockDeep } from "jest-mock-extended";
-import { User } from "~/domain/users.js";
-import { ApolloContext, getFormatErrorHandler } from "~/lib/apollo-server.js";
+import type { User } from "~/domain/users.js";
+import {
+	type ApolloContext,
+	getFormatErrorHandler,
+} from "~/lib/apollo-server.js";
 import { resolvers } from "../resolvers.generated.js";
 import { typeDefs } from "../type-defs.generated.js";
 

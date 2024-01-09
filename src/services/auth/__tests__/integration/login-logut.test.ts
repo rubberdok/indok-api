@@ -1,12 +1,12 @@
 import { faker } from "@faker-js/faker";
 import { jest } from "@jest/globals";
-import { FastifyRequest } from "fastify";
+import type { FastifyRequest } from "fastify";
 import { mock, mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
 import { defaultTestDependenciesFactory } from "~/__tests__/dependencies-factory.js";
 import { AuthenticationError } from "~/domain/errors.js";
-import { User } from "~/domain/users.js";
-import { AuthService, UserService } from "../../service.js";
+import type { User } from "~/domain/users.js";
+import { AuthService, type UserService } from "../../service.js";
 
 describe("AuthService", () => {
 	let userService: UserService;

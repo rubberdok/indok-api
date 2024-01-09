@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { Organization, User } from "@prisma/client";
+import type { Organization, User } from "@prisma/client";
 import prisma from "~/lib/prisma.js";
 import { EventRepository } from "~/repositories/events/repository.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";

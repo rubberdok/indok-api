@@ -1,7 +1,7 @@
 import assert from "assert";
-import { FastifyInstance, InjectOptions } from "fastify";
+import type { FastifyInstance, InjectOptions } from "fastify";
 import { defaultTestDependenciesFactory } from "~/__tests__/dependencies-factory.js";
-import { MockOpenIdClient } from "~/__tests__/mocks/openIdClient.js";
+import type { MockOpenIdClient } from "~/__tests__/mocks/openIdClient.js";
 import { env } from "~/config.js";
 import { errorCodes } from "~/domain/errors.js";
 import { createServer } from "~/server.js";

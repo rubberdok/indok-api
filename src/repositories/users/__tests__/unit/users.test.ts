@@ -1,5 +1,5 @@
-import { Prisma, PrismaClient, User } from "@prisma/client";
-import { DeepMockProxy, mockDeep } from "jest-mock-extended";
+import type { Prisma, PrismaClient, User } from "@prisma/client";
+import { type DeepMockProxy, mockDeep } from "jest-mock-extended";
 import { UserRepository } from "../../index.js";
 
 const dummyUser = mockDeep<User>();

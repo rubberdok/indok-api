@@ -1,9 +1,9 @@
-import { FastifyBaseLogger, FastifyRequest } from "fastify";
+import type { FastifyBaseLogger, FastifyRequest } from "fastify";
 import type { TokenSet, UserinfoResponse } from "openid-client";
 import { generators } from "openid-client";
 import { env } from "~/config.js";
 import { AuthenticationError, BadRequestError } from "~/domain/errors.js";
-import { User } from "~/domain/users.js";
+import type { User } from "~/domain/users.js";
 
 export interface OpenIDClient {
 	authorizationUrl(options: {

@@ -1,4 +1,4 @@
-import { FastifyInstance } from "fastify";
+import type { FastifyInstance } from "fastify";
 import { Redis } from "ioredis";
 import { env } from "~/config.js";
 

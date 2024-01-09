@@ -1,9 +1,9 @@
 import { faker } from "@faker-js/faker";
-import { Organization, ParticipationStatus, User } from "@prisma/client";
+import type { Organization, ParticipationStatus, User } from "@prisma/client";
 import { DateTime } from "luxon";
-import { SignUpAvailability } from "~/domain/events.js";
+import type { SignUpAvailability } from "~/domain/events.js";
 import prisma from "~/lib/prisma.js";
-import { EventService } from "../../service.js";
+import type { EventService } from "../../service.js";
 import { makeDependencies } from "./dependencies-factory.js";
 
 describe("EventService", () => {

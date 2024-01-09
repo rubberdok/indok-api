@@ -1,5 +1,5 @@
-import { FastifyServerOptions } from "fastify";
-import { PinoLoggerOptions } from "fastify/types/logger.js";
+import type { FastifyServerOptions } from "fastify";
+import type { PinoLoggerOptions } from "fastify/types/logger.js";
 import { env } from "~/config.js";
 
 /**

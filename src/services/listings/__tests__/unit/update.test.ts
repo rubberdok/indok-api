@@ -1,15 +1,15 @@
 import { faker } from "@faker-js/faker";
-import { Listing } from "@prisma/client";
-import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
+import type { Listing } from "@prisma/client";
+import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import {
 	InvalidArgumentError,
 	PermissionDeniedError,
 } from "~/domain/errors.js";
 import { Role } from "~/domain/organizations.js";
 import {
-	ListingRepository,
+	type ListingRepository,
 	ListingService,
-	PermissionService,
+	type PermissionService,
 } from "../../service.js";
 
 describe("ListingService", () => {

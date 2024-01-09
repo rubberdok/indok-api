@@ -2,7 +2,7 @@ import { ApolloServer } from "@apollo/server";
 import { ApolloServerPluginLandingPageDisabled } from "@apollo/server/plugin/disabled";
 import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
 import fastifyApollo, {
-	ApolloFastifyContextFunction,
+	type ApolloFastifyContextFunction,
 	fastifyApolloDrainPlugin,
 } from "@as-integrations/fastify";
 import fastifyCookie from "@fastify/cookie";
@@ -13,14 +13,17 @@ import fastifySession from "@fastify/session";
 import fastifySentry from "@immobiliarelabs/fastify-sentry";
 import * as Sentry from "@sentry/node";
 import RedisStore from "connect-redis";
-import { FastifyInstance } from "fastify";
+import type { FastifyInstance } from "fastify";
 import { env } from "./config.js";
 import { NotFoundError, isUserFacingError } from "./domain/errors.js";
-import { User } from "./domain/users.js";
+import type { User } from "./domain/users.js";
 import { resolvers } from "./graphql/resolvers.generated.js";
 import { typeDefs } from "./graphql/type-defs.generated.js";
-import { ApolloContext, getFormatErrorHandler } from "./lib/apollo-server.js";
-import { ServerDependencies } from "./lib/fastify/dependencies.js";
+import {
+	type ApolloContext,
+	getFormatErrorHandler,
+} from "./lib/apollo-server.js";
+import type { ServerDependencies } from "./lib/fastify/dependencies.js";
 import { healthCheckPlugin } from "./lib/fastify/health-checks.js";
 import { helmetOptionsByEnv } from "./lib/fastify/helmet.js";
 import { fastifyApolloSentryPlugin } from "./lib/sentry.js";

@@ -1,9 +1,13 @@
 import { faker } from "@faker-js/faker";
-import { Organization, ParticipationStatus, User } from "@prisma/client";
+import {
+	type Organization,
+	ParticipationStatus,
+	type User,
+} from "@prisma/client";
 import { DateTime } from "luxon";
 import { InvalidArgumentError } from "~/domain/errors.js";
 import prisma from "~/lib/prisma.js";
-import { EventService } from "../../service.js";
+import type { EventService } from "../../service.js";
 import { makeDependencies } from "./dependencies-factory.js";
 
 describe("Event Sign Up", () => {

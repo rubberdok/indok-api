@@ -1,13 +1,13 @@
 import { faker } from "@faker-js/faker";
 import { FeaturePermission, Semester } from "@prisma/client";
-import { DeepMockProxy, mockDeep } from "jest-mock-extended";
+import { type DeepMockProxy, mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
 import { NotFoundError, PermissionDeniedError } from "~/domain/errors.js";
 import {
-	CabinRepository,
+	type CabinRepository,
 	CabinService,
-	IMailService,
-	PermissionService,
+	type IMailService,
+	type PermissionService,
 } from "../../service.js";
 
 describe("CabinService", () => {

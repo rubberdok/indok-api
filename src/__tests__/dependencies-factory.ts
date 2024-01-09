@@ -1,11 +1,11 @@
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import {
-	MockOpenIdClient,
+	type MockOpenIdClient,
 	newMockOpenIdClient,
 } from "~/__tests__/mocks/openIdClient.js";
-import { ApolloServerDependencies } from "~/lib/apollo-server.js";
+import type { ApolloServerDependencies } from "~/lib/apollo-server.js";
 import {
-	ServerDependencies,
+	type ServerDependencies,
 	dependenciesFactory,
 } from "~/lib/fastify/dependencies.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";

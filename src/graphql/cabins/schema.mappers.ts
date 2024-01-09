@@ -7,4 +7,4 @@ export {
 // biome-ignore lint/complexity/noBannedTypes: this is intentionally empty as we want the field resolvers to return the two semesters
 type BookingSemestersResponseMapper = {};
 
-export { BookingSemestersResponseMapper };
+export type { BookingSemestersResponseMapper };

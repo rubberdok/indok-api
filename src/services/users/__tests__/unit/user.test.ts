@@ -1,10 +1,10 @@
 import { jest } from "@jest/globals";
-import { Prisma, User } from "@prisma/client";
+import type { Prisma, User } from "@prisma/client";
 import dayjs from "dayjs";
-import { DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
+import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import {
-	PermissionService,
-	UserRepository,
+	type PermissionService,
+	type UserRepository,
 	UserService,
 } from "../../service.js";
 

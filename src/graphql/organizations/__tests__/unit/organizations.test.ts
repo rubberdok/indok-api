@@ -1,13 +1,13 @@
 import assert from "assert";
 import { faker } from "@faker-js/faker";
-import { ResultOf } from "@graphql-typed-document-node/core";
-import { Organization } from "@prisma/client";
+import type { ResultOf } from "@graphql-typed-document-node/core";
+import type { Organization } from "@prisma/client";
 import { mock } from "jest-mock-extended";
 import { errorCodes } from "~/domain/errors.js";
 import { Role } from "~/domain/organizations.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
-import {
+import type {
 	AddMember2Document,
 	RemoveMember2Document,
 } from "~/graphql/test-clients/unit/graphql.js";
