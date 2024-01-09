@@ -12,13 +12,11 @@ import type {
 	Prisma,
 	Semester,
 } from "@prisma/client";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type { GraphQLFormattedError } from "graphql";
 import { merge } from "lodash-es";
-import { ZodError } from "zod";
 import type { BookingStatus } from "~/domain/cabins.js";
-import { KnownDomainError, errorCodes } from "~/domain/errors.js";
+import { isUserFacingError } from "~/domain/errors.js";
 import type { Category, Event, SignUpAvailability } from "~/domain/events.js";
 import type { Role } from "~/domain/organizations.js";
 import type { User } from "~/domain/users.js";
@@ -28,38 +26,27 @@ export function getFormatErrorHandler(log?: Partial<FastifyInstance["log"]>) {
 		formattedError: GraphQLFormattedError,
 		error: unknown,
 	): GraphQLFormattedError => {
-		if (error instanceof ZodError) {
-			return {
-				...formattedError,
-				message: error.message,
-				extensions: {
-					code: errorCodes.ERR_BAD_USER_INPUT,
-				},
-			};
-		}
-
 		const originalError = unwrapResolverError(error);
 
-		if (originalError instanceof KnownDomainError) {
+		if (isUserFacingError(originalError)) {
 			return merge({}, formattedError, {
-				message: originalError.description,
+				message: originalError.message,
 				extensions: {
 					code: originalError.code,
 				},
 			});
 		}
 
-		if (originalError instanceof PrismaClientKnownRequestError) {
+		if (originalError instanceof Error) {
 			log?.error?.(originalError);
-			return merge({}, formattedError, {
-				message: originalError.message,
-				extensions: {
-					code: errorCodes.ERR_INTERNAL_SERVER_ERROR,
-				},
-			});
 		}
 
-		return formattedError;
+		return merge({}, formattedError, {
+			message: "An unexpected error occurred",
+			extensions: {
+				code: "INTERNAL_SERVER_ERROR",
+			},
+		});
 	};
 	return formatError;
 }
