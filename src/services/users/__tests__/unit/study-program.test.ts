@@ -1,9 +1,9 @@
 import { faker } from "@faker-js/faker";
-import { DeepMockProxy, mockDeep } from "jest-mock-extended";
+import { type DeepMockProxy, mockDeep } from "jest-mock-extended";
 import { InvalidArgumentError } from "~/domain/errors.js";
 import {
-	PermissionService,
-	UserRepository,
+	type PermissionService,
+	type UserRepository,
 	UserService,
 } from "../../service.js";
 

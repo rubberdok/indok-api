@@ -1,7 +1,7 @@
 import type { Prisma, PrismaClient, User } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 import { InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
-import { StudyProgram } from "~/domain/users.js";
+import type { StudyProgram } from "~/domain/users.js";
 import { prismaKnownErrorCodes } from "~/lib/prisma.js";
 
 export class UserRepository {
