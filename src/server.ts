@@ -153,12 +153,9 @@ export async function createServer(
 			new Sentry.Integrations.Prisma({ client: dependencies.prisma }),
 			new Sentry.Integrations.GraphQL(),
 			new Sentry.Integrations.Apollo(),
+			new Sentry.Integrations.Anr({ captureStackTrace: true }),
 		],
 	});
-
-	// Enable Application Not Responding detection
-	// https://docs.sentry.io/platforms/node/configuration/application-not-responding/
-	await app.Sentry.enableAnrDetection({ captureStackTrace: true });
 
 	// Security headers
 	app.register(fastifyHelmet, helmetOptionsByEnv[env.NODE_ENV]);

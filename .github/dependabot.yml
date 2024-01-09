@@ -21,10 +21,10 @@ updates:
     open-pull-requests-limit: 10
 
     groups:
-      # @swc/core and @swc/core-linux-x64-musl versions should be kept in sync
-      swc:
+      # All sentry packages should be updated together
+      sentry:
         patterns:
-          - "@swc/core*"
+          - "@sentry/*"
       prisma:
         patterns:
           - "@prisma/client*"
