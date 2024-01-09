@@ -7,7 +7,11 @@ import {
 	InvalidArgumentError,
 	PermissionDeniedError,
 } from "~/domain/errors.js";
-import type { StudyProgram, User } from "~/domain/users.js";
+import {
+	type StudyProgram,
+	type User,
+	newStudyProgram,
+} from "~/domain/users.js";
 import { createUserSchema } from "./validation.js";
 
 export interface UserRepository {
@@ -22,7 +26,7 @@ export interface UserRepository {
 	}): Promise<StudyProgram>;
 	getStudyProgram(
 		by: { id: string } | { externalId: string },
-	): Promise<StudyProgram>;
+	): Promise<StudyProgram | null>;
 }
 
 export interface PermissionService {
@@ -292,7 +296,7 @@ export class UserService {
 	 */
 	getStudyProgram(
 		by: { id: string } | { externalId: string },
-	): Promise<StudyProgram> {
+	): Promise<StudyProgram | null> {
 		return this.usersRepository.getStudyProgram(by);
 	}
 }
