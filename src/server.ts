@@ -280,6 +280,10 @@ export async function createServer(
 		req,
 		res,
 	) => {
+		const transaction = app.Sentry.startTransaction({
+			op: "GraphQL",
+			name: "GraphQL",
+		});
 		const { userId, authenticated } = req.session;
 		let user: User | null = null;
 		if (userId !== undefined && authenticated) {
@@ -303,6 +307,7 @@ export async function createServer(
 			user,
 			req,
 			res,
+			transaction,
 		};
 	};
 

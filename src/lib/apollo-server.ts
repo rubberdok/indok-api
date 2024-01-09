@@ -12,6 +12,7 @@ import type {
 	Prisma,
 	Semester,
 } from "@prisma/client";
+import type { Transaction } from "@sentry/node";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { GraphQLError, type GraphQLFormattedError } from "graphql";
 import { merge } from "lodash-es";
@@ -69,6 +70,7 @@ export interface ApolloContext extends ApolloServerDependencies {
 	res: FastifyReply;
 	req: FastifyRequest;
 	user: User | null;
+	transaction?: Transaction;
 }
 
 declare module "graphql" {

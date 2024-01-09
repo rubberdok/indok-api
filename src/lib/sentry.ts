@@ -26,8 +26,16 @@ export const fastifyApolloSentryPlugin = (
 	app: FastifyInstance,
 ): ApolloServerPlugin<ApolloContext> => {
 	return {
-		async requestDidStart() {
+		async requestDidStart({ request, contextValue }) {
+			if (request.operationName) {
+				contextValue.transaction?.setName(request.operationName);
+			}
+
 			return {
+				// biome-ignore lint/nursery/useAwait: We need to use async/await API here.
+				async willSendResponse({ contextValue }) {
+					contextValue.transaction?.finish();
+				},
 				async didEncounterErrors(ctx) {
 					// If we couldn't parse the operation, don't
 					// do anything here
