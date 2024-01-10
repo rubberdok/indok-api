@@ -1,6 +1,5 @@
 import { faker } from "@faker-js/faker";
 import type { EventSlot } from "@prisma/client";
-import type { FastifyBaseLogger } from "fastify";
 import { mock, mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
 import {
@@ -11,6 +10,7 @@ import {
 import type { Event } from "~/domain/events.js";
 import { Role } from "~/domain/organizations.js";
 import type { User } from "~/domain/users.js";
+import { makeMockContext } from "~/services/context.js";
 import {
 	type EventRepository,
 	EventService,
@@ -906,7 +906,7 @@ describe("EventsService", () => {
 			 * Act
 			 */
 			const result = service.createCategory(
-				makeContext(mock<User>({ id: faker.string.uuid() })),
+				makeMockContext(mock<User>({ id: faker.string.uuid() })),
 				{
 					name: faker.commerce.productName(),
 				},
@@ -935,7 +935,7 @@ describe("EventsService", () => {
 			 * Act
 			 */
 			const result = service.createCategory(
-				makeContext(mock<User>({ id: faker.string.uuid() })),
+				makeMockContext(mock<User>({ id: faker.string.uuid() })),
 				{
 					name: faker.commerce.productName(),
 				},
@@ -964,7 +964,7 @@ describe("EventsService", () => {
 			 * Act
 			 */
 			const result = service.createCategory(
-				makeContext(mock<User>({ id: faker.string.uuid() })),
+				makeMockContext(mock<User>({ id: faker.string.uuid() })),
 				{
 					name: faker.string.sample(101),
 				},
@@ -993,7 +993,7 @@ describe("EventsService", () => {
 			 * Act
 			 */
 			const result = service.createCategory(
-				makeContext(mock<User>({ id: faker.string.uuid() })),
+				makeMockContext(mock<User>({ id: faker.string.uuid() })),
 				{
 					name: "",
 				},
@@ -1024,7 +1024,7 @@ describe("EventsService", () => {
 			 * Act
 			 */
 			const result = service.updateCategory(
-				makeContext(mock<User>({ id: faker.string.uuid() })),
+				makeMockContext(mock<User>({ id: faker.string.uuid() })),
 				{
 					id: faker.string.uuid(),
 					name: faker.commerce.productName(),
@@ -1054,7 +1054,7 @@ describe("EventsService", () => {
 			 * Act
 			 */
 			const result = service.updateCategory(
-				makeContext(mock<User>({ id: faker.string.uuid() })),
+				makeMockContext(mock<User>({ id: faker.string.uuid() })),
 				{
 					id: faker.string.uuid(),
 					name: faker.commerce.productName(),
@@ -1084,7 +1084,7 @@ describe("EventsService", () => {
 			 * Act
 			 */
 			const result = service.updateCategory(
-				makeContext(mock<User>({ id: faker.string.uuid() })),
+				makeMockContext(mock<User>({ id: faker.string.uuid() })),
 				{
 					id: faker.string.uuid(),
 					name: faker.string.sample(101),
@@ -1114,7 +1114,7 @@ describe("EventsService", () => {
 			 * Act
 			 */
 			const result = service.updateCategory(
-				makeContext(mock<User>({ id: faker.string.uuid() })),
+				makeMockContext(mock<User>({ id: faker.string.uuid() })),
 				{
 					id: faker.string.uuid(),
 					name: "",
@@ -1146,7 +1146,7 @@ describe("EventsService", () => {
 			 * Act
 			 */
 			const result = service.deleteCategory(
-				makeContext(mock<User>({ id: faker.string.uuid() })),
+				makeMockContext(mock<User>({ id: faker.string.uuid() })),
 				{
 					id: faker.string.uuid(),
 				},
@@ -1175,7 +1175,7 @@ describe("EventsService", () => {
 			 * Act
 			 */
 			const result = service.deleteCategory(
-				makeContext(mock<User>({ id: faker.string.uuid() })),
+				makeMockContext(mock<User>({ id: faker.string.uuid() })),
 				{
 					id: faker.string.uuid(),
 				},
@@ -1189,7 +1189,3 @@ describe("EventsService", () => {
 		});
 	});
 });
-
-function makeContext(user: User) {
-	return { user, log: mock<FastifyBaseLogger>() };
-}
