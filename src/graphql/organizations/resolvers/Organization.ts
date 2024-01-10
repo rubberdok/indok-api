@@ -9,5 +9,5 @@ export const Organization: OrganizationResolvers = {
 	featurePermissions: ({ featurePermissions }) => {
 		/* Organization.featurePermissions resolver is required because Organization.featurePermissions and OrganizationMapper.featurePermissions are not compatible */
 		return featurePermissions;
-	},
+	}
 };

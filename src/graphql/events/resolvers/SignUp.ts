@@ -19,5 +19,5 @@ export const SignUp: SignUpResolvers = {
 	},
 	user: (signUp, _args, ctx) => {
 		return ctx.users.get(signUp.userId);
-	},
+	}
 };

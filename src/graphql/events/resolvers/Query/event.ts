@@ -1,5 +1,5 @@
 import type { QueryResolvers } from "./../../../types.generated.js";
-export const event: NonNullable<QueryResolvers["event"]> = async (
+export const event: NonNullable<QueryResolvers['event']> = async (
 	_parent,
 	{ data },
 	ctx,

@@ -7,5 +7,5 @@ export const PrivateUser: PrivateUserResolvers = {
 	studyProgram: (user, _args, ctx) => {
 		if (!user.studyProgramId) return null;
 		return ctx.users.getStudyProgram({ id: user.studyProgramId });
-	},
+	}
 };

@@ -1,6 +1,6 @@
 import { assertIsAuthenticated } from "~/graphql/auth.js";
 import type { MutationResolvers } from "./../../../types.generated.js";
-export const updateEvent: NonNullable<MutationResolvers["updateEvent"]> =
+export const updateEvent: NonNullable<MutationResolvers['updateEvent']> =
 	async (_parent, { data, id }, ctx) => {
 		assertIsAuthenticated(ctx);
 		const { name, description, startAt, endAt, location, capacity } = data;

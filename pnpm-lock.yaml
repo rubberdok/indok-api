@@ -47,6 +47,9 @@ dependencies:
   '@sentry/tracing':
     specifier: 7.98.0
     version: 7.98.0
+  '@vippsmobilepay/sdk':
+    specifier: ^0.6.0
+    version: 0.6.0
   avvio:
     specifier: ^8.2.1
     version: 8.2.1
@@ -3122,6 +3125,10 @@ packages:
     dependencies:
       '@types/yargs-parser': 21.0.3
     dev: true
+
+  /@vippsmobilepay/sdk@0.6.0:
+    resolution: {integrity: sha512-Kc8/M7Z/5ElTtSTt1n/Z8DsqTkt0HATGI5qHThFOSc0pGjuP55I8WQAHMjVG+OBY3Zmtd7aOWTD2FdtUKejNVQ==}
+    dev: false
 
   /@whatwg-node/events@0.0.3:
     resolution: {integrity: sha512-IqnKIDWfXBJkvy/k6tzskWTc2NK3LcqHlb+KHGCrjOCH4jfQckRX0NAiIcC/vIqQkzLYw2r2CTSwAxcrtcD6lA==}

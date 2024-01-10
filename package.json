@@ -90,6 +90,7 @@
 		"@sentry/node": "^7.98.0",
 		"@sentry/tracing": "7.98.0",
 		"avvio": "^8.2.1",
+		"@vippsmobilepay/sdk": "^0.6.0",
 		"body-parser": "^1.20.2",
 		"bullmq": "^5.1.5",
 		"connect-redis": "^7.1.1",
@@ -113,18 +114,9 @@
 	},
 	"pnpm": {
 		"supportedArchitectures": {
-			"os": [
-				"current",
-				"linux"
-			],
-			"cpu": [
-				"current",
-				"x64"
-			],
-			"libc": [
-				"current",
-				"glibc"
-			]
+			"os": ["current", "linux"],
+			"cpu": ["current", "x64"],
+			"libc": ["current", "glibc"]
 		}
 	}
 }
