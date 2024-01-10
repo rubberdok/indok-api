@@ -44,6 +44,21 @@ function makeUserWithMemberships(
 	return {
 		...data,
 		id: userId,
+		studyProgram: {
+			connectOrCreate: {
+				where: {
+					externalId: "fc:fs:fs:prg:ntnu.no:MTIØT",
+				},
+				create: {
+					externalId: "fc:fs:fs:prg:ntnu.no:MTIØT",
+					name: "Industriell Økonomi og Teknologiledelse",
+					featurePermissions: [
+						FeaturePermission.ARCHIVE_VIEW_DOCUMENTS,
+						FeaturePermission.EVENT_WRITE_SIGN_UPS,
+					],
+				},
+			},
+		},
 		memberships: {
 			connectOrCreate: {
 				where: {
