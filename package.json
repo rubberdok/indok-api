@@ -85,7 +85,7 @@
 		"@fastify/session": "^10.7.0",
 		"@graphql-tools/merge": "^9.0.1",
 		"@immobiliarelabs/fastify-sentry": "^8.0.0",
-		"@prisma/client": "^5.7.1",
+		"@prisma/client": "^5.8.0",
 		"@sentry/node": "^7.92.0",
 		"@sentry/tracing": "7.92.0",
 		"body-parser": "^1.20.2",
@@ -102,7 +102,7 @@
 		"node-fetch": "^3.3.2",
 		"openid-client": "^5.6.4",
 		"postmark": "^4.0.2",
-		"prisma": "^5.7.1",
+		"prisma": "^5.8.0",
 		"yargs": "^17.7.2",
 		"zod": "^3.22.4"
 	},
