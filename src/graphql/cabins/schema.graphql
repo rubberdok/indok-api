@@ -134,11 +134,11 @@ type Mutation {
   updateBookingStatus(data: UpdateBookingStatusInput!): UpdateBookingResponse!
   """
   Updates the booking semester for the given semester, requires that the user is in an organization with
-  the CABIN_BOOKING permission.
+  the CABIN_ADMIN permission.
   """
   updateBookingSemester(data: UpdateBookingSemesterInput!): UpdateBookingSemesterResponse!
   """
-  Updates the booking contact, requires that the user is in an organization with the CABIN_BOOKING permission.
+  Updates the booking contact, requires that the user is in an organization with the CABIN_ADMIN permission.
   """
   updateBookingContact(data: UpdateBookingContactInput!): UpdateBookingContactResponse!
 }

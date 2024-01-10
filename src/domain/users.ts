@@ -11,6 +11,7 @@ export type StudyProgram = {
 	id: string;
 	name: string;
 	externalId: string;
+	featurePermissions: string[];
 };
 
 export function newStudyProgram(studyProgram: {
@@ -26,6 +27,7 @@ export function newStudyProgram(studyProgram: {
 		return {
 			name,
 			externalId,
+			featurePermissions: [],
 		};
 	} catch (err) {
 		if (err instanceof z.ZodError) {

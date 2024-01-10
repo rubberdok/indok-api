@@ -269,7 +269,7 @@ export class CabinService {
 	}
 
 	/**
-	 * updateBookingStatus updates the status of a booking. Requires MEMBER role and CABIN_BOOKING permission.
+	 * updateBookingStatus updates the status of a booking. Requires MEMBER role and CABIN_ADMIN permission.
 	 *
 	 * @throws {PermissionDeniedError} if the user does not have permission to update the booking
 	 * @throws {InvalidArgumentError} if the new status is CONFIRMED and the booking overlaps with another booking
@@ -285,7 +285,7 @@ export class CabinService {
 	): Promise<Booking> {
 		const hasPermission = await this.permissionService.hasFeaturePermission({
 			userId,
-			featurePermission: FeaturePermission.CABIN_BOOKING,
+			featurePermission: FeaturePermission.CABIN_ADMIN,
 		});
 
 		if (!hasPermission)
@@ -322,7 +322,7 @@ export class CabinService {
 	 * exist for the given semester, a new one will be created, with `startAt` default to the
 	 * first day of the semester and `endAt` default to the last day of the semester.
 	 *
-	 * @requires a membership in an organization with the CABIN_BOOKING feature permission.
+	 * @requires a membership in an organization with the CABIN_ADMIN feature permission.
 	 *
 	 * @param userId - The id of the user performing the update
 	 * @param data - The new booking semester data
@@ -339,7 +339,7 @@ export class CabinService {
 	) {
 		const hasPermission = await this.permissionService.hasFeaturePermission({
 			userId,
-			featurePermission: FeaturePermission.CABIN_BOOKING,
+			featurePermission: FeaturePermission.CABIN_ADMIN,
 		});
 
 		if (!hasPermission)
@@ -469,7 +469,7 @@ export class CabinService {
 	): Promise<BookingContact> {
 		const hasPermission = await this.permissionService.hasFeaturePermission({
 			userId,
-			featurePermission: FeaturePermission.CABIN_BOOKING,
+			featurePermission: FeaturePermission.CABIN_ADMIN,
 		});
 
 		if (!hasPermission)

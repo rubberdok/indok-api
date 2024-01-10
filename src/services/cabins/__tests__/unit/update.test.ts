@@ -62,7 +62,7 @@ describe("CabinService", () => {
 			await expect(updateBookingStatus).rejects.toThrow(PermissionDeniedError);
 			expect(permissionService.hasFeaturePermission).toHaveBeenCalledWith({
 				userId: userId,
-				featurePermission: FeaturePermission.CABIN_BOOKING,
+				featurePermission: FeaturePermission.CABIN_ADMIN,
 			});
 		});
 

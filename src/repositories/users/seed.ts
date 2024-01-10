@@ -62,7 +62,7 @@ function makeUserWithMemberships(
 								id: organizationId,
 								name: "Rubberdøk",
 								description: "Rubberdøk er en gjeng som lager gummibåter",
-								featurePermissions: [FeaturePermission.CABIN_BOOKING],
+								featurePermissions: [FeaturePermission.CABIN_ADMIN],
 							},
 						},
 					},

@@ -19,7 +19,7 @@ describe("Permission queries", () => {
         `),
 				variables: {
 					data: {
-						featurePermission: "CABIN_BOOKING",
+						featurePermission: "CABIN_ADMIN",
 					},
 				},
 			});
@@ -55,7 +55,7 @@ describe("Permission queries", () => {
           `),
 					variables: {
 						data: {
-							featurePermission: "CABIN_BOOKING",
+							featurePermission: "CABIN_ADMIN",
 						},
 					},
 				},
@@ -67,7 +67,7 @@ describe("Permission queries", () => {
 			expect(errors).toBeUndefined();
 			expect(permissionService.hasFeaturePermission).toHaveBeenCalledWith({
 				userId: authenticatedContext.user?.id,
-				featurePermission: "CABIN_BOOKING",
+				featurePermission: "CABIN_ADMIN",
 			});
 		});
 	});

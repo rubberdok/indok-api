@@ -271,8 +271,10 @@ type EventsResponse {
 }
 
 enum FeaturePermission {
-  ARCHIVE
-  CABIN_BOOKING
+  ARCHIVE_VIEW_DOCUMENTS
+  ARCHIVE_WRITE_DOCUMENTS
+  CABIN_ADMIN
+  EVENT_WRITE_SIGN_UPS
 }
 
 input HasFeaturePermissionInput {
@@ -372,13 +374,13 @@ type Mutation {
   superUpdateUser(data: SuperUpdateUserInput!, id: ID!): SuperUpdateUserResponse!
 
   """
-  Updates the booking contact, requires that the user is in an organization with the CABIN_BOOKING permission.
+  Updates the booking contact, requires that the user is in an organization with the CABIN_ADMIN permission.
   """
   updateBookingContact(data: UpdateBookingContactInput!): UpdateBookingContactResponse!
 
   """
   Updates the booking semester for the given semester, requires that the user is in an organization with
-  the CABIN_BOOKING permission.
+  the CABIN_ADMIN permission.
   """
   updateBookingSemester(data: UpdateBookingSemesterInput!): UpdateBookingSemesterResponse!
   updateBookingStatus(data: UpdateBookingStatusInput!): UpdateBookingResponse!

@@ -125,7 +125,7 @@ describe("PermissionService", () => {
 					},
 				},
 				act: {
-					requiredFeaturePermission: FeaturePermission.CABIN_BOOKING,
+					requiredFeaturePermission: FeaturePermission.CABIN_ADMIN,
 					requiredRole: Role.MEMBER,
 				},
 				expected: true,
@@ -138,12 +138,12 @@ describe("PermissionService", () => {
 						isSuperUser: false,
 					},
 					organization: {
-						featurePermissions: [FeaturePermission.CABIN_BOOKING],
+						featurePermissions: [FeaturePermission.CABIN_ADMIN],
 					},
 					organizationRole: Role.ADMIN,
 				},
 				act: {
-					requiredFeaturePermission: FeaturePermission.CABIN_BOOKING,
+					requiredFeaturePermission: FeaturePermission.CABIN_ADMIN,
 					requiredRole: Role.MEMBER,
 				},
 				expected: true,
@@ -156,12 +156,12 @@ describe("PermissionService", () => {
 						isSuperUser: false,
 					},
 					organization: {
-						featurePermissions: [FeaturePermission.CABIN_BOOKING],
+						featurePermissions: [FeaturePermission.CABIN_ADMIN],
 					},
 					organizationRole: Role.MEMBER,
 				},
 				act: {
-					requiredFeaturePermission: FeaturePermission.CABIN_BOOKING,
+					requiredFeaturePermission: FeaturePermission.CABIN_ADMIN,
 					requiredRole: Role.MEMBER,
 				},
 				expected: true,
@@ -174,12 +174,12 @@ describe("PermissionService", () => {
 						isSuperUser: false,
 					},
 					organization: {
-						featurePermissions: [FeaturePermission.ARCHIVE],
+						featurePermissions: [FeaturePermission.ARCHIVE_WRITE_DOCUMENTS],
 					},
 					organizationRole: Role.MEMBER,
 				},
 				act: {
-					requiredFeaturePermission: FeaturePermission.CABIN_BOOKING,
+					requiredFeaturePermission: FeaturePermission.CABIN_ADMIN,
 					requiredRole: Role.MEMBER,
 				},
 				expected: false,
@@ -197,7 +197,7 @@ describe("PermissionService", () => {
 					organizationRole: Role.MEMBER,
 				},
 				act: {
-					requiredFeaturePermission: FeaturePermission.CABIN_BOOKING,
+					requiredFeaturePermission: FeaturePermission.CABIN_ADMIN,
 					requiredRole: Role.MEMBER,
 				},
 				expected: false,

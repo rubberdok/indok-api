@@ -48,8 +48,8 @@ describe("OrganizationService", () => {
 					name: faker.company.name(),
 					description: faker.lorem.paragraph(),
 					featurePermissions: [
-						FeaturePermission.CABIN_BOOKING,
-						FeaturePermission.ARCHIVE,
+						FeaturePermission.CABIN_ADMIN,
+						FeaturePermission.ARCHIVE_WRITE_DOCUMENTS,
 					],
 				});
 
@@ -62,8 +62,8 @@ describe("OrganizationService", () => {
 					name: expect.any(String),
 					description: expect.any(String),
 					featurePermissions: [
-						FeaturePermission.CABIN_BOOKING,
-						FeaturePermission.ARCHIVE,
+						FeaturePermission.CABIN_ADMIN,
+						FeaturePermission.ARCHIVE_WRITE_DOCUMENTS,
 					],
 				});
 				expect(permissionService.isSuperUser).toHaveBeenCalledWith(
@@ -98,8 +98,8 @@ describe("OrganizationService", () => {
 					name: faker.company.name(),
 					description: faker.lorem.paragraph(),
 					featurePermissions: [
-						FeaturePermission.CABIN_BOOKING,
-						FeaturePermission.ARCHIVE,
+						FeaturePermission.CABIN_ADMIN,
+						FeaturePermission.ARCHIVE_WRITE_DOCUMENTS,
 					],
 				});
 
@@ -146,8 +146,8 @@ describe("OrganizationService", () => {
 						name: faker.company.name(),
 						description: null,
 						featurePermissions: [
-							FeaturePermission.CABIN_BOOKING,
-							FeaturePermission.ARCHIVE,
+							FeaturePermission.CABIN_ADMIN,
+							FeaturePermission.ARCHIVE_WRITE_DOCUMENTS,
 						],
 					},
 				);
@@ -162,8 +162,8 @@ describe("OrganizationService", () => {
 						name: expect.any(String),
 						description: undefined,
 						featurePermissions: [
-							FeaturePermission.CABIN_BOOKING,
-							FeaturePermission.ARCHIVE,
+							FeaturePermission.CABIN_ADMIN,
+							FeaturePermission.ARCHIVE_WRITE_DOCUMENTS,
 						],
 					},
 				);
@@ -199,8 +199,8 @@ describe("OrganizationService", () => {
 						name: faker.company.name(),
 						description: null,
 						featurePermissions: [
-							FeaturePermission.CABIN_BOOKING,
-							FeaturePermission.ARCHIVE,
+							FeaturePermission.CABIN_ADMIN,
+							FeaturePermission.ARCHIVE_WRITE_DOCUMENTS,
 						],
 					},
 				);

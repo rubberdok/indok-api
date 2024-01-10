@@ -157,14 +157,14 @@ describe("OrganizationsRepository", () => {
 				name: "should update the organizations' feature permissions",
 				data: {
 					name: faker.string.sample(),
-					featurePermissions: [FeaturePermission.ARCHIVE],
+					featurePermissions: [FeaturePermission.ARCHIVE_WRITE_DOCUMENTS],
 				},
 				expected: {
 					id: expect.any(String),
 					description: expect.any(String),
 					updatedAt: expect.any(Date),
 					createdAt: expect.any(Date),
-					featurePermissions: [FeaturePermission.ARCHIVE],
+					featurePermissions: [FeaturePermission.ARCHIVE_WRITE_DOCUMENTS],
 				},
 			},
 			{
