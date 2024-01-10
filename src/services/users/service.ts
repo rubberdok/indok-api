@@ -1,5 +1,4 @@
 import type { Prisma, User as PrismaUser } from "@prisma/client";
-import type { FastifyBaseLogger } from "fastify";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
 import { z } from "zod";
@@ -12,6 +11,7 @@ import {
 	type User,
 	newStudyProgram,
 } from "~/domain/users.js";
+import type { Context } from "../context.js";
 import { createUserSchema } from "./validation.js";
 
 export interface UserRepository {
@@ -30,27 +30,26 @@ export interface UserRepository {
 }
 
 export interface PermissionService {
-	isSuperUser(userId: string): Promise<{ isSuperUser: boolean }>;
+	isSuperUser(userId: string | undefined): Promise<{ isSuperUser: boolean }>;
 }
 
 export class UserService {
 	constructor(
 		private usersRepository: UserRepository,
 		private permissionService: PermissionService,
-		private log?: FastifyBaseLogger,
 	) {}
 
 	/**
 	 * superUpdateUser - Updates a user with the given data. This method can only be called by a super user.
 	 *
 	 * @throws PermissionDeniedError - If the caller is not a super user
-	 * @param callerId - The id of the user making the request, must be a super user
-	 * @param userToUpdateId - The id of the user to update
+	 * @param ctx - The context of the request
+	 * @param userId - The id of the user to update
 	 * @param data - The data to update the user with
 	 */
 	async superUpdateUser(
-		callerId: string,
-		userToUpdateId: string,
+		ctx: Context,
+		userId: string,
 		data: Partial<{
 			firstName: string | null;
 			lastName: string | null;
@@ -60,13 +59,15 @@ export class UserService {
 			isSuperUser?: boolean | null;
 		}>,
 	): Promise<User> {
-		const { isSuperUser } = await this.permissionService.isSuperUser(callerId);
+		const { isSuperUser } = await this.permissionService.isSuperUser(
+			ctx.user?.id,
+		);
 		if (isSuperUser !== true)
 			throw new PermissionDeniedError(
 				"You do not have permission to update this user",
 			);
 
-		this.log?.info({ callerId, userToUpdateId }, "super update user");
+		ctx.log.info({ updatingUser: userId }, "super update user");
 		const schema = z.object({
 			firstName: z
 				.string()
@@ -104,10 +105,7 @@ export class UserService {
 		});
 		const validatedData = schema.parse(data);
 
-		const user = await this.usersRepository.update(
-			userToUpdateId,
-			validatedData,
-		);
+		const user = await this.usersRepository.update(userId, validatedData);
 		return this.toDomainUser(user);
 	}
 

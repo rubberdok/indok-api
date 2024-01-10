@@ -2,8 +2,8 @@ import { ApolloServer } from "@apollo/server";
 import { ApolloServerPluginLandingPageDisabled } from "@apollo/server/plugin/disabled";
 import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
 import fastifyApollo, {
-	type ApolloFastifyContextFunction,
 	fastifyApolloDrainPlugin,
+	type ApolloFastifyContextFunction,
 } from "@as-integrations/fastify";
 import fastifyCookie from "@fastify/cookie";
 import fastifyCors from "@fastify/cors";
@@ -149,6 +149,7 @@ export async function createServer(
 		environment: env.NODE_ENV,
 		tracesSampleRate: env.SENTRY_TRACES_SAMPLE_RATE,
 		release: env.SENTRY_RELEASE,
+
 		integrations: [
 			new Sentry.Integrations.Prisma({ client: dependencies.prisma }),
 			new Sentry.Integrations.GraphQL(),
@@ -280,10 +281,12 @@ export async function createServer(
 		req,
 		res,
 	) => {
+		const name = `${req.method} ${req.url}`;
 		const transaction = app.Sentry.startTransaction({
-			op: "GraphQL",
-			name: "GraphQL",
+			op: "apollo.graphql",
+			name,
 		});
+
 		const { userId, authenticated } = req.session;
 		let user: User | null = null;
 		if (userId !== undefined && authenticated) {
@@ -308,6 +311,7 @@ export async function createServer(
 			req,
 			res,
 			transaction,
+			log: req.log.child({ userId: user?.id, service: "apollo-server" }),
 		};
 	};
 

@@ -26,11 +26,21 @@ export const fastifyApolloSentryPlugin = (
 	app: FastifyInstance,
 ): ApolloServerPlugin<ApolloContext> => {
 	return {
-		async requestDidStart({ request, contextValue }) {
+		async requestDidStart({ contextValue, request }) {
+			contextValue.log.info(
+				{
+					graphql: {
+						query: request.query,
+						variables: request.variables,
+						method: request.http?.method,
+						operationName: request.operationName,
+					},
+				},
+				"incoming graphql request",
+			);
 			if (request.operationName) {
 				contextValue.transaction?.setName(request.operationName);
 			}
-
 			return {
 				// biome-ignore lint/nursery/useAwait: We need to use async/await API here.
 				async willSendResponse({ contextValue }) {
@@ -85,7 +95,7 @@ export const fastifyApolloSentryPlugin = (
 								});
 							}
 							if (originalError instanceof Error) {
-								ctx.contextValue.req.log.error(originalError);
+								ctx.contextValue.log.error(originalError);
 								app.Sentry.captureException(originalError);
 							}
 						});

@@ -45,7 +45,9 @@ describe("User mutations", () => {
 
 			expect(errors).toBeUndefined();
 			expect(userService.superUpdateUser).toHaveBeenCalledWith(
-				callerUserId,
+				expect.objectContaining({
+					user: expect.objectContaining({ id: callerUserId }),
+				}),
 				updateUserId,
 				{
 					isSuperUser: true,

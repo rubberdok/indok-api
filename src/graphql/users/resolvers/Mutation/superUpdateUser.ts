@@ -5,7 +5,7 @@ export const superUpdateUser: NonNullable<
 > = async (_parent, { id, data }, ctx) => {
 	assertIsAuthenticated(ctx);
 
-	const user = await ctx.userService.superUpdateUser(ctx.user.id, id, {
+	const user = await ctx.userService.superUpdateUser(ctx, id, {
 		firstName: data.firstName,
 		lastName: data.lastName,
 		allergies: data.allergies ?? undefined,

@@ -1,4 +1,4 @@
-import type { FastifyBaseLogger, FastifyRequest } from "fastify";
+import type { FastifyRequest } from "fastify";
 import type { TokenSet, UserinfoResponse } from "openid-client";
 import { generators } from "openid-client";
 import { env } from "~/config.js";
@@ -54,7 +54,6 @@ export class AuthService {
 	constructor(
 		private userService: UserService,
 		private openIDClient: OpenIDClient,
-		private log?: FastifyBaseLogger,
 		private callbackUrl: string | URL = new URL(
 			"/auth/authenticate",
 			env.SERVER_URL,
@@ -115,7 +114,7 @@ export class AuthService {
 
 		const { code } = params;
 
-		this.log?.info("Fetching access token");
+		req.log?.info("Fetching access token");
 		const tokenSet = await this.openIDClient.callback(
 			this.callbackUrl.toString(),
 			{
@@ -126,7 +125,7 @@ export class AuthService {
 			},
 		);
 
-		this.log?.info("Fetching user info");
+		req.log?.info("Fetching user info");
 		const {
 			sub,
 			name,
@@ -134,11 +133,11 @@ export class AuthService {
 			"https://n.feide.no/claims/userid_sec": userid_sec,
 			"https://n.feide.no/claims/eduPersonPrincipalName": ntnuId,
 		} = await this.openIDClient.userinfo(tokenSet);
-		this.log?.info({ sub }, "Fetched user info");
+		req.log?.info({ sub }, "Fetched user info");
 
 		const existingUser = await this.userService.getByFeideID(sub);
 		if (existingUser) {
-			this.log?.info(
+			req.log?.info(
 				{
 					userId: existingUser.id,
 				},
@@ -147,7 +146,7 @@ export class AuthService {
 			return existingUser;
 		}
 
-		this.log?.info({ sub }, "Creating new user");
+		req.log?.info({ sub }, "Creating new user");
 
 		let eduUsername: string;
 		if (ntnuId) {

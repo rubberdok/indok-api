@@ -118,6 +118,7 @@ export const createMockApolloServer = (logger?: Partial<FastifyBaseLogger>) => {
 			listingService,
 			permissionService,
 			user,
+			log: mockDeep<FastifyBaseLogger>(logger),
 		};
 
 		return contextValue;

@@ -1,8 +1,9 @@
 import { faker } from "@faker-js/faker";
-import type { User } from "@prisma/client";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
 import { PermissionDeniedError } from "~/domain/errors.js";
+import type { User } from "~/domain/users.js";
+import { makeMockContext } from "~/services/context.js";
 import {
 	type PermissionService,
 	type UserRepository,
@@ -39,9 +40,13 @@ describe("UserService", () => {
 				 */
 				const callerUserId = faker.string.uuid();
 				const updateUserId = faker.string.uuid();
-				const actual = userService.superUpdateUser(callerUserId, updateUserId, {
-					isSuperUser: true,
-				});
+				const actual = userService.superUpdateUser(
+					makeMockContext(mock<User>({ id: callerUserId })),
+					updateUserId,
+					{
+						isSuperUser: true,
+					},
+				);
 
 				/**
 				 * Assert
@@ -74,9 +79,13 @@ describe("UserService", () => {
 				 */
 				const callerUserId = faker.string.uuid();
 				const updateUserId = faker.string.uuid();
-				const actual = userService.superUpdateUser(callerUserId, updateUserId, {
-					graduationYear: DateTime.now().year,
-				});
+				const actual = userService.superUpdateUser(
+					makeMockContext(mock<User>({ id: callerUserId })),
+					updateUserId,
+					{
+						graduationYear: DateTime.now().year,
+					},
+				);
 
 				/**
 				 * Assert
@@ -108,7 +117,7 @@ describe("UserService", () => {
 				 */
 				const callerUserId = faker.string.uuid();
 				const actual = userService.superUpdateUser(
-					callerUserId,
+					makeMockContext(mock<User>({ id: callerUserId })),
 					faker.string.uuid(),
 					{ isSuperUser: true },
 				);
