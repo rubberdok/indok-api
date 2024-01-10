@@ -6,4 +6,8 @@ export const Organization: OrganizationResolvers = {
 		assertIsAuthenticated(ctx);
 		return await ctx.organizationService.getMembers(ctx.user.id, parent.id);
 	},
+	featurePermissions: ({ featurePermissions }) => {
+		/* Organization.featurePermissions resolver is required because Organization.featurePermissions and OrganizationMapper.featurePermissions are not compatible */
+		return featurePermissions;
+	},
 };

@@ -118,7 +118,7 @@ describe("OrganizationsService", () => {
 						role: Role.ADMIN,
 					},
 				},
-				requiredFeaturePermission: FeaturePermission.CABIN_BOOKING,
+				requiredFeaturePermission: FeaturePermission.CABIN_ADMIN,
 				requiredRole: Role.MEMBER,
 				expected: false,
 			},
@@ -132,7 +132,7 @@ describe("OrganizationsService", () => {
 						role: null,
 					},
 				},
-				requiredFeaturePermission: FeaturePermission.CABIN_BOOKING,
+				requiredFeaturePermission: FeaturePermission.CABIN_ADMIN,
 				requiredRole: Role.ADMIN,
 				expected: true,
 			},
@@ -141,13 +141,13 @@ describe("OrganizationsService", () => {
 					user: makeUser({ isSuperUser: false }),
 					organization: {
 						name: faker.string.sample(20),
-						featurePermissions: [FeaturePermission.CABIN_BOOKING],
+						featurePermissions: [FeaturePermission.CABIN_ADMIN],
 					},
 					member: {
 						role: Role.ADMIN,
 					},
 				},
-				requiredFeaturePermission: FeaturePermission.CABIN_BOOKING,
+				requiredFeaturePermission: FeaturePermission.CABIN_ADMIN,
 				requiredRole: Role.MEMBER,
 				expected: true,
 			},
@@ -157,15 +157,15 @@ describe("OrganizationsService", () => {
 					organization: {
 						name: faker.string.sample(20),
 						featurePermissions: [
-							FeaturePermission.CABIN_BOOKING,
-							FeaturePermission.ARCHIVE,
+							FeaturePermission.CABIN_ADMIN,
+							FeaturePermission.ARCHIVE_WRITE_DOCUMENTS,
 						],
 					},
 					member: {
 						role: Role.ADMIN,
 					},
 				},
-				requiredFeaturePermission: FeaturePermission.ARCHIVE,
+				requiredFeaturePermission: FeaturePermission.ARCHIVE_WRITE_DOCUMENTS,
 				requiredRole: Role.MEMBER,
 				expected: true,
 			},
@@ -180,7 +180,7 @@ describe("OrganizationsService", () => {
 						role: Role.ADMIN,
 					},
 				},
-				requiredFeaturePermission: FeaturePermission.ARCHIVE,
+				requiredFeaturePermission: FeaturePermission.ARCHIVE_WRITE_DOCUMENTS,
 				requiredRole: Role.MEMBER,
 				expected: false,
 			},
@@ -303,7 +303,7 @@ describe("OrganizationsService", () => {
 		});
 	});
 
-	describe("hasFeaturePermission", () => {
+	describe("#hasFeaturePermission", () => {
 		it("should return true if the user is a super user", async () => {
 			/**
 			 * Arrange
@@ -320,7 +320,7 @@ describe("OrganizationsService", () => {
 			 */
 			const result = permissionService.hasFeaturePermission({
 				userId: user.id,
-				featurePermission: FeaturePermission.CABIN_BOOKING,
+				featurePermission: FeaturePermission.CABIN_ADMIN,
 			});
 
 			/**
@@ -345,7 +345,7 @@ describe("OrganizationsService", () => {
 			 */
 			const result = permissionService.hasFeaturePermission({
 				userId: user.id,
-				featurePermission: FeaturePermission.CABIN_BOOKING,
+				featurePermission: FeaturePermission.CABIN_ADMIN,
 			});
 
 			/**
@@ -369,7 +369,7 @@ describe("OrganizationsService", () => {
 			});
 			const organizationWithoutFeaturePermission = await makeOrganization({});
 			const organizationWithFeaturePermission = await makeOrganization({
-				featurePermissions: [FeaturePermission.CABIN_BOOKING],
+				featurePermissions: [FeaturePermission.CABIN_ADMIN],
 			});
 			await makeMember({
 				userId: user.id,
@@ -386,7 +386,7 @@ describe("OrganizationsService", () => {
 			 */
 			const result = permissionService.hasFeaturePermission({
 				userId: user.id,
-				featurePermission: FeaturePermission.CABIN_BOOKING,
+				featurePermission: FeaturePermission.CABIN_ADMIN,
 			});
 
 			/**
@@ -410,7 +410,7 @@ describe("OrganizationsService", () => {
 			});
 			const organizationWithoutFeaturePermission = await makeOrganization({});
 			await makeOrganization({
-				featurePermissions: [FeaturePermission.CABIN_BOOKING],
+				featurePermissions: [FeaturePermission.CABIN_ADMIN],
 			});
 			await makeMember({
 				userId: user.id,
@@ -423,7 +423,7 @@ describe("OrganizationsService", () => {
 			 */
 			const result = permissionService.hasFeaturePermission({
 				userId: user.id,
-				featurePermission: FeaturePermission.CABIN_BOOKING,
+				featurePermission: FeaturePermission.CABIN_ADMIN,
 			});
 
 			/**
@@ -447,8 +447,8 @@ describe("OrganizationsService", () => {
 			const organizationWithoutFeaturePermission = await makeOrganization({});
 			const organizationWithFeaturePermission = await makeOrganization({
 				featurePermissions: [
-					FeaturePermission.CABIN_BOOKING,
-					FeaturePermission.ARCHIVE,
+					FeaturePermission.CABIN_ADMIN,
+					FeaturePermission.ARCHIVE_WRITE_DOCUMENTS,
 				],
 			});
 			await makeMember({
@@ -466,7 +466,52 @@ describe("OrganizationsService", () => {
 			 */
 			const result = permissionService.hasFeaturePermission({
 				userId: user.id,
-				featurePermission: FeaturePermission.CABIN_BOOKING,
+				featurePermission: FeaturePermission.CABIN_ADMIN,
+			});
+
+			/**
+			 * Assert that the user has the feature permission
+			 */
+			await expect(result).resolves.toEqual(true);
+		});
+
+		it("should return true if the user is a member of a study program with the feature permission", async () => {
+			/**
+			 * Arrange
+			 *
+			 * 1. Create a user with isSuperUser set to true
+			 * 2. Create an organization with the feature permission
+			 * 3. Create a member with the user and organization
+			 * 4. Create an organization without the feature permission
+			 */
+			const user = await prisma.user.create({
+				data: makeUser({ isSuperUser: false }),
+			});
+			await prisma.studyProgram.create({
+				data: {
+					externalId: faker.string.uuid(),
+					name: faker.string.sample(20),
+					featurePermissions: [FeaturePermission.EVENT_WRITE_SIGN_UPS],
+					users: {
+						connect: {
+							id: user.id,
+						},
+					},
+				},
+			});
+			const organizationWithoutFeaturePermission = await makeOrganization({});
+			await makeMember({
+				userId: user.id,
+				organizationId: organizationWithoutFeaturePermission.id,
+			});
+
+			/**
+			 * Act
+			 * 1. Call the hasFeaturePermission method on the permissionService with the userId and a feature permission
+			 */
+			const result = permissionService.hasFeaturePermission({
+				userId: user.id,
+				featurePermission: FeaturePermission.EVENT_WRITE_SIGN_UPS,
 			});
 
 			/**

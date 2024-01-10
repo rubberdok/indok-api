@@ -48,11 +48,11 @@ export const load = async (db: PrismaClient) => {
 			name: "Hyttestyret",
 		},
 		update: {
-			featurePermissions: [FeaturePermission.CABIN_BOOKING],
+			featurePermissions: [FeaturePermission.CABIN_ADMIN],
 		},
 		create: {
 			name: "Hyttestyret",
-			featurePermissions: [FeaturePermission.CABIN_BOOKING],
+			featurePermissions: [FeaturePermission.CABIN_ADMIN],
 		},
 	});
 
@@ -61,11 +61,11 @@ export const load = async (db: PrismaClient) => {
 			name: "Rubberdøk",
 		},
 		update: {
-			featurePermissions: [FeaturePermission.CABIN_BOOKING],
+			featurePermissions: [FeaturePermission.CABIN_ADMIN],
 		},
 		create: {
 			name: "Rubberdøk",
-			featurePermissions: [FeaturePermission.CABIN_BOOKING],
+			featurePermissions: [FeaturePermission.CABIN_ADMIN],
 		},
 	});
 

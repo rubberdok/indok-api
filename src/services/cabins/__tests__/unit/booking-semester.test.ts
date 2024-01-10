@@ -59,7 +59,7 @@ describe("CabinService", () => {
 			);
 			expect(permissionSerivce.hasFeaturePermission).toHaveBeenCalledWith({
 				userId: userId,
-				featurePermission: FeaturePermission.CABIN_BOOKING,
+				featurePermission: FeaturePermission.CABIN_ADMIN,
 			});
 		});
 

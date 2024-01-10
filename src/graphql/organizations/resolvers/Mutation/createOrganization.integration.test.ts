@@ -59,7 +59,7 @@ describe("Organization mutations", () => {
 						variables: {
 							data: {
 								name: faker.string.sample(20),
-								featurePermissions: ["CABIN_BOOKING"],
+								featurePermissions: ["CABIN_ADMIN"],
 							},
 						},
 					},
@@ -80,7 +80,7 @@ describe("Organization mutations", () => {
 				);
 				expect(
 					data?.createOrganization.organization.featurePermissions,
-				).toEqual(["CABIN_BOOKING"]);
+				).toEqual(["CABIN_ADMIN"]);
 			});
 		});
 	});

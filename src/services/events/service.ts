@@ -1,6 +1,7 @@
 import {
 	type EventSignUp,
 	type EventSlot,
+	type FeaturePermission,
 	ParticipationStatus,
 } from "@prisma/client";
 import type { FastifyBaseLogger } from "fastify";
@@ -112,6 +113,10 @@ export interface PermissionService {
 		userId: string;
 		organizationId: string;
 		role: Role;
+	}): Promise<boolean>;
+	hasFeaturePermission(data: {
+		userId: string;
+		featurePermission: FeaturePermission;
 	}): Promise<boolean>;
 	isSuperUser(userId: string | undefined): Promise<{ isSuperUser: boolean }>;
 }

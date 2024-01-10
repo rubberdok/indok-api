@@ -1,6 +1,8 @@
 enum FeaturePermission {
-  CABIN_BOOKING
-  ARCHIVE
+  ARCHIVE_VIEW_DOCUMENTS
+  ARCHIVE_WRITE_DOCUMENTS
+  EVENT_WRITE_SIGN_UPS
+  CABIN_ADMIN
 }
 
 type HasFeaturePermissionResponse {

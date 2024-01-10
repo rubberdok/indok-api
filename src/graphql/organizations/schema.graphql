@@ -87,11 +87,6 @@ input CreateOrganizationInput {
   featurePermissions: [FeaturePermission!]
 }
 
-enum FeaturePermission {
-  CABIN_BOOKING
-  ARCHIVE
-}
-
 type CreateOrganizationResponse {
   organization: Organization!
 }
