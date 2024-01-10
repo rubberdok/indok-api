@@ -24,11 +24,16 @@ import { createRedisClient } from "../redis.js";
 import { envToLogger } from "./logging.js";
 
 interface IAuthService {
-	authorizationCallback(
+	userLoginCallback(req: FastifyRequest, data: { code: string }): Promise<User>;
+	studyProgramCallback(
 		req: FastifyRequest,
 		data: { code: string },
 	): Promise<User>;
-	authorizationUrl(req: FastifyRequest, state?: string | null): string;
+	authorizationUrl(
+		req: FastifyRequest,
+		postAuthorizationRedirectUrl?: string | null,
+		kind?: "login" | "studyProgram",
+	): string;
 	logout(req: FastifyRequest): Promise<void>;
 	login(req: FastifyRequest, user: User): Promise<User>;
 }

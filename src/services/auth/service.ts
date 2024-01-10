@@ -1,9 +1,16 @@
+import type { IncomingMessage } from "http";
 import type { FastifyRequest } from "fastify";
 import type { TokenSet, UserinfoResponse } from "openid-client";
 import { generators } from "openid-client";
 import { env } from "~/config.js";
-import { AuthenticationError, BadRequestError } from "~/domain/errors.js";
-import type { User } from "~/domain/users.js";
+import {
+	AuthenticationError,
+	BadRequestError,
+	NotFoundError,
+	UnauthorizedError,
+} from "~/domain/errors.js";
+import type { StudyProgram, User } from "~/domain/users.js";
+import type { Context } from "../context.js";
 
 export interface OpenIDClient {
 	authorizationUrl(options: {
@@ -11,12 +18,17 @@ export interface OpenIDClient {
 		code_challenge_method: string;
 		code_challenge: string;
 		state?: string;
+		redirect_uri?: string;
 	}): string;
 	callback(
 		redirectUrl: string,
 		params: { code: string },
 		options: { code_verifier: string },
 	): Promise<TokenSet>;
+	requestResource(
+		resourceUrl: URL,
+		accessToken: TokenSet,
+	): Promise<{ body?: Buffer } & IncomingMessage>;
 	userinfo(
 		tokenSet: TokenSet,
 	): Promise<UserinfoResponse<FeideUserInfo, Record<string, never>>>;
@@ -32,6 +44,25 @@ export interface UserService {
 	}): Promise<User>;
 	login(id: string): Promise<User>;
 	getByFeideID(feideId: string): Promise<User | null>;
+	update(
+		id: string,
+		data: Partial<{
+			firstName: string | null;
+			lastName: string | null;
+			graduationYear: number | null;
+			allergies: string | null;
+			phoneNumber: string | null;
+			studyProgramId: string | null;
+		}>,
+	): Promise<User>;
+	get(id: string): Promise<User>;
+	getStudyProgram(
+		by: { id: string } | { externalId: string },
+	): Promise<StudyProgram | null>;
+	createStudyProgram(studyProgram: {
+		name: string;
+		externalId: string;
+	}): Promise<StudyProgram>;
 }
 
 export interface FeideUserInfo {
@@ -54,10 +85,14 @@ export class AuthService {
 	constructor(
 		private userService: UserService,
 		private openIDClient: OpenIDClient,
-		private callbackUrl: string | URL = new URL(
-			"/auth/authenticate",
-			env.SERVER_URL,
-		),
+		private callbackUrlMapping: Record<
+			"login" | "studyProgram",
+			string | URL
+		> = {
+			login: new URL("/auth/authenticate", env.SERVER_URL),
+			studyProgram: new URL("/auth/study-program", env.SERVER_URL),
+		},
+		private feideGroupsApi: URL = new URL(env.FEIDE_GROUPS_API),
 	) {}
 
 	/**
@@ -68,10 +103,14 @@ export class AuthService {
 	 * send the verifier along with the code, and the OpenID Provider will verify that the verifier matches the challenge.
 	 *
 	 * @param req - the fastify request
-	 * @param redirect - the url to redirect the user to after authentication is complete
+	 * @param postAuthorizationRedirectUrl - the url to redirect the user to after authentication is complete
 	 * @returns the url to redirect the user to
 	 */
-	authorizationUrl(req: FastifyRequest, redirect?: string | null): string {
+	authorizationUrl(
+		req: FastifyRequest,
+		postAuthorizationRedirectUrl?: string | null,
+		kind: "login" | "studyProgram" = "login",
+	): string {
 		const { codeVerifier, codeChallenge } = this.pkce();
 		req.session.set("codeVerifier", codeVerifier);
 
@@ -79,7 +118,8 @@ export class AuthService {
 			scope: this.scope,
 			code_challenge_method: "S256",
 			code_challenge: codeChallenge,
-			state: redirect ?? undefined,
+			state: postAuthorizationRedirectUrl ?? undefined,
+			redirect_uri: this.callbackUrlMapping[kind].toString(),
 		});
 
 		return url;
@@ -104,7 +144,111 @@ export class AuthService {
 	 * @param params.code - the authorization code from the OpenID Provider as a result of the user authenticating
 	 * @returns the user
 	 */
-	async authorizationCallback(
+	async studyProgramCallback(
+		req: FastifyRequest,
+		params: { code: string },
+	): Promise<User> {
+		const codeVerifier = req.session.get("codeVerifier");
+		if (!codeVerifier) throw new BadRequestError("No code verifier found");
+
+		const { code } = params;
+
+		const tokenSet = await this.openIDClient.callback(
+			this.callbackUrlMapping.studyProgram.toString(),
+			{
+				code,
+			},
+			{
+				code_verifier: codeVerifier,
+			},
+		);
+
+		const userInfo = await this.openIDClient.userinfo(tokenSet);
+
+		const user = await this.userService.getByFeideID(userInfo.sub);
+		if (user === null) {
+			throw new NotFoundError("User not found, use /login?kind=login instead");
+		}
+
+		const ctx = {
+			user,
+			log: req.log,
+		};
+
+		const studyProgram = await this.getStudyProgramForUser(ctx, tokenSet);
+
+		if (ctx.user.studyProgramId === studyProgram?.id) return ctx.user;
+
+		const updatedUser = await this.userService.update(ctx.user.id, {
+			studyProgramId: studyProgram?.id,
+		});
+
+		return updatedUser;
+	}
+
+	private async getStudyProgramForUser(
+		ctx: Context,
+		accessToken: TokenSet,
+	): Promise<StudyProgram | null> {
+		if (!ctx.user) throw new UnauthorizedError("Not logged in");
+
+		ctx.log.info({ userId: ctx.user.id }, "fetching study programs");
+		const groupsApiResponse = await this.openIDClient.requestResource(
+			this.feideGroupsApi,
+			accessToken,
+		);
+
+		if (!groupsApiResponse.body) return null;
+
+		const groups: FeideGroup[] = JSON.parse(groupsApiResponse.body.toString());
+		const studyPrograms = groups.filter((group) => {
+			const isAtNtnu = group.parent === "fc:org:ntnu.no";
+			const isStudyProgram = group.type === "fc:fs:prg";
+			const isActive = group.membership.active;
+
+			return isAtNtnu && isStudyProgram && isActive;
+		});
+
+		ctx.log.info({ studyPrograms: studyPrograms.length }, "study programs");
+		const bestGuessStudyProgram = studyPrograms[0];
+		if (!bestGuessStudyProgram) return null;
+
+		const studyProgram = await this.userService.getStudyProgram({
+			externalId: bestGuessStudyProgram.id,
+		});
+		if (studyProgram) return studyProgram;
+
+		ctx.log.info(
+			{ studyProgram: bestGuessStudyProgram },
+			"found new study program",
+		);
+		const newStudyProgram = await this.userService.createStudyProgram({
+			name: bestGuessStudyProgram.displayName,
+			externalId: bestGuessStudyProgram.id,
+		});
+		return newStudyProgram;
+	}
+
+	/**
+	 * userLoginCallback is the callback handler for the OpenID Provider. Using the code, we will fetch
+	 * an access token and an id token from the OpenID Provider. The id token contains information about the user,
+	 * and we use this to create a new user in our database if it does not already exist.
+	 *
+	 * The openid-client library handles JWT verification of the ID token for us. The access token is used to fetch
+	 * additional information about the user from the OpenID Provider.
+	 *
+	 * When making the access token request, we send the code verifier along with the code. The OpenID Provider will
+	 * verify that the verifier matches the challenge.
+	 *
+	 * If the user already exists, we return the user without changes.
+	 *
+	 * @throws {BadRequestError} - if no code verifier is found in the session
+	 * @throws {AuthenticationError} - if no username is found for the user.
+	 * @param req - the fastify request
+	 * @param params.code - the authorization code from the OpenID Provider as a result of the user authenticating
+	 * @returns the user
+	 */
+	async userLoginCallback(
 		req: FastifyRequest,
 		params: { code: string },
 	): Promise<User> {
@@ -116,7 +260,7 @@ export class AuthService {
 
 		req.log?.info("Fetching access token");
 		const tokenSet = await this.openIDClient.callback(
-			this.callbackUrl.toString(),
+			this.callbackUrlMapping.login.toString(),
 			{
 				code,
 			},
@@ -164,13 +308,25 @@ export class AuthService {
 		}
 
 		const [firstName, lastName] = name.split(" ");
-		const user = await this.userService.create({
+		let user = await this.userService.create({
 			email,
 			firstName: firstName ?? "",
 			lastName: lastName ?? "",
 			feideId: sub,
 			username: eduUsername,
 		});
+
+		req.log.info("fetching study program");
+		const studyProgram = await this.getStudyProgramForUser(
+			{ user, log: req.log },
+			tokenSet,
+		);
+
+		if (studyProgram) {
+			user = await this.userService.update(user.id, {
+				studyProgramId: studyProgram.id,
+			});
+		}
 		return user;
 	}
 
@@ -219,3 +375,16 @@ export class AuthService {
 		);
 	}
 }
+
+type FeideGroup = {
+	id: string;
+	type: string;
+	displayName: string;
+	membership: {
+		basic: string;
+		active: boolean;
+		displayName: string;
+		fsroles: string[];
+	};
+	parent: string;
+};

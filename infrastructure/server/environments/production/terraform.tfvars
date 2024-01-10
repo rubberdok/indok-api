@@ -68,6 +68,10 @@ environment_variables = [
   {
     name  = "REDIRECT_ORIGINS",
     value = "https://server-17vie6z9.blacksea-cdec4a8e.norwayeast.azurecontainerapps.io,https://indokntnu.no,https://indøkntnu.no"
+  },
+  {
+    name  = "FEIDE_GROUPS_API",
+    value = "https://groups-api.dataporten.no/groups/me/groups"
   }
 ]
 

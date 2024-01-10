@@ -25,7 +25,7 @@ import type { BookingStatus } from "~/domain/cabins.js";
 import { errorCodes, isUserFacingError } from "~/domain/errors.js";
 import type { Category, Event, SignUpAvailability } from "~/domain/events.js";
 import type { Role } from "~/domain/organizations.js";
-import type { User } from "~/domain/users.js";
+import type { StudyProgram, User } from "~/domain/users.js";
 import type { Context } from "~/services/context.js";
 
 export function getFormatErrorHandler(log?: Partial<FastifyInstance["log"]>) {
@@ -146,6 +146,13 @@ interface IUserService {
 	login(id: string): Promise<User>;
 	create(data: Prisma.UserCreateInput): Promise<User>;
 	canUpdateYear(user: Pick<User, "graduationYearUpdatedAt">): boolean;
+	getStudyProgram(
+		by: { id: string } | { externalId: string },
+	): Promise<StudyProgram | null>;
+	createStudyProgram(studyProgram: {
+		name: string;
+		externalId: string;
+	}): Promise<StudyProgram>;
 }
 
 export interface BookingData {

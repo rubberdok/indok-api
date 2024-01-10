@@ -1,17 +1,23 @@
 import assert from "assert";
+import type { IncomingMessage } from "http";
+import { faker } from "@faker-js/faker";
 import type { FastifyInstance, InjectOptions } from "fastify";
+import { mock } from "jest-mock-extended";
+import type { UserinfoResponse } from "openid-client";
 import { defaultTestDependenciesFactory } from "~/__tests__/dependencies-factory.js";
 import type { MockOpenIdClient } from "~/__tests__/mocks/openIdClient.js";
 import { env } from "~/config.js";
 import { errorCodes } from "~/domain/errors.js";
 import { createServer } from "~/server.js";
+import type { FeideUserInfo } from "../../service.js";
 
 describe("AuthPlugin", () => {
 	let app: FastifyInstance;
 	let mockOpenIdClient: MockOpenIdClient;
+	let dependencies: ReturnType<typeof defaultTestDependenciesFactory>;
 
 	beforeAll(async () => {
-		const dependencies = defaultTestDependenciesFactory();
+		dependencies = defaultTestDependenciesFactory();
 		({ mockOpenIdClient } = dependencies);
 		app = await createServer(dependencies);
 	});
@@ -24,6 +30,7 @@ describe("AuthPlugin", () => {
 				code_challenge: expect.any(String),
 				code_challenge_method: "S256",
 				state: "https://example.com/",
+				redirect_uri: expect.any(String),
 			});
 
 			expect(result.statusCode).toBe(303);
@@ -41,6 +48,157 @@ describe("AuthPlugin", () => {
 				sameSite: "None",
 				expires: expect.any(Date),
 			});
+		});
+	});
+
+	describe("GET /auth/login?kind=studyProgram", () => {
+		it("should create a new study program and add it to the user if it does not already exist", async () => {
+			const studyProgramId = faker.string.uuid();
+			const existingUser =
+				await dependencies.apolloServerDependencies.userService.create({
+					email: faker.internet.exampleEmail({
+						firstName: faker.string.uuid(),
+					}),
+					firstName: faker.person.firstName(),
+					lastName: faker.person.lastName(),
+					feideId: faker.string.uuid(),
+					username: faker.string.sample(20),
+				});
+
+			mockOpenIdClient.userinfo.mockResolvedValue(
+				mock<UserinfoResponse<FeideUserInfo, Record<string, never>>>({
+					sub: existingUser.feideId,
+				}),
+			);
+			mockOpenIdClient.requestResource.mockResolvedValue({
+				body: Buffer.from(
+					JSON.stringify([
+						{
+							id: studyProgramId,
+							type: "fc:fs:prg",
+							displayName: faker.string.sample(20),
+							membership: {
+								basic: "member",
+								active: true,
+								displayName: "Student",
+								fsroles: ["STUDENT"],
+							},
+							parent: "fc:org:ntnu.no",
+							url: "http://www.ntnu.no/studier/mtiot",
+						},
+					]),
+					"utf8",
+				),
+				...mock<IncomingMessage>(),
+			});
+
+			const login = await app.inject({
+				method: "GET",
+				url: "/auth/login?kind=studyProgram",
+			});
+			expect(login.statusCode).toBe(303);
+
+			const sessionCookie = login.cookies[0]?.value;
+			assert(sessionCookie !== undefined);
+
+			const studyProgramResponse = await app.inject({
+				method: "GET",
+				url: "/auth/study-program?code=code",
+				cookies: {
+					[env.SESSION_COOKIE_NAME]: sessionCookie,
+				},
+			});
+
+			expect(studyProgramResponse.statusCode).toBe(303);
+
+			const actual =
+				await dependencies.apolloServerDependencies.userService.get(
+					existingUser.id,
+				);
+			assert(actual.studyProgramId !== null);
+
+			const actualStudyProgram =
+				await dependencies.apolloServerDependencies.userService.getStudyProgram(
+					{
+						id: actual.studyProgramId,
+					},
+				);
+
+			expect(actualStudyProgram?.externalId).toBe(studyProgramId);
+		});
+
+		it("should add the user to an existing study program", async () => {
+			const studyProgramId = faker.string.uuid();
+			const existingStudyProgram =
+				await dependencies.apolloServerDependencies.userService.createStudyProgram(
+					{
+						name: faker.string.sample(20),
+						externalId: studyProgramId,
+					},
+				);
+
+			const existingUser =
+				await dependencies.apolloServerDependencies.userService.create({
+					email: faker.internet.exampleEmail({
+						firstName: faker.string.uuid(),
+					}),
+					firstName: faker.person.firstName(),
+					lastName: faker.person.lastName(),
+					feideId: faker.string.uuid(),
+					username: faker.string.sample(20),
+				});
+
+			mockOpenIdClient.userinfo.mockResolvedValue(
+				mock<UserinfoResponse<FeideUserInfo, Record<string, never>>>({
+					sub: existingUser.feideId,
+				}),
+			);
+			mockOpenIdClient.requestResource.mockResolvedValue({
+				body: Buffer.from(
+					JSON.stringify([
+						{
+							id: studyProgramId,
+							type: "fc:fs:prg",
+							displayName: faker.string.sample(20),
+							membership: {
+								basic: "member",
+								active: true,
+								displayName: "Student",
+								fsroles: ["STUDENT"],
+							},
+							parent: "fc:org:ntnu.no",
+							url: "http://www.ntnu.no/studier/mtiot",
+						},
+					]),
+					"utf8",
+				),
+				...mock<IncomingMessage>(),
+			});
+
+			const login = await app.inject({
+				method: "GET",
+				url: "/auth/login?kind=studyProgram",
+			});
+			expect(login.statusCode).toBe(303);
+
+			const sessionCookie = login.cookies[0]?.value;
+			assert(sessionCookie !== undefined);
+
+			const studyProgramResponse = await app.inject({
+				method: "GET",
+				url: "/auth/study-program?code=code",
+				cookies: {
+					[env.SESSION_COOKIE_NAME]: sessionCookie,
+				},
+			});
+
+			expect(studyProgramResponse.statusCode).toBe(303);
+
+			const actual =
+				await dependencies.apolloServerDependencies.userService.get(
+					existingUser.id,
+				);
+			expect(actual.studyProgramId).toBe(existingStudyProgram.id);
 		});
 	});
 
