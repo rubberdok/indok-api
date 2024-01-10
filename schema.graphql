@@ -480,6 +480,9 @@ type PrivateUser {
   """All organizations the user is a member of"""
   organizations: [Organization!]!
   phoneNumber: String
+
+  """The users' study program"""
+  studyProgram: StudyProgram
   username: String!
 }
 
@@ -645,6 +648,12 @@ enum Status {
   CONFIRMED
   PENDING
   REJECTED
+}
+
+type StudyProgram {
+  externalId: String!
+  id: ID!
+  name: String!
 }
 
 input SuperUpdateUserInput {

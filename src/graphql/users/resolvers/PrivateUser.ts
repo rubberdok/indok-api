@@ -4,4 +4,8 @@ export const PrivateUser: PrivateUserResolvers = {
 	organizations: (user, _args, ctx) => {
 		return ctx.organizationService.findMany({ userId: user.id });
 	},
+	studyProgram: (user, _args, ctx) => {
+		if (!user.studyProgramId) return null;
+		return ctx.userService.getStudyProgram({ id: user.studyProgramId });
+	},
 };

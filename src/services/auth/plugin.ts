@@ -4,8 +4,13 @@ import { InvalidArgumentError, UnauthorizedError } from "~/domain/errors.js";
 import type { User } from "~/domain/users.js";
 
 export interface AuthService {
-	authorizationUrl(req: FastifyRequest, redirect?: string | null): string;
-	authorizationCallback(
+	authorizationUrl(
+		req: FastifyRequest,
+		redirect?: string | null,
+		kind?: "login" | "studyProgram",
+	): string;
+	userLoginCallback(req: FastifyRequest, data: { code: string }): Promise<User>;
+	studyProgramCallback(
 		req: FastifyRequest,
 		data: { code: string },
 	): Promise<User>;
@@ -27,6 +32,7 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
 		app.route<{
 			Querystring: {
 				redirect?: string;
+				kind?: "login" | "studyProgram";
 			};
 		}>({
 			url: "/login",
@@ -35,12 +41,13 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
 				querystring: {
 					type: "object",
 					properties: {
+						kind: { type: "string" },
 						redirect: { type: "string" },
 					},
 				},
 			},
 			handler: (req, reply) => {
-				const { redirect } = req.query;
+				const { redirect, kind = "login" } = req.query;
 				let redirectUrl = new URL("/auth/me", env.SERVER_URL);
 
 				if (redirect) {
@@ -48,7 +55,11 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
 					redirectUrl = new URL(redirect);
 				}
 
-				const url = authService.authorizationUrl(req, redirectUrl.toString());
+				const url = authService.authorizationUrl(
+					req,
+					redirectUrl.toString(),
+					kind,
+				);
 
 				return reply.redirect(303, url);
 			},
@@ -82,7 +93,7 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
 				}
 
 				try {
-					const user = await authService.authorizationCallback(req, { code });
+					const user = await authService.userLoginCallback(req, { code });
 
 					await authService.login(req, user);
 
@@ -90,6 +101,45 @@ function getAuthPlugin(authService: AuthService): FastifyPluginAsync {
 				} catch (err) {
 					if (err instanceof Error) {
 						req.log.error(err, "Authentication failed");
+					}
+					throw err;
+				}
+			},
+		});
+
+		app.route<{
+			Querystring: {
+				code: string;
+				state?: string;
+			};
+		}>({
+			url: "/study-program",
+			method: "GET",
+			schema: {
+				querystring: {
+					type: "object",
+					properties: {
+						code: { type: "string" },
+						state: { type: "string" },
+					},
+					required: ["code"],
+				},
+			},
+			handler: async (req, reply) => {
+				const { code, state } = req.query;
+				let redirectUrl = new URL("/auth/me", env.SERVER_URL);
+
+				if (state) {
+					assertValidRedirectUrl(state);
+					redirectUrl = new URL(state);
+				}
+
+				try {
+					await authService.studyProgramCallback(req, { code });
+					return reply.redirect(303, redirectUrl.toString());
+				} catch (err) {
+					if (err instanceof Error) {
+						req.log.error(err, "Failed to fetch study programs for user");
 					}
 					throw err;
 				}

@@ -2,11 +2,11 @@ import { faker } from "@faker-js/faker";
 import type { FastifyRequest } from "fastify";
 import { mockDeep } from "jest-mock-extended";
 import { defaultTestDependenciesFactory } from "~/__tests__/dependencies-factory.js";
-import prisma from "~/lib/prisma.js";
 import {
 	type MockOpenIdClient,
 	newMockOpenIdClient,
-} from "../../../../__tests__/mocks/openIdClient.js";
+} from "~/__tests__/mocks/openIdClient.js";
+import prisma from "~/lib/prisma.js";
 import { AuthService } from "../../service.js";
 
 describe("AuthService", () => {
@@ -20,11 +20,10 @@ describe("AuthService", () => {
 		} = defaultTestDependenciesFactory({
 			openIdClient: openIdClient,
 		});
-		authService = new AuthService(
-			userService,
-			openIdClient,
-			"https://example.com",
-		);
+		authService = new AuthService(userService, openIdClient, {
+			login: "https://example.com",
+			studyProgram: "https://example.com",
+		});
 	});
 	describe("authorizationUrl", () => {
 		it("should call openIdClient#authorizeUrl with the expected parameters", () => {
@@ -36,6 +35,7 @@ describe("AuthService", () => {
 				code_challenge: expect.any(String),
 				code_challenge_method: "S256",
 				state: "redirectionUrl",
+				redirect_uri: "https://example.com",
 			});
 			expect(req.session.set).toHaveBeenCalledWith(
 				"codeVerifier",
@@ -44,7 +44,7 @@ describe("AuthService", () => {
 		});
 	});
 
-	describe("authorizationCallback", () => {
+	describe("userLoginCallback", () => {
 		it("should call openIdClient#callback and openIdClient#userinfo with the expected parameters", async () => {
 			/**
 			 * Arrange
@@ -64,7 +64,7 @@ describe("AuthService", () => {
 
 			openIdClient.updateUserResponseMock(user);
 
-			await authService.authorizationCallback(req, data);
+			await authService.userLoginCallback(req, data);
 
 			expect(openIdClient.callback).toHaveBeenCalledWith(
 				"https://example.com",
@@ -95,14 +95,14 @@ describe("AuthService", () => {
 
 			openIdClient.updateUserResponseMock(user);
 
-			const actual = await authService.authorizationCallback(req, data);
+			const actual = await authService.userLoginCallback(req, data);
 
 			expect(actual.feideId).toBe(user.id);
 			expect(actual.firstName).toBe(user.name.split(" ")[0]);
 			expect(actual.lastName).toBe(user.name.split(" ")[1]);
 			expect(actual.email).toBe(user.email);
 			expect(actual.username).toBe(user.email.split("@")[0]);
-			expect(actual.createdAt).toEqual(actual.updatedAt);
+			expect(actual.studyProgramId).toEqual(expect.any(String));
 		});
 
 		it("should return the existing user with the feide ID if it exists", async () => {
@@ -134,7 +134,7 @@ describe("AuthService", () => {
 
 			openIdClient.updateUserResponseMock(user);
 
-			const actual = await authService.authorizationCallback(req, data);
+			const actual = await authService.userLoginCallback(req, data);
 
 			expect(actual.id).toBe(expected.id);
 			expect(actual.feideId).toBe(expected.feideId);

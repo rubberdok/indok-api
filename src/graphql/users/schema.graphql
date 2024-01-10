@@ -113,4 +113,14 @@ type PrivateUser {
   true if the user is a super user, false otherwise
   """
   isSuperUser: Boolean!
+  """
+  The users' study program
+  """
+  studyProgram: StudyProgram
+}
+
+type StudyProgram {
+  id: ID!
+  name: String!
+  externalId: String!
 }

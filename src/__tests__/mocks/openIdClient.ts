@@ -1,3 +1,4 @@
+import type { IncomingMessage } from "http";
 import { faker } from "@faker-js/faker";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { merge } from "lodash-es";
@@ -52,5 +53,25 @@ function updateUserResponseMock(
 		name: user.name,
 		"https://n.feide.no/claims/userid_sec": [`feide:${user.email}`],
 		"https://n.feide.no/claims/eduPersonPrincipalName": user.email,
+	});
+	mockOpenIdClient.requestResource.mockResolvedValue({
+		body: Buffer.from(
+			JSON.stringify([
+				{
+					id: faker.string.uuid(),
+					displayName: faker.string.sample(20),
+					parent: "fc:org:ntnu.no",
+					type: "fc:fs:prg",
+					membership: {
+						basic: "member",
+						active: true,
+						displayName: "Student",
+						fsroles: ["STUDENT"],
+					},
+				},
+			]),
+			"utf8",
+		),
+		...mock<IncomingMessage>(),
 	});
 }

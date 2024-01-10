@@ -18,7 +18,7 @@ export interface UserRepository {
 	get(id: string): Promise<PrismaUser>;
 	getAll(): Promise<PrismaUser[]>;
 	getByFeideId(feideId: string): Promise<PrismaUser>;
-	update(id: string, data: Prisma.UserUpdateInput): Promise<PrismaUser>;
+	update(id: string, user: Partial<User>): Promise<PrismaUser>;
 	create(data: Prisma.UserCreateInput): Promise<PrismaUser>;
 	createStudyProgram(studyProgram: {
 		name: string;
@@ -57,6 +57,7 @@ export class UserService {
 			allergies: string | null;
 			phoneNumber: string | null;
 			isSuperUser?: boolean | null;
+			studyProgramId?: string | null;
 		}>,
 	): Promise<User> {
 		const { isSuperUser } = await this.permissionService.isSuperUser(
@@ -102,6 +103,11 @@ export class UserService {
 				.boolean()
 				.nullish()
 				.transform((val) => val ?? undefined),
+			studyProgramId: z
+				.string()
+				.uuid()
+				.nullish()
+				.transform((val) => val ?? undefined),
 		});
 		const validatedData = schema.parse(data);
 
@@ -126,6 +132,7 @@ export class UserService {
 			graduationYear: number | null;
 			allergies: string | null;
 			phoneNumber: string | null;
+			studyProgramId: string | null;
 		}>,
 	): Promise<User> {
 		const schema = z.object({
@@ -153,6 +160,10 @@ export class UserService {
 				.string()
 				.nullish()
 				.transform((val) => val ?? undefined),
+			studyProgramId: z
+				.string()
+				.nullish()
+				.transform((val) => val ?? undefined),
 			phoneNumber: z
 				.string()
 				.regex(/^(0047|\+47|47)?[49]\d{7}$/)
@@ -175,6 +186,7 @@ export class UserService {
 				phoneNumber,
 				allergies,
 				graduationYear,
+				studyProgramId,
 			} = schema.parse(data);
 			let firstLogin: boolean | undefined;
 			let newGraduationYear: number | undefined = graduationYear;
@@ -194,6 +206,7 @@ export class UserService {
 				graduationYear: newGraduationYear,
 				graduationYearUpdatedAt,
 				firstLogin,
+				studyProgramId,
 			});
 
 			return this.toDomainUser(updatedUser);

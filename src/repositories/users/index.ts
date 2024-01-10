@@ -1,13 +1,13 @@
 import type { Prisma, PrismaClient, User } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 import { InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
-import type { StudyProgram } from "~/domain/users.js";
+import type { StudyProgram, User as DomainUser } from "~/domain/users.js";
 import { prismaKnownErrorCodes } from "~/lib/prisma.js";
 
 export class UserRepository {
 	constructor(private db: PrismaClient) {}
 
-	update(id: string, data: Prisma.UserUpdateInput): Promise<User> {
+	update(id: string, data: Partial<DomainUser>): Promise<User> {
 		return this.db.user.update({
 			where: {
 				id,

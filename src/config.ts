@@ -8,6 +8,7 @@ const envVarsSchema = z.object({
 	CORS_CREDENTIALS: z.string().transform((v) => v === "true"),
 	CORS_ORIGINS: z.string().transform((v) => v.split(",")),
 	DATABASE_CONNECTION_STRING: z.string(),
+	FEIDE_GROUPS_API: z.string().url(),
 	FEIDE_BASE_URL: z.string().url(),
 	FEIDE_CLIENT_ID: z.string(),
 	FEIDE_CLIENT_SECRET: z.string(),
