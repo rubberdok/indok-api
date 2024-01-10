@@ -90,6 +90,7 @@ describe("Event mutations", () => {
 				participationStatus: "CONFIRMED",
 			});
 			expect(eventService.signUp).toHaveBeenCalledWith(
+				expect.objectContaining({ user: contextValue.user }),
 				contextValue.req.session.userId,
 				expect.any(String),
 			);

@@ -2,11 +2,13 @@ import { faker } from "@faker-js/faker";
 import {
 	type Organization,
 	ParticipationStatus,
-	type User,
+	type User as PrismaUser,
 } from "@prisma/client";
 import { DateTime } from "luxon";
 import { InvalidArgumentError } from "~/domain/errors.js";
+import type { User } from "~/domain/users.js";
 import prisma from "~/lib/prisma.js";
+import { makeMockContext } from "~/services/context.js";
 import type { EventService } from "../../service.js";
 import { makeDependencies } from "./dependencies-factory.js";
 
@@ -56,7 +58,11 @@ describe("Event Sign Up", () => {
 			 *
 			 * 1. Sign up the user for the event.
 			 */
-			const actual = await eventService.signUp(user.id, event.id);
+			const actual = await eventService.signUp(
+				makeMockContext(),
+				user.id,
+				event.id,
+			);
 
 			/**
 			 * Assert.
@@ -109,7 +115,11 @@ describe("Event Sign Up", () => {
 			 *
 			 * 1. Sign up the user for the event.
 			 */
-			const actual = await eventService.signUp(user.id, event.id);
+			const actual = await eventService.signUp(
+				makeMockContext(),
+				user.id,
+				event.id,
+			);
 
 			/**
 			 * Assert.
@@ -162,7 +172,11 @@ describe("Event Sign Up", () => {
 			 *
 			 * 1. Sign up the user for the event.
 			 */
-			const actual = await eventService.signUp(user.id, event.id);
+			const actual = await eventService.signUp(
+				makeMockContext(),
+				user.id,
+				event.id,
+			);
 
 			/**
 			 * Assert.
@@ -238,7 +252,11 @@ describe("Event Sign Up", () => {
 					 *
 					 * 1. Sign up the user for the event.
 					 */
-					const actual = await eventService.signUp(user.id, event.id);
+					const actual = await eventService.signUp(
+						makeMockContext(),
+						user.id,
+						event.id,
+					);
 
 					/**
 					 * Assert.
@@ -306,7 +324,7 @@ describe("Event Sign Up", () => {
 			 * Sign up all users for the event.
 			 */
 			const promises = users.map((user) =>
-				eventService.signUp(user.id, event.id),
+				eventService.signUp(makeMockContext(), user.id, event.id),
 			);
 			const actual = await Promise.all(promises);
 
@@ -386,7 +404,7 @@ describe("Event Sign Up", () => {
 			 * Sign up all users for the event.
 			 */
 			const promises = users.map((user) =>
-				eventService.signUp(user.id, event.id),
+				eventService.signUp(makeMockContext(), user.id, event.id),
 			);
 			const actual = await Promise.all(promises);
 
@@ -456,7 +474,7 @@ describe("Event Sign Up", () => {
 			 *
 			 * Sign up for the event with sign ups disabled.
 			 */
-			const signUp = eventService.signUp(user.id, event.id);
+			const signUp = eventService.signUp(makeMockContext(), user.id, event.id);
 
 			/**
 			 * Assert
@@ -500,7 +518,7 @@ describe("Event Sign Up", () => {
 			 *
 			 * Sign up for the event with sign ups disabled.
 			 */
-			const signUp = eventService.signUp(user.id, event.id);
+			const signUp = eventService.signUp(makeMockContext(), user.id, event.id);
 
 			/**
 			 * Assert
@@ -524,7 +542,7 @@ function getCreateUserData() {
 
 async function makeUserWithOrganizationMembership(
 	userData: Partial<User> = {},
-): Promise<{ user: User; organization: Organization }> {
+): Promise<{ user: PrismaUser; organization: Organization }> {
 	const user = await prisma.user.create({
 		data: {
 			firstName: faker.person.firstName(),

@@ -79,22 +79,13 @@ export function dependenciesFactory(): ServerDependencies {
 		mailService,
 		permissionService,
 	);
-	const userService = new UserService(
-		userRepository,
-		permissionService,
-		app.log.child({ service: "users" }),
-	);
+	const userService = new UserService(userRepository, permissionService);
 	const eventService = new EventService(
 		eventRepository,
 		permissionService,
 		userService,
-		app.log.child({ service: "events" }),
 	);
-	const authService = new AuthService(
-		userService,
-		feideClient,
-		app.log.child({ service: "auth" }),
-	);
+	const authService = new AuthService(userService, feideClient);
 
 	const apolloServerDependencies: ApolloServerDependencies = {
 		cabinService,

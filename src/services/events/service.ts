@@ -22,6 +22,7 @@ import {
 } from "~/domain/events.js";
 import { Role } from "~/domain/organizations.js";
 import type { User } from "~/domain/users.js";
+import type { Context } from "../context.js";
 
 interface CreateConfirmedSignUpData {
 	userId: string;
@@ -120,7 +121,6 @@ export class EventService {
 		private eventRepository: EventRepository,
 		private permissionService: PermissionService,
 		private userService: UserService,
-		private log?: Logger,
 	) {}
 	/**
 	 * Create a new event
@@ -411,7 +411,11 @@ export class EventService {
 	 * full, or because the event itself is full, the user will be added to the wait list. The returned sign up will
 	 * either have a status of `CONFIRMED` or `WAIT_LIST`.
 	 */
-	async signUp(userId: string, eventId: string): Promise<EventSignUp> {
+	async signUp(
+		ctx: Context,
+		userId: string,
+		eventId: string,
+	): Promise<EventSignUp> {
 		const maxAttempts = 20;
 		const user = await this.userService.get(userId);
 
@@ -423,7 +427,7 @@ export class EventService {
 		 * This number may need to be tweaked.
 		 */
 		for (let attempt = 0; attempt < maxAttempts; attempt++) {
-			this.log?.info(
+			ctx.log.info(
 				{ userId, eventId, attempt },
 				"Attempting to sign up user for event.",
 			);
@@ -435,7 +439,7 @@ export class EventService {
 
 			// If there is no remaining capacity on the event, it doesn't matter if there is any remaining capacity in slots.
 			if (event.signUpDetails.remainingCapacity <= 0) {
-				this.log?.info({ event }, "Event is full, adding user to wait list.");
+				ctx.log.info({ event }, "Event is full, adding user to wait list.");
 				const { signUp } = await this.eventRepository.createSignUp({
 					userId,
 					participationStatus: ParticipationStatus.ON_WAITLIST,
@@ -452,7 +456,7 @@ export class EventService {
 					);
 
 				if (slotToSignUp === null) {
-					this.log?.info({ event }, "Event is full, adding user to wait list.");
+					ctx.log.info({ event }, "Event is full, adding user to wait list.");
 					const { signUp } = await this.eventRepository.createSignUp({
 						userId,
 						participationStatus: ParticipationStatus.ON_WAITLIST,
@@ -466,7 +470,7 @@ export class EventService {
 					eventId,
 					slotId: slotToSignUp.id,
 				});
-				this.log?.info(
+				ctx.log.info(
 					{ signUp, attempt },
 					"Successfully signed up user for event.",
 				);
@@ -483,7 +487,7 @@ export class EventService {
 		 * Since the user hasn't been added to the wait list, there is likely still remaining capacity on the event,
 		 * but we have to abort at some point to avoid stalling the request.
 		 */
-		this.log?.error(
+		ctx.log.error(
 			"Failed to sign up user after 20 attempts. If this happens often, consider increasing the number of attempts.",
 		);
 		throw new InternalServerError("Failed to sign up user after 20 attempts");
@@ -524,11 +528,15 @@ export class EventService {
 	/**
 	 * promoteFromWaitList promotes the first available user on the wait list for the specified event to a confirmed sign up.
 	 *
+	 * @param ctx - The context of the request
 	 * @param eventId - The ID of the event to promote a user from the wait list for
 	 * @returns The confirmed sign up, or null if there are no users on the wait list, or if there is no remaining capacity
 	 * on the event, or no available slots for the users on the wait list.
 	 */
-	async promoteFromWaitList(eventId: string): Promise<EventSignUp | null> {
+	async promoteFromWaitList(
+		ctx: Context,
+		eventId: string,
+	): Promise<EventSignUp | null> {
 		const event = await this.eventRepository.get(eventId);
 		if (!event.signUpsEnabled) {
 			throw new InvalidArgumentError("This event does does not have sign ups.");
@@ -555,7 +563,7 @@ export class EventService {
 							newParticipationStatus: ParticipationStatus.CONFIRMED,
 						});
 
-					this.log?.info(
+					ctx.log.info(
 						{ confirmedSignUp },
 						"Promoted from waitlist to confirmed sign up.",
 					);
@@ -566,7 +574,7 @@ export class EventService {
 				throw err;
 			}
 		}
-		this.log?.info(
+		ctx.log.info(
 			{ eventId },
 			"Found no valid sign ups to promote from wait list",
 		);
@@ -882,8 +890,4 @@ export class EventService {
 	public getCategories(_ctx: Context): Promise<Category[]> {
 		return this.eventRepository.getCategories();
 	}
-}
-
-interface Context {
-	user: User | null;
 }

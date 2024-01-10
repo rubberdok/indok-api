@@ -7,6 +7,6 @@ export const signUp: NonNullable<MutationResolvers["signUp"]> = async (
 ) => {
 	assertIsAuthenticated(ctx);
 	const { eventId } = data;
-	const signUp = await ctx.eventService.signUp(ctx.user.id, eventId);
+	const signUp = await ctx.eventService.signUp(ctx, ctx.user.id, eventId);
 	return { signUp };
 };

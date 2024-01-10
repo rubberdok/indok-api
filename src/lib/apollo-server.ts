@@ -13,7 +13,12 @@ import type {
 	Semester,
 } from "@prisma/client";
 import type { Transaction } from "@sentry/node";
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import type {
+	FastifyBaseLogger,
+	FastifyInstance,
+	FastifyReply,
+	FastifyRequest,
+} from "fastify";
 import { GraphQLError, type GraphQLFormattedError } from "graphql";
 import { merge } from "lodash-es";
 import type { BookingStatus } from "~/domain/cabins.js";
@@ -21,6 +26,7 @@ import { errorCodes, isUserFacingError } from "~/domain/errors.js";
 import type { Category, Event, SignUpAvailability } from "~/domain/events.js";
 import type { Role } from "~/domain/organizations.js";
 import type { User } from "~/domain/users.js";
+import type { Context } from "~/services/context.js";
 
 export function getFormatErrorHandler(log?: Partial<FastifyInstance["log"]>) {
 	const formatError = (
@@ -70,6 +76,7 @@ export interface ApolloContext extends ApolloServerDependencies {
 	res: FastifyReply;
 	req: FastifyRequest;
 	user: User | null;
+	log: FastifyBaseLogger;
 	transaction?: Transaction;
 }
 
@@ -125,7 +132,7 @@ interface IUserService {
 		},
 	): Promise<User>;
 	superUpdateUser(
-		callerId: string,
+		ctx: Context,
 		userToUpdateId: string,
 		data: {
 			firstName?: string | null;
@@ -217,7 +224,7 @@ interface IEventService {
 	): Promise<Event>;
 	get(id: string): Promise<Event>;
 	findMany(data?: { onlyFutureEvents?: boolean | null }): Promise<Event[]>;
-	signUp(userId: string, eventId: string): Promise<EventSignUp>;
+	signUp(ctx: Context, userId: string, eventId: string): Promise<EventSignUp>;
 	retractSignUp(userId: string, eventId: string): Promise<EventSignUp>;
 	canSignUpForEvent(userId: string, eventId: string): Promise<boolean>;
 	getSignUpAvailability(

@@ -23,7 +23,6 @@ describe("AuthService", () => {
 		authService = new AuthService(
 			userService,
 			openIdClient,
-			undefined,
 			"https://example.com",
 		);
 	});

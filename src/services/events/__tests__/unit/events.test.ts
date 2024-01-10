@@ -10,6 +10,7 @@ import {
 import type { Event } from "~/domain/events.js";
 import { Role } from "~/domain/organizations.js";
 import type { User } from "~/domain/users.js";
+import { makeMockContext } from "~/services/context.js";
 import {
 	type EventRepository,
 	EventService,
@@ -905,7 +906,7 @@ describe("EventsService", () => {
 			 * Act
 			 */
 			const result = service.createCategory(
-				{ user: mock<User>({ id: faker.string.uuid() }) },
+				makeMockContext(mock<User>({ id: faker.string.uuid() })),
 				{
 					name: faker.commerce.productName(),
 				},
@@ -934,7 +935,7 @@ describe("EventsService", () => {
 			 * Act
 			 */
 			const result = service.createCategory(
-				{ user: mock<User>({ id: faker.string.uuid() }) },
+				makeMockContext(mock<User>({ id: faker.string.uuid() })),
 				{
 					name: faker.commerce.productName(),
 				},
@@ -963,7 +964,7 @@ describe("EventsService", () => {
 			 * Act
 			 */
 			const result = service.createCategory(
-				{ user: mock<User>({ id: faker.string.uuid() }) },
+				makeMockContext(mock<User>({ id: faker.string.uuid() })),
 				{
 					name: faker.string.sample(101),
 				},
@@ -992,7 +993,7 @@ describe("EventsService", () => {
 			 * Act
 			 */
 			const result = service.createCategory(
-				{ user: mock<User>({ id: faker.string.uuid() }) },
+				makeMockContext(mock<User>({ id: faker.string.uuid() })),
 				{
 					name: "",
 				},
@@ -1023,7 +1024,7 @@ describe("EventsService", () => {
 			 * Act
 			 */
 			const result = service.updateCategory(
-				{ user: mock<User>({ id: faker.string.uuid() }) },
+				makeMockContext(mock<User>({ id: faker.string.uuid() })),
 				{
 					id: faker.string.uuid(),
 					name: faker.commerce.productName(),
@@ -1053,7 +1054,7 @@ describe("EventsService", () => {
 			 * Act
 			 */
 			const result = service.updateCategory(
-				{ user: mock<User>({ id: faker.string.uuid() }) },
+				makeMockContext(mock<User>({ id: faker.string.uuid() })),
 				{
 					id: faker.string.uuid(),
 					name: faker.commerce.productName(),
@@ -1083,7 +1084,7 @@ describe("EventsService", () => {
 			 * Act
 			 */
 			const result = service.updateCategory(
-				{ user: mock<User>({ id: faker.string.uuid() }) },
+				makeMockContext(mock<User>({ id: faker.string.uuid() })),
 				{
 					id: faker.string.uuid(),
 					name: faker.string.sample(101),
@@ -1113,7 +1114,7 @@ describe("EventsService", () => {
 			 * Act
 			 */
 			const result = service.updateCategory(
-				{ user: mock<User>({ id: faker.string.uuid() }) },
+				makeMockContext(mock<User>({ id: faker.string.uuid() })),
 				{
 					id: faker.string.uuid(),
 					name: "",
@@ -1145,7 +1146,7 @@ describe("EventsService", () => {
 			 * Act
 			 */
 			const result = service.deleteCategory(
-				{ user: mock<User>({ id: faker.string.uuid() }) },
+				makeMockContext(mock<User>({ id: faker.string.uuid() })),
 				{
 					id: faker.string.uuid(),
 				},
@@ -1174,7 +1175,7 @@ describe("EventsService", () => {
 			 * Act
 			 */
 			const result = service.deleteCategory(
-				{ user: mock<User>({ id: faker.string.uuid() }) },
+				makeMockContext(mock<User>({ id: faker.string.uuid() })),
 				{
 					id: faker.string.uuid(),
 				},

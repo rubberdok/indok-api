@@ -3,6 +3,7 @@ import { ParticipationStatus } from "@prisma/client";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
 import prisma from "~/lib/prisma.js";
+import { makeMockContext } from "~/services/context.js";
 import type { EventService } from "../../service.js";
 import {
 	makeDependencies,
@@ -78,7 +79,10 @@ describe("EventService", () => {
 			 *
 			 * Call promoteFromWaitList for the event
 			 */
-			const actual = await eventService.promoteFromWaitList(event.id);
+			const actual = await eventService.promoteFromWaitList(
+				makeMockContext(),
+				event.id,
+			);
 
 			/**
 			 * Assert
