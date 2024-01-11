@@ -10,6 +10,7 @@ export type IMailClient = ServerClient;
 export const TemplateAlias = {
 	EVENT_WAIT_LIST: "event-wait-list",
 	CABIN_BOOKING_RECEIPT: "cabin-booking-receipt",
+	WELCOME: "welcome",
 } as const;
 
 type CabinBookingReceipt = {
@@ -22,6 +23,11 @@ type Model = {
 		subject: string;
 	};
 	[TemplateAlias.CABIN_BOOKING_RECEIPT]: CabinBookingReceipt;
+	[TemplateAlias.WELCOME]: {
+		firstName: string;
+		lastName: string;
+		subject: string;
+	};
 };
 
 export type EmailContent = Modify<
@@ -38,5 +44,9 @@ export type EmailContent = Modify<
 		| {
 				TemplateAlias: typeof TemplateAlias.CABIN_BOOKING_RECEIPT;
 				TemplateModel: Model[typeof TemplateAlias.CABIN_BOOKING_RECEIPT];
+		  }
+		| {
+				TemplateAlias: typeof TemplateAlias.WELCOME;
+				TemplateModel: Model[typeof TemplateAlias.WELCOME];
 		  }
 	);

@@ -1,5 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
+import { Queue } from "bullmq";
 import fastify, { type FastifyInstance, type FastifyRequest } from "fastify";
+import { Redis } from "ioredis";
 import { env } from "~/config.js";
 import type { User } from "~/domain/users.js";
 import { CabinRepository } from "~/repositories/cabins/index.js";
@@ -84,7 +86,20 @@ export function dependenciesFactory(): ServerDependencies {
 		mailService,
 		permissionService,
 	);
-	const userService = new UserService(userRepository, permissionService);
+	const redisQueueClient = new Redis(env.REDIS_CONNECTION_STRING, {
+		keepAlive: 1_000 * 60 * 3, // 3 minutes
+		maxRetriesPerRequest: 0,
+	});
+	const mailQueue = new Queue<
+		{ subject: string; receiverId: string },
+		{ status: string },
+		"welcome"
+	>("email", { connection: redisQueueClient });
+	const userService = new UserService(
+		userRepository,
+		permissionService,
+		mailQueue,
+	);
 	const eventService = new EventService(
 		eventRepository,
 		permissionService,
