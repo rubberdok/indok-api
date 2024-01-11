@@ -23,8 +23,18 @@ export function initWorkers() {
 		"welcome" | "waitlist"
 	>("email", MailWorker(mailService, userRepository, logger), {
 		connection: redis,
-	}).on("ready", () => {
+	});
+
+	worker.on("ready", () => {
 		logger.info("Mail worker ready");
+	});
+
+	worker.on("error", (error) => {
+		logger.error(error, "Mail worker error");
+	});
+
+	worker.on("failed", (job, error) => {
+		logger.error({ error, job }, "Mail job failed");
 	});
 
 	const gracefulShutdown = async (signal: "SIGINT" | "SIGTERM") => {
