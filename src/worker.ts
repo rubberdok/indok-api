@@ -21,18 +21,19 @@ export function initWorkers() {
 		{ subject: string; receiverId: string },
 		{ status: string },
 		"welcome" | "waitlist"
-	>("email", MailWorker(mailService, userRepository), {
+	>("email", MailWorker(mailService, userRepository, logger), {
 		connection: redis,
+	}).on("ready", () => {
+		logger.info("Mail worker ready");
 	});
 
 	const gracefulShutdown = async (signal: "SIGINT" | "SIGTERM") => {
-		console.log(`Received ${signal}, closing server...`);
+		logger.info(`Received ${signal}, closing server...`);
 		await worker.close();
 		await redis.quit();
 		process.exit(0);
 	};
 
 	process.on("SIGINT", () => gracefulShutdown("SIGINT"));
-
 	process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 }
