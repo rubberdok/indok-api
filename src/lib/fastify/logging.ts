@@ -1,12 +1,11 @@
-import type { FastifyServerOptions } from "fastify";
-import type { PinoLoggerOptions } from "fastify/types/logger.js";
+import type { LoggerOptions } from "pino";
 import { env } from "~/config.js";
 
 /**
  * Redact personally identifiable information (PII) from logs
  * to try to be GDPR compliant, and avoid storing sensitive data in logs.
  */
-const redact: PinoLoggerOptions["redact"] = [
+const redact: LoggerOptions["redact"] = [
 	"*.firstName",
 	"*.lastName",
 	"*.email",
@@ -17,7 +16,7 @@ const redact: PinoLoggerOptions["redact"] = [
 
 export const envToLogger: Record<
 	"development" | "production" | "test",
-	Exclude<FastifyServerOptions["logger"], boolean>
+	Omit<LoggerOptions, "hooks">
 > = {
 	development: {
 		enabled: env.LOG_ENABLED,

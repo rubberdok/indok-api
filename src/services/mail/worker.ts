@@ -1,5 +1,6 @@
 import type { User } from "@prisma/client";
 import type { Processor } from "bullmq";
+import type { Logger } from "pino";
 import type { MailService } from "./index.js";
 
 type UserRepository = {
@@ -9,16 +10,16 @@ type UserRepository = {
 const MailWorker = (
 	mailService: MailService,
 	userRepository: UserRepository,
+	log?: Logger,
 ): Processor<
 	{ subject: string; receiverId: string },
 	{ status: string },
 	"waitlist" | "welcome"
 > => {
 	return async (job) => {
+		log?.info({ job: { name: job.name, data: job.data } }, "starting job");
 		const { subject, receiverId } = job.data;
-		console.log("sending email", job.name);
 		const user = await userRepository.get(receiverId);
-		console.log("Sending email to", user.id);
 		switch (job.name) {
 			case "waitlist":
 				await mailService.send({

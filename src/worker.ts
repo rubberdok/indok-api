@@ -1,6 +1,8 @@
 import { Worker } from "bullmq";
 import { Redis } from "ioredis";
+import { pino } from "pino";
 import { env } from "./config.js";
+import { envToLogger } from "./lib/fastify/logging.js";
 import postmark from "./lib/postmark.js";
 import prisma from "./lib/prisma.js";
 import { UserRepository } from "./repositories/users/index.js";
@@ -12,7 +14,7 @@ export function initWorkers() {
 		keepAlive: 1_000 * 60 * 3, // 3 minutes
 		maxRetriesPerRequest: 0,
 	});
-
+	const logger = pino(envToLogger[env.NODE_ENV]);
 	const mailService = new MailService(postmark, env.NO_REPLY_EMAIL);
 	const userRepository = new UserRepository(prisma);
 	const worker = new Worker<
