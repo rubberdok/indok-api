@@ -1,4 +1,5 @@
 import type { Prisma, User as PrismaUser } from "@prisma/client";
+import type { Queue } from "bullmq";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
 import { z } from "zod";
@@ -37,6 +38,11 @@ export class UserService {
 	constructor(
 		private usersRepository: UserRepository,
 		private permissionService: PermissionService,
+		private emailQueue?: Queue<
+			{ subject: string; receiverId: string },
+			{ status: string },
+			"welcome"
+		>,
 	) {}
 
 	/**
@@ -235,6 +241,10 @@ export class UserService {
 	async create(data: Prisma.UserCreateInput): Promise<User> {
 		this.validateUser(data);
 		const user = await this.usersRepository.create(data);
+		await this.emailQueue?.add("welcome", {
+			subject: "Velkommen til Indøk",
+			receiverId: user.id,
+		});
 		return this.toDomainUser(user);
 	}
 
