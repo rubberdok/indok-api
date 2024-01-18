@@ -12,8 +12,8 @@ dependencies:
     specifier: ^2.1.1
     version: 2.1.1(@apollo/server@4.10.0)(fastify@4.25.2)
   '@fastify/cookie':
-    specifier: ^9.3.0
-    version: 9.3.0
+    specifier: ^9.3.1
+    version: 9.3.1
   '@fastify/cors':
     specifier: ^8.5.0
     version: 8.5.0
@@ -1234,8 +1234,8 @@ packages:
       fast-uri: 2.3.0
     dev: false
 
-  /@fastify/cookie@9.3.0:
-    resolution: {integrity: sha512-kDEo3hOaWGcbwgK2TLXAK034a4YmNIcencBeHFO3kiFs9YbGdNEluC62rzqKxSW+NyomezxDrpyts30hK0xQ6g==}
+  /@fastify/cookie@9.3.1:
+    resolution: {integrity: sha512-h1NAEhB266+ZbZ0e9qUE6NnNR07i7DnNXWG9VbbZ8uC6O/hxHpl+Zoe5sw1yfdZ2U6XhToUGDnzQtWJdCaPwfg==}
     dependencies:
       cookie-signature: 1.2.1
       fastify-plugin: 4.5.1
