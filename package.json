@@ -55,7 +55,7 @@
 		"@jest/globals": "^29.7.0",
 		"@parcel/watcher": "^2.4.0",
 		"@swc/cli": "^0.1.65",
-		"@swc/core": "1.3.104",
+		"@swc/core": "1.3.105",
 		"@swc/helpers": "^0.5.3",
 		"@swc/jest": "^0.2.31",
 		"@types/connect-redis": "^0.0.23",
