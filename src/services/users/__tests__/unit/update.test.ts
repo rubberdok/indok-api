@@ -4,6 +4,7 @@ import { DateTime } from "luxon";
 import { PermissionDeniedError } from "~/domain/errors.js";
 import type { User } from "~/domain/users.js";
 import { makeMockContext } from "~/services/context.js";
+import type { MailQueue } from "~/services/mail/worker.js";
 import {
 	type PermissionService,
 	type UserRepository,
@@ -18,7 +19,11 @@ describe("UserService", () => {
 	beforeAll(() => {
 		userRepository = mockDeep<UserRepository>();
 		permissionService = mockDeep<PermissionService>();
-		userService = new UserService(userRepository, permissionService);
+		userService = new UserService(
+			userRepository,
+			permissionService,
+			mockDeep<MailQueue>(),
+		);
 	});
 
 	describe("superUpdateUser", () => {

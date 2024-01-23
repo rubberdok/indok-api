@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
+import { mockDeep } from "jest-mock-extended";
 import {
 	type MockOpenIdClient,
 	newMockOpenIdClient,
@@ -12,6 +13,7 @@ import { MemberRepository } from "~/repositories/organizations/members.js";
 import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
 import { UserRepository } from "~/repositories/users/index.js";
 import { AuthService } from "~/services/auth/service.js";
+import type { MailQueue } from "~/services/mail/worker.js";
 import { PermissionService } from "~/services/permissions/service.js";
 import { UserService } from "~/services/users/service.js";
 
@@ -43,8 +45,13 @@ export function defaultTestDependenciesFactory(
 			organizationRepository,
 		),
 	} = serviceOverrides;
-	const { userService = new UserService(userRepository, permissionService) } =
-		serviceOverrides;
+	const {
+		userService = new UserService(
+			userRepository,
+			permissionService,
+			mockDeep<MailQueue>(),
+		),
+	} = serviceOverrides;
 	const { authService = new AuthService(userService, openIdClient) } =
 		overrides;
 

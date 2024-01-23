@@ -1,9 +1,9 @@
 import type { PrismaClient } from "@prisma/client";
-import { Queue } from "bullmq";
 import fastify, { type FastifyInstance, type FastifyRequest } from "fastify";
 import { Redis } from "ioredis";
 import { env } from "~/config.js";
 import type { User } from "~/domain/users.js";
+import { Queue } from "~/lib/mq.js";
 import { CabinRepository } from "~/repositories/cabins/index.js";
 import { EventRepository } from "~/repositories/events/repository.js";
 import { ListingRepository } from "~/repositories/listings/repository.js";
@@ -16,6 +16,7 @@ import { CabinService } from "~/services/cabins/service.js";
 import { EventService } from "~/services/events/service.js";
 import { ListingService } from "~/services/listings/index.js";
 import { MailService } from "~/services/mail/index.js";
+import type { MailQueue } from "~/services/mail/worker.js";
 import { OrganizationService } from "~/services/organizations/service.js";
 import { PermissionService } from "~/services/permissions/service.js";
 import { UserService } from "~/services/users/service.js";
@@ -86,15 +87,32 @@ export function dependenciesFactory(): ServerDependencies {
 		mailService,
 		permissionService,
 	);
+
 	const redisQueueClient = new Redis(env.REDIS_CONNECTION_STRING, {
 		keepAlive: 1_000 * 60 * 3, // 3 minutes
 		maxRetriesPerRequest: 0,
 	});
-	const mailQueue = new Queue<
-		{ subject: string; receiverId: string },
-		{ status: string },
+
+	app.addHook("onClose", async () => {
+		await redisQueueClient.quit();
+	});
+
+	const mailQueue: MailQueue = new Queue<
+		{ recipientId: string },
+		void,
 		"welcome"
-	>("email", { connection: redisQueueClient });
+	>(
+		"email",
+		{ connection: redisQueueClient },
+		undefined,
+		app.log.child({ service: "email-queue" }),
+	);
+
+	const queues = [mailQueue];
+	app.addHook("onClose", async () => {
+		await Promise.all(queues.map((queue) => queue.close()));
+	});
+
 	const userService = new UserService(
 		userRepository,
 		permissionService,
