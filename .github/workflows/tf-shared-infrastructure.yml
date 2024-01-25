@@ -90,7 +90,7 @@ jobs:
           body-includes: "### Planned Changes to Shared Infrastructure"
 
       - name: Update Pull Request
-        uses: peter-evans/create-or-update-comment@v3
+        uses: peter-evans/create-or-update-comment@v4
         if: github.event_name == 'pull_request'
         env:
           PLAN: "${{ steps.plan.outputs.stdout }}"
