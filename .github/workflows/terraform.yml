@@ -75,7 +75,7 @@ jobs:
         continue-on-error: true
 
       - name: Find Existing Comment
-        uses: peter-evans/find-comment@v2
+        uses: peter-evans/find-comment@v3
         if: github.event_name == 'pull_request'
         id: find-comment
         with:
