@@ -53,7 +53,7 @@ describe("User queries", () => {
             `),
 					},
 					{
-						userId: superUser.id,
+						user: { feideId: superUser.id },
 					},
 				);
 
@@ -82,7 +82,7 @@ describe("User queries", () => {
 	function makeUser(
 		data: Partial<{ isSuperUser: boolean }> = {},
 	): Promise<User> {
-		return client.dependencies.apolloServerDependencies.userService.create({
+		return client.services.users.create({
 			feideId: faker.string.uuid(),
 			firstName: faker.person.firstName(),
 			lastName: faker.person.lastName(),

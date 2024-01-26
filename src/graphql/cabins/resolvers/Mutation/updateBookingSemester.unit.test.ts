@@ -57,7 +57,7 @@ describe("Cabin mutations", () => {
 			 */
 			expect(errors).toBeUndefined();
 			expect(cabinService.updateBookingSemester).toHaveBeenCalledWith(
-				authenticatedContext.req.session.userId,
+				authenticatedContext.user?.id,
 				{
 					semester: data.semester,
 					startAt: data.startAt,

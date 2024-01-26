@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
 import type { FastifyRequest } from "fastify";
 import { mockDeep } from "jest-mock-extended";
-import { defaultTestDependenciesFactory } from "~/__tests__/dependencies-factory.js";
+import { makeTestServices } from "~/__tests__/dependencies-factory.js";
 import {
 	type MockOpenIdClient,
 	newMockOpenIdClient,
@@ -15,12 +15,8 @@ describe("AuthService", () => {
 
 	beforeAll(() => {
 		openIdClient = newMockOpenIdClient();
-		const {
-			apolloServerDependencies: { userService },
-		} = defaultTestDependenciesFactory({
-			openIdClient: openIdClient,
-		});
-		authService = new AuthService(userService, openIdClient, {
+		const { users } = makeTestServices();
+		authService = new AuthService(users, openIdClient, {
 			login: "https://example.com",
 			studyProgram: "https://example.com",
 		});

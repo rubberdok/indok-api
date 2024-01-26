@@ -1,7 +1,6 @@
 {
 	"name": "indok-api",
 	"version": "1.0.0",
-	"main": "./dist/index.js",
 	"description": "api for indok-web",
 	"repository": "https://github.com/rubberdok/indok-web",
 	"author": "Rubberdøk NTNU",
@@ -18,9 +17,9 @@
 		"db:migrate": "prisma migrate deploy",
 		"db:push": "dotenv -e .env.development -- prisma db push",
 		"db:seed": "dotenv -e .env.development -- node dist/repositories/seed.js",
-		"dev": "concurrently --restart-tries 3 -n server,worker,transpile,graphql,prisma --kill-signal -c cyan.bold,cyan.dim,black.dim,magenta.dim,black.dim 'dotenv -e .env.development -- nodemon --delay 250ms --watch .env --watch dist' 'dotenv -e .env.worker.development -- nodemon --delay 250ms --watch .env --watch dist' 'pnpm:swc --watch' \"pnpm:generate:gql --watch 'src/graphql/**/type-defs.ts'\" 'pnpm:generate:prisma --watch'",
+		"dev": "concurrently --restart-tries 3 -n server,worker,transpile,graphql,prisma --kill-signal -c cyan.bold,cyan.dim,black.dim,magenta.dim,black.dim 'dotenv -e .env.development -- nodemon ./dist/server.js --delay 250ms --watch .env --watch dist' 'dotenv -e .env.worker.development -- nodemon ./dist/worker.js --delay 250ms --watch .env --watch dist' 'pnpm:swc --watch' \"pnpm:generate:gql --watch 'src/graphql/**/type-defs.ts'\" 'pnpm:generate:prisma --watch'",
 		"docker:up": "docker compose up postgres redis -d",
-		"generate:gql": "NODE_OPTIONS='--loader ts-node/esm --no-warnings' graphql-codegen-esm -c codegen.config.cjs",
+		"generate:gql": "NODE_OPTIONS='--loader ts-node/esm --no-warnings' graphql-codegen-esm -c codegen.config.cjs -s",
 		"generate:prisma": "prisma generate",
 		"generate": "run-p generate:*",
 		"integration-test": "dotenv -e .env.test -- pnpm db:push && dotenv -e .env.test -- node --experimental-vm-modules --no-warnings=ExperimentalWarning ./node_modules/jest/bin/jest.js --config jest.integration.config.cjs",
@@ -31,7 +30,7 @@
 		"biome:ci": "biome ci src",
 		"lint:ci": "run-s setup biome:ci",
 		"setup-integration-test": "run-s docker:up && wait-on tcp:5433 -t 20000",
-		"swc": "swc src -d dist",
+		"swc": "swc src -d dist --log-watch-compilation",
 		"test:integration:ci": "run-s setup 'integration-test {@}' --",
 		"test:integration": "pnpm setup-integration-test && pnpm integration-test",
 		"test": "dotenv -e .env.test -- node --experimental-vm-modules --no-warnings=ExperimentalWarning ./node_modules/jest/bin/jest.js",
@@ -82,18 +81,21 @@
 		"@fastify/cors": "^8.5.0",
 		"@fastify/helmet": "^11.1.1",
 		"@fastify/rate-limit": "^9.1.0",
+		"@fastify/redis": "^6.1.1",
 		"@fastify/session": "^10.7.0",
 		"@graphql-tools/merge": "^9.0.1",
 		"@immobiliarelabs/fastify-sentry": "^8.0.0",
 		"@prisma/client": "^5.8.1",
 		"@sentry/node": "^7.98.0",
 		"@sentry/tracing": "7.98.0",
+		"avvio": "^8.2.1",
 		"body-parser": "^1.20.2",
 		"bullmq": "^5.1.5",
 		"connect-redis": "^7.1.1",
 		"dayjs": "^1.11.10",
 		"dotenv": "^16.4.1",
 		"fastify": "^4.25.2",
+		"fastify-plugin": "^4.5.1",
 		"graphql": "^16.8.1",
 		"graphql-scalars": "^1.22.4",
 		"graphql-tag": "^2.12.6",
@@ -110,18 +112,9 @@
 	},
 	"pnpm": {
 		"supportedArchitectures": {
-			"os": [
-				"current",
-				"linux"
-			],
-			"cpu": [
-				"current",
-				"x64"
-			],
-			"libc": [
-				"current",
-				"glibc"
-			]
+			"os": ["current", "linux"],
+			"cpu": ["current", "x64"],
+			"libc": ["current", "glibc"]
 		}
 	}
 }

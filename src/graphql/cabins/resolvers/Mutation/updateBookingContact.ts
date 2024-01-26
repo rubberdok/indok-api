@@ -6,14 +6,11 @@ export const updateBookingContact: NonNullable<
 	assertIsAuthenticated(ctx);
 
 	const { name, email, phoneNumber } = data;
-	const bookingContact = await ctx.cabinService.updateBookingContact(
-		ctx.user.id,
-		{
-			name,
-			email,
-			phoneNumber,
-		},
-	);
+	const bookingContact = await ctx.cabins.updateBookingContact(ctx.user.id, {
+		name,
+		email,
+		phoneNumber,
+	});
 
 	return {
 		bookingContact,

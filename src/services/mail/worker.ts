@@ -1,9 +1,11 @@
 import type { Processor } from "bullmq";
+import type { FastifyInstance } from "fastify";
 import type { Redis } from "ioredis";
 import type { Logger } from "pino";
 import type { MessageSendingResponse } from "postmark/dist/client/models/index.js";
+import { InternalServerError } from "~/domain/errors.js";
 import type { User } from "~/domain/users.js";
-import { type Queue, Worker } from "~/lib/mq.js";
+import { Queue, Worker } from "~/lib/mq.js";
 import type { EmailContent } from "~/lib/postmark.js";
 
 export type UserService = {
@@ -20,12 +22,50 @@ type EmailQueueDataType = {
 
 type EmailQueueNameType = "welcome";
 
-const MailWorkerService = (dependencies: {
+type EmailQueueType = Queue<EmailQueueDataType, void, EmailQueueNameType>;
+type EmailWorkerType = Worker<EmailQueueDataType, void, EmailQueueNameType>;
+
+
+const EmailHandler = (dependencies: {
+	mailService: MailService;
+	userService: UserService;
+}): Processor<EmailQueueDataType, void, EmailQueueNameType> => {
+	return async (job) => {
+		const { recipientId } = job.data;
+		const user = await dependencies.userService.get(recipientId);
+
+		switch (job.name) {
+			case "welcome": {
+				await dependencies.mailService.send({
+					To: user.email,
+					TemplateAlias: "welcome",
+					TemplateModel: {
+						firstName: user.firstName,
+						lastName: user.lastName,
+					},
+				});
+				return;
+			}
+		}
+	};
+}
+
+function getEmailHandler(dependencies: {
+	mailService: MailService,
+	userService: UserService
+}): { handler: Processor<EmailQueueDataType, void, EmailQueueNameType>, name: "email" } {
+	return {
+		handler: EmailHandler(dependencies),
+		name: "email"
+	}
+}
+
+const EmailWorker = (dependencies: {
 	mailService: MailService;
 	userService: UserService;
 	redisClient: Redis;
 	log?: Logger;
-}): MailWorker => {
+}): EmailWorkerType => {
 	const processor: Processor<EmailQueueDataType, void, EmailQueueNameType> =
 		async (job) => {
 			const { recipientId } = job.data;
@@ -63,9 +103,13 @@ const MailWorkerService = (dependencies: {
 	return worker;
 };
 
-type MailQueue = Queue<EmailQueueDataType, void, EmailQueueNameType>;
-type MailWorker = Worker<EmailQueueDataType, void, EmailQueueNameType>;
 
-export { MailWorkerService };
 
-export type { EmailQueueDataType, EmailQueueNameType, MailQueue, MailWorker };
+export type {
+	EmailQueueDataType,
+	EmailQueueNameType,
+	EmailQueueType,
+	EmailWorkerType,
+};
+
+export {  EmailWorker, EmailHandler, getEmailHandler };

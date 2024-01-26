@@ -2,7 +2,7 @@ import { jest } from "@jest/globals";
 import type { Prisma, User } from "@prisma/client";
 import dayjs from "dayjs";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
-import type { MailQueue } from "~/services/mail/worker.js";
+import type { EmailQueueType } from "~/services/mail/worker.js";
 import {
 	type PermissionService,
 	type UserRepository,
@@ -20,7 +20,11 @@ let permissionService: DeepMockProxy<PermissionService>;
 beforeAll(() => {
 	repo = mockDeep<UserRepository>();
 	permissionService = mockDeep<PermissionService>();
-	service = new UserService(repo, permissionService, mockDeep<MailQueue>());
+	service = new UserService(
+		repo,
+		permissionService,
+		mockDeep<EmailQueueType>(),
+	);
 
 	jest.useFakeTimers().setSystemTime(time);
 });

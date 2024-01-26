@@ -4,6 +4,6 @@ export const listings: NonNullable<QueryResolvers["listings"]> = async (
 	_arg,
 	ctx,
 ) => {
-	const listings = await ctx.listingService.findMany();
+	const listings = await ctx.listings.findMany();
 	return { listings };
 };

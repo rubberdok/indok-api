@@ -10,7 +10,7 @@ export const createEvent: NonNullable<MutationResolvers["createEvent"]> =
 			signUpDetails,
 		} = data;
 		if (signUpDetails) {
-			const event = await ctx.eventService.create(
+			const event = await ctx.events.create(
 				ctx.user.id,
 				organizationId,
 				{
@@ -29,7 +29,7 @@ export const createEvent: NonNullable<MutationResolvers["createEvent"]> =
 			);
 			return { event };
 		}
-		const event = await ctx.eventService.create(ctx.user.id, organizationId, {
+		const event = await ctx.events.create(ctx.user.id, organizationId, {
 			name,
 			description,
 			startAt: new Date(startAt),

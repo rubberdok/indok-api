@@ -1,20 +1,21 @@
 import { faker } from "@faker-js/faker";
 import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
-import type { PrismaClient } from "@prisma/client";
 import type {
 	FastifyInstance,
 	InjectOptions,
 	LightMyRequestResponse,
 } from "fastify";
 import { GraphQLError } from "graphql";
-import { defaultTestDependenciesFactory } from "~/__tests__/dependencies-factory.js";
+import { makeTestServices } from "~/__tests__/dependencies-factory.js";
 import {
 	type MockOpenIdClient,
 	newMockOpenIdClient,
 } from "~/__tests__/mocks/openIdClient.js";
 import { env } from "~/config.js";
-import type { ApolloServerDependencies } from "~/lib/apollo-server.js";
-import { createServer } from "~/server.js";
+import { fastifyServer } from "~/lib/fastify/fastify.js";
+import fastifyService from "~/lib/fastify/service.js";
+import type { Services } from "~/lib/server.js";
+import { AuthService } from "~/services/auth/service.js";
 
 /**
  * A test client for integration testing GraphQL resolvers.
@@ -57,16 +58,16 @@ import { createServer } from "~/server.js";
  */
 export class GraphQLTestClient {
 	public mockOpenIdClient: MockOpenIdClient;
-	public dependencies: ReturnType<typeof defaultTestDependenciesFactory>;
+	public services: Services;
 	public app: FastifyInstance;
 
 	constructor(options: {
 		app: FastifyInstance;
-		dependencies: ReturnType<typeof defaultTestDependenciesFactory>;
+		services: Services;
 		mockOpenIdClient: MockOpenIdClient;
 	}) {
 		this.app = options.app;
-		this.dependencies = options.dependencies;
+		this.services = options.services;
 		this.mockOpenIdClient = options.mockOpenIdClient;
 	}
 
@@ -76,10 +77,7 @@ export class GraphQLTestClient {
 			| { feideId: string; email?: string; name?: string },
 	): Promise<{ cookies: Record<string, string>; userId: string }> {
 		if ("userId" in data) {
-			const user =
-				await this.dependencies?.apolloServerDependencies.userService.get(
-					data.userId,
-				);
+			const user = await this.services?.users.get(data.userId);
 			this.mockOpenIdClient.updateUserResponseMock({
 				id: user.feideId,
 				email: user.email,
@@ -291,18 +289,22 @@ export class GraphQLTestClient {
  * ```
  */
 export async function newGraphQLTestClient(
-	overrideDependencies: Partial<{
-		apolloServerDependencies: Partial<ApolloServerDependencies>;
-		openIdClient: MockOpenIdClient;
-		prismaClient: PrismaClient;
-	}> = {},
+	overrides?: Partial<Services>,
 ): Promise<GraphQLTestClient> {
 	const mockOpenIdClient = newMockOpenIdClient();
-	const dependencies = defaultTestDependenciesFactory({
-		openIdClient: mockOpenIdClient,
-		...overrideDependencies,
-	});
+	const defaultServices = makeTestServices(overrides);
+	const authService = new AuthService(defaultServices.users, mockOpenIdClient);
+	const services = {
+		...defaultServices,
+		auth: authService,
+	};
 
-	const app = await createServer(dependencies);
-	return new GraphQLTestClient({ app, dependencies, mockOpenIdClient });
+	const { serverInstance } = await fastifyServer(env);
+	await serverInstance.register(fastifyService, { services });
+
+	return new GraphQLTestClient({
+		app: serverInstance,
+		services,
+		mockOpenIdClient,
+	});
 }

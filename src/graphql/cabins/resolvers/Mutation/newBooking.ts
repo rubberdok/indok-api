@@ -17,7 +17,7 @@ export const newBooking: NonNullable<MutationResolvers["newBooking"]> = async (
 	const startDate = new Date(rawStartDate);
 	const endDate = new Date(rawEndDate);
 
-	const booking = await ctx.cabinService.newBooking({
+	const booking = await ctx.cabins.newBooking({
 		cabinId,
 		startDate,
 		endDate,

@@ -74,12 +74,8 @@ export const fastifyApolloSentryPlugin = (
 							scope.setTag("kind", ctx.operation?.operation);
 
 							// Annotate with user ID
-							if (ctx.contextValue.req.session.userId) {
-								scope.setUser({ id: ctx.contextValue.req.session.userId });
-								scope.setExtra(
-									"authenticated",
-									ctx.contextValue.req.session.authenticated,
-								);
+							if (ctx.contextValue.user) {
+								scope.setUser({ id: ctx.contextValue.user.id });
 							}
 
 							// Log query and variables as extras

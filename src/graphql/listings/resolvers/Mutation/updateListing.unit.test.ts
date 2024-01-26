@@ -41,7 +41,7 @@ describe("Listing mutations", () => {
 
 			expect(errors).toBeUndefined();
 			expect(listingService.update).toHaveBeenCalledWith(
-				authenticatedContext.req.session.userId,
+				authenticatedContext.user?.id,
 				expect.any(String),
 				{
 					name: expect.any(String),

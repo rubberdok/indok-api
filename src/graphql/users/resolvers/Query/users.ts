@@ -4,7 +4,7 @@ export const users: NonNullable<QueryResolvers["users"]> = async (
 	_arg,
 	ctx,
 ) => {
-	const users = await ctx.userService.getAll();
+	const users = await ctx.users.getAll();
 	return {
 		users,
 	};

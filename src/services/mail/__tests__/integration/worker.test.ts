@@ -10,15 +10,15 @@ import { envToLogger } from "~/lib/fastify/logging.js";
 import { Queue } from "~/lib/mq.js";
 import type { MailService } from "../../index.js";
 import {
-	type MailQueue,
-	type MailWorker,
-	MailWorkerService,
+	type EmailQueueType,
+	EmailWorker,
+	type EmailWorkerType,
 	type UserService,
 } from "../../worker.js";
 
 describe("MailService", () => {
-	let mailWorker: MailWorker;
-	let mailQueue: MailQueue;
+	let mailWorker: EmailWorkerType;
+	let mailQueue: EmailQueueType;
 	let redis: Redis;
 	let mockUserService: DeepMockProxy<UserService>;
 	let mockMailService: DeepMockProxy<MailService>;
@@ -37,7 +37,7 @@ describe("MailService", () => {
 			maxRetriesPerRequest: 0,
 		});
 
-		mailWorker = MailWorkerService({
+		mailWorker = EmailWorker({
 			mailService: mockMailService,
 			userService: mockUserService,
 			redisClient: redis,

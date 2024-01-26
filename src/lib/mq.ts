@@ -6,7 +6,7 @@ import {
 	Worker as BullMqWorker,
 	type WorkerOptions,
 } from "bullmq";
-import type pino from "pino";
+import type { BaseLogger, Logger } from "pino";
 
 export class Worker<
 	// biome-ignore lint/suspicious/noExplicitAny: DataType can be literally anything
@@ -20,28 +20,28 @@ export class Worker<
 		processor?: Processor<DataType, ResultType, NameType>,
 		opts?: WorkerOptions,
 		Connection?: typeof RedisConnection,
-		private logger?: pino.BaseLogger,
+		private log?: Logger,
 	) {
 		super(name, processor, opts, Connection);
-		logger?.info(`${name} worker created`);
+		log?.info(`${name} worker created`);
 
 		this.on("ready", () => {
-			this.logger?.info(`${name} worker listening`);
+			this.log?.info(`${name} worker listening`);
 		});
 		this.on("closing", () => {
-			this.logger?.info(`${name} worker closing`);
+			this.log?.info(`${name} worker closing`);
 		});
 		this.on("error", (error) => {
-			this.logger?.error({ error }, `${name} worker error`);
+			this.log?.error({ error }, `${name} worker error`);
 		});
 		this.on("failed", (job, error) => {
-			this.logger?.error({ error, job }, `${name} job failed`);
+			this.log?.error({ error, job }, `${name} job failed`);
 		});
 		this.on("active", (job) => {
-			this.logger?.info({ job }, `${name} job started`);
+			this.log?.info({ job }, `${name} job started`);
 		});
 		this.on("completed", (job) => {
-			this.logger?.info({ job }, `${name} job completed`);
+			this.log?.info({ job }, `${name} job completed`);
 		});
 	}
 }
@@ -57,12 +57,12 @@ export class Queue<
 		name: string,
 		opts?: QueueOptions,
 		Connection?: typeof RedisConnection,
-		logger?: pino.BaseLogger,
+		log?: BaseLogger,
 	) {
 		super(name, opts, Connection);
 
 		this.on("error", (err) => {
-			logger?.error({ err }, "queue error");
+			log?.error({ err }, "queue error");
 		});
 	}
 }

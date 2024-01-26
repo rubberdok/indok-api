@@ -13,8 +13,9 @@ describe("User mutations", () => {
 			const callerUserId = faker.string.uuid();
 			const updateUserId = faker.string.uuid();
 			const contextValue = createMockContext({
-				userId: callerUserId,
-				authenticated: true,
+				user: {
+					id: callerUserId,
+				},
 			});
 			userService.superUpdateUser.mockResolvedValue(
 				mock<User>({ id: updateUserId }),

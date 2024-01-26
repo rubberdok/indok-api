@@ -83,7 +83,7 @@ describe("Event mutations", () => {
 
 			expect(errors).toBeUndefined();
 			expect(eventService.update).toHaveBeenCalledWith(
-				authenticatedContext.req.session.userId,
+				authenticatedContext.user?.id,
 				eventId,
 				{
 					name: expect.any(String),

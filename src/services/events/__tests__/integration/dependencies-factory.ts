@@ -6,7 +6,7 @@ import { EventRepository } from "~/repositories/events/repository.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
 import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
 import { UserRepository } from "~/repositories/users/index.js";
-import type { MailQueue } from "~/services/mail/worker.js";
+import type { EmailQueueType } from "~/services/mail/worker.js";
 import { PermissionService } from "~/services/permissions/service.js";
 import { UserService } from "~/services/users/service.js";
 import { EventService } from "../../service.js";
@@ -24,7 +24,7 @@ export function makeDependencies() {
 	const userService = new UserService(
 		userRepository,
 		permissionService,
-		mockDeep<MailQueue>(),
+		mockDeep<EmailQueueType>(),
 	);
 	const eventService = new EventService(
 		eventRepository,

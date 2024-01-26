@@ -7,7 +7,7 @@ export const updateUser: NonNullable<MutationResolvers["updateUser"]> = async (
 ) => {
 	assertIsAuthenticated(ctx);
 
-	const user = await ctx.userService.update(ctx.user.id, {
+	const user = await ctx.users.update(ctx.user.id, {
 		firstName: data.firstName,
 		lastName: data.lastName,
 		allergies: data.allergies ?? undefined,

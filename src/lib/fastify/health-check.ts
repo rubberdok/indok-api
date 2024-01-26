@@ -1,9 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
 
-const healthCheckPlugin: FastifyPluginAsync = async (app) => {
-	/**
-	 * Straight forward health check, currently just used for testing.
-	 */
+const fastifyHealthCheck: FastifyPluginAsync = (app) => {
 	app.route({
 		url: "/health",
 		method: "GET",
@@ -12,6 +9,7 @@ const healthCheckPlugin: FastifyPluginAsync = async (app) => {
 			return reply.send({ status: "ok" });
 		},
 	});
+	return Promise.resolve();
 };
 
-export { healthCheckPlugin };
+export default fastifyHealthCheck;

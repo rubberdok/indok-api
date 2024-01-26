@@ -21,9 +21,7 @@ describe("GraphQL error handling", () => {
 	beforeAll(async () => {
 		mockOrganizationService = mockDeep<OrganizationService>();
 		client = await newGraphQLTestClient({
-			apolloServerDependencies: {
-				organizationService: mockOrganizationService,
-			},
+			organizations: mockOrganizationService,
 		});
 	});
 

@@ -7,10 +7,10 @@ export const addMember: NonNullable<MutationResolvers["addMember"]> = async (
 	ctx,
 ) => {
 	assertIsAuthenticated(ctx);
-	const { userId } = ctx.req.session;
+	const userId = ctx.user.id;
 
 	const { userId: memberId, organizationId, role } = data;
-	const member = await ctx.organizationService.addMember(userId, {
+	const member = await ctx.organizations.addMember(userId, {
 		userId: memberId,
 		organizationId,
 		role: role ?? Role.MEMBER,

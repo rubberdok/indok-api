@@ -12,7 +12,7 @@ import {
 	newStudyProgram,
 } from "~/domain/users.js";
 import type { Context } from "../context.js";
-import type { MailQueue } from "../mail/worker.js";
+import type { EmailQueueType } from "../mail/worker.js";
 import { createUserSchema } from "./validation.js";
 
 export interface UserRepository {
@@ -38,7 +38,7 @@ export class UserService {
 	constructor(
 		private usersRepository: UserRepository,
 		private permissionService: PermissionService,
-		private emailQueue: MailQueue,
+		private emailQueue: EmailQueueType,
 	) {}
 
 	/**

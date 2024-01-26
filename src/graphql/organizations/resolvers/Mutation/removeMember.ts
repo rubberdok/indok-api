@@ -3,8 +3,8 @@ import type { MutationResolvers } from "./../../../types.generated.js";
 export const removeMember: NonNullable<MutationResolvers["removeMember"]> =
 	async (_parent, { data }, ctx) => {
 		assertIsAuthenticated(ctx);
-		const { userId } = ctx.req.session;
+		const userId = ctx.user.id;
 
-		const member = await ctx.organizationService.removeMember(userId, data);
+		const member = await ctx.organizations.removeMember(userId, data);
 		return { member };
 	};

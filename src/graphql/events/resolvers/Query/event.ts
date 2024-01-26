@@ -4,6 +4,6 @@ export const event: NonNullable<QueryResolvers["event"]> = async (
 	{ data },
 	ctx,
 ) => {
-	const event = await ctx.eventService.get(data.id);
+	const event = await ctx.events.get(data.id);
 	return { event };
 };
