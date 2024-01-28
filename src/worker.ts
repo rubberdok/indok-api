@@ -120,7 +120,7 @@ const avvioQueue: Plugin<{ name: string }, WorkerType> = (instance, opts) => {
 
 export async function initWorkers(): Promise<{
 	worker: Avvio<WorkerType>;
-	close: () => void;
+	close: () => Promise<void>;
 }> {
 	const worker = server<WorkerType>({} as unknown as WorkerType);
 

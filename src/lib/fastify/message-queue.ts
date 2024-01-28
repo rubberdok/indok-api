@@ -7,7 +7,7 @@ import { Queue } from "../mq.js";
 
 type FastifyMessageQueuePluginOptions = {
 	name: string;
-	connection?: Redis | undefined;
+	connection?: Redis;
 };
 
 type KnownQueues = {
