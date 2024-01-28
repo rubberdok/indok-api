@@ -1,11 +1,9 @@
 import type { Processor } from "bullmq";
-import type { FastifyInstance } from "fastify";
 import type { Redis } from "ioredis";
 import type { Logger } from "pino";
 import type { MessageSendingResponse } from "postmark/dist/client/models/index.js";
-import { InternalServerError } from "~/domain/errors.js";
 import type { User } from "~/domain/users.js";
-import { Queue, Worker } from "~/lib/mq.js";
+import { type Queue, Worker } from "~/lib/mq.js";
 import type { EmailContent } from "~/lib/postmark.js";
 
 export type UserService = {
@@ -24,7 +22,6 @@ type EmailQueueNameType = "welcome";
 
 type EmailQueueType = Queue<EmailQueueDataType, void, EmailQueueNameType>;
 type EmailWorkerType = Worker<EmailQueueDataType, void, EmailQueueNameType>;
-
 
 const EmailHandler = (dependencies: {
 	mailService: MailService;
@@ -48,16 +45,19 @@ const EmailHandler = (dependencies: {
 			}
 		}
 	};
-}
+};
 
 function getEmailHandler(dependencies: {
-	mailService: MailService,
-	userService: UserService
-}): { handler: Processor<EmailQueueDataType, void, EmailQueueNameType>, name: "email" } {
+	mailService: MailService;
+	userService: UserService;
+}): {
+	handler: Processor<EmailQueueDataType, void, EmailQueueNameType>;
+	name: "email";
+} {
 	return {
 		handler: EmailHandler(dependencies),
-		name: "email"
-	}
+		name: "email",
+	};
 }
 
 const EmailWorker = (dependencies: {
@@ -103,8 +103,6 @@ const EmailWorker = (dependencies: {
 	return worker;
 };
 
-
-
 export type {
 	EmailQueueDataType,
 	EmailQueueNameType,
@@ -112,4 +110,4 @@ export type {
 	EmailWorkerType,
 };
 
-export {  EmailWorker, EmailHandler, getEmailHandler };
+export { EmailWorker, EmailHandler, getEmailHandler };

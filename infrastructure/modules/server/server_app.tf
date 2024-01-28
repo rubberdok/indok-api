@@ -231,10 +231,10 @@ resource "azurerm_container_app" "worker" {
     min_replicas = 1
     container {
       command = ["node", "./dist/worker.js"]
-      cpu    = 0.25
-      memory = "0.5Gi"
-      name   = "worker"
-      image  = var.image_tag
+      cpu     = 0.25
+      memory  = "0.5Gi"
+      name    = "worker"
+      image   = var.image_tag
 
       dynamic "env" {
         for_each = var.environment_variables
