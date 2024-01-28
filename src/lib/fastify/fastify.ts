@@ -14,126 +14,128 @@ import fastifyAuth from "~/services/auth/plugin.js";
 import fastifyHealthCheck from "./health-check.js";
 import { helmetOptionsByEnv } from "./helmet.js";
 import { envToLogger } from "./logging.js";
+import fastifyApolloServer from "./apollo-server.js"
 
 async function fastifyServer(
-	opts: Configuration,
+  opts: Configuration,
 ): Promise<{ serverInstance: FastifyInstance }> {
-	const server = fastify({
-		logger: envToLogger[opts.NODE_ENV],
-		ignoreTrailingSlash: true,
-	});
+  const server = fastify({
+    logger: envToLogger[opts.NODE_ENV],
+    ignoreTrailingSlash: true,
+  });
 
-	/**
-	 * Set up Sentry monitoring before anything else
-	 * so that we can monitor the server for errors and performance issues, even during
-	 * the initial setup.
-	 */
-	await server.register(fastifySentry, {
-		dsn: opts.SENTRY_DSN,
-		environment: opts.NODE_ENV,
-		tracesSampleRate: opts.SENTRY_TRACES_SAMPLE_RATE,
-		release: opts.SENTRY_RELEASE,
+  /**
+   * Set up Sentry monitoring before anything else
+   * so that we can monitor the server for errors and performance issues, even during
+   * the initial setup.
+   */
+  await server.register(fastifySentry, {
+    dsn: opts.SENTRY_DSN,
+    environment: opts.NODE_ENV,
+    tracesSampleRate: opts.SENTRY_TRACES_SAMPLE_RATE,
+    release: opts.SENTRY_RELEASE,
 
-		integrations: [
-			new Sentry.Integrations.GraphQL(),
-			new Sentry.Integrations.Apollo(),
-			new Sentry.Integrations.Anr({ captureStackTrace: true }),
-		],
-	});
+    integrations: [
+      new Sentry.Integrations.GraphQL(),
+      new Sentry.Integrations.Apollo(),
+      new Sentry.Integrations.Anr({ captureStackTrace: true }),
+    ],
+  });
 
-	// Security headers
-	server.register(fastifyHelmet, helmetOptionsByEnv[opts.NODE_ENV]);
+  // Security headers
+  server.register(fastifyHelmet, helmetOptionsByEnv[opts.NODE_ENV]);
 
-	/**
-	 * Register plugins
-	 *
-	 * CORS:
-	 *   - credentials: allow cookies to be sent to the server
-	 *   - origin: allow requests from the specified origins
-	 */
-	await server.register(fastifyCors, {
-		credentials: opts.CORS_CREDENTIALS,
-		origin: opts.CORS_ORIGINS,
-	});
+  /**
+   * Register plugins
+   *
+   * CORS:
+   *   - credentials: allow cookies to be sent to the server
+   *   - origin: allow requests from the specified origins
+   */
+  await server.register(fastifyCors, {
+    credentials: opts.CORS_CREDENTIALS,
+    origin: opts.CORS_ORIGINS,
+  });
 
-	// Cookie parser, dependency of fastifySession
-	await server.register(fastifyCookie);
+  // Cookie parser, dependency of fastifySession
+  await server.register(fastifyCookie);
 
-	await server.register(fastifyRedis, {
-		namespace: "main",
-		url: opts.REDIS_CONNECTION_STRING,
-		keepAlive: 1_000 * 60 * 3, // 3 minutes,
-		closeClient: true,
-	});
+  await server.register(fastifyRedis, {
+    namespace: "main",
+    url: opts.REDIS_CONNECTION_STRING,
+    keepAlive: 1_000 * 60 * 3, // 3 minutes,
+    closeClient: true,
+  });
 
-	await server.register(fastifyRedis, {
-		namespace: "message-queue",
-		url: opts.REDIS_CONNECTION_STRING,
-		keepAlive: 1_000 * 60 * 3, // 3 minutes
-		maxRetriesPerRequest: 0,
-		closeClient: true,
-	});
+  await server.register(fastifyRedis, {
+    namespace: "message-queue",
+    url: opts.REDIS_CONNECTION_STRING,
+    keepAlive: 1_000 * 60 * 3, // 3 minutes
+    maxRetriesPerRequest: 0,
+    closeClient: true,
+  });
 
-	// Rate limit plugin
-	await server.register(fastifyRateLimit, {
-		max: opts.RATE_LIMIT_MAX,
-		redis: server.redis.main,
-		nameSpace: "rate-limit",
-	});
+  // Rate limit plugin
+  await server.register(fastifyRateLimit, {
+    max: opts.RATE_LIMIT_MAX,
+    redis: server.redis.main,
+    nameSpace: "rate-limit",
+  });
 
-	// Regsiter session plugin
-	await server.register(fastifySession, {
-		secret: opts.SESSION_SECRET,
-		cookieName: opts.SESSION_COOKIE_NAME,
-		saveUninitialized: true,
-		store: new RedisStore({
-			client: server.redis.main,
-		}),
-		cookie: {
-			httpOnly: opts.SESSION_COOKIE_HTTP_ONLY,
-			secure: opts.SESSION_COOKIE_SECURE,
-			domain: opts.SESSION_COOKIE_DOMAIN,
-			sameSite: "none",
-			maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-		},
-	});
+  // Regsiter session plugin
+  await server.register(fastifySession, {
+    secret: opts.SESSION_SECRET,
+    cookieName: opts.SESSION_COOKIE_NAME,
+    saveUninitialized: true,
+    store: new RedisStore({
+      client: server.redis.main,
+    }),
+    cookie: {
+      httpOnly: opts.SESSION_COOKIE_HTTP_ONLY,
+      secure: opts.SESSION_COOKIE_SECURE,
+      domain: opts.SESSION_COOKIE_DOMAIN,
+      sameSite: "none",
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    },
+  });
 
-	/**
-	 * Set custom error handler to handle user-facing errors
-	 */
-	server.setErrorHandler((error, _request, reply) => {
-		if (isUserFacingError(error)) {
-			switch (error.code) {
-				// fallthrough
-				case "BAD_REQUEST":
-				case "BAD_USER_INPUT":
-					reply.status(400);
-					break;
-				case "PERMISSION_DENIED":
-					reply.status(403);
-					break;
-				case "UNAUTHORIZED":
-					reply.status(401);
-					break;
-				case "NOT_FOUND":
-					reply.status(404);
-					break;
-			}
-			reply.send({
-				message: error.message,
-				code: error.code,
-				error: error.name,
-			});
-		} else {
-			// Handle these errors with the default error handler
-			reply.send(error);
-		}
-	});
+  /**
+   * Set custom error handler to handle user-facing errors
+   */
+  server.setErrorHandler((error, _request, reply) => {
+    if (isUserFacingError(error)) {
+      switch (error.code) {
+        // fallthrough
+        case "BAD_REQUEST":
+        case "BAD_USER_INPUT":
+          reply.status(400);
+          break;
+        case "PERMISSION_DENIED":
+          reply.status(403);
+          break;
+        case "UNAUTHORIZED":
+          reply.status(401);
+          break;
+        case "NOT_FOUND":
+          reply.status(404);
+          break;
+      }
+      reply.send({
+        message: error.message,
+        code: error.code,
+        error: error.name,
+      });
+    } else {
+      // Handle these errors with the default error handler
+      reply.send(error);
+    }
+  });
 
-	await server.register(fastifyHealthCheck, { prefix: "/-" });
-	await server.register(fastifyAuth, { prefix: "/auth" });
+  await server.register(fastifyHealthCheck, { prefix: "/-" });
+  await server.register(fastifyAuth, { prefix: "/auth" });
+  await server.register(fastifyApolloServer, { configuration: opts });
 
-	return { serverInstance: server };
+  return { serverInstance: server };
 }
 
 export { fastifyServer };

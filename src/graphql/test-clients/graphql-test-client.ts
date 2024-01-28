@@ -1,15 +1,15 @@
 import { faker } from "@faker-js/faker";
 import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
 import type {
-	FastifyInstance,
-	InjectOptions,
-	LightMyRequestResponse,
+  FastifyInstance,
+  InjectOptions,
+  LightMyRequestResponse,
 } from "fastify";
 import { GraphQLError } from "graphql";
 import { makeTestServices } from "~/__tests__/dependencies-factory.js";
 import {
-	type MockOpenIdClient,
-	newMockOpenIdClient,
+  type MockOpenIdClient,
+  newMockOpenIdClient,
 } from "~/__tests__/mocks/openIdClient.js";
 import { env } from "~/config.js";
 import { fastifyServer } from "~/lib/fastify/fastify.js";
@@ -57,189 +57,171 @@ import { AuthService } from "~/services/auth/service.js";
  * ```
  */
 export class GraphQLTestClient {
-	public mockOpenIdClient: MockOpenIdClient;
-	public services: Services;
-	public app: FastifyInstance;
+  public mockOpenIdClient: MockOpenIdClient;
+  public services: Services;
+  public app: FastifyInstance;
 
-	constructor(options: {
-		app: FastifyInstance;
-		services: Services;
-		mockOpenIdClient: MockOpenIdClient;
-	}) {
-		this.app = options.app;
-		this.services = options.services;
-		this.mockOpenIdClient = options.mockOpenIdClient;
-	}
+  constructor(options: {
+    app: FastifyInstance;
+    services: Services;
+    mockOpenIdClient: MockOpenIdClient;
+  }) {
+    this.app = options.app;
+    this.services = options.services;
+    this.mockOpenIdClient = options.mockOpenIdClient;
+  }
 
-	public async performMockedLogin(
-		data:
-			| { userId: string }
-			| { feideId: string; email?: string; name?: string },
-	): Promise<{ cookies: Record<string, string>; userId: string }> {
-		if ("userId" in data) {
-			const user = await this.services?.users.get(data.userId);
-			this.mockOpenIdClient.updateUserResponseMock({
-				id: user.feideId,
-				email: user.email,
-				name: `${user.firstName} ${user.lastName}`,
-			});
-			return await this.performLogin();
-		}
-		this.mockOpenIdClient.updateUserResponseMock({
-			id: data.feideId,
-			email: data.email ?? faker.internet.email(),
-			name: data.name ?? faker.person.fullName(),
-		});
-		return await this.performLogin();
-	}
+  public async performMockedLogin(
+    user: UserLoginType,
+  ): Promise<{ cookies: Record<string, string>; userId: string }> {
+    if ("id" in user) {
+      const currentUser = await this.services?.users.get(user.id);
+      this.mockOpenIdClient.updateUserResponseMock({
+        id: currentUser.feideId,
+        email: currentUser.email,
+        name: `${currentUser.firstName} ${currentUser.lastName}`,
+      });
+      return await this.performLogin();
+    }
+    this.mockOpenIdClient.updateUserResponseMock({
+      id: user.feideId,
+      email: user.email ?? faker.internet.email(),
+      name: user.name ?? faker.person.fullName(),
+    });
+    return await this.performLogin();
+  }
 
-	public async close(): Promise<void> {
-		await this.app.close();
-	}
+  public async close(): Promise<void> {
+    await this.app.close();
+  }
 
-	/**
-	 * Perform a GraphQL mutation.
-	 *
-	 * If there are any errors in the response, they will be returned in the `errors` property,
-	 * otherwise, `errors` is `undefined`.
-	 *
-	 * If there are any errors in the response, the `data` property will be `undefined`,
-	 * otherwise, `data` is the result of the mutation.
-	 *
-	 * @param queryData.mutation - The GraphQL mutation
-	 * @param queryData.varaibles - The variables to pass to the mutation
-	 * @param options.request - The request options to pass to Fastify
-	 * @param options.userId - The ID of the user to perform the mutation as
-	 */
-	public mutate<T>(
-		queryData: {
-			mutation: T;
-			variables?: VariablesOf<T>;
-		},
-		options?: {
-			request?: InjectOptions;
-			userId?: string;
-		},
-	): Promise<{
-		data?: ResultOf<T>;
-		errors?: GraphQLError[];
-		response: LightMyRequestResponse;
-	}> {
-		const { mutation: query, variables } = queryData;
-		return this.query(
-			{
-				query,
-				variables,
-			},
-			options,
-		);
-	}
+  /**
+   * Perform a GraphQL mutation.
+   *
+   * If there are any errors in the response, they will be returned in the `errors` property,
+   * otherwise, `errors` is `undefined`.
+   *
+   * If there are any errors in the response, the `data` property will be `undefined`,
+   * otherwise, `data` is the result of the mutation.
+   *
+   * @param queryData.mutation - The GraphQL mutation
+   * @param queryData.varaibles - The variables to pass to the mutation
+   * @param options.request - The request options to pass to Fastify
+   * @param options.userId - The ID of the user to perform the mutation as
+   */
+  public mutate<T>(
+    queryData: MutationData<T>,
+    options?: MutationOptions
+  ): Promise<{
+    data?: ResultOf<T>;
+    errors?: GraphQLError[];
+    response: LightMyRequestResponse;
+  }> {
+    const { mutation: query, variables } = queryData;
+    return this.query(
+      {
+        query,
+        variables,
+      },
+      options,
+    );
+  }
 
-	/**
-	 * Perform a GraphQL query.
-	 *
-	 * If there are any errors in the response, they will be returned in the `errors` property,
-	 * otherwise, `errors` is `undefined`.
-	 *
-	 * If there are any errors in the response, the `data` property will be `undefined`,
-	 * otherwise, `data` is the result of the mutation.
-	 *
-	 * @param queryData.query - The GraphQL query
-	 * @param queryData.variables - The variables to pass to the mutation
-	 * @param options.request - The request options to pass to Fastify
-	 * @param options.userId - The ID of the user to perform the query as
-	 */
-	public async query<T>(
-		queryData: {
-			query: T;
-			variables?: VariablesOf<T>;
-		},
-		options?: {
-			userId?: string;
-			user?: { feideId: string; email?: string; name?: string };
-			request?: InjectOptions;
-		},
-	): Promise<{
-		data?: ResultOf<T>;
-		errors?: GraphQLError[];
-		response: LightMyRequestResponse;
-	}> {
-		const { query, variables } = queryData;
-		const { request, userId, user } = options ?? {};
-		let cookies: Record<string, string> | undefined;
-		if (userId) {
-			const res = await this.performMockedLogin({ userId });
-			cookies = res.cookies;
-			this.app.log.info({ userId }, "Logged in as user");
-		} else if (user) {
-			const res = await this.performMockedLogin(user);
-			cookies = res.cookies;
-			this.app.log.info({ userId: user.feideId }, "Logged in as user");
-		}
+  /**
+   * Perform a GraphQL query.
+   *
+   * If there are any errors in the response, they will be returned in the `errors` property,
+   * otherwise, `errors` is `undefined`.
+   *
+   * If there are any errors in the response, the `data` property will be `undefined`,
+   * otherwise, `data` is the result of the mutation.
+   *
+   * @param queryData.query - The GraphQL query
+   * @param queryData.variables - The variables to pass to the mutation
+   * @param options.request - The request options to pass to Fastify
+   * @param options.userId - The ID of the user to perform the query as
+   */
+  public async query<T>(
+    queryData: QueryData<T>,
+    options?: QueryOptions
+  ): Promise<{
+    data?: ResultOf<T>;
+    errors?: GraphQLError[];
+    response: LightMyRequestResponse;
+  }> {
+    const { query, variables } = queryData;
+    const { request, user } = options ?? {};
+    let cookies: Record<string, string> | undefined;
 
-		const response = await this.app.inject({
-			method: "POST",
-			url: "/graphql",
-			payload: {
-				query,
-				variables,
-			},
-			cookies,
-			...request,
-		});
+    if (user) {
+      const res = await this.performMockedLogin(user);
+      cookies = res.cookies;
+      this.app.log.info({ user: res }, "Logged in as user");
+    }
 
-		let errors: GraphQLError[] | undefined;
+    const response = await this.app.inject({
+      method: "POST",
+      url: "/graphql",
+      payload: {
+        query,
+        variables,
+      },
+      cookies,
+      ...request,
+    });
 
-		const parsedBody = JSON.parse(response.body);
-		if ("errors" in parsedBody) {
-			errors = parsedBody.errors.map(
-				(err: {
-					message: string;
-					path?: string[];
-					extensions?: { code: string };
-				}) => new GraphQLError(err.message, { ...err }),
-			);
-		}
+    let errors: GraphQLError[] | undefined;
 
-		const { data } = response.json<{ data: ResultOf<T> }>();
-		return { errors, data, response };
-	}
+    const parsedBody = JSON.parse(response.body);
+    if ("errors" in parsedBody) {
+      errors = parsedBody.errors.map(
+        (err: {
+          message: string;
+          path?: string[];
+          extensions?: { code: string };
+        }) => new GraphQLError(err.message, { ...err }),
+      );
+    }
 
-	async performLogin(): Promise<{
-		cookies: Record<string, string>;
-		userId: string;
-	}> {
-		const redirectUrl = await this.app.inject({
-			method: "GET",
-			url: "/auth/login",
-		});
-		const sessionCookie = redirectUrl.cookies[0]?.value ?? "";
+    const { data } = response.json<{ data: ResultOf<T> }>();
+    return { errors, data, response };
+  }
 
-		const authenticateResponse = await this.app.inject({
-			method: "GET",
-			url: "/auth/authenticate",
-			query: {
-				code: "code",
-			},
-			cookies: {
-				[env.SESSION_COOKIE_NAME]: sessionCookie,
-			},
-		});
-		const authenticatedCookie = authenticateResponse.cookies[0]?.value ?? "";
+  async performLogin(): Promise<{
+    cookies: Record<string, string>;
+    userId: string;
+  }> {
+    const redirectUrl = await this.app.inject({
+      method: "GET",
+      url: "/auth/login",
+    });
+    const sessionCookie = redirectUrl.cookies[0]?.value ?? "";
 
-		const userInfo = await this.app.inject({
-			method: "GET",
-			url: "/auth/me",
-			cookies: {
-				[env.SESSION_COOKIE_NAME]: authenticatedCookie,
-			},
-		});
-		const { user } = await userInfo.json();
-		return {
-			cookies: { [env.SESSION_COOKIE_NAME]: authenticatedCookie },
-			userId: user,
-		};
-	}
+    const authenticateResponse = await this.app.inject({
+      method: "GET",
+      url: "/auth/authenticate",
+      query: {
+        code: "code",
+      },
+      cookies: {
+        [env.SESSION_COOKIE_NAME]: sessionCookie,
+      },
+    });
+    const authenticatedCookie = authenticateResponse.cookies[0]?.value ?? "";
+
+    const userInfo = await this.app.inject({
+      method: "GET",
+      url: "/auth/me",
+      cookies: {
+        [env.SESSION_COOKIE_NAME]: authenticatedCookie,
+      },
+    });
+    const { user } = await userInfo.json();
+    return {
+      cookies: { [env.SESSION_COOKIE_NAME]: authenticatedCookie },
+      userId: user,
+    };
+  }
 }
 
 /**
@@ -289,22 +271,42 @@ export class GraphQLTestClient {
  * ```
  */
 export async function newGraphQLTestClient(
-	overrides?: Partial<Services>,
+  overrides?: Partial<Services>,
 ): Promise<GraphQLTestClient> {
-	const mockOpenIdClient = newMockOpenIdClient();
-	const defaultServices = makeTestServices(overrides);
-	const authService = new AuthService(defaultServices.users, mockOpenIdClient);
-	const services = {
-		...defaultServices,
-		auth: authService,
-	};
+  const mockOpenIdClient = newMockOpenIdClient();
+  const defaultServices = makeTestServices(overrides);
+  const authService = new AuthService(defaultServices.users, mockOpenIdClient);
+  const services = {
+    ...defaultServices,
+    auth: authService,
+  };
 
-	const { serverInstance } = await fastifyServer(env);
-	await serverInstance.register(fastifyService, { services });
+  const { serverInstance } = await fastifyServer(env);
+  await serverInstance.register(fastifyService, { services });
 
-	return new GraphQLTestClient({
-		app: serverInstance,
-		services,
-		mockOpenIdClient,
-	});
+  return new GraphQLTestClient({
+    app: serverInstance,
+    services,
+    mockOpenIdClient,
+  });
+}
+
+
+type UserLoginType = { feideId: string; email?: string; name?: string } | { id: string }
+
+type QueryOptions = {
+  user?: UserLoginType;
+  request?: InjectOptions;
+}
+
+type MutationOptions = QueryOptions
+
+type QueryData<T> = {
+  query: T;
+  variables?: VariablesOf<T>;
+}
+
+type MutationData<T> = {
+  mutation: T;
+  variables?: VariablesOf<T>;
 }
