@@ -21,7 +21,15 @@ type CreateOrderResponse {
 
 type Product {
     id: ID!
-    amount: Int!
+    """
+    price in øre, i.e. 100 = 1 NOK
+    """
+    price: Price!
+}
+
+type Price {
+    value: Int!
+    unit: String!
 }
 
 type ProductResponse {

@@ -54,7 +54,7 @@ export class UserRepository {
 	}
 
 	async getByFeideId(feideId: string): Promise<User> {
-		const user = await this.db.user.findFirstOrThrow({
+		const user = await this.db.user.findUniqueOrThrow({
 			where: {
 				feideId,
 			},

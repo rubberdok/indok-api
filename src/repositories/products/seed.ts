@@ -3,9 +3,12 @@ import type { Prisma, PrismaClient } from "@prisma/client";
 import { env } from "~/config.js";
 import type { Merchant } from "~/domain/products.js";
 
+faker.seed(12334143143);
+
 const products: Prisma.ProductCreateInput[] = [
 	{
-		amount: 100,
+		id: faker.string.uuid(),
+		price: 100 * 100,
 		description: faker.lorem.sentence(),
 		name: faker.commerce.productName(),
 		merchant: {
@@ -44,7 +47,7 @@ const load = async (db: PrismaClient) => {
 	for (const product of products) {
 		await db.product.upsert({
 			where: {
-				name: product.name,
+				id: product.id,
 			},
 			update: product,
 			create: product,

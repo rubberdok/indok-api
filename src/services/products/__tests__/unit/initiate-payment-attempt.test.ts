@@ -34,35 +34,48 @@ describe("ProductService", () => {
 			 * Mock the `create` method for Vipps
 			 */
 			const orderId = faker.string.uuid();
-			const amount = 100;
+			const price = 100;
 			mockProductRepository.getOrder.mockResolvedValueOnce({
-				attempt: 0,
-				id: orderId,
-				productId: faker.string.uuid(),
-				version: 0,
-				paymentStatus: "PENDING",
+				order: {
+					attempt: 0,
+					id: orderId,
+					productId: faker.string.uuid(),
+					version: 0,
+					paymentStatus: "PENDING",
+				},
 			});
 			mockProductRepository.getProduct.mockResolvedValueOnce({
-				id: faker.string.uuid(),
-				amount,
-				description: faker.lorem.sentence(),
-				version: 0,
-				merchant: {
+				product: {
 					id: faker.string.uuid(),
-					serialNumber: faker.string.sample(6),
-					subscriptionKey: faker.string.uuid(),
-					name: faker.company.name(),
-					clientId: faker.string.uuid(),
-					clientSecret: faker.string.uuid(),
+					price,
+					description: faker.lorem.sentence(),
+					version: 0,
+					merchant: {
+						id: faker.string.uuid(),
+						serialNumber: faker.string.sample(6),
+						subscriptionKey: faker.string.uuid(),
+						name: faker.company.name(),
+						clientId: faker.string.uuid(),
+						clientSecret: faker.string.uuid(),
+					},
 				},
 			});
 			mockProductRepository.createPaymentAttempt.mockResolvedValue({
-				id: faker.string.uuid(),
-				reference: orderId,
-				state: "CREATED",
-				version: 0,
-				orderId,
-				inProgress: true,
+				paymentAttempt: {
+					id: faker.string.uuid(),
+					reference: orderId,
+					state: "CREATED",
+					version: 0,
+					orderId,
+					inProgress: true,
+				},
+				order: {
+					attempt: 1,
+					id: orderId,
+					productId: faker.string.uuid(),
+					version: 0,
+					paymentStatus: "CREATED",
+				},
 			});
 			mockClient.payment.create.mockImplementation((_token, body) => {
 				return Promise.resolve({
@@ -94,7 +107,7 @@ describe("ProductService", () => {
 				expect.any(String),
 				expect.objectContaining({
 					amount: {
-						value: amount,
+						value: price,
 						currency: "NOK",
 					},
 					reference: expect.stringContaining(orderId),

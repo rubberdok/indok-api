@@ -23,33 +23,32 @@ import type {
 } from "./worker.js";
 
 export interface ProductRepository {
-	getProduct(id: string): Promise<Product | null>;
-	getOrder(id: string): Promise<Order | null>;
+	getProduct(id: string): Promise<{ product: Product | null }>;
+	getOrder(id: string): Promise<{ order: Order | null }>;
 	createOrder(order: {
 		userId: string;
 		product: {
 			id: string;
 			version: number;
 		};
-	}): Promise<Order>;
+	}): Promise<{ order: Order; product: Product }>;
 	createPaymentAttempt(params: {
 		order: {
 			id: string;
 			version: number;
 		};
 		reference: string;
-	}): Promise<PaymentAttempt>;
+	}): Promise<{ paymentAttempt: PaymentAttempt; order: Order }>;
 	getPaymentAttempt(
 		by: { id: string } | { reference: string },
-	): Promise<PaymentAttempt | null>;
+	): Promise<{ paymentAttempt: PaymentAttempt | null }>;
 	updatePaymentAttempt(
-		paymentAttempt: { id: string; version: number },
-		data: { state: PaymentAttemptState },
-	): Promise<PaymentAttempt>;
+		paymentAttempt: Pick<PaymentAttempt, "id" | "version" | "state">,
+	): Promise<{ paymentAttempt: PaymentAttempt }>;
 	getProducts(): Promise<{ products: Product[]; total: number }>;
 	createProduct(product: {
 		name: string;
-		amount: number;
+		price: number;
 		merchantId: string;
 	}): Promise<{ product: Product }>;
 	createMerchant(merchant: {
@@ -103,7 +102,7 @@ export class ProductService {
 			);
 		}
 
-		const order = await this.productRepository.getOrder(params.orderId);
+		const { order } = await this.productRepository.getOrder(params.orderId);
 		if (order === null) {
 			throw new NotFoundError("Order not found");
 		}
@@ -117,7 +116,9 @@ export class ProductService {
 			throw new InvalidArgumentError("Order has been refunded");
 		}
 
-		const product = await this.productRepository.getProduct(order?.productId);
+		const { product } = await this.productRepository.getProduct(
+			order?.productId,
+		);
 
 		if (product === null) {
 			throw new NotFoundError("Product not found");
@@ -137,7 +138,7 @@ export class ProductService {
 		const vippsPayment = await vipps.payment.create(token, {
 			reference: this.getPaymentReference(order, order.attempt + 1),
 			amount: {
-				value: product.amount,
+				value: product.price,
 				currency: "NOK",
 			},
 			paymentMethod: {
@@ -154,13 +155,14 @@ export class ProductService {
 			throw error;
 		}
 
-		const paymentAttempt = await this.productRepository.createPaymentAttempt({
-			order: {
-				id: order.id,
-				version: order.version,
-			},
-			reference,
-		});
+		const { paymentAttempt } =
+			await this.productRepository.createPaymentAttempt({
+				order: {
+					id: order.id,
+					version: order.version,
+				},
+				reference,
+			});
 
 		/**
 		 * While Vipps has support for webhooks, they make no guarantees about the success of the webhook delivery,
@@ -234,11 +236,15 @@ export class ProductService {
 	): Promise<{ paymentAttempt: PaymentAttempt }> {
 		const { reference } = paymentAttempt;
 
-		const order = await this.productRepository.getOrder(paymentAttempt.orderId);
+		const { order } = await this.productRepository.getOrder(
+			paymentAttempt.orderId,
+		);
 		if (order === null) {
 			throw new NotFoundError("Order not found");
 		}
-		const product = await this.productRepository.getProduct(order.productId);
+		const { product } = await this.productRepository.getProduct(
+			order.productId,
+		);
 		if (product === null) {
 			throw new NotFoundError("Product not found");
 		}
@@ -288,15 +294,12 @@ export class ProductService {
 
 		let updatedPaymentAttempt = paymentAttempt;
 		if (newState !== paymentAttempt.state) {
-			updatedPaymentAttempt = await this.productRepository.updatePaymentAttempt(
-				{
-					id: paymentAttempt.id,
-					version: paymentAttempt.version,
-				},
-				{
-					state: newState,
-				},
-			);
+			const updated = await this.productRepository.updatePaymentAttempt({
+				id: paymentAttempt.id,
+				version: paymentAttempt.version,
+				state: newState,
+			});
+			updatedPaymentAttempt = updated.paymentAttempt;
 		}
 
 		if (this.isFinalPaymentState(newState)) {
@@ -331,8 +334,8 @@ export class ProductService {
 		data: {
 			name: string;
 			description?: string | null;
-			// Amount in øre, i.e. 100 = 1 NOK
-			amount: number;
+			// price in øre, i.e. 100 = 1 NOK
+			price: number;
 			merchantId: string;
 		},
 	): Promise<{ product: Product }> {
@@ -344,7 +347,7 @@ export class ProductService {
 
 		const { product } = await this.productRepository.createProduct({
 			name: data.name,
-			amount: data.amount,
+			price: data.price,
 			merchantId: data.merchantId,
 		});
 
@@ -360,7 +363,7 @@ export class ProductService {
 		const { reference } = params;
 		ctx.log.info({ reference }, "Fetching payment attempt");
 
-		const paymentAttempt = await this.productRepository.getPaymentAttempt({
+		const { paymentAttempt } = await this.productRepository.getPaymentAttempt({
 			reference,
 		});
 		return { paymentAttempt };
@@ -379,12 +382,12 @@ export class ProductService {
 			"Creating order",
 		);
 
-		const product = await this.productRepository.getProduct(data.productId);
+		const { product } = await this.productRepository.getProduct(data.productId);
 		if (product === null) {
 			throw new NotFoundError("Product not found");
 		}
 
-		const order = await this.productRepository.createOrder({
+		const { order } = await this.productRepository.createOrder({
 			userId: ctx.user.id,
 			product: product,
 		});

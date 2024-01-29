@@ -58,7 +58,7 @@ describe("ProductService", () => {
 			});
 			const { product } = await productService.createProduct(ctx, {
 				name: faker.word.noun(),
-				amount: 100 * 100,
+				price: 100 * 100,
 				merchantId: merchant.id,
 			});
 			const { order } = await productService.createOrder(ctx, {

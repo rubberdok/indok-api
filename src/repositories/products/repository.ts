@@ -1,16 +1,23 @@
 import type { PrismaClient } from "@prisma/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
+import { InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
 import {
 	type Merchant,
 	type Order,
 	type PaymentAttempt,
 	PaymentAttemptFromDSO,
-	type PaymentAttemptState,
 	type Product,
 } from "~/domain/products.js";
+import { prismaKnownErrorCodes } from "~/lib/prisma.js";
 
 export class ProductRepository {
 	constructor(private db: PrismaClient) {}
 
+	/**
+	 * createMerchant creates a merchant.
+	 *
+	 * @throws {InvalidArgumentError} if a merchant with the same clientId already exists.
+	 */
 	async createMerchant(merchant: {
 		name: string;
 		clientSecret: string;
@@ -18,12 +25,29 @@ export class ProductRepository {
 		serialNumber: string;
 		subscriptionKey: string;
 	}): Promise<{ merchant: Merchant }> {
-		const created = await this.db.merchant.create({
-			data: merchant,
-		});
-		return { merchant: created };
+		try {
+			const created = await this.db.merchant.create({
+				data: merchant,
+			});
+			return { merchant: created };
+		} catch (err) {
+			if (err instanceof PrismaClientKnownRequestError) {
+				if (
+					err.code === prismaKnownErrorCodes.ERR_UNIQUE_CONSTRAINT_VIOLATION
+				) {
+					throw new InvalidArgumentError(
+						"A merchant with this clientId already exists",
+					);
+				}
+			}
+			throw err;
+		}
 	}
 
+	/**
+	 * updateMerchant updates a merchant.
+	 * @throws {InvalidArgumentError} if a merchant with the same clientId already exists.
+	 */
 	async updateMerchant(
 		merchant: Partial<{
 			name: string;
@@ -32,22 +56,40 @@ export class ProductRepository {
 			serialNumber: string;
 			subscriptionKey: string;
 		}> & { id: string },
-	) {
-		return await this.db.merchant.update({
-			where: {
-				id: merchant.id,
-			},
-			data: merchant,
-		});
+	): Promise<{ merchant: Merchant }> {
+		try {
+			const updated = await this.db.merchant.update({
+				where: {
+					id: merchant.id,
+				},
+				data: merchant,
+			});
+			return { merchant: updated };
+		} catch (err) {
+			if (err instanceof PrismaClientKnownRequestError) {
+				if (
+					err.code === prismaKnownErrorCodes.ERR_UNIQUE_CONSTRAINT_VIOLATION
+				) {
+					throw new InvalidArgumentError(
+						"A merchant with this clientId already exists",
+					);
+				}
+			}
+			throw err;
+		}
 	}
 
+	/**
+	 * createOrder creates an order for a product, and decrements the product's remaining quantity.
+	 *
+	 */
 	async createOrder(order: {
 		userId: string;
 		product: {
 			id: string;
 			version: number;
 		};
-	}): Promise<Order> {
+	}): Promise<{ order: Order; product: Product }> {
 		const { userId, product } = order;
 		const orderPromise = this.db.order.create({
 			data: {
@@ -56,6 +98,9 @@ export class ProductRepository {
 			},
 		});
 		const productPromise = this.db.product.update({
+			include: {
+				merchant: true,
+			},
 			where: {
 				id: product.id,
 				version: product.version,
@@ -69,12 +114,25 @@ export class ProductRepository {
 				},
 			},
 		});
-
-		const [orderResult] = await this.db.$transaction([
-			orderPromise,
-			productPromise,
-		]);
-		return orderResult;
+		try {
+			const [orderResult, productResult] = await this.db.$transaction([
+				orderPromise,
+				productPromise,
+			]);
+			return { order: orderResult, product: productResult };
+		} catch (err) {
+			if (err instanceof PrismaClientKnownRequestError) {
+				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) {
+					throw new NotFoundError(`
+						Product could not be found.
+						This is either because the product does not exist,
+						or someone else has updated the product in the meantime,
+						or the product is out of stock.
+					`);
+				}
+			}
+			throw err;
+		}
 	}
 
 	/**
@@ -86,7 +144,7 @@ export class ProductRepository {
 			version: number;
 		};
 		reference: string;
-	}): Promise<PaymentAttempt> {
+	}): Promise<{ paymentAttempt: PaymentAttempt; order: Order }> {
 		const { reference, order } = paymentAttempt;
 		const paymentAttemptPromise = this.db.paymentAttempt.create({
 			data: {
@@ -109,20 +167,39 @@ export class ProductRepository {
 			},
 		});
 
-		/**
-		 * Wrap the promises in a transaction so that we can be sure that the order's attempt counter is incremented
-		 * if the payment attempt is created.
-		 */
-		const [paymentAttemptResult] = await this.db.$transaction([
-			paymentAttemptPromise,
-			orderPromise,
-		]);
+		try {
+			/**
+			 * Wrap the promises in a transaction so that we can be sure that the order's attempt counter is incremented
+			 * if the payment attempt is created.
+			 */
+			const [paymentAttemptResult, orderResult] = await this.db.$transaction([
+				paymentAttemptPromise,
+				orderPromise,
+			]);
 
-		return PaymentAttemptFromDSO(paymentAttemptResult);
+			return {
+				paymentAttempt: PaymentAttemptFromDSO(paymentAttemptResult),
+				order: orderResult,
+			};
+		} catch (err) {
+			if (err instanceof PrismaClientKnownRequestError) {
+				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) {
+					throw new NotFoundError(`
+						Order could not be found.
+						This is either because the order does not exist,
+						or someone else has updated the order in the meantime.
+					`);
+				}
+			}
+			throw err;
+		}
 	}
 
-	getProduct(id: string): Promise<Product | null> {
-		return this.db.product.findUnique({
+	/**
+	 * getProduct returns a product.
+	 */
+	async getProduct(id: string): Promise<{ product: Product | null }> {
+		const product = await this.db.product.findUnique({
 			include: {
 				merchant: true,
 			},
@@ -130,48 +207,74 @@ export class ProductRepository {
 				id,
 			},
 		});
+		return { product };
 	}
 
-	getOrder(id: string): Promise<Order | null> {
-		return this.db.order.findUnique({
+	/**
+	 * getOrder returns an order.
+	 */
+	async getOrder(id: string): Promise<{ order: Order | null }> {
+		const order = await this.db.order.findUnique({
 			where: {
 				id,
 			},
 		});
+		return { order };
 	}
 
+	/**
+	 * getPamentAttempt returns a payment attempt.
+	 */
 	async getPaymentAttempt(
 		by: { id: string } | { reference: string },
-	): Promise<PaymentAttempt | null> {
+	): Promise<{ paymentAttempt: PaymentAttempt | null }> {
 		const attempt = await this.db.paymentAttempt.findUnique({
 			where: by,
 		});
 		if (!attempt) {
-			return null;
+			return { paymentAttempt: null };
 		}
-		return PaymentAttemptFromDSO(attempt);
+		return { paymentAttempt: PaymentAttemptFromDSO(attempt) };
 	}
 
+	/**
+	 * updatePaymentAttempt updates a payment attempt.
+	 */
 	async updatePaymentAttempt(
-		paymentAttempt: { id: string; version: number },
-		data: { state: PaymentAttemptState },
-	): Promise<PaymentAttempt> {
-		const updated = await this.db.paymentAttempt.update({
-			where: {
-				id: paymentAttempt.id,
-				version: paymentAttempt.version,
-			},
-			data: {
-				state: data.state,
-				version: {
-					increment: 1,
+		paymentAttempt: Pick<PaymentAttempt, "state" | "id" | "version">,
+	): Promise<{ paymentAttempt: PaymentAttempt }> {
+		try {
+			const updated = await this.db.paymentAttempt.update({
+				where: {
+					id: paymentAttempt.id,
+					version: paymentAttempt.version,
 				},
-			},
-		});
+				data: {
+					state: paymentAttempt.state,
+					version: {
+						increment: 1,
+					},
+				},
+			});
 
-		return PaymentAttemptFromDSO(updated);
+			return { paymentAttempt: PaymentAttemptFromDSO(updated) };
+		} catch (err) {
+			if (err instanceof PrismaClientKnownRequestError) {
+				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) {
+					throw new NotFoundError(`
+					Payment attempt could not be found.
+					This is either because the payment attempt does not exist,
+					or someone else has updated the payment attempt in the meantime.
+				`);
+				}
+			}
+			throw err;
+		}
 	}
 
+	/**
+	 * getProduct returns a product.
+	 */
 	async getProducts(): Promise<{ products: Product[]; total: number }> {
 		const [products, count] = await this.db.$transaction([
 			this.db.product.findMany({
@@ -184,9 +287,12 @@ export class ProductRepository {
 		return { products, total: count };
 	}
 
+	/**
+	 * createProduct creates a product.
+	 */
 	async createProduct(product: {
 		name: string;
-		amount: number;
+		price: number;
 		merchantId: string;
 	}): Promise<{ product: Product }> {
 		const created = await this.db.product.create({

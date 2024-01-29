@@ -471,6 +471,11 @@ enum ParticipationStatus {
   RETRACTED
 }
 
+type Price {
+  unit: String!
+  value: Int!
+}
+
 """
 PrivateUser should only be used when accessed by the authenticated user themselves
 as it contains sensitive information.
@@ -511,8 +516,10 @@ type PrivateUser {
 }
 
 type Product {
-  amount: Int!
   id: ID!
+
+  """price in øre, i.e. 100 = 1 NOK"""
+  price: Price!
 }
 
 type ProductResponse {

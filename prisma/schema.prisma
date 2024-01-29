@@ -238,10 +238,10 @@ model BookingContact {
 // E-commerce
 model Product {
   id                String   @id @default(uuid()) @db.Uuid
-  name              String   @unique
+  name              String
   description       String   @default("")
-  /// The amount in øre
-  amount            Int
+  /// The price in øre
+  price             Int
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   merchantId        String   @db.Uuid
@@ -259,7 +259,7 @@ model Merchant {
   clientSecret    String
   clientId        String    @unique
   subscriptionKey String
-  serialNumber    String    @unique
+  serialNumber    String
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   products        Product[]

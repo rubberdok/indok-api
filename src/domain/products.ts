@@ -22,8 +22,8 @@ type OrderPaymentStatus =
 
 type Product = {
 	id: string;
-	// Amount in øre, i.e. 100 = 1 NOK
-	amount: number;
+	// Price in øre, i.e. 100 = 1 NOK
+	price: number;
 	description: string;
 	version: number;
 	merchant: Merchant;
