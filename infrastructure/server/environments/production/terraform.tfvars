@@ -72,6 +72,10 @@ environment_variables = [
   {
     name  = "FEIDE_GROUPS_API",
     value = "https://groups-api.dataporten.no/groups/me/groups"
+  },
+  {
+    name  = "VIPPS_TEST_MODE",
+    value = "true"
   }
 ]
 
