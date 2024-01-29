@@ -31,7 +31,7 @@ environment_variables = [
   },
   {
     name  = "SERVER_URL"
-    value = "https://server-17vie6z9.blacksea-cdec4a8e.norwayeast.azurecontainerapps.io"
+    value = "https://server-7o8xwaka.yellowflower-e949ae00.norwayeast.azurecontainerapps.io"
   },
   {
     name  = "FEIDE_CLIENT_ID"
@@ -47,7 +47,7 @@ environment_variables = [
   },
   {
     name  = "SESSION_COOKIE_DOMAIN"
-    value = "server-17vie6z9.blacksea-cdec4a8e.norwayeast.azurecontainerapps.io"
+    value = "yellowflower-e949ae00.norwayeast.azurecontainerapps.io"
   },
   {
     name  = "SESSION_COOKIE_HTTP_ONLY"
@@ -67,7 +67,7 @@ environment_variables = [
   },
   {
     name  = "REDIRECT_ORIGINS",
-    value = "https://server-17vie6z9.blacksea-cdec4a8e.norwayeast.azurecontainerapps.io,https://indokntnu.no,https://indøkntnu.no"
+    value = "https://server-7o8xwaka.yellowflower-e949ae00.norwayeast.azurecontainerapps.io,https://indokntnu.no,https://indøkntnu.no"
   },
   {
     name  = "FEIDE_GROUPS_API",

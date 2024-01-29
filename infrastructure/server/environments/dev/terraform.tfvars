@@ -37,7 +37,7 @@ environment_variables = [
   },
   {
     name  = "SESSION_COOKIE_DOMAIN"
-    value = "thankfulpebble-c9bfb320.norwayeast.azurecontainerapps.io"
+    value = "yellowflower-e949ae00.norwayeast.azurecontainerapps.io"
   },
   {
     name  = "SESSION_COOKIE_HTTP_ONLY"
