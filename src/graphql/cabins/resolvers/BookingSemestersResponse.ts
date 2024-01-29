@@ -3,9 +3,9 @@ import type { BookingSemestersResponseResolvers } from "./../../types.generated.
 export const BookingSemestersResponse: BookingSemestersResponseResolvers = {
 	/* Implement BookingSemestersResponse resolver logic here */
 	fall: async (_parent, _args, ctx) => {
-		return await ctx.cabinService.getBookingSemester(Semester.FALL);
+		return await ctx.cabins.getBookingSemester(Semester.FALL);
 	},
 	spring: async (_parent, _args, ctx) => {
-		return await ctx.cabinService.getBookingSemester(Semester.SPRING);
+		return await ctx.cabins.getBookingSemester(Semester.SPRING);
 	},
 };

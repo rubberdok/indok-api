@@ -90,7 +90,7 @@ describe("Event mutations", () => {
 				participationStatus: "RETRACTED",
 			});
 			expect(eventService.retractSignUp).toHaveBeenCalledWith(
-				contextValue.req.session.userId,
+				contextValue.user?.id,
 				expect.any(String),
 			);
 		});

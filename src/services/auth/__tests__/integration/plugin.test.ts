@@ -4,28 +4,30 @@ import { faker } from "@faker-js/faker";
 import type { FastifyInstance, InjectOptions } from "fastify";
 import { mock } from "jest-mock-extended";
 import type { UserinfoResponse } from "openid-client";
-import { defaultTestDependenciesFactory } from "~/__tests__/dependencies-factory.js";
+import { makeTestServices } from "~/__tests__/dependencies-factory.js";
 import type { MockOpenIdClient } from "~/__tests__/mocks/openIdClient.js";
 import { env } from "~/config.js";
 import { errorCodes } from "~/domain/errors.js";
-import { createServer } from "~/server.js";
+import { fastifyServer } from "~/lib/fastify/fastify.js";
+import fastifyService from "~/lib/fastify/service.js";
 import type { FeideUserInfo } from "../../service.js";
 
 describe("AuthPlugin", () => {
 	let app: FastifyInstance;
-	let mockOpenIdClient: MockOpenIdClient;
-	let dependencies: ReturnType<typeof defaultTestDependenciesFactory>;
+	let openIdClient: MockOpenIdClient;
+	let services: ReturnType<typeof makeTestServices>;
 
 	beforeAll(async () => {
-		dependencies = defaultTestDependenciesFactory();
-		({ mockOpenIdClient } = dependencies);
-		app = await createServer(dependencies);
+		services = makeTestServices();
+		({ openIdClient } = services);
+		({ serverInstance: app } = await fastifyServer(env));
+		await app.register(fastifyService, { services });
 	});
 
 	describe("GET /auth/login?redirect=https://example.com/", () => {
 		it("should perform a request to the open ID provider with the correct parameters", async () => {
 			const result = await performSSORedirect(app, "https://example.com/");
-			expect(mockOpenIdClient.authorizationUrl).toHaveBeenCalledWith({
+			expect(openIdClient.authorizationUrl).toHaveBeenCalledWith({
 				scope: expect.any(String),
 				code_challenge: expect.any(String),
 				code_challenge_method: "S256",
@@ -54,23 +56,22 @@ describe("AuthPlugin", () => {
 	describe("GET /auth/login?kind=studyProgram", () => {
 		it("should create a new study program and add it to the user if it does not already exist", async () => {
 			const studyProgramId = faker.string.uuid();
-			const existingUser =
-				await dependencies.apolloServerDependencies.userService.create({
-					email: faker.internet.exampleEmail({
-						firstName: faker.string.uuid(),
-					}),
-					firstName: faker.person.firstName(),
-					lastName: faker.person.lastName(),
-					feideId: faker.string.uuid(),
-					username: faker.string.sample(20),
-				});
+			const existingUser = await services.users.create({
+				email: faker.internet.exampleEmail({
+					firstName: faker.string.uuid(),
+				}),
+				firstName: faker.person.firstName(),
+				lastName: faker.person.lastName(),
+				feideId: faker.string.uuid(),
+				username: faker.string.sample(20),
+			});
 
-			mockOpenIdClient.userinfo.mockResolvedValue(
+			openIdClient.userinfo.mockResolvedValue(
 				mock<UserinfoResponse<FeideUserInfo, Record<string, never>>>({
 					sub: existingUser.feideId,
 				}),
 			);
-			mockOpenIdClient.requestResource.mockResolvedValue({
+			openIdClient.requestResource.mockResolvedValue({
 				body: Buffer.from(
 					JSON.stringify([
 						{
@@ -111,49 +112,39 @@ describe("AuthPlugin", () => {
 
 			expect(studyProgramResponse.statusCode).toBe(303);
 
-			const actual =
-				await dependencies.apolloServerDependencies.userService.get(
-					existingUser.id,
-				);
+			const actual = await services.users.get(existingUser.id);
 			assert(actual.studyProgramId !== null);
 
-			const actualStudyProgram =
-				await dependencies.apolloServerDependencies.userService.getStudyProgram(
-					{
-						id: actual.studyProgramId,
-					},
-				);
+			const actualStudyProgram = await services.users.getStudyProgram({
+				id: actual.studyProgramId,
+			});
 
 			expect(actualStudyProgram?.externalId).toBe(studyProgramId);
 		});
 
 		it("should add the user to an existing study program", async () => {
 			const studyProgramId = faker.string.uuid();
-			const existingStudyProgram =
-				await dependencies.apolloServerDependencies.userService.createStudyProgram(
-					{
-						name: faker.string.sample(20),
-						externalId: studyProgramId,
-					},
-				);
+			const existingStudyProgram = await services.users.createStudyProgram({
+				name: faker.string.sample(20),
+				externalId: studyProgramId,
+			});
 
-			const existingUser =
-				await dependencies.apolloServerDependencies.userService.create({
-					email: faker.internet.exampleEmail({
-						firstName: faker.string.uuid(),
-					}),
-					firstName: faker.person.firstName(),
-					lastName: faker.person.lastName(),
-					feideId: faker.string.uuid(),
-					username: faker.string.sample(20),
-				});
+			const existingUser = await services.users.create({
+				email: faker.internet.exampleEmail({
+					firstName: faker.string.uuid(),
+				}),
+				firstName: faker.person.firstName(),
+				lastName: faker.person.lastName(),
+				feideId: faker.string.uuid(),
+				username: faker.string.sample(20),
+			});
 
-			mockOpenIdClient.userinfo.mockResolvedValue(
+			openIdClient.userinfo.mockResolvedValue(
 				mock<UserinfoResponse<FeideUserInfo, Record<string, never>>>({
 					sub: existingUser.feideId,
 				}),
 			);
-			mockOpenIdClient.requestResource.mockResolvedValue({
+			openIdClient.requestResource.mockResolvedValue({
 				body: Buffer.from(
 					JSON.stringify([
 						{
@@ -194,10 +185,7 @@ describe("AuthPlugin", () => {
 
 			expect(studyProgramResponse.statusCode).toBe(303);
 
-			const actual =
-				await dependencies.apolloServerDependencies.userService.get(
-					existingUser.id,
-				);
+			const actual = await services.users.get(existingUser.id);
 			expect(actual.studyProgramId).toBe(existingStudyProgram.id);
 		});
 	});

@@ -5,13 +5,11 @@ export const hasFeaturePermission: NonNullable<
 > = async (_parent, { data }, ctx) => {
 	assertIsAuthenticated(ctx);
 
-	const hasFeaturePermission = await ctx.permissionService.hasFeaturePermission(
-		{
-			userId: ctx.user.id,
-			featurePermission: data.featurePermission,
-		},
-	);
-	ctx.req.log.info({
+	const hasFeaturePermission = await ctx.permissions.hasFeaturePermission({
+		userId: ctx.user.id,
+		featurePermission: data.featurePermission,
+	});
+	ctx.log.info({
 		userId: ctx.user.id,
 		featurePermission: data.featurePermission,
 		hasFeaturePermission,

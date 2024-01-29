@@ -1,13 +1,12 @@
 import assert from "assert";
 import { ApolloServer } from "@apollo/server";
 import { faker } from "@faker-js/faker";
-import type { FastifySessionObject } from "@fastify/session";
 import type {
 	ResultOf,
 	TypedDocumentNode,
 	VariablesOf,
 } from "@graphql-typed-document-node/core";
-import type { FastifyBaseLogger, FastifyReply, FastifyRequest } from "fastify";
+import type { FastifyBaseLogger } from "fastify";
 import type { GraphQLFormattedError } from "graphql";
 import { mock, mockDeep } from "jest-mock-extended";
 import type { User } from "~/domain/users.js";
@@ -80,44 +79,41 @@ export const createMockApolloServer = (logger?: Partial<FastifyBaseLogger>) => {
 		includeStacktraceInErrorResponses: true,
 	});
 
-	const userService = mockDeep<ApolloContext["userService"]>();
-	const organizationService = mockDeep<ApolloContext["organizationService"]>();
-	const cabinService = mockDeep<ApolloContext["cabinService"]>();
-	const eventService = mockDeep<ApolloContext["eventService"]>();
-	const listingService = mockDeep<ApolloContext["listingService"]>();
-	const permissionService = mockDeep<ApolloContext["permissionService"]>();
+	const users = mockDeep<ApolloContext["users"]>();
+	const organizations = mockDeep<ApolloContext["organizations"]>();
+	const cabins = mockDeep<ApolloContext["cabins"]>();
+	const events = mockDeep<ApolloContext["events"]>();
+	const listings = mockDeep<ApolloContext["listings"]>();
+	const permissions = mockDeep<ApolloContext["permissions"]>();
+	const auth = mockDeep<ApolloContext["auth"]>();
 
 	function createMockContext(data: CreateMockContextData = {}): ApolloContext {
-		let session: Partial<FastifySessionObject> = {};
 		let user: User | null = null;
-		if ("user" in data && data.user) {
+
+		if ("authenticated" in data) {
+			console.warn(
+				"createMockContext: `authenticated` is deprecated, use `user` instead",
+			);
+
+			if (data.authenticated === true) {
+				const id = data.userId ?? faker.string.uuid();
+				user = mock<User>({ id });
+			} else {
+				user = null;
+			}
+		} else if ("user" in data && data.user !== null) {
 			user = { ...mock<User>(), ...data.user };
-			session = {
-				authenticated: true,
-				userId: user.id,
-			};
-		} else if (("userId" in data && data.userId) || "authenticated" in data) {
-			const { userId, authenticated } = data;
-			session = {
-				authenticated: authenticated ?? false,
-				userId,
-			};
-			user = { ...mock<User>(), id: userId ?? faker.string.uuid() };
 		}
 
 		const contextValue = {
-			req: mock<FastifyRequest>({
-				log: mock<FastifyBaseLogger>(logger),
-				session: mock<FastifySessionObject>(session),
-			}),
-			res: mock<FastifyReply>(),
-			userService,
-			organizationService,
-			cabinService,
-			eventService,
-			listingService,
-			permissionService,
+			users,
+			organizations,
+			cabins,
+			events,
+			listings,
+			permissions,
 			user,
+			auth,
 			log: mockDeep<FastifyBaseLogger>(logger),
 		};
 
@@ -127,13 +123,13 @@ export const createMockApolloServer = (logger?: Partial<FastifyBaseLogger>) => {
 	const client = new ApolloServerClient(server, createMockContext);
 
 	return {
-		userService,
-		organizationService,
-		cabinService,
-		eventService,
-		listingService,
+		userService: users,
+		organizationService: organizations,
+		cabinService: cabins,
+		eventService: events,
+		listingService: listings,
 		createMockContext,
-		permissionService,
+		permissionService: permissions,
 		server,
 		client,
 	};

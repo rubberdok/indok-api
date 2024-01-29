@@ -4,11 +4,11 @@ export const updateOrganization: NonNullable<
 	MutationResolvers["updateOrganization"]
 > = async (_parent, { data }, ctx) => {
 	assertIsAuthenticated(ctx);
-	const { userId } = ctx.req.session;
+	const userId = ctx.user.id;
 
 	const { id, name, description, featurePermissions } = data;
 
-	const organization = await ctx.organizationService.update(userId, id, {
+	const organization = await ctx.organizations.update(userId, id, {
 		name,
 		description,
 		featurePermissions,

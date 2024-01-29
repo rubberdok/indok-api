@@ -41,12 +41,9 @@ describe("User mutations", () => {
 			);
 
 			expect(errors).toBeUndefined();
-			expect(userService.update).toHaveBeenCalledWith(
-				contextValue.req.session.userId,
-				{
-					firstName: expect.any(String),
-				},
-			);
+			expect(userService.update).toHaveBeenCalledWith(contextValue.user?.id, {
+				firstName: expect.any(String),
+			});
 		});
 
 		it("should raise PermissionDenied if not logged in", async () => {

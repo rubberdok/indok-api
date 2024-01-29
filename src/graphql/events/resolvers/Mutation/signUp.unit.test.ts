@@ -91,7 +91,7 @@ describe("Event mutations", () => {
 			});
 			expect(eventService.signUp).toHaveBeenCalledWith(
 				expect.objectContaining({ user: contextValue.user }),
-				contextValue.req.session.userId,
+				contextValue.user?.id,
 				expect.any(String),
 			);
 		});

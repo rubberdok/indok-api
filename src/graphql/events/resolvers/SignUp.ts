@@ -3,7 +3,7 @@ import type { SignUpResolvers } from "./../../types.generated.js";
 export const SignUp: SignUpResolvers = {
 	/* Implement SignUp resolver logic here */
 	event: (signUp, _args, ctx) => {
-		return ctx.eventService.get(signUp.eventId);
+		return ctx.events.get(signUp.eventId);
 	},
 	participationStatus: (signUp) => {
 		switch (signUp.participationStatus) {
@@ -18,6 +18,6 @@ export const SignUp: SignUpResolvers = {
 		}
 	},
 	user: (signUp, _args, ctx) => {
-		return ctx.userService.get(signUp.userId);
+		return ctx.users.get(signUp.userId);
 	},
 };

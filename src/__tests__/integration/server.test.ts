@@ -1,13 +1,16 @@
-import { createServer, initServer } from "../../server.js";
-import { defaultTestDependenciesFactory } from "../dependencies-factory.js";
+import type { FastifyInstance } from "fastify";
+import { env } from "~/config.js";
+import { fastifyServer } from "~/lib/fastify/fastify.js";
+import { registerServices, startServer } from "~/lib/server.js";
 
 describe("Server", () => {
-	describe("#createServer", () => {
-		let server: Awaited<ReturnType<typeof createServer>> | undefined;
+	describe("#registerServices", () => {
+		let server: FastifyInstance | undefined;
 
 		beforeAll(async () => {
-			const dependencies = defaultTestDependenciesFactory();
-			server = await createServer(dependencies);
+			const { serverInstance } = await fastifyServer(env);
+			server = serverInstance;
+			await registerServices(server);
 		});
 
 		it("GET /-/health", async () => {
@@ -20,12 +23,14 @@ describe("Server", () => {
 		});
 	});
 
-	describe("#initServer", () => {
-		let server: Awaited<ReturnType<typeof initServer>> | undefined;
+	describe("#startServer", () => {
+		let server: FastifyInstance | undefined;
 
 		beforeAll(async () => {
-			const dependencies = defaultTestDependenciesFactory();
-			server = await initServer(dependencies, { port: 4001, host: "0.0.0.0" });
+			const { serverInstance } = await fastifyServer(env);
+			server = serverInstance;
+			await registerServices(server);
+			await startServer({ server: serverInstance }, { PORT: 4001 });
 		});
 
 		it("GET /-/health should be available on port 4001", async () => {

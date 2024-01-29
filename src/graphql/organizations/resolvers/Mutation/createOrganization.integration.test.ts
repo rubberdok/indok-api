@@ -64,7 +64,7 @@ describe("Organization mutations", () => {
 						},
 					},
 					{
-						userId: user.id,
+						user: { id: user.id },
 					},
 				);
 

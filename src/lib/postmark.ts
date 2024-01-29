@@ -26,7 +26,6 @@ type Model = {
 	[TemplateAlias.WELCOME]: {
 		firstName: string;
 		lastName: string;
-		subject: string;
 	};
 };
 

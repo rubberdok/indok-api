@@ -7,10 +7,9 @@ export const UsersResponse: UsersResponseResolvers = {
 	},
 	super: async ({ users }, _args, ctx) => {
 		assertIsAuthenticated(ctx);
-		const { isSuperUser } = await ctx.permissionService.isSuperUser(
-			ctx.user.id,
-		);
-		if (isSuperUser) {
+
+		const { isSuperUser } = await ctx.permissions.isSuperUser(ctx.user.id);
+		if (isSuperUser === true) {
 			return users;
 		}
 		return [];

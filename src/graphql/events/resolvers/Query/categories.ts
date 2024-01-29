@@ -4,6 +4,6 @@ export const categories: NonNullable<QueryResolvers["categories"]> = async (
 	_arg,
 	ctx,
 ) => {
-	const categories = await ctx.eventService.getCategories(ctx);
+	const categories = await ctx.events.getCategories(ctx);
 	return { categories };
 };

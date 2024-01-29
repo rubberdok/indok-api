@@ -14,15 +14,12 @@ export const updateBookingSemester: NonNullable<
 	const startAt = rawStartAt ? new Date(rawStartAt) : null;
 	const endAt = rawEndAt ? new Date(rawEndAt) : null;
 
-	const bookingSemester = await ctx.cabinService.updateBookingSemester(
-		ctx.user.id,
-		{
-			semester,
-			startAt,
-			endAt,
-			bookingsEnabled,
-		},
-	);
+	const bookingSemester = await ctx.cabins.updateBookingSemester(ctx.user.id, {
+		semester,
+		startAt,
+		endAt,
+		bookingsEnabled,
+	});
 
 	return { bookingSemester };
 };

@@ -41,14 +41,8 @@ const envVarsSchema = z.object({
 	SESSION_COOKIE_NAME: z.string(),
 	SESSION_COOKIE_SECURE: z.string().transform((val) => val === "true"),
 	SESSION_SECRET: z.string(),
-	SERVE_HTTP: z
-		.string()
-		.default("true")
-		.transform((v) => v === "true"),
-	WORKER: z
-		.string()
-		.default("false")
-		.transform((v) => v === "true"),
 });
 
 export const env = envVarsSchema.parse(process.env);
+type Configuration = z.infer<typeof envVarsSchema>;
+export type { Configuration };

@@ -4,6 +4,6 @@ export const listing: NonNullable<QueryResolvers["listing"]> = async (
 	{ data },
 	ctx,
 ) => {
-	const listing = await ctx.listingService.get(data.id);
+	const listing = await ctx.listings.get(data.id);
 	return { listing };
 };

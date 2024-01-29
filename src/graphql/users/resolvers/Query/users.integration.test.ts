@@ -53,7 +53,7 @@ describe("User queries", () => {
             `),
 					},
 					{
-						userId: superUser.id,
+						user: { id: superUser.id },
 					},
 				);
 
@@ -63,6 +63,7 @@ describe("User queries", () => {
 				 * Assert that all users are returned, both in users and super without errors
 				 */
 				expect(errors).toBeUndefined();
+
 				expect(data?.users.users.length).toBeGreaterThanOrEqual(4);
 				expect(data?.users.super.length).toBeGreaterThanOrEqual(4);
 
@@ -82,7 +83,7 @@ describe("User queries", () => {
 	function makeUser(
 		data: Partial<{ isSuperUser: boolean }> = {},
 	): Promise<User> {
-		return client.dependencies.apolloServerDependencies.userService.create({
+		return client.services.users.create({
 			feideId: faker.string.uuid(),
 			firstName: faker.person.firstName(),
 			lastName: faker.person.lastName(),

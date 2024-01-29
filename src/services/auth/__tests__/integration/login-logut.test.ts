@@ -3,14 +3,14 @@ import { jest } from "@jest/globals";
 import type { FastifyRequest } from "fastify";
 import { mock, mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
-import { defaultTestDependenciesFactory } from "~/__tests__/dependencies-factory.js";
+import { makeTestServices } from "~/__tests__/dependencies-factory.js";
 import { AuthenticationError } from "~/domain/errors.js";
 import type { User } from "~/domain/users.js";
-import { AuthService, type UserService } from "../../service.js";
+import type { UserService } from "../../service.js";
 
 describe("AuthService", () => {
 	let userService: UserService;
-	let authService: AuthService;
+	let authService: ReturnType<typeof makeTestServices>["auth"];
 
 	beforeAll(() => {
 		jest.useFakeTimers();
@@ -20,9 +20,9 @@ describe("AuthService", () => {
 	});
 
 	beforeAll(() => {
-		const dependencies = defaultTestDependenciesFactory();
-		userService = dependencies.apolloServerDependencies.userService;
-		authService = new AuthService(userService, dependencies.mockOpenIdClient);
+		const services = makeTestServices();
+		userService = services.users;
+		authService = services.auth;
 	});
 
 	describe("login", () => {

@@ -157,16 +157,6 @@ resource "azurerm_container_app" "server" {
         name        = "POSTMARK_API_TOKEN"
         secret_name = "postmark-api-token"
       }
-
-      env {
-        name  = "SERVE_HTTP"
-        value = "true"
-      }
-
-      env {
-        name  = "WORKER"
-        value = "false"
-      }
     }
   }
 
@@ -240,10 +230,11 @@ resource "azurerm_container_app" "worker" {
   template {
     min_replicas = 1
     container {
-      cpu    = 0.25
-      memory = "0.5Gi"
-      name   = "worker"
-      image  = var.image_tag
+      command = ["node", "./dist/worker.js"]
+      cpu     = 0.25
+      memory  = "0.5Gi"
+      name    = "worker"
+      image   = var.image_tag
 
       dynamic "env" {
         for_each = var.environment_variables
@@ -278,19 +269,8 @@ resource "azurerm_container_app" "worker" {
         name        = "POSTMARK_API_TOKEN"
         secret_name = "postmark-api-token"
       }
-
-      env {
-        name  = "WORKER"
-        value = "true"
-      }
-
-      env {
-        name  = "SERVE_HTTP"
-        value = "false"
-      }
     }
   }
 
   tags = local.tags
 }
-

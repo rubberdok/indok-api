@@ -4,6 +4,6 @@ export const cabins: NonNullable<QueryResolvers["cabins"]> = async (
 	_args,
 	ctx,
 ) => {
-	const cabins = await ctx.cabinService.findManyCabins();
+	const cabins = await ctx.cabins.findManyCabins();
 	return { cabins };
 };

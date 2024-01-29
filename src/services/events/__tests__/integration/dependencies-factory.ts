@@ -1,10 +1,12 @@
 import { faker } from "@faker-js/faker";
 import type { Organization, User } from "@prisma/client";
+import { mockDeep } from "jest-mock-extended";
 import prisma from "~/lib/prisma.js";
 import { EventRepository } from "~/repositories/events/repository.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
 import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
 import { UserRepository } from "~/repositories/users/index.js";
+import type { EmailQueueType } from "~/services/mail/worker.js";
 import { PermissionService } from "~/services/permissions/service.js";
 import { UserService } from "~/services/users/service.js";
 import { EventService } from "../../service.js";
@@ -19,7 +21,11 @@ export function makeDependencies() {
 		userRepository,
 		organizationRepository,
 	);
-	const userService = new UserService(userRepository, permissionService);
+	const userService = new UserService(
+		userRepository,
+		permissionService,
+		mockDeep<EmailQueueType>(),
+	);
 	const eventService = new EventService(
 		eventRepository,
 		permissionService,

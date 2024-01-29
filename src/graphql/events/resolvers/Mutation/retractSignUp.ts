@@ -4,9 +4,6 @@ export const retractSignUp: NonNullable<MutationResolvers["retractSignUp"]> =
 	async (_parent, { data }, ctx) => {
 		assertIsAuthenticated(ctx);
 
-		const signUp = await ctx.eventService.retractSignUp(
-			ctx.user.id,
-			data.eventId,
-		);
+		const signUp = await ctx.events.retractSignUp(ctx.user.id, data.eventId);
 		return { signUp };
 	};

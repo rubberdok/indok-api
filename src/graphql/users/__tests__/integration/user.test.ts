@@ -39,14 +39,13 @@ describe("Users", () => {
 			 *
 			 * Create a user
 			 */
-			const user =
-				await client.dependencies.apolloServerDependencies.userService.create({
-					feideId: faker.string.uuid(),
-					firstName: faker.person.firstName(),
-					lastName: faker.person.lastName(),
-					email: faker.internet.email(),
-					username: faker.string.sample(20),
-				});
+			const user = await client.services.users.create({
+				feideId: faker.string.uuid(),
+				firstName: faker.person.firstName(),
+				lastName: faker.person.lastName(),
+				email: faker.internet.email(),
+				username: faker.string.sample(20),
+			});
 
 			const { data } = await client.query(
 				{
@@ -61,7 +60,7 @@ describe("Users", () => {
           `),
 				},
 				{
-					userId: user.id,
+					user: { feideId: user.id },
 				},
 			);
 

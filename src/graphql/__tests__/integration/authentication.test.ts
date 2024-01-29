@@ -20,7 +20,7 @@ describe("Apollo Context Authentication", () => {
 	beforeAll(async () => {
 		mockUserService = mockDeep<UserService>();
 		client = await newGraphQLTestClient({
-			apolloServerDependencies: { userService: mockUserService },
+			users: mockUserService,
 		});
 	});
 
@@ -57,7 +57,7 @@ describe("Apollo Context Authentication", () => {
 		});
 		mockUserService.create.mockResolvedValue(mock<User>({ id: userId }));
 		// We mock the logout function so we can montior that it is called
-		client.dependencies.authService.logout = mockFn();
+		client.services.auth.logout = mockFn();
 
 		const { errors, data } = await client.query(
 			{
@@ -77,7 +77,7 @@ describe("Apollo Context Authentication", () => {
 		expect(errors).toBeUndefined();
 		expect(data?.user.user).toBeNull();
 		expect(mockUserService.get).toHaveBeenCalledTimes(1);
-		expect(client.dependencies.authService.logout).toHaveBeenCalledWith(
+		expect(client.services.auth.logout).toHaveBeenCalledWith(
 			expect.objectContaining({
 				session: expect.objectContaining({ authenticated: true, userId }),
 			}),
