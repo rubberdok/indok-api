@@ -6,8 +6,8 @@ import { pino } from "pino";
 import type { MessageSendingResponse } from "postmark/dist/client/models/index.js";
 import { env } from "~/config.js";
 import type { User } from "~/domain/users.js";
+import { Queue } from "~/lib/bullmq/queue.js";
 import { envToLogger } from "~/lib/fastify/logging.js";
-import { Queue } from "~/lib/mq.js";
 import type { MailService } from "../../index.js";
 import {
 	type EmailQueueType,

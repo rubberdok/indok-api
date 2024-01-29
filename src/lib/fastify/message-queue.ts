@@ -3,7 +3,7 @@ import fp from "fastify-plugin";
 import type { Redis } from "ioredis";
 import { InternalServerError } from "~/domain/errors.js";
 import type { EmailQueueType } from "~/services/mail/worker.js";
-import { Queue } from "../mq.js";
+import { Queue } from "../bullmq/queue.js";
 
 type FastifyMessageQueuePluginOptions = {
 	name: string;
