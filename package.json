@@ -30,7 +30,7 @@
 		"biome:ci": "biome ci src",
 		"lint:ci": "run-s setup biome:ci",
 		"setup-integration-test": "run-s docker:up && wait-on tcp:5433 -t 20000",
-		"swc": "swc src -d dist --log-watch-compilation",
+		"swc": "swc src -d dist --log-watch-compilation --strip-leading-paths",
 		"test:integration:ci": "run-s setup 'integration-test {@}' --",
 		"test:integration": "pnpm setup-integration-test && pnpm integration-test",
 		"test": "dotenv -e .env.test -- node --experimental-vm-modules --no-warnings=ExperimentalWarning ./node_modules/jest/bin/jest.js",
