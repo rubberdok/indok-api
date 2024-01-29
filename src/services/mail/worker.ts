@@ -3,7 +3,8 @@ import type { Redis } from "ioredis";
 import type { Logger } from "pino";
 import type { MessageSendingResponse } from "postmark/dist/client/models/index.js";
 import type { User } from "~/domain/users.js";
-import { type Queue, Worker } from "~/lib/bullmq/worker.js";
+import type { Queue } from "~/lib/bullmq/queue.js";
+import { Worker } from "~/lib/bullmq/worker.js";
 import type { EmailContent } from "~/lib/postmark.js";
 
 export type UserService = {
