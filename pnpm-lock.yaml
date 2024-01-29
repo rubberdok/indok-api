@@ -29,6 +29,9 @@ dependencies:
   '@fastify/session':
     specifier: ^10.7.0
     version: 10.7.0
+  '@fastify/under-pressure':
+    specifier: ^8.3.0
+    version: 8.3.0
   '@graphql-tools/merge':
     specifier: ^9.0.1
     version: 9.0.1(graphql@16.8.1)
@@ -1300,6 +1303,13 @@ packages:
     dependencies:
       fastify-plugin: 4.5.1
       safe-stable-stringify: 2.4.3
+    dev: false
+
+  /@fastify/under-pressure@8.3.0:
+    resolution: {integrity: sha512-ap1EePB9vHm8uQLM0nnaOeIMBLooNmAMTnccavBRwaXmu+acJFuSEQRVdMGRkW6viFDhdo5RGTcHzMBQyrucEA==}
+    dependencies:
+      '@fastify/error': 3.4.1
+      fastify-plugin: 4.5.1
     dev: false
 
   /@graphql-codegen/add@5.0.0(graphql@16.8.1):

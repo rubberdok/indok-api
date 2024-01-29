@@ -104,7 +104,7 @@ resource "azurerm_container_app" "server" {
       startup_probe {
         failure_count_threshold = 10
         interval_seconds        = 10
-        path                    = "/-/health"
+        path                    = "/status"
         port                    = 4000
         transport               = "HTTP"
         timeout                 = 30
@@ -122,6 +122,14 @@ resource "azurerm_container_app" "server" {
         port             = 4000
         transport        = "HTTP"
         initial_delay    = 5
+      }
+
+      readiness_probe {
+        failure_count_threshold = 3
+        interval_seconds        = 10
+        path                    = "/status"
+        port                    = 4000
+        transport               = "HTTP"
       }
 
       dynamic "env" {

@@ -4,6 +4,7 @@ import fastifyHelmet from "@fastify/helmet";
 import fastifyRateLimit from "@fastify/rate-limit";
 import fastifyRedis from "@fastify/redis";
 import fastifySession from "@fastify/session";
+import fastifyUnderPressure from "@fastify/under-pressure";
 import fastifySentry from "@immobiliarelabs/fastify-sentry";
 import * as Sentry from "@sentry/node";
 import RedisStore from "connect-redis";
@@ -97,6 +98,11 @@ async function fastifyServer(
 			sameSite: "none",
 			maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
 		},
+	});
+
+	// Register under pressure plugin to monitor server health
+	await server.register(fastifyUnderPressure, {
+		exposeStatusRoute: true,
 	});
 
 	/**
