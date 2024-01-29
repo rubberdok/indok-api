@@ -22,6 +22,17 @@ import type {
 	PaymentProcessingResultType,
 } from "./worker.js";
 
+type Result<TError extends Error, TData> =
+	| {
+			ok: true;
+			data: TData;
+	  }
+	| {
+			ok: false;
+			error: TError;
+			message: string;
+	  };
+
 export interface ProductRepository {
 	getProduct(id: string): Promise<{ product: Product | null }>;
 	getOrder(id: string): Promise<{ order: Order | null }>;
@@ -86,34 +97,62 @@ export class ProductService {
 	async initiatePaymentAttempt(
 		ctx: Context,
 		params: { orderId: string },
-	): Promise<{
-		redirectUrl: string;
-		paymentAttempt: PaymentAttempt;
-		order: Order;
-		pollingJob: Job<
-			PaymentProcessingDataType,
-			PaymentProcessingResultType,
-			PaymentProcessingNameType
-		>;
-	}> {
+	): Promise<
+		Result<
+			| UnauthorizedError
+			| NotFoundError
+			| InvalidArgumentError
+			| InternalServerError,
+			{
+				redirectUrl: string;
+				paymentAttempt: PaymentAttempt;
+				order: Order;
+				pollingJob: Job<
+					PaymentProcessingDataType,
+					PaymentProcessingResultType,
+					PaymentProcessingNameType
+				>;
+			}
+		>
+	> {
 		if (!ctx.user) {
-			throw new UnauthorizedError(
-				"You must be logged in to initiate a payment attempt",
-			);
+			return {
+				ok: false,
+				error: new UnauthorizedError(
+					"You must be logged in to initiate payment",
+				),
+				message: "You must be logged in to initiate a payment",
+			};
 		}
 
 		const { order } = await this.productRepository.getOrder(params.orderId);
 		if (order === null) {
-			throw new NotFoundError("Order not found");
+			return {
+				ok: false,
+				error: new NotFoundError("Order not found"),
+				message: "Order not found",
+			};
 		}
 		if (order.paymentStatus === "CAPTURED") {
-			throw new InvalidArgumentError("Order has already been captured");
+			return {
+				ok: false,
+				error: new InvalidArgumentError("Order has been captured"),
+				message: "Order has been captured",
+			};
 		}
 		if (order.paymentStatus === "CANCELLED") {
-			throw new InvalidArgumentError("Order has been cancelled");
+			return {
+				ok: false,
+				error: new InvalidArgumentError("Order has been cancelled"),
+				message: "Order has been cancelled",
+			};
 		}
 		if (order.paymentStatus === "REFUNDED") {
-			throw new InvalidArgumentError("Order has been refunded");
+			return {
+				ok: false,
+				error: new InvalidArgumentError("Order has been refunded"),
+				message: "Order has been refunded",
+			};
 		}
 
 		const { product } = await this.productRepository.getProduct(
@@ -121,7 +160,11 @@ export class ProductService {
 		);
 
 		if (product === null) {
-			throw new NotFoundError("Product not found");
+			return {
+				ok: false,
+				error: new NotFoundError("Product not found"),
+				message: "Product not found",
+			};
 		}
 
 		/**
@@ -152,7 +195,11 @@ export class ProductService {
 		if (!vippsPayment.ok) {
 			const error = new InternalServerError("Failed to create vipps payment");
 			error.cause = vippsPayment.error;
-			throw error;
+			return {
+				ok: false,
+				error,
+				message: "Failed to create Vipps payment.",
+			};
 		}
 
 		const { paymentAttempt } =
@@ -190,10 +237,13 @@ export class ProductService {
 		);
 
 		return {
-			redirectUrl: vippsPayment.data.redirectUrl,
-			paymentAttempt,
-			order,
-			pollingJob,
+			ok: true,
+			data: {
+				redirectUrl: vippsPayment.data.redirectUrl,
+				paymentAttempt,
+				order,
+				pollingJob,
+			},
 		};
 	}
 

@@ -1,3 +1,4 @@
+import assert from "assert";
 import { faker } from "@faker-js/faker";
 import type { EPaymentGetPaymentOKResponse } from "@vippsmobilepay/sdk";
 import type { QueueEvents } from "bullmq";
@@ -89,7 +90,7 @@ describe("ProductService", () => {
 			 *
 			 * Initiate a payment attempt, which should create a payment attempt, and trigger polling.
 			 */
-			const { pollingJob } = await productService.initiatePaymentAttempt(ctx, {
+			const result = await productService.initiatePaymentAttempt(ctx, {
 				orderId: order.id,
 			});
 
@@ -98,6 +99,7 @@ describe("ProductService", () => {
 			 *
 			 * Initially, the payment attempt should be in progress, and the status should be CREATED.
 			 */
+			assert(result.ok);
 			const { paymentAttempt: initialPaymentAttempt } =
 				await productService.getPaymentAttempt(ctx, {
 					reference,
@@ -122,7 +124,7 @@ describe("ProductService", () => {
 			let pendingJobs = await paymentProcessingQueue.getRepeatableJobs();
 			expect(pendingJobs).toHaveLength(1);
 
-			await pollingJob.waitUntilFinished(queueEvents);
+			await result.data.pollingJob.waitUntilFinished(queueEvents);
 			const { paymentAttempt: finalPaymentAttempt } =
 				await productService.getPaymentAttempt(ctx, {
 					reference,
