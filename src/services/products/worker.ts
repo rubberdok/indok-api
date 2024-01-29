@@ -3,6 +3,7 @@ import type { Logger } from "pino";
 import type { PaymentAttempt } from "~/domain/products.js";
 import type { Queue } from "~/lib/bullmq/queue.js";
 import type { Worker } from "~/lib/bullmq/worker.js";
+import type { Result } from "~/lib/result.js";
 import type { Context } from "../context.js";
 
 type PaymentProcessingDataType = { reference: string };
@@ -29,7 +30,7 @@ type ProductService = {
 	updatePaymentAttemptState(
 		ctx: Context,
 		paymentAttempt: PaymentAttempt,
-	): Promise<{ paymentAttempt: PaymentAttempt }>;
+	): Promise<Result<{ paymentAttempt: PaymentAttempt }>>;
 };
 
 function getPaymentProcessingHandler({

@@ -75,21 +75,31 @@ describe("ProductRepository", () => {
 		it("updates a payment attempt", async () => {
 			const { order, productRepository } = await makeDependencies();
 
-			const { paymentAttempt } = await productRepository.createPaymentAttempt({
-				order,
-				reference: order.id,
-			});
+			const { paymentAttempt, order: updatedOrder } =
+				await productRepository.createPaymentAttempt({
+					order,
+					reference: order.id,
+				});
 
 			// Call the method under test
-			const result = await productRepository.updatePaymentAttempt({
-				id: paymentAttempt.id,
-				version: paymentAttempt.version,
-				state: "AUTHORIZED",
-			});
+			const result = await productRepository.updatePaymentAttempt(
+				{
+					id: paymentAttempt.id,
+					version: paymentAttempt.version,
+					state: "AUTHORIZED",
+				},
+				{
+					id: updatedOrder.id,
+					version: updatedOrder.version,
+					paymentStatus: "RESERVED",
+				},
+			);
 
 			// Assert the result
 			expect(result.paymentAttempt).toBeDefined();
 			expect(result.paymentAttempt.state).toEqual("AUTHORIZED");
+			expect(result.order.paymentStatus).toEqual("RESERVED");
+			expect(result.order.version).toEqual(updatedOrder.version + 1);
 		});
 
 		it("should raise NotFoundError if the version of the payment attempt does not match", async () => {
@@ -102,11 +112,18 @@ describe("ProductRepository", () => {
 
 			// Call the method under test
 			try {
-				await productRepository.updatePaymentAttempt({
-					id: paymentAttempt.id,
-					version: paymentAttempt.version + 1,
-					state: "AUTHORIZED",
-				});
+				await productRepository.updatePaymentAttempt(
+					{
+						id: paymentAttempt.id,
+						version: paymentAttempt.version + 1,
+						state: "AUTHORIZED",
+					},
+					{
+						id: order.id,
+						version: order.version,
+						paymentStatus: "RESERVED",
+					},
+				);
 				fail("Expected NotFoundError to be raised");
 			} catch (err) {
 				expect(err).toBeInstanceOf(NotFoundError);
@@ -117,11 +134,18 @@ describe("ProductRepository", () => {
 			const { productRepository } = await makeDependencies();
 			// Call the method under test
 			try {
-				await productRepository.updatePaymentAttempt({
-					id: faker.string.uuid(),
-					version: 1,
-					state: "AUTHORIZED",
-				});
+				await productRepository.updatePaymentAttempt(
+					{
+						id: faker.string.uuid(),
+						version: 1,
+						state: "AUTHORIZED",
+					},
+					{
+						id: faker.string.uuid(),
+						version: 1,
+						paymentStatus: "RESERVED",
+					},
+				);
 				fail("Expected NotFoundError to be raised");
 			} catch (err) {
 				expect(err).toBeInstanceOf(NotFoundError);

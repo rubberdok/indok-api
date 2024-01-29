@@ -11,14 +11,16 @@ type PaymentAttemptState =
 	| "AUTHORIZED"
 	| "FAILED"
 	| "TERMINATED"
-	| "EXPIRED";
+	| "EXPIRED"
+	| "ABORTED";
 
 type OrderPaymentStatus =
 	| "PENDING"
 	| "CREATED"
 	| "CAPTURED"
 	| "REFUNDED"
-	| "CANCELLED";
+	| "CANCELLED"
+	| "RESERVED";
 
 type Product = {
 	id: string;

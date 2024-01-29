@@ -4,12 +4,14 @@ import { env } from "~/config.js";
 import {
 	InternalServerError,
 	InvalidArgumentError,
+	type KnownDomainError,
 	NotFoundError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
 import type {
 	Merchant,
 	Order,
+	OrderPaymentStatus,
 	PaymentAttempt,
 	PaymentAttemptState,
 	Product,
@@ -22,7 +24,7 @@ import type {
 	PaymentProcessingResultType,
 } from "./worker.js";
 
-type Result<TError extends Error, TData> =
+type Result<TData, TError extends Error = KnownDomainError> =
 	| {
 			ok: true;
 			data: TData;
@@ -55,7 +57,8 @@ export interface ProductRepository {
 	): Promise<{ paymentAttempt: PaymentAttempt | null }>;
 	updatePaymentAttempt(
 		paymentAttempt: Pick<PaymentAttempt, "id" | "version" | "state">,
-	): Promise<{ paymentAttempt: PaymentAttempt }>;
+		order: Pick<Order, "id" | "version" | "paymentStatus">,
+	): Promise<{ paymentAttempt: PaymentAttempt; order: Order }>;
 	getProducts(): Promise<{ products: Product[]; total: number }>;
 	createProduct(product: {
 		name: string;
@@ -99,10 +102,6 @@ export class ProductService {
 		params: { orderId: string },
 	): Promise<
 		Result<
-			| UnauthorizedError
-			| NotFoundError
-			| InvalidArgumentError
-			| InternalServerError,
 			{
 				redirectUrl: string;
 				paymentAttempt: PaymentAttempt;
@@ -112,7 +111,11 @@ export class ProductService {
 					PaymentProcessingResultType,
 					PaymentProcessingNameType
 				>;
-			}
+			},
+			| UnauthorizedError
+			| NotFoundError
+			| InvalidArgumentError
+			| InternalServerError
 		>
 	> {
 		if (!ctx.user) {
@@ -280,18 +283,12 @@ export class ProductService {
 		);
 	}
 
-	async updatePaymentAttemptState(
+	private async getRemotePaymentState(
 		ctx: Context,
 		paymentAttempt: PaymentAttempt,
-	): Promise<{ paymentAttempt: PaymentAttempt }> {
+		order: Order,
+	): Promise<Result<{ state: PaymentAttemptState }>> {
 		const { reference } = paymentAttempt;
-
-		const { order } = await this.productRepository.getOrder(
-			paymentAttempt.orderId,
-		);
-		if (order === null) {
-			throw new NotFoundError("Order not found");
-		}
 		const { product } = await this.productRepository.getProduct(
 			order.productId,
 		);
@@ -312,43 +309,82 @@ export class ProductService {
 				"Failed to fetch payment status from Vipps",
 			);
 			interalErr.cause = response.error;
-			throw interalErr;
+			return {
+				ok: false,
+				error: interalErr,
+				message: "Failed to fetch payment status from Vipps",
+			};
 		}
 
-		const status = response.data.state;
-		let newState: PaymentAttemptState;
-		ctx.log.info({ reference, status }, "Current payment status");
+		return {
+			ok: true,
+			data: {
+				state: response.data.state,
+			},
+		};
+	}
 
-		switch (status) {
-			case "ABORTED": {
-				newState = "FAILED";
-				break;
-			}
-			case "EXPIRED": {
-				newState = "EXPIRED";
-				break;
-			}
-			case "TERMINATED": {
-				newState = "TERMINATED";
-				break;
-			}
-			case "CREATED": {
-				newState = "CREATED";
-				break;
-			}
-			case "AUTHORIZED": {
-				newState = "AUTHORIZED";
-				break;
-			}
+	private paymentAttemptStateToOrderPaymentStatus(
+		paymentAttempt: PaymentAttempt,
+		order: Order,
+	): OrderPaymentStatus {
+		switch (paymentAttempt.state) {
+			case "CREATED":
+				return "CREATED";
+			case "AUTHORIZED":
+				return "RESERVED";
+			default:
+				return order.paymentStatus;
 		}
+	}
+
+	async updatePaymentAttemptState(
+		ctx: Context,
+		paymentAttempt: PaymentAttempt,
+	): Promise<Result<{ paymentAttempt: PaymentAttempt }>> {
+		const { reference } = paymentAttempt;
+
+		const { order } = await this.productRepository.getOrder(
+			paymentAttempt.orderId,
+		);
+		if (order === null) {
+			return {
+				ok: false,
+				error: new NotFoundError("Order not found"),
+				message: "Order not found",
+			};
+		}
+
+		const result = await this.getRemotePaymentState(ctx, paymentAttempt, order);
+		if (!result.ok) {
+			return {
+				ok: false,
+				error: new InternalServerError(
+					"Failed to fetch payment status from Vipps",
+				),
+				message: "Failed to fetch payment status from Vipps",
+			};
+		}
+		const { state: newState } = result.data;
 
 		let updatedPaymentAttempt = paymentAttempt;
 		if (newState !== paymentAttempt.state) {
-			const updated = await this.productRepository.updatePaymentAttempt({
-				id: paymentAttempt.id,
-				version: paymentAttempt.version,
-				state: newState,
-			});
+			const orderPaymentStatus = this.paymentAttemptStateToOrderPaymentStatus(
+				paymentAttempt,
+				order,
+			);
+			const updated = await this.productRepository.updatePaymentAttempt(
+				{
+					id: paymentAttempt.id,
+					version: paymentAttempt.version,
+					state: newState,
+				},
+				{
+					id: order.id,
+					version: order.version,
+					paymentStatus: orderPaymentStatus,
+				},
+			);
 			updatedPaymentAttempt = updated.paymentAttempt;
 		}
 
@@ -376,7 +412,7 @@ export class ProductService {
 			}
 		}
 
-		return { paymentAttempt: updatedPaymentAttempt };
+		return { ok: true, data: { paymentAttempt: updatedPaymentAttempt } };
 	}
 
 	async createProduct(

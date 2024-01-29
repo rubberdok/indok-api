@@ -242,9 +242,10 @@ export class ProductRepository {
 	 */
 	async updatePaymentAttempt(
 		paymentAttempt: Pick<PaymentAttempt, "state" | "id" | "version">,
-	): Promise<{ paymentAttempt: PaymentAttempt }> {
+		order: Pick<Order, "id" | "version" | "paymentStatus">,
+	): Promise<{ paymentAttempt: PaymentAttempt; order: Order }> {
 		try {
-			const updated = await this.db.paymentAttempt.update({
+			const paymentAttemptPromise = this.db.paymentAttempt.update({
 				where: {
 					id: paymentAttempt.id,
 					version: paymentAttempt.version,
@@ -256,8 +257,28 @@ export class ProductRepository {
 					},
 				},
 			});
+			const orderPromise = this.db.order.update({
+				where: {
+					id: order.id,
+					version: order.version,
+				},
+				data: {
+					paymentStatus: order.paymentStatus,
+					version: {
+						increment: 1,
+					},
+				},
+			});
 
-			return { paymentAttempt: PaymentAttemptFromDSO(updated) };
+			const [updatedPaymentAttempt, updatedOrder] = await this.db.$transaction([
+				paymentAttemptPromise,
+				orderPromise,
+			]);
+
+			return {
+				paymentAttempt: PaymentAttemptFromDSO(updatedPaymentAttempt),
+				order: updatedOrder,
+			};
 		} catch (err) {
 			if (err instanceof PrismaClientKnownRequestError) {
 				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) {
