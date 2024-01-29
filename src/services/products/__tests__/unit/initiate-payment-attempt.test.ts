@@ -4,7 +4,7 @@ import type { User } from "~/domain/users.js";
 import { makeMockContext } from "~/services/context.js";
 import { type ProductRepository, ProductService } from "../../service.js";
 import type { PaymentProcessingQueueType } from "../../worker.js";
-import { MockVippsClientFactory } from "./mock-vipps-client.js";
+import { MockVippsClientFactory } from "../mock-vipps-client.js";
 
 describe("ProductService", () => {
 	describe("#initiatePaymentAttempt", () => {

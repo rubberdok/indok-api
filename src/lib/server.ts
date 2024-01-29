@@ -120,7 +120,6 @@ export interface IUserService {
 	): Promise<User>;
 	login(id: string): Promise<User>;
 	create(data: Prisma.UserCreateInput): Promise<User>;
-	canUpdateYear(user: Pick<User, "graduationYearUpdatedAt">): boolean;
 	getStudyProgram(
 		by: { id: string } | { externalId: string },
 	): Promise<StudyProgram | null>;

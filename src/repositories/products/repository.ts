@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 import {
+	type Merchant,
 	type Order,
 	type PaymentAttempt,
 	PaymentAttemptFromDSO,
@@ -16,10 +17,11 @@ export class ProductRepository {
 		clientId: string;
 		serialNumber: string;
 		subscriptionKey: string;
-	}) {
-		return await this.db.merchant.create({
+	}): Promise<{ merchant: Merchant }> {
+		const created = await this.db.merchant.create({
 			data: merchant,
 		});
+		return { merchant: created };
 	}
 
 	async updateMerchant(
@@ -180,5 +182,19 @@ export class ProductRepository {
 			this.db.product.count(),
 		]);
 		return { products, total: count };
+	}
+
+	async createProduct(product: {
+		name: string;
+		amount: number;
+		merchantId: string;
+	}): Promise<{ product: Product }> {
+		const created = await this.db.product.create({
+			include: {
+				merchant: true,
+			},
+			data: product,
+		});
+		return { product: created };
 	}
 }

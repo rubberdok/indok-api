@@ -25,11 +25,11 @@ type ProductService = {
 	getPaymentAttempt(
 		ctx: Context,
 		by: { reference: string },
-	): Promise<PaymentAttempt | null>;
+	): Promise<{ paymentAttempt: PaymentAttempt | null }>;
 	updatePaymentAttemptState(
 		ctx: Context,
 		paymentAttempt: PaymentAttempt,
-	): Promise<PaymentAttempt>;
+	): Promise<{ paymentAttempt: PaymentAttempt }>;
 };
 
 function getPaymentProcessingHandler({
@@ -54,7 +54,7 @@ function getPaymentProcessingHandler({
 		const { reference } = job.data;
 		const ctx = { log, user: null };
 
-		const paymentAttempt = await productService.getPaymentAttempt(ctx, {
+		const { paymentAttempt } = await productService.getPaymentAttempt(ctx, {
 			reference,
 		});
 		if (paymentAttempt === null) {

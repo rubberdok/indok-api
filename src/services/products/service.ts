@@ -1,4 +1,5 @@
 import type { Client } from "@vippsmobilepay/sdk";
+import type { Job } from "bullmq";
 import { env } from "~/config.js";
 import {
 	InternalServerError,
@@ -14,7 +15,12 @@ import type {
 	Product,
 } from "~/domain/products.js";
 import type { Context } from "../context.js";
-import type { PaymentProcessingQueueType } from "./worker.js";
+import type {
+	PaymentProcessingDataType,
+	PaymentProcessingNameType,
+	PaymentProcessingQueueType,
+	PaymentProcessingResultType,
+} from "./worker.js";
 
 export interface ProductRepository {
 	getProduct(id: string): Promise<Product | null>;
@@ -41,6 +47,18 @@ export interface ProductRepository {
 		data: { state: PaymentAttemptState },
 	): Promise<PaymentAttempt>;
 	getProducts(): Promise<{ products: Product[]; total: number }>;
+	createProduct(product: {
+		name: string;
+		amount: number;
+		merchantId: string;
+	}): Promise<{ product: Product }>;
+	createMerchant(merchant: {
+		name: string;
+		serialNumber: string;
+		subscriptionKey: string;
+		clientId: string;
+		clientSecret: string;
+	}): Promise<{ merchant: Merchant }>;
 }
 
 export class ProductService {
@@ -53,7 +71,7 @@ export class ProductService {
 		},
 	) {}
 
-	private getPaymentReference(order: Order, attempt: number) {
+	getPaymentReference(order: Order, attempt: number) {
 		return `indok-ntnu-${order.id}-${attempt}`;
 	}
 
@@ -73,6 +91,11 @@ export class ProductService {
 		redirectUrl: string;
 		paymentAttempt: PaymentAttempt;
 		order: Order;
+		pollingJob: Job<
+			PaymentProcessingDataType,
+			PaymentProcessingResultType,
+			PaymentProcessingNameType
+		>;
 	}> {
 		if (!ctx.user) {
 			throw new UnauthorizedError(
@@ -149,7 +172,7 @@ export class ProductService {
 		 * - Wait 5 seconds before the first poll
 		 * - Poll every 2 seconds
 		 */
-		await this.paymentProcessingQueue.add(
+		const pollingJob = await this.paymentProcessingQueue.add(
 			"payment-processing",
 			{
 				reference,
@@ -168,6 +191,7 @@ export class ProductService {
 			redirectUrl: vippsPayment.data.redirectUrl,
 			paymentAttempt,
 			order,
+			pollingJob,
 		};
 	}
 
@@ -207,7 +231,7 @@ export class ProductService {
 	async updatePaymentAttemptState(
 		ctx: Context,
 		paymentAttempt: PaymentAttempt,
-	): Promise<PaymentAttempt> {
+	): Promise<{ paymentAttempt: PaymentAttempt }> {
 		const { reference } = paymentAttempt;
 
 		const order = await this.productRepository.getOrder(paymentAttempt.orderId);
@@ -262,8 +286,9 @@ export class ProductService {
 			}
 		}
 
-		const updatedPaymentAttempt =
-			await this.productRepository.updatePaymentAttempt(
+		let updatedPaymentAttempt = paymentAttempt;
+		if (newState !== paymentAttempt.state) {
+			updatedPaymentAttempt = await this.productRepository.updatePaymentAttempt(
 				{
 					id: paymentAttempt.id,
 					version: paymentAttempt.version,
@@ -272,6 +297,7 @@ export class ProductService {
 					state: newState,
 				},
 			);
+		}
 
 		if (this.isFinalPaymentState(newState)) {
 			// Stop polling for this payment attempt as we have reached a final state.
@@ -297,19 +323,47 @@ export class ProductService {
 			}
 		}
 
-		return updatedPaymentAttempt;
+		return { paymentAttempt: updatedPaymentAttempt };
+	}
+
+	async createProduct(
+		ctx: Context,
+		data: {
+			name: string;
+			description?: string | null;
+			// Amount in øre, i.e. 100 = 1 NOK
+			amount: number;
+			merchantId: string;
+		},
+	): Promise<{ product: Product }> {
+		if (!ctx.user) {
+			throw new UnauthorizedError("You must be logged in to create a product");
+		}
+
+		ctx.log.info({ userId: ctx.user.id }, "Creating product");
+
+		const { product } = await this.productRepository.createProduct({
+			name: data.name,
+			amount: data.amount,
+			merchantId: data.merchantId,
+		});
+
+		ctx.log.info({ userId: ctx.user.id }, "Product created");
+
+		return { product };
 	}
 
 	async getPaymentAttempt(
 		ctx: Context,
 		params: { reference: string },
-	): Promise<PaymentAttempt | null> {
+	): Promise<{ paymentAttempt: PaymentAttempt | null }> {
 		const { reference } = params;
 		ctx.log.info({ reference }, "Fetching payment attempt");
 
-		return await this.productRepository.getPaymentAttempt({
+		const paymentAttempt = await this.productRepository.getPaymentAttempt({
 			reference,
 		});
+		return { paymentAttempt };
 	}
 
 	async createOrder(
@@ -348,5 +402,26 @@ export class ProductService {
 	): Promise<{ products: Product[]; total: number }> {
 		const { products, total } = await this.productRepository.getProducts();
 		return { products, total };
+	}
+
+	async createMerchant(
+		ctx: Context,
+		data: {
+			name: string;
+			serialNumber: string;
+			subscriptionKey: string;
+			clientId: string;
+			clientSecret: string;
+		},
+	): Promise<{ merchant: Merchant }> {
+		const { user } = ctx;
+		if (!user?.isSuperUser) {
+			throw new UnauthorizedError(
+				"You must be logged in as a super user to create a merchant",
+			);
+		}
+
+		const { merchant } = await this.productRepository.createMerchant(data);
+		return { merchant };
 	}
 }

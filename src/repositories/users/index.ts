@@ -1,38 +1,46 @@
-import type { Prisma, PrismaClient, User } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 import { InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
-import type { StudyProgram, User as DomainUser } from "~/domain/users.js";
+import {
+	type StudyProgram,
+	type User,
+	newUserFromDSO,
+} from "~/domain/users.js";
 import { prismaKnownErrorCodes } from "~/lib/prisma.js";
 
 export class UserRepository {
 	constructor(private db: PrismaClient) {}
 
-	update(id: string, data: Partial<DomainUser>): Promise<User> {
-		return this.db.user.update({
+	async update(id: string, data: Partial<User>): Promise<User> {
+		const user = await this.db.user.update({
 			where: {
 				id,
 			},
 			data,
 		});
+		return newUserFromDSO(user);
 	}
 
-	create(data: Prisma.UserCreateInput): Promise<User> {
-		return this.db.user.create({
+	async create(data: Prisma.UserCreateInput): Promise<User> {
+		const user = await this.db.user.create({
 			data,
 		});
+		return newUserFromDSO(user);
 	}
 
-	getAll(): Promise<User[]> {
-		return this.db.user.findMany();
+	async getAll(): Promise<User[]> {
+		const users = await this.db.user.findMany();
+		return users.map(newUserFromDSO);
 	}
 
 	async get(id: string): Promise<User> {
 		try {
-			return await this.db.user.findUniqueOrThrow({
+			const user = await this.db.user.findUniqueOrThrow({
 				where: {
 					id,
 				},
 			});
+			return newUserFromDSO(user);
 		} catch (err) {
 			if (err instanceof PrismaClientKnownRequestError) {
 				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) {
@@ -45,12 +53,13 @@ export class UserRepository {
 		}
 	}
 
-	getByFeideId(feideId: string): Promise<User> {
-		return this.db.user.findFirstOrThrow({
+	async getByFeideId(feideId: string): Promise<User> {
+		const user = await this.db.user.findFirstOrThrow({
 			where: {
 				feideId,
 			},
 		});
+		return newUserFromDSO(user);
 	}
 
 	/**
