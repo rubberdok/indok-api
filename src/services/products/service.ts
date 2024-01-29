@@ -4,7 +4,6 @@ import { env } from "~/config.js";
 import {
 	InternalServerError,
 	InvalidArgumentError,
-	type KnownDomainError,
 	NotFoundError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
@@ -16,6 +15,7 @@ import type {
 	PaymentAttemptState,
 	Product,
 } from "~/domain/products.js";
+import type { Result } from "~/lib/result.js";
 import type { Context } from "../context.js";
 import type {
 	PaymentProcessingDataType,
@@ -23,17 +23,6 @@ import type {
 	PaymentProcessingQueueType,
 	PaymentProcessingResultType,
 } from "./worker.js";
-
-type Result<TData, TError extends Error = KnownDomainError> =
-	| {
-			ok: true;
-			data: TData;
-	  }
-	| {
-			ok: false;
-			error: TError;
-			message: string;
-	  };
 
 export interface ProductRepository {
 	getProduct(id: string): Promise<{ product: Product | null }>;
