@@ -41,6 +41,11 @@ const envVarsSchema = z.object({
 	SESSION_COOKIE_NAME: z.string(),
 	SESSION_COOKIE_SECURE: z.string().transform((val) => val === "true"),
 	SESSION_SECRET: z.string(),
+	VIPPS_TEST_MODE: z.string().transform((val) => val === "true"),
+	VIPPS_DEFAULT_CLIENT_ID: z.string().optional(),
+	VIPPS_DEFAULT_CLIENT_SECRET: z.string().optional(),
+	VIPPS_DEFAULT_MERCHANT_SERIAL_NUMBER: z.string().optional(),
+	VIPPS_DEFAULT_SUBSCRIPTION_KEY: z.string().optional(),
 });
 
 export const env = envVarsSchema.parse(process.env);

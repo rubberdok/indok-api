@@ -6,5 +6,5 @@ export const Member: MemberResolvers = {
 	},
 	user: (parent, _args, ctx) => {
 		return ctx.users.get(parent.userId);
-	}
+	},
 };

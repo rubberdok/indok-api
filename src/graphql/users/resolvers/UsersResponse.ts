@@ -13,5 +13,5 @@ export const UsersResponse: UsersResponseResolvers = {
 			return users;
 		}
 		return [];
-	}
+	},
 };

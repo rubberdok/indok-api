@@ -1,5 +1,5 @@
 import type { QueryResolvers } from "./../../../types.generated.js";
-export const cabins: NonNullable<QueryResolvers['cabins']> = async (
+export const cabins: NonNullable<QueryResolvers["cabins"]> = async (
 	_parent,
 	_args,
 	ctx,

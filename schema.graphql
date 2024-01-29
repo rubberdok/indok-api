@@ -119,6 +119,14 @@ type CreateListingResponse {
   listing: Listing!
 }
 
+input CreateOrderInput {
+  productId: ID!
+}
+
+type CreateOrderResponse {
+  order: Order!
+}
+
 input CreateOrganizationInput {
   """The description of the organization, cannot exceed 10 000 characters"""
   description: String
@@ -286,6 +294,14 @@ type HasFeaturePermissionResponse {
   id: FeaturePermission!
 }
 
+input InitiatePaymentAttemptInput {
+  orderId: ID!
+}
+
+type InitiatePaymentAttemptResponse {
+  redirectUrl: String!
+}
+
 type Listing {
   """
   An optional URL to the application form for the listing, defaults to ""
@@ -345,6 +361,7 @@ type Mutation {
   """Create a new event category, requires super user status"""
   createEventCategory(data: CreateEventCategoryInput!): CreateEventCategoryResponse!
   createListing(data: CreateListingInput!): CreateListingResponse!
+  createOrder(data: CreateOrderInput!): CreateOrderResponse!
 
   """
   Create a new organization, and add the current user as an admin of the organization.
@@ -354,6 +371,7 @@ type Mutation {
   """Delete an event category, requires super user status"""
   deleteEventCategory(data: DeleteEventCategoryInput!): DeleteEventCategoryResponse!
   deleteListing(data: DeleteListingInput!): DeleteListingResponse!
+  initiatePaymentAttempt(data: InitiatePaymentAttemptInput!): InitiatePaymentAttemptResponse!
   newBooking(data: NewBookingInput!): NewBookingResponse!
 
   """Remove a member from the organization by the ID of the membership."""
@@ -412,6 +430,10 @@ input NewBookingInput {
 
 type NewBookingResponse {
   booking: Booking!
+}
+
+type Order {
+  id: ID!
 }
 
 type Organization {
@@ -488,6 +510,16 @@ type PrivateUser {
   username: String!
 }
 
+type Product {
+  amount: Int!
+  id: ID!
+}
+
+type ProductResponse {
+  products: [Product!]!
+  total: Int!
+}
+
 """
 The public facing user type, with limited information.
 This type is is available to other users, and should therefore not contain sensitive information,
@@ -521,6 +553,7 @@ type Query {
 
   """Get all organizations"""
   organizations: OrganizationsResponse
+  products: ProductResponse!
   serverTime: ServerTimeResponse!
   user: UserResponse!
   users: UsersResponse!

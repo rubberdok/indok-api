@@ -240,7 +240,8 @@ model Product {
   id                String   @id @default(uuid()) @db.Uuid
   name              String   @unique
   description       String   @default("")
-  price             Int
+  /// The amount in øre
+  amount            Int
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   merchantId        String   @db.Uuid
@@ -253,43 +254,56 @@ model Product {
 }
 
 model Merchant {
-  id        String    @id @default(uuid()) @db.Uuid
-  name      String    @unique
-  secretKey String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  products  Product[]
+  id              String    @id @default(uuid()) @db.Uuid
+  name            String    @unique
+  clientSecret    String
+  clientId        String    @unique
+  subscriptionKey String
+  serialNumber    String    @unique
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  products        Product[]
 }
 
 model Order {
-  id              String           @id @default(uuid()) @db.Uuid
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  userId          String?          @db.Uuid
-  user            User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
-  product         Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId       String           @db.Uuid
+  id              String             @id @default(uuid()) @db.Uuid
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  userId          String?            @db.Uuid
+  user            User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  product         Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId       String             @db.Uuid
   paymentAttempts PaymentAttempt[]
-  version         Int              @default(0)
-  status          PaymentStatus    @default(PENDING)
+  version         Int                @default(0)
+  paymentStatus   OrderPaymentStatus @default(PENDING)
+  attempt         Int                @default(0)
 }
 
-enum PaymentStatus {
+enum OrderPaymentStatus {
   PENDING
-  INITIATED
-  CONFIRMED
+  CREATED
+  CAPTURED
+  REFUNDED
   CANCELLED
-  REJECTED
+}
+
+enum PaymentAttemptState {
+  CREATED
+  AUTHORIZED
+  FAILED
+  TERMINATED
+  EXPIRED
 }
 
 model PaymentAttempt {
-  id        String        @id @default(uuid()) @db.Uuid
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  orderId   String        @db.Uuid
-  order     Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  status    PaymentStatus @default(PENDING)
-  version   Int           @default(0)
+  id        String              @id @default(uuid()) @db.Uuid
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+  orderId   String              @db.Uuid
+  order     Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  state     PaymentAttemptState @default(CREATED)
+  version   Int                 @default(0)
+  reference String              @unique
 }
 
 // Listings

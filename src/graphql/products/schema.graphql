@@ -1,0 +1,41 @@
+input InitiatePaymentAttemptInput {
+    orderId: ID!
+}
+
+type InitiatePaymentAttemptResponse {
+    redirectUrl: String!
+}
+
+
+type Order {
+    id: ID!
+}
+
+input CreateOrderInput {
+    productId: ID!
+}
+
+type CreateOrderResponse {
+    order: Order!
+}
+
+type Product {
+    id: ID!
+    amount: Int!
+}
+
+type ProductResponse {
+    products: [Product!]!
+    total: Int!
+}
+
+type Mutation {
+    initiatePaymentAttempt(data: InitiatePaymentAttemptInput!): InitiatePaymentAttemptResponse!
+    createOrder(data: CreateOrderInput!): CreateOrderResponse!
+}
+
+
+
+type Query {
+    products: ProductResponse!
+}

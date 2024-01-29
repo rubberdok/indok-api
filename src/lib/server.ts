@@ -13,18 +13,21 @@ import type {
 	Semester,
 } from "@prisma/client";
 import * as Sentry from "@sentry/node";
+import { Client } from "@vippsmobilepay/sdk";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { type Configuration, env } from "~/config.js";
 import type { BookingStatus } from "~/domain/cabins.js";
 import { InternalServerError } from "~/domain/errors.js";
 import type { Category, Event, SignUpAvailability } from "~/domain/events.js";
 import type { Role } from "~/domain/organizations.js";
+import type { Order, Product } from "~/domain/products.js";
 import type { StudyProgram, User } from "~/domain/users.js";
 import { CabinRepository } from "~/repositories/cabins/repository.js";
 import { EventRepository } from "~/repositories/events/repository.js";
 import { ListingRepository } from "~/repositories/listings/repository.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
 import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
+import { ProductRepository } from "~/repositories/products/repository.js";
 import { UserRepository } from "~/repositories/users/index.js";
 import { feideClient } from "~/services/auth/clients.js";
 import { AuthService } from "~/services/auth/service.js";
@@ -35,6 +38,7 @@ import { ListingService } from "~/services/listings/index.js";
 import { MailService } from "~/services/mail/index.js";
 import { OrganizationService } from "~/services/organizations/index.js";
 import { PermissionService } from "~/services/permissions/index.js";
+import { ProductService } from "~/services/products/index.js";
 import { UserService } from "~/services/users/index.js";
 import fastifyMessageQueue from "./fastify/message-queue.js";
 import fastifyPrisma from "./fastify/prisma.js";
@@ -249,6 +253,20 @@ export interface IPermissionService {
 	}): Promise<boolean>;
 }
 
+export type IProductService = {
+	initiatePaymentAttempt(
+		ctx: Context,
+		data: { orderId: string },
+	): Promise<{
+		redirectUrl: string;
+	}>;
+	createOrder(
+		ctx: Context,
+		data: { productId: string },
+	): Promise<{ order: Order }>;
+	getProducts(ctx: Context): Promise<{ products: Product[]; total: number }>;
+};
+
 type UserContext = {
 	user: User | null;
 };
@@ -261,6 +279,7 @@ type Services = {
 	events: IEventService;
 	listings: IListingService;
 	cabins: ICabinService;
+	products: IProductService;
 };
 
 type ServerDependencies = {
@@ -308,6 +327,7 @@ async function startServer(
  */
 async function registerServices(
 	serverInstance: FastifyInstance,
+	configuration?: Partial<Configuration>,
 ): Promise<Services> {
 	await serverInstance.register(fastifyPrisma, { client: prisma });
 	const database = serverInstance.database;
@@ -322,6 +342,7 @@ async function registerServices(
 	const organizationRepository = new OrganizationRepository(database);
 	const eventRepository = new EventRepository(database);
 	const listingRepository = new ListingRepository(database);
+	const productRepository = new ProductRepository(database);
 
 	const mailService = new MailService(postmark, env.NO_REPLY_EMAIL);
 	const permissionService = new PermissionService(
@@ -363,6 +384,22 @@ async function registerServices(
 		userService,
 	);
 	const authService = new AuthService(userService, feideClient);
+
+	await serverInstance.register(fastifyMessageQueue, {
+		name: "payment-processing",
+	});
+	if (!serverInstance.queues["payment-processing"]) {
+		throw new InternalServerError("Payment processing queue not initialized");
+	}
+	const productService = new ProductService(
+		Client,
+		serverInstance.queues["payment-processing"],
+		productRepository,
+		{
+			useTestMode: configuration?.VIPPS_TEST_MODE,
+		},
+	);
+
 	const services: Services = {
 		users: userService,
 		auth: authService,
@@ -371,6 +408,7 @@ async function registerServices(
 		events: eventService,
 		listings: listingService,
 		cabins: cabinService,
+		products: productService,
 	};
 
 	await serverInstance.register(fastifyService, { services });

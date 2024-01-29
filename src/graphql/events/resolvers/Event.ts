@@ -32,5 +32,5 @@ export const Event: EventResolvers = {
 	signUpDetails: (event) => {
 		if (!isEventWithSignUps(event)) return null;
 		return event.signUpDetails;
-	}
+	},
 };

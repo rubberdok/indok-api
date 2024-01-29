@@ -3,6 +3,7 @@ import fp from "fastify-plugin";
 import type { Redis } from "ioredis";
 import { InternalServerError } from "~/domain/errors.js";
 import type { EmailQueueType } from "~/services/mail/worker.js";
+import type { PaymentProcessingQueueType } from "~/services/products/worker.js";
 import { Queue } from "../bullmq/queue.js";
 
 type FastifyMessageQueuePluginOptions = {
@@ -12,6 +13,7 @@ type FastifyMessageQueuePluginOptions = {
 
 type KnownQueues = {
 	email: EmailQueueType;
+	"payment-processing": PaymentProcessingQueueType;
 };
 
 declare module "fastify" {
@@ -43,10 +45,7 @@ const fastifyMessageQueue: FastifyPluginAsync<
 	});
 
 	if (fastify.hasDecorator("queues")) {
-		fastify.decorate("queues", {
-			...fastify.queues,
-			[name]: queue,
-		});
+		fastify.queues[name] = queue;
 	} else {
 		fastify.decorate("queues", {
 			[name]: queue,

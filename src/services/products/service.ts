@@ -1,42 +1,23 @@
 import type { Client } from "@vippsmobilepay/sdk";
+import { env } from "~/config.js";
 import {
 	InternalServerError,
 	InvalidArgumentError,
 	NotFoundError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
+import type {
+	Merchant,
+	Order,
+	PaymentAttempt,
+	PaymentAttemptState,
+	Product,
+} from "~/domain/products.js";
 import type { Context } from "../context.js";
+import type { PaymentProcessingQueueType } from "./worker.js";
 
-type Product = {
-	id: string;
-	amount: number;
-	description: string;
-	version: number;
-};
-
-type Order = {
-	id: string;
-	productId: string;
-	attempt: number;
-	version: number;
-	/**
-	 * PENDING: The order has been created, by no payment attempts have been made
-	 * CREATED: A payment attempt has been made, but the user has not yet paid
-	 * CAPTURED: The user has paid, and the order has been captured
-	 * REFUNDED: The order has been refunded
-	 * CANCELLED: The order has been cancelled
-	 */
-	paymentStatus: "PENDING" | "REFUNDED" | "CANCELLED" | "CREATED" | "CAPTURED";
-};
-
-type PaymentAttempt = {
-	id: string;
-	orderId: string;
-	reference: string;
-};
-
-interface ProductRepository {
-	getProduct(id: string): Promise<Product>;
+export interface ProductRepository {
+	getProduct(id: string): Promise<Product | null>;
 	getOrder(id: string): Promise<Order | null>;
 	createOrder(order: {
 		userId: string;
@@ -52,17 +33,37 @@ interface ProductRepository {
 		};
 		reference: string;
 	}): Promise<PaymentAttempt>;
+	getPaymentAttempt(
+		by: { id: string } | { reference: string },
+	): Promise<PaymentAttempt | null>;
+	updatePaymentAttempt(
+		paymentAttempt: { id: string; version: number },
+		data: { state: PaymentAttemptState },
+	): Promise<PaymentAttempt>;
+	getProducts(): Promise<{ products: Product[]; total: number }>;
 }
 
 export class ProductService {
 	constructor(
-		private vipps: ReturnType<typeof Client>,
-
+		private vippsFactory: typeof Client,
+		private paymentProcessingQueue: PaymentProcessingQueueType,
 		private productRepository: ProductRepository,
+		private config?: {
+			useTestMode?: boolean;
+		},
 	) {}
 
 	private getPaymentReference(order: Order, attempt: number) {
 		return `indok-ntnu-${order.id}-${attempt}`;
+	}
+
+	private newClient(merchant: Merchant): ReturnType<typeof Client> {
+		return this.vippsFactory({
+			merchantSerialNumber: merchant.serialNumber,
+			useTestMode: this.config?.useTestMode,
+			subscriptionKey: merchant.subscriptionKey,
+			retryRequests: false,
+		});
 	}
 
 	async initiatePaymentAttempt(
@@ -95,25 +96,22 @@ export class ProductService {
 
 		const product = await this.productRepository.getProduct(order?.productId);
 
+		if (product === null) {
+			throw new NotFoundError("Product not found");
+		}
+
 		/**
 		 * https://developer.vippsmobilepay.com/docs/knowledge-base/orderid
 		 *
 		 * The order ID must be unique for each order attempt. Recommended to suffix the order ID with a counter to
 		 * easily identify multiple attempts for the same order.
 		 */
-		const accessToken = await this.vipps.auth.getToken({
-			clientId: "",
-			clientSecret: "",
-			subscriptionKey: "",
-		});
-
-		if (!accessToken.ok) {
-			throw new InternalServerError("Failed to fetch vipps access token");
-		}
-
-		const token = accessToken.data.access_token;
 		const reference = this.getPaymentReference(order, order.attempt + 1);
-		const vippsPayment = await this.vipps.payment.create(token, {
+
+		const vipps = this.newClient(product.merchant);
+		ctx.log.info(product.merchant);
+		const token = await this.getToken(ctx, vipps, product.merchant);
+		const vippsPayment = await vipps.payment.create(token, {
 			reference: this.getPaymentReference(order, order.attempt + 1),
 			amount: {
 				value: product.amount,
@@ -123,7 +121,7 @@ export class ProductService {
 				type: "WALLET",
 			},
 			userFlow: "WEB_REDIRECT",
-			returnUrl: "",
+			returnUrl: env.SERVER_URL,
 			paymentDescription: product.description,
 		});
 
@@ -141,10 +139,214 @@ export class ProductService {
 			reference,
 		});
 
+		/**
+		 * While Vipps has support for webhooks, they make no guarantees about the success of the webhook delivery,
+		 * see https://developer.vippsmobilepay.com/docs/APIs/epayment-api/checklist/#avoid-integration-pitfalls
+		 *
+		 * https://developer.vippsmobilepay.com/docs/knowledge-base/polling-guidelines/?_highlight=pol
+		 *
+		 * Recommendations:
+		 * - Wait 5 seconds before the first poll
+		 * - Poll every 2 seconds
+		 */
+		await this.paymentProcessingQueue.add(
+			"payment-processing",
+			{
+				reference,
+			},
+			{
+				jobId: reference,
+				delay: 5 * 1000, // 5 seconds
+				repeat: {
+					every: 2 * 1000, // 2 seconds
+					limit: 300, // After 5 seconds, we poll every 2 seconds. Payments expire after 10 minutes, so we poll for 10 minutes / 2 seconds = 300 times
+				},
+			},
+		);
+
 		return {
 			redirectUrl: vippsPayment.data.redirectUrl,
 			paymentAttempt,
 			order,
 		};
+	}
+
+	private async getToken(
+		ctx: Context,
+		client: ReturnType<typeof Client>,
+		merchant: Merchant,
+	): Promise<string> {
+		const accessToken = await client.auth.getToken({
+			clientId: merchant.clientId,
+			clientSecret: merchant.clientSecret,
+			subscriptionKey: merchant.subscriptionKey,
+		});
+
+		if (!accessToken.ok) {
+			ctx.log.error(
+				{ message: accessToken.message },
+				"Failed to fetch vipps access token",
+			);
+			const err = new InternalServerError("Failed to fetch vipps access token");
+			err.cause = accessToken.error;
+			throw err;
+		}
+
+		return accessToken.data.access_token;
+	}
+
+	private isFinalPaymentState(status: PaymentAttemptState): boolean {
+		return (
+			status === "FAILED" ||
+			status === "TERMINATED" ||
+			status === "EXPIRED" ||
+			status === "AUTHORIZED"
+		);
+	}
+
+	async updatePaymentAttemptState(
+		ctx: Context,
+		paymentAttempt: PaymentAttempt,
+	): Promise<PaymentAttempt> {
+		const { reference } = paymentAttempt;
+
+		const order = await this.productRepository.getOrder(paymentAttempt.orderId);
+		if (order === null) {
+			throw new NotFoundError("Order not found");
+		}
+		const product = await this.productRepository.getProduct(order.productId);
+		if (product === null) {
+			throw new NotFoundError("Product not found");
+		}
+		ctx.log.info({ reference }, "Fetching latest payment status from Vipps");
+		const vipps = this.newClient(product.merchant);
+		const token = await this.getToken(ctx, vipps, product.merchant);
+		const response = await vipps.payment.info(token, reference);
+
+		if (!response.ok) {
+			ctx.log.error(
+				{ reference, message: response.message },
+				"Failed to fetch payment status from Vipps",
+			);
+			const interalErr = new InternalServerError(
+				"Failed to fetch payment status from Vipps",
+			);
+			interalErr.cause = response.error;
+			throw interalErr;
+		}
+
+		const status = response.data.state;
+		let newState: PaymentAttemptState;
+		ctx.log.info({ reference, status }, "Current payment status");
+
+		switch (status) {
+			case "ABORTED": {
+				newState = "FAILED";
+				break;
+			}
+			case "EXPIRED": {
+				newState = "EXPIRED";
+				break;
+			}
+			case "TERMINATED": {
+				newState = "TERMINATED";
+				break;
+			}
+			case "CREATED": {
+				newState = "CREATED";
+				break;
+			}
+			case "AUTHORIZED": {
+				newState = "AUTHORIZED";
+				break;
+			}
+		}
+
+		const updatedPaymentAttempt =
+			await this.productRepository.updatePaymentAttempt(
+				{
+					id: paymentAttempt.id,
+					version: paymentAttempt.version,
+				},
+				{
+					state: newState,
+				},
+			);
+
+		if (this.isFinalPaymentState(newState)) {
+			// Stop polling for this payment attempt as we have reached a final state.
+			ctx.log.info({ reference }, "payment processed, removing from queue");
+			const ok = await this.paymentProcessingQueue.removeRepeatable(
+				"payment-processing",
+				{
+					every: 2 * 1000,
+					limit: 300,
+				},
+				reference,
+			);
+			if (!ok) {
+				ctx.log.error(
+					{ reference },
+					"Failed to remove payment attempt from payment processing queue",
+				);
+			} else {
+				ctx.log.info(
+					{ reference },
+					"Successfully removed payment attempt from payment processing queue",
+				);
+			}
+		}
+
+		return updatedPaymentAttempt;
+	}
+
+	async getPaymentAttempt(
+		ctx: Context,
+		params: { reference: string },
+	): Promise<PaymentAttempt | null> {
+		const { reference } = params;
+		ctx.log.info({ reference }, "Fetching payment attempt");
+
+		return await this.productRepository.getPaymentAttempt({
+			reference,
+		});
+	}
+
+	async createOrder(
+		ctx: Context,
+		data: { productId: string },
+	): Promise<{ order: Order }> {
+		if (!ctx.user) {
+			throw new UnauthorizedError("You must be logged in to create an order");
+		}
+
+		ctx.log.info(
+			{ userId: ctx.user.id, productId: data.productId },
+			"Creating order",
+		);
+
+		const product = await this.productRepository.getProduct(data.productId);
+		if (product === null) {
+			throw new NotFoundError("Product not found");
+		}
+
+		const order = await this.productRepository.createOrder({
+			userId: ctx.user.id,
+			product: product,
+		});
+
+		ctx.log.info(
+			{ userId: ctx.user.id, productId: data.productId },
+			"Order created",
+		);
+
+		return { order };
+	}
+
+	async getProducts(
+		_ctx: Context,
+	): Promise<{ products: Product[]; total: number }> {
+		const { products, total } = await this.productRepository.getProducts();
+		return { products, total };
 	}
 }
