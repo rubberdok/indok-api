@@ -104,6 +104,7 @@ describe("ProductService", () => {
 			 * Initially, the payment attempt should be in progress, and the status should be CREATED.
 			 */
 			assert(result.ok);
+			const { pollingJob } = result.data;
 			const initialPaymentAttemptResult =
 				await productService.getPaymentAttempt(ctx, {
 					reference,
@@ -129,10 +130,9 @@ describe("ProductService", () => {
 					state: "AUTHORIZED",
 				}),
 			});
-			let pendingJobs = await paymentProcessingQueue.getRepeatableJobs();
-			expect(pendingJobs).toHaveLength(1);
+			const jobResult = await pollingJob.waitUntilFinished(queueEvents);
+			assert(jobResult.ok);
 
-			await result.data.pollingJob.waitUntilFinished(queueEvents);
 			const finalPaymentResult = await productService.getPaymentAttempt(ctx, {
 				reference,
 			});
@@ -148,7 +148,7 @@ describe("ProductService", () => {
 			expect(finalPaymentAttempt?.state).toBe("AUTHORIZED");
 			expect(finalPaymentAttempt?.inProgress).toBe(false);
 			expect(finalPaymentAttempt?.version).toBe(1);
-			pendingJobs = await paymentProcessingQueue.getRepeatableJobs();
+			const pendingJobs = await paymentProcessingQueue.getRepeatableJobs();
 			expect(pendingJobs).toHaveLength(0);
 		});
 	});

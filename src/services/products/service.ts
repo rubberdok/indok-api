@@ -425,19 +425,14 @@ export class ProductService {
 
 	/**
 	 * getPaymentAttempt returns a payment attempt.
+	 *
+	 * **NOTE**: This method does not check if the user is authorized to view the payment attempt,
+	 * and should only be used internally.
 	 */
 	async getPaymentAttempt(
 		ctx: Context,
 		params: { reference: string },
 	): ResultAsync<{ paymentAttempt: PaymentAttempt | null }> {
-		if (!ctx.user) {
-			return {
-				ok: false,
-				error: new UnauthorizedError(
-					"You must be logged in to fetch a payment attempt",
-				),
-			};
-		}
 		const { reference } = params;
 		ctx.log.info({ reference }, "Fetching payment attempt");
 

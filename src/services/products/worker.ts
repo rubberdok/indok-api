@@ -7,7 +7,7 @@ import type { Result } from "~/lib/result.js";
 import type { Context } from "../context.js";
 
 type PaymentProcessingDataType = { reference: string };
-type PaymentProcessingResultType = undefined;
+type PaymentProcessingResultType = Result<undefined>;
 type PaymentProcessingNameType = "payment-processing";
 
 type PaymentProcessingWorkerType = Worker<
@@ -61,7 +61,10 @@ function getPaymentProcessingHandler({
 
 		if (!result.ok) {
 			log.error({ error: result.error }, "Failed to get payment attempt");
-			return;
+			return {
+				ok: false,
+				error: result.error,
+			};
 		}
 
 		const { paymentAttempt } = result.data;
@@ -71,7 +74,25 @@ function getPaymentProcessingHandler({
 			throw new UnrecoverableError("Payment attempt not found");
 		}
 
-		await productService.updatePaymentAttemptState(ctx, paymentAttempt);
+		const updateResult = await productService.updatePaymentAttemptState(
+			ctx,
+			paymentAttempt,
+		);
+		if (updateResult.ok) {
+			log.info({ reference }, "Payment attempt updated");
+			return {
+				ok: true,
+				data: undefined,
+			};
+		}
+		log.error(
+			{ error: updateResult.error },
+			"Failed to update payment attempt",
+		);
+		return {
+			ok: false,
+			error: updateResult.error,
+		};
 	};
 
 	return {

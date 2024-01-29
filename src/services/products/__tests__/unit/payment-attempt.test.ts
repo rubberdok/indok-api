@@ -117,17 +117,17 @@ describe("ProductService", () => {
 	});
 
 	describe("#getPaymentAttempt", () => {
-		it("should fail if the user is not logged in", async () => {
+		it("should succeed if the user is not logged in", async () => {
 			const ctx = makeMockContext(null);
+			productRepository.getPaymentAttempt.mockResolvedValueOnce({
+				paymentAttempt: mock<PaymentAttempt>({}),
+			});
 
 			const result = await productService.getPaymentAttempt(ctx, {
 				reference: faker.string.uuid(),
 			});
 
-			expect(result).toEqual({
-				ok: false,
-				error: expect.any(Error),
-			});
+			expect(result.ok).toBe(true);
 		});
 
 		it("should succeed if the user is logged in", async () => {
