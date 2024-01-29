@@ -86,6 +86,10 @@ export class ProductService {
 		});
 	}
 
+	/**
+	 * initiatePaymentAttempt initiates a new payment attempt for the given order.
+	 * If the payment attempt is created successfully, a polling job is added to the "payment-processing" queue.
+	 */
 	async initiatePaymentAttempt(
 		ctx: Context,
 		params: { orderId: string },
@@ -404,6 +408,9 @@ export class ProductService {
 		return { ok: true, data: { paymentAttempt: updatedPaymentAttempt } };
 	}
 
+	/**
+	 * createProduct creates a new product.
+	 */
 	async createProduct(
 		ctx: Context,
 		data: {
@@ -413,9 +420,15 @@ export class ProductService {
 			price: number;
 			merchantId: string;
 		},
-	): Promise<{ product: Product }> {
+	): Promise<Result<{ product: Product }>> {
 		if (!ctx.user) {
-			throw new UnauthorizedError("You must be logged in to create a product");
+			return {
+				ok: false,
+				error: new UnauthorizedError(
+					"You must be logged in to create a product",
+				),
+				message: "You must be logged in to create a product",
+			};
 		}
 
 		ctx.log.info({ userId: ctx.user.id }, "Creating product");
@@ -428,28 +441,40 @@ export class ProductService {
 
 		ctx.log.info({ userId: ctx.user.id }, "Product created");
 
-		return { product };
+		return { ok: true, data: { product } };
 	}
 
+	/**
+	 * getPaymentAttempt returns a payment attempt.
+	 */
 	async getPaymentAttempt(
 		ctx: Context,
 		params: { reference: string },
-	): Promise<{ paymentAttempt: PaymentAttempt | null }> {
+	): Promise<Result<{ paymentAttempt: PaymentAttempt | null }>> {
 		const { reference } = params;
 		ctx.log.info({ reference }, "Fetching payment attempt");
 
 		const { paymentAttempt } = await this.productRepository.getPaymentAttempt({
 			reference,
 		});
-		return { paymentAttempt };
+		return { ok: true, data: { paymentAttempt } };
 	}
 
+	/**
+	 * createOrder creates a new order.
+	 */
 	async createOrder(
 		ctx: Context,
 		data: { productId: string },
-	): Promise<{ order: Order }> {
+	): Promise<Result<{ order: Order }>> {
 		if (!ctx.user) {
-			throw new UnauthorizedError("You must be logged in to create an order");
+			return {
+				ok: false,
+				error: new UnauthorizedError(
+					"You must be logged in to create an order",
+				),
+				message: "You must be logged in to create an order",
+			};
 		}
 
 		ctx.log.info(
@@ -459,7 +484,11 @@ export class ProductService {
 
 		const { product } = await this.productRepository.getProduct(data.productId);
 		if (product === null) {
-			throw new NotFoundError("Product not found");
+			return {
+				ok: false,
+				error: new NotFoundError("Product not found"),
+				message: "Product not found",
+			};
 		}
 
 		const { order } = await this.productRepository.createOrder({
@@ -472,16 +501,30 @@ export class ProductService {
 			"Order created",
 		);
 
-		return { order };
+		return { ok: true, data: { order } };
 	}
 
+	/**
+	 * getProduct returns a product.
+	 */
 	async getProducts(
 		_ctx: Context,
-	): Promise<{ products: Product[]; total: number }> {
-		const { products, total } = await this.productRepository.getProducts();
-		return { products, total };
+	): Promise<Result<{ products: Product[]; total: number }>> {
+		try {
+			const { products, total } = await this.productRepository.getProducts();
+			return { ok: true, data: { products, total } };
+		} catch (err) {
+			return {
+				ok: false,
+				error: new InternalServerError("Failed to get products"),
+				message: "Failed to get products",
+			};
+		}
 	}
 
+	/**
+	 * createMerchant creates a new merchant.
+	 */
 	async createMerchant(
 		ctx: Context,
 		data: {
@@ -491,15 +534,34 @@ export class ProductService {
 			clientId: string;
 			clientSecret: string;
 		},
-	): Promise<{ merchant: Merchant }> {
+	): Promise<Result<{ merchant: Merchant }>> {
 		const { user } = ctx;
 		if (!user?.isSuperUser) {
-			throw new UnauthorizedError(
-				"You must be logged in as a super user to create a merchant",
-			);
+			return {
+				ok: false,
+				error: new UnauthorizedError(
+					"You must be logged in as a super user to create a merchant",
+				),
+				message: "You must be logged in as a super user to create a merchant",
+			};
 		}
 
-		const { merchant } = await this.productRepository.createMerchant(data);
-		return { merchant };
+		try {
+			const { merchant } = await this.productRepository.createMerchant(data);
+			return { ok: true, data: { merchant } };
+		} catch (err) {
+			if (err instanceof InvalidArgumentError) {
+				return {
+					ok: false,
+					error: err,
+					message: err.message,
+				};
+			}
+			return {
+				ok: false,
+				error: new InternalServerError("Failed to create merchant"),
+				message: "Failed to create merchant",
+			};
+		}
 	}
 }

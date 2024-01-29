@@ -4,6 +4,9 @@ export const products: NonNullable<QueryResolvers["products"]> = async (
 	_arg,
 	ctx,
 ) => {
-	const { products, total } = await ctx.products.getProducts(ctx);
-	return { products, total };
+	const productsResult = await ctx.products.getProducts(ctx);
+	if (!productsResult.ok) {
+		throw productsResult.error;
+	}
+	return productsResult.data;
 };

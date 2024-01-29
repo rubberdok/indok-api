@@ -17,7 +17,7 @@ import { Client } from "@vippsmobilepay/sdk";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { type Configuration, env } from "~/config.js";
 import type { BookingStatus } from "~/domain/cabins.js";
-import { InternalServerError, type KnownDomainError } from "~/domain/errors.js";
+import { InternalServerError } from "~/domain/errors.js";
 import type { Category, Event, SignUpAvailability } from "~/domain/events.js";
 import type { Role } from "~/domain/organizations.js";
 import type { Order, Product } from "~/domain/products.js";
@@ -45,17 +45,7 @@ import fastifyPrisma from "./fastify/prisma.js";
 import fastifyService from "./fastify/service.js";
 import postmark from "./postmark.js";
 import prisma from "./prisma.js";
-
-type Result<TError, TData> =
-	| {
-			ok: true;
-			data: TData;
-	  }
-	| {
-			ok: false;
-			error: TError;
-			message: string;
-	  };
+import type { Result } from "./result.js";
 
 export interface IOrganizationService {
 	create(
@@ -268,18 +258,17 @@ export type IProductService = {
 		ctx: Context,
 		data: { orderId: string },
 	): Promise<
-		Result<
-			KnownDomainError,
-			{
-				redirectUrl: string;
-			}
-		>
+		Result<{
+			redirectUrl: string;
+		}>
 	>;
 	createOrder(
 		ctx: Context,
 		data: { productId: string },
-	): Promise<{ order: Order }>;
-	getProducts(ctx: Context): Promise<{ products: Product[]; total: number }>;
+	): Promise<Result<{ order: Order }>>;
+	getProducts(
+		ctx: Context,
+	): Promise<Result<{ products: Product[]; total: number }>>;
 };
 
 type UserContext = {

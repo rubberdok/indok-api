@@ -26,7 +26,7 @@ type ProductService = {
 	getPaymentAttempt(
 		ctx: Context,
 		by: { reference: string },
-	): Promise<{ paymentAttempt: PaymentAttempt | null }>;
+	): Promise<Result<{ paymentAttempt: PaymentAttempt | null }>>;
 	updatePaymentAttemptState(
 		ctx: Context,
 		paymentAttempt: PaymentAttempt,
@@ -55,9 +55,17 @@ function getPaymentProcessingHandler({
 		const { reference } = job.data;
 		const ctx = { log, user: null };
 
-		const { paymentAttempt } = await productService.getPaymentAttempt(ctx, {
+		const result = await productService.getPaymentAttempt(ctx, {
 			reference,
 		});
+
+		if (!result.ok) {
+			log.error({ error: result.error }, "Failed to get payment attempt");
+			return;
+		}
+
+		const { paymentAttempt } = result.data;
+
 		if (paymentAttempt === null) {
 			log.error({ reference }, "Payment attempt not found for reference");
 			throw new UnrecoverableError("Payment attempt not found");

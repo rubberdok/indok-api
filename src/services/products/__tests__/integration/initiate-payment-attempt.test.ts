@@ -50,21 +50,25 @@ describe("ProductService", () => {
 				},
 			});
 			const ctx = makeMockContext(newUserFromDSO(user));
-			const { merchant } = await productService.createMerchant(ctx, {
+			const merchantResult = await productService.createMerchant(ctx, {
 				name: faker.company.name(),
 				serialNumber: faker.string.sample(6),
 				subscriptionKey: faker.string.uuid(),
 				clientId: faker.string.uuid(),
 				clientSecret: faker.string.uuid(),
 			});
-			const { product } = await productService.createProduct(ctx, {
+			assert(merchantResult.ok);
+			const productResult = await productService.createProduct(ctx, {
 				name: faker.word.noun(),
 				price: 100 * 100,
-				merchantId: merchant.id,
+				merchantId: merchantResult.data.merchant.id,
 			});
-			const { order } = await productService.createOrder(ctx, {
-				productId: product.id,
+			assert(productResult.ok);
+			const orderResult = await productService.createOrder(ctx, {
+				productId: productResult.data.product.id,
 			});
+			assert(orderResult.ok);
+			const { order } = orderResult.data;
 			const reference = productService.getPaymentReference(order, 1);
 			vippsMock.payment.create.mockResolvedValue({
 				ok: true,
@@ -100,10 +104,14 @@ describe("ProductService", () => {
 			 * Initially, the payment attempt should be in progress, and the status should be CREATED.
 			 */
 			assert(result.ok);
-			const { paymentAttempt: initialPaymentAttempt } =
+			const initialPaymentAttemptResult =
 				await productService.getPaymentAttempt(ctx, {
 					reference,
 				});
+			assert(initialPaymentAttemptResult.ok);
+			const {
+				data: { paymentAttempt: initialPaymentAttempt },
+			} = initialPaymentAttemptResult;
 			expect(initialPaymentAttempt?.state).toBe("CREATED");
 			expect(initialPaymentAttempt?.inProgress).toBe(true);
 
@@ -125,10 +133,13 @@ describe("ProductService", () => {
 			expect(pendingJobs).toHaveLength(1);
 
 			await result.data.pollingJob.waitUntilFinished(queueEvents);
-			const { paymentAttempt: finalPaymentAttempt } =
-				await productService.getPaymentAttempt(ctx, {
-					reference,
-				});
+			const finalPaymentResult = await productService.getPaymentAttempt(ctx, {
+				reference,
+			});
+			assert(finalPaymentResult.ok);
+			const {
+				data: { paymentAttempt: finalPaymentAttempt },
+			} = finalPaymentResult;
 
 			/**
 			 * Assert
