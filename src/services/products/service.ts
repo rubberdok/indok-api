@@ -430,6 +430,14 @@ export class ProductService {
 		ctx: Context,
 		params: { reference: string },
 	): ResultAsync<{ paymentAttempt: PaymentAttempt | null }> {
+		if (!ctx.user) {
+			return {
+				ok: false,
+				error: new UnauthorizedError(
+					"You must be logged in to fetch a payment attempt",
+				),
+			};
+		}
 		const { reference } = params;
 		ctx.log.info({ reference }, "Fetching payment attempt");
 

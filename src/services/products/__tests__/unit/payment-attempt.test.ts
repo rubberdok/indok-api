@@ -1,30 +1,18 @@
 import { faker } from "@faker-js/faker";
-import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
+import { mock } from "jest-mock-extended";
+import type { PaymentAttempt } from "~/domain/products.js";
 import type { User } from "~/domain/users.js";
 import { makeMockContext } from "~/services/context.js";
-import { type ProductRepository, ProductService } from "../../service.js";
-import type { PaymentProcessingQueueType } from "../../worker.js";
-import { MockVippsClientFactory } from "../mock-vipps-client.js";
+import { makeDependencies } from "./dependencies.js";
 
 describe("ProductService", () => {
+	const {
+		productService,
+		mockVippsClient,
+		productRepository,
+		mockPaymentProcessingQueue,
+	} = makeDependencies();
 	describe("#initiatePaymentAttempt", () => {
-		let productService: ProductService;
-		let mockProductRepository: DeepMockProxy<ProductRepository>;
-		let mockPaymentProcessingQueue: DeepMockProxy<PaymentProcessingQueueType>;
-		let mockClient: ReturnType<typeof MockVippsClientFactory>["client"];
-
-		beforeAll(() => {
-			const { client, factory } = MockVippsClientFactory();
-			mockPaymentProcessingQueue = mockDeep<PaymentProcessingQueueType>();
-			mockProductRepository = mockDeep<ProductRepository>();
-			mockClient = client;
-			productService = new ProductService(
-				factory,
-				mockPaymentProcessingQueue,
-				mockProductRepository,
-			);
-		});
-
 		it("should create a payment attempt with Vipps and add polling to queue", async () => {
 			/**
 			 * Arrange
@@ -35,7 +23,7 @@ describe("ProductService", () => {
 			 */
 			const orderId = faker.string.uuid();
 			const price = 100;
-			mockProductRepository.getOrder.mockResolvedValueOnce({
+			productRepository.getOrder.mockResolvedValueOnce({
 				order: {
 					attempt: 0,
 					id: orderId,
@@ -44,7 +32,7 @@ describe("ProductService", () => {
 					paymentStatus: "PENDING",
 				},
 			});
-			mockProductRepository.getProduct.mockResolvedValueOnce({
+			productRepository.getProduct.mockResolvedValueOnce({
 				product: {
 					id: faker.string.uuid(),
 					price,
@@ -60,7 +48,7 @@ describe("ProductService", () => {
 					},
 				},
 			});
-			mockProductRepository.createPaymentAttempt.mockResolvedValue({
+			productRepository.createPaymentAttempt.mockResolvedValue({
 				paymentAttempt: {
 					id: faker.string.uuid(),
 					reference: orderId,
@@ -77,7 +65,7 @@ describe("ProductService", () => {
 					paymentStatus: "CREATED",
 				},
 			});
-			mockClient.payment.create.mockImplementation((_token, body) => {
+			mockVippsClient.payment.create.mockImplementation((_token, body) => {
 				return Promise.resolve({
 					ok: true,
 					data: {
@@ -103,7 +91,7 @@ describe("ProductService", () => {
 				},
 			);
 
-			expect(mockClient.payment.create).toHaveBeenCalledWith(
+			expect(mockVippsClient.payment.create).toHaveBeenCalledWith(
 				expect.any(String),
 				expect.objectContaining({
 					amount: {
@@ -125,6 +113,34 @@ describe("ProductService", () => {
 					},
 				},
 			);
+		});
+	});
+
+	describe("#getPaymentAttempt", () => {
+		it("should fail if the user is not logged in", async () => {
+			const ctx = makeMockContext(null);
+
+			const result = await productService.getPaymentAttempt(ctx, {
+				reference: faker.string.uuid(),
+			});
+
+			expect(result).toEqual({
+				ok: false,
+				error: expect.any(Error),
+			});
+		});
+
+		it("should succeed if the user is logged in", async () => {
+			const ctx = makeMockContext(mock<User>({}));
+			productRepository.getPaymentAttempt.mockResolvedValueOnce({
+				paymentAttempt: mock<PaymentAttempt>({}),
+			});
+
+			const result = await productService.getPaymentAttempt(ctx, {
+				reference: faker.string.uuid(),
+			});
+
+			expect(result.ok).toBe(true);
 		});
 	});
 });
