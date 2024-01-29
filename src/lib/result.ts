@@ -8,7 +8,10 @@ type Result<TData, TError extends Error = KnownDomainError> =
 	| {
 			ok: false;
 			error: TError;
-			message: string;
 	  };
 
-export type { Result };
+type ResultAsync<TData, TError extends Error = KnownDomainError> = Promise<
+	Result<TData, TError>
+>;
+
+export type { Result, ResultAsync };

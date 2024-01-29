@@ -15,7 +15,7 @@ import type {
 	PaymentAttemptState,
 	Product,
 } from "~/domain/products.js";
-import type { Result } from "~/lib/result.js";
+import type { ResultAsync } from "~/lib/result.js";
 import type { Context } from "../context.js";
 import type {
 	PaymentProcessingDataType,
@@ -93,23 +93,21 @@ export class ProductService {
 	async initiatePaymentAttempt(
 		ctx: Context,
 		params: { orderId: string },
-	): Promise<
-		Result<
-			{
-				redirectUrl: string;
-				paymentAttempt: PaymentAttempt;
-				order: Order;
-				pollingJob: Job<
-					PaymentProcessingDataType,
-					PaymentProcessingResultType,
-					PaymentProcessingNameType
-				>;
-			},
-			| UnauthorizedError
-			| NotFoundError
-			| InvalidArgumentError
-			| InternalServerError
-		>
+	): ResultAsync<
+		{
+			redirectUrl: string;
+			paymentAttempt: PaymentAttempt;
+			order: Order;
+			pollingJob: Job<
+				PaymentProcessingDataType,
+				PaymentProcessingResultType,
+				PaymentProcessingNameType
+			>;
+		},
+		| UnauthorizedError
+		| NotFoundError
+		| InvalidArgumentError
+		| InternalServerError
 	> {
 		if (!ctx.user) {
 			return {
@@ -117,7 +115,6 @@ export class ProductService {
 				error: new UnauthorizedError(
 					"You must be logged in to initiate payment",
 				),
-				message: "You must be logged in to initiate a payment",
 			};
 		}
 
@@ -126,28 +123,24 @@ export class ProductService {
 			return {
 				ok: false,
 				error: new NotFoundError("Order not found"),
-				message: "Order not found",
 			};
 		}
 		if (order.paymentStatus === "CAPTURED") {
 			return {
 				ok: false,
 				error: new InvalidArgumentError("Order has been captured"),
-				message: "Order has been captured",
 			};
 		}
 		if (order.paymentStatus === "CANCELLED") {
 			return {
 				ok: false,
 				error: new InvalidArgumentError("Order has been cancelled"),
-				message: "Order has been cancelled",
 			};
 		}
 		if (order.paymentStatus === "REFUNDED") {
 			return {
 				ok: false,
 				error: new InvalidArgumentError("Order has been refunded"),
-				message: "Order has been refunded",
 			};
 		}
 
@@ -159,7 +152,6 @@ export class ProductService {
 			return {
 				ok: false,
 				error: new NotFoundError("Product not found"),
-				message: "Product not found",
 			};
 		}
 
@@ -194,7 +186,6 @@ export class ProductService {
 			return {
 				ok: false,
 				error,
-				message: "Failed to create Vipps payment.",
 			};
 		}
 
@@ -255,10 +246,7 @@ export class ProductService {
 		});
 
 		if (!accessToken.ok) {
-			ctx.log.error(
-				{ message: accessToken.message },
-				"Failed to fetch vipps access token",
-			);
+			ctx.log.error("Failed to fetch vipps access token");
 			const err = new InternalServerError("Failed to fetch vipps access token");
 			err.cause = accessToken.error;
 			throw err;
@@ -280,7 +268,7 @@ export class ProductService {
 		ctx: Context,
 		paymentAttempt: PaymentAttempt,
 		order: Order,
-	): Promise<Result<{ state: PaymentAttemptState }>> {
+	): ResultAsync<{ state: PaymentAttemptState }> {
 		const { reference } = paymentAttempt;
 		const { product } = await this.productRepository.getProduct(
 			order.productId,
@@ -294,10 +282,7 @@ export class ProductService {
 		const response = await vipps.payment.info(token, reference);
 
 		if (!response.ok) {
-			ctx.log.error(
-				{ reference, message: response.message },
-				"Failed to fetch payment status from Vipps",
-			);
+			ctx.log.error("Failed to fetch payment status from Vipps");
 			const interalErr = new InternalServerError(
 				"Failed to fetch payment status from Vipps",
 			);
@@ -305,7 +290,6 @@ export class ProductService {
 			return {
 				ok: false,
 				error: interalErr,
-				message: "Failed to fetch payment status from Vipps",
 			};
 		}
 
@@ -334,7 +318,7 @@ export class ProductService {
 	async updatePaymentAttemptState(
 		ctx: Context,
 		paymentAttempt: PaymentAttempt,
-	): Promise<Result<{ paymentAttempt: PaymentAttempt }>> {
+	): ResultAsync<{ paymentAttempt: PaymentAttempt }> {
 		const { reference } = paymentAttempt;
 
 		const { order } = await this.productRepository.getOrder(
@@ -344,7 +328,6 @@ export class ProductService {
 			return {
 				ok: false,
 				error: new NotFoundError("Order not found"),
-				message: "Order not found",
 			};
 		}
 
@@ -355,7 +338,6 @@ export class ProductService {
 				error: new InternalServerError(
 					"Failed to fetch payment status from Vipps",
 				),
-				message: "Failed to fetch payment status from Vipps",
 			};
 		}
 		const { state: newState } = result.data;
@@ -420,18 +402,15 @@ export class ProductService {
 			price: number;
 			merchantId: string;
 		},
-	): Promise<Result<{ product: Product }>> {
+	): ResultAsync<{ product: Product }> {
 		if (!ctx.user) {
 			return {
 				ok: false,
 				error: new UnauthorizedError(
 					"You must be logged in to create a product",
 				),
-				message: "You must be logged in to create a product",
 			};
 		}
-
-		ctx.log.info({ userId: ctx.user.id }, "Creating product");
 
 		const { product } = await this.productRepository.createProduct({
 			name: data.name,
@@ -450,7 +429,7 @@ export class ProductService {
 	async getPaymentAttempt(
 		ctx: Context,
 		params: { reference: string },
-	): Promise<Result<{ paymentAttempt: PaymentAttempt | null }>> {
+	): ResultAsync<{ paymentAttempt: PaymentAttempt | null }> {
 		const { reference } = params;
 		ctx.log.info({ reference }, "Fetching payment attempt");
 
@@ -466,14 +445,13 @@ export class ProductService {
 	async createOrder(
 		ctx: Context,
 		data: { productId: string },
-	): Promise<Result<{ order: Order }>> {
+	): ResultAsync<{ order: Order }> {
 		if (!ctx.user) {
 			return {
 				ok: false,
 				error: new UnauthorizedError(
 					"You must be logged in to create an order",
 				),
-				message: "You must be logged in to create an order",
 			};
 		}
 
@@ -487,7 +465,6 @@ export class ProductService {
 			return {
 				ok: false,
 				error: new NotFoundError("Product not found"),
-				message: "Product not found",
 			};
 		}
 
@@ -509,7 +486,7 @@ export class ProductService {
 	 */
 	async getProducts(
 		_ctx: Context,
-	): Promise<Result<{ products: Product[]; total: number }>> {
+	): ResultAsync<{ products: Product[]; total: number }> {
 		try {
 			const { products, total } = await this.productRepository.getProducts();
 			return { ok: true, data: { products, total } };
@@ -517,7 +494,6 @@ export class ProductService {
 			return {
 				ok: false,
 				error: new InternalServerError("Failed to get products"),
-				message: "Failed to get products",
 			};
 		}
 	}
@@ -534,7 +510,7 @@ export class ProductService {
 			clientId: string;
 			clientSecret: string;
 		},
-	): Promise<Result<{ merchant: Merchant }>> {
+	): ResultAsync<{ merchant: Merchant }> {
 		const { user } = ctx;
 		if (!user?.isSuperUser) {
 			return {
@@ -542,7 +518,6 @@ export class ProductService {
 				error: new UnauthorizedError(
 					"You must be logged in as a super user to create a merchant",
 				),
-				message: "You must be logged in as a super user to create a merchant",
 			};
 		}
 
@@ -554,13 +529,11 @@ export class ProductService {
 				return {
 					ok: false,
 					error: err,
-					message: err.message,
 				};
 			}
 			return {
 				ok: false,
 				error: new InternalServerError("Failed to create merchant"),
-				message: "Failed to create merchant",
 			};
 		}
 	}

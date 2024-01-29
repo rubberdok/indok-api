@@ -45,7 +45,7 @@ import fastifyPrisma from "./fastify/prisma.js";
 import fastifyService from "./fastify/service.js";
 import postmark from "./postmark.js";
 import prisma from "./prisma.js";
-import type { Result } from "./result.js";
+import type { Result, ResultAsync } from "./result.js";
 
 export interface IOrganizationService {
 	create(
@@ -265,10 +265,10 @@ export type IProductService = {
 	createOrder(
 		ctx: Context,
 		data: { productId: string },
-	): Promise<Result<{ order: Order }>>;
+	): ResultAsync<{ order: Order }>;
 	getProducts(
 		ctx: Context,
-	): Promise<Result<{ products: Product[]; total: number }>>;
+	): ResultAsync<{ products: Product[]; total: number }>;
 };
 
 type UserContext = {
