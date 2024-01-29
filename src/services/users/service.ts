@@ -218,14 +218,6 @@ export class UserService {
 		}
 	}
 
-	static canUpdateYear(user: Pick<User, "graduationYearUpdatedAt">): boolean {
-		return (
-			user.graduationYearUpdatedAt === null ||
-			DateTime.fromJSDate(user.graduationYearUpdatedAt).plus({ years: 1 }) <
-				DateTime.now()
-		);
-	}
-
 	async login(id: string): Promise<User> {
 		const user = await this.usersRepository.update(id, {
 			lastLogin: new Date(),
