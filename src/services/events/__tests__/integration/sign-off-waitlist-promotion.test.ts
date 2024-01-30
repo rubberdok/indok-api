@@ -417,7 +417,6 @@ describe("EventService", () => {
 					event.id,
 				);
 				expect(promotedSignUp).toBe("CONFIRMED");
-				console.log({ startAt: event.startAt });
 				expect(mailClient.sendEmailWithTemplate).toHaveBeenCalledWith(
 					expect.objectContaining({
 						To: user.email,
