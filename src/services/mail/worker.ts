@@ -3,13 +3,14 @@ import { DateTime } from "luxon";
 import type { MessageSendingResponse } from "postmark/dist/client/models/index.js";
 import { env } from "~/config.js";
 import type { Event } from "~/domain/events.js";
-import type { User } from "~/domain/users.js";
+import type { StudyProgram, User } from "~/domain/users.js";
 import type { Queue } from "~/lib/bullmq/queue.js";
 import type { Worker } from "~/lib/bullmq/worker.js";
 import type { MailContent } from "./index.js";
 
 export type UserService = {
 	get(id: string): Promise<User>;
+	getStudyProgram(by: { id: string }): Promise<StudyProgram | null>;
 };
 
 export type EventService = {
@@ -66,6 +67,14 @@ const EmailHandler = ({
 
 		switch (type) {
 			case "user-registration": {
+				let studyProgram: string | undefined;
+				if (user.studyProgramId) {
+					const program = await userService.getStudyProgram({
+						id: user.studyProgramId,
+					});
+					studyProgram = program?.name;
+				}
+
 				await mailService.send({
 					to: user.email,
 					templateAlias: "user-registration",
@@ -73,6 +82,7 @@ const EmailHandler = ({
 						user: {
 							firstName: user.firstName,
 							lastName: user.lastName,
+							studyProgram,
 						},
 					},
 				});
