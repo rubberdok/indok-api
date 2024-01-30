@@ -120,6 +120,7 @@ type CreateListingResponse {
 }
 
 input CreateOrderInput {
+  """The ID of the product to create an order for."""
   productId: ID!
 }
 
@@ -295,10 +296,12 @@ type HasFeaturePermissionResponse {
 }
 
 input InitiatePaymentAttemptInput {
+  """The ID of the order to initiate a payment attempt for."""
   orderId: ID!
 }
 
 type InitiatePaymentAttemptResponse {
+  """The URL to redirect the user to in order to complete the payment."""
   redirectUrl: String!
 }
 
@@ -361,6 +364,8 @@ type Mutation {
   """Create a new event category, requires super user status"""
   createEventCategory(data: CreateEventCategoryInput!): CreateEventCategoryResponse!
   createListing(data: CreateListingInput!): CreateListingResponse!
+
+  """Creates an order for the given product."""
   createOrder(data: CreateOrderInput!): CreateOrderResponse!
 
   """
@@ -371,6 +376,8 @@ type Mutation {
   """Delete an event category, requires super user status"""
   deleteEventCategory(data: DeleteEventCategoryInput!): DeleteEventCategoryResponse!
   deleteListing(data: DeleteListingInput!): DeleteListingResponse!
+
+  """Initiates a payment attempt for the given order."""
   initiatePaymentAttempt(data: InitiatePaymentAttemptInput!): InitiatePaymentAttemptResponse!
   newBooking(data: NewBookingInput!): NewBookingResponse!
 
@@ -472,7 +479,10 @@ enum ParticipationStatus {
 }
 
 type Price {
+  """The unit of the price, e.g. NOK, USD, EUR, etc."""
   unit: String!
+
+  """The value of the price, in the given unit."""
   value: Int!
 }
 

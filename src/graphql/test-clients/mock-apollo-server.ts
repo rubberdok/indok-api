@@ -132,6 +132,7 @@ export const createMockApolloServer = (logger?: Partial<FastifyBaseLogger>) => {
 		listingService: listings,
 		createMockContext,
 		permissionService: permissions,
+		productService: products,
 		server,
 		client,
 	};
