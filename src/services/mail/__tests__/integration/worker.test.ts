@@ -2,18 +2,17 @@ import { faker } from "@faker-js/faker";
 import { QueueEvents } from "bullmq";
 import { Redis } from "ioredis";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
-import { pino } from "pino";
 import type { MessageSendingResponse } from "postmark/dist/client/models/index.js";
 import { env } from "~/config.js";
 import type { User } from "~/domain/users.js";
 import { Queue } from "~/lib/bullmq/queue.js";
-import { envToLogger } from "~/lib/fastify/logging.js";
+import { Worker } from "~/lib/bullmq/worker.js";
 import type { MailService } from "../../index.js";
 import {
 	type EmailQueueType,
-	EmailWorker,
 	type EmailWorkerType,
 	type UserService,
+	getEmailHandler,
 } from "../../worker.js";
 
 describe("MailService", () => {
@@ -37,13 +36,13 @@ describe("MailService", () => {
 			maxRetriesPerRequest: 0,
 		});
 
-		mailWorker = EmailWorker({
+		const { handler } = getEmailHandler({
 			mailService: mockMailService,
 			userService: mockUserService,
-			redisClient: redis,
-			log: pino(envToLogger[env.NODE_ENV]),
 		});
-
+		mailWorker = new Worker("email", handler, {
+			connection: redis,
+		});
 		mailQueue = new Queue("email", {
 			connection: redis,
 		});
