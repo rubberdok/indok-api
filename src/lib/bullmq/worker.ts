@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
+import { Client } from "@vippsmobilepay/sdk";
 import server, { type Avvio, type Plugin } from "avvio";
 import type { Processor } from "bullmq";
 import {
@@ -12,6 +13,7 @@ import { env } from "~/config.js";
 import { InternalServerError } from "~/domain/errors.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
 import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
+import { ProductRepository } from "~/repositories/products/repository.js";
 import { UserRepository } from "~/repositories/users/index.js";
 import { MailService } from "~/services/mail/index.js";
 import {
@@ -19,6 +21,11 @@ import {
 	getEmailHandler,
 } from "~/services/mail/worker.js";
 import { PermissionService } from "~/services/permissions/service.js";
+import {
+	ProductService,
+	getPaymentProcessingHandler,
+} from "~/services/products/index.js";
+import type { PaymentProcessingQueueType } from "~/services/products/worker.js";
 import { UserService } from "~/services/users/service.js";
 import { envToLogger } from "../fastify/logging.js";
 import postmark from "../postmark.js";
@@ -71,6 +78,7 @@ type WorkerType = {
 	workers?: Record<string, Worker<any, any, any>>;
 	queues?: Partial<{
 		email: EmailQueueType;
+		"payment-processing": PaymentProcessingQueueType;
 	}> &
 		// biome-ignore lint/suspicious/noExplicitAny: the types here can be anything
 		Record<string, Queue<any, any, any>>;
@@ -183,6 +191,7 @@ export async function initWorkers(): Promise<{
 	worker.use(avvioRedis, { url: env.REDIS_CONNECTION_STRING });
 
 	worker.use(avvioQueue, { name: "email" });
+	worker.use(avvioQueue, { name: "payment-processing" });
 
 	worker.use((instance) => {
 		const userRepository = new UserRepository(instance.database);
@@ -206,7 +215,22 @@ export async function initWorkers(): Promise<{
 		);
 		const mailService = new MailService(postmark, env.NO_REPLY_EMAIL);
 
-		worker.use(avvioWorker, getEmailHandler({ mailService, userService }));
+		if (!instance.queues?.["payment-processing"]) {
+			throw new InternalServerError("Payment processing queue not initialized");
+		}
+		const productRepository = new ProductRepository(instance.database);
+		const productService = new ProductService(
+			Client,
+			instance.queues?.["payment-processing"],
+			productRepository,
+			{ useTestMode: env.VIPPS_TEST_MODE },
+		);
+
+		instance.use(avvioWorker, getEmailHandler({ mailService, userService }));
+		instance.use(
+			avvioWorker,
+			getPaymentProcessingHandler({ productService, log: instance.log }),
+		);
 
 		return Promise.resolve();
 	});

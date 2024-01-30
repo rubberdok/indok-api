@@ -1,5 +1,4 @@
-import type { Prisma, User as PrismaUser } from "@prisma/client";
-import { merge } from "lodash-es";
+import type { Prisma } from "@prisma/client";
 import { DateTime } from "luxon";
 import { z } from "zod";
 import {
@@ -16,11 +15,11 @@ import type { EmailQueueType } from "../mail/worker.js";
 import { createUserSchema } from "./validation.js";
 
 export interface UserRepository {
-	get(id: string): Promise<PrismaUser>;
-	getAll(): Promise<PrismaUser[]>;
-	getByFeideId(feideId: string): Promise<PrismaUser>;
-	update(id: string, user: Partial<User>): Promise<PrismaUser>;
-	create(data: Prisma.UserCreateInput): Promise<PrismaUser>;
+	get(id: string): Promise<User>;
+	getAll(): Promise<User[]>;
+	getByFeideId(feideId: string): Promise<User>;
+	update(id: string, user: Partial<User>): Promise<User>;
+	create(data: Prisma.UserCreateInput): Promise<User>;
 	createStudyProgram(studyProgram: {
 		name: string;
 		externalId: string;
@@ -114,7 +113,7 @@ export class UserService {
 		const validatedData = schema.parse(data);
 
 		const user = await this.usersRepository.update(userId, validatedData);
-		return this.toDomainUser(user);
+		return user;
 	}
 
 	/**
@@ -195,7 +194,7 @@ export class UserService {
 			let graduationYearUpdatedAt: Date | undefined = undefined;
 
 			if (user.firstLogin) firstLogin = false;
-			else if (!this.canUpdateYear(user)) newGraduationYear = undefined;
+			else if (!user.canUpdateYear) newGraduationYear = undefined;
 			else if (graduationYear && graduationYear !== user.graduationYear)
 				graduationYearUpdatedAt = new Date();
 
@@ -211,7 +210,7 @@ export class UserService {
 				studyProgramId,
 			});
 
-			return this.toDomainUser(updatedUser);
+			return updatedUser;
 		} catch (err) {
 			if (err instanceof z.ZodError)
 				throw new InvalidArgumentError(err.message);
@@ -219,19 +218,11 @@ export class UserService {
 		}
 	}
 
-	canUpdateYear(user: Pick<User, "graduationYearUpdatedAt">): boolean {
-		return (
-			user.graduationYearUpdatedAt === null ||
-			DateTime.fromJSDate(user.graduationYearUpdatedAt).plus({ years: 1 }) <
-				DateTime.now()
-		);
-	}
-
 	async login(id: string): Promise<User> {
 		const user = await this.usersRepository.update(id, {
 			lastLogin: new Date(),
 		});
-		return this.toDomainUser(user);
+		return user;
 	}
 
 	async create(data: Prisma.UserCreateInput): Promise<User> {
@@ -240,13 +231,13 @@ export class UserService {
 		await this.emailQueue.add("welcome", {
 			recipientId: user.id,
 		});
-		return this.toDomainUser(user);
+		return user;
 	}
 
 	async getByFeideID(feideId: string): Promise<User | null> {
 		try {
 			const user = await this.usersRepository.getByFeideId(feideId);
-			return this.toDomainUser(user);
+			return user;
 		} catch (err) {
 			return null;
 		}
@@ -258,42 +249,12 @@ export class UserService {
 
 	async get(id: string): Promise<User> {
 		const user = await this.usersRepository.get(id);
-		return this.toDomainUser(user);
+		return user;
 	}
 
 	async getAll(): Promise<User[]> {
 		const users = await this.usersRepository.getAll();
-		return users.map((user) => this.toDomainUser(user));
-	}
-
-	toDomainUser(user: PrismaUser): User {
-		const canUpdateYear = this.canUpdateYear(user);
-
-		if (!user.graduationYear) {
-			return merge({}, user, { gradeYear: undefined, canUpdateYear });
-		}
-		/**
-		 * Grade year should be between 1 and 6,
-		 * and is calculated based on the graduation year.
-		 * Since the semester starts in August, we increment the grade year
-		 * from the start of august.
-		 *
-		 * Example:
-		 * | Current Date | Graduation Year | Grade Year |
-		 * -----------------------------------------------
-		 * | 2021-01-01   | 2021            | 5          |
-		 * | 2021-08-01   | 2021            | 6          |
-		 * | 2021-08-01   | 2026            | 1          |
-		 * | 2022-01-01   | 2026            | 1          |
-		 * | 2022-08-01   | 2026            | 2          |
-		 */
-
-		const now = DateTime.now();
-		const graduationYear = user.graduationYear;
-		const gradeYear = 5 - (graduationYear - now.year);
-		const offset = now.month >= 7 ? 1 : 0;
-
-		return merge({}, user, { gradeYear: gradeYear + offset, canUpdateYear });
+		return users;
 	}
 
 	/**

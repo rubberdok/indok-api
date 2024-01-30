@@ -1,15 +1,14 @@
+import { faker } from "@faker-js/faker";
 import { jest } from "@jest/globals";
-import type { Prisma, User } from "@prisma/client";
 import dayjs from "dayjs";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
+import type { User } from "~/domain/users.js";
 import type { EmailQueueType } from "~/services/mail/worker.js";
 import {
 	type PermissionService,
 	type UserRepository,
 	UserService,
 } from "../../service.js";
-
-const dummyUser = mockDeep<User>();
 
 const time = new Date(`${dayjs().year() + 1}-01-01`);
 
@@ -36,9 +35,8 @@ describe("UserService", () => {
 			firstName: string | null;
 			graduationYear: number | null;
 		}>;
-		updateInput: Partial<Prisma.UserUpdateInput>;
 		existing: User;
-		expected: User;
+		expected: Partial<User>;
 	}
 
 	const testCases: TestCase[] = [
@@ -47,125 +45,83 @@ describe("UserService", () => {
 			input: {
 				firstName: "test",
 			},
-			updateInput: {
-				firstName: "test",
-				firstLogin: false,
-			},
-			existing: {
-				...dummyUser,
-				id: "1",
-				firstLogin: true,
-			},
 			expected: {
-				...dummyUser,
 				firstName: "test",
 				firstLogin: false,
 			},
+			existing: mock<User>({
+				firstLogin: true,
+			}),
 		},
 		{
 			name: "not set `graduationYearUpdatedAt` on first login",
 			input: {
 				graduationYear: dayjs().year() + 1,
 			},
-			updateInput: {
+			expected: {
 				firstLogin: false,
 				graduationYear: dayjs().year() + 1,
 			},
-			existing: {
-				...dummyUser,
-				id: "1",
+			existing: mock<User>({
 				firstLogin: true,
 				graduationYear: null,
 				graduationYearUpdatedAt: null,
-			},
-			expected: {
-				...dummyUser,
-				graduationYearUpdatedAt: null,
-				graduationYear: dayjs().year() + 1,
-			},
+			}),
 		},
 		{
 			name: "set `graduationYearUpdatedAt` on on graduation year update",
 			input: {
 				graduationYear: dayjs().year() + 1,
 			},
-			updateInput: {
+			expected: {
 				graduationYear: dayjs().year() + 1,
 				graduationYearUpdatedAt: time,
 			},
-			existing: {
-				...dummyUser,
-				id: "1",
+			existing: mock<User>({
 				firstLogin: false,
 				graduationYear: null,
 				graduationYearUpdatedAt: null,
-			},
-			expected: {
-				...dummyUser,
-				graduationYearUpdatedAt: time,
-				graduationYear: dayjs().year() + 1,
-			},
+			}),
 		},
 		{
-			name: "disallow updating graduation year within one year",
+			name: "disallow updating graduation year if canUpdateYear is false",
 			input: {
 				graduationYear: dayjs().year() + 1,
 			},
-			updateInput: {},
-			existing: {
-				...dummyUser,
-				id: "1",
+			expected: {},
+			existing: mock<User>({
 				firstLogin: false,
 				graduationYear: dayjs().year(),
-				graduationYearUpdatedAt: dayjs(time)
-					.subtract(1, "year")
-					.add(1, "minute")
-					.toDate(),
-			},
-			expected: {
-				...dummyUser,
-				graduationYearUpdatedAt: time,
-				graduationYear: dayjs().year(),
-			},
+				canUpdateYear: false,
+			}),
 		},
 		{
-			name: "update `graduationYearUpdatedAt` if changed after one year",
+			name: "update `graduationYearUpdatedAt` if canUpdateYear is `true`",
 			input: {
 				graduationYear: dayjs().year() + 1,
 			},
-			updateInput: {
+			expected: {
 				graduationYear: dayjs().year() + 1,
 				graduationYearUpdatedAt: time,
 			},
-			existing: {
-				...dummyUser,
-				id: "1",
+			existing: mock<User>({
 				firstLogin: false,
 				graduationYear: dayjs().year(),
-				graduationYearUpdatedAt: dayjs(time)
-					.subtract(1, "year")
-					.subtract(1, "minute")
-					.toDate(),
-			},
-			expected: {
-				...dummyUser,
-				graduationYearUpdatedAt: time,
-				graduationYear: dayjs().year() + 1,
-			},
+				canUpdateYear: true,
+			}),
 		},
 	];
 
 	test.each(testCases)(
 		"should $name",
-		async ({ existing, expected, input, updateInput }) => {
-			repo.get.mockReturnValueOnce(Promise.resolve(existing));
-			repo.update.mockReturnValueOnce(Promise.resolve(expected));
+		async ({ existing, input, expected }) => {
+			repo.get.mockResolvedValueOnce(existing);
+			repo.update.mockResolvedValueOnce(mock<User>());
 			permissionService.isSuperUser.mockResolvedValue({ isSuperUser: false });
 
 			await service.update(existing.id, input);
 
-			expect(repo.get).toHaveBeenCalledWith(existing.id);
-			expect(repo.update).toHaveBeenCalledWith(existing.id, updateInput);
+			expect(repo.update).toHaveBeenCalledWith(existing.id, expected);
 		},
 	);
 
@@ -173,9 +129,10 @@ describe("UserService", () => {
 		repo.update.mockReturnValueOnce(
 			Promise.resolve(mock<User>({ graduationYearUpdatedAt: null })),
 		);
+		const id = faker.string.uuid();
 
-		await service.login(dummyUser.id);
+		await service.login(id);
 
-		expect(repo.update).toHaveBeenCalledWith(dummyUser.id, { lastLogin: time });
+		expect(repo.update).toHaveBeenCalledWith(id, { lastLogin: time });
 	});
 });

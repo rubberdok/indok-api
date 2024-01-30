@@ -1,0 +1,70 @@
+input InitiatePaymentAttemptInput {
+    """
+    The ID of the order to initiate a payment attempt for.
+    """
+    orderId: ID!
+}
+
+type InitiatePaymentAttemptResponse {
+    """
+    The URL to redirect the user to in order to complete the payment.
+    """
+    redirectUrl: String!
+}
+
+
+type Order {
+    id: ID!
+}
+
+input CreateOrderInput {
+    """
+    The ID of the product to create an order for.
+    """
+    productId: ID!
+}
+
+type CreateOrderResponse {
+    order: Order!
+}
+
+type Product {
+    id: ID!
+    """
+    price in øre, i.e. 100 = 1 NOK
+    """
+    price: Price!
+}
+
+type Price {
+    """
+    The value of the price, in the given unit.
+    """
+    value: Int!
+    """
+    The unit of the price, e.g. NOK, USD, EUR, etc.
+    """
+    unit: String!
+}
+
+type ProductResponse {
+    products: [Product!]!
+    total: Int!
+}
+
+type Mutation {
+    """
+    Initiates a payment attempt for the given order.
+    """
+    initiatePaymentAttempt(data: InitiatePaymentAttemptInput!): InitiatePaymentAttemptResponse!
+    """
+    Creates an order for the given product.
+    """
+    createOrder(data: CreateOrderInput!): CreateOrderResponse!
+}
+
+
+
+type Query {
+    products: ProductResponse!
+}
