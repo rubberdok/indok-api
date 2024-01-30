@@ -28,7 +28,6 @@ import { PermissionService } from "~/services/permissions/service.js";
 import { UserService } from "~/services/users/service.js";
 import { EventService } from "../../service.js";
 import {
-	SignUpQueueName,
 	type SignUpQueueType,
 	type SignUpWorkerType,
 	getSignUpWorkerHandler,
@@ -56,8 +55,11 @@ describe("EventService", () => {
 			maxRetriesPerRequest: 0,
 		});
 
-		emailQueue = new Queue("email", { connection: redis });
-		signUpQueue = new Queue(SignUpQueueName, { connection: redis });
+		const emailQueueName = faker.string.uuid();
+		const signUpQueueName = faker.string.uuid();
+
+		emailQueue = new Queue(emailQueueName, { connection: redis });
+		signUpQueue = new Queue(signUpQueueName, { connection: redis });
 		mailClient = mockDeep<ServerClient>();
 		const mailService = buildMailService(
 			{
@@ -105,13 +107,9 @@ describe("EventService", () => {
 			mailService,
 			cabinService: mockDeep<CabinService>(),
 		});
-		emailWorker = new Worker(
-			emailWorkerHandler.name,
-			emailWorkerHandler.handler,
-			{
-				connection: redis,
-			},
-		);
+		emailWorker = new Worker(emailQueueName, emailWorkerHandler.handler, {
+			connection: redis,
+		});
 
 		const signUpWorkerHandler = getSignUpWorkerHandler({
 			events: eventService,
@@ -119,18 +117,14 @@ describe("EventService", () => {
 			log: mockDeep<Logger>(),
 		});
 
-		signUpWorker = new Worker(
-			signUpWorkerHandler.name,
-			signUpWorkerHandler.handler,
-			{
-				connection: redis,
-			},
-		);
+		signUpWorker = new Worker(signUpQueueName, signUpWorkerHandler.handler, {
+			connection: redis,
+		});
 
-		signUpQueueEvents = new QueueEvents(signUpWorkerHandler.name, {
+		signUpQueueEvents = new QueueEvents(signUpQueueName, {
 			connection: queueEventsRedis,
 		});
-		emailQueueEvents = new QueueEvents(emailWorkerHandler.name, {
+		emailQueueEvents = new QueueEvents(emailQueueName, {
 			connection: queueEventsRedis,
 		});
 	});
