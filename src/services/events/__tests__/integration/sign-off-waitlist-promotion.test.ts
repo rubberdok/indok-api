@@ -247,10 +247,10 @@ describe("EventService", () => {
 			expect(promotedSignUp).toBe("CONFIRMED");
 			expect(mailClient.sendEmailWithTemplate).toHaveBeenCalledWith(
 				expect.objectContaining({
-					to: waitListUser.email,
-					from: env.NO_REPLY_EMAIL,
-					templateAlias: "event-wait-list",
-					content: expect.objectContaining({
+					To: waitListUser.email,
+					From: env.NO_REPLY_EMAIL,
+					TemplateAlias: "event-wait-list",
+					TemplateModel: expect.objectContaining({
 						event: expect.objectContaining({
 							name: event.name,
 							startAt: expect.any(String),
@@ -419,10 +419,10 @@ describe("EventService", () => {
 				expect(promotedSignUp).toBe("CONFIRMED");
 				expect(mailClient.sendEmailWithTemplate).toHaveBeenCalledWith(
 					expect.objectContaining({
-						to: user.email,
-						from: env.NO_REPLY_EMAIL,
-						templateAlias: "event-wait-list",
-						content: expect.objectContaining({
+						To: user.email,
+						From: env.NO_REPLY_EMAIL,
+						TemplateAlias: "event-wait-list",
+						TemplateModel: expect.objectContaining({
 							event: expect.objectContaining({
 								name: event.name,
 								startAt: expect.any(String),
