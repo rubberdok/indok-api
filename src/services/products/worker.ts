@@ -33,6 +33,8 @@ type ProductService = {
 	): Promise<Result<{ paymentAttempt: PaymentAttempt }>>;
 };
 
+const PaymentProcessingQueueName = "payment-processing" as const;
+
 function getPaymentProcessingHandler({
 	productService,
 	log,
@@ -40,7 +42,7 @@ function getPaymentProcessingHandler({
 	productService: ProductService;
 	log: Logger;
 }): {
-	name: string;
+	name: typeof PaymentProcessingQueueName;
 	handler: Processor<
 		PaymentProcessingDataType,
 		PaymentProcessingResultType,
@@ -96,12 +98,12 @@ function getPaymentProcessingHandler({
 	};
 
 	return {
-		name: "payment-processing",
+		name: PaymentProcessingQueueName,
 		handler: processor,
 	};
 }
 
-export { getPaymentProcessingHandler };
+export { getPaymentProcessingHandler, PaymentProcessingQueueName };
 export type {
 	PaymentProcessingDataType,
 	PaymentProcessingNameType,

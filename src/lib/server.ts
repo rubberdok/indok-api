@@ -34,11 +34,13 @@ import { AuthService } from "~/services/auth/service.js";
 import { CabinService } from "~/services/cabins/service.js";
 import type { Context } from "~/services/context.js";
 import { EventService } from "~/services/events/index.js";
+import { SignUpQueueName } from "~/services/events/worker.js";
 import { ListingService } from "~/services/listings/index.js";
 import { MailService } from "~/services/mail/index.js";
 import { OrganizationService } from "~/services/organizations/index.js";
 import { PermissionService } from "~/services/permissions/index.js";
 import { ProductService } from "~/services/products/index.js";
+import { PaymentProcessingQueueName } from "~/services/products/worker.js";
 import { UserService } from "~/services/users/index.js";
 import fastifyMessageQueue from "./fastify/message-queue.js";
 import fastifyPrisma from "./fastify/prisma.js";
@@ -382,22 +384,31 @@ async function registerServices(
 		permissionService,
 		serverInstance.queues.email,
 	);
+
+	await serverInstance.register(fastifyMessageQueue, {
+		name: SignUpQueueName,
+	});
+	if (!serverInstance.queues[SignUpQueueName]) {
+		throw new InternalServerError("Sign-ups queue not initialized");
+	}
+
 	const eventService = new EventService(
 		eventRepository,
 		permissionService,
 		userService,
+		serverInstance.queues[SignUpQueueName],
 	);
 	const authService = new AuthService(userService, feideClient);
 
 	await serverInstance.register(fastifyMessageQueue, {
-		name: "payment-processing",
+		name: PaymentProcessingQueueName,
 	});
-	if (!serverInstance.queues["payment-processing"]) {
+	if (!serverInstance.queues[PaymentProcessingQueueName]) {
 		throw new InternalServerError("Payment processing queue not initialized");
 	}
 	const productService = new ProductService(
 		Client,
-		serverInstance.queues["payment-processing"],
+		serverInstance.queues[PaymentProcessingQueueName],
 		productRepository,
 		{
 			useTestMode: configuration?.VIPPS_TEST_MODE,

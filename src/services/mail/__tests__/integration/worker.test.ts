@@ -11,6 +11,7 @@ import type { MailService } from "../../index.js";
 import {
 	type EmailQueueType,
 	type EmailWorkerType,
+	type EventService,
 	type UserService,
 	getEmailHandler,
 } from "../../worker.js";
@@ -21,11 +22,13 @@ describe("MailService", () => {
 	let redis: Redis;
 	let mockUserService: DeepMockProxy<UserService>;
 	let mockMailService: DeepMockProxy<MailService>;
+	let mockEventService: DeepMockProxy<EventService>;
 	let eventsRedis: Redis;
 
 	beforeAll(() => {
 		mockUserService = mockDeep<UserService>();
 		mockMailService = mockDeep<MailService>();
+		mockEventService = mockDeep<EventService>();
 		redis = new Redis(env.REDIS_CONNECTION_STRING, {
 			keepAlive: 1_000 * 60 * 3, // 3 minutes
 			maxRetriesPerRequest: 0,
@@ -39,6 +42,7 @@ describe("MailService", () => {
 		const { handler } = getEmailHandler({
 			mailService: mockMailService,
 			userService: mockUserService,
+			eventService: mockEventService,
 		});
 		mailWorker = new Worker("email", handler, {
 			connection: redis,
@@ -49,7 +53,7 @@ describe("MailService", () => {
 	});
 
 	describe("worker", () => {
-		describe("#welcome", () => {
+		describe("type: user-registration", () => {
 			it("should send a welcome email to the user", async () => {
 				mockUserService.get.mockResolvedValue(
 					mock<User>({
@@ -61,7 +65,8 @@ describe("MailService", () => {
 					mockDeep<MessageSendingResponse>(),
 				);
 
-				const job = await mailQueue.add("welcome", {
+				const job = await mailQueue.add("send-email", {
+					type: "user-registration",
 					recipientId: faker.string.uuid(),
 				});
 

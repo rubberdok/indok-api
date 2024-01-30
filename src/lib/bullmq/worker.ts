@@ -11,10 +11,17 @@ import { Redis } from "ioredis";
 import { type Logger, pino } from "pino";
 import { env } from "~/config.js";
 import { InternalServerError } from "~/domain/errors.js";
+import { EventRepository } from "~/repositories/events/repository.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
 import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
 import { ProductRepository } from "~/repositories/products/repository.js";
 import { UserRepository } from "~/repositories/users/index.js";
+import { EventService } from "~/services/events/service.js";
+import {
+	SignUpQueueName,
+	type SignUpQueueType,
+	getSignUpWorkerHandler,
+} from "~/services/events/worker.js";
 import { MailService } from "~/services/mail/index.js";
 import {
 	type EmailQueueType,
@@ -25,7 +32,10 @@ import {
 	ProductService,
 	getPaymentProcessingHandler,
 } from "~/services/products/index.js";
-import type { PaymentProcessingQueueType } from "~/services/products/worker.js";
+import {
+	PaymentProcessingQueueName,
+	type PaymentProcessingQueueType,
+} from "~/services/products/worker.js";
 import { UserService } from "~/services/users/service.js";
 import { envToLogger } from "../fastify/logging.js";
 import postmark from "../postmark.js";
@@ -79,6 +89,7 @@ type WorkerType = {
 	queues?: Partial<{
 		email: EmailQueueType;
 		"payment-processing": PaymentProcessingQueueType;
+		[SignUpQueueName]: SignUpQueueType;
 	}> &
 		// biome-ignore lint/suspicious/noExplicitAny: the types here can be anything
 		Record<string, Queue<any, any, any>>;
@@ -191,7 +202,8 @@ export async function initWorkers(): Promise<{
 	worker.use(avvioRedis, { url: env.REDIS_CONNECTION_STRING });
 
 	worker.use(avvioQueue, { name: "email" });
-	worker.use(avvioQueue, { name: "payment-processing" });
+	worker.use(avvioQueue, { name: PaymentProcessingQueueName });
+	worker.use(avvioQueue, { name: SignUpQueueName });
 
 	worker.use((instance) => {
 		const userRepository = new UserRepository(instance.database);
@@ -215,21 +227,44 @@ export async function initWorkers(): Promise<{
 		);
 		const mailService = new MailService(postmark, env.NO_REPLY_EMAIL);
 
-		if (!instance.queues?.["payment-processing"]) {
+		if (!instance.queues?.[PaymentProcessingQueueName]) {
 			throw new InternalServerError("Payment processing queue not initialized");
 		}
 		const productRepository = new ProductRepository(instance.database);
 		const productService = new ProductService(
 			Client,
-			instance.queues?.["payment-processing"],
+			instance.queues?.[PaymentProcessingQueueName],
 			productRepository,
 			{ useTestMode: env.VIPPS_TEST_MODE },
 		);
 
-		instance.use(avvioWorker, getEmailHandler({ mailService, userService }));
+		const eventRepositroy = new EventRepository(instance.database);
+
+		if (!instance.queues?.[SignUpQueueName]) {
+			throw new InternalServerError("Sign up queue not initialized");
+		}
+		const eventService = new EventService(
+			eventRepositroy,
+			permissionService,
+			userService,
+			instance.queues?.[SignUpQueueName],
+		);
+
+		instance.use(
+			avvioWorker,
+			getEmailHandler({ mailService, userService, eventService }),
+		);
 		instance.use(
 			avvioWorker,
 			getPaymentProcessingHandler({ productService, log: instance.log }),
+		);
+		instance.use(
+			avvioWorker,
+			getSignUpWorkerHandler({
+				emailQueue: instance.queues?.email,
+				events: eventService,
+				log: instance.log,
+			}),
 		);
 
 		return Promise.resolve();
