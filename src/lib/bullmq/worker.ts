@@ -38,7 +38,7 @@ import {
 } from "~/services/products/worker.js";
 import { UserService } from "~/services/users/service.js";
 import { envToLogger } from "../fastify/logging.js";
-import postmark from "../postmark.js";
+import { postmark } from "../postmark.js";
 import prisma from "../prisma.js";
 import { Queue } from "./queue.js";
 
@@ -225,14 +225,19 @@ export async function initWorkers(): Promise<{
 			permissionService,
 			instance.queues?.email,
 		);
-		const mailService = new MailService(postmark, {
-			noReplyEmail: env.NO_REPLY_EMAIL,
-			contactMail: env.CONTACT_EMAIL,
-			companyName: env.COMPANY_NAME,
-			parentCompany: env.PARENT_COMPANY,
-			productName: env.PRODUCT_NAME,
-			websiteUrl: env.CLIENT_URL,
-		});
+		const mailService = new MailService(
+			postmark(env.POSTMARK_API_TOKEN, {
+				useTestMode: env.NODE_ENV === "test",
+			}),
+			{
+				noReplyEmail: env.NO_REPLY_EMAIL,
+				contactMail: env.CONTACT_EMAIL,
+				companyName: env.COMPANY_NAME,
+				parentCompany: env.PARENT_COMPANY,
+				productName: env.PRODUCT_NAME,
+				websiteUrl: env.CLIENT_URL,
+			},
+		);
 
 		if (!instance.queues?.[PaymentProcessingQueueName]) {
 			throw new InternalServerError("Payment processing queue not initialized");

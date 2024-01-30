@@ -45,7 +45,7 @@ import { UserService } from "~/services/users/index.js";
 import fastifyMessageQueue from "./fastify/message-queue.js";
 import fastifyPrisma from "./fastify/prisma.js";
 import fastifyService from "./fastify/service.js";
-import postmark from "./postmark.js";
+import { postmark } from "./postmark.js";
 import prisma from "./prisma.js";
 import type { Result, ResultAsync } from "./result.js";
 
@@ -350,14 +350,19 @@ async function registerServices(
 	const listingRepository = new ListingRepository(database);
 	const productRepository = new ProductRepository(database);
 
-	const mailService = new MailService(postmark, {
-		companyName: env.COMPANY_NAME,
-		contactMail: env.CONTACT_EMAIL,
-		noReplyEmail: env.NO_REPLY_EMAIL,
-		parentCompany: env.PARENT_COMPANY,
-		productName: env.PRODUCT_NAME,
-		websiteUrl: env.CLIENT_URL,
-	});
+	const mailService = new MailService(
+		postmark(env.POSTMARK_API_TOKEN, {
+			useTestMode: env.NODE_ENV === "test",
+		}),
+		{
+			companyName: env.COMPANY_NAME,
+			contactMail: env.CONTACT_EMAIL,
+			noReplyEmail: env.NO_REPLY_EMAIL,
+			parentCompany: env.PARENT_COMPANY,
+			productName: env.PRODUCT_NAME,
+			websiteUrl: env.CLIENT_URL,
+		},
+	);
 	const permissionService = new PermissionService(
 		memberRepository,
 		userRepository,

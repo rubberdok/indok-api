@@ -1,8 +1,8 @@
 import type { Client } from "@vippsmobilepay/sdk";
 import { mockDeep } from "jest-mock-extended";
+import type { ServerClient } from "postmark";
 import { newMockOpenIdClient } from "~/__tests__/mocks/openIdClient.js";
 import { env } from "~/config.js";
-import postmark from "~/lib/postmark.js";
 import prisma from "~/lib/prisma.js";
 import type { Services } from "~/lib/server.js";
 import { CabinRepository } from "~/repositories/cabins/repository.js";
@@ -39,7 +39,7 @@ export function makeTestServices(
 	const listingRepository = new ListingRepository(database);
 	const productRepository = new ProductRepository(database);
 
-	const mailService = new MailService(postmark, {
+	const mailService = new MailService(mockDeep<ServerClient>(), {
 		noReplyEmail: env.NO_REPLY_EMAIL,
 		contactMail: env.CONTACT_EMAIL,
 		companyName: env.COMPANY_NAME,
