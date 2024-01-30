@@ -228,8 +228,9 @@ export class UserService {
 	async create(data: Prisma.UserCreateInput): Promise<User> {
 		this.validateUser(data);
 		const user = await this.usersRepository.create(data);
-		await this.emailQueue.add("welcome", {
+		await this.emailQueue.add("send-email", {
 			recipientId: user.id,
+			type: "user-registration",
 		});
 		return user;
 	}

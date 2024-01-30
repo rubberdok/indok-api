@@ -15,6 +15,7 @@ import { UserRepository } from "~/repositories/users/index.js";
 import { AuthService } from "~/services/auth/service.js";
 import { CabinService } from "~/services/cabins/service.js";
 import { EventService } from "~/services/events/service.js";
+import type { SignUpQueueType } from "~/services/events/worker.js";
 import { ListingService } from "~/services/listings/service.js";
 import { MailService } from "~/services/mail/index.js";
 import type { EmailQueueType } from "~/services/mail/worker.js";
@@ -68,6 +69,7 @@ export function makeTestServices(
 		eventRepository,
 		permissionService,
 		userService,
+		mockDeep<SignUpQueueType>(),
 	);
 	const authService = new AuthService(userService, openIdClient);
 	const products = new ProductService(

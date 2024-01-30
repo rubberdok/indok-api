@@ -10,6 +10,7 @@ import type { EmailQueueType } from "~/services/mail/worker.js";
 import { PermissionService } from "~/services/permissions/service.js";
 import { UserService } from "~/services/users/service.js";
 import { EventService } from "../../service.js";
+import type { SignUpQueueType } from "../../worker.js";
 
 export function makeDependencies() {
 	const eventRepository = new EventRepository(prisma);
@@ -30,6 +31,7 @@ export function makeDependencies() {
 		eventRepository,
 		permissionService,
 		userService,
+		mockDeep<SignUpQueueType>(),
 	);
 	return { eventService };
 }

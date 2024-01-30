@@ -21,6 +21,9 @@ type CabinBookingReceipt = {
 type Model = {
 	[TemplateAlias.EVENT_WAIT_LIST]: {
 		subject: string;
+		eventName: string;
+		eventStartAt: string;
+		location: string;
 	};
 	[TemplateAlias.CABIN_BOOKING_RECEIPT]: CabinBookingReceipt;
 	[TemplateAlias.WELCOME]: {

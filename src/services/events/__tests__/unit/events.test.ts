@@ -17,6 +17,7 @@ import {
 	type PermissionService,
 	type UserService,
 } from "../../service.js";
+import type { SignUpQueueType } from "../../worker.js";
 
 function setup() {
 	const permissionService = mockDeep<PermissionService>();
@@ -26,6 +27,7 @@ function setup() {
 		eventsRepository,
 		permissionService,
 		userService,
+		mockDeep<SignUpQueueType>(),
 	);
 	return { permissionService, eventsRepository, service, userService };
 }

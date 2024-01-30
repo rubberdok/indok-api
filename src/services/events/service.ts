@@ -4,7 +4,6 @@ import {
 	type FeaturePermission,
 	ParticipationStatus,
 } from "@prisma/client";
-import type { FastifyBaseLogger } from "fastify";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
 import { z } from "zod";
@@ -24,6 +23,7 @@ import {
 import { Role } from "~/domain/organizations.js";
 import type { User } from "~/domain/users.js";
 import type { Context } from "../context.js";
+import type { SignUpQueueType } from "./worker.js";
 
 interface CreateConfirmedSignUpData {
 	userId: string;
@@ -106,8 +106,6 @@ export interface UserService {
 	get(id: string): Promise<User>;
 }
 
-type Logger = FastifyBaseLogger;
-
 export interface PermissionService {
 	hasRole(data: {
 		userId: string;
@@ -126,6 +124,7 @@ export class EventService {
 		private eventRepository: EventRepository,
 		private permissionService: PermissionService,
 		private userService: UserService,
+		private signUpQueue: SignUpQueueType,
 	) {}
 	/**
 	 * Create a new event
@@ -390,11 +389,12 @@ export class EventService {
 				data,
 				event,
 			);
-			return await this.eventRepository.update(
+			const updated = await this.eventRepository.update(
 				eventId,
 				validatedEvent,
 				validatedSignUpDetails,
 			);
+			return updated;
 		} catch (err) {
 			if (err instanceof z.ZodError)
 				throw new InvalidArgumentError(err.message);
@@ -625,6 +625,7 @@ export class EventService {
 			eventId: eventId,
 			userId: userId,
 		});
+		await this.eventCapacityChanged(eventId);
 		return demotedSignUp;
 	}
 
@@ -894,5 +895,11 @@ export class EventService {
 
 	public getCategories(_ctx: Context): Promise<Category[]> {
 		return this.eventRepository.getCategories();
+	}
+
+	private async eventCapacityChanged(eventId: string): Promise<void> {
+		await this.signUpQueue.add("event-capacity-increased", {
+			eventId,
+		});
 	}
 }
