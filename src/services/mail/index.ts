@@ -1,5 +1,6 @@
 import { merge } from "lodash-es";
 import type { IMailClient } from "~/lib/postmark.js";
+import type { EmailQueueDataType, EmailQueueType } from "./worker.js";
 
 type LayoutContent = {
 	websiteUrl: string;
@@ -57,36 +58,65 @@ export type MailContent =
 	| CabinBookingReceipt
 	| UserRegistration;
 
-export class MailService {
-	constructor(
-		private client: IMailClient,
-		private defaults: {
-			companyName: string;
-			noReplyEmail: string;
-			productName: string;
-			parentCompany: string;
-			contactMail: string;
-			websiteUrl: string;
+type MailServiceDependencies = {
+	emailQueue: EmailQueueType;
+	emailClient: IMailClient;
+};
+
+type MailServiceOptions = {
+	companyName: string;
+	noReplyEmail: string;
+	productName: string;
+	parentCompany: string;
+	contactMail: string;
+	websiteUrl: string;
+};
+
+type MailService = {
+	sendAsync: (jobData: EmailQueueDataType) => Promise<void>;
+	sendAsyncBulk: (jobData: EmailQueueDataType[]) => Promise<void>;
+	send: (data: MailContent) => Promise<void>;
+};
+
+const buildMailService = (
+	{ emailQueue, emailClient }: MailServiceDependencies,
+	options: MailServiceOptions,
+): MailService => {
+	return {
+		async sendAsync(jobData: EmailQueueDataType) {
+			await emailQueue.add("send-email", jobData);
 		},
-	) {}
 
-	send(data: MailContent) {
-		const { to, from, content, templateAlias } = data;
-		const defaultContent: LayoutContent = {
-			companyName: this.defaults.companyName,
-			parentCompany: this.defaults.parentCompany,
-			contactMail: this.defaults.contactMail,
-			productName: this.defaults.productName,
-			websiteUrl: this.defaults.websiteUrl,
-		};
+		async sendAsyncBulk(jobData: EmailQueueDataType[]) {
+			await emailQueue.addBulk(
+				jobData.map((data) => ({
+					data,
+					name: "send-email",
+				})),
+			);
+		},
 
-		const contentWithDefaults = merge({}, defaultContent, content);
+		async send(data: MailContent) {
+			const { to, from, content, templateAlias } = data;
+			const defaultContent: LayoutContent = {
+				companyName: options.companyName,
+				parentCompany: options.parentCompany,
+				contactMail: options.contactMail,
+				productName: options.productName,
+				websiteUrl: options.websiteUrl,
+			};
 
-		return this.client.sendEmailWithTemplate({
-			To: to,
-			From: from ?? this.defaults.noReplyEmail,
-			TemplateAlias: templateAlias,
-			TemplateModel: contentWithDefaults,
-		});
-	}
-}
+			const contentWithDefaults = merge({}, defaultContent, content);
+
+			await emailClient.sendEmailWithTemplate({
+				To: to,
+				From: from ?? options.noReplyEmail,
+				TemplateAlias: templateAlias,
+				TemplateModel: contentWithDefaults,
+			});
+		},
+	};
+};
+
+export { buildMailService };
+export type { MailService };

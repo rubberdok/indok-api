@@ -1,11 +1,12 @@
+import type { Booking } from "@prisma/client";
 import type { Job, Processor } from "bullmq";
 import { DateTime } from "luxon";
-import type { MessageSendingResponse } from "postmark/dist/client/models/index.js";
 import { env } from "~/config.js";
 import type { Event } from "~/domain/events.js";
 import type { StudyProgram, User } from "~/domain/users.js";
 import type { Queue } from "~/lib/bullmq/queue.js";
 import type { Worker } from "~/lib/bullmq/worker.js";
+import type { ResultAsync } from "~/lib/result.js";
 import type { MailContent } from "./index.js";
 
 export type UserService = {
@@ -17,31 +18,35 @@ export type EventService = {
 	get(id: string): Promise<Event>;
 };
 
-type MailService = {
-	send(content: MailContent): Promise<MessageSendingResponse>;
+export type CabinService = {
+	getBooking(by: { id: string }): ResultAsync<{ booking: Booking }>;
 };
 
-type EmailRecipientType = {
-	recipientId: string;
+type MailService = {
+	send(data: MailContent): Promise<void>;
 };
 
 type EmailQueueNameType = "send-email";
 
 type EmailWorkerHelperType<TData, TReturn, TName extends string> = {
-	QueueType: Queue<TData & EmailRecipientType, TReturn, TName>;
-	WorkerType: Worker<TData & EmailRecipientType, TReturn, TName>;
-	ProcessorType: Processor<TData & EmailRecipientType, TReturn, TName>;
-	JobType: Job<TData & EmailRecipientType, TReturn, TName>;
+	QueueType: Queue<TData, TReturn, TName>;
+	WorkerType: Worker<TData, TReturn, TName>;
+	ProcessorType: Processor<TData, TReturn, TName>;
+	JobType: Job<TData, TReturn, TName>;
 };
 
-type EmailWorker = EmailWorkerHelperType<
+type EmailQueueDataType =
 	| {
 			type: "event-wait-list-confirmation";
 			eventId: string;
 			recipientId: string;
 	  }
-	| { type: "user-registration"; recipientId: string },
-	void,
+	| { type: "user-registration"; recipientId: string }
+	| { type: "cabin-booking-receipt"; bookingId: string };
+
+type EmailWorker = EmailWorkerHelperType<
+	EmailQueueDataType,
+	{ ok: boolean },
 	EmailQueueNameType
 >;
 
@@ -56,17 +61,20 @@ const EmailHandler = ({
 	mailService,
 	userService,
 	eventService,
+	cabinService,
 }: {
 	mailService: MailService;
 	userService: UserService;
 	eventService: EventService;
+	cabinService: CabinService;
 }): EmailProcessorType => {
 	return async (job: EmailJobType) => {
-		const { recipientId, type } = job.data;
-		const user = await userService.get(recipientId);
+		const { type } = job.data;
 
 		switch (type) {
 			case "user-registration": {
+				const { recipientId } = job.data;
+				const user = await userService.get(recipientId);
 				let studyProgram: string | undefined;
 				if (user.studyProgramId) {
 					const program = await userService.getStudyProgram({
@@ -86,10 +94,13 @@ const EmailHandler = ({
 						},
 					},
 				});
-				return;
+				return {
+					ok: true,
+				};
 			}
 			case "event-wait-list-confirmation": {
-				const { eventId } = job.data;
+				const { eventId, recipientId } = job.data;
+				const user = await userService.get(recipientId);
 				const event = await eventService.get(eventId);
 				await mailService.send({
 					to: user.email,
@@ -110,6 +121,34 @@ const EmailHandler = ({
 						},
 					},
 				});
+				return {
+					ok: true,
+				};
+			}
+			case "cabin-booking-receipt": {
+				const { bookingId } = job.data;
+				const getBookingResult = await cabinService.getBooking({
+					id: bookingId,
+				});
+				if (!getBookingResult.ok) {
+					return {
+						ok: false,
+					};
+				}
+				const { booking } = getBookingResult.data;
+				const user = await userService.get(booking.email);
+				await mailService.send({
+					to: user.email,
+					templateAlias: "cabin-booking-receipt",
+					content: {
+						booking: {
+							price: "",
+						},
+					},
+				});
+				return {
+					ok: true,
+				};
 			}
 		}
 	};
@@ -119,6 +158,7 @@ function getEmailHandler(dependencies: {
 	mailService: MailService;
 	userService: UserService;
 	eventService: EventService;
+	cabinService: CabinService;
 }): {
 	handler: EmailProcessorType;
 	name: typeof EmailQueueName;
@@ -129,6 +169,11 @@ function getEmailHandler(dependencies: {
 	};
 }
 
-export type { EmailQueueNameType, EmailQueueType, EmailWorkerType };
+export type {
+	EmailQueueNameType,
+	EmailQueueType,
+	EmailWorkerType,
+	EmailQueueDataType,
+};
 
 export { EmailHandler, getEmailHandler };

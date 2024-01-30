@@ -36,7 +36,7 @@ import type { Context } from "~/services/context.js";
 import { EventService } from "~/services/events/index.js";
 import { SignUpQueueName } from "~/services/events/worker.js";
 import { ListingService } from "~/services/listings/index.js";
-import { MailService } from "~/services/mail/index.js";
+import { buildMailService } from "~/services/mail/index.js";
 import { OrganizationService } from "~/services/organizations/index.js";
 import { PermissionService } from "~/services/permissions/index.js";
 import { ProductService } from "~/services/products/index.js";
@@ -350,19 +350,6 @@ async function registerServices(
 	const listingRepository = new ListingRepository(database);
 	const productRepository = new ProductRepository(database);
 
-	const mailService = new MailService(
-		postmark(env.POSTMARK_API_TOKEN, {
-			useTestMode: env.NODE_ENV === "test",
-		}),
-		{
-			companyName: env.COMPANY_NAME,
-			contactMail: env.CONTACT_EMAIL,
-			noReplyEmail: env.NO_REPLY_EMAIL,
-			parentCompany: env.PARENT_COMPANY,
-			productName: env.PRODUCT_NAME,
-			websiteUrl: env.CLIENT_URL,
-		},
-	);
 	const permissionService = new PermissionService(
 		memberRepository,
 		userRepository,
@@ -377,11 +364,6 @@ async function registerServices(
 		listingRepository,
 		permissionService,
 	);
-	const cabinService = new CabinService(
-		cabinRepository,
-		mailService,
-		permissionService,
-	);
 
 	await serverInstance.register(fastifyMessageQueue, {
 		name: "email",
@@ -391,10 +373,33 @@ async function registerServices(
 		throw new InternalServerError("Email queue not initialized");
 	}
 
+	const mailService = buildMailService(
+		{
+			emailQueue: serverInstance.queues.email,
+			emailClient: postmark(env.POSTMARK_API_TOKEN, {
+				useTestMode: env.NODE_ENV === "test",
+			}),
+		},
+		{
+			companyName: env.COMPANY_NAME,
+			contactMail: env.CONTACT_EMAIL,
+			noReplyEmail: env.NO_REPLY_EMAIL,
+			parentCompany: env.PARENT_COMPANY,
+			productName: env.PRODUCT_NAME,
+			websiteUrl: env.CLIENT_URL,
+		},
+	);
+
+	const cabinService = new CabinService(
+		cabinRepository,
+		mailService,
+		permissionService,
+	);
+
 	const userService = new UserService(
 		userRepository,
 		permissionService,
-		serverInstance.queues.email,
+		mailService,
 	);
 
 	await serverInstance.register(fastifyMessageQueue, {

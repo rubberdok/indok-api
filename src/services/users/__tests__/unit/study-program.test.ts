@@ -1,8 +1,8 @@
 import { faker } from "@faker-js/faker";
 import { type DeepMockProxy, mockDeep } from "jest-mock-extended";
 import { InvalidArgumentError } from "~/domain/errors.js";
-import type { EmailQueueType } from "~/services/mail/worker.js";
 import {
+	type MailService,
 	type PermissionService,
 	type UserRepository,
 	UserService,
@@ -12,14 +12,16 @@ describe("UserService", () => {
 	let userService: UserService;
 	let permissionService: DeepMockProxy<PermissionService>;
 	let userRepository: DeepMockProxy<UserRepository>;
+	let mailService: DeepMockProxy<MailService>;
 
 	beforeAll(() => {
 		userRepository = mockDeep<UserRepository>();
 		permissionService = mockDeep<PermissionService>();
+		mailService = mockDeep<MailService>();
 		userService = new UserService(
 			userRepository,
 			permissionService,
-			mockDeep<EmailQueueType>(),
+			mailService,
 		);
 	});
 

@@ -6,7 +6,7 @@ import { NotFoundError, PermissionDeniedError } from "~/domain/errors.js";
 import {
 	type CabinRepository,
 	CabinService,
-	type IMailService,
+	type MailService,
 	type PermissionService,
 } from "../../service.js";
 
@@ -20,7 +20,7 @@ describe("CabinService", () => {
 		permissionSerivce = mockDeep<PermissionService>();
 		cabinService = new CabinService(
 			cabinRepository,
-			mockDeep<IMailService>(),
+			mockDeep<MailService>(),
 			permissionSerivce,
 		);
 	});
