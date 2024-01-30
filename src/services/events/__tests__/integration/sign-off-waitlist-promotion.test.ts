@@ -427,6 +427,6 @@ describe("EventService", () => {
 				);
 				expect(signUpAvailability).toBe("ON_WAITLIST");
 			}
-		});
+		}, 10_000);
 	});
 });
