@@ -23,6 +23,27 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		name: fakeName(),
 		startAt: DateTime.now().plus({ week: 1 }).toJSDate(),
 		endAt: DateTime.now().plus({ week: 1, hours: 2 }).toJSDate(),
+		categories: {
+			connectOrCreate: {
+				where: {
+					name: "Fest",
+				},
+				create: {
+					name: "Fest",
+				},
+			},
+		},
+		organization: {
+			connectOrCreate: {
+				where: {
+					name: "Eksperter i Alkoholfri Vin",
+				},
+				create: {
+					name: "Eksperter i Alkoholfri Vin",
+					description: faker.lorem.paragraph(),
+				},
+			},
+		},
 	},
 	{
 		id: faker.string.uuid(),
@@ -31,6 +52,27 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		name: fakeName(),
 		startAt: DateTime.now().plus({ day: 1 }).toJSDate(),
 		endAt: DateTime.now().plus({ day: 1, hours: 2 }).toJSDate(),
+		categories: {
+			connectOrCreate: {
+				where: {
+					name: "Kultur",
+				},
+				create: {
+					name: "Kultur",
+				},
+			},
+		},
+		organization: {
+			connectOrCreate: {
+				where: {
+					name: "Rubberdøk",
+				},
+				create: {
+					name: "Rubberdøk",
+					description: faker.lorem.paragraph(),
+				},
+			},
+		},
 	},
 	{
 		id: faker.string.uuid(),
@@ -39,6 +81,17 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		name: fakeName(),
 		startAt: DateTime.now().plus({ weeks: 2 }).toJSDate(),
 		endAt: DateTime.now().plus({ weeks: 2, hours: 2 }).toJSDate(),
+		organization: {
+			connectOrCreate: {
+				where: {
+					name: "Hyttestyret",
+				},
+				create: {
+					name: "Hyttestyret",
+					description: faker.lorem.paragraph(),
+				},
+			},
+		},
 	},
 	{
 		id: faker.string.uuid(),
@@ -47,6 +100,17 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		name: fakeName(),
 		startAt: DateTime.now().plus({ weeks: 3 }).toJSDate(),
 		endAt: DateTime.now().plus({ weeks: 3, hours: 2 }).toJSDate(),
+		organization: {
+			connectOrCreate: {
+				where: {
+					name: "Bindeleddet",
+				},
+				create: {
+					name: "Bindeleddet",
+					description: faker.lorem.paragraph(),
+				},
+			},
+		},
 	},
 	{
 		id: faker.string.uuid(),
@@ -55,6 +119,27 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		name: fakeName(),
 		startAt: DateTime.now().plus({ year: 1 }).toJSDate(),
 		endAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
+		categories: {
+			connectOrCreate: {
+				where: {
+					name: "Bedriftspresentasjon",
+				},
+				create: {
+					name: "Bedriftspresentasjon",
+				},
+			},
+		},
+		organization: {
+			connectOrCreate: {
+				where: {
+					name: "Bindeleddet",
+				},
+				create: {
+					name: "Bindeleddet",
+					description: faker.lorem.paragraph(),
+				},
+			},
+		},
 	},
 	{
 		id: faker.string.uuid(),
@@ -63,6 +148,17 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		name: fakeName(),
 		startAt: DateTime.now().plus({ year: 1 }).toJSDate(),
 		endAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
+		organization: {
+			connectOrCreate: {
+				where: {
+					name: "Rubberdøk",
+				},
+				create: {
+					name: "Rubberdøk",
+					description: faker.lorem.paragraph(),
+				},
+			},
+		},
 	},
 	{
 		id: faker.string.uuid(),
@@ -71,6 +167,17 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		name: fakeName(),
 		startAt: DateTime.now().plus({ year: 1 }).toJSDate(),
 		endAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
+		organization: {
+			connectOrCreate: {
+				where: {
+					name: "Janus",
+				},
+				create: {
+					name: "Janus",
+					description: faker.lorem.paragraph(),
+				},
+			},
+		},
 	},
 	{
 		id: faker.string.uuid(),
@@ -79,6 +186,17 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		name: fakeName(),
 		startAt: DateTime.now().plus({ year: 1 }).toJSDate(),
 		endAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
+		organization: {
+			connectOrCreate: {
+				where: {
+					name: "ESTIEM",
+				},
+				create: {
+					name: "ESTIEM",
+					description: faker.lorem.paragraph(),
+				},
+			},
+		},
 	},
 	{
 		id: faker.string.uuid(),
@@ -92,6 +210,17 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		signUpsEnabled: true,
 		signUpsStartAt: DateTime.now().minus({ day: 1 }).toJSDate(),
 		signUpsEndAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
+		organization: {
+			connectOrCreate: {
+				where: {
+					name: "Rubberdøk",
+				},
+				create: {
+					name: "Rubberdøk",
+					description: faker.lorem.paragraph(),
+				},
+			},
+		},
 		slots: {
 			createMany: {
 				data: [
@@ -113,6 +242,17 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		signUpsEnabled: true,
 		signUpsStartAt: DateTime.now().minus({ day: 1 }).toJSDate(),
 		signUpsEndAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
+		organization: {
+			connectOrCreate: {
+				where: {
+					name: "Janus",
+				},
+				create: {
+					name: "Janus",
+					description: faker.lorem.paragraph(),
+				},
+			},
+		},
 		slots: {
 			createMany: {
 				data: [
@@ -134,6 +274,17 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		signUpsEnabled: true,
 		signUpsStartAt: DateTime.now().plus({ minutes: 2 }).toJSDate(),
 		signUpsEndAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
+		organization: {
+			connectOrCreate: {
+				where: {
+					name: "Bandøk",
+				},
+				create: {
+					name: "Bandøk",
+					description: faker.lorem.paragraph(),
+				},
+			},
+		},
 		slots: {
 			createMany: {
 				data: [
