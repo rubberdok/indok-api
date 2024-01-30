@@ -3,8 +3,8 @@ import { jest } from "@jest/globals";
 import dayjs from "dayjs";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import type { User } from "~/domain/users.js";
-import type { EmailQueueType } from "~/services/mail/worker.js";
 import {
+	type MailService,
 	type PermissionService,
 	type UserRepository,
 	UserService,
@@ -15,15 +15,13 @@ const time = new Date(`${dayjs().year() + 1}-01-01`);
 let service: UserService;
 let repo: DeepMockProxy<UserRepository>;
 let permissionService: DeepMockProxy<PermissionService>;
+let mailService: DeepMockProxy<MailService>;
 
 beforeAll(() => {
 	repo = mockDeep<UserRepository>();
 	permissionService = mockDeep<PermissionService>();
-	service = new UserService(
-		repo,
-		permissionService,
-		mockDeep<EmailQueueType>(),
-	);
+	mailService = mockDeep<MailService>();
+	service = new UserService(repo, permissionService, mailService);
 
 	jest.useFakeTimers().setSystemTime(time);
 });

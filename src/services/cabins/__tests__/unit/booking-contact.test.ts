@@ -8,7 +8,7 @@ import {
 import {
 	type CabinRepository,
 	CabinService,
-	type IMailService,
+	type MailService,
 	type PermissionService,
 } from "../../service.js";
 
@@ -16,12 +16,12 @@ describe("CabinService", () => {
 	let cabinService: CabinService;
 	let cabinRepository: DeepMockProxy<CabinRepository>;
 	let permissionService: DeepMockProxy<PermissionService>;
-	let mailService: DeepMockProxy<IMailService>;
+	let mailService: DeepMockProxy<MailService>;
 
 	beforeAll(() => {
 		cabinRepository = mockDeep<CabinRepository>();
 		permissionService = mockDeep<PermissionService>();
-		mailService = mockDeep<IMailService>();
+		mailService = mockDeep<MailService>();
 		cabinService = new CabinService(
 			cabinRepository,
 			mailService,

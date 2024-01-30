@@ -16,8 +16,9 @@ import { MemberRepository } from "~/repositories/organizations/members.js";
 import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
 import { UserRepository } from "~/repositories/users/index.js";
 import { makeMockContext } from "~/services/context.js";
-import { MailService } from "~/services/mail/index.js";
+import { buildMailService } from "~/services/mail/index.js";
 import {
+	type CabinService,
 	type EmailQueueType,
 	type EmailWorkerType,
 	getEmailHandler,
@@ -58,7 +59,20 @@ describe("EventService", () => {
 		emailQueue = new Queue("email", { connection: redis });
 		signUpQueue = new Queue(SignUpQueueName, { connection: redis });
 		mailClient = mockDeep<ServerClient>();
-
+		const mailService = buildMailService(
+			{
+				emailQueue,
+				emailClient: mailClient,
+			},
+			{
+				companyName: "test",
+				contactMail: faker.internet.email(),
+				noReplyEmail: env.NO_REPLY_EMAIL,
+				productName: "test",
+				parentCompany: "test",
+				websiteUrl: env.CLIENT_URL,
+			},
+		);
 		const userRepository = new UserRepository(prisma);
 		const organizationRepository = new OrganizationRepository(prisma);
 		const memberRepository = new MemberRepository(prisma);
@@ -71,7 +85,7 @@ describe("EventService", () => {
 		userService = new UserService(
 			userRepository,
 			permissionService,
-			emailQueue,
+			mailService,
 		);
 		eventService = new EventService(
 			eventRepository,
@@ -84,19 +98,12 @@ describe("EventService", () => {
 			memberRepository,
 			permissionService,
 		);
-		const mailService = new MailService(mailClient, {
-			companyName: "test",
-			contactMail: faker.internet.email(),
-			noReplyEmail: env.NO_REPLY_EMAIL,
-			productName: "test",
-			parentCompany: "test",
-			websiteUrl: env.CLIENT_URL,
-		});
 
 		const emailWorkerHandler = getEmailHandler({
 			eventService,
 			userService,
 			mailService,
+			cabinService: mockDeep<CabinService>(),
 		});
 		emailWorker = new Worker(
 			emailWorkerHandler.name,
@@ -108,7 +115,7 @@ describe("EventService", () => {
 
 		const signUpWorkerHandler = getSignUpWorkerHandler({
 			events: eventService,
-			emailQueue,
+			mailService,
 			log: mockDeep<Logger>(),
 		});
 

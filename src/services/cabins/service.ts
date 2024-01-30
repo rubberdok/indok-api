@@ -7,15 +7,17 @@ import {
 	Semester,
 } from "@prisma/client";
 import { DateTime } from "luxon";
-import type { MessageSendingResponse } from "postmark/dist/client/models/index.js";
 import { z } from "zod";
 import { BookingStatus } from "~/domain/cabins.js";
 import {
+	InternalServerError,
 	InvalidArgumentError,
+	KnownDomainError,
 	NotFoundError,
 	PermissionDeniedError,
 } from "~/domain/errors.js";
-import type { MailContent } from "../mail/index.js";
+import type { ResultAsync } from "~/lib/result.js";
+import type { EmailQueueDataType } from "../mail/worker.js";
 
 export interface BookingData {
 	email: string;
@@ -75,14 +77,14 @@ export interface PermissionService {
 	}): Promise<boolean>;
 }
 
-export interface IMailService {
-	send(data: MailContent): Promise<MessageSendingResponse>;
+export interface MailService {
+	sendAsync(jobData: EmailQueueDataType): Promise<void>;
 }
 
 export class CabinService {
 	constructor(
 		private cabinRepository: CabinRepository,
-		private mailService: IMailService,
+		private mailService: MailService,
 		private permissionService: PermissionService,
 	) {}
 
@@ -240,15 +242,10 @@ export class CabinService {
 		}
 	}
 
-	private sendBookingConfirmation(booking: Booking) {
-		return this.mailService.send({
-			to: booking.email,
-			templateAlias: "cabin-booking-receipt",
-			content: {
-				booking: {
-					price: "",
-				},
-			},
+	private async sendBookingConfirmation(booking: Booking) {
+		await this.mailService.sendAsync({
+			type: "cabin-booking-receipt",
+			bookingId: booking.id,
 		});
 	}
 
@@ -519,5 +516,28 @@ export class CabinService {
 	 */
 	async getBookingContact(): Promise<BookingContact> {
 		return await this.cabinRepository.getBookingContact();
+	}
+
+	async getBooking(by: { id: string }): ResultAsync<{ booking: Booking }> {
+		try {
+			const booking = await this.cabinRepository.getBookingById(by.id);
+			return {
+				ok: true,
+				data: {
+					booking,
+				},
+			};
+		} catch (err) {
+			if (err instanceof KnownDomainError) {
+				return {
+					ok: false,
+					error: err,
+				};
+			}
+			return {
+				ok: false,
+				error: new InternalServerError("An unknown error occurred"),
+			};
+		}
 	}
 }

@@ -4,8 +4,8 @@ import { DateTime } from "luxon";
 import { PermissionDeniedError } from "~/domain/errors.js";
 import type { User } from "~/domain/users.js";
 import { makeMockContext } from "~/services/context.js";
-import type { EmailQueueType } from "~/services/mail/worker.js";
 import {
+	type MailService,
 	type PermissionService,
 	type UserRepository,
 	UserService,
@@ -15,14 +15,16 @@ describe("UserService", () => {
 	let userService: UserService;
 	let permissionService: DeepMockProxy<PermissionService>;
 	let userRepository: DeepMockProxy<UserRepository>;
+	let mailService: DeepMockProxy<MailService>;
 
 	beforeAll(() => {
 		userRepository = mockDeep<UserRepository>();
 		permissionService = mockDeep<PermissionService>();
+		mailService = mockDeep<MailService>();
 		userService = new UserService(
 			userRepository,
 			permissionService,
-			mockDeep<EmailQueueType>(),
+			mailService,
 		);
 	});
 

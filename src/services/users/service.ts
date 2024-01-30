@@ -11,7 +11,7 @@ import {
 	newStudyProgram,
 } from "~/domain/users.js";
 import type { Context } from "../context.js";
-import type { EmailQueueType } from "../mail/worker.js";
+import type { EmailQueueDataType } from "../mail/worker.js";
 import { createUserSchema } from "./validation.js";
 
 export interface UserRepository {
@@ -33,11 +33,15 @@ export interface PermissionService {
 	isSuperUser(userId: string | undefined): Promise<{ isSuperUser: boolean }>;
 }
 
+export type MailService = {
+	sendAsync(jobData: EmailQueueDataType): Promise<void>;
+};
+
 export class UserService {
 	constructor(
 		private usersRepository: UserRepository,
 		private permissionService: PermissionService,
-		private emailQueue: EmailQueueType,
+		private mailService: MailService,
 	) {}
 
 	/**
@@ -228,7 +232,7 @@ export class UserService {
 	async create(data: Prisma.UserCreateInput): Promise<User> {
 		this.validateUser(data);
 		const user = await this.usersRepository.create(data);
-		await this.emailQueue.add("send-email", {
+		await this.mailService.sendAsync({
 			recipientId: user.id,
 			type: "user-registration",
 		});

@@ -11,18 +11,20 @@ import { Redis } from "ioredis";
 import { type Logger, pino } from "pino";
 import { env } from "~/config.js";
 import { InternalServerError } from "~/domain/errors.js";
+import { CabinRepository } from "~/repositories/cabins/repository.js";
 import { EventRepository } from "~/repositories/events/repository.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
 import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
 import { ProductRepository } from "~/repositories/products/repository.js";
 import { UserRepository } from "~/repositories/users/index.js";
+import { CabinService } from "~/services/cabins/service.js";
 import { EventService } from "~/services/events/service.js";
 import {
 	SignUpQueueName,
 	type SignUpQueueType,
 	getSignUpWorkerHandler,
 } from "~/services/events/worker.js";
-import { MailService } from "~/services/mail/index.js";
+import { buildMailService } from "~/services/mail/index.js";
 import {
 	type EmailQueueType,
 	getEmailHandler,
@@ -211,6 +213,8 @@ export async function initWorkers(): Promise<{
 		const organizationRepository = new OrganizationRepository(
 			instance.database,
 		);
+		const cabinRepository = new CabinRepository(instance.database);
+
 		const permissionService = new PermissionService(
 			memberRepository,
 			userRepository,
@@ -220,15 +224,14 @@ export async function initWorkers(): Promise<{
 		if (!instance.queues?.email) {
 			throw new InternalServerError("Email queue not initialized");
 		}
-		const userService = new UserService(
-			userRepository,
-			permissionService,
-			instance.queues?.email,
-		);
-		const mailService = new MailService(
-			postmark(env.POSTMARK_API_TOKEN, {
-				useTestMode: env.NODE_ENV === "test",
-			}),
+
+		const mailService = buildMailService(
+			{
+				emailClient: postmark(env.POSTMARK_API_TOKEN, {
+					useTestMode: env.NODE_ENV === "test",
+				}),
+				emailQueue: instance.queues.email,
+			},
 			{
 				noReplyEmail: env.NO_REPLY_EMAIL,
 				contactMail: env.CONTACT_EMAIL,
@@ -237,6 +240,12 @@ export async function initWorkers(): Promise<{
 				productName: env.PRODUCT_NAME,
 				websiteUrl: env.CLIENT_URL,
 			},
+		);
+
+		const userService = new UserService(
+			userRepository,
+			permissionService,
+			mailService,
 		);
 
 		if (!instance.queues?.[PaymentProcessingQueueName]) {
@@ -262,9 +271,15 @@ export async function initWorkers(): Promise<{
 			instance.queues?.[SignUpQueueName],
 		);
 
+		const cabinService = new CabinService(
+			cabinRepository,
+			mailService,
+			permissionService,
+		);
+
 		instance.use(
 			avvioWorker,
-			getEmailHandler({ mailService, userService, eventService }),
+			getEmailHandler({ mailService, userService, eventService, cabinService }),
 		);
 		instance.use(
 			avvioWorker,
@@ -273,7 +288,7 @@ export async function initWorkers(): Promise<{
 		instance.use(
 			avvioWorker,
 			getSignUpWorkerHandler({
-				emailQueue: instance.queues?.email,
+				mailService,
 				events: eventService,
 				log: instance.log,
 			}),

@@ -17,7 +17,7 @@ import { CabinService } from "~/services/cabins/service.js";
 import { EventService } from "~/services/events/service.js";
 import type { SignUpQueueType } from "~/services/events/worker.js";
 import { ListingService } from "~/services/listings/service.js";
-import { MailService } from "~/services/mail/index.js";
+import { buildMailService } from "~/services/mail/index.js";
 import type { EmailQueueType } from "~/services/mail/worker.js";
 import { OrganizationService } from "~/services/organizations/service.js";
 import { PermissionService } from "~/services/permissions/service.js";
@@ -39,14 +39,20 @@ export function makeTestServices(
 	const listingRepository = new ListingRepository(database);
 	const productRepository = new ProductRepository(database);
 
-	const mailService = new MailService(mockDeep<ServerClient>(), {
-		noReplyEmail: env.NO_REPLY_EMAIL,
-		contactMail: env.CONTACT_EMAIL,
-		companyName: env.COMPANY_NAME,
-		parentCompany: env.PARENT_COMPANY,
-		productName: env.PRODUCT_NAME,
-		websiteUrl: env.CLIENT_URL,
-	});
+	const mailService = buildMailService(
+		{
+			emailClient: mockDeep<ServerClient>(),
+			emailQueue: mockDeep<EmailQueueType>(),
+		},
+		{
+			noReplyEmail: env.NO_REPLY_EMAIL,
+			contactMail: env.CONTACT_EMAIL,
+			companyName: env.COMPANY_NAME,
+			parentCompany: env.PARENT_COMPANY,
+			productName: env.PRODUCT_NAME,
+			websiteUrl: env.CLIENT_URL,
+		},
+	);
 	const permissionService = new PermissionService(
 		memberRepository,
 		userRepository,
@@ -70,7 +76,7 @@ export function makeTestServices(
 	const userService = new UserService(
 		userRepository,
 		permissionService,
-		mockDeep<EmailQueueType>(),
+		mailService,
 	);
 	const eventService = new EventService(
 		eventRepository,

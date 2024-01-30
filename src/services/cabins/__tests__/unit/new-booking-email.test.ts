@@ -9,7 +9,7 @@ import {
 	type BookingData,
 	type CabinRepository,
 	CabinService,
-	type IMailService,
+	type MailService,
 	type PermissionService,
 } from "../../service.js";
 
@@ -24,13 +24,13 @@ const validBooking: BookingData = {
 };
 
 let repo: DeepMockProxy<CabinRepository>;
-let mockMailService: DeepMockProxy<IMailService>;
+let mockMailService: DeepMockProxy<MailService>;
 let cabinService: CabinService;
 let permissionService: DeepMockProxy<PermissionService>;
 
 beforeAll(() => {
 	repo = mockDeep<CabinRepository>();
-	mockMailService = mockDeep<IMailService>();
+	mockMailService = mockDeep<MailService>();
 	permissionService = mockDeep<PermissionService>();
 	cabinService = new CabinService(repo, mockMailService, permissionService);
 });
@@ -86,10 +86,9 @@ describe("newBooking", () => {
 
 		await cabinService.newBooking(input);
 		expect(repo.createBooking).toHaveBeenCalledWith(input);
-		expect(mockMailService.send).toHaveBeenCalledWith({
-			templateAlias: "cabin-booking-receipt",
-			content: expectedConfirmationEmail,
-			to: input.email,
+		expect(mockMailService.sendAsync).toHaveBeenCalledWith({
+			type: "cabin-booking-receipt",
+			bookingId: expect.any(String),
 		});
 	});
 });

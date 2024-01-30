@@ -7,7 +7,7 @@ import type { Queue } from "~/lib/bullmq/queue.js";
 import type { Worker } from "~/lib/bullmq/worker.js";
 import type { Result } from "~/lib/result.js";
 import type { Context } from "../context.js";
-import type { EmailQueueType } from "../mail/worker.js";
+import type { EmailQueueDataType } from "../mail/worker.js";
 
 type SignUpQueueDataType = { eventId: string };
 type SignUpQueueReturnType = Result<undefined>;
@@ -43,11 +43,14 @@ type EventService = {
 	get(id: string): Promise<Event>;
 };
 
+type MailService = {
+	sendAsyncBulk(data: EmailQueueDataType[]): Promise<void>;
+};
 const getSignUpWorkerHandler = ({
 	events,
-	emailQueue,
+	mailService,
 	log,
-}: { events: EventService; emailQueue: EmailQueueType; log: Logger }): {
+}: { events: EventService; mailService: MailService; log: Logger }): {
 	name: string;
 	handler: Processor<
 		SignUpQueueDataType,
@@ -77,15 +80,12 @@ const getSignUpWorkerHandler = ({
 								break;
 							}
 						}
-						await emailQueue.addBulk(
+						await mailService.sendAsyncBulk(
 							newSignUps.map((newSignUp) => {
 								return {
-									name: "send-email",
-									data: {
-										type: "event-wait-list-confirmation",
-										eventId: newSignUp.eventId,
-										recipientId: newSignUp.userId,
-									},
+									type: "event-wait-list-confirmation",
+									eventId: newSignUp.eventId,
+									recipientId: newSignUp.userId,
 								};
 							}),
 						);

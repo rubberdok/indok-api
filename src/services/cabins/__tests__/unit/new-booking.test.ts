@@ -3,24 +3,23 @@ import { type Booking, type BookingSemester, Semester } from "@prisma/client";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
-import type { MessageSendingResponse } from "postmark/dist/client/models/index.js";
 import { InvalidArgumentError } from "~/domain/errors.js";
 import {
 	type BookingData,
 	type CabinRepository,
 	CabinService,
-	type IMailService,
+	type MailService,
 	type PermissionService,
 } from "../../service.js";
 
 describe("CabinService", () => {
 	let cabinService: CabinService;
 	let cabinRepository: DeepMockProxy<CabinRepository>;
-	let mailService: DeepMockProxy<IMailService>;
+	let mailService: DeepMockProxy<MailService>;
 
 	beforeAll(() => {
 		cabinRepository = mockDeep<CabinRepository>();
-		mailService = mockDeep<IMailService>();
+		mailService = mockDeep<MailService>();
 		cabinService = new CabinService(
 			cabinRepository,
 			mailService,
@@ -578,9 +577,7 @@ describe("CabinService", () => {
 					},
 				);
 				cabinRepository.createBooking.mockResolvedValueOnce(mock<Booking>());
-				mailService.send.mockImplementationOnce(() =>
-					Promise.resolve(mock<MessageSendingResponse>()),
-				);
+				mailService.sendAsync.mockResolvedValue();
 
 				/**
 				 * Act
