@@ -4,8 +4,18 @@ import {
 	ParticipationStatus,
 	type User,
 } from "@prisma/client";
+import { mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
+import type { IMailClient } from "~/lib/postmark.js";
 import prisma from "~/lib/prisma.js";
+import { MemberRepository } from "~/repositories/organizations/members.js";
+import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
+import { UserRepository } from "~/repositories/users/index.js";
+import { buildMailService } from "~/services/mail/index.js";
+import type { EmailQueueType } from "~/services/mail/worker.js";
+import { OrganizationService } from "~/services/organizations/service.js";
+import { PermissionService } from "~/services/permissions/service.js";
+import { UserService } from "~/services/users/service.js";
 import type { EventService } from "../../service.js";
 import { makeDependencies } from "./dependencies-factory.js";
 
@@ -384,27 +394,50 @@ describe("EventService", () => {
 async function makeUserWithOrganizationMembership(
 	userData: Partial<User> = {},
 ): Promise<{ user: User; organization: Organization }> {
-	const user = await prisma.user.create({
-		data: {
-			firstName: faker.person.firstName(),
-			lastName: faker.person.lastName(),
-			username: faker.string.sample(30),
-			feideId: faker.string.uuid(),
-			email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
-			...userData,
+	const userRepository = new UserRepository(prisma);
+	const memberRepository = new MemberRepository(prisma);
+	const organizationRepository = new OrganizationRepository(prisma);
+	const permissionService = new PermissionService(
+		memberRepository,
+		userRepository,
+		organizationRepository,
+	);
+	const mailService = buildMailService(
+		{
+			emailClient: mockDeep<IMailClient>(),
+			emailQueue: mockDeep<EmailQueueType>(),
 		},
+		{
+			companyName: "test",
+			noReplyEmail: "test",
+			contactMail: "test",
+			parentCompany: "test",
+			productName: "test",
+			websiteUrl: "test",
+		},
+	);
+	const userService = new UserService(
+		userRepository,
+		permissionService,
+		mailService,
+	);
+
+	const organizationService = new OrganizationService(
+		organizationRepository,
+		memberRepository,
+		permissionService,
+	);
+
+	const user = await userService.create({
+		firstName: faker.person.firstName(),
+		lastName: faker.person.lastName(),
+		username: faker.string.sample(30),
+		feideId: faker.string.uuid(),
+		email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
+		...userData,
 	});
-	const organization = await prisma.organization.create({
-		data: {
-			name: faker.string.sample(20),
-		},
-	});
-	await prisma.member.create({
-		data: {
-			organizationId: organization.id,
-			userId: user.id,
-			role: "MEMBER",
-		},
+	const organization = await organizationService.create(user.id, {
+		name: faker.string.sample(20),
 	});
 	return { user, organization };
 }

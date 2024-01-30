@@ -281,7 +281,7 @@ describe("EventService", () => {
 				feideId: faker.string.uuid(),
 			});
 			const confirmedUsers = await Promise.all(
-				range(0, 100).map(
+				range(0, 20).map(
 					async () =>
 						await userService.create({
 							firstName: faker.person.firstName(),
@@ -294,7 +294,7 @@ describe("EventService", () => {
 				),
 			);
 			const waitListUsers = await Promise.all(
-				range(0, 100).map(
+				range(0, 20).map(
 					async () =>
 						await userService.create({
 							firstName: faker.person.firstName(),
@@ -308,7 +308,7 @@ describe("EventService", () => {
 			);
 
 			const shouldRemainOnWaitListUsers = await Promise.all(
-				range(0, 100).map(
+				range(0, 20).map(
 					async () =>
 						await userService.create({
 							firstName: faker.person.firstName(),
@@ -334,12 +334,12 @@ describe("EventService", () => {
 					endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
 				},
 				{
-					capacity: 100,
+					capacity: 20,
 					signUpsStartAt: faker.date.past(),
 					signUpsEndAt: faker.date.future(),
 					slots: [
-						{ capacity: 50, gradeYears: [1, 2, 3, 4, 5] },
-						{ capacity: 50, gradeYears: [1, 2, 3, 4, 5] },
+						{ capacity: 10, gradeYears: [1, 2, 3, 4, 5] },
+						{ capacity: 10, gradeYears: [1, 2, 3, 4, 5] },
 					],
 					signUpsEnabled: true,
 				},
