@@ -39,7 +39,14 @@ export function makeTestServices(
 	const listingRepository = new ListingRepository(database);
 	const productRepository = new ProductRepository(database);
 
-	const mailService = new MailService(postmark, env.NO_REPLY_EMAIL);
+	const mailService = new MailService(postmark, {
+		noReplyEmail: env.NO_REPLY_EMAIL,
+		contactMail: env.CONTACT_EMAIL,
+		companyName: env.COMPANY_NAME,
+		parentCompany: env.PARENT_COMPANY,
+		productName: env.PRODUCT_NAME,
+		websiteUrl: env.CLIENT_URL,
+	});
 	const permissionService = new PermissionService(
 		memberRepository,
 		userRepository,

@@ -46,6 +46,15 @@ const envVarsSchema = z.object({
 	VIPPS_DEFAULT_CLIENT_SECRET: z.string().optional(),
 	VIPPS_DEFAULT_MERCHANT_SERIAL_NUMBER: z.string().optional(),
 	VIPPS_DEFAULT_SUBSCRIPTION_KEY: z.string().optional(),
+	CLIENT_URL: z.string().default("https://indokntnu.no"),
+	COMPANY_NAME: z.string().default("Rubberdøk"),
+	PARENT_COMPANY: z
+		.string()
+		.default(
+			"Foreningen for Studentene ved Industriell Økonomi og Teknologiledelse",
+		),
+	PRODUCT_NAME: z.string().default("Indøk NTNU"),
+	CONTACT_EMAIL: z.string().email(),
 });
 
 export const env = envVarsSchema.parse(process.env);

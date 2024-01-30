@@ -76,6 +76,10 @@ environment_variables = [
   {
     name  = "VIPPS_TEST_MODE",
     value = "true"
+  },
+  {
+    name  = "CONTACT_EMAIL",
+    value = "kontakt@rubberdok.no"
   }
 ]
 

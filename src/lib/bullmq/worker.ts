@@ -225,7 +225,14 @@ export async function initWorkers(): Promise<{
 			permissionService,
 			instance.queues?.email,
 		);
-		const mailService = new MailService(postmark, env.NO_REPLY_EMAIL);
+		const mailService = new MailService(postmark, {
+			noReplyEmail: env.NO_REPLY_EMAIL,
+			contactMail: env.CONTACT_EMAIL,
+			companyName: env.COMPANY_NAME,
+			parentCompany: env.PARENT_COMPANY,
+			productName: env.PRODUCT_NAME,
+			websiteUrl: env.CLIENT_URL,
+		});
 
 		if (!instance.queues?.[PaymentProcessingQueueName]) {
 			throw new InternalServerError("Payment processing queue not initialized");

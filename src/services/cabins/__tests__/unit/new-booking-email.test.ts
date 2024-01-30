@@ -5,7 +5,6 @@ import dayjs from "dayjs";
 import { type DeepMockProxy, mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
 import { BookingStatus } from "~/domain/cabins.js";
-import { TemplateAlias } from "~/lib/postmark.js";
 import {
 	type BookingData,
 	type CabinRepository,
@@ -41,8 +40,9 @@ describe("newBooking", () => {
 		name: string;
 		input: BookingData;
 		expectedConfirmationEmail: {
-			firstName: string;
-			lastName: string;
+			booking: {
+				price: string;
+			};
 		};
 	}
 
@@ -50,10 +50,11 @@ describe("newBooking", () => {
 		{
 			name: "should send a booking confirmation email",
 			input: validBooking,
-			expectedConfirmationEmail: {
-				firstName: validBooking.firstName,
-				lastName: validBooking.lastName,
-			},
+			expectedConfirmationEmail: expect.objectContaining({
+				booking: expect.objectContaining({
+					price: expect.any(String),
+				}),
+			}),
 		},
 	];
 
@@ -86,8 +87,9 @@ describe("newBooking", () => {
 		await cabinService.newBooking(input);
 		expect(repo.createBooking).toHaveBeenCalledWith(input);
 		expect(mockMailService.send).toHaveBeenCalledWith({
-			TemplateAlias: TemplateAlias.CABIN_BOOKING_RECEIPT,
-			TemplateModel: expectedConfirmationEmail,
+			templateAlias: "cabin-booking-receipt",
+			content: expectedConfirmationEmail,
+			to: input.email,
 		});
 	});
 });

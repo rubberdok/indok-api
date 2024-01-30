@@ -350,7 +350,14 @@ async function registerServices(
 	const listingRepository = new ListingRepository(database);
 	const productRepository = new ProductRepository(database);
 
-	const mailService = new MailService(postmark, env.NO_REPLY_EMAIL);
+	const mailService = new MailService(postmark, {
+		companyName: env.COMPANY_NAME,
+		contactMail: env.CONTACT_EMAIL,
+		noReplyEmail: env.NO_REPLY_EMAIL,
+		parentCompany: env.PARENT_COMPANY,
+		productName: env.PRODUCT_NAME,
+		websiteUrl: env.CLIENT_URL,
+	});
 	const permissionService = new PermissionService(
 		memberRepository,
 		userRepository,

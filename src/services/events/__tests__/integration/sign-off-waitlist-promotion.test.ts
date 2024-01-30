@@ -84,7 +84,14 @@ describe("EventService", () => {
 			memberRepository,
 			permissionService,
 		);
-		const mailService = new MailService(mailClient, env.NO_REPLY_EMAIL);
+		const mailService = new MailService(mailClient, {
+			companyName: "test",
+			contactMail: faker.internet.email(),
+			noReplyEmail: env.NO_REPLY_EMAIL,
+			productName: "test",
+			parentCompany: "test",
+			websiteUrl: env.CLIENT_URL,
+		});
 
 		const emailWorkerHandler = getEmailHandler({
 			eventService,
@@ -240,12 +247,15 @@ describe("EventService", () => {
 			expect(promotedSignUp).toBe("CONFIRMED");
 			expect(mailClient.sendEmailWithTemplate).toHaveBeenCalledWith(
 				expect.objectContaining({
-					To: waitListUser.email,
-					From: env.NO_REPLY_EMAIL,
-					TemplateAlias: "event-wait-list",
-					TemplateModel: expect.objectContaining({
-						eventName: event.name,
-						eventStartAt: expect.any(String),
+					to: waitListUser.email,
+					from: env.NO_REPLY_EMAIL,
+					templateAlias: "event-wait-list",
+					content: expect.objectContaining({
+						event: expect.objectContaining({
+							name: event.name,
+							startAt: expect.any(String),
+							url: `${env.CLIENT_URL}/events/${event.id}`,
+						}),
 					}),
 				}),
 			);
@@ -409,12 +419,15 @@ describe("EventService", () => {
 				expect(promotedSignUp).toBe("CONFIRMED");
 				expect(mailClient.sendEmailWithTemplate).toHaveBeenCalledWith(
 					expect.objectContaining({
-						To: user.email,
-						From: env.NO_REPLY_EMAIL,
-						TemplateAlias: "event-wait-list",
-						TemplateModel: expect.objectContaining({
-							eventName: event.name,
-							eventStartAt: expect.any(String),
+						to: user.email,
+						from: env.NO_REPLY_EMAIL,
+						templateAlias: "event-wait-list",
+						content: expect.objectContaining({
+							event: expect.objectContaining({
+								name: event.name,
+								startAt: expect.any(String),
+								url: `${env.CLIENT_URL}/events/${event.id}`,
+							}),
 						}),
 					}),
 				);
