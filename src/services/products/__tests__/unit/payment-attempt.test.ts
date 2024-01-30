@@ -1,6 +1,7 @@
 import { faker } from "@faker-js/faker";
+import type { EpaymentErrorResponse } from "@vippsmobilepay/sdk";
 import { mock } from "jest-mock-extended";
-import type { PaymentAttempt } from "~/domain/products.js";
+import type { Order, PaymentAttempt, Product } from "~/domain/products.js";
 import type { User } from "~/domain/users.js";
 import { makeMockContext } from "~/services/context.js";
 import { makeDependencies } from "./dependencies.js";
@@ -113,6 +114,176 @@ describe("ProductService", () => {
 					},
 				},
 			);
+		});
+
+		it("should fail with UnauthorizedError if not logged in", async () => {
+			const result = await productService.initiatePaymentAttempt(
+				makeMockContext(null),
+				{
+					orderId: faker.string.uuid(),
+				},
+			);
+
+			expect(result).toEqual({
+				ok: false,
+				error: expect.objectContaining({
+					name: "UnauthorizedError",
+				}),
+			});
+		});
+
+		it("should fail with NotFoundError if the order does not exist", async () => {
+			productRepository.getOrder.mockResolvedValueOnce({
+				order: null,
+			});
+
+			const result = await productService.initiatePaymentAttempt(
+				makeMockContext(mock<User>({})),
+				{
+					orderId: faker.string.uuid(),
+				},
+			);
+
+			expect(result).toEqual({
+				ok: false,
+				error: expect.objectContaining({
+					name: "NotFoundError",
+				}),
+			});
+		});
+
+		it("should fail with InvalidArgumentError if the order is captured", async () => {
+			productRepository.getOrder.mockResolvedValueOnce({
+				order: mock<Order>({
+					paymentStatus: "CAPTURED",
+				}),
+			});
+
+			const result = await productService.initiatePaymentAttempt(
+				makeMockContext(mock<User>({})),
+				{
+					orderId: faker.string.uuid(),
+				},
+			);
+
+			expect(result).toEqual({
+				ok: false,
+				error: expect.objectContaining({
+					name: "InvalidArgumentError",
+					description: expect.stringContaining("captured"),
+				}),
+			});
+		});
+
+		it("should fail with InvalidArgumentError if the order is cancelled", async () => {
+			productRepository.getOrder.mockResolvedValueOnce({
+				order: mock<Order>({
+					paymentStatus: "CANCELLED",
+				}),
+			});
+
+			const result = await productService.initiatePaymentAttempt(
+				makeMockContext(mock<User>({})),
+				{
+					orderId: faker.string.uuid(),
+				},
+			);
+
+			expect(result).toEqual({
+				ok: false,
+				error: expect.objectContaining({
+					name: "InvalidArgumentError",
+					description: expect.stringContaining("cancelled"),
+				}),
+			});
+		});
+
+		it("should fail with InvalidArgumentError if the order is refunded", async () => {
+			productRepository.getOrder.mockResolvedValueOnce({
+				order: mock<Order>({
+					paymentStatus: "REFUNDED",
+				}),
+			});
+
+			const result = await productService.initiatePaymentAttempt(
+				makeMockContext(mock<User>({})),
+				{
+					orderId: faker.string.uuid(),
+				},
+			);
+
+			expect(result).toEqual({
+				ok: false,
+				error: expect.objectContaining({
+					name: "InvalidArgumentError",
+					description: expect.stringContaining("refunded"),
+				}),
+			});
+		});
+
+		it("should fail with NotFoundError if the related product does not exist", async () => {
+			productRepository.getOrder.mockResolvedValueOnce({
+				order: mock<Order>({
+					paymentStatus: "CREATED",
+				}),
+			});
+
+			productRepository.getProduct.mockResolvedValueOnce({
+				product: null,
+			});
+
+			const result = await productService.initiatePaymentAttempt(
+				makeMockContext(mock<User>({})),
+				{
+					orderId: faker.string.uuid(),
+				},
+			);
+
+			expect(result).toEqual({
+				ok: false,
+				error: expect.objectContaining({
+					name: "NotFoundError",
+					description: expect.stringContaining("Product"),
+				}),
+			});
+		});
+
+		it("should fail with InternalServerError if the request to Vipps fails", async () => {
+			productRepository.getOrder.mockResolvedValueOnce({
+				order: mock<Order>({
+					paymentStatus: "CREATED",
+					id: faker.string.uuid(),
+					attempt: 0,
+				}),
+			});
+
+			productRepository.getProduct.mockResolvedValueOnce({
+				product: mock<Product>({
+					id: faker.string.uuid(),
+					price: 100,
+				}),
+			});
+
+			mockVippsClient.payment.create.mockResolvedValueOnce({
+				ok: false,
+				message: "Some error",
+				error: mock<EpaymentErrorResponse>({}),
+			});
+
+			const result = await productService.initiatePaymentAttempt(
+				makeMockContext(mock<User>({})),
+				{
+					orderId: faker.string.uuid(),
+				},
+			);
+
+			expect(result).toEqual({
+				ok: false,
+				error: expect.objectContaining({
+					name: "InternalServerError",
+					description: expect.stringContaining("vipps"),
+				}),
+			});
 		});
 	});
 
