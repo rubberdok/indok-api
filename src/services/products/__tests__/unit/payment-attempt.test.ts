@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import type { EpaymentErrorResponse } from "@vippsmobilepay/sdk";
+import type { EPaymentErrorResponse } from "@vippsmobilepay/sdk";
 import { mock } from "jest-mock-extended";
 import type { Order, PaymentAttempt, Product } from "~/domain/products.js";
 import type { User } from "~/domain/users.js";
@@ -266,8 +266,7 @@ describe("ProductService", () => {
 
 			mockVippsClient.payment.create.mockResolvedValueOnce({
 				ok: false,
-				message: "Some error",
-				error: mock<EpaymentErrorResponse>({}),
+				error: mock<EPaymentErrorResponse>({}),
 			});
 
 			const result = await productService.initiatePaymentAttempt(
