@@ -97,9 +97,14 @@ const EmailHandler = ({
 					content: {
 						event: {
 							name: event.name,
-							startAt: DateTime.fromJSDate(event.startAt).toFormat("fff", {
-								locale: "nb",
-							}),
+							startAt: DateTime.fromJSDate(event.startAt).toLocaleString(
+								{
+									...DateTime.DATETIME_HUGE,
+									timeZoneName: undefined,
+									timeZone: "Europe/Oslo",
+								},
+								{ locale: "nb" },
+							),
 							location: event.location,
 							url: new URL(`/events/${event.id}`, env.CLIENT_URL).toString(),
 						},
