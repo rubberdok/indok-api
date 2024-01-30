@@ -15,7 +15,7 @@ import {
 	NotFoundError,
 	PermissionDeniedError,
 } from "~/domain/errors.js";
-import { type EmailContent, TemplateAlias } from "~/lib/postmark.js";
+import type { MailContent } from "../mail/index.js";
 
 export interface BookingData {
 	email: string;
@@ -76,7 +76,7 @@ export interface PermissionService {
 }
 
 export interface IMailService {
-	send(template: EmailContent): Promise<MessageSendingResponse>;
+	send(data: MailContent): Promise<MessageSendingResponse>;
 }
 
 export class CabinService {
@@ -242,10 +242,12 @@ export class CabinService {
 
 	private sendBookingConfirmation(booking: Booking) {
 		return this.mailService.send({
-			TemplateAlias: TemplateAlias.CABIN_BOOKING_RECEIPT,
-			TemplateModel: {
-				firstName: booking.firstName,
-				lastName: booking.lastName,
+			to: booking.email,
+			templateAlias: "cabin-booking-receipt",
+			content: {
+				booking: {
+					price: "",
+				},
 			},
 		});
 	}

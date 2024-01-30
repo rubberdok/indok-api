@@ -1,11 +1,12 @@
 import type { Job, Processor } from "bullmq";
 import { DateTime } from "luxon";
 import type { MessageSendingResponse } from "postmark/dist/client/models/index.js";
+import { env } from "~/config.js";
 import type { Event } from "~/domain/events.js";
 import type { User } from "~/domain/users.js";
 import type { Queue } from "~/lib/bullmq/queue.js";
 import type { Worker } from "~/lib/bullmq/worker.js";
-import type { EmailContent } from "~/lib/postmark.js";
+import type { MailContent } from "./index.js";
 
 export type UserService = {
 	get(id: string): Promise<User>;
@@ -16,7 +17,7 @@ export type EventService = {
 };
 
 type MailService = {
-	send(content: EmailContent): Promise<MessageSendingResponse>;
+	send(content: MailContent): Promise<MessageSendingResponse>;
 };
 
 type EmailRecipientType = {
@@ -66,11 +67,13 @@ const EmailHandler = ({
 		switch (type) {
 			case "user-registration": {
 				await mailService.send({
-					To: user.email,
-					TemplateAlias: "welcome",
-					TemplateModel: {
-						firstName: user.firstName,
-						lastName: user.lastName,
+					to: user.email,
+					templateAlias: "user-registration",
+					content: {
+						user: {
+							firstName: user.firstName,
+							lastName: user.lastName,
+						},
 					},
 				});
 				return;
@@ -79,15 +82,17 @@ const EmailHandler = ({
 				const { eventId } = job.data;
 				const event = await eventService.get(eventId);
 				await mailService.send({
-					To: user.email,
-					TemplateAlias: "event-wait-list",
-					TemplateModel: {
-						subject: "Du har fått plass på arrangementet",
-						eventName: event.name,
-						eventStartAt: DateTime.fromJSDate(event.startAt).toFormat("fff", {
-							locale: "nb",
-						}),
-						location: event.location,
+					to: user.email,
+					templateAlias: "event-wait-list",
+					content: {
+						event: {
+							name: event.name,
+							startAt: DateTime.fromJSDate(event.startAt).toFormat("fff", {
+								locale: "nb",
+							}),
+							location: event.location,
+							url: new URL(`/events/${event.id}`, env.CLIENT_URL).toString(),
+						},
 					},
 				});
 			}
