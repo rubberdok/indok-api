@@ -42,11 +42,11 @@ dependencies:
     specifier: ^5.8.1
     version: 5.8.1(prisma@5.8.1)
   '@sentry/node':
-    specifier: ^7.98.0
-    version: 7.98.0
+    specifier: ^7.99.0
+    version: 7.99.0
   '@sentry/tracing':
-    specifier: 7.98.0
-    version: 7.98.0
+    specifier: 7.99.0
+    version: 7.99.0
   '@vippsmobilepay/sdk':
     specifier: ^1.0.0
     version: 1.0.0
@@ -61,7 +61,7 @@ dependencies:
     version: 5.1.5
   connect-redis:
     specifier: ^7.1.1
-    version: 7.1.1(express-session@1.17.3)
+    version: 7.1.1(express-session@1.18.0)
   dayjs:
     specifier: ^1.11.10
     version: 1.11.10
@@ -1989,8 +1989,8 @@ packages:
     resolution: {integrity: sha512-W2T7dTIxctBo70vFDjknsQeaITKyY7YmL4OJHV79Qotm0CCcQ8DHW+dJvCOYDOnFrNo92mf73pdC/M2NvDzi+Q==}
     engines: {node: '>=18'}
     dependencies:
-      '@sentry/node': 7.98.0
-      '@sentry/tracing': 7.98.0
+      '@sentry/node': 7.99.0
+      '@sentry/tracing': 7.99.0
       '@sentry/utils': 7.89.0
       cookie: 0.6.0
       fastify-plugin: 4.5.1
@@ -2614,38 +2614,38 @@ packages:
     resolution: {integrity: sha512-l3YHBLAol6d/IKnB9LhpD0cEZWAoe3eFKUyTYWmFmCO2Q/WOckxLQAUyMZWwZV2M/m3+4vgRoaolFqaII82/TA==}
     dev: true
 
-  /@sentry-internal/tracing@7.98.0:
-    resolution: {integrity: sha512-FnhD2uMLIAJvv4XsYPv3qsTTtxrImyLxiZacudJyaWFhxoeVQ8bKKbWJ/Ar68FAwqTtjXMeY5evnEBbRMcQlaA==}
+  /@sentry-internal/tracing@7.99.0:
+    resolution: {integrity: sha512-z3JQhHjoM1KdM20qrHwRClKJrNLr2CcKtCluq7xevLtXHJWNAQQbafnWD+Aoj85EWXBzKt9yJMv2ltcXJ+at+w==}
     engines: {node: '>=8'}
     dependencies:
-      '@sentry/core': 7.98.0
-      '@sentry/types': 7.98.0
-      '@sentry/utils': 7.98.0
+      '@sentry/core': 7.99.0
+      '@sentry/types': 7.99.0
+      '@sentry/utils': 7.99.0
     dev: false
 
-  /@sentry/core@7.98.0:
-    resolution: {integrity: sha512-baRUcpCNGyk7cApQHMfqEZJkXdvAKK+z/dVWiMqWc5T5uhzMnPE8/gjP1JZsMtJSQ8g5nHimBdI5TwOyZtxPaA==}
+  /@sentry/core@7.99.0:
+    resolution: {integrity: sha512-vOAtzcAXEUtS/oW7wi3wMkZ3hsb5Ch96gKyrrj/mXdOp2zrcwdNV6N9/pawq2E9P/7Pw8AXw4CeDZztZrjQLuA==}
     engines: {node: '>=8'}
     dependencies:
-      '@sentry/types': 7.98.0
-      '@sentry/utils': 7.98.0
+      '@sentry/types': 7.99.0
+      '@sentry/utils': 7.99.0
     dev: false
 
-  /@sentry/node@7.98.0:
-    resolution: {integrity: sha512-9cHW217DnU9wC4iR+QxmY3q59N1Touh23hPMDtpMRmbRHSgrmLMoHTVPhK9zHsXRs0mUeidmMqY1ubAWauQByw==}
+  /@sentry/node@7.99.0:
+    resolution: {integrity: sha512-34wYtLddnPcQ8qvKq62AfxowaMFw+GMUZGv7fIs9FxeBqqqn6Ckl0gFCTADudIIBQ3rSbmN7sHJIXdyiQv+pcw==}
     engines: {node: '>=8'}
     dependencies:
-      '@sentry-internal/tracing': 7.98.0
-      '@sentry/core': 7.98.0
-      '@sentry/types': 7.98.0
-      '@sentry/utils': 7.98.0
+      '@sentry-internal/tracing': 7.99.0
+      '@sentry/core': 7.99.0
+      '@sentry/types': 7.99.0
+      '@sentry/utils': 7.99.0
     dev: false
 
-  /@sentry/tracing@7.98.0:
-    resolution: {integrity: sha512-O5lKcxkeNxoChJI0b/sX3N1TA5TjQuFwH9fMS00xWUFY0ei9HewBZbbx9c9aye2aRIWF2EHMsASZ+GCWGOZTlQ==}
+  /@sentry/tracing@7.99.0:
+    resolution: {integrity: sha512-Cf622gSeamiSsi0JEj3PTXnq019OymaCrGf91x1d6OPyJ5jAXdlNuhw7NkqCEw8euIhhULuS81l5nGfBrgjj9Q==}
     engines: {node: '>=8'}
     dependencies:
-      '@sentry-internal/tracing': 7.98.0
+      '@sentry-internal/tracing': 7.99.0
     dev: false
 
   /@sentry/types@7.89.0:
@@ -2653,8 +2653,8 @@ packages:
     engines: {node: '>=8'}
     dev: false
 
-  /@sentry/types@7.98.0:
-    resolution: {integrity: sha512-pc034ziM0VTETue4bfBcBqTWGy4w0okidtoZJjGVrYAfE95ObZnUGVj/XYIQ3FeCYWIa7NFN2MvdsCS0buwivQ==}
+  /@sentry/types@7.99.0:
+    resolution: {integrity: sha512-94qwOw4w40sAs5mCmzcGyj8ZUu/KhnWnuMZARRq96k+SjRW/tHFAOlIdnFSrt3BLPvSOK7R3bVAskZQ0N4FTmA==}
     engines: {node: '>=8'}
     dev: false
 
@@ -2665,11 +2665,11 @@ packages:
       '@sentry/types': 7.89.0
     dev: false
 
-  /@sentry/utils@7.98.0:
-    resolution: {integrity: sha512-0/LY+kpHxItVRY0xPDXPXVsKRb95cXsGSQf8sVMtfSjz++0bLL1U4k7PFz1c5s2/Vk0B8hS6duRrgMv6dMIZDw==}
+  /@sentry/utils@7.99.0:
+    resolution: {integrity: sha512-cYZy5WNTkWs5GgggGnjfGqC44CWir0pAv4GVVSx0fsup4D4pMKBJPrtub15f9uC+QkUf3vVkqwpBqeFxtmJQTQ==}
     engines: {node: '>=8'}
     dependencies:
-      '@sentry/types': 7.98.0
+      '@sentry/types': 7.99.0
     dev: false
 
   /@sideway/address@4.1.4:
@@ -3946,13 +3946,13 @@ packages:
       yargs: 17.7.2
     dev: true
 
-  /connect-redis@7.1.1(express-session@1.17.3):
+  /connect-redis@7.1.1(express-session@1.18.0):
     resolution: {integrity: sha512-M+z7alnCJiuzKa8/1qAYdGUXHYfDnLolOGAUjOioB07pP39qxjG+X9ibsud7qUBc4jMV5Mcy3ugGv8eFcgamJQ==}
     engines: {node: '>=16'}
     peerDependencies:
       express-session: '>=1'
     dependencies:
-      express-session: 1.17.3
+      express-session: 1.18.0
     dev: false
 
   /constant-case@3.0.4:
@@ -3982,14 +3982,13 @@ packages:
     resolution: {integrity: sha512-QADzlaHc8icV8I7vbaJXJwod9HWYp8uCqf1xa4OfNu1T7JVxQIrUgOWtHdNDtPiywmFbiS12VjotIXLrKM3orQ==}
     dev: false
 
+  /cookie-signature@1.0.7:
+    resolution: {integrity: sha512-NXdYc3dLr47pBkpUCHtKSwIOQXLVn8dZEuywboCOJY/osA0wFSLlSawr3KN8qXJEyX66FcONTH8EIlVuK0yyFA==}
+    dev: false
+
   /cookie-signature@1.2.1:
     resolution: {integrity: sha512-78KWk9T26NhzXtuL26cIJ8/qNHANyJ/ZYrmEXFzUmhZdjpBv+DlWlOANRTGBt48YcyslsLrj0bMLFTmXvLRCOw==}
     engines: {node: '>=6.6.0'}
-    dev: false
-
-  /cookie@0.4.2:
-    resolution: {integrity: sha512-aSWTXFzaKWkvHO1Ny/s+ePFpvKsPnjc551iI41v3ny/ow6tBG5Vd+FuqGNhh1LxOmVzOlGUriIlOaokOvhaStA==}
-    engines: {node: '>= 0.6'}
     dev: false
 
   /cookie@0.5.0:
@@ -4474,12 +4473,12 @@ packages:
       jest-util: 29.7.0
     dev: true
 
-  /express-session@1.17.3:
-    resolution: {integrity: sha512-4+otWXlShYlG1Ma+2Jnn+xgKUZTMJ5QD3YvfilX3AcocOAbIkVylSWEklzALe/+Pu4qV6TYBj5GwOBFfdKqLBw==}
+  /express-session@1.18.0:
+    resolution: {integrity: sha512-m93QLWr0ju+rOwApSsyso838LQwgfs44QtOP/WBiwtAgPIo/SAh1a5c6nn2BR6mFNZehTpqKDESzP+fRHVbxwQ==}
     engines: {node: '>= 0.8.0'}
     dependencies:
-      cookie: 0.4.2
-      cookie-signature: 1.0.6
+      cookie: 0.6.0
+      cookie-signature: 1.0.7
       debug: 2.6.9
       depd: 2.0.0
       on-headers: 1.0.2
