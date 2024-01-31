@@ -92,7 +92,7 @@
 		"avvio": "^8.2.1",
 		"@vippsmobilepay/sdk": "^1.0.0",
 		"body-parser": "^1.20.2",
-		"bullmq": "^5.1.5",
+		"bullmq": "^5.1.6",
 		"connect-redis": "^7.1.1",
 		"dayjs": "^1.11.10",
 		"dotenv": "^16.4.1",
