@@ -42,7 +42,7 @@ jobs:
         run: pnpm run test:ci --collect-coverage
 
       - name: Upload Coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         if: always()
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -196,7 +196,7 @@ jobs:
         run: pnpm test:integration:ci --collect-coverage --shard ${{ matrix.shard }}/4
 
       - name: Upload Coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         if: always()
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
