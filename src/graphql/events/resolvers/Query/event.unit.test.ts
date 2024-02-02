@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
 import type { Organization } from "@prisma/client";
 import { mock } from "jest-mock-extended";
-import type { Event } from "~/domain/events.js";
+import type { EventTypeFromDSO } from "~/domain/events.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
@@ -11,7 +11,7 @@ describe("Event queries", () => {
 			const { client, eventService, organizationService } =
 				createMockApolloServer();
 			eventService.get.mockResolvedValue(
-				mock<Event>({
+				mock<EventTypeFromDSO>({
 					id: faker.string.uuid(),
 					organizationId: faker.string.uuid(),
 				}),
@@ -49,7 +49,9 @@ describe("Event queries", () => {
 					createMockApolloServer();
 				const eventId = faker.string.uuid();
 				const userId = faker.string.uuid();
-				eventService.get.mockResolvedValue(mock<Event>({ id: eventId }));
+				eventService.get.mockResolvedValue(
+					mock<EventTypeFromDSO>({ id: eventId }),
+				);
 				eventService.canSignUpForEvent.mockResolvedValue(true);
 
 				const { errors, data } = await client.query(
@@ -83,7 +85,7 @@ describe("Event queries", () => {
 			it("should return false if the user is not authenticated", async () => {
 				const { client, eventService } = createMockApolloServer();
 				eventService.get.mockResolvedValue(
-					mock<Event>({ id: faker.string.uuid() }),
+					mock<EventTypeFromDSO>({ id: faker.string.uuid() }),
 				);
 
 				const { errors, data } = await client.query({
@@ -108,7 +110,7 @@ describe("Event queries", () => {
 			it("should return false if canSignUpForEvent returns false", async () => {
 				const { client, eventService } = createMockApolloServer();
 				eventService.get.mockResolvedValue(
-					mock<Event>({ id: faker.string.uuid() }),
+					mock<EventTypeFromDSO>({ id: faker.string.uuid() }),
 				);
 				eventService.canSignUpForEvent.mockResolvedValue(false);
 

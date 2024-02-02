@@ -1,3 +1,4 @@
+import assert from "assert";
 import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
@@ -90,6 +91,7 @@ describe("EventRepository", () => {
 			 *
 			 * Should return the sign up with `active: true`
 			 */
+			assert(actual.event.type === "SIGN_UPS");
 			expect(actual.signUp.active).toBe(true);
 			expect(actual.slot.remainingCapacity).toBe(slot.remainingCapacity - 1);
 			expect(actual.event.signUpDetails?.remainingCapacity).toBe(
@@ -127,6 +129,7 @@ describe("EventRepository", () => {
 			 *
 			 * Should return the sign up with `active: true`
 			 */
+			assert(actual.event.type === "SIGN_UPS");
 			expect(actual.signUp.active).toBe(true);
 			expect(actual.event.signUpDetails?.remainingCapacity).toBe(
 				event.remainingCapacity,
@@ -169,6 +172,7 @@ describe("EventRepository", () => {
 			 *
 			 * Should return the sign up with `active: true`
 			 */
+			assert(actual.event.type === "SIGN_UPS");
 			expect(actual.signUp.active).toBe(true);
 			expect(actual.signUp.id).not.toBe(existingSignUp.id);
 			expect(actual.event.signUpDetails?.remainingCapacity).toBe(
@@ -205,6 +209,7 @@ describe("EventRepository", () => {
 			 *
 			 * Should return the sign up with `active: true`
 			 */
+			assert(actual.event.type === "SIGN_UPS");
 			expect(actual.signUp.active).toBe(true);
 			expect(actual.event.signUpDetails?.remainingCapacity).toBe(
 				event.remainingCapacity,
@@ -312,6 +317,7 @@ function makeEvent(data: { capacity: number }) {
 			signUpsEnabled: true,
 			signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 			signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+			type: "SIGN_UPS",
 		},
 	});
 }

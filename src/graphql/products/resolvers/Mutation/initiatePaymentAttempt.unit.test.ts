@@ -7,7 +7,7 @@ describe("Product mutations", () => {
 	describe("#initiatePaymentAttempt", () => {
 		it("should initiate a payment attempt", async () => {
 			const { productService, client } = createMockApolloServer();
-			productService.initiatePaymentAttempt.mockResolvedValueOnce({
+			productService.payments.initiatePaymentAttempt.mockResolvedValueOnce({
 				ok: true,
 				data: {
 					redirectUrl: faker.internet.url(),
@@ -35,7 +35,7 @@ describe("Product mutations", () => {
 
 		it("should throw if ok: false", async () => {
 			const { productService, client } = createMockApolloServer();
-			productService.initiatePaymentAttempt.mockResolvedValueOnce({
+			productService.payments.initiatePaymentAttempt.mockResolvedValueOnce({
 				ok: false,
 				error: new InternalServerError("Some error"),
 			});

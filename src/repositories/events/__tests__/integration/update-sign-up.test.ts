@@ -1,3 +1,4 @@
+import assert from "assert";
 import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
@@ -53,6 +54,7 @@ describe("EventRepository", () => {
 				 * The EventSlot remainingCapacity should be decremented
 				 * The EventSignUp should be returned
 				 */
+				assert(actual.event.type === "SIGN_UPS");
 				expect(actual.signUp.participationStatus).toBe(
 					ParticipationStatus.CONFIRMED,
 				);
@@ -99,6 +101,7 @@ describe("EventRepository", () => {
 				 * The event remainingCapacity should remain unchanged
 				 * The slot remainingCapacity should remain unchanged
 				 */
+				assert(actual.event.type === "SIGN_UPS");
 				expect(actual.signUp.version).toBe(signUp.version);
 				expect(actual.event.signUpDetails?.remainingCapacity).toBe(
 					event.remainingCapacity,
@@ -265,6 +268,7 @@ describe("EventRepository", () => {
 					ParticipationStatus.REMOVED,
 				);
 				expect(actual.signUp.version).toBe(signUp.version + 1);
+				assert(actual.event.type === "SIGN_UPS");
 				expect(actual.event.signUpDetails?.remainingCapacity).toBe(
 					(event.remainingCapacity ?? Number.NaN) + 1,
 				);
@@ -317,6 +321,7 @@ describe("EventRepository", () => {
 				);
 				expect(actual.signUp.active).toBe(false);
 				expect(actual.signUp.version).toBe(signUp.version + 1);
+				assert(actual.event.type === "SIGN_UPS");
 				expect(actual.event.signUpDetails?.remainingCapacity).toBe(
 					event.remainingCapacity,
 				);
@@ -424,6 +429,7 @@ describe("EventRepository", () => {
 function makeEvent(data: { capacity: number }) {
 	return prisma.event.create({
 		data: {
+			type: "SIGN_UPS",
 			name: faker.word.adjective(),
 			startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 			endAt: DateTime.now().plus({ days: 2 }).toJSDate(),

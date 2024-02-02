@@ -1,23 +1,14 @@
+import assert from "assert";
 import { faker } from "@faker-js/faker";
-import {
-	type Organization,
-	ParticipationStatus,
-	type User,
-} from "@prisma/client";
-import { mockDeep } from "jest-mock-extended";
+import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
-import type { IMailClient } from "~/lib/postmark.js";
 import prisma from "~/lib/prisma.js";
-import { MemberRepository } from "~/repositories/organizations/members.js";
-import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
-import { UserRepository } from "~/repositories/users/index.js";
-import { buildMailService } from "~/services/mail/index.js";
-import type { EmailQueueType } from "~/services/mail/worker.js";
-import { OrganizationService } from "~/services/organizations/service.js";
-import { PermissionService } from "~/services/permissions/service.js";
-import { UserService } from "~/services/users/service.js";
+import { makeMockContext } from "~/services/context.js";
 import type { EventService } from "../../service.js";
-import { makeDependencies } from "./dependencies-factory.js";
+import {
+	makeDependencies,
+	makeUserWithOrganizationMembership,
+} from "./dependencies-factory.js";
 
 describe("EventService", () => {
 	let eventService: EventService;
@@ -33,9 +24,9 @@ describe("EventService", () => {
 				user?: {
 					graduationYear?: number;
 				};
-				signUpDetails?: {
+				signUpsEnabled: boolean;
+				signUpDetails: {
 					capacity: number;
-					signUpsEnabled: boolean;
 					signUpsStartAt: Date;
 					signUpsEndAt: Date;
 					slots: {
@@ -52,8 +43,8 @@ describe("EventService", () => {
 			{
 				name: "if the user does not have a sign up for the event, and there is capacity on the event and a slot",
 				arrange: {
+					signUpsEnabled: true,
 					signUpDetails: {
-						signUpsEnabled: true,
 						signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 						capacity: 1,
@@ -69,8 +60,8 @@ describe("EventService", () => {
 			{
 				name: "if the user has an inactive sign up for the event, and there is capacity on the event and a slot",
 				arrange: {
+					signUpsEnabled: true,
 					signUpDetails: {
-						signUpsEnabled: true,
 						signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 						capacity: 1,
@@ -90,8 +81,8 @@ describe("EventService", () => {
 			{
 				name: "if the user has an active sign up for the event, even if there is capacity on the event and slot",
 				arrange: {
+					signUpsEnabled: true,
 					signUpDetails: {
-						signUpsEnabled: true,
 						signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 						capacity: 1,
@@ -111,8 +102,8 @@ describe("EventService", () => {
 			{
 				name: "if there is no capacity on the event, even if there is capacity in a slot",
 				arrange: {
+					signUpsEnabled: true,
 					signUpDetails: {
-						signUpsEnabled: true,
 						signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 						capacity: 0,
@@ -128,8 +119,8 @@ describe("EventService", () => {
 			{
 				name: "if signUpsEnabled: false, even if there is capacity",
 				arrange: {
+					signUpsEnabled: false,
 					signUpDetails: {
-						signUpsEnabled: false,
 						signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 						capacity: 1,
@@ -145,8 +136,8 @@ describe("EventService", () => {
 			{
 				name: "if there is no slot with capacity on the event, even if there is capacity on the event",
 				arrange: {
+					signUpsEnabled: true,
 					signUpDetails: {
-						signUpsEnabled: true,
 						signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 						capacity: 1,
@@ -162,8 +153,8 @@ describe("EventService", () => {
 			{
 				name: "if sign ups have not started",
 				arrange: {
+					signUpsEnabled: true,
 					signUpDetails: {
-						signUpsEnabled: true,
 						signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
 						signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 						capacity: 1,
@@ -182,8 +173,8 @@ describe("EventService", () => {
 					user: {
 						graduationYear: DateTime.now().year + 1,
 					},
+					signUpsEnabled: true,
 					signUpDetails: {
-						signUpsEnabled: true,
 						signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
 						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 						capacity: 1,
@@ -203,8 +194,8 @@ describe("EventService", () => {
 					user: {
 						graduationYear: DateTime.now().year + 3,
 					},
+					signUpsEnabled: true,
 					signUpDetails: {
-						signUpsEnabled: true,
 						signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
 						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 						capacity: 1,
@@ -224,8 +215,8 @@ describe("EventService", () => {
 					user: {
 						graduationYear: DateTime.now().year + 3,
 					},
+					signUpsEnabled: true,
 					signUpDetails: {
-						signUpsEnabled: true,
 						signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
 						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 						capacity: 1,
@@ -255,8 +246,8 @@ describe("EventService", () => {
 				name: "if there is a slot open for all grade years and the user has not set their graduation year",
 				arrange: {
 					user: {},
+					signUpsEnabled: true,
 					signUpDetails: {
-						signUpsEnabled: true,
 						signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
 						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 						capacity: 1,
@@ -274,8 +265,8 @@ describe("EventService", () => {
 				name: "if there is not a slot open for all grade years and the user has not set their graduation year",
 				arrange: {
 					user: {},
+					signUpsEnabled: true,
 					signUpDetails: {
-						signUpsEnabled: true,
 						signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
 						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 						capacity: 1,
@@ -306,20 +297,23 @@ describe("EventService", () => {
 				const { user, organization } = await makeUserWithOrganizationMembership(
 					arrange.user,
 				);
-				const event = await eventService.create(
-					user.id,
-					organization.id,
-					{
+				const event = await eventService.create(makeMockContext(user), {
+					data: {
+						organizationId: organization.id,
 						name: faker.word.adjective(),
 						startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 						endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+						signUpsEnabled: arrange.signUpsEnabled,
+						signUpDetails: arrange.signUpDetails,
 					},
-					arrange.signUpDetails,
-				);
+					type: "SIGN_UPS",
+				});
+				assert(event.ok);
+
 				if (arrange.signUp) {
 					await prisma.eventSignUp.create({
 						data: {
-							event: { connect: { id: event.id } },
+							event: { connect: { id: event.data.event.id } },
 							user: { connect: { id: user.id } },
 							participationStatus: arrange.signUp.participationStatus,
 							active: arrange.signUp.active,
@@ -332,7 +326,10 @@ describe("EventService", () => {
 				 *
 				 * Call the canSignUpForEvent function with the user and the event
 				 */
-				const actual = await eventService.canSignUpForEvent(user.id, event.id);
+				const actual = await eventService.canSignUpForEvent(
+					user.id,
+					event.data.event.id,
+				);
 
 				/**
 				 * Assert
@@ -354,6 +351,7 @@ describe("EventService", () => {
 			const { user, organization } = await makeUserWithOrganizationMembership();
 			const event = await prisma.event.create({
 				data: {
+					type: "SIGN_UPS",
 					name: faker.word.adjective(),
 					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 					endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
@@ -390,54 +388,3 @@ describe("EventService", () => {
 		});
 	});
 });
-
-async function makeUserWithOrganizationMembership(
-	userData: Partial<User> = {},
-): Promise<{ user: User; organization: Organization }> {
-	const userRepository = new UserRepository(prisma);
-	const memberRepository = new MemberRepository(prisma);
-	const organizationRepository = new OrganizationRepository(prisma);
-	const permissionService = new PermissionService(
-		memberRepository,
-		userRepository,
-		organizationRepository,
-	);
-	const mailService = buildMailService(
-		{
-			emailClient: mockDeep<IMailClient>(),
-			emailQueue: mockDeep<EmailQueueType>(),
-		},
-		{
-			companyName: "test",
-			noReplyEmail: "test",
-			contactMail: "test",
-			parentCompany: "test",
-			productName: "test",
-			websiteUrl: "test",
-		},
-	);
-	const userService = new UserService(
-		userRepository,
-		permissionService,
-		mailService,
-	);
-
-	const organizationService = new OrganizationService(
-		organizationRepository,
-		memberRepository,
-		permissionService,
-	);
-
-	const user = await userService.create({
-		firstName: faker.person.firstName(),
-		lastName: faker.person.lastName(),
-		username: faker.string.sample(30),
-		feideId: faker.string.uuid(),
-		email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
-		...userData,
-	});
-	const organization = await organizationService.create(user.id, {
-		name: faker.string.sample(20),
-	});
-	return { user, organization };
-}

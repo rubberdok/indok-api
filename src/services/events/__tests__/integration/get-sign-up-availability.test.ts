@@ -1,10 +1,15 @@
+import assert from "assert";
 import { faker } from "@faker-js/faker";
-import type { Organization, ParticipationStatus, User } from "@prisma/client";
+import type { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
 import type { SignUpAvailability } from "~/domain/events.js";
 import prisma from "~/lib/prisma.js";
+import { makeMockContext } from "~/services/context.js";
 import type { EventService } from "../../service.js";
-import { makeDependencies } from "./dependencies-factory.js";
+import {
+	makeDependencies,
+	makeUserWithOrganizationMembership,
+} from "./dependencies-factory.js";
 
 describe("EventService", () => {
 	let eventService: EventService;
@@ -20,9 +25,9 @@ describe("EventService", () => {
 				user?: {
 					graduationYear?: number;
 				};
-				signUpDetails?: {
+				signUpsEnabled: boolean;
+				signUpDetails: {
 					capacity: number;
-					signUpsEnabled: boolean;
 					signUpsStartAt: Date;
 					signUpsEndAt: Date;
 					slots: {
@@ -39,8 +44,8 @@ describe("EventService", () => {
 			{
 				name: "if the user is `null`, and sign ups are enabled",
 				arrange: {
+					signUpsEnabled: true,
 					signUpDetails: {
-						signUpsEnabled: true,
 						signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 						capacity: 1,
@@ -56,8 +61,8 @@ describe("EventService", () => {
 			{
 				name: "if sign ups are disabled",
 				arrange: {
+					signUpsEnabled: false,
 					signUpDetails: {
-						signUpsEnabled: false,
 						signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 						capacity: 1,
@@ -74,8 +79,8 @@ describe("EventService", () => {
 				name: "if sign ups have not started yet",
 				arrange: {
 					user: { graduationYear: DateTime.now().year + 1 },
+					signUpsEnabled: true,
 					signUpDetails: {
-						signUpsEnabled: true,
 						signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
 						signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 						capacity: 1,
@@ -92,8 +97,8 @@ describe("EventService", () => {
 				name: "if there are no slots for this user's grade year, regardless of capacity",
 				arrange: {
 					user: { graduationYear: DateTime.now().year + 1 },
+					signUpsEnabled: true,
 					signUpDetails: {
-						signUpsEnabled: true,
 						signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 						capacity: 0,
@@ -115,8 +120,8 @@ describe("EventService", () => {
 				name: "if the event is full, and the user is not signed up",
 				arrange: {
 					user: { graduationYear: DateTime.now().year + 1 },
+					signUpsEnabled: true,
 					signUpDetails: {
-						signUpsEnabled: true,
 						signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 						capacity: 0,
@@ -133,8 +138,8 @@ describe("EventService", () => {
 				name: "if all slots for the user's grade year are full, and the user is not signed up",
 				arrange: {
 					user: { graduationYear: DateTime.now().year + 1 },
+					signUpsEnabled: true,
 					signUpDetails: {
-						signUpsEnabled: true,
 						signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 						capacity: 1,
@@ -158,8 +163,8 @@ describe("EventService", () => {
 					user: {
 						graduationYear: DateTime.now().year + 1,
 					},
+					signUpsEnabled: true,
 					signUpDetails: {
-						signUpsEnabled: true,
 						signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
 						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 						capacity: 10,
@@ -183,8 +188,8 @@ describe("EventService", () => {
 						participationStatus: "CONFIRMED",
 						active: true,
 					},
+					signUpsEnabled: true,
 					signUpDetails: {
-						signUpsEnabled: true,
 						signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
 						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 						capacity: 10,
@@ -208,8 +213,8 @@ describe("EventService", () => {
 						participationStatus: "ON_WAITLIST",
 						active: true,
 					},
+					signUpsEnabled: true,
 					signUpDetails: {
-						signUpsEnabled: true,
 						signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
 						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 						capacity: 10,
@@ -227,8 +232,8 @@ describe("EventService", () => {
 				name: "if there is a slot open for all grade years and the user has not set their graduation year",
 				arrange: {
 					user: {},
+					signUpsEnabled: true,
 					signUpDetails: {
-						signUpsEnabled: true,
 						signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
 						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 						capacity: 1,
@@ -250,8 +255,8 @@ describe("EventService", () => {
 						participationStatus: "CONFIRMED",
 						active: true,
 					},
+					signUpsEnabled: true,
 					signUpDetails: {
-						signUpsEnabled: true,
 						signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
 						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 						capacity: 0,
@@ -269,8 +274,8 @@ describe("EventService", () => {
 				name: "if there is not a slot open for all grade years and the user has not set their graduation year",
 				arrange: {
 					user: {},
+					signUpsEnabled: true,
 					signUpDetails: {
-						signUpsEnabled: true,
 						signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
 						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 						capacity: 1,
@@ -301,20 +306,23 @@ describe("EventService", () => {
 				const { user, organization } = await makeUserWithOrganizationMembership(
 					arrange.user ?? {},
 				);
-				const event = await eventService.create(
-					user.id,
-					organization.id,
-					{
+				const event = await eventService.create(makeMockContext(user), {
+					data: {
+						organizationId: organization.id,
 						name: faker.word.adjective(),
 						startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 						endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+						signUpsEnabled: arrange.signUpsEnabled,
+						signUpDetails: arrange.signUpDetails,
 					},
-					arrange.signUpDetails,
-				);
+					type: "SIGN_UPS",
+				});
+
+				assert(event.ok);
 				if (arrange.signUp) {
 					await prisma.eventSignUp.create({
 						data: {
-							event: { connect: { id: event.id } },
+							event: { connect: { id: event.data.event.id } },
 							user: { connect: { id: user.id } },
 							participationStatus: arrange.signUp.participationStatus,
 							active: arrange.signUp.active,
@@ -329,7 +337,7 @@ describe("EventService", () => {
 				 */
 				const actual = await eventService.getSignUpAvailability(
 					arrange.user && user.id,
-					event.id,
+					event.data.event.id,
 				);
 
 				/**
@@ -352,6 +360,7 @@ describe("EventService", () => {
 			const { user, organization } = await makeUserWithOrganizationMembership();
 			const event = await prisma.event.create({
 				data: {
+					type: "SIGN_UPS",
 					name: faker.word.adjective(),
 					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 					endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
@@ -391,31 +400,3 @@ describe("EventService", () => {
 		});
 	});
 });
-
-async function makeUserWithOrganizationMembership(
-	userData: Partial<User> = {},
-): Promise<{ user: User; organization: Organization }> {
-	const user = await prisma.user.create({
-		data: {
-			firstName: faker.person.firstName(),
-			lastName: faker.person.lastName(),
-			username: faker.string.sample(30),
-			feideId: faker.string.uuid(),
-			email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
-			...userData,
-		},
-	});
-	const organization = await prisma.organization.create({
-		data: {
-			name: faker.string.sample(20),
-		},
-	});
-	await prisma.member.create({
-		data: {
-			organizationId: organization.id,
-			userId: user.id,
-			role: "MEMBER",
-		},
-	});
-	return { user, organization };
-}

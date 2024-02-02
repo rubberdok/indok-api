@@ -1,3 +1,4 @@
+import assert from "assert";
 import { faker } from "@faker-js/faker";
 import prisma from "~/lib/prisma.js";
 import { EventRepository } from "../../repository.js";
@@ -25,6 +26,7 @@ describe("EventRepository", () => {
 					prisma.event.create({
 						data: {
 							id,
+							type: "BASIC",
 							name: faker.person.firstName(),
 							startAt: faker.date.soon({
 								refDate: new Date(2021, 0, 1),
@@ -72,6 +74,7 @@ describe("EventRepository", () => {
 				eventIds.map((id) =>
 					prisma.event.create({
 						data: {
+							type: "BASIC",
 							id,
 							name: faker.person.firstName(),
 							startAt: faker.date.soon({
@@ -89,6 +92,7 @@ describe("EventRepository", () => {
 
 			const eventInThePast = await prisma.event.create({
 				data: {
+					type: "BASIC",
 					id: faker.string.uuid(),
 					name: faker.person.firstName(),
 					startAt: new Date(2020, 0, 1),
@@ -128,29 +132,36 @@ describe("EventRepository", () => {
 					name: faker.string.sample(20),
 				},
 			});
-			const event = await eventRepository.create(
-				{
-					name: faker.word.adjective(),
-					startAt: new Date(),
-					endAt: new Date(),
-					contactEmail: faker.internet.email(),
-					organizationId: organization.id,
-				},
-				{
-					slots: [{ capacity: 1 }, { capacity: 2 }, { capacity: 3 }],
+			const event = await eventRepository.create({
+				name: faker.word.adjective(),
+				startAt: new Date(),
+				endAt: new Date(),
+				contactEmail: faker.internet.email(),
+				organizationId: organization.id,
+				signUpsEnabled: true,
+				type: "SIGN_UPS",
+				location: "",
+				description: "",
+				signUpDetails: {
+					slots: [
+						{ capacity: 1, remainingCapacity: 1, id: "" },
+						{ capacity: 2, remainingCapacity: 2, id: "" },
+						{ capacity: 3, remainingCapacity: 3, id: "" },
+					],
 					capacity: 5,
-					signUpsEnabled: true,
+					remainingCapacity: 5,
 					signUpsStartAt: new Date(),
 					signUpsEndAt: new Date(),
 				},
-			);
+			});
+			assert(event.ok);
 
 			/**
 			 * Act
 			 *
 			 * 1. Get the event
 			 */
-			const result = await eventRepository.getWithSlots(event.id);
+			const result = await eventRepository.getWithSlots(event.data.event.id);
 
 			/**
 			 * Assert

@@ -21,6 +21,7 @@ describe("EventService", () => {
 			const eventId = faker.string.uuid();
 			await prisma.event.create({
 				data: {
+					type: "BASIC",
 					id: eventId,
 					name: faker.person.firstName(),
 					startAt: faker.date.soon({ refDate: new Date(2021, 0, 1), days: 1 }),
@@ -52,6 +53,7 @@ describe("EventService", () => {
 			const notFoundEventId = faker.string.uuid();
 			await prisma.event.create({
 				data: {
+					type: "BASIC",
 					name: faker.person.firstName(),
 					startAt: faker.date.soon({ refDate: new Date(2021, 0, 1), days: 1 }),
 					endAt: faker.date.soon({ refDate: new Date(2021, 0, 3), days: 1 }),
@@ -90,6 +92,7 @@ describe("EventService", () => {
 				eventIds.map((id) =>
 					prisma.event.create({
 						data: {
+							type: "BASIC",
 							id,
 							name: faker.person.firstName(),
 							startAt: faker.date.soon({
@@ -132,6 +135,7 @@ describe("EventService", () => {
 			 */
 			const eventInTheFuture = await prisma.event.create({
 				data: {
+					type: "BASIC",
 					id: faker.string.uuid(),
 					name: faker.person.firstName(),
 					startAt: dayjs().add(1, "day").toDate(),
@@ -140,6 +144,7 @@ describe("EventService", () => {
 			});
 			const eventInThePast = await prisma.event.create({
 				data: {
+					type: "BASIC",
 					id: faker.string.uuid(),
 					name: faker.person.firstName(),
 					startAt: dayjs().subtract(2, "day").toDate(),

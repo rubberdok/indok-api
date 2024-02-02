@@ -1,7 +1,7 @@
+import { ApolloServerErrorCode } from "@apollo/server/errors";
 import { faker } from "@faker-js/faker";
 import { mock } from "jest-mock-extended";
-import { errorCodes } from "~/domain/errors.js";
-import type { Event } from "~/domain/events.js";
+import type { EventTypeFromDSO } from "~/domain/events.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
@@ -18,17 +18,21 @@ describe("Event mutations", () => {
 				createMockApolloServer();
 
 			const contextValue = createMockContext({
-				authenticated: true,
-				userId: faker.string.uuid(),
+				user: {
+					id: faker.string.uuid(),
+				},
 			});
 
-			eventService.create.mockResolvedValue(
-				mock<Event>({
-					id: faker.string.uuid(),
-					name: faker.person.fullName(),
-					description: faker.lorem.paragraph(),
-				}),
-			);
+			eventService.create.mockResolvedValue({
+				ok: true,
+				data: {
+					event: mock<EventTypeFromDSO>({
+						id: faker.string.uuid(),
+						name: faker.person.fullName(),
+						description: faker.lorem.paragraph(),
+					}),
+				},
+			});
 
 			/**
 			 * Act
@@ -50,8 +54,9 @@ describe("Event mutations", () => {
           `),
 					variables: {
 						data: {
-							organizationId: faker.string.uuid(),
 							event: {
+								type: "BASIC",
+								organizationId: faker.string.uuid(),
 								name: faker.person.fullName(),
 								startAt: faker.date.future(),
 							},
@@ -71,11 +76,16 @@ describe("Event mutations", () => {
 			 */
 			expect(errors).toBeUndefined();
 			expect(eventService.create).toHaveBeenCalledWith(
-				expect.any(String),
-				expect.any(String),
+				expect.objectContaining({
+					user: expect.objectContaining({ id: expect.any(String) }),
+				}),
 				{
-					name: expect.any(String),
-					startAt: expect.any(Date),
+					type: "BASIC",
+					data: {
+						name: expect.any(String),
+						organizationId: expect.any(String),
+						startAt: expect.any(Date),
+					},
 				},
 			);
 		});
@@ -91,18 +101,21 @@ describe("Event mutations", () => {
 				createMockApolloServer();
 
 			const contextValue = createMockContext({
-				authenticated: true,
-				userId: faker.string.uuid(),
+				user: {
+					id: faker.string.uuid(),
+				},
 			});
 
-			eventService.create.mockResolvedValue(
-				mock<Event>({
-					id: faker.string.uuid(),
-					name: faker.person.fullName(),
-					description: faker.lorem.paragraph(),
-				}),
-			);
-
+			eventService.create.mockResolvedValue({
+				ok: true,
+				data: {
+					event: mock<EventTypeFromDSO>({
+						id: faker.string.uuid(),
+						name: faker.person.fullName(),
+						description: faker.lorem.paragraph(),
+					}),
+				},
+			});
 			/**
 			 * Act
 			 *
@@ -123,17 +136,18 @@ describe("Event mutations", () => {
           `),
 					variables: {
 						data: {
-							organizationId: faker.string.uuid(),
 							event: {
+								type: "SIGN_UPS",
+								organizationId: faker.string.uuid(),
 								name: faker.person.fullName(),
 								startAt: faker.date.future(),
-							},
-							signUpDetails: {
-								enabled: true,
-								signUpsStartAt: faker.date.future(),
-								signUpsEndAt: faker.date.future(),
-								capacity: 1,
-								slots: [{ capacity: 1 }],
+								signUpsEnabled: true,
+								signUpDetails: {
+									signUpsStartAt: faker.date.future(),
+									signUpsEndAt: faker.date.future(),
+									capacity: 1,
+									slots: [{ capacity: 1 }],
+								},
 							},
 						},
 					},
@@ -150,32 +164,53 @@ describe("Event mutations", () => {
 			 * and that no errors were returned.
 			 */
 			expect(errors).toBeUndefined();
-			expect(eventService.create).toHaveBeenCalledWith(
-				expect.any(String),
-				expect.any(String),
-				{
+			expect(eventService.create).toHaveBeenCalledWith(expect.any(Object), {
+				type: "SIGN_UPS",
+				data: expect.objectContaining({
 					name: expect.any(String),
 					startAt: expect.any(Date),
-				},
-				{
 					signUpsEnabled: true,
-					signUpsStartAt: expect.any(Date),
-					signUpsEndAt: expect.any(Date),
-					capacity: 1,
-					slots: [{ capacity: 1 }],
-				},
-			);
+					signUpDetails: {
+						signUpsStartAt: expect.any(Date),
+						signUpsEndAt: expect.any(Date),
+						capacity: 1,
+						slots: [{ capacity: 1 }],
+					},
+				}),
+			});
 		});
 
-		it("should err if not logged in", async () => {
+		it("should raise bad input error if the user does not supply the correct type with sign up details", async () => {
+			/**
+			 * Arrange
+			 *
+			 * Create an authenticated context,
+			 * and set up the mock return value for the eventService.create method.
+			 */
 			const { client, createMockContext, eventService } =
 				createMockApolloServer();
 
 			const contextValue = createMockContext({
-				authenticated: false,
-				userId: undefined,
+				user: {
+					id: faker.string.uuid(),
+				},
 			});
 
+			eventService.create.mockResolvedValue({
+				ok: true,
+				data: {
+					event: mock<EventTypeFromDSO>({
+						id: faker.string.uuid(),
+						name: faker.person.fullName(),
+						description: faker.lorem.paragraph(),
+					}),
+				},
+			});
+			/**
+			 * Act
+			 *
+			 * Create an event using the authenticated context
+			 */
 			const { errors } = await client.mutate(
 				{
 					mutation: graphql(`
@@ -191,11 +226,12 @@ describe("Event mutations", () => {
           `),
 					variables: {
 						data: {
-							organizationId: faker.string.uuid(),
 							event: {
+								type: "SIGN_UPS",
+								organizationId: faker.string.uuid(),
 								name: faker.person.fullName(),
-								description: faker.lorem.paragraph(),
 								startAt: faker.date.future(),
+								signUpsEnabled: true,
 							},
 						},
 					},
@@ -208,16 +244,13 @@ describe("Event mutations", () => {
 			/**
 			 * Assert
 			 *
-			 * Event creation was not attempted, and the mutation returned an error.
+			 * Ensure that the event creation was attempted with the correct arguments,
+			 * and that no errors were returned.
 			 */
 			expect(errors).toBeDefined();
-			expect(
-				errors?.every(
-					(error) =>
-						error.extensions?.code === errorCodes.ERR_PERMISSION_DENIED,
-				),
-			).toBe(true);
-			expect(eventService.create).not.toHaveBeenCalled();
+			errors?.map((err) =>
+				expect(err.extensions?.code).toBe(ApolloServerErrorCode.BAD_USER_INPUT),
+			);
 		});
 	});
 });

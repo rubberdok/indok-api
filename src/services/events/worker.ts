@@ -2,7 +2,7 @@ import type { EventSignUp } from "@prisma/client";
 import type { Processor } from "bullmq";
 import type { Logger } from "pino";
 import { InvalidArgumentError } from "~/domain/errors.js";
-import type { Event } from "~/domain/events.js";
+import type { EventType } from "~/domain/events.js";
 import type { Queue } from "~/lib/bullmq/queue.js";
 import type { Worker } from "~/lib/bullmq/worker.js";
 import type { Result } from "~/lib/result.js";
@@ -40,7 +40,7 @@ type EventService = {
 		ctx: Context,
 		eventId: string,
 	): Promise<EventSignUp | null>;
-	get(id: string): Promise<Event>;
+	get(id: string): Promise<EventType>;
 };
 
 type MailService = {
@@ -96,7 +96,9 @@ const getSignUpWorkerHandler = ({
 					}
 					return {
 						ok: false,
-						error: new InvalidArgumentError("Event is not accepting sign-ups"),
+						error: new InvalidArgumentError(
+							"EventType is not accepting sign-ups",
+						),
 					};
 				}
 			}

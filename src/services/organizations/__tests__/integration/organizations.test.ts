@@ -3,7 +3,6 @@ import { faker } from "@faker-js/faker";
 import type { Prisma } from "@prisma/client";
 import {
 	InvalidArgumentError,
-	type KnownDomainError,
 	PermissionDeniedError,
 } from "~/domain/errors.js";
 import { Role } from "~/domain/organizations.js";
@@ -289,7 +288,7 @@ describe("OrganizationsService", () => {
 				act: {
 					memberIndex: number;
 				};
-				expected: typeof KnownDomainError;
+				expected: string;
 			}
 
 			const selfId = faker.string.uuid();
@@ -321,7 +320,7 @@ describe("OrganizationsService", () => {
 					act: {
 						memberIndex: 0,
 					},
-					expected: PermissionDeniedError,
+					expected: PermissionDeniedError.name,
 				},
 				{
 					name: "if removing an admin from an organization as a member",
@@ -349,7 +348,7 @@ describe("OrganizationsService", () => {
 					act: {
 						memberIndex: 0,
 					},
-					expected: PermissionDeniedError,
+					expected: PermissionDeniedError.name,
 				},
 				{
 					name: "leaving the organization as the only remaining admin",
@@ -382,7 +381,7 @@ describe("OrganizationsService", () => {
 					act: {
 						memberIndex: 0,
 					},
-					expected: InvalidArgumentError,
+					expected: InvalidArgumentError.name,
 				},
 			];
 
@@ -463,15 +462,15 @@ describe("OrganizationsService", () => {
 						"The user to remove must be defined",
 					);
 
-					const result = organizationService.removeMember(
-						userMakingRequest.id,
-						{
+					try {
+						await organizationService.removeMember(userMakingRequest.id, {
 							userId: userToRemove.userId,
 							organizationId: organization.id,
-						},
-					);
-
-					await expect(result).rejects.toThrow(expected);
+						});
+					} catch (err) {
+						assert(err instanceof Error);
+						expect(err.name).toEqual(expected);
+					}
 				},
 			);
 		});

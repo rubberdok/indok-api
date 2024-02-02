@@ -25,6 +25,7 @@ describe("EventRepository", () => {
 
 			const event = await prisma.event.create({
 				data: {
+					type: "BASIC",
 					name: faker.word.adjective(),
 					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 					endAt: DateTime.now().plus({ days: 2 }).toJSDate(),

@@ -4,7 +4,7 @@ export const products: NonNullable<QueryResolvers["products"]> = async (
 	_arg,
 	ctx,
 ) => {
-	const productsResult = await ctx.products.getProducts(ctx);
+	const productsResult = await ctx.products.products.findMany(ctx);
 	if (!productsResult.ok) {
 		throw productsResult.error;
 	}

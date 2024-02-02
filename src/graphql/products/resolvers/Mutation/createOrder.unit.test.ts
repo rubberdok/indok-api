@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { mock } from "jest-mock-extended";
 import { InternalServerError } from "~/domain/errors.js";
-import type { Order } from "~/domain/products.js";
+import type { OrderType } from "~/domain/products.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
@@ -9,10 +9,10 @@ describe("Product mutations", () => {
 	describe("#createOrder", () => {
 		it("should create an order", async () => {
 			const { productService, client } = createMockApolloServer();
-			productService.createOrder.mockResolvedValueOnce({
+			productService.orders.create.mockResolvedValueOnce({
 				ok: true,
 				data: {
-					order: mock<Order>({
+					order: mock<OrderType>({
 						id: faker.string.uuid(),
 					}),
 				},
@@ -45,7 +45,7 @@ describe("Product mutations", () => {
 
 		it("should throw if ok: false", async () => {
 			const { productService, client } = createMockApolloServer();
-			productService.createOrder.mockResolvedValueOnce({
+			productService.orders.create.mockResolvedValueOnce({
 				ok: false,
 				error: new InternalServerError("Some error"),
 			});

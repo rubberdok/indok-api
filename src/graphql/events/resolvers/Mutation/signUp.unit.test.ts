@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 import { type EventSignUp, ParticipationStatus } from "@prisma/client";
 import { mock } from "jest-mock-extended";
 import { errorCodes } from "~/domain/errors.js";
-import type { Event } from "~/domain/events.js";
+import type { EventTypeFromDSO } from "~/domain/events.js";
 import type { User } from "~/domain/users.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
@@ -32,7 +32,7 @@ describe("Event mutations", () => {
 				}),
 			);
 			eventService.get.mockResolvedValue(
-				mock<Event>({ id: faker.string.uuid() }),
+				mock<EventTypeFromDSO>({ id: faker.string.uuid() }),
 			);
 			userService.get.mockResolvedValue(
 				mock<User>({ id: faker.string.uuid() }),

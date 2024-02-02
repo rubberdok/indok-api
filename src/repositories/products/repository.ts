@@ -2,11 +2,11 @@ import type { PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 import { InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
 import {
-	type Merchant,
-	type Order,
+	type MerchantType,
+	type OrderType,
 	type PaymentAttempt,
 	PaymentAttemptFromDSO,
-	type Product,
+	type ProductType,
 } from "~/domain/products.js";
 import { prismaKnownErrorCodes } from "~/lib/prisma.js";
 
@@ -24,7 +24,7 @@ export class ProductRepository {
 		clientId: string;
 		serialNumber: string;
 		subscriptionKey: string;
-	}): Promise<{ merchant: Merchant }> {
+	}): Promise<{ merchant: MerchantType }> {
 		try {
 			const created = await this.db.merchant.create({
 				data: merchant,
@@ -56,7 +56,7 @@ export class ProductRepository {
 			serialNumber: string;
 			subscriptionKey: string;
 		}> & { id: string },
-	): Promise<{ merchant: Merchant }> {
+	): Promise<{ merchant: MerchantType }> {
 		try {
 			const updated = await this.db.merchant.update({
 				where: {
@@ -89,7 +89,7 @@ export class ProductRepository {
 			id: string;
 			version: number;
 		};
-	}): Promise<{ order: Order; product: Product }> {
+	}): Promise<{ order: OrderType; product: ProductType }> {
 		const { userId, product } = order;
 		const orderPromise = this.db.order.create({
 			data: {
@@ -124,7 +124,7 @@ export class ProductRepository {
 			if (err instanceof PrismaClientKnownRequestError) {
 				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) {
 					throw new NotFoundError(`
-						Product could not be found.
+						ProductType could not be found.
 						This is either because the product does not exist,
 						or someone else has updated the product in the meantime,
 						or the product is out of stock.
@@ -144,7 +144,7 @@ export class ProductRepository {
 			version: number;
 		};
 		reference: string;
-	}): Promise<{ paymentAttempt: PaymentAttempt; order: Order }> {
+	}): Promise<{ paymentAttempt: PaymentAttempt; order: OrderType }> {
 		const { reference, order } = paymentAttempt;
 		const paymentAttemptPromise = this.db.paymentAttempt.create({
 			data: {
@@ -185,7 +185,7 @@ export class ProductRepository {
 			if (err instanceof PrismaClientKnownRequestError) {
 				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) {
 					throw new NotFoundError(`
-						Order could not be found.
+						OrderType could not be found.
 						This is either because the order does not exist,
 						or someone else has updated the order in the meantime.
 					`);
@@ -198,7 +198,7 @@ export class ProductRepository {
 	/**
 	 * getProduct returns a product.
 	 */
-	async getProduct(id: string): Promise<{ product: Product | null }> {
+	async getProduct(id: string): Promise<{ product: ProductType | null }> {
 		const product = await this.db.product.findUnique({
 			include: {
 				merchant: true,
@@ -213,7 +213,7 @@ export class ProductRepository {
 	/**
 	 * getOrder returns an order.
 	 */
-	async getOrder(id: string): Promise<{ order: Order | null }> {
+	async getOrder(id: string): Promise<{ order: OrderType | null }> {
 		const order = await this.db.order.findUnique({
 			where: {
 				id,
@@ -242,8 +242,8 @@ export class ProductRepository {
 	 */
 	async updatePaymentAttempt(
 		paymentAttempt: Pick<PaymentAttempt, "state" | "id" | "version">,
-		order: Pick<Order, "id" | "version" | "paymentStatus">,
-	): Promise<{ paymentAttempt: PaymentAttempt; order: Order }> {
+		order: Pick<OrderType, "id" | "version" | "paymentStatus">,
+	): Promise<{ paymentAttempt: PaymentAttempt; order: OrderType }> {
 		try {
 			const paymentAttemptPromise = this.db.paymentAttempt.update({
 				where: {
@@ -296,7 +296,7 @@ export class ProductRepository {
 	/**
 	 * getProduct returns a product.
 	 */
-	async getProducts(): Promise<{ products: Product[]; total: number }> {
+	async getProducts(): Promise<{ products: ProductType[]; total: number }> {
 		const [products, count] = await this.db.$transaction([
 			this.db.product.findMany({
 				include: {
@@ -315,7 +315,7 @@ export class ProductRepository {
 		name: string;
 		price: number;
 		merchantId: string;
-	}): Promise<{ product: Product }> {
+	}): Promise<{ product: ProductType }> {
 		const created = await this.db.product.create({
 			include: {
 				merchant: true,

@@ -23,14 +23,16 @@ type PaymentProcessingQueueType = Queue<
 >;
 
 type ProductService = {
-	getPaymentAttempt(
-		ctx: Context,
-		by: { reference: string },
-	): Promise<Result<{ paymentAttempt: PaymentAttempt | null }>>;
-	updatePaymentAttemptState(
-		ctx: Context,
-		paymentAttempt: PaymentAttempt,
-	): Promise<Result<{ paymentAttempt: PaymentAttempt }>>;
+	payments: {
+		get(
+			ctx: Context,
+			by: { reference: string },
+		): Promise<Result<{ paymentAttempt: PaymentAttempt | null }>>;
+		updatePaymentAttemptState(
+			ctx: Context,
+			paymentAttempt: PaymentAttempt,
+		): Promise<Result<{ paymentAttempt: PaymentAttempt }>>;
+	};
 };
 
 const PaymentProcessingQueueName = "payment-processing" as const;
@@ -57,7 +59,7 @@ function getPaymentProcessingHandler({
 		const { reference } = job.data;
 		const ctx = { log, user: null };
 
-		const result = await productService.getPaymentAttempt(ctx, {
+		const result = await productService.payments.get(ctx, {
 			reference,
 		});
 
@@ -76,10 +78,11 @@ function getPaymentProcessingHandler({
 			throw new UnrecoverableError("Payment attempt not found");
 		}
 
-		const updateResult = await productService.updatePaymentAttemptState(
-			ctx,
-			paymentAttempt,
-		);
+		const updateResult =
+			await productService.payments.updatePaymentAttemptState(
+				ctx,
+				paymentAttempt,
+			);
 		if (updateResult.ok) {
 			log.info({ reference }, "Payment attempt updated");
 			return {

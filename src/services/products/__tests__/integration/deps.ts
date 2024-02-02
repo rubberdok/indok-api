@@ -28,14 +28,15 @@ export function makeDependencies() {
 		},
 	);
 
-	const productService = new ProductService(
-		factory,
+	const productService = ProductService({
+		vippsFactory: factory,
 		paymentProcessingQueue,
 		productRepository,
-		{
+		config: {
 			useTestMode: true,
+			returnUrl: env.SERVER_URL,
 		},
-	);
+	});
 
 	const { handler } = getPaymentProcessingHandler({
 		productService,

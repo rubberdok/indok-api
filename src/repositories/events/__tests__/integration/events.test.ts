@@ -52,15 +52,16 @@ describe("EventsRepository", () => {
 			});
 
 			const startAt = faker.date.future();
-			const event = await prisma.event.create({
-				data: {
-					name: faker.company.name(),
-					description: faker.lorem.paragraph(),
-					startAt,
-					endAt: faker.date.future({ refDate: startAt }),
-					organizationId: organization.id,
-					contactEmail: faker.internet.email(),
-				},
+			const event = await eventsRepository.create({
+				type: "BASIC",
+				name: faker.company.name(),
+				description: faker.lorem.paragraph(),
+				startAt,
+				endAt: faker.date.future({ refDate: startAt }),
+				organizationId: organization.id,
+				contactEmail: faker.internet.email(),
+				location: faker.location.streetAddress(),
+				signUpsEnabled: false,
 			});
 
 			/**
@@ -68,7 +69,7 @@ describe("EventsRepository", () => {
 			 *
 			 * Update the event with the values from {data}
 			 */
-			const result = eventsRepository.update(event.id, data);
+			const result = eventsRepository.update(data);
 
 			/**
 			 * Assert that only defined fields have been updated

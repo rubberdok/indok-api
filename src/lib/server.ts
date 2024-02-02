@@ -17,10 +17,18 @@ import { Client } from "@vippsmobilepay/sdk";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { type Configuration, env } from "~/config.js";
 import type { BookingStatus } from "~/domain/cabins.js";
-import { InternalServerError } from "~/domain/errors.js";
-import type { Category, Event, SignUpAvailability } from "~/domain/events.js";
+import {
+	InternalServerError,
+	type InvalidArgumentError,
+	type PermissionDeniedError,
+} from "~/domain/errors.js";
+import type {
+	Category,
+	EventTypeFromDSO,
+	SignUpAvailability,
+} from "~/domain/events.js";
 import type { Role } from "~/domain/organizations.js";
-import type { Order, Product } from "~/domain/products.js";
+import type { OrderType, ProductType } from "~/domain/products.js";
 import type { StudyProgram, User } from "~/domain/users.js";
 import { CabinRepository } from "~/repositories/cabins/repository.js";
 import { EventRepository } from "~/repositories/events/repository.js";
@@ -33,7 +41,10 @@ import { feideClient } from "~/services/auth/clients.js";
 import { AuthService } from "~/services/auth/service.js";
 import { CabinService } from "~/services/cabins/service.js";
 import type { Context } from "~/services/context.js";
-import { EventService } from "~/services/events/index.js";
+import {
+	type CreateEventParams,
+	EventService,
+} from "~/services/events/index.js";
 import { SignUpQueueName } from "~/services/events/worker.js";
 import { ListingService } from "~/services/listings/index.js";
 import { buildMailService } from "~/services/mail/index.js";
@@ -177,23 +188,12 @@ export interface ICabinService {
 
 export interface IEventService {
 	create(
-		userId: string,
-		organizationId: string,
-		event: {
-			name: string;
-			description?: string | null;
-			startAt: Date;
-			endAt?: Date | null;
-			location?: string | null;
-		},
-		signUpDetails?: {
-			signUpsEnabled: boolean;
-			signUpsStartAt: Date;
-			signUpsEndAt: Date;
-			capacity: number;
-			slots: { capacity: number }[];
-		} | null,
-	): Promise<Event>;
+		ctx: Context,
+		params: CreateEventParams,
+	): ResultAsync<
+		{ event: EventTypeFromDSO },
+		InvalidArgumentError | PermissionDeniedError | InternalServerError
+	>;
 	update(
 		userId: string,
 		id: string,
@@ -205,9 +205,11 @@ export interface IEventService {
 			location: string | null;
 			capacity: number | null;
 		}>,
-	): Promise<Event>;
-	get(id: string): Promise<Event>;
-	findMany(data?: { onlyFutureEvents?: boolean | null }): Promise<Event[]>;
+	): Promise<EventTypeFromDSO>;
+	get(id: string): Promise<EventTypeFromDSO>;
+	findMany(data?: { onlyFutureEvents?: boolean | null }): Promise<
+		EventTypeFromDSO[]
+	>;
 	signUp(ctx: Context, userId: string, eventId: string): Promise<EventSignUp>;
 	retractSignUp(userId: string, eventId: string): Promise<EventSignUp>;
 	canSignUpForEvent(userId: string, eventId: string): Promise<boolean>;
@@ -256,21 +258,27 @@ export interface IPermissionService {
 }
 
 export type IProductService = {
-	initiatePaymentAttempt(
-		ctx: Context,
-		data: { orderId: string },
-	): Promise<
-		Result<{
-			redirectUrl: string;
-		}>
-	>;
-	createOrder(
-		ctx: Context,
-		data: { productId: string },
-	): ResultAsync<{ order: Order }>;
-	getProducts(
-		ctx: Context,
-	): ResultAsync<{ products: Product[]; total: number }>;
+	payments: {
+		initiatePaymentAttempt(
+			ctx: Context,
+			data: { orderId: string },
+		): Promise<
+			Result<{
+				redirectUrl: string;
+			}>
+		>;
+	};
+	orders: {
+		create(
+			ctx: Context,
+			data: { productId: string },
+		): ResultAsync<{ order: OrderType }>;
+	};
+	products: {
+		findMany(
+			ctx: Context,
+		): ResultAsync<{ products: ProductType[]; total: number }>;
+	};
 };
 
 type UserContext = {
@@ -403,6 +411,22 @@ async function registerServices(
 	);
 
 	await serverInstance.register(fastifyMessageQueue, {
+		name: PaymentProcessingQueueName,
+	});
+	if (!serverInstance.queues[PaymentProcessingQueueName]) {
+		throw new InternalServerError("Payment processing queue not initialized");
+	}
+	const productService = ProductService({
+		vippsFactory: Client,
+		paymentProcessingQueue: serverInstance.queues[PaymentProcessingQueueName],
+		productRepository,
+		config: {
+			useTestMode: configuration?.VIPPS_TEST_MODE,
+			returnUrl: env.SERVER_URL,
+		},
+	});
+
+	await serverInstance.register(fastifyMessageQueue, {
 		name: SignUpQueueName,
 	});
 	if (!serverInstance.queues[SignUpQueueName]) {
@@ -413,24 +437,10 @@ async function registerServices(
 		eventRepository,
 		permissionService,
 		userService,
+		productService,
 		serverInstance.queues[SignUpQueueName],
 	);
 	const authService = new AuthService(userService, feideClient);
-
-	await serverInstance.register(fastifyMessageQueue, {
-		name: PaymentProcessingQueueName,
-	});
-	if (!serverInstance.queues[PaymentProcessingQueueName]) {
-		throw new InternalServerError("Payment processing queue not initialized");
-	}
-	const productService = new ProductService(
-		Client,
-		serverInstance.queues[PaymentProcessingQueueName],
-		productRepository,
-		{
-			useTestMode: configuration?.VIPPS_TEST_MODE,
-		},
-	);
 
 	const services: Services = {
 		users: userService,

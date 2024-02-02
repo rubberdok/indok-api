@@ -92,6 +92,7 @@ describe("EventService", () => {
 			 */
 			const event = await prisma.event.create({
 				data: {
+					type: "SIGN_UPS",
 					name: faker.word.adjective(),
 					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 					endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
@@ -236,6 +237,7 @@ describe("EventService", () => {
 			 */
 			const event = await prisma.event.create({
 				data: {
+					type: "SIGN_UPS",
 					name: faker.word.adjective(),
 					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 					endAt: DateTime.now().plus({ days: 2 }).toJSDate(),

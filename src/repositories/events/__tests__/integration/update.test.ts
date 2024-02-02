@@ -1,4 +1,5 @@
 import { fail } from "assert";
+import assert from "assert";
 import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 import { merge, range } from "lodash-es";
@@ -39,7 +40,7 @@ describe("EventRepository", () => {
 						signUpsEndAt: Date;
 					};
 				};
-				assert: {
+				assertion: {
 					slots: {
 						capacity: number;
 						remainingCapacity: number;
@@ -78,7 +79,7 @@ describe("EventRepository", () => {
 							signUpsEndAt: new Date(),
 						},
 					},
-					assert: {
+					assertion: {
 						slots: [
 							{
 								capacity: 20,
@@ -118,7 +119,7 @@ describe("EventRepository", () => {
 							signUpsEndAt: new Date(),
 						},
 					},
-					assert: {
+					assertion: {
 						slots: [
 							{
 								capacity: 10,
@@ -160,7 +161,7 @@ describe("EventRepository", () => {
 							signUpsEndAt: new Date(),
 						},
 					},
-					assert: {
+					assertion: {
 						slots: [
 							{
 								gradeYears: [3, 4],
@@ -176,7 +177,7 @@ describe("EventRepository", () => {
 				},
 			];
 
-			test.each(testCases)("$name", async ({ arrange, act, assert }) => {
+			test.each(testCases)("$name", async ({ arrange, act, assertion }) => {
 				/**
 				 * Arrange
 				 *
@@ -188,25 +189,34 @@ describe("EventRepository", () => {
 						name: faker.string.sample(20),
 					},
 				});
-				const event = await eventRepository.create(
-					{
-						name: faker.word.adjective(),
-						startAt: faker.date.past(),
-						endAt: faker.date.future(),
-						contactEmail: faker.internet.email(),
-						organizationId: organization.id,
-					},
-					{
-						signUpsEnabled: true,
+				const event = await eventRepository.create({
+					name: faker.word.adjective(),
+					startAt: faker.date.past(),
+					endAt: faker.date.future(),
+					contactEmail: faker.internet.email(),
+					organizationId: organization.id,
+					signUpsEnabled: true,
+					type: "SIGN_UPS",
+					location: "",
+					description: "",
+					signUpDetails: {
 						capacity: arrange.event.capacity,
-						slots: arrange.slots,
+						remainingCapacity: arrange.event.capacity,
+						slots: arrange.slots.map((slot) => ({
+							...slot,
+							id: "",
+							remainingCapacity: slot.capacity,
+						})),
 						signUpsStartAt: new Date(),
 						signUpsEndAt: new Date(),
 					},
-				);
+				});
+
+				assert(event.ok);
+
 				const slots = await prisma.eventSlot.findMany({
 					where: {
-						eventId: event.id,
+						eventId: event.data.event.id,
 					},
 				});
 
@@ -241,7 +251,7 @@ describe("EventRepository", () => {
 				 * 1. Update the event with act.signUpDetails
 				 */
 				const actual = await eventRepository.update(
-					event.id,
+					event.data.event.id,
 					{},
 					{
 						...act.signUpDetails,
@@ -252,7 +262,7 @@ describe("EventRepository", () => {
 				);
 				const actualSlots = await prisma.eventSlot.findMany({
 					where: {
-						eventId: event.id,
+						eventId: event.data.event.id,
 					},
 				});
 
@@ -264,9 +274,10 @@ describe("EventRepository", () => {
 				 * 3. The slot capacities and remaining capacities should be correctly updated
 				 * 4. Any new slots should be created
 				 */
-				expect(actual.signUpDetails?.capacity).toBe(assert.event.capacity);
+				assert(actual.type === "SIGN_UPS");
+				expect(actual.signUpDetails?.capacity).toBe(assertion.event.capacity);
 				expect(actual.signUpDetails?.remainingCapacity).toBe(
-					assert.event.remainingCapacity,
+					assertion.event.remainingCapacity,
 				);
 				expect(
 					actualSlots.map((slot) => ({
@@ -274,7 +285,7 @@ describe("EventRepository", () => {
 						remainingCapacity: slot.remainingCapacity,
 						gradeYears: slot.gradeYears,
 					})),
-				).toEqual(assert.slots);
+				).toEqual(assertion.slots);
 			});
 		});
 
@@ -290,25 +301,28 @@ describe("EventRepository", () => {
 					name: faker.string.sample(20),
 				},
 			});
-			const event = await eventRepository.create(
-				{
-					name: faker.word.adjective(),
-					startAt: faker.date.past(),
-					endAt: faker.date.future(),
-					contactEmail: faker.internet.email(),
-					organizationId: organization.id,
-				},
-				{
-					signUpsEnabled: true,
+			const event = await eventRepository.create({
+				description: "",
+				location: "",
+				name: faker.word.adjective(),
+				startAt: faker.date.past(),
+				endAt: faker.date.future(),
+				contactEmail: faker.internet.email(),
+				organizationId: organization.id,
+				signUpsEnabled: true,
+				type: "SIGN_UPS",
+				signUpDetails: {
 					capacity: 1,
-					slots: [{ capacity: 1 }],
+					remainingCapacity: 1,
+					slots: [{ capacity: 1, id: "", remainingCapacity: 1 }],
 					signUpsStartAt: new Date(),
 					signUpsEndAt: new Date(),
 				},
-			);
+			});
+			assert(event.ok);
 			const existingSlots = await prisma.eventSlot.findMany({
 				where: {
-					eventId: event.id,
+					eventId: event.data.event.id,
 				},
 			});
 			if (existingSlots.length !== 1) fail("Expected to find exactly one slot");
@@ -319,7 +333,7 @@ describe("EventRepository", () => {
 			 * 1. Update the event with a new slot
 			 */
 			const actual = await eventRepository.update(
-				event.id,
+				event.data.event.id,
 				{},
 				{
 					slots: [{ id: existingSlots[0]?.id, capacity: 2 }, { capacity: 1 }],
@@ -331,7 +345,7 @@ describe("EventRepository", () => {
 			);
 			const actualSlots = await prisma.eventSlot.findMany({
 				where: {
-					eventId: event.id,
+					eventId: event.data.event.id,
 				},
 			});
 
@@ -343,6 +357,7 @@ describe("EventRepository", () => {
 			 * 3. The slot capacities and remaining capacities should be correctly updated
 			 * 4. Any new slots should be created
 			 */
+			assert(actual.type === "SIGN_UPS");
 			expect(actual.signUpDetails?.capacity).toBe(1);
 			expect(actual.signUpDetails?.remainingCapacity).toBe(1);
 			expect(actualSlots).toHaveLength(2);
@@ -362,25 +377,29 @@ describe("EventRepository", () => {
 					name: faker.string.sample(20),
 				},
 			});
-			const event = await eventRepository.create(
-				{
-					name: faker.word.adjective(),
-					startAt: faker.date.past(),
-					endAt: faker.date.future(),
-					contactEmail: faker.internet.email(),
-					organizationId: organization.id,
-				},
-				{
-					signUpsEnabled: true,
+			const event = await eventRepository.create({
+				name: faker.word.adjective(),
+				startAt: faker.date.past(),
+				endAt: faker.date.future(),
+				contactEmail: faker.internet.email(),
+				organizationId: organization.id,
+				signUpsEnabled: true,
+				location: "",
+				description: "",
+				type: "SIGN_UPS",
+				signUpDetails: {
 					capacity: 1,
-					slots: [{ capacity: 1 }],
+					remainingCapacity: 1,
+					slots: [{ capacity: 1, remainingCapacity: 1, id: "" }],
 					signUpsStartAt: new Date(),
 					signUpsEndAt: new Date(),
 				},
-			);
+			});
+
+			assert(event.ok);
 			const existingSlots = await prisma.eventSlot.findMany({
 				where: {
-					eventId: event.id,
+					eventId: event.data.event.id,
 				},
 			});
 			if (existingSlots.length !== 1) fail("Expected to find exactly one slot");
@@ -391,7 +410,7 @@ describe("EventRepository", () => {
 			 * 1. Update the event with a new slot
 			 */
 			await eventRepository.update(
-				event.id,
+				event.data.event.id,
 				{},
 				{
 					slots: [{ capacity: 10 }],
@@ -403,7 +422,7 @@ describe("EventRepository", () => {
 			);
 			const actualSlots = await prisma.eventSlot.findMany({
 				where: {
-					eventId: event.id,
+					eventId: event.data.event.id,
 				},
 			});
 
@@ -441,29 +460,32 @@ describe("EventRepository", () => {
 					name: faker.string.sample(20),
 				},
 			});
-			const event = await eventRepository.create(
-				{
-					name: faker.word.adjective(),
-					startAt: faker.date.past(),
-					endAt: faker.date.future(),
-					contactEmail: faker.internet.email(),
-					organizationId: organization.id,
-				},
-				{
-					signUpsEnabled: true,
+			const event = await eventRepository.create({
+				name: faker.word.adjective(),
+				startAt: faker.date.past(),
+				endAt: faker.date.future(),
+				contactEmail: faker.internet.email(),
+				organizationId: organization.id,
+				signUpsEnabled: true,
+				description: "",
+				location: "",
+				type: "SIGN_UPS",
+				signUpDetails: {
 					capacity: 1,
-					slots: [{ capacity: 1 }],
+					remainingCapacity: 1,
+					slots: [{ capacity: 1, remainingCapacity: 1, id: "" }],
 					signUpsStartAt: new Date(),
 					signUpsEndAt: new Date(),
 				},
-			);
+			});
+			assert(event.ok);
 			const existingSlot = await prisma.eventSlot.findFirstOrThrow({
 				where: {
-					eventId: event.id,
+					eventId: event.data.event.id,
 				},
 			});
 			await eventRepository.createSignUp({
-				eventId: event.id,
+				eventId: event.data.event.id,
 				userId: user.id,
 				participationStatus: ParticipationStatus.CONFIRMED,
 				slotId: existingSlot.id,
@@ -475,7 +497,7 @@ describe("EventRepository", () => {
 			 * 1. Update the event with a new slot
 			 */
 			const actual = eventRepository.update(
-				event.id,
+				event.data.event.id,
 				{},
 				{
 					slots: [{ capacity: 10 }],
@@ -518,29 +540,32 @@ describe("EventRepository", () => {
 					name: faker.string.sample(20),
 				},
 			});
-			const event = await eventRepository.create(
-				{
-					name: faker.word.adjective(),
-					startAt: faker.date.past(),
-					endAt: faker.date.future(),
-					contactEmail: faker.internet.email(),
-					organizationId: organization.id,
-				},
-				{
-					signUpsEnabled: true,
+			const event = await eventRepository.create({
+				name: faker.word.adjective(),
+				startAt: faker.date.past(),
+				endAt: faker.date.future(),
+				contactEmail: faker.internet.email(),
+				organizationId: organization.id,
+				signUpsEnabled: true,
+				type: "SIGN_UPS",
+				description: "",
+				location: "",
+				signUpDetails: {
 					capacity: 1,
-					slots: [{ capacity: 1 }],
+					remainingCapacity: 1,
+					slots: [{ capacity: 1, remainingCapacity: 1, id: "" }],
 					signUpsStartAt: new Date(),
 					signUpsEndAt: new Date(),
 				},
-			);
+			});
+			assert(event.ok);
 			const existingSlot = await prisma.eventSlot.findFirstOrThrow({
 				where: {
-					eventId: event.id,
+					eventId: event.data.event.id,
 				},
 			});
 			await eventRepository.createSignUp({
-				eventId: event.id,
+				eventId: event.data.event.id,
 				userId: user.id,
 				participationStatus: ParticipationStatus.CONFIRMED,
 				slotId: existingSlot.id,
@@ -552,7 +577,7 @@ describe("EventRepository", () => {
 			 * 1. Update the event with a new slot
 			 */
 			const actual = eventRepository.update(
-				event.id,
+				event.data.event.id,
 				{},
 				{
 					slots: [{ id: existingSlot.id, capacity: 10 }],
@@ -595,29 +620,33 @@ describe("EventRepository", () => {
 					name: faker.string.sample(20),
 				},
 			});
-			const event = await eventRepository.create(
-				{
-					name: faker.word.adjective(),
-					startAt: faker.date.past(),
-					endAt: faker.date.future(),
-					contactEmail: faker.internet.email(),
-					organizationId: organization.id,
-				},
-				{
-					signUpsEnabled: true,
+			const event = await eventRepository.create({
+				name: faker.word.adjective(),
+				startAt: faker.date.past(),
+				endAt: faker.date.future(),
+				contactEmail: faker.internet.email(),
+				organizationId: organization.id,
+				signUpsEnabled: true,
+				description: "",
+				location: "",
+				type: "SIGN_UPS",
+				signUpDetails: {
 					capacity: 1,
-					slots: [{ capacity: 1 }],
+					remainingCapacity: 1,
+					slots: [{ capacity: 1, remainingCapacity: 1, id: "" }],
 					signUpsStartAt: new Date(),
 					signUpsEndAt: new Date(),
 				},
-			);
+			});
+
+			assert(event.ok);
 			const existingSlot = await prisma.eventSlot.findFirstOrThrow({
 				where: {
-					eventId: event.id,
+					eventId: event.data.event.id,
 				},
 			});
 			await eventRepository.createSignUp({
-				eventId: event.id,
+				eventId: event.data.event.id,
 				userId: user.id,
 				participationStatus: ParticipationStatus.CONFIRMED,
 				slotId: existingSlot.id,
@@ -629,7 +658,7 @@ describe("EventRepository", () => {
 			 * 1. Update the event with a new slot
 			 */
 			const actual = eventRepository.update(
-				event.id,
+				event.data.event.id,
 				{},
 				{
 					slots: [{ id: existingSlot.id, capacity: 0 }],
@@ -666,7 +695,12 @@ describe("EventRepository", () => {
 				endAt: faker.date.future(),
 				contactEmail: faker.internet.email(),
 				organizationId: organization.id,
+				type: "BASIC",
+				description: "",
+				location: "",
+				signUpsEnabled: false,
 			});
+			assert(event.ok);
 
 			/**
 			 * Act
@@ -674,7 +708,7 @@ describe("EventRepository", () => {
 			 * 1. Update the event with capacity and slots
 			 */
 			const actual = await eventRepository.update(
-				event.id,
+				event.data.event.id,
 				{},
 				{
 					slots: [{ capacity: 20 }],
@@ -686,7 +720,7 @@ describe("EventRepository", () => {
 			);
 			const slot = await prisma.eventSlot.findFirstOrThrow({
 				where: {
-					eventId: event.id,
+					eventId: event.data.event.id,
 				},
 			});
 
@@ -695,6 +729,7 @@ describe("EventRepository", () => {
 			 *
 			 * The event should have capacity
 			 */
+			assert(actual.type === "SIGN_UPS");
 			expect(actual.signUpDetails?.capacity).toBe(10);
 			expect(actual.signUpDetails?.remainingCapacity).toBe(10);
 			expect(actual.signUpsEnabled).toBe(true);
@@ -715,12 +750,17 @@ describe("EventRepository", () => {
 				},
 			});
 			const event = await eventRepository.create({
+				type: "BASIC",
+				description: "",
+				location: "",
+				signUpsEnabled: false,
 				name: faker.word.adjective(),
 				startAt: faker.date.past(),
 				endAt: faker.date.future(),
 				contactEmail: faker.internet.email(),
 				organizationId: organization.id,
 			});
+			assert(event.ok);
 			const newCategory = await prisma.eventCategory.create({
 				data: {
 					name: faker.string.sample(20),
@@ -732,7 +772,7 @@ describe("EventRepository", () => {
 			 *
 			 * 1. Update the event with categories
 			 */
-			const actual = await eventRepository.update(event.id, {
+			const actual = await eventRepository.update(event.data.event.id, {
 				categories: [newCategory.id],
 			});
 

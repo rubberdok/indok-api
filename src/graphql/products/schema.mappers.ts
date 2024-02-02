@@ -1,4 +1,4 @@
 export type {
-	Order as OrderMapper,
-	Product as ProductMapper,
+	OrderType as OrderMapper,
+	ProductType as ProductMapper,
 } from "~/domain/products.js";

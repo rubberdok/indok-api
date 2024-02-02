@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { mock } from "jest-mock-extended";
 import { errorCodes } from "~/domain/errors.js";
-import type { Event } from "~/domain/events.js";
+import type { EventTypeFromDSO } from "~/domain/events.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
@@ -49,7 +49,7 @@ describe("Event mutations", () => {
 				authenticated: true,
 			});
 			eventService.update.mockResolvedValueOnce(
-				mock<Event>({ id: faker.string.uuid() }),
+				mock<EventTypeFromDSO>({ id: faker.string.uuid() }),
 			);
 			const eventId = faker.string.uuid();
 

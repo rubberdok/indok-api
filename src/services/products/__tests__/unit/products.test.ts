@@ -1,6 +1,6 @@
 import { mock } from "jest-mock-extended";
 import { UnauthorizedError } from "~/domain/errors.js";
-import type { Product } from "~/domain/products.js";
+import type { ProductType } from "~/domain/products.js";
 import type { User } from "~/domain/users.js";
 import { makeMockContext } from "~/services/context.js";
 import { makeDependencies } from "./dependencies.js";
@@ -12,10 +12,11 @@ describe("ProductService", () => {
 		it("should fail if the user is not logged in", async () => {
 			const ctx = makeMockContext(null);
 
-			const result = await productService.createProduct(ctx, {
+			const result = await productService.products.create(ctx, {
 				merchantId: "123456",
 				name: "Test",
 				price: 123,
+				description: "test",
 			});
 
 			expect(result).toEqual({
@@ -28,13 +29,14 @@ describe("ProductService", () => {
 			const ctx = makeMockContext(mock<User>({ isSuperUser: true }));
 
 			productRepository.createProduct.mockResolvedValueOnce({
-				product: mock<Product>({}),
+				product: mock<ProductType>({}),
 			});
 
-			const result = await productService.createProduct(ctx, {
+			const result = await productService.products.create(ctx, {
 				merchantId: "123456",
 				name: "Test",
 				price: 123,
+				description: "test",
 			});
 
 			expect(result.ok).toBe(true);
@@ -47,11 +49,11 @@ describe("ProductService", () => {
 			const ctx = makeMockContext(mock<User>({ isSuperUser: false }));
 
 			productRepository.getProducts.mockResolvedValueOnce({
-				products: [mock<Product>({}), mock<Product>({})],
+				products: [mock<ProductType>({}), mock<ProductType>({})],
 				total: 2,
 			});
 
-			const result = await productService.getProducts(ctx);
+			const result = await productService.products.findMany(ctx);
 
 			expect(result.ok).toBe(true);
 		});

@@ -14,14 +14,24 @@ import {
 	PermissionDeniedError,
 } from "~/domain/errors.js";
 import {
+	type BasicEvent,
 	type Category,
-	type Event as DomainEvent,
-	type EventWithSignUps,
-	isEventWithSignUps,
+	Event,
+	type EventType,
+	type EventTypeFromDSO,
+	EventTypes,
+	type NewEventReturnType,
+	type SignUpEvent,
+	type SignUpEventWithSlots,
+	type TicketEvent,
+	type TicketEventWithSlots,
+	isSignUpEvent,
 	signUpAvailability,
 } from "~/domain/events.js";
 import { Role } from "~/domain/organizations.js";
+import type { OrderType, ProductType } from "~/domain/products.js";
 import type { User } from "~/domain/users.js";
+import type { ResultAsync } from "~/lib/result.js";
 import type { Context } from "../context.js";
 import type { SignUpQueueType } from "./worker.js";
 
@@ -69,19 +79,24 @@ interface SignUpDetails {
 }
 
 export interface EventRepository {
-	create(event: EventData, signUpDetails?: SignUpDetails): Promise<DomainEvent>;
+	create(
+		event: BasicEvent | TicketEventWithSlots | SignUpEventWithSlots,
+	): ResultAsync<
+		{ event: EventTypeFromDSO },
+		InvalidArgumentError | InternalServerError
+	>;
 	update(
 		id: string,
 		event: Partial<EventData>,
 		signUpDetails?: Partial<SignUpDetails>,
-	): Promise<DomainEvent>;
-	get(id: string): Promise<DomainEvent>;
-	getWithSlots(id: string): Promise<DomainEvent & { slots: EventSlot[] }>;
+	): Promise<EventTypeFromDSO>;
+	get(id: string): Promise<EventTypeFromDSO>;
+	getWithSlots(id: string): Promise<EventTypeFromDSO & { slots: EventSlot[] }>;
 	getSlotWithRemainingCapacity(
 		eventId: string,
 		gradeYear?: number,
 	): Promise<EventSlot | null>;
-	findMany(data?: { endAtGte?: Date | null }): Promise<DomainEvent[]>;
+	findMany(data?: { endAtGte?: Date | null }): Promise<EventTypeFromDSO[]>;
 	findManySignUps(data: {
 		eventId: string;
 		status: ParticipationStatus;
@@ -89,10 +104,18 @@ export interface EventRepository {
 	getSignUp(userId: string, eventId: string): Promise<EventSignUp>;
 	createSignUp(
 		data: CreateConfirmedSignUpData | CreateOnWaitlistSignUpData,
-	): Promise<{ signUp: EventSignUp; slot?: EventSlot; event: DomainEvent }>;
+	): Promise<{
+		signUp: EventSignUp;
+		slot?: EventSlot;
+		event: EventTypeFromDSO;
+	}>;
 	updateSignUp(
 		data: UpdateToConfirmedSignUpData | UpdateToInactiveSignUpData,
-	): Promise<{ signUp: EventSignUp; slot?: EventSlot; event: DomainEvent }>;
+	): Promise<{
+		signUp: EventSignUp;
+		slot?: EventSlot;
+		event: EventTypeFromDSO;
+	}>;
 	findManySlots(data: { gradeYear?: number; eventId: string }): Promise<
 		EventSlot[]
 	>;
@@ -108,7 +131,7 @@ export interface UserService {
 
 export interface PermissionService {
 	hasRole(data: {
-		userId: string;
+		userId?: string;
 		organizationId: string;
 		role: Role;
 	}): Promise<boolean>;
@@ -119,162 +142,187 @@ export interface PermissionService {
 	isSuperUser(userId: string | undefined): Promise<{ isSuperUser: boolean }>;
 }
 
+export interface ProductService {
+	products: {
+		create(
+			ctx: Context,
+			product: Pick<ProductType, "price" | "description" | "name"> & {
+				merchantId: string;
+			},
+		): ResultAsync<{ product: ProductType }>;
+	};
+	orders: {
+		create(
+			ctx: Context,
+			order: Pick<OrderType, "productId">,
+		): ResultAsync<{ order: OrderType }>;
+	};
+}
+
+type CreateBasicEventData = {
+	name: string;
+	description?: string | null;
+	startAt: Date;
+	endAt?: Date | null;
+	contactEmail?: string | null;
+	location?: string | null;
+	organizationId: string;
+};
+
+type CreateSignUpEventData = CreateBasicEventData & {
+	signUpsEnabled?: boolean | null;
+	signUpDetails: {
+		capacity: number;
+		slots: { capacity: number; gradeYears?: number[] | null }[];
+		signUpsStartAt: Date;
+		signUpsEndAt: Date;
+	};
+};
+
+type CreateTicketEventData = CreateSignUpEventData & {
+	price: { value: number; merchantId: string };
+};
+
+type CreateBasicEventParams = {
+	type: typeof EventTypes.BASIC;
+	data: CreateBasicEventData;
+};
+type CreateSignUpEventParams = {
+	type: typeof EventTypes.SIGN_UPS;
+	data: CreateSignUpEventData;
+};
+type CreateTicketEventParams = {
+	type: typeof EventTypes.TICKETS;
+	data: CreateTicketEventData;
+};
+export type CreateEventParams =
+	| CreateBasicEventParams
+	| CreateSignUpEventParams
+	| CreateTicketEventParams;
+
 export class EventService {
 	constructor(
 		private eventRepository: EventRepository,
 		private permissionService: PermissionService,
 		private userService: UserService,
+		private productService: ProductService,
 		private signUpQueue: SignUpQueueType,
 	) {}
-	/**
-	 * Create a new event
-	 * @throws {InvalidArgumentError} - If any values are invalid
-	 * @throws {PermissionDeniedError} - If the user does not have permission to create an event for the organization
-	 * @param userId - The ID of the user that is creating the event
-	 * @param organizationId - The ID of the organization that the event belongs to
-	 * @param data.name - The name of the event
-	 * @param data.description - The description of the event
-	 * @param data.startAt - The start datetime of the event, must be in the future
-	 * @param data.endAt - The end datetime of the event
-	 * @param data.location - The location of the event
-	 * @param data.contactEmail - The email address of the contact person for the event
-	 * @param data.categories - A list of category IDs that the event belongs to
-	 * @param signUps.capacity - The total number of sign ups allowed for the event
-	 * @param signUps.slots - The slots for the event
-	 * @param signUps.signUpsStartAt - The datetime when sign ups for the event open
-	 * @param signUps.signUpsEndAt - The datetime when sign ups for the event close
-	 * @returns The created event
-	 */
+
 	async create(
-		userId: string,
-		organizationId: string,
-		event: {
-			name: string;
-			description?: string | null;
-			startAt: Date;
-			endAt?: Date | null;
-			location?: string | null;
-			contactEmail?: string | null;
-			categories?: string[] | null;
-		},
-		signUpDetails?: {
-			signUpsEnabled: boolean;
-			capacity: number;
-			slots: { capacity: number; gradeYears?: number[] }[];
-			signUpsStartAt: Date;
-			signUpsEndAt: Date;
-		} | null,
-	): Promise<DomainEvent> {
+		ctx: Context,
+		{ type, data }: CreateEventParams,
+	): ResultAsync<
+		{ event: EventTypeFromDSO },
+		InternalServerError | InvalidArgumentError | PermissionDeniedError
+	> {
 		const isMember = await this.permissionService.hasRole({
-			userId,
-			organizationId,
+			userId: ctx.user?.id,
+			organizationId: data.organizationId,
 			role: Role.MEMBER,
 		});
 
 		if (isMember !== true) {
-			throw new PermissionDeniedError(
-				"You do not have permission to create an event for this organization.",
-			);
+			return {
+				ok: false,
+				error: new PermissionDeniedError(
+					"You do not have permission to create an event for this organization.",
+				),
+			};
 		}
 
-		try {
-			const validatedSignUpDetails = z
-				.object({
-					signUpsEnabled: z.boolean(),
-					capacity: z.number().int().min(0),
-					slots: z.array(
-						z.object({
-							capacity: z.number().int().min(0),
-							gradeYears: z.array(z.number().int().min(1).max(5)).optional(),
-						}),
+		let result: NewEventReturnType;
+		switch (type) {
+			case EventTypes.SIGN_UPS: {
+				result = Event.new({ type: EventTypes.SIGN_UPS, data });
+				break;
+			}
+			case EventTypes.BASIC: {
+				result = Event.new({ type: EventTypes.BASIC, data });
+				if (result.ok) {
+					result.data.event;
+				}
+				break;
+			}
+			case EventTypes.TICKETS: {
+				const { price, ...eventDataWithoutPrice } = data;
+				const createProductResult = await this.productService.products.create(
+					ctx,
+					{
+						price: price.value,
+						merchantId: price.merchantId,
+						name: data.name,
+						description: `Billetter til ${data.name}`,
+					},
+				);
+				if (!createProductResult.ok) {
+					if (createProductResult.error.name === "InvalidArgumentError") {
+						return {
+							ok: false,
+							error: new InvalidArgumentError(
+								"Could not create product for event",
+								createProductResult.error,
+							),
+						};
+					}
+					return {
+						ok: false,
+						error: new InternalServerError(
+							"Unexpected error when creating product for event",
+							createProductResult.error,
+						),
+					};
+				}
+
+				result = Event.new({
+					type: EventTypes.TICKETS,
+					data: merge(eventDataWithoutPrice, {
+						productId: createProductResult.data.product.id,
+					}),
+				});
+				break;
+			}
+		}
+
+		if (!result.ok) {
+			const { error } = result;
+			if (error.name === "InvalidArgumentError") {
+				return {
+					ok: false,
+					error: new InvalidArgumentError(
+						`Event constructor for ${type}`,
+						error,
 					),
-					signUpsStartAt: z.date(),
-					signUpsEndAt: z.date().min(new Date()),
-				})
-				.optional()
-				.transform((data) => data ?? undefined)
-				.refine(
-					(data) => {
-						if (!data) return true;
-						return data.signUpsEndAt > data.signUpsStartAt;
-					},
-					{
-						message: "Sign ups end date must be after sign ups start date",
-						path: ["signUpsEndAt"],
-					},
-				)
-				.parse(signUpDetails);
-
-			const {
-				name,
-				description,
-				startAt,
-				endAt = DateTime.fromJSDate(startAt).plus({ hours: 2 }).toJSDate(),
-				location,
-				contactEmail,
-			} = z
-				.object({
-					name: z.string().min(1).max(100),
-					description: z
-						.string()
-						.max(10_000)
-						.optional()
-						.transform((val) => val ?? undefined),
-					startAt: z.date().min(new Date()),
-					endAt: z
-						.date()
-						.min(new Date())
-						.optional()
-						.transform((val) => val ?? undefined),
-					location: z
-						.string()
-						.max(100)
-						.optional()
-						.transform((val) => val ?? undefined),
-					contactEmail: z
-						.string()
-						.email()
-						.optional()
-						.transform((val) => val ?? undefined),
-					categories: z
-						.array(z.string())
-						.optional()
-						.transform((val) => val ?? undefined),
-				})
-				.refine(
-					(data) => {
-						if (data.endAt === undefined) return true;
-						return data.endAt > data.startAt;
-					},
-					{
-						message: "End date must be after start date",
-						path: ["endAt"],
-					},
-				)
-				.parse(event);
-
-			return await this.eventRepository.create(
-				{
-					name,
-					description,
-					startAt,
-					endAt,
-					location,
-					contactEmail,
-					organizationId,
-				},
-				validatedSignUpDetails,
-			);
-		} catch (err) {
-			if (err instanceof z.ZodError)
-				throw new InvalidArgumentError(err.message);
-			throw err;
+				};
+			}
+			return result;
 		}
+
+		const { event } = result.data;
+		const createEventResult = await this.eventRepository.create(event);
+		if (!createEventResult.ok) {
+			const { error } = createEventResult;
+			if (error.name === "InvalidArgumentError") {
+				return {
+					ok: false,
+					error: new InvalidArgumentError(
+						`Could not create event in repository for ${type}`,
+						error,
+					),
+				};
+			}
+			return {
+				ok: false,
+				error: new InternalServerError("Unexpected error in repository", error),
+			};
+		}
+		const { event: createdEvent } = createEventResult.data;
+		return { ok: true, data: { event: createdEvent } };
 	}
 
 	private validateUpdateSignUpDetails(
 		data: Partial<SignUpDetails>,
-		existingEvent: DomainEvent & { slots: EventSlot[] },
+		existingEvent: EventType & { slots: EventSlot[] },
 	): SignUpDetails {
 		const changingStartAt = data.signUpsStartAt !== undefined;
 		const changingEndAt = data.signUpsEndAt !== undefined;
@@ -286,6 +334,10 @@ export class EventService {
 			signUpsStartAt: z.date(),
 			signUpsEndAt: z.date(),
 		});
+
+		if (existingEvent.type === "BASIC") {
+			return schema.parse(merge({}, data));
+		}
 
 		if (changingStartAt || changingEndAt) {
 			return schema
@@ -304,7 +356,7 @@ export class EventService {
 
 	private validateUpdateEventData(
 		data: Partial<EventData>,
-		existingEvent: DomainEvent,
+		existingEvent: EventType,
 	): Partial<EventData> {
 		const changingStartAt = data.startAt !== undefined;
 		const changingEndAt = data.endAt !== undefined;
@@ -357,7 +409,7 @@ export class EventService {
 			signUpsStartAt: Date;
 			signUpsEndAt: Date;
 		}>,
-	): Promise<DomainEvent> {
+	): Promise<EventTypeFromDSO> {
 		const event = await this.eventRepository.getWithSlots(eventId);
 		if (!event.organizationId) {
 			throw new InvalidArgumentError(
@@ -479,6 +531,18 @@ export class EventService {
 					{ signUp, attempt },
 					"Successfully signed up user for event.",
 				);
+				if (event.type === EventTypes.TICKETS) {
+					const orderResult = await this.productService.orders.create(ctx, {
+						productId: event.productId,
+					});
+					if (orderResult.ok) {
+						ctx.log.info(
+							{ order: orderResult.data.order },
+							"Successfully created order for event.",
+						);
+						return signUp;
+					}
+				}
 				return signUp;
 			} catch (err) {
 				// If there are no slots with remaining capacity, we add the user to the wait list.
@@ -505,7 +569,7 @@ export class EventService {
 	 * @param id - The ID of the event to get
 	 * @returns The event with the specified ID
 	 */
-	async get(id: string): Promise<DomainEvent> {
+	async get(id: string): Promise<EventTypeFromDSO> {
 		return await this.eventRepository.get(id);
 	}
 
@@ -516,7 +580,7 @@ export class EventService {
 	 * @returns All events
 	 */
 	async findMany(data?: { onlyFutureEvents?: boolean }): Promise<
-		DomainEvent[]
+		EventTypeFromDSO[]
 	> {
 		if (!data) {
 			return await this.eventRepository.findMany();
@@ -742,7 +806,10 @@ export class EventService {
 	 * areSignUpsAvailable returns true if sign ups are available for the event, i.e.
 	 * if sign ups are enabled, and the current time is between the start and end date for sign ups.
 	 */
-	private areSignUpsAvailable(event: DomainEvent): event is EventWithSignUps {
+	private areSignUpsAvailable(
+		event: EventType,
+	): event is SignUpEvent | TicketEvent {
+		if (event.type === EventTypes.BASIC) return false;
 		if (!event.signUpsEnabled) return false;
 		if (event.signUpDetails.signUpsStartAt > DateTime.now().toJSDate())
 			return false;
@@ -756,7 +823,7 @@ export class EventService {
 		eventId: string,
 	): Promise<keyof typeof signUpAvailability> {
 		const event = await this.eventRepository.getWithSlots(eventId);
-		if (!isEventWithSignUps(event)) return signUpAvailability.DISABLED;
+		if (!isSignUpEvent(event)) return signUpAvailability.DISABLED;
 
 		/**
 		 * User is not signed in

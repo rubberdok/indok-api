@@ -1,8 +1,9 @@
 import { faker } from "@faker-js/faker";
-import type { Organization, User } from "@prisma/client";
+import type { Organization } from "@prisma/client";
 import { mockDeep } from "jest-mock-extended";
 import type { ServerClient } from "postmark";
 import { env } from "~/config.js";
+import { type User, newUserFromDSO } from "~/domain/users.js";
 import prisma from "~/lib/prisma.js";
 import { EventRepository } from "~/repositories/events/repository.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
@@ -12,7 +13,7 @@ import { buildMailService } from "~/services/mail/index.js";
 import type { EmailQueueType } from "~/services/mail/worker.js";
 import { PermissionService } from "~/services/permissions/service.js";
 import { UserService } from "~/services/users/service.js";
-import { EventService } from "../../service.js";
+import { EventService, type ProductService } from "../../service.js";
 import type { SignUpQueueType } from "../../worker.js";
 
 export function makeDependencies() {
@@ -48,6 +49,7 @@ export function makeDependencies() {
 		eventRepository,
 		permissionService,
 		userService,
+		mockDeep<ProductService>(),
 		mockDeep<SignUpQueueType>(),
 	);
 	return { eventService };
@@ -56,16 +58,18 @@ export function makeDependencies() {
 export async function makeUserWithOrganizationMembership(
 	userData: Partial<User> = {},
 ): Promise<{ user: User; organization: Organization }> {
-	const user = await prisma.user.create({
-		data: {
-			firstName: faker.person.firstName(),
-			lastName: faker.person.lastName(),
-			username: faker.string.sample(30),
-			feideId: faker.string.uuid(),
-			email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
-			...userData,
-		},
-	});
+	const user = newUserFromDSO(
+		await prisma.user.create({
+			data: {
+				firstName: faker.person.firstName(),
+				lastName: faker.person.lastName(),
+				username: faker.string.sample(30),
+				feideId: faker.string.uuid(),
+				email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
+				...userData,
+			},
+		}),
+	);
 	const organization = await prisma.organization.create({
 		data: {
 			name: faker.string.sample(20),
