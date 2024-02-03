@@ -2,7 +2,7 @@ import type { Booking } from "@prisma/client";
 import type { Job, Processor } from "bullmq";
 import { DateTime } from "luxon";
 import { env } from "~/config.js";
-import type { EventTypeFromDSO } from "~/domain/events.js";
+import type { EventTypeFromDSO } from "~/domain/events/event.js";
 import type { StudyProgram, User } from "~/domain/users.js";
 import type { Queue } from "~/lib/bullmq/queue.js";
 import type { Worker } from "~/lib/bullmq/worker.js";

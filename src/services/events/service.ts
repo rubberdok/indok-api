@@ -4,7 +4,6 @@ import {
 	type FeaturePermission,
 	ParticipationStatus,
 } from "@prisma/client";
-import { merge } from "lodash-es";
 import { DateTime } from "luxon";
 import { z } from "zod";
 import {
@@ -14,26 +13,36 @@ import {
 	PermissionDeniedError,
 } from "~/domain/errors.js";
 import {
-	type BasicEvent,
-	type Category,
 	Event,
+	EventTypeEnum,
 	type EventType,
-	type EventTypeFromDSO,
-	EventTypes,
-	type NewEventReturnType,
-	type SignUpEvent,
-	type SignUpEventWithSlots,
-	type TicketEvent,
-	type TicketEventWithSlots,
-	isSignUpEvent,
+	type SlotType,
+	Slot,
+	type SignUpAvailability,
 	signUpAvailability,
-} from "~/domain/events.js";
+} from "~/domain/events/index.js";
 import { Role } from "~/domain/organizations.js";
 import type { OrderType, ProductType } from "~/domain/products.js";
 import type { User } from "~/domain/users.js";
-import type { ResultAsync } from "~/lib/result.js";
-import type { Context } from "../context.js";
+import type { Result, ResultAsync } from "~/lib/result.js";
+import type { Context } from "../../lib/context.js";
 import type { SignUpQueueType } from "./worker.js";
+import type { EventUpdateFn } from "~/repositories/events/index.js";
+import type { EventUpdateFields } from "~/domain/events/event.js";
+import type { NewSlotParams, UpdateSlotFields } from "~/domain/events/slot.js";
+import type { CategoryType } from "~/domain/events/category.js";
+
+export { EventService };
+export type {
+	EventRepository,
+	UserService,
+	PermissionService,
+	ProductService,
+	CreateEventParams,
+	CreateBasicEventParams,
+	CreateSignUpEventParams,
+	CreateTicketEventParams,
+};
 
 interface CreateConfirmedSignUpData {
 	userId: string;
@@ -61,42 +70,26 @@ interface UpdateToInactiveSignUpData {
 	newParticipationStatus: Extract<ParticipationStatus, "REMOVED" | "RETRACTED">;
 }
 
-interface EventData {
-	name: string;
-	description?: string;
-	startAt: Date;
-	endAt: Date;
-	organizationId: string;
-	contactEmail?: string;
-	location?: string;
-}
-
-interface SignUpDetails {
-	capacity: number;
-	slots: { capacity: number }[];
-	signUpsStartAt: Date;
-	signUpsEndAt: Date;
-}
-
-export interface EventRepository {
+interface EventRepository {
 	create(
-		event: BasicEvent | TicketEventWithSlots | SignUpEventWithSlots,
+		ctx: Context,
+		params: { event: EventType; slots?: SlotType[] },
 	): ResultAsync<
-		{ event: EventTypeFromDSO },
-		InvalidArgumentError | InternalServerError
+		{ event: EventType; slots?: SlotType[] },
+		InternalServerError | InvalidArgumentError
 	>;
 	update(
+		ctx: Context,
 		id: string,
-		event: Partial<EventData>,
-		signUpDetails?: Partial<SignUpDetails>,
-	): Promise<EventTypeFromDSO>;
-	get(id: string): Promise<EventTypeFromDSO>;
-	getWithSlots(id: string): Promise<EventTypeFromDSO & { slots: EventSlot[] }>;
+		updateFn: EventUpdateFn,
+	): ResultAsync<{ event: EventType }, InternalServerError>;
+	get(id: string): Promise<EventType>;
+	getWithSlots(id: string): Promise<EventType & { slots: EventSlot[] }>;
 	getSlotWithRemainingCapacity(
 		eventId: string,
 		gradeYear?: number,
 	): Promise<EventSlot | null>;
-	findMany(data?: { endAtGte?: Date | null }): Promise<EventTypeFromDSO[]>;
+	findMany(data?: { endAtGte?: Date | null }): Promise<EventType[]>;
 	findManySignUps(data: {
 		eventId: string;
 		status: ParticipationStatus;
@@ -107,29 +100,29 @@ export interface EventRepository {
 	): Promise<{
 		signUp: EventSignUp;
 		slot?: EventSlot;
-		event: EventTypeFromDSO;
+		event: EventType;
 	}>;
 	updateSignUp(
 		data: UpdateToConfirmedSignUpData | UpdateToInactiveSignUpData,
 	): Promise<{
 		signUp: EventSignUp;
 		slot?: EventSlot;
-		event: EventTypeFromDSO;
+		event: EventType;
 	}>;
 	findManySlots(data: { gradeYear?: number; eventId: string }): Promise<
 		EventSlot[]
 	>;
-	getCategories(): Promise<Category[]>;
-	createCategory(data: { name: string }): Promise<Category>;
-	updateCategory(data: Category): Promise<Category>;
-	deleteCategory(data: { id: string }): Promise<Category>;
+	getCategories(): Promise<CategoryType[]>;
+	createCategory(data: { name: string }): Promise<CategoryType>;
+	updateCategory(data: CategoryType): Promise<CategoryType>;
+	deleteCategory(data: { id: string }): Promise<CategoryType>;
 }
 
-export interface UserService {
+interface UserService {
 	get(id: string): Promise<User>;
 }
 
-export interface PermissionService {
+interface PermissionService {
 	hasRole(data: {
 		userId?: string;
 		organizationId: string;
@@ -142,7 +135,7 @@ export interface PermissionService {
 	isSuperUser(userId: string | undefined): Promise<{ isSuperUser: boolean }>;
 }
 
-export interface ProductService {
+interface ProductService {
 	products: {
 		create(
 			ctx: Context,
@@ -159,7 +152,7 @@ export interface ProductService {
 	};
 }
 
-type CreateBasicEventData = {
+type BaseCreateEventFields = {
 	name: string;
 	description?: string | null;
 	startAt: Date;
@@ -167,40 +160,51 @@ type CreateBasicEventData = {
 	contactEmail?: string | null;
 	location?: string | null;
 	organizationId: string;
-};
-
-type CreateSignUpEventData = CreateBasicEventData & {
+	capacity?: number | null;
+	signUpsStartAt?: Date | null;
+	signUpsEndAt?: Date | null;
 	signUpsEnabled?: boolean | null;
-	signUpDetails: {
-		capacity: number;
-		slots: { capacity: number; gradeYears?: number[] | null }[];
-		signUpsStartAt: Date;
-		signUpsEndAt: Date;
-	};
-};
-
-type CreateTicketEventData = CreateSignUpEventData & {
-	price: { value: number; merchantId: string };
 };
 
 type CreateBasicEventParams = {
-	type: typeof EventTypes.BASIC;
-	data: CreateBasicEventData;
+	type: typeof EventTypeEnum.BASIC;
+	event: BaseCreateEventFields & {
+		capacity?: undefined | null;
+		signUpsStartAt?: undefined | null;
+		signUpsEndAt?: undefined | null;
+	};
+	slots?: undefined;
+	tickets?: undefined;
 };
+
 type CreateSignUpEventParams = {
-	type: typeof EventTypes.SIGN_UPS;
-	data: CreateSignUpEventData;
+	type: typeof EventTypeEnum.SIGN_UPS;
+	event: BaseCreateEventFields & {
+		capacity: number;
+		signUpsStartAt: Date;
+		signUpsEndAt: Date;
+	};
+	slots: { capacity: number; gradeYears?: number[] | null }[];
+	tickets?: undefined;
 };
+
 type CreateTicketEventParams = {
-	type: typeof EventTypes.TICKETS;
-	data: CreateTicketEventData;
+	type: typeof EventTypeEnum.TICKETS;
+	event: BaseCreateEventFields & {
+		capacity: number;
+		signUpsStartAt: Date;
+		signUpsEndAt: Date;
+	};
+	slots: { capacity: number; gradeYears?: number[] | null }[];
+	tickets: { price: number; merchantId: string };
 };
-export type CreateEventParams =
+
+type CreateEventParams =
 	| CreateBasicEventParams
 	| CreateSignUpEventParams
 	| CreateTicketEventParams;
 
-export class EventService {
+class EventService {
 	constructor(
 		private eventRepository: EventRepository,
 		private permissionService: PermissionService,
@@ -211,14 +215,16 @@ export class EventService {
 
 	async create(
 		ctx: Context,
-		{ type, data }: CreateEventParams,
+		params: CreateEventParams,
 	): ResultAsync<
-		{ event: EventTypeFromDSO },
+		{ event: EventType; slots?: SlotType[] },
 		InternalServerError | InvalidArgumentError | PermissionDeniedError
 	> {
+		const { event: eventData, slots: slotData, tickets, type } = params;
+
 		const isMember = await this.permissionService.hasRole({
 			userId: ctx.user?.id,
-			organizationId: data.organizationId,
+			organizationId: eventData.organizationId,
 			role: Role.MEMBER,
 		});
 
@@ -230,29 +236,39 @@ export class EventService {
 				),
 			};
 		}
-
-		let result: NewEventReturnType;
-		switch (type) {
-			case EventTypes.SIGN_UPS: {
-				result = Event.new({ type: EventTypes.SIGN_UPS, data });
-				break;
-			}
-			case EventTypes.BASIC: {
-				result = Event.new({ type: EventTypes.BASIC, data });
-				if (result.ok) {
-					result.data.event;
+		const slots: SlotType[] = [];
+		if (slotData) {
+			for (const data of slotData) {
+				const slotResult = Slot.new(data);
+				if (!slotResult.ok) {
+					return {
+						ok: false,
+						error: new InvalidArgumentError(
+							"Invalid slot parameters",
+							slotResult.error,
+						),
+					};
 				}
-				break;
+				slots.push(slotResult.data.slot);
 			}
-			case EventTypes.TICKETS: {
-				const { price, ...eventDataWithoutPrice } = data;
+		}
+
+		let result: Result<{ event: EventType; slots?: SlotType }>;
+		switch (type) {
+			case "BASIC":
+				result = Event.new({ type: "BASIC", event: eventData });
+				break;
+			case "SIGN_UPS":
+				result = Event.new({ type: "SIGN_UPS", event: eventData });
+				break;
+			case "TICKETS": {
 				const createProductResult = await this.productService.products.create(
 					ctx,
 					{
-						price: price.value,
-						merchantId: price.merchantId,
-						name: data.name,
-						description: `Billetter til ${data.name}`,
+						price: tickets.price,
+						merchantId: tickets.merchantId,
+						name: eventData.name,
+						description: `Billetter til ${eventData.name}`,
 					},
 				);
 				if (!createProductResult.ok) {
@@ -273,12 +289,12 @@ export class EventService {
 						),
 					};
 				}
-
 				result = Event.new({
-					type: EventTypes.TICKETS,
-					data: merge(eventDataWithoutPrice, {
+					type: "TICKETS",
+					event: {
+						...eventData,
 						productId: createProductResult.data.product.id,
-					}),
+					},
 				});
 				break;
 			}
@@ -295,11 +311,20 @@ export class EventService {
 					),
 				};
 			}
-			return result;
+			return {
+				ok: false,
+				error: new InternalServerError(
+					"Unexpected error in event constructor",
+					error,
+				),
+			};
 		}
 
 		const { event } = result.data;
-		const createEventResult = await this.eventRepository.create(event);
+		const createEventResult = await this.eventRepository.create(ctx, {
+			event,
+			slots,
+		});
 		if (!createEventResult.ok) {
 			const { error } = createEventResult;
 			if (error.name === "InvalidArgumentError") {
@@ -316,70 +341,8 @@ export class EventService {
 				error: new InternalServerError("Unexpected error in repository", error),
 			};
 		}
-		const { event: createdEvent } = createEventResult.data;
-		return { ok: true, data: { event: createdEvent } };
-	}
-
-	private validateUpdateSignUpDetails(
-		data: Partial<SignUpDetails>,
-		existingEvent: EventType & { slots: EventSlot[] },
-	): SignUpDetails {
-		const changingStartAt = data.signUpsStartAt !== undefined;
-		const changingEndAt = data.signUpsEndAt !== undefined;
-
-		const schema = z.object({
-			signUpsEnabled: z.boolean(),
-			capacity: z.number().int().min(0),
-			slots: z.array(z.object({ capacity: z.number().int().min(0) })),
-			signUpsStartAt: z.date(),
-			signUpsEndAt: z.date(),
-		});
-
-		if (existingEvent.type === "BASIC") {
-			return schema.parse(merge({}, data));
-		}
-
-		if (changingStartAt || changingEndAt) {
-			return schema
-				.extend({
-					signUpsStartAt: z.date(),
-					signUpsEndAt: z.date().min(new Date()),
-				})
-				.refine((data) => data.signUpsEndAt > data.signUpsStartAt, {
-					message: "Sign ups end date must be after sign ups start date",
-					path: ["signUpsEndAt"],
-				})
-				.parse(merge({}, existingEvent.signUpDetails, data));
-		}
-		return schema.parse(merge({}, existingEvent.signUpDetails, data));
-	}
-
-	private validateUpdateEventData(
-		data: Partial<EventData>,
-		existingEvent: EventType,
-	): Partial<EventData> {
-		const changingStartAt = data.startAt !== undefined;
-		const changingEndAt = data.endAt !== undefined;
-		const schema = z.object({
-			name: z.string().min(1).max(100).optional(),
-			description: z.string().max(10_000).optional(),
-			location: z.string().max(100).optional(),
-			contactEmail: z.string().email().optional(),
-		});
-
-		if (changingStartAt || changingEndAt) {
-			return schema
-				.extend({
-					startAt: z.date().min(new Date()),
-					endAt: z.date().min(new Date()),
-				})
-				.refine((data) => data.endAt > data.startAt, {
-					message: "End date must be after start date",
-					path: ["endAt"],
-				})
-				.parse(merge({}, existingEvent, data));
-		}
-		return schema.parse(merge({}, existingEvent, data));
+		const { event: createdEvent, slots: createdSlots } = createEventResult.data;
+		return { ok: true, data: { event: createdEvent, slots: createdSlots } };
 	}
 
 	/**
@@ -387,71 +350,149 @@ export class EventService {
 	 * If capacity is changed, the remaining capacity of the event will be updated to reflect the change.
 	 *
 	 * @throws {InvalidCapacityError} if the new capacity is less than the number of confirmed sign ups
-	 * @param userId - The ID of the user that is updating the event
-	 * @param eventId - The ID of the event to update
-	 * @param data - The data to update the event with
+	 * @param ctx - The context of the request
+	 * @param params - The event to update, and the slots to create, update, and delete
 	 * @returns the updated event
 	 */
 	async update(
-		userId: string,
-		eventId: string,
-		data: {
-			name?: string;
-			description?: string;
-			startAt?: Date;
-			endAt?: Date;
-			location?: string;
+		ctx: Context,
+		params: {
+			event: EventUpdateFields & { id: string };
+			slots?: {
+				create?: NewSlotParams[];
+				update?: UpdateSlotFields[];
+				delete?: string[];
+			};
 		},
-		signUpDetails?: Partial<{
-			signUpsEnabled: boolean;
-			capacity: number;
-			slots: { capacity: number }[];
-			signUpsStartAt: Date;
-			signUpsEndAt: Date;
-		}>,
-	): Promise<EventTypeFromDSO> {
-		const event = await this.eventRepository.getWithSlots(eventId);
-		if (!event.organizationId) {
-			throw new InvalidArgumentError(
-				"Events that belong to deleted organizations cannot be updated.",
-			);
-		}
+	): ResultAsync<{ event: EventType; slots?: SlotType[] }> {
+		const updateResult = await this.eventRepository.update(
+			ctx,
+			params.event.id,
+			async ({ event, slots }) => {
+				if (event.organizationId === null) {
+					return {
+						ok: false,
+						error: new InvalidArgumentError(
+							"Event must belong to an organization",
+						),
+					};
+				}
+				const isMember = await this.permissionService.hasRole({
+					userId: ctx.user?.id,
+					organizationId: event.organizationId,
+					role: Role.MEMBER,
+				});
 
-		const isMember = await this.permissionService.hasRole({
-			userId,
-			organizationId: event.organizationId,
-			role: Role.MEMBER,
-		});
+				if (isMember !== true) {
+					return {
+						ok: false,
+						error: new PermissionDeniedError(
+							"You do not have permission to update this event",
+						),
+					};
+				}
 
-		if (isMember !== true) {
-			throw new PermissionDeniedError(
-				"You do not have permission to update this event.",
-			);
-		}
-		try {
-			let validatedSignUpDetails: SignUpDetails | undefined = undefined;
-			if (signUpDetails) {
-				validatedSignUpDetails = this.validateUpdateSignUpDetails(
-					signUpDetails,
-					event,
+				const updateEventResult = Event.update({
+					previous: { event },
+					data: params,
+				});
+				if (!updateEventResult.ok) {
+					return {
+						ok: false,
+						error: new InvalidArgumentError(
+							"Invalid event update parameters",
+							updateEventResult.error,
+						),
+					};
+				}
+
+				const updatedEvent = updateEventResult.data.event;
+				const slotsToUpdate: SlotType[] = [];
+				const slotsToDelete: SlotType[] = [];
+				const slotsToCreate: SlotType[] = [];
+				const existingSlotsById = Object.fromEntries(
+					slots?.map((s) => [s.id, s]) ?? [],
 				);
-			}
 
-			const validatedEvent: Partial<EventData> = this.validateUpdateEventData(
-				data,
-				event,
-			);
-			const updated = await this.eventRepository.update(
-				eventId,
-				validatedEvent,
-				validatedSignUpDetails,
-			);
-			return updated;
-		} catch (err) {
-			if (err instanceof z.ZodError)
-				throw new InvalidArgumentError(err.message);
-			throw err;
+				if (params.slots?.create) {
+					for (const slotData of params.slots.create) {
+						const slotResult = Slot.new(slotData);
+						if (!slotResult.ok) {
+							return {
+								ok: false,
+								error: new InvalidArgumentError(
+									"Invalid slot parameters",
+									slotResult.error,
+								),
+							};
+						}
+						slotsToCreate.push(slotResult.data.slot);
+					}
+				}
+
+				if (params.slots?.update) {
+					for (const slotData of params.slots.update) {
+						const previousSlot = existingSlotsById[slotData.id];
+						if (!previousSlot) {
+							return {
+								ok: false,
+								error: new InvalidArgumentError("Slot to update not found"),
+							};
+						}
+						const slotResult = Slot.update({
+							previous: previousSlot,
+							data: slotData,
+						});
+						if (!slotResult.ok) {
+							return {
+								ok: false,
+								error: new InvalidArgumentError(
+									"Invalid slot update parameters",
+									slotResult.error,
+								),
+							};
+						}
+						slotsToUpdate.push(slotResult.data.slot);
+					}
+				}
+
+				if (params.slots?.delete) {
+					for (const slotId of params.slots.delete) {
+						const slotToDelete = existingSlotsById[slotId];
+						if (!slotToDelete) {
+							return {
+								ok: false,
+								error: new InvalidArgumentError("Slot to delete not found"),
+							};
+						}
+						slotsToDelete.push(slotToDelete);
+					}
+				}
+
+				return {
+					ok: true,
+					data: {
+						event: updatedEvent,
+						slots: {
+							create: slotsToCreate,
+							update: slotsToUpdate,
+							delete: slotsToDelete,
+						},
+					},
+				};
+			},
+		);
+
+		if (!updateResult.ok) {
+			return {
+				ok: false,
+				error: new InternalServerError(
+					"Unexpected error when updating event",
+					updateResult.error,
+				),
+			};
 		}
+		return { ok: true, data: updateResult.data };
 	}
 
 	/**
@@ -490,12 +531,12 @@ export class EventService {
 			);
 			// Fetch the event to check if it has available slots or not
 			const event = await this.eventRepository.get(eventId);
-			if (!this.areSignUpsAvailable(event)) {
+			if (!Event.areSignUpsAvailable(event)) {
 				throw new InvalidArgumentError("Cannot sign up for the event.");
 			}
 
 			// If there is no remaining capacity on the event, it doesn't matter if there is any remaining capacity in slots.
-			if (event.signUpDetails.remainingCapacity <= 0) {
+			if (event.remainingCapacity <= 0) {
 				ctx.log.info({ event }, "Event is full, adding user to wait list.");
 				const { signUp } = await this.eventRepository.createSignUp({
 					userId,
@@ -531,7 +572,7 @@ export class EventService {
 					{ signUp, attempt },
 					"Successfully signed up user for event.",
 				);
-				if (event.type === EventTypes.TICKETS) {
+				if (event.type === EventTypeEnum.TICKETS) {
 					const orderResult = await this.productService.orders.create(ctx, {
 						productId: event.productId,
 					});
@@ -569,7 +610,7 @@ export class EventService {
 	 * @param id - The ID of the event to get
 	 * @returns The event with the specified ID
 	 */
-	async get(id: string): Promise<EventTypeFromDSO> {
+	async get(id: string): Promise<EventType> {
 		return await this.eventRepository.get(id);
 	}
 
@@ -579,9 +620,7 @@ export class EventService {
 	 * @params data.onlyFutureEvents - If true, only future events that have an `endAt` in the future will be returned
 	 * @returns All events
 	 */
-	async findMany(data?: { onlyFutureEvents?: boolean }): Promise<
-		EventTypeFromDSO[]
-	> {
+	async findMany(data?: { onlyFutureEvents?: boolean }): Promise<EventType[]> {
 		if (!data) {
 			return await this.eventRepository.findMany();
 		}
@@ -607,11 +646,11 @@ export class EventService {
 		eventId: string,
 	): Promise<EventSignUp | null> {
 		const event = await this.eventRepository.get(eventId);
-		if (!event.signUpsEnabled) {
+		if (event.type === EventTypeEnum.BASIC) {
 			throw new InvalidArgumentError("This event does does not have sign ups.");
 		}
 
-		if (event.signUpDetails.remainingCapacity <= 0) {
+		if (event.remainingCapacity <= 0) {
 			throw new InvalidArgumentError("This event is full.");
 		}
 
@@ -783,8 +822,8 @@ export class EventService {
 	async canSignUpForEvent(userId: string, eventId: string): Promise<boolean> {
 		const event = await this.eventRepository.get(eventId);
 
-		if (!this.areSignUpsAvailable(event)) return false;
-		if (event.signUpDetails.remainingCapacity <= 0) return false;
+		if (!Event.areSignUpsAvailable(event)) return false;
+		if (event.remainingCapacity <= 0) return false;
 
 		try {
 			const signUp = await this.eventRepository.getSignUp(userId, eventId);
@@ -802,28 +841,12 @@ export class EventService {
 		return slot !== null;
 	}
 
-	/**
-	 * areSignUpsAvailable returns true if sign ups are available for the event, i.e.
-	 * if sign ups are enabled, and the current time is between the start and end date for sign ups.
-	 */
-	private areSignUpsAvailable(
-		event: EventType,
-	): event is SignUpEvent | TicketEvent {
-		if (event.type === EventTypes.BASIC) return false;
-		if (!event.signUpsEnabled) return false;
-		if (event.signUpDetails.signUpsStartAt > DateTime.now().toJSDate())
-			return false;
-		if (event.signUpDetails.signUpsEndAt < DateTime.now().toJSDate())
-			return false;
-		return true;
-	}
-
 	async getSignUpAvailability(
 		userId: string | undefined,
 		eventId: string,
-	): Promise<keyof typeof signUpAvailability> {
+	): Promise<SignUpAvailability> {
 		const event = await this.eventRepository.getWithSlots(eventId);
-		if (!isSignUpEvent(event)) return signUpAvailability.DISABLED;
+		if (!Event.isSignUpEvent(event)) return signUpAvailability.DISABLED;
 
 		/**
 		 * User is not signed in
@@ -853,19 +876,18 @@ export class EventService {
 		/**
 		 * Event sign ups have not opened yet
 		 */
-		if (event.signUpDetails.signUpsStartAt > DateTime.now().toJSDate())
+		if (event.signUpsStartAt > DateTime.now().toJSDate())
 			return signUpAvailability.NOT_OPEN;
 		/**
 		 * Event sign ups have closed
 		 */
-		if (event.signUpDetails.signUpsEndAt < DateTime.now().toJSDate())
+		if (event.signUpsEndAt < DateTime.now().toJSDate())
 			return signUpAvailability.CLOSED;
 
 		/**
 		 * The event is full
 		 */
-		if (!event.signUpDetails.remainingCapacity)
-			return signUpAvailability.WAITLIST_AVAILABLE;
+		if (!event.remainingCapacity) return signUpAvailability.WAITLIST_AVAILABLE;
 
 		const slotWithRemainingCapacity =
 			await this.eventRepository.getSlotWithRemainingCapacity(
@@ -887,7 +909,7 @@ export class EventService {
 	public async createCategory(
 		ctx: Context,
 		data: { name: string },
-	): Promise<Category> {
+	): Promise<CategoryType> {
 		const { isSuperUser } = await this.permissionService.isSuperUser(
 			ctx.user?.id,
 		);
@@ -910,7 +932,10 @@ export class EventService {
 		}
 	}
 
-	public async updateCategory(ctx: Context, data: Category): Promise<Category> {
+	public async updateCategory(
+		ctx: Context,
+		data: CategoryType,
+	): Promise<CategoryType> {
 		const { isSuperUser } = await this.permissionService.isSuperUser(
 			ctx.user?.id,
 		);
@@ -937,7 +962,7 @@ export class EventService {
 	public async deleteCategory(
 		ctx: Context,
 		data: { id: string },
-	): Promise<Category> {
+	): Promise<CategoryType> {
 		const { isSuperUser } = await this.permissionService.isSuperUser(
 			ctx.user?.id,
 		);
@@ -960,7 +985,7 @@ export class EventService {
 		}
 	}
 
-	public getCategories(_ctx: Context): Promise<Category[]> {
+	public getCategories(_ctx: Context): Promise<CategoryType[]> {
 		return this.eventRepository.getCategories();
 	}
 

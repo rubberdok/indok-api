@@ -5,7 +5,7 @@ import { DateTime } from "luxon";
 import { InvalidArgumentError } from "~/domain/errors.js";
 import { type User, newUserFromDSO } from "~/domain/users.js";
 import prisma from "~/lib/prisma.js";
-import { makeMockContext } from "~/services/context.js";
+import { makeMockContext } from "~/lib/context.js";
 import type { EventService } from "../../service.js";
 import { makeDependencies } from "./dependencies-factory.js";
 

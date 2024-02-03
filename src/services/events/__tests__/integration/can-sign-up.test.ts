@@ -3,7 +3,7 @@ import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
 import prisma from "~/lib/prisma.js";
-import { makeMockContext } from "~/services/context.js";
+import { makeMockContext } from "~/lib/context.js";
 import type { EventService } from "../../service.js";
 import {
 	makeDependencies,

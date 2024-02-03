@@ -26,7 +26,7 @@ import type {
 	Category,
 	EventTypeFromDSO,
 	SignUpAvailability,
-} from "~/domain/events.js";
+} from "~/domain/events/event.js";
 import type { Role } from "~/domain/organizations.js";
 import type { OrderType, ProductType } from "~/domain/products.js";
 import type { StudyProgram, User } from "~/domain/users.js";
@@ -40,7 +40,7 @@ import { UserRepository } from "~/repositories/users/index.js";
 import { feideClient } from "~/services/auth/clients.js";
 import { AuthService } from "~/services/auth/service.js";
 import { CabinService } from "~/services/cabins/service.js";
-import type { Context } from "~/services/context.js";
+import type { Context } from "~/lib/context.js";
 import {
 	type CreateEventParams,
 	EventService,

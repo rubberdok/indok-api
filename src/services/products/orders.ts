@@ -1,7 +1,7 @@
 import { NotFoundError, UnauthorizedError } from "~/domain/errors.js";
 import type { OrderType } from "~/domain/products.js";
 import type { ResultAsync } from "~/lib/result.js";
-import type { Context } from "../context.js";
+import type { Context } from "../../lib/context.js";
 import type { BuildProductsDependencies } from "./service.js";
 
 function buildOrders({ productRepository }: BuildProductsDependencies) {

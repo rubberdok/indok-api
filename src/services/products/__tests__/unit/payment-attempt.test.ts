@@ -7,7 +7,7 @@ import type {
 	ProductType,
 } from "~/domain/products.js";
 import type { User } from "~/domain/users.js";
-import { makeMockContext } from "~/services/context.js";
+import { makeMockContext } from "~/lib/context.js";
 import { makeDependencies } from "./dependencies.js";
 
 describe("ProductService", () => {

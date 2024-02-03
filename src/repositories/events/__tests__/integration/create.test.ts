@@ -1,7 +1,7 @@
 import assert from "assert";
 import { faker } from "@faker-js/faker";
 import { DateTime } from "luxon";
-import { Event } from "~/domain/events.js";
+import { Event } from "~/domain/events/event.js";
 import prisma from "~/lib/prisma.js";
 import { EventRepository } from "../../repository.js";
 

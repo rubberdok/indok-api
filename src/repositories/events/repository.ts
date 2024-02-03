@@ -3,11 +3,11 @@ import {
 	type EventSignUp,
 	type EventSlot,
 	ParticipationStatus,
-	type Prisma,
 	type PrismaClient,
 	type PrismaPromise,
 	type Product,
 } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 import { merge } from "lodash-es";
 import {
@@ -17,19 +17,18 @@ import {
 } from "~/domain/errors.js";
 import {
 	AlreadySignedUpError,
-	type BasicEvent,
-	type Category,
 	Event,
-	type EventTypeFromDSO,
 	InvalidCapacityError,
-	type SignUpEventFromDSO,
-	type TicketEventFromDSO,
-	type TicketEvent,
-	type SignUpEvent,
-} from "~/domain/events.js";
+} from "~/domain/events/event.js";
+import type {
+	SlotType,
+	EventType,
+	EventUpdateFn,
+} from "~/domain/events/index.js";
+
 import { prismaKnownErrorCodes } from "~/lib/prisma.js";
 import type { Result, ResultAsync } from "~/lib/result.js";
-import type { Context } from "../context.js";
+import type { Context } from "~/lib/context.js";
 
 export class EventRepository {
 	constructor(private db: PrismaClient) {}
@@ -38,12 +37,21 @@ export class EventRepository {
 	 * Create a new event.
 	 */
 	async create(
-		event: BasicEvent | TicketEvent | SignUpEvent,
+		_ctx: Context,
+		params: { event: EventType; slots?: SlotType[] },
 	): ResultAsync<
-		{ event: EventTypeFromDSO },
+		{ event: EventType; slots?: SlotType[] },
 		InternalServerError | InvalidArgumentError
 	> {
+		const { event, slots } = params;
 		const {
+			id,
+			version,
+			capacity,
+			remainingCapacity,
+			productId,
+			signUpsEndAt,
+			signUpsStartAt,
 			name,
 			description,
 			type,
@@ -55,107 +63,59 @@ export class EventRepository {
 			startAt,
 			categories,
 		} = event;
-		let createInput: Prisma.EventCreateInput = {
-			name,
-			description,
-			type,
-			contactEmail,
-			endAt,
-			location,
-			organization: {
-				connect: {
-					id: organizationId,
-				},
-			},
-			signUpsEnabled,
-			startAt,
-			categories: {
-				connect: categories?.map((category) => ({
-					id: category.id,
-				})),
-			},
-		};
 
-		if (event.type === "SIGN_UPS") {
-			const {
-				signUpsStartAt,
-				signUpsEndAt,
-				capacity,
-				remainingCapacity,
-				slots,
-			} = event.signUpDetails;
-			createInput = merge<
-				Partial<Prisma.EventCreateInput>,
-				Prisma.EventCreateInput
-			>(
-				{
+		let createManySlots:
+			| Prisma.EventSlotCreateManyEventInputEnvelope
+			| undefined = undefined;
+		if (slots) {
+			createManySlots = {
+				data: slots.map((slot) => ({
+					id: slot.id,
+					version: slot.version,
+					remainingCapacity: slot.remainingCapacity,
+					capacity: slot.capacity,
+					gradeYears: slot.gradeYears,
+				})),
+			};
+		}
+		try {
+			const dbEvent = await this.db.event.create({
+				data: {
+					id,
+					version,
+					name,
+					description,
+					type,
+					contactEmail,
+					endAt,
+					location,
+					organizationId,
+					signUpsEnabled,
+					startAt,
+					categories: {
+						connect: categories?.map((category) => ({
+							id: category.id,
+						})),
+					},
 					signUpsEndAt,
 					signUpsStartAt,
 					capacity,
 					remainingCapacity,
+					productId,
 					slots: {
-						createMany: {
-							data: slots.map((slot) => ({
-								remainingCapacity: slot.remainingCapacity,
-								capacity: slot.capacity,
-								gradeYears: slot.gradeYears,
-							})),
-						},
+						createMany: createManySlots,
 					},
 				},
-				createInput,
-			);
-		}
-
-		if (event.type === "TICKETS") {
-			const { productId } = event;
-			createInput = merge<
-				Partial<Prisma.EventCreateInput>,
-				Prisma.EventCreateInput
-			>(
-				{
-					product: {
-						connect: {
-							id: productId,
-						},
-					},
-				},
-				createInput,
-			);
-		}
-		try {
-			const createdEvent = await this.db.event.create({
-				include: {
-					categories: true,
-					slots: true,
-					product: true,
-				},
-				data: createInput,
 			});
-			const res = Event.fromDataStorage(createdEvent);
-			if (!res.ok) {
-				return {
-					ok: false,
-					error: new InternalServerError(
-						"Failed to convert event from data storage after creation",
-						res.error,
-					),
-				};
-			}
-			return {
-				ok: true,
-				data: {
-					event: res.data.event,
-				},
-			};
-		} catch (error) {
-			if (error instanceof PrismaClientKnownRequestError) {
-				if (error.code === prismaKnownErrorCodes.ERR_NOT_FOUND) {
+			return Event.fromDataStorage(dbEvent);
+		} catch (err) {
+			if (err instanceof PrismaClientKnownRequestError) {
+				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) {
 					return {
 						ok: false,
 						error: new InvalidArgumentError(
 							"Related entity not found when creating a new event",
-							error,
+							err,
 						),
 					};
 				}
@@ -164,7 +124,7 @@ export class EventRepository {
 				ok: false,
 				error: new InternalServerError(
 					"Unexpected error when creating a new event",
-					error,
+					err,
 				),
 			};
 		}
@@ -182,17 +142,65 @@ export class EventRepository {
 	 * @returns The updated event
 	 */
 	async update(
-		event: EventTypeFromDSO,
-	): Promise<ResultAsync<{ event: EventTypeFromDSO }>> {
-		const previousEvent = await this.get(event.id);
-		switch (previousEvent.type) {
-			case "BASIC":
-				return this.updateBasicEvent(event);
-			case "SIGN_UPS":
-				return this.updateSignUpEvent(previousEvent, event);
-			case "TICKETS":
-				return this.updateTicketEvent(previousEvent, event);
-		}
+		_ctx: Context,
+		id: string,
+		updateFn: EventUpdateFn,
+	): ResultAsync<{ event: EventType }, InternalServerError> {
+		const updatedEvent = await this.db.$transaction(async (tx) => {
+			const event = await this.get(id);
+			const updateEventResult = await updateFn(event);
+			if (!updateEventResult.ok) {
+				throw updateEventResult.error;
+			}
+			const { event: newEvent, slots } = updateEventResult.data;
+			const { id: _, categories, ...data } = newEvent;
+			let createManySlots: Prisma.EventSlotCreateManyEventInputEnvelope = {
+				data: [],
+			};
+			if (slots?.create) {
+				createManySlots = {
+					data: slots.create.map((slot) => ({
+						remainingCapacity: slot.remainingCapacity,
+						capacity: slot.capacity,
+						gradeYears: slot.gradeYears,
+					})),
+				};
+			}
+
+			const updatedEvent = await tx.event.update({
+				where: {
+					id,
+				},
+				data: {
+					...data,
+					categories: {
+						set: categories?.map((category) => ({
+							id: category.id,
+						})),
+					},
+					slots: {
+						createMany: createManySlots,
+						deleteMany: slots?.delete?.map((slot) => ({
+							id: slot.id,
+							version: slot.version,
+						})),
+						updateMany: slots?.update?.map((slot) => ({
+							where: {
+								id: slot.id,
+							},
+							data: {
+								remainingCapacity: slot.remainingCapacity,
+								capacity: slot.capacity,
+								gradeYears: slot.gradeYears,
+								version: slot.version,
+							},
+						})),
+					},
+				},
+			});
+			return updatedEvent;
+		});
+		return Event.fromDataStorage(updatedEvent);
 	}
 
 	/**
@@ -200,10 +208,8 @@ export class EventRepository {
 	 */
 	async updateBasicEvent(
 		ctx: Context,
-		updateEventFn: (
-			event: EventTypeFromDSO,
-		) => ResultAsync<{ event: EventTypeFromDSO }>,
-	): ResultAsync<{ event: EventTypeFromDSO }> {
+		updateEventFn: (event: EventType) => ResultAsync<{ event: EventType }>,
+	): ResultAsync<{ event: EventType }> {
 		const { id, categories, version, ...data } = newEvent;
 		let eventUpdateInput: Prisma.EventUpdateInput = {
 			categories: {
@@ -1568,36 +1574,4 @@ interface UpdateToInactiveSignUpData {
 	newParticipationStatus: Extract<ParticipationStatus, "REMOVED" | "RETRACTED">;
 }
 
-interface UpdateSignUpData {
-	signUpsEnabled: boolean;
-	signUpsStartAt: Date;
-	signUpsEndAt: Date;
-	capacity: number;
-	slots: {
-		id?: string;
-		gradeYears?: number[];
-		capacity: number;
-	}[];
-}
-
-interface EventData {
-	name: string;
-	startAt: Date;
-	endAt: Date;
-	organizationId: string;
-	contactEmail: string;
-	description?: string;
-	location?: string;
-	categories?: string[];
-}
-
-interface SignUpData {
-	signUpsEnabled: boolean;
-	signUpsStartAt: Date;
-	signUpsEndAt: Date;
-	capacity: number;
-	slots: {
-		capacity: number;
-		gradeYears?: number[];
-	}[];
-}
+export type { EventUpdateFn, EventUpdateFnReturn };

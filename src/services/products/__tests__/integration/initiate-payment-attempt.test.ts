@@ -5,7 +5,7 @@ import type { QueueEvents } from "bullmq";
 import { mockDeep } from "jest-mock-extended";
 import { newUserFromDSO } from "~/domain/users.js";
 import prisma from "~/lib/prisma.js";
-import { makeMockContext } from "~/services/context.js";
+import { makeMockContext } from "~/lib/context.js";
 import type { ProductServiceType } from "../../service.js";
 import type { PaymentProcessingQueueType } from "../../worker.js";
 import type { MockVippsClientFactory } from "../mock-vipps-client.js";

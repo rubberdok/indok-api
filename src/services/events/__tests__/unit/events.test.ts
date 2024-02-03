@@ -9,16 +9,10 @@ import {
 	InvalidArgumentError,
 	PermissionDeniedError,
 } from "~/domain/errors.js";
-import {
-	type EventSignUpDetails,
-	type EventType,
-	type EventTypeFromDSO,
-	EventTypes,
-} from "~/domain/events.js";
 import { Role } from "~/domain/organizations.js";
 import type { User } from "~/domain/users.js";
 import type { Result } from "~/lib/result.js";
-import { makeMockContext } from "~/services/context.js";
+import { makeMockContext } from "~/lib/context.js";
 import {
 	type CreateEventParams,
 	type EventRepository,
@@ -26,8 +20,12 @@ import {
 	type PermissionService,
 	type ProductService,
 	type UserService,
+	type CreateBasicEventParams,
+	type CreateSignUpEventParams,
+	type CreateTicketEventParams,
 } from "../../service.js";
 import type { SignUpQueueType } from "../../worker.js";
+import type { EventType } from "~/domain/events/index.js";
 
 function setup() {
 	const permissionService = mockDeep<PermissionService>();
@@ -50,91 +48,13 @@ function setup() {
 	};
 }
 
-function mockSignUpDetails(
-	data: Partial<EventSignUpDetails> = {},
-): EventSignUpDetails {
-	return {
-		signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-		signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
-		capacity: 10,
-		remainingCapacity: 10,
-		...data,
-	};
-}
-
-type DeepPartial<T> = T extends object
-	? {
-			[P in keyof T]?: DeepPartial<T[P]>;
-	  }
-	: T;
-
-function makeEventParams(
-	params: DeepPartial<CreateEventParams>,
-): CreateEventParams {
-	const { type, data } = params ?? {};
-	const baseData = {
-		name: faker.commerce.productName(),
-		description: faker.lorem.paragraph(),
-		startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-		endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
-		location: faker.location.streetAddress(),
-		contactEmail: faker.internet.email(),
-		organizationId: faker.string.uuid(),
-		signUpsEnabled: false,
-	} as const;
-
-	switch (type) {
-		case EventTypes.TICKETS: {
-			return {
-				type: EventTypes.TICKETS,
-				data: merge(
-					baseData,
-					{
-						signUpsEnabled: true,
-						price: {
-							value: 100,
-							merchantId: faker.string.uuid(),
-						},
-						signUpDetails: {
-							capacity: 0,
-							signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
-							signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-							slots: [{ capacity: 1 }],
-						},
-					},
-					data,
-				),
-			};
-		}
-		case EventTypes.SIGN_UPS: {
-			return {
-				type: EventTypes.SIGN_UPS,
-				data: merge(
-					baseData,
-					{
-						signUpsEnabled: true,
-						signUpDetails: {
-							capacity: 0,
-							signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
-							signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-							slots: [{ capacity: 1 }],
-						},
-					},
-					data,
-				),
-			};
-		}
-		default: {
-			return {
-				type: EventTypes.BASIC,
-				data: merge(baseData, data),
-			};
-		}
-	}
-}
-
-function makeEvent(data?: Partial<EventTypeFromDSO>): EventTypeFromDSO {
-	return merge<EventTypeFromDSO, Partial<EventTypeFromDSO> | undefined>(
+function makeBasicEventParams(
+	event?: Partial<CreateBasicEventParams["event"]>,
+): CreateBasicEventParams {
+	const basicEvent = merge<
+		CreateBasicEventParams["event"],
+		Partial<CreateBasicEventParams["event"]> | undefined
+	>(
 		{
 			name: faker.commerce.productName(),
 			description: faker.lorem.paragraph(),
@@ -144,47 +64,69 @@ function makeEvent(data?: Partial<EventTypeFromDSO>): EventTypeFromDSO {
 			contactEmail: faker.internet.email(),
 			organizationId: faker.string.uuid(),
 			signUpsEnabled: false,
-			signUpDetails: {
-				capacity: 1,
-				signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
-				signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-				remainingCapacity: 1,
-			},
-			id: faker.string.uuid(),
-			productId: faker.string.uuid(),
-			type: "TICKETS",
-			version: 0,
-			categories: [{ id: faker.string.uuid(), name: faker.word.adjective() }],
 		},
-		data,
+		event,
 	);
+	return {
+		event: basicEvent,
+		type: "BASIC",
+	};
 }
 
-function makeEventWithSlots(
-	data?: Partial<EventTypeFromDSO>,
-): EventTypeFromDSO & { slots: EventSlot[] } {
-	const event = makeEvent(data);
+function makeSignUpEventParams(
+	event?: Partial<CreateSignUpEventParams["event"]>,
+	slots?: CreateSignUpEventParams["slots"],
+): CreateSignUpEventParams {
+	const { capacity, signUpsStartAt, signUpsEndAt, ...basicEventData } =
+		event ?? {};
+	const { event: basicEvent } = makeBasicEventParams(basicEventData);
+	const signUpEvent = {
+		...basicEvent,
+		signUpsEnabled: true,
+		signUpsStartAt:
+			signUpsStartAt ?? DateTime.now().plus({ days: 1 }).toJSDate(),
+		signUpsEndAt: signUpsEndAt ?? DateTime.now().plus({ days: 2 }).toJSDate(),
+		capacity: 1,
+	};
+	const slotData = slots ?? [{ capacity: 1 }];
+
 	return {
-		...event,
-		slots: [
-			mock<EventSlot>({
-				id: faker.string.uuid(),
-				capacity: 1,
-				eventId: event.id,
-				remainingCapacity: 1,
-			}),
-		],
+		type: "SIGN_UPS",
+		event: merge<
+			CreateSignUpEventParams["event"],
+			Partial<CreateSignUpEventParams["event"]> | undefined
+		>(signUpEvent, event),
+		slots: slotData,
+	};
+}
+
+function makeTicketEventParams(
+	data?: Partial<CreateTicketEventParams["event"]>,
+	slots?: CreateTicketEventParams["slots"],
+	tickets?: Partial<CreateTicketEventParams["tickets"]>,
+): CreateTicketEventParams {
+	const { event: signUpEvent, slots: signUpSlots } = makeSignUpEventParams(
+		data,
+		slots,
+	);
+	const ticketData = {
+		merchantId: faker.string.uuid(),
+		price: 100,
+		...tickets,
+	};
+	return {
+		type: "TICKETS",
+		event: signUpEvent,
+		slots: signUpSlots,
+		tickets: ticketData,
 	};
 }
 
 function makeReturnType(
 	result:
-		| { data: EventTypeFromDSO }
+		| { data: EventType }
 		| { error: InvalidArgumentError | InternalServerError },
-): Result<
-	{ event: EventTypeFromDSO },
-	InvalidArgumentError | InternalServerError
-> {
+): Result<{ event: EventType }, InvalidArgumentError | InternalServerError> {
 	if ("data" in result) {
 		return {
 			ok: true,
@@ -196,6 +138,22 @@ function makeReturnType(
 	return {
 		ok: false,
 		error: result.error,
+	};
+}
+
+function makeEvent(): EventType {
+	return {
+		id: faker.string.uuid(),
+		name: faker.commerce.productName(),
+		description: faker.lorem.paragraph(),
+		startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+		endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
+		location: faker.location.streetAddress(),
+		contactEmail: faker.internet.email(),
+		organizationId: faker.string.uuid(),
+		signUpsEnabled: false,
+		version: 0,
+		type: "BASIC",
 	};
 }
 
@@ -213,7 +171,7 @@ describe("EventsService", () => {
 					user: User | null;
 					role?: Role | null;
 					repository?: Result<
-						{ event: EventTypeFromDSO },
+						{ event: EventType },
 						InvalidArgumentError | InternalServerError
 					>;
 				};
@@ -231,7 +189,7 @@ describe("EventsService", () => {
 					act: {
 						user: makeUser(),
 						role: Role.MEMBER,
-						createEventParams: makeEventParams({ data: { name: "" } }),
+						createEventParams: makeBasicEventParams({ name: "" }),
 					},
 					assertion: {
 						return: makeReturnType({
@@ -246,8 +204,8 @@ describe("EventsService", () => {
 					act: {
 						user: makeUser(),
 						role: Role.MEMBER,
-						createEventParams: makeEventParams({
-							data: { startAt: DateTime.now().minus({ days: 1 }).toJSDate() },
+						createEventParams: makeBasicEventParams({
+							startAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 						}),
 					},
 					assertion: {
@@ -263,11 +221,9 @@ describe("EventsService", () => {
 					act: {
 						user: makeUser(),
 						role: Role.MEMBER,
-						createEventParams: makeEventParams({
-							data: {
-								startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-								endAt: DateTime.now().minus({ days: 2 }).toJSDate(),
-							},
+						createEventParams: makeBasicEventParams({
+							startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+							endAt: DateTime.now().minus({ days: 2 }).toJSDate(),
 						}),
 					},
 					assertion: {
@@ -283,11 +239,9 @@ describe("EventsService", () => {
 					act: {
 						user: makeUser(),
 						role: Role.MEMBER,
-						createEventParams: makeEventParams({
-							data: {
-								startAt: DateTime.now().plus({ days: 2 }).toJSDate(),
-								endAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-							},
+						createEventParams: makeBasicEventParams({
+							startAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+							endAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 						}),
 					},
 					assertion: {
@@ -303,8 +257,8 @@ describe("EventsService", () => {
 					act: {
 						user: makeUser(),
 						role: Role.MEMBER,
-						createEventParams: makeEventParams({
-							data: { description: faker.string.sample(10_001) },
+						createEventParams: makeBasicEventParams({
+							description: faker.string.sample(10_001),
 						}),
 					},
 					assertion: {
@@ -320,8 +274,8 @@ describe("EventsService", () => {
 					act: {
 						user: makeUser(),
 						role: Role.MEMBER,
-						createEventParams: makeEventParams({
-							data: { name: faker.string.sample(201) },
+						createEventParams: makeBasicEventParams({
+							name: faker.string.sample(201),
 						}),
 					},
 					assertion: {
@@ -337,20 +291,17 @@ describe("EventsService", () => {
 					act: {
 						user: makeUser(),
 						role: Role.MEMBER,
-						createEventParams: makeEventParams({
-							type: EventTypes.SIGN_UPS,
-							data: {
+						createEventParams: makeSignUpEventParams(
+							{
 								signUpsEnabled: true,
-								signUpDetails: {
-									capacity: -1,
-									slots: [{ capacity: 1 }],
-									signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-									signUpsEndAt: DateTime.now()
-										.plus({ days: 1, hours: 2 })
-										.toJSDate(),
-								},
+								capacity: -1,
+								signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+								signUpsEndAt: DateTime.now()
+									.plus({ days: 1, hours: 2 })
+									.toJSDate(),
 							},
-						}),
+							[{ capacity: 1 }],
+						),
 					},
 					assertion: {
 						return: makeReturnType({
@@ -365,20 +316,17 @@ describe("EventsService", () => {
 					act: {
 						user: makeUser(),
 						role: Role.MEMBER,
-						createEventParams: makeEventParams({
-							type: EventTypes.SIGN_UPS,
-							data: {
+						createEventParams: makeSignUpEventParams(
+							{
 								signUpsEnabled: true,
-								signUpDetails: {
-									capacity: 1,
-									slots: [{ capacity: -1 }],
-									signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-									signUpsEndAt: DateTime.now()
-										.plus({ days: 1, hours: 2 })
-										.toJSDate(),
-								},
+								capacity: 1,
+								signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+								signUpsEndAt: DateTime.now()
+									.plus({ days: 1, hours: 2 })
+									.toJSDate(),
 							},
-						}),
+							[{ capacity: -1 }],
+						),
 					},
 					assertion: {
 						return: makeReturnType({
@@ -393,20 +341,18 @@ describe("EventsService", () => {
 					act: {
 						user: makeUser(),
 						role: Role.MEMBER,
-						createEventParams: makeEventParams({
-							type: EventTypes.SIGN_UPS,
-							data: {
+						createEventParams: makeSignUpEventParams(
+							{
 								signUpsEnabled: true,
-								signUpDetails: {
-									capacity: 1,
-									slots: [{ capacity: 1 }],
-									signUpsStartAt: DateTime.now()
-										.plus({ days: 1, hours: 2 })
-										.toJSDate(),
-									signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-								},
+								capacity: 1,
+
+								signUpsStartAt: DateTime.now()
+									.plus({ days: 1, hours: 2 })
+									.toJSDate(),
+								signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 							},
-						}),
+							[{ capacity: 1 }],
+						),
 					},
 					assertion: {
 						return: makeReturnType({
@@ -421,7 +367,7 @@ describe("EventsService", () => {
 					act: {
 						user: makeUser(),
 						role: null,
-						createEventParams: makeEventParams({}),
+						createEventParams: makeBasicEventParams(),
 					},
 					assertion: {
 						return: makeReturnType({
@@ -436,7 +382,7 @@ describe("EventsService", () => {
 					act: {
 						user: makeUser(),
 						role: null,
-						createEventParams: makeEventParams({}),
+						createEventParams: makeBasicEventParams(),
 					},
 					assertion: {
 						return: makeReturnType({
@@ -451,7 +397,7 @@ describe("EventsService", () => {
 					act: {
 						user: makeUser(),
 						role: Role.MEMBER,
-						createEventParams: makeEventParams({ type: EventTypes.BASIC }),
+						createEventParams: makeBasicEventParams(),
 						repository: makeReturnType({
 							data: makeEvent(),
 						}),
@@ -506,7 +452,7 @@ describe("EventsService", () => {
 				name: string;
 				arrange: {
 					hasRole: boolean;
-					event: EventTypeFromDSO & { slots: EventSlot[] };
+					event: EventType & { slots: EventSlot[] };
 				};
 				act: {
 					event: Partial<{
@@ -773,7 +719,7 @@ describe("EventsService", () => {
 			interface TestCase {
 				name: string;
 				arrange: {
-					event: EventTypeFromDSO & { slots: EventSlot[] };
+					event: EventType & { slots: EventSlot[] };
 				};
 				act: {
 					event: Partial<{

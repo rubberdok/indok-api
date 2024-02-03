@@ -10,7 +10,7 @@ import {
 	UnauthorizedError,
 } from "~/domain/errors.js";
 import type { StudyProgram, User } from "~/domain/users.js";
-import type { Context } from "../context.js";
+import type { Context } from "../../lib/context.js";
 
 export interface OpenIDClient {
 	authorizationUrl(options: {

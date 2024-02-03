@@ -3,7 +3,7 @@ import assert from "assert";
 import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 import { merge, range } from "lodash-es";
-import { InvalidCapacityError } from "~/domain/events.js";
+import { InvalidCapacityError } from "~/domain/events/event.js";
 import prisma from "~/lib/prisma.js";
 import { EventRepository } from "../../repository.js";
 

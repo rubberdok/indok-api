@@ -1,4 +1,4 @@
-import { EventTypeFromDSO as EventMapper } from "~/domain/events.js";
+import { EventTypeFromDSO as EventMapper } from "~/domain/events/event.js";
 
 interface EventsResponseMapper {
 	events: EventMapper[];

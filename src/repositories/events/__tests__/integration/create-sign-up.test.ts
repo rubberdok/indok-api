@@ -3,7 +3,7 @@ import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
 import { type ErrorCode, errorCodes } from "~/domain/errors.js";
-import { AlreadySignedUpError } from "~/domain/events.js";
+import { AlreadySignedUpError } from "~/domain/events/event.js";
 import prisma from "~/lib/prisma.js";
 import { EventRepository } from "../../repository.js";
 
