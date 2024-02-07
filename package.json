@@ -45,7 +45,7 @@
 		"@eddeee888/gcg-typescript-resolver-files": "^0.7.2",
 		"@faker-js/faker": "^8.4.0",
 		"@graphql-codegen/add": "^5.0.2",
-		"@graphql-codegen/cli": "^5.0.0",
+		"@graphql-codegen/cli": "^5.0.2",
 		"@graphql-codegen/client-preset": "^4.2.2",
 		"@graphql-codegen/schema-ast": "^4.0.0",
 		"@graphql-codegen/typescript": "^4.0.4",
