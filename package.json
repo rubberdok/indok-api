@@ -89,7 +89,7 @@
 		"@prisma/client": "^5.9.1",
 		"@sentry/node": "^7.99.0",
 		"@sentry/tracing": "7.99.0",
-		"avvio": "^8.2.1",
+		"avvio": "^8.3.0",
 		"@vippsmobilepay/sdk": "^1.0.0",
 		"body-parser": "^1.20.2",
 		"bullmq": "^5.1.8",
