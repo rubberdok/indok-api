@@ -23,10 +23,11 @@ import {
 	type PermissionDeniedError,
 } from "~/domain/errors.js";
 import type {
-	Category,
-	EventTypeFromDSO,
+	CategoryType,
+	EventType,
 	SignUpAvailability,
-} from "~/domain/events/event.js";
+	SlotType,
+} from "~/domain/events/index.js";
 import type { Role } from "~/domain/organizations.js";
 import type { OrderType, ProductType } from "~/domain/products.js";
 import type { StudyProgram, User } from "~/domain/users.js";
@@ -59,6 +60,7 @@ import fastifyService from "./fastify/service.js";
 import { postmark } from "./postmark.js";
 import prisma from "./prisma.js";
 import type { Result, ResultAsync } from "./result.js";
+import type { UpdateEventParams } from "~/services/events/service.js";
 
 export interface IOrganizationService {
 	create(
@@ -191,25 +193,18 @@ export interface IEventService {
 		ctx: Context,
 		params: CreateEventParams,
 	): ResultAsync<
-		{ event: EventTypeFromDSO },
+		{ event: EventType; slots?: SlotType[] },
 		InvalidArgumentError | PermissionDeniedError | InternalServerError
 	>;
 	update(
-		userId: string,
-		id: string,
-		data: Partial<{
-			name: string | null;
-			description: string | null;
-			startAt: Date | null;
-			endAt: Date | null;
-			location: string | null;
-			capacity: number | null;
-		}>,
-	): Promise<EventTypeFromDSO>;
-	get(id: string): Promise<EventTypeFromDSO>;
-	findMany(data?: { onlyFutureEvents?: boolean | null }): Promise<
-		EventTypeFromDSO[]
+		ctx: Context,
+		params: UpdateEventParams,
+	): ResultAsync<
+		{ event: EventType; slots: SlotType[]; categories: CategoryType[] },
+		InvalidArgumentError | PermissionDeniedError | InternalServerError
 	>;
+	get(id: string): Promise<EventType>;
+	findMany(data?: { onlyFutureEvents?: boolean | null }): Promise<EventType[]>;
 	signUp(ctx: Context, userId: string, eventId: string): Promise<EventSignUp>;
 	retractSignUp(userId: string, eventId: string): Promise<EventSignUp>;
 	canSignUpForEvent(userId: string, eventId: string): Promise<boolean>;
@@ -217,10 +212,20 @@ export interface IEventService {
 		userId: string | undefined,
 		eventId: string,
 	): Promise<SignUpAvailability>;
-	createCategory(ctx: UserContext, data: { name: string }): Promise<Category>;
-	updateCategory(ctx: UserContext, data: Category): Promise<Category>;
-	getCategories(ctx: UserContext): Promise<Category[]>;
-	deleteCategory(ctx: UserContext, data: { id: string }): Promise<Category>;
+	createCategory(
+		ctx: UserContext,
+		data: { name: string },
+	): Promise<CategoryType>;
+	updateCategory(ctx: UserContext, data: CategoryType): Promise<CategoryType>;
+	getCategories(
+		ctx: UserContext,
+		by?: { eventId?: string },
+	): Promise<CategoryType[]>;
+	deleteCategory(ctx: UserContext, data: { id: string }): Promise<CategoryType>;
+	getSlots(
+		ctx: Context,
+		params: { eventId: string },
+	): ResultAsync<{ slots: SlotType[] }>;
 }
 
 export interface IListingService {

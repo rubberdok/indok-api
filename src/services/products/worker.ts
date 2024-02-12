@@ -7,7 +7,7 @@ import type { Result } from "~/lib/result.js";
 import type { Context } from "../../lib/context.js";
 
 type PaymentProcessingDataType = { reference: string };
-type PaymentProcessingResultType = Result<undefined>;
+type PaymentProcessingResultType = Result<Record<string, never>>;
 type PaymentProcessingNameType = "payment-processing";
 
 type PaymentProcessingWorkerType = Worker<
@@ -87,7 +87,7 @@ function getPaymentProcessingHandler({
 			log.info({ reference }, "Payment attempt updated");
 			return {
 				ok: true,
-				data: undefined,
+				data: {},
 			};
 		}
 		log.error(
