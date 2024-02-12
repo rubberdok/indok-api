@@ -1,8 +1,8 @@
 import {
 	InternalServerError,
 	type InvalidArgumentError,
-	UnauthorizedError,
 	NotFoundError,
+	UnauthorizedError,
 } from "~/domain/errors.js";
 import { Product, type ProductType } from "~/domain/products.js";
 import type { ResultAsync } from "~/lib/result.js";

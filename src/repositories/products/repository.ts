@@ -9,8 +9,8 @@ import {
 	type MerchantType,
 	Order,
 	type OrderType,
-	type PaymentAttemptType,
 	PaymentAttempt,
+	type PaymentAttemptType,
 	type ProductType,
 } from "~/domain/products.js";
 import { prismaKnownErrorCodes } from "~/lib/prisma.js";

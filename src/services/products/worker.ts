@@ -1,11 +1,11 @@
 import { type Processor, UnrecoverableError } from "bullmq";
 import type { Logger } from "pino";
 import type { InternalServerError, NotFoundError } from "~/domain/errors.js";
+import type { PaymentAttemptType } from "~/domain/products.js";
 import type { Queue } from "~/lib/bullmq/queue.js";
 import type { Worker } from "~/lib/bullmq/worker.js";
 import type { Result, ResultAsync } from "~/lib/result.js";
 import type { Context } from "../../lib/context.js";
-import type { PaymentAttemptType } from "~/domain/products.js";
 
 type PaymentProcessingDataType = { reference: string };
 type PaymentProcessingResultType = Result<
