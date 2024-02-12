@@ -362,6 +362,9 @@ export class ProductRepository {
 		return { product: created };
 	}
 
+	/**
+	 * findManyOrders returns orders for a user, product, or a combination of the two.
+	 */
 	async findManyOrders(params?: {
 		userId?: string;
 		productId?: string;
@@ -390,6 +393,10 @@ export class ProductRepository {
 			},
 		};
 	}
+
+	/**
+	 * findManyPaymentAttempts returns payment attempts for a user, order, or product, or a combination of the three
+	 */
 	async findManyPaymentAttempts(params?: {
 		userId?: string;
 		orderId?: string;
