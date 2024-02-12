@@ -27,7 +27,7 @@ describe("GraphQL", () => {
         `),
 			},
 			{
-				contextValue: createMockContext({ userId: faker.string.uuid() }),
+				contextValue: createMockContext({ user: { id: faker.string.uuid() } }),
 			},
 		);
 

@@ -17,7 +17,7 @@ describe("Event mutations", () => {
 			);
 
 			const contextValue = createMockContext({
-				userId: faker.string.uuid(),
+				user: { id: faker.string.uuid() },
 			});
 
 			const { errors } = await client.mutate(

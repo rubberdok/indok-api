@@ -305,7 +305,7 @@ type IProductService = {
 			} | null,
 		): ResultAsync<
 			{ paymentAttempts: PaymentAttemptType[]; total: number },
-			InternalServerError | PermissionDeniedError
+			InternalServerError | PermissionDeniedError | UnauthorizedError
 		>;
 	};
 	orders: {
@@ -318,7 +318,7 @@ type IProductService = {
 			params?: { userId?: string | null; productId?: string | null } | null,
 		): ResultAsync<
 			{ orders: OrderType[]; total: number },
-			InternalServerError | PermissionDeniedError
+			InternalServerError | PermissionDeniedError | UnauthorizedError
 		>;
 		get(
 			ctx: Context,
