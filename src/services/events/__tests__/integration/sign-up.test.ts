@@ -6,16 +6,14 @@ import { InvalidArgumentError } from "~/domain/errors.js";
 import { type User, newUserFromDSO } from "~/domain/users.js";
 import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
-import type { EventService, UserService } from "../../service.js";
+import type { EventService } from "../../service.js";
 import { makeDependencies } from "./dependencies-factory.js";
 
 describe("Event Sign Up", () => {
 	let eventService: EventService;
-	let userService: UserService;
 
-	beforeAll(async () => {
-		({ eventService, userService } = makeDependencies());
-		await prisma.organization.deleteMany({});
+	beforeAll(() => {
+		({ eventService } = makeDependencies());
 	});
 
 	describe("signUp", () => {
