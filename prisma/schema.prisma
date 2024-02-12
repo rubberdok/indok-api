@@ -74,7 +74,7 @@ model Event {
   startAt        DateTime
   endAt          DateTime
   location       String        @default("")
-  type           EventType
+  type           EventType     @default(BASIC)
   // If an organization is deleted, we keep the event and set the organizationId to null
   // as it could be related to payments and other stuff.
   organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
