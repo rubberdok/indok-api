@@ -1,3 +1,4 @@
+import assert from "assert";
 import { faker } from "@faker-js/faker";
 import type { EventSlot } from "@prisma/client";
 import { mock, mockDeep } from "jest-mock-extended";
@@ -8,26 +9,25 @@ import {
 	InvalidArgumentError,
 	PermissionDeniedError,
 } from "~/domain/errors.js";
+import type { EventType } from "~/domain/events/index.js";
 import { Role } from "~/domain/organizations.js";
 import type { User } from "~/domain/users.js";
-import type { Result } from "~/lib/result.js";
 import { makeMockContext } from "~/lib/context.js";
+import type { Result } from "~/lib/result.js";
 import {
+	type CreateBasicEventParams,
 	type CreateEventParams,
+	type CreateSignUpEventParams,
+	type CreateTicketEventParams,
 	type EventRepository,
 	EventService,
 	type PermissionService,
 	type ProductService,
-	type UserService,
-	type CreateBasicEventParams,
-	type CreateSignUpEventParams,
-	type CreateTicketEventParams,
 	type UpdateEventParams,
+	type UserService,
 } from "../../service.js";
 import type { SignUpQueueType } from "../../worker.js";
-import type { EventType } from "~/domain/events/index.js";
 import { makeBasicEvent, makeSignUpEvent } from "../dependencies.js";
-import assert from "assert";
 
 function setup() {
 	const permissionService = mockDeep<PermissionService>();

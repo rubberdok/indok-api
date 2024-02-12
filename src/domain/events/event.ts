@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import type { Event as DataStorageEvent } from "@prisma/client";
 import { isNil, merge, omitBy } from "lodash-es";
 import { DateTime } from "luxon";
@@ -9,9 +10,8 @@ import {
 	KnownDomainError,
 	errorCodes,
 } from "../errors.js";
-import { randomUUID } from "crypto";
-import type { SlotType } from "./slot.js";
 import type { CategoryType } from "./category.js";
+import type { SlotType } from "./slot.js";
 
 class AlreadySignedUpError extends KnownDomainError {
 	constructor(description: string) {

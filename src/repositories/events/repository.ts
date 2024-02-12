@@ -17,9 +17,9 @@ import {
 import type { CategoryType } from "~/domain/events/category.js";
 import { AlreadySignedUpError, Event } from "~/domain/events/event.js";
 import {
-	Slot,
 	type EventType,
 	type EventUpdateFn,
+	Slot,
 	type SlotType,
 } from "~/domain/events/index.js";
 import type { Context } from "~/lib/context.js";

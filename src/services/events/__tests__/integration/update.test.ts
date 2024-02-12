@@ -1,14 +1,14 @@
-import { makeTestServices } from "~/__tests__/dependencies-factory.js";
-import type { Services } from "~/lib/server.js";
-import { makeUserWithOrganizationMembership } from "./dependencies-factory.js";
-import { makeMockContext } from "~/lib/context.js";
-import { makeBasicEvent, makeSignUpEvent } from "../dependencies.js";
 import assert from "assert";
-import { DateTime } from "luxon";
-import { InvalidArgumentError } from "~/domain/errors.js";
-import type { EventType, Event } from "~/domain/events/index.js";
-import type { CreateEventParams, UpdateEventParams } from "../../service.js";
 import { faker } from "@faker-js/faker";
+import { DateTime } from "luxon";
+import { makeTestServices } from "~/__tests__/dependencies-factory.js";
+import { InvalidArgumentError } from "~/domain/errors.js";
+import type { Event, EventType } from "~/domain/events/index.js";
+import { makeMockContext } from "~/lib/context.js";
+import type { Services } from "~/lib/server.js";
+import type { CreateEventParams, UpdateEventParams } from "../../service.js";
+import { makeBasicEvent, makeSignUpEvent } from "../dependencies.js";
+import { makeUserWithOrganizationMembership } from "./dependencies-factory.js";
 
 describe("EventService", () => {
 	let events: Services["events"];

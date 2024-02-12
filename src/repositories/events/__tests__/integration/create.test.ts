@@ -3,18 +3,18 @@ import { faker } from "@faker-js/faker";
 import { DateTime } from "luxon";
 import {
 	Event,
-	type NewEventReturnType,
 	type EventType,
 	type NewEventParams,
+	type NewEventReturnType,
 } from "~/domain/events/event.js";
-import prisma from "~/lib/prisma.js";
-import { EventRepository } from "../../repository.js";
 import {
 	type NewSlotParams,
 	Slot,
 	type SlotType,
 } from "~/domain/events/slot.js";
 import { makeMockContext } from "~/lib/context.js";
+import prisma from "~/lib/prisma.js";
+import { EventRepository } from "../../repository.js";
 
 describe("EventRepository", () => {
 	let eventRepository: EventRepository;

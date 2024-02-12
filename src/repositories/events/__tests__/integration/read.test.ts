@@ -1,9 +1,9 @@
 import assert from "assert";
 import { faker } from "@faker-js/faker";
+import type { CategoryType } from "~/domain/events/category.js";
+import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import { EventRepository } from "../../repository.js";
-import { makeMockContext } from "~/lib/context.js";
-import type { CategoryType } from "~/domain/events/category.js";
 
 describe("EventRepository", () => {
 	let eventRepository: EventRepository;

@@ -11,11 +11,11 @@ import { OrganizationRepository } from "~/repositories/organizations/organizatio
 import { UserRepository } from "~/repositories/users/index.js";
 import { buildMailService } from "~/services/mail/index.js";
 import type { EmailQueueType } from "~/services/mail/worker.js";
+import { OrganizationService } from "~/services/organizations/service.js";
 import { PermissionService } from "~/services/permissions/service.js";
 import { UserService } from "~/services/users/service.js";
 import { EventService, type ProductService } from "../../service.js";
 import type { SignUpQueueType } from "../../worker.js";
-import { OrganizationService } from "~/services/organizations/service.js";
 
 export function makeDependencies() {
 	const eventRepository = new EventRepository(prisma);

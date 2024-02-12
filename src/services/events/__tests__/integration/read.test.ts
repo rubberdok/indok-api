@@ -1,13 +1,13 @@
+import assert from "assert";
 import { faker } from "@faker-js/faker";
 import dayjs from "dayjs";
-import { NotFoundError } from "~/domain/errors.js";
-import { makeTestServices } from "~/__tests__/dependencies-factory.js";
-import type { Services } from "~/lib/server.js";
-import { makeUserWithOrganizationMembership } from "./dependencies-factory.js";
-import { makeMockContext } from "~/lib/context.js";
-import assert from "assert";
 import { range } from "lodash-es";
 import { DateTime, Settings } from "luxon";
+import { makeTestServices } from "~/__tests__/dependencies-factory.js";
+import { NotFoundError } from "~/domain/errors.js";
+import { makeMockContext } from "~/lib/context.js";
+import type { Services } from "~/lib/server.js";
+import { makeUserWithOrganizationMembership } from "./dependencies-factory.js";
 
 let events: Services["events"];
 

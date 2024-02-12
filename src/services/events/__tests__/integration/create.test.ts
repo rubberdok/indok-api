@@ -1,15 +1,15 @@
+import { DateTime } from "luxon";
 import { makeTestServices } from "~/__tests__/dependencies-factory.js";
-import type { Services } from "~/lib/server.js";
-import { makeUserWithOrganizationMembership } from "./dependencies-factory.js";
-import { makeMockContext } from "~/lib/context.js";
 import type {
+	CategoryType,
 	EventType,
 	SlotType,
-	CategoryType,
 } from "~/domain/events/index.js";
-import type { CreateEventParams } from "../../service.js";
+import { makeMockContext } from "~/lib/context.js";
 import type { Result } from "~/lib/result.js";
-import { DateTime } from "luxon";
+import type { Services } from "~/lib/server.js";
+import type { CreateEventParams } from "../../service.js";
+import { makeUserWithOrganizationMembership } from "./dependencies-factory.js";
 
 describe("EventService", () => {
 	let events: Services["events"];

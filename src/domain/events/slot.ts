@@ -1,9 +1,9 @@
+import { randomUUID } from "crypto";
+import type { EventSlot as PrismaSlot } from "@prisma/client";
+import { isNil, omitBy } from "lodash-es";
 import { z } from "zod";
 import type { Result } from "~/lib/result.js";
 import { type InternalServerError, InvalidArgumentError } from "../errors.js";
-import { randomUUID } from "crypto";
-import { isNil, omitBy } from "lodash-es";
-import type { EventSlot as PrismaSlot } from "@prisma/client";
 
 type SlotType = {
 	capacity: number;

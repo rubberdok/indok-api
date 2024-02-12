@@ -2,8 +2,8 @@ import { faker } from "@faker-js/faker";
 import type { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
 import type { SignUpAvailability } from "~/domain/events/index.js";
-import prisma from "~/lib/prisma.js";
 import { makeMockContext } from "~/lib/context.js";
+import prisma from "~/lib/prisma.js";
 import type { EventService } from "../../service.js";
 import {
 	makeDependencies,

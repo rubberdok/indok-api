@@ -1,10 +1,10 @@
 import { faker } from "@faker-js/faker";
-import prisma from "~/lib/prisma.js";
-import { EventRepository } from "../../repository.js";
-import { makeMockContext } from "~/lib/context.js";
-import type { EventType, EventUpdateFn } from "~/domain/events/event.js";
 import { InternalServerError } from "~/domain/errors.js";
+import type { EventType, EventUpdateFn } from "~/domain/events/event.js";
+import { makeMockContext } from "~/lib/context.js";
+import prisma from "~/lib/prisma.js";
 import type { Result } from "~/lib/result.js";
+import { EventRepository } from "../../repository.js";
 
 let eventsRepository: EventRepository;
 

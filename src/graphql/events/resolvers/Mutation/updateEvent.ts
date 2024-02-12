@@ -1,6 +1,6 @@
-import type { MutationResolvers } from "./../../../types.generated.js";
 import { ApolloServerErrorCode } from "@apollo/server/errors";
 import { GraphQLError } from "graphql";
+import type { MutationResolvers } from "./../../../types.generated.js";
 export const updateEvent: NonNullable<MutationResolvers["updateEvent"]> =
 	async (_parent, { data, id }, ctx) => {
 		const {

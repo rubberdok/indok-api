@@ -31,6 +31,7 @@ import type {
 import type { Role } from "~/domain/organizations.js";
 import type { OrderType, ProductType } from "~/domain/products.js";
 import type { StudyProgram, User } from "~/domain/users.js";
+import type { Context } from "~/lib/context.js";
 import { CabinRepository } from "~/repositories/cabins/repository.js";
 import { EventRepository } from "~/repositories/events/repository.js";
 import { ListingRepository } from "~/repositories/listings/repository.js";
@@ -41,11 +42,11 @@ import { UserRepository } from "~/repositories/users/index.js";
 import { feideClient } from "~/services/auth/clients.js";
 import { AuthService } from "~/services/auth/service.js";
 import { CabinService } from "~/services/cabins/service.js";
-import type { Context } from "~/lib/context.js";
 import {
 	type CreateEventParams,
 	EventService,
 } from "~/services/events/index.js";
+import type { UpdateEventParams } from "~/services/events/service.js";
 import { SignUpQueueName } from "~/services/events/worker.js";
 import { ListingService } from "~/services/listings/index.js";
 import { buildMailService } from "~/services/mail/index.js";
@@ -60,7 +61,6 @@ import fastifyService from "./fastify/service.js";
 import { postmark } from "./postmark.js";
 import prisma from "./prisma.js";
 import type { Result, ResultAsync } from "./result.js";
-import type { UpdateEventParams } from "~/services/events/service.js";
 
 export interface IOrganizationService {
 	create(

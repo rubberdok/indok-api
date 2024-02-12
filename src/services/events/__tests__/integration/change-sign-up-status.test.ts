@@ -1,12 +1,12 @@
+import assert, { fail } from "assert";
 import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
+import { makeTestServices } from "~/__tests__/dependencies-factory.js";
+import { NotFoundError } from "~/domain/errors.js";
 import { makeMockContext } from "~/lib/context.js";
 import type { Services } from "~/lib/server.js";
-import { makeTestServices } from "~/__tests__/dependencies-factory.js";
-import assert, { fail } from "assert";
 import { makeUserWithOrganizationMembership } from "./dependencies-factory.js";
-import { NotFoundError } from "~/domain/errors.js";
 
 describe("EventService", () => {
 	let events: Services["events"];

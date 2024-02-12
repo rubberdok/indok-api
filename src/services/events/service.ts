@@ -12,27 +12,27 @@ import {
 	NotFoundError,
 	PermissionDeniedError,
 } from "~/domain/errors.js";
+import type { CategoryType } from "~/domain/events/category.js";
+import type {
+	EventUpdateFields,
+	EventUpdateFn,
+} from "~/domain/events/event.js";
 import {
 	Event,
-	EventTypeEnum,
 	type EventType,
-	type SlotType,
-	Slot,
+	EventTypeEnum,
 	type SignUpAvailability,
+	Slot,
+	type SlotType,
 	signUpAvailability,
 } from "~/domain/events/index.js";
+import type { NewSlotParams, UpdateSlotFields } from "~/domain/events/slot.js";
 import { Role } from "~/domain/organizations.js";
 import type { OrderType, ProductType } from "~/domain/products.js";
 import type { User } from "~/domain/users.js";
 import type { Result, ResultAsync } from "~/lib/result.js";
 import type { Context } from "../../lib/context.js";
 import type { SignUpQueueType } from "./worker.js";
-import type {
-	EventUpdateFields,
-	EventUpdateFn,
-} from "~/domain/events/event.js";
-import type { NewSlotParams, UpdateSlotFields } from "~/domain/events/slot.js";
-import type { CategoryType } from "~/domain/events/category.js";
 
 export { EventService };
 export type {
