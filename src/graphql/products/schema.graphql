@@ -12,9 +12,21 @@ type InitiatePaymentAttemptResponse {
     redirectUrl: String!
 }
 
+enum OrderPaymentStatus {
+    PENDING
+    CREATED
+    CAPTURED
+    REFUNDED
+    CANCELLED
+    RESERVED
+}
 
 type Order {
     id: ID!
+    product: Product!
+    user: PrivateUser
+    attempt: Int!
+    paymentStatus: OrderPaymentStatus!
 }
 
 input CreateOrderInput {
@@ -87,6 +99,64 @@ type ProductResponse {
     total: Int!
 }
 
+type OrdersResponse {
+    orders: [Order!]!
+    total: Int!
+}
+
+enum PaymentAttemptState {
+    CREATED
+    AUTHORIZED
+    FAILED
+    TERMINATED
+    EXPIRED
+    ABORTED
+}
+
+type PaymentAttempt {
+    id: ID!
+    reference: String!
+    inProgress: Boolean!
+    state: PaymentAttemptState!
+    order: Order!
+
+}
+
+type PaymentAttemptsResponse {
+    paymentAttempts: [PaymentAttempt!]!
+    total: Int!
+}
+
+input OrdersInput {
+    """
+    Only get orders for the given user ID. Requires super user status,
+    or the user ID to match the user ID of the order. Omit to default to
+    the current user.
+    """
+    userId: ID
+    """
+    Only get orders for the given product ID.
+    """
+    productId: ID
+}
+
+input PaymentAttemptsInput {
+    """
+    Only get payment attempts for the given user ID. Requires super user status,
+    or the user ID to match the user ID of the payment attempt. Omit to default to
+    the current user.
+    """
+    userId: ID
+    """
+    Only get payment atttempts for the given order ID.
+    """
+    orderId: ID
+    """
+    Only get payment attempts for the given product ID.
+    """
+    productId: ID
+}
+
 type Mutation {
     """
     Initiates a payment attempt for the given order.
@@ -104,7 +174,16 @@ type Mutation {
 }
 
 
-
 type Query {
     products: ProductResponse!
+    """
+    Get orders, filtered by the given input. Unless the user is a super user, only
+    orders for the current user will be returned.
+    """
+    orders(data: OrdersInput): OrdersResponse!
+    """
+    Get payment attempts, filtered by the given input. Unless the user is a super user, only
+    payment attempts for the current user will be returned.
+    """
+    paymentAttempts(data: PaymentAttemptsInput): PaymentAttemptsResponse!
 }

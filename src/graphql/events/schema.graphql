@@ -148,7 +148,7 @@ input EventTicketData {
   """
   MerchantID is the ID for the merchant, this will be the recipient of the payments.
   """
-  merchantId: String!
+  merchantId: ID!
 }
 
 input EventData {

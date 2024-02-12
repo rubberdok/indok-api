@@ -343,7 +343,7 @@ describe("OrganizationResolvers", () => {
 				 * 2. Create the mock context without a userId in session
 				 */
 				const { createMockContext, client } = createMockApolloServer();
-				const contextValue = createMockContext({ userId: undefined });
+				const contextValue = createMockContext({ user: null });
 
 				/**
 				 * Act

@@ -9,8 +9,8 @@ import {
 	type MerchantType,
 	Order,
 	type OrderType,
-	type PaymentAttempt,
-	PaymentAttemptFromDSO,
+	PaymentAttempt,
+	type PaymentAttemptType,
 	type ProductType,
 } from "~/domain/products.js";
 import { prismaKnownErrorCodes } from "~/lib/prisma.js";
@@ -150,7 +150,7 @@ export class ProductRepository {
 			version: number;
 		};
 		reference: string;
-	}): Promise<{ paymentAttempt: PaymentAttempt; order: OrderType }> {
+	}): Promise<{ paymentAttempt: PaymentAttemptType; order: OrderType }> {
 		const { reference, order } = paymentAttempt;
 		const paymentAttemptPromise = this.db.paymentAttempt.create({
 			data: {
@@ -184,7 +184,7 @@ export class ProductRepository {
 			]);
 
 			return {
-				paymentAttempt: PaymentAttemptFromDSO(paymentAttemptResult),
+				paymentAttempt: PaymentAttempt.fromDSO(paymentAttemptResult),
 				order: orderResult,
 			};
 		} catch (err) {
@@ -249,7 +249,7 @@ export class ProductRepository {
 	async getPaymentAttempt(
 		by: { id: string } | { reference: string },
 	): ResultAsync<
-		{ paymentAttempt: PaymentAttempt | null },
+		{ paymentAttempt: PaymentAttemptType | null },
 		InternalServerError
 	> {
 		try {
@@ -260,7 +260,7 @@ export class ProductRepository {
 				return { data: { paymentAttempt: null }, ok: true };
 			}
 			return {
-				data: { paymentAttempt: PaymentAttemptFromDSO(attempt) },
+				data: { paymentAttempt: PaymentAttempt.fromDSO(attempt) },
 				ok: true,
 			};
 		} catch (err) {
@@ -278,9 +278,9 @@ export class ProductRepository {
 	 * updatePaymentAttempt updates a payment attempt.
 	 */
 	async updatePaymentAttempt(
-		paymentAttempt: Pick<PaymentAttempt, "state" | "id" | "version">,
+		paymentAttempt: Pick<PaymentAttemptType, "state" | "id" | "version">,
 		order: Pick<OrderType, "id" | "version" | "paymentStatus">,
-	): Promise<{ paymentAttempt: PaymentAttempt; order: OrderType }> {
+	): Promise<{ paymentAttempt: PaymentAttemptType; order: OrderType }> {
 		try {
 			const paymentAttemptPromise = this.db.paymentAttempt.update({
 				where: {
@@ -313,7 +313,7 @@ export class ProductRepository {
 			]);
 
 			return {
-				paymentAttempt: PaymentAttemptFromDSO(updatedPaymentAttempt),
+				paymentAttempt: PaymentAttempt.fromDSO(updatedPaymentAttempt),
 				order: updatedOrder,
 			};
 		} catch (err) {
@@ -360,5 +360,83 @@ export class ProductRepository {
 			data: product,
 		});
 		return { product: created };
+	}
+
+	/**
+	 * findManyOrders returns orders for a user, product, or a combination of the two.
+	 */
+	async findManyOrders(params?: {
+		userId?: string;
+		productId?: string;
+	}): ResultAsync<{ orders: OrderType[]; total: number }, InternalServerError> {
+		const { userId, productId } = params ?? {};
+		const [count, orders] = await this.db.$transaction([
+			this.db.order.count({
+				where: {
+					userId,
+					productId,
+				},
+			}),
+			this.db.order.findMany({
+				where: {
+					userId,
+					productId,
+				},
+			}),
+		]);
+
+		return {
+			ok: true,
+			data: {
+				orders: orders,
+				total: count,
+			},
+		};
+	}
+
+	/**
+	 * findManyPaymentAttempts returns payment attempts for a user, order, or product, or a combination of the three
+	 */
+	async findManyPaymentAttempts(params?: {
+		userId?: string;
+		orderId?: string;
+		productId?: string;
+	}): ResultAsync<
+		{ paymentAttempts: PaymentAttemptType[]; total: number },
+		InternalServerError
+	> {
+		const { userId, orderId, productId } = params ?? {};
+		const [count, paymentAttemptsFromDSO] = await this.db.$transaction([
+			this.db.paymentAttempt.count({
+				where: {
+					order: {
+						id: orderId,
+						userId: userId,
+						productId: productId,
+					},
+				},
+			}),
+			this.db.paymentAttempt.findMany({
+				where: {
+					order: {
+						id: orderId,
+						userId: userId,
+						productId: productId,
+					},
+				},
+			}),
+		]);
+		const paymentAttempts: PaymentAttemptType[] = [];
+		for (const paymentAttempt of paymentAttemptsFromDSO) {
+			paymentAttempts.push(PaymentAttempt.fromDSO(paymentAttempt));
+		}
+
+		return {
+			ok: true,
+			data: {
+				paymentAttempts: paymentAttempts,
+				total: count,
+			},
+		};
 	}
 }

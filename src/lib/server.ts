@@ -35,7 +35,7 @@ import type { Role } from "~/domain/organizations.js";
 import type {
 	MerchantType,
 	OrderType,
-	PaymentAttempt,
+	PaymentAttemptType,
 	ProductType,
 } from "~/domain/products.js";
 import type { StudyProgram, User } from "~/domain/users.js";
@@ -283,7 +283,7 @@ type IProductService = {
 		): ResultAsync<
 			{
 				redirectUrl: string;
-				paymentAttempt: PaymentAttempt;
+				paymentAttempt: PaymentAttemptType;
 				order: OrderType;
 				pollingJob: Job<
 					PaymentProcessingDataType,
@@ -296,12 +296,40 @@ type IProductService = {
 			| InvalidArgumentError
 			| InternalServerError
 		>;
+		findMany(
+			ctx: Context,
+			params?: {
+				userId?: string | null;
+				productId?: string | null;
+				orderId?: string | null;
+			} | null,
+		): ResultAsync<
+			{ paymentAttempts: PaymentAttemptType[]; total: number },
+			InternalServerError | PermissionDeniedError | UnauthorizedError
+		>;
 	};
 	orders: {
 		create(
 			ctx: Context,
 			data: Pick<OrderType, "productId">,
 		): ResultAsync<{ order: OrderType }, UnauthorizedError | NotFoundError>;
+		findMany(
+			ctx: Context,
+			params?: { userId?: string | null; productId?: string | null } | null,
+		): ResultAsync<
+			{ orders: OrderType[]; total: number },
+			InternalServerError | PermissionDeniedError | UnauthorizedError
+		>;
+		get(
+			ctx: Context,
+			params: { id: string },
+		): ResultAsync<
+			{ order: OrderType },
+			| NotFoundError
+			| UnauthorizedError
+			| PermissionDeniedError
+			| InternalServerError
+		>;
 	};
 	products: {
 		findMany(
@@ -310,6 +338,10 @@ type IProductService = {
 			{ products: ProductType[]; total: number },
 			InternalServerError
 		>;
+		get(
+			ctx: Context,
+			params: { id: string },
+		): ResultAsync<{ product: ProductType }, NotFoundError>;
 	};
 	merchants: {
 		create(

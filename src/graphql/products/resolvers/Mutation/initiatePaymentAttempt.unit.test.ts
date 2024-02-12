@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { mock } from "jest-mock-extended";
 import { InternalServerError } from "~/domain/errors.js";
-import type { OrderType, PaymentAttempt } from "~/domain/products.js";
+import type { OrderType, PaymentAttemptType } from "~/domain/products.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
@@ -13,7 +13,7 @@ describe("Product mutations", () => {
 				ok: true,
 				data: {
 					order: mock<OrderType>(),
-					paymentAttempt: mock<PaymentAttempt>(),
+					paymentAttempt: mock<PaymentAttemptType>(),
 					pollingJob: mock(),
 					redirectUrl: faker.internet.url(),
 				},

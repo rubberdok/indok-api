@@ -125,11 +125,4 @@ export const createMockApolloServer = (logger?: Partial<FastifyBaseLogger>) => {
 	};
 };
 
-type CreateMockContextData =
-	| { user?: (Partial<User> & { id: string }) | null }
-	| DeprectatedCreateMockContextData;
-
-type DeprectatedCreateMockContextData = Partial<{
-	userId: string;
-	authenticated: boolean;
-}>;
+type CreateMockContextData = { user?: (Partial<User> & { id: string }) | null };

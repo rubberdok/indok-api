@@ -1,6 +1,7 @@
 import {
 	InternalServerError,
 	type InvalidArgumentError,
+	NotFoundError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
 import { Product, type ProductType } from "~/domain/products.js";
@@ -60,6 +61,21 @@ function buildProducts({ productRepository }: BuildProductsDependencies) {
 					error: new InternalServerError("Failed to get products"),
 				};
 			}
+		},
+
+		async get(
+			_ctx: Context,
+			params: { id: string },
+		): ResultAsync<{ product: ProductType }, NotFoundError> {
+			const { product } = await productRepository.getProduct(params.id);
+			if (!product) {
+				return {
+					ok: false,
+					error: new NotFoundError("Product not found"),
+				};
+			}
+
+			return { ok: true, data: { product } };
 		},
 	} as const;
 }

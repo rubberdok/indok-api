@@ -1,9 +1,10 @@
 import { faker } from "@faker-js/faker";
 import type { EPaymentErrorResponse } from "@vippsmobilepay/sdk";
 import { mock } from "jest-mock-extended";
+import { PermissionDeniedError, UnauthorizedError } from "~/domain/errors.js";
 import type {
 	OrderType,
-	PaymentAttempt,
+	PaymentAttemptType,
 	ProductType,
 } from "~/domain/products.js";
 import type { User } from "~/domain/users.js";
@@ -320,7 +321,7 @@ describe("ProductService", () => {
 			productRepository.getPaymentAttempt.mockResolvedValueOnce({
 				ok: true,
 				data: {
-					paymentAttempt: mock<PaymentAttempt>({}),
+					paymentAttempt: mock<PaymentAttemptType>({}),
 				},
 			});
 
@@ -336,7 +337,7 @@ describe("ProductService", () => {
 			productRepository.getPaymentAttempt.mockResolvedValueOnce({
 				ok: true,
 				data: {
-					paymentAttempt: mock<PaymentAttempt>({}),
+					paymentAttempt: mock<PaymentAttemptType>({}),
 				},
 			});
 
@@ -345,6 +346,89 @@ describe("ProductService", () => {
 			});
 
 			expect(result.ok).toBe(true);
+		});
+	});
+
+	describe("#findMany", () => {
+		it("should return all payment attempts as a super user", async () => {
+			const ctx = makeMockContext(mock<User>({ isSuperUser: true }));
+			productRepository.findManyPaymentAttempts.mockResolvedValueOnce({
+				ok: true,
+				data: {
+					total: 1,
+					paymentAttempts: [mock<PaymentAttemptType>()],
+				},
+			});
+
+			const result = await productService.payments.findMany(ctx);
+			if (!result.ok) throw result.error;
+
+			expect(productRepository.findManyPaymentAttempts).toHaveBeenCalledWith(
+				undefined,
+			);
+		});
+
+		it("should return UnauthorizedError if not logged in", async () => {
+			const ctx = makeMockContext(null);
+			productRepository.findManyPaymentAttempts.mockResolvedValueOnce({
+				ok: true,
+				data: {
+					total: 1,
+					paymentAttempts: [mock<PaymentAttemptType>()],
+				},
+			});
+
+			const result = await productService.payments.findMany(ctx);
+			expect(result).toEqual({
+				ok: false,
+				error: expect.any(UnauthorizedError),
+			});
+		});
+
+		it("should return all your own payment attempts as a regular user", async () => {
+			const user = mock<User>({
+				id: faker.string.uuid(),
+				isSuperUser: false,
+			});
+			const ctx = makeMockContext(user);
+			productRepository.findManyPaymentAttempts.mockResolvedValueOnce({
+				ok: true,
+				data: {
+					total: 1,
+					paymentAttempts: [mock<PaymentAttemptType>()],
+				},
+			});
+
+			const result = await productService.payments.findMany(ctx);
+			if (!result.ok) throw result.error;
+
+			expect(productRepository.findManyPaymentAttempts).toHaveBeenCalledWith({
+				userId: user.id,
+			});
+		});
+
+		it("should return PermissionDeniedError if you try to fetch other users' payment attempts as a regular user", async () => {
+			const user = mock<User>({
+				id: faker.string.uuid(),
+				isSuperUser: false,
+			});
+			const ctx = makeMockContext(user);
+			productRepository.findManyPaymentAttempts.mockResolvedValueOnce({
+				ok: true,
+				data: {
+					total: 1,
+					paymentAttempts: [mock<PaymentAttemptType>()],
+				},
+			});
+
+			const result = await productService.payments.findMany(ctx, {
+				userId: faker.string.uuid(),
+			});
+
+			expect(result).toEqual({
+				ok: false,
+				error: expect.any(PermissionDeniedError),
+			});
 		});
 	});
 });

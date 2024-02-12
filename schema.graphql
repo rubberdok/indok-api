@@ -314,7 +314,7 @@ input EventTicketData {
   """
   MerchantID is the ID for the merchant, this will be the recipient of the payments.
   """
-  merchantId: String!
+  merchantId: ID!
 
   """Price in øre, i.e. 100 = 1 NOK"""
   price: Int!
@@ -528,7 +528,37 @@ type NewBookingResponse {
 }
 
 type Order {
+  attempt: Int!
   id: ID!
+  paymentStatus: OrderPaymentStatus!
+  product: Product!
+  user: PrivateUser
+}
+
+enum OrderPaymentStatus {
+  CANCELLED
+  CAPTURED
+  CREATED
+  PENDING
+  REFUNDED
+  RESERVED
+}
+
+input OrdersInput {
+  """Only get orders for the given product ID."""
+  productId: ID
+
+  """
+  Only get orders for the given user ID. Requires super user status,
+  or the user ID to match the user ID of the order. Omit to default to
+  the current user.
+  """
+  userId: ID
+}
+
+type OrdersResponse {
+  orders: [Order!]!
+  total: Int!
 }
 
 type Organization {
@@ -564,6 +594,43 @@ enum ParticipationStatus {
 
   """The user has signed up for the event, and then retracted their sign up"""
   RETRACTED
+}
+
+type PaymentAttempt {
+  id: ID!
+  inProgress: Boolean!
+  order: Order!
+  reference: String!
+  state: PaymentAttemptState!
+}
+
+enum PaymentAttemptState {
+  ABORTED
+  AUTHORIZED
+  CREATED
+  EXPIRED
+  FAILED
+  TERMINATED
+}
+
+input PaymentAttemptsInput {
+  """Only get payment atttempts for the given order ID."""
+  orderId: ID
+
+  """Only get payment attempts for the given product ID."""
+  productId: ID
+
+  """
+  Only get payment attempts for the given user ID. Requires super user status,
+  or the user ID to match the user ID of the payment attempt. Omit to default to
+  the current user.
+  """
+  userId: ID
+}
+
+type PaymentAttemptsResponse {
+  paymentAttempts: [PaymentAttempt!]!
+  total: Int!
 }
 
 type Price {
@@ -656,8 +723,20 @@ type Query {
   listing(data: ListingInput!): ListingResponse!
   listings: ListingsResponse!
 
+  """
+  Get orders, filtered by the given input. Unless the user is a super user, only
+  orders for the current user will be returned.
+  """
+  orders(data: OrdersInput): OrdersResponse!
+
   """Get all organizations"""
   organizations: OrganizationsResponse
+
+  """
+  Get payment attempts, filtered by the given input. Unless the user is a super user, only
+  payment attempts for the current user will be returned.
+  """
+  paymentAttempts(data: PaymentAttemptsInput): PaymentAttemptsResponse!
   products: ProductResponse!
   serverTime: ServerTimeResponse!
   user: UserResponse!

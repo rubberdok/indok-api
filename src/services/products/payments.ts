@@ -4,14 +4,15 @@ import {
 	InternalServerError,
 	InvalidArgumentError,
 	NotFoundError,
+	PermissionDeniedError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
 import type {
 	MerchantType,
 	OrderPaymentStatus,
 	OrderType,
-	PaymentAttempt,
 	PaymentAttemptState,
+	PaymentAttemptType,
 } from "~/domain/products.js";
 import type { ResultAsync } from "~/lib/result.js";
 import type { Context } from "../../lib/context.js";
@@ -29,7 +30,7 @@ function buildPayments({
 	paymentProcessingQueue,
 }: BuildProductsDependencies) {
 	function paymentAttemptStateToOrderPaymentStatus(
-		paymentAttempt: PaymentAttempt,
+		paymentAttempt: PaymentAttemptType,
 		order: OrderType,
 	): OrderPaymentStatus {
 		switch (paymentAttempt.state) {
@@ -81,7 +82,7 @@ function buildPayments({
 
 	async function getRemotePaymentState(
 		ctx: Context,
-		paymentAttempt: PaymentAttempt,
+		paymentAttempt: PaymentAttemptType,
 		order: OrderType,
 	): ResultAsync<{ state: PaymentAttemptState }, InternalServerError> {
 		const { reference } = paymentAttempt;
@@ -130,7 +131,7 @@ function buildPayments({
 		): ResultAsync<
 			{
 				redirectUrl: string;
-				paymentAttempt: PaymentAttempt;
+				paymentAttempt: PaymentAttemptType;
 				order: OrderType;
 				pollingJob: Job<
 					PaymentProcessingDataType,
@@ -271,9 +272,9 @@ function buildPayments({
 
 		async updatePaymentAttemptState(
 			ctx: Context,
-			paymentAttempt: PaymentAttempt,
+			paymentAttempt: PaymentAttemptType,
 		): ResultAsync<
-			{ paymentAttempt: PaymentAttempt },
+			{ paymentAttempt: PaymentAttemptType },
 			NotFoundError | InternalServerError
 		> {
 			const { reference } = paymentAttempt;
@@ -362,7 +363,7 @@ function buildPayments({
 			ctx: Context,
 			params: { reference: string },
 		): ResultAsync<
-			{ paymentAttempt: PaymentAttempt | null },
+			{ paymentAttempt: PaymentAttemptType | null },
 			InternalServerError
 		> {
 			const { reference } = params;
@@ -370,6 +371,55 @@ function buildPayments({
 
 			return await productRepository.getPaymentAttempt({
 				reference,
+			});
+		},
+
+		async findMany(
+			ctx: Context,
+			params?: {
+				userId?: string | null;
+				productId?: string | null;
+				orderId?: string | null;
+			} | null,
+		): ResultAsync<
+			{ paymentAttempts: PaymentAttemptType[]; total: number },
+			InternalServerError | PermissionDeniedError | UnauthorizedError
+		> {
+			if (!ctx.user) {
+				return {
+					ok: false,
+					error: new UnauthorizedError(
+						"You must be logged in to get payment attempts",
+					),
+				};
+			}
+
+			if (ctx.user.isSuperUser) {
+				return await productRepository.findManyPaymentAttempts(
+					params
+						? {
+								userId: params.userId ?? undefined,
+								productId: params.productId ?? undefined,
+								orderId: params.orderId ?? undefined,
+						  }
+						: undefined,
+				);
+			}
+
+			const { userId, productId, orderId } = params ?? {};
+			if (userId && userId !== ctx.user.id) {
+				return {
+					ok: false,
+					error: new PermissionDeniedError(
+						"You are not allowed to view payment attempts for other users",
+					),
+				};
+			}
+
+			return await productRepository.findManyPaymentAttempts({
+				userId: ctx.user.id,
+				productId: productId ?? undefined,
+				orderId: orderId ?? undefined,
 			});
 		},
 	} as const;

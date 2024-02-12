@@ -1,3 +1,4 @@
+import assert from "assert";
 import { faker } from "@faker-js/faker";
 import { NotFoundError } from "~/domain/errors.js";
 import { makeDependencies } from "./dependencies.js";
@@ -152,6 +153,193 @@ describe("ProductRepository", () => {
 			} catch (err) {
 				expect(err).toBeInstanceOf(NotFoundError);
 			}
+		});
+	});
+
+	describe("#findManyPaymentAttempts", () => {
+		it("by order id", async () => {
+			const { productRepository, order } = await makeDependencies();
+
+			const { paymentAttempt } = await productRepository.createPaymentAttempt({
+				order,
+				reference: order.id,
+			});
+
+			// Act
+			const result = await productRepository.findManyPaymentAttempts({
+				orderId: order.id,
+			});
+
+			// Assert
+			if (!result.ok) throw result.error;
+
+			expect(result.data.paymentAttempts).toEqual([paymentAttempt]);
+		});
+
+		it("by product id", async () => {
+			const { productRepository, order, product } = await makeDependencies();
+
+			const { paymentAttempt } = await productRepository.createPaymentAttempt({
+				order,
+				reference: order.id,
+			});
+
+			// Act
+			const result = await productRepository.findManyPaymentAttempts({
+				productId: product.id,
+			});
+
+			// Assert
+			if (!result.ok) throw result.error;
+
+			expect(result.data.paymentAttempts).toEqual([paymentAttempt]);
+		});
+
+		it("by user id", async () => {
+			const { productRepository, order, user } = await makeDependencies();
+
+			const { paymentAttempt } = await productRepository.createPaymentAttempt({
+				order,
+				reference: order.id,
+			});
+
+			// Act
+			const result = await productRepository.findManyPaymentAttempts({
+				userId: user.id,
+			});
+
+			// Assert
+			if (!result.ok) throw result.error;
+
+			expect(result.data.paymentAttempts).toEqual([paymentAttempt]);
+		});
+
+		it("by user, product, and order ID", async () => {
+			const { productRepository, order, user, product } =
+				await makeDependencies();
+			const { user: otherUser, product: otherProduct } =
+				await makeDependencies();
+
+			const { paymentAttempt: expectedPaymentAttempt } =
+				await productRepository.createPaymentAttempt({
+					order,
+					reference: order.id,
+				});
+
+			// Create a payment attempt for a different user
+			const { order: otherUserOrder } = await productRepository.createOrder({
+				userId: otherUser.id,
+				product: product,
+			});
+			await productRepository.createPaymentAttempt({
+				order: otherUserOrder,
+				reference: otherUserOrder.id,
+			});
+
+			// Create a payment attempt for a different product
+			const { order: otherProductOrder } = await productRepository.createOrder({
+				userId: user.id,
+				product: otherProduct,
+			});
+			await productRepository.createPaymentAttempt({
+				order: otherProductOrder,
+				reference: otherProductOrder.id,
+			});
+
+			const { product: sameProduct } = await productRepository.getProduct(
+				product.id,
+			);
+			assert(sameProduct !== null, "Product not found");
+			// Create another payment attempt for the same user, but different order
+			const { order: otherOrder } = await productRepository.createOrder({
+				userId: user.id,
+				product: sameProduct,
+			});
+			await productRepository.createPaymentAttempt({
+				order: otherOrder,
+				reference: otherOrder.id,
+			});
+
+			// Act
+			const result = await productRepository.findManyPaymentAttempts({
+				userId: user.id,
+				productId: product.id,
+				orderId: order.id,
+			});
+
+			// Assert
+			if (!result.ok) throw result.error;
+
+			expect(result.data.paymentAttempts).toEqual([expectedPaymentAttempt]);
+		});
+
+		it("should return all payment attempts", async () => {
+			const { productRepository, order, user, product } =
+				await makeDependencies();
+			const { user: otherUser, product: otherProduct } =
+				await makeDependencies();
+
+			const { paymentAttempt: expectedPaymentAttempt } =
+				await productRepository.createPaymentAttempt({
+					order,
+					reference: order.id,
+				});
+
+			// Create a payment attempt for a different user
+			const { order: otherUserOrder } = await productRepository.createOrder({
+				userId: otherUser.id,
+				product: product,
+			});
+			const { paymentAttempt: otherUserPaymentAttempt } =
+				await productRepository.createPaymentAttempt({
+					order: otherUserOrder,
+					reference: otherUserOrder.id,
+				});
+
+			// Create a payment attempt for a different product
+			const { order: otherProductOrder } = await productRepository.createOrder({
+				userId: user.id,
+				product: otherProduct,
+			});
+			const { paymentAttempt: otherProductPaymentAttempt } =
+				await productRepository.createPaymentAttempt({
+					order: otherProductOrder,
+					reference: otherProductOrder.id,
+				});
+
+			const { product: sameProduct } = await productRepository.getProduct(
+				product.id,
+			);
+			assert(sameProduct !== null, "Product not found");
+			// Create another payment attempt for the same user, but different order
+			const { order: otherOrder } = await productRepository.createOrder({
+				userId: user.id,
+				product: sameProduct,
+			});
+			const { paymentAttempt: otherOrderPaymentAttempt } =
+				await productRepository.createPaymentAttempt({
+					order: otherOrder,
+					reference: otherOrder.id,
+				});
+
+			// Act
+			const result = await productRepository.findManyPaymentAttempts();
+
+			// Assert
+			if (!result.ok) throw result.error;
+
+			expect(result.data.paymentAttempts).toContainEqual(
+				expectedPaymentAttempt,
+			);
+			expect(result.data.paymentAttempts).toContainEqual(
+				otherUserPaymentAttempt,
+			);
+			expect(result.data.paymentAttempts).toContainEqual(
+				otherProductPaymentAttempt,
+			);
+			expect(result.data.paymentAttempts).toContainEqual(
+				otherOrderPaymentAttempt,
+			);
 		});
 	});
 });
