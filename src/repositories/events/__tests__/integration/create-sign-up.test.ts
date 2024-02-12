@@ -94,7 +94,7 @@ describe("EventRepository", () => {
 			assert(actual.event.type === "SIGN_UPS");
 			expect(actual.signUp.active).toBe(true);
 			expect(actual.slot.remainingCapacity).toBe(slot.remainingCapacity - 1);
-			expect(actual.event.signUpDetails?.remainingCapacity).toBe(
+			expect(actual.event.remainingCapacity).toBe(
 				(event.remainingCapacity ?? Number.NaN) - 1,
 			);
 			expect(actual.slot.version).toBe(slot.version + 1);
@@ -131,9 +131,7 @@ describe("EventRepository", () => {
 			 */
 			assert(actual.event.type === "SIGN_UPS");
 			expect(actual.signUp.active).toBe(true);
-			expect(actual.event.signUpDetails?.remainingCapacity).toBe(
-				event.remainingCapacity,
-			);
+			expect(actual.event.remainingCapacity).toBe(event.remainingCapacity);
 			expect(actual.event.version).toBe(event.version + 1);
 		});
 
@@ -175,7 +173,7 @@ describe("EventRepository", () => {
 			assert(actual.event.type === "SIGN_UPS");
 			expect(actual.signUp.active).toBe(true);
 			expect(actual.signUp.id).not.toBe(existingSignUp.id);
-			expect(actual.event.signUpDetails?.remainingCapacity).toBe(
+			expect(actual.event.remainingCapacity).toBe(
 				(event.remainingCapacity ?? Number.NaN) - 1,
 			);
 			expect(actual.event.version).toBe(event.version + 1);
@@ -211,9 +209,7 @@ describe("EventRepository", () => {
 			 */
 			assert(actual.event.type === "SIGN_UPS");
 			expect(actual.signUp.active).toBe(true);
-			expect(actual.event.signUpDetails?.remainingCapacity).toBe(
-				event.remainingCapacity,
-			);
+			expect(actual.event.remainingCapacity).toBe(event.remainingCapacity);
 		});
 
 		describe("should raise", () => {

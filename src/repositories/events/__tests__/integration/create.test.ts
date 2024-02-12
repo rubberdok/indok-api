@@ -1,9 +1,20 @@
 import assert from "assert";
 import { faker } from "@faker-js/faker";
 import { DateTime } from "luxon";
-import { Event } from "~/domain/events/event.js";
+import {
+	Event,
+	type NewEventReturnType,
+	type EventType,
+	type NewEventParams,
+} from "~/domain/events/event.js";
 import prisma from "~/lib/prisma.js";
 import { EventRepository } from "../../repository.js";
+import {
+	type NewSlotParams,
+	Slot,
+	type SlotType,
+} from "~/domain/events/slot.js";
+import { makeMockContext } from "~/lib/context.js";
 
 describe("EventRepository", () => {
 	let eventRepository: EventRepository;
@@ -30,9 +41,9 @@ describe("EventRepository", () => {
 			 *
 			 * Create an event with sign ups enabled
 			 */
-			const newEvent = Event.new({
+			const newEvent = makeNewEvent({
 				type: "SIGN_UPS",
-				data: {
+				event: {
 					name: faker.string.sample(),
 					description: faker.lorem.paragraph(),
 					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
@@ -40,21 +51,18 @@ describe("EventRepository", () => {
 					contactEmail: faker.internet.email(),
 					organizationId: organization.id,
 					location: faker.location.streetAddress(),
-					signUpDetails: {
-						capacity: 10,
-						signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-						slots: [
-							{
-								capacity: 10,
-							},
-						],
-					},
+					capacity: 10,
+					signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+					signUpsEnabled: true,
 				},
 			});
-			assert(newEvent.ok);
-			const actual = await eventRepository.create(newEvent.data.event);
-			assert(actual.ok);
+			const newSlots = [makeNewSlot({ capacity: 10 })];
+			const actual = await eventRepository.create(makeMockContext(), {
+				event: newEvent,
+				slots: newSlots,
+			});
+			if (!actual.ok) throw actual.error;
 			const slots = await prisma.eventSlot.findMany({
 				where: {
 					eventId: actual.data.event.id,
@@ -63,9 +71,8 @@ describe("EventRepository", () => {
 			expect(slots).toHaveLength(1);
 			expect(slots[0]?.capacity).toBe(10);
 			expect(actual.data.event.signUpsEnabled).toBe(true);
-			assert(actual.data.event.type === "SIGN_UPS");
-			expect(actual.data.event.signUpDetails?.capacity).toBe(10);
-			expect(actual.data.event.signUpDetails?.remainingCapacity).toBe(10);
+			expect(actual.data.event.capacity).toBe(10);
+			expect(actual.data.event.remainingCapacity).toBe(10);
 		});
 
 		it("with sign ups disabled, should create an event", async () => {
@@ -85,9 +92,9 @@ describe("EventRepository", () => {
 			 *
 			 * Create an event without sign ups enabled
 			 */
-			const newEvent = Event.new({
+			const newEvent = makeNewEvent({
 				type: "BASIC",
-				data: {
+				event: {
 					name: faker.string.sample(),
 					description: faker.lorem.paragraph(),
 					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
@@ -97,12 +104,13 @@ describe("EventRepository", () => {
 					location: faker.location.streetAddress(),
 				},
 			});
-			assert(newEvent.ok);
-			const actual = await eventRepository.create(newEvent.data.event);
-			assert(actual.ok);
 
-			expect("slots" in actual).toBe(false);
-			expect("signUpDetails" in actual.data.event).toBe(false);
+			const actual = await eventRepository.create(makeMockContext(), {
+				event: newEvent,
+			});
+			if (!actual.ok) throw actual.error;
+
+			expect(actual.data.slots).toHaveLength(0);
 			expect(actual.data.event.signUpsEnabled).toBe(false);
 		});
 
@@ -130,9 +138,9 @@ describe("EventRepository", () => {
 			 * Create an event without sign ups enabled
 			 */
 
-			const newEvent = Event.new({
+			const newEvent = makeNewEvent({
 				type: "BASIC",
-				data: {
+				event: {
 					name: faker.string.sample(),
 					description: faker.lorem.paragraph(),
 					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
@@ -140,21 +148,47 @@ describe("EventRepository", () => {
 					contactEmail: faker.internet.email(),
 					organizationId: organization.id,
 					location: faker.location.streetAddress(),
-					// categories: [category.id],
-					categories: [
-						{
-							id: category.id,
-						},
-					],
 				},
 			});
-			assert(newEvent.ok);
-			expect(newEvent.data.event.categories).toEqual([
-				{
+			const actual = await eventRepository.create(makeMockContext(), {
+				event: newEvent,
+				categories: [{ id: category.id }],
+			});
+			assert(actual.ok);
+
+			expect(actual.data.categories).toEqual([
+				expect.objectContaining({
 					id: category.id,
 					name: category.name,
-				},
+				}),
 			]);
 		});
 	});
 });
+
+function makeNewEvent(params: NewEventParams): EventType {
+	let newEvent: NewEventReturnType;
+	switch (params.type) {
+		case "BASIC":
+			newEvent = Event.new(params);
+			break;
+		case "SIGN_UPS":
+			newEvent = Event.new(params);
+			break;
+		case "TICKETS":
+			newEvent = Event.new(params);
+			break;
+	}
+	if (!newEvent.ok) {
+		throw new Error(newEvent.error.message);
+	}
+	return newEvent.data.event;
+}
+
+function makeNewSlot(params: NewSlotParams): SlotType {
+	const newSlot = Slot.new(params);
+	if (!newSlot.ok) {
+		throw new Error(newSlot.error.message);
+	}
+	return newSlot.data.slot;
+}
