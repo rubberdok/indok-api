@@ -863,34 +863,6 @@ class EventService {
 	}
 
 	/**
-	 * removeSignUp removes a sign up, incrementing the remaining capacity of the event and slot
-	 * if the sign up was assigned to a slot.
-	 * This should be used when a user is removed from an event by an admin.
-	 */
-	async removeSignUp(userId: string, eventId: string): Promise<EventSignUp> {
-		const signUp = await this.eventRepository.getSignUp(userId, eventId);
-
-		switch (signUp.participationStatus) {
-			case ParticipationStatus.CONFIRMED:
-				return await this.demoteConfirmedSignUp({
-					userId,
-					eventId,
-					newParticipationStatus: ParticipationStatus.REMOVED,
-				});
-			case ParticipationStatus.ON_WAITLIST:
-				return await this.demoteOnWaitlistSignUp({
-					userId,
-					eventId,
-					newParticipationStatus: ParticipationStatus.REMOVED,
-				});
-			case ParticipationStatus.RETRACTED:
-			// fallthrough
-			case ParticipationStatus.REMOVED:
-				return signUp;
-		}
-	}
-
-	/**
 	 * canSignUpForEvent returns true if the user can sign up for the event, false otherwise.
 	 */
 	async canSignUpForEvent(userId: string, eventId: string): Promise<boolean> {
