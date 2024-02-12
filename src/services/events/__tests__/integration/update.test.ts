@@ -2,9 +2,13 @@ import assert from "assert";
 import { faker } from "@faker-js/faker";
 import { DateTime } from "luxon";
 import { makeTestServices } from "~/__tests__/dependencies-factory.js";
-import { InvalidArgumentError } from "~/domain/errors.js";
+import {
+	InvalidArgumentError,
+	PermissionDeniedError,
+} from "~/domain/errors.js";
 import type { Event, EventType } from "~/domain/events/index.js";
 import { makeMockContext } from "~/lib/context.js";
+import prisma from "~/lib/prisma.js";
 import type { Services } from "~/lib/server.js";
 import type { CreateEventParams, UpdateEventParams } from "../../service.js";
 import { makeBasicEvent, makeSignUpEvent } from "../dependencies.js";
@@ -451,6 +455,49 @@ describe("EventService", () => {
 					name: category.name,
 				}),
 			);
+		});
+
+		it("should return PermissionDeniedError if not logged in", async () => {
+			const { user, organization } = await makeUserWithOrganizationMembership();
+			const createEventResult = await events.create(makeMockContext(user), {
+				event: { ...makeBasicEvent(), organizationId: organization.id },
+				type: "BASIC",
+			});
+			if (!createEventResult.ok) throw createEventResult.error;
+
+			const updateEventResult = await events.update(makeMockContext(null), {
+				event: {
+					id: createEventResult.data.event.id,
+					name: faker.word.adjective(),
+				},
+			});
+
+			assert(!updateEventResult.ok, "expected update event to fail");
+			expect(updateEventResult.error).toBeInstanceOf(PermissionDeniedError);
+		});
+
+		it("should return ok: false if the organization has been deleted", async () => {
+			const { user, organization } = await makeUserWithOrganizationMembership();
+			const createEventResult = await events.create(makeMockContext(user), {
+				event: { ...makeBasicEvent(), organizationId: organization.id },
+				type: "BASIC",
+			});
+			if (!createEventResult.ok) throw createEventResult.error;
+			await prisma.organization.delete({
+				where: {
+					id: organization.id,
+				},
+			});
+
+			const updateEventResult = await events.update(makeMockContext(null), {
+				event: {
+					id: createEventResult.data.event.id,
+					name: faker.word.adjective(),
+				},
+			});
+
+			assert(!updateEventResult.ok, "expected update event to fail");
+			expect(updateEventResult.error).toBeInstanceOf(InvalidArgumentError);
 		});
 	});
 });

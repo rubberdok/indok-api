@@ -1,6 +1,8 @@
+import assert from "assert";
 import { faker } from "@faker-js/faker";
 import { DateTime } from "luxon";
 import { makeTestServices } from "~/__tests__/dependencies-factory.js";
+import { InvalidArgumentError } from "~/domain/errors.js";
 import type {
 	CategoryType,
 	EventType,
@@ -14,8 +16,6 @@ import {
 	makeDependencies,
 	makeUserWithOrganizationMembership,
 } from "./dependencies-factory.js";
-import assert from "assert";
-import { InvalidArgumentError } from "~/domain/errors.js";
 
 describe("EventService", () => {
 	let events: Services["events"];
