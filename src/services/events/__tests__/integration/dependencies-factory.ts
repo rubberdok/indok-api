@@ -5,7 +5,7 @@ import type { ServerClient } from "postmark";
 import { env } from "~/config.js";
 import type { User } from "~/domain/users.js";
 import prisma from "~/lib/prisma.js";
-import { EventRepository } from "~/repositories/events/repository.js";
+import { EventRepository } from "~/repositories/events/index.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
 import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
 import { ProductRepository } from "~/repositories/products/repository.js";

@@ -35,15 +35,15 @@ import type { OrderType, ProductType } from "~/domain/products.js";
 import type { StudyProgram, User } from "~/domain/users.js";
 import type { Context } from "~/lib/context.js";
 import { CabinRepository } from "~/repositories/cabins/repository.js";
-import { EventRepository } from "~/repositories/events/repository.js";
+import { EventRepository } from "~/repositories/events/index.js";
 import { ListingRepository } from "~/repositories/listings/repository.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
 import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
 import { ProductRepository } from "~/repositories/products/repository.js";
 import { UserRepository } from "~/repositories/users/index.js";
 import { feideClient } from "~/services/auth/clients.js";
-import { AuthService } from "~/services/auth/service.js";
-import { CabinService } from "~/services/cabins/service.js";
+import { AuthService } from "~/services/auth/index.js";
+import { CabinService } from "~/services/cabins/index.js";
 import {
 	type CreateEventParams,
 	EventService,
@@ -64,7 +64,7 @@ import { postmark } from "./postmark.js";
 import prisma from "./prisma.js";
 import type { Result, ResultAsync } from "./result.js";
 
-export interface IOrganizationService {
+interface IOrganizationService {
 	create(
 		userId: string,
 		data: {
@@ -95,7 +95,7 @@ export interface IOrganizationService {
 	findMany(data?: { userId?: string }): Promise<Organization[]>;
 }
 
-export interface IAuthService {
+interface IAuthService {
 	userLoginCallback(req: FastifyRequest, data: { code: string }): Promise<User>;
 	studyProgramCallback(
 		req: FastifyRequest,
@@ -110,7 +110,7 @@ export interface IAuthService {
 	login(req: FastifyRequest, user: User): Promise<User>;
 }
 
-export interface IUserService {
+interface IUserService {
 	get(id: string): Promise<User>;
 	getAll(): Promise<User[]>;
 	getByFeideID(feideId: string): Promise<User | null>;
@@ -147,7 +147,7 @@ export interface IUserService {
 	}): Promise<StudyProgram>;
 }
 
-export interface BookingData {
+interface BookingData {
 	email: string;
 	firstName: string;
 	lastName: string;
@@ -157,7 +157,7 @@ export interface BookingData {
 	cabinId: string;
 }
 
-export interface ICabinService {
+interface ICabinService {
 	newBooking(data: BookingData): Promise<Booking>;
 	updateBookingStatus(
 		userId: string,
@@ -190,7 +190,7 @@ export interface ICabinService {
 	): Promise<Pick<BookingContact, "email" | "name" | "phoneNumber" | "id">>;
 }
 
-export interface IEventService {
+interface IEventService {
 	create(
 		ctx: Context,
 		params: CreateEventParams,
@@ -230,7 +230,7 @@ export interface IEventService {
 	): ResultAsync<{ slots: SlotType[] }, never>;
 }
 
-export interface IListingService {
+interface IListingService {
 	get(id: string): Promise<Listing>;
 	findMany(): Promise<Listing[]>;
 	create(
@@ -256,7 +256,7 @@ export interface IListingService {
 	delete(userId: string, id: string): Promise<Listing>;
 }
 
-export interface IPermissionService {
+interface IPermissionService {
 	isSuperUser(userId: string): Promise<{ isSuperUser: boolean }>;
 	hasFeaturePermission(data: {
 		userId: string;
@@ -264,7 +264,7 @@ export interface IPermissionService {
 	}): Promise<boolean>;
 }
 
-export type IProductService = {
+type IProductService = {
 	payments: {
 		initiatePaymentAttempt(
 			ctx: Context,

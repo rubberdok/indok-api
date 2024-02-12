@@ -1,9 +1,9 @@
-import type { Prisma } from "@prisma/client";
 import {
 	type Event as PrismaEvent,
 	type EventSignUp,
 	type EventSlot,
 	ParticipationStatus,
+	type Prisma,
 	type PrismaClient,
 } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";

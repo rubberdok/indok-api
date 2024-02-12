@@ -1,8 +1,8 @@
 import type { PrismaClient } from "@prisma/client";
 import { Client } from "@vippsmobilepay/sdk";
 import server, { type Avvio, type Plugin } from "avvio";
-import type { Processor } from "bullmq";
 import {
+	type Processor,
 	type RedisConnection,
 	Worker as BullMqWorker,
 	type WorkerOptions,
@@ -12,12 +12,12 @@ import { type Logger, pino } from "pino";
 import { env } from "~/config.js";
 import { InternalServerError } from "~/domain/errors.js";
 import { CabinRepository } from "~/repositories/cabins/repository.js";
-import { EventRepository } from "~/repositories/events/repository.js";
+import { EventRepository } from "~/repositories/events/index.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
 import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
 import { ProductRepository } from "~/repositories/products/repository.js";
 import { UserRepository } from "~/repositories/users/index.js";
-import { CabinService } from "~/services/cabins/service.js";
+import { CabinService } from "~/services/cabins/index.js";
 import { EventService } from "~/services/events/service.js";
 import {
 	SignUpQueueName,

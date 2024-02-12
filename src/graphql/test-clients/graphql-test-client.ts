@@ -15,7 +15,7 @@ import { env } from "~/config.js";
 import { fastifyServer } from "~/lib/fastify/fastify.js";
 import fastifyService from "~/lib/fastify/service.js";
 import type { Services } from "~/lib/server.js";
-import { AuthService } from "~/services/auth/service.js";
+import { AuthService } from "~/services/auth/index.js";
 
 /**
  * A test client for integration testing GraphQL resolvers.
