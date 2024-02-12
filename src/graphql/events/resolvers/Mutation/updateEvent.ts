@@ -1,5 +1,3 @@
-import { ApolloServerErrorCode } from "@apollo/server/errors";
-import { GraphQLError } from "graphql";
 import type { MutationResolvers } from "./../../../types.generated.js";
 export const updateEvent: NonNullable<MutationResolvers["updateEvent"]> =
 	async (_parent, { data, id }, ctx) => {
@@ -28,11 +26,6 @@ export const updateEvent: NonNullable<MutationResolvers["updateEvent"]> =
 		});
 
 		if (!updateEventResult.ok) {
-			if (updateEventResult.error.name === "InvalidArgumentError") {
-				throw new GraphQLError("Event not found", {
-					extensions: { code: ApolloServerErrorCode.BAD_USER_INPUT },
-				});
-			}
 			throw updateEventResult.error;
 		}
 

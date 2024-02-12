@@ -7,11 +7,11 @@ import {
 } from "~/domain/errors.js";
 import {
 	type MerchantType,
+	Order,
 	type OrderType,
 	type PaymentAttempt,
 	PaymentAttemptFromDSO,
 	type ProductType,
-	Order,
 } from "~/domain/products.js";
 import { prismaKnownErrorCodes } from "~/lib/prisma.js";
 import type { ResultAsync } from "~/lib/result.js";
