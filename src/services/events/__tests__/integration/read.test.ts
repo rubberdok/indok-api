@@ -1,47 +1,54 @@
 import { faker } from "@faker-js/faker";
 import dayjs from "dayjs";
 import { NotFoundError } from "~/domain/errors.js";
-import prisma from "~/lib/prisma.js";
-import type { EventService } from "../../service.js";
-import { makeDependencies } from "./dependencies-factory.js";
+import { makeTestServices } from "~/__tests__/dependencies-factory.js";
+import type { Services } from "~/lib/server.js";
+import { makeUserWithOrganizationMembership } from "./dependencies-factory.js";
+import { makeMockContext } from "~/lib/context.js";
+import assert from "assert";
+import { range } from "lodash-es";
+import { DateTime, Settings } from "luxon";
 
-let eventService: EventService;
+let events: Services["events"];
 
 describe("EventService", () => {
 	beforeAll(() => {
-		({ eventService } = makeDependencies());
+		({ events } = makeTestServices());
 	});
+
 	describe("get", () => {
 		it("should return an event", async () => {
+			const { user, organization } = await makeUserWithOrganizationMembership();
 			/**
 			 * Arrange
 			 *
 			 * 1. Create an event
 			 */
-			const eventId = faker.string.uuid();
-			await prisma.event.create({
-				data: {
-					type: "BASIC",
-					id: eventId,
+			const ctx = makeMockContext(user);
+			const createEventResult = await events.create(ctx, {
+				type: "BASIC",
+				event: {
+					organizationId: organization.id,
 					name: faker.person.firstName(),
-					startAt: faker.date.soon({ refDate: new Date(2021, 0, 1), days: 1 }),
-					endAt: faker.date.soon({ refDate: new Date(2021, 0, 3), days: 1 }),
+					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
 				},
 			});
+			if (!createEventResult.ok) throw createEventResult.error;
 
 			/**
 			 * Act
 			 *
 			 * 1. Get the event
 			 */
-			const event = await eventService.get(eventId);
+			const event = await events.get(createEventResult.data.event.id);
 
 			/**
 			 * Assert
 			 *
 			 * 1. The event should be returned
 			 */
-			expect(event.id).toEqual(eventId);
+			expect(event.id).toEqual(createEventResult.data.event.id);
 		});
 
 		it("should raise NotFoundError if the event does not exist", async () => {
@@ -50,13 +57,15 @@ describe("EventService", () => {
 			 *
 			 * 1. Create an event
 			 */
-			const notFoundEventId = faker.string.uuid();
-			await prisma.event.create({
-				data: {
-					type: "BASIC",
+			const { user, organization } = await makeUserWithOrganizationMembership();
+			const ctx = makeMockContext(user);
+			await events.create(ctx, {
+				type: "BASIC",
+				event: {
+					organizationId: organization.id,
 					name: faker.person.firstName(),
-					startAt: faker.date.soon({ refDate: new Date(2021, 0, 1), days: 1 }),
-					endAt: faker.date.soon({ refDate: new Date(2021, 0, 3), days: 1 }),
+					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
 				},
 			});
 
@@ -65,7 +74,7 @@ describe("EventService", () => {
 			 *
 			 * 1. Get the event
 			 */
-			const event = eventService.get(notFoundEventId);
+			const event = events.get(faker.string.uuid());
 
 			/**
 			 * Assert
@@ -77,52 +86,54 @@ describe("EventService", () => {
 	});
 
 	describe("findMany", () => {
+		const defaultNow = Settings.now;
+		afterAll(() => {
+			Settings.now = defaultNow;
+		});
+
 		it("should return a list of all events", async () => {
 			/**
 			 * Arrange
 			 *
 			 * 1. Create several events
 			 */
-			const eventIds = [
-				faker.string.uuid(),
-				faker.string.uuid(),
-				faker.string.uuid(),
-			];
-			await Promise.all(
-				eventIds.map((id) =>
-					prisma.event.create({
-						data: {
-							type: "BASIC",
-							id,
+			const { user, organization } = await makeUserWithOrganizationMembership();
+			const ctx = makeMockContext(user);
+			const createEventResults = await Promise.all(
+				range(3).map(() =>
+					events.create(ctx, {
+						type: "BASIC",
+						event: {
+							organizationId: organization.id,
 							name: faker.person.firstName(),
-							startAt: faker.date.soon({
-								refDate: new Date(2021, 0, 1),
-								days: 1,
-							}),
-							endAt: faker.date.soon({
-								refDate: new Date(2021, 0, 3),
-								days: 1,
-							}),
+							startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+							endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
 						},
 					}),
 				),
 			);
+			const createdEvents = createEventResults.map((res) => {
+				if (!res.ok) throw res.error;
+				return res.data.event;
+			});
 
 			/**
 			 * Act
 			 *
 			 * 1. Get the event
 			 */
-			const events = await eventService.findMany();
+			const actualEvents = await events.findMany();
 
 			/**
 			 * Assert
 			 *
 			 * 1. The events should be returned
 			 */
-			expect(events.length).toBeGreaterThanOrEqual(3);
-			for (const evnetId of eventIds) {
-				expect(events.map((event) => event.id)).toContainEqual(evnetId);
+			expect(actualEvents.length).toBeGreaterThanOrEqual(3);
+			for (const expectedEvent of createdEvents) {
+				expect(actualEvents.map((event) => event.id)).toContainEqual(
+					expectedEvent.id,
+				);
 			}
 		});
 
@@ -133,31 +144,38 @@ describe("EventService", () => {
 			 * 1. Create an event in the future
 			 * 2. Create an event in the past
 			 */
-			const eventInTheFuture = await prisma.event.create({
-				data: {
-					type: "BASIC",
-					id: faker.string.uuid(),
+			const { user, organization } = await makeUserWithOrganizationMembership();
+			const ctx = makeMockContext(user);
+			const eventInTheFuture = await events.create(ctx, {
+				type: "BASIC",
+				event: {
+					organizationId: organization.id,
+					name: faker.person.firstName(),
+					startAt: dayjs().add(10, "day").toDate(),
+					endAt: dayjs().add(11, "day").toDate(),
+				},
+			});
+			const eventInThePast = await events.create(ctx, {
+				type: "BASIC",
+				event: {
+					organizationId: organization.id,
 					name: faker.person.firstName(),
 					startAt: dayjs().add(1, "day").toDate(),
 					endAt: dayjs().add(2, "day").toDate(),
 				},
 			});
-			const eventInThePast = await prisma.event.create({
-				data: {
-					type: "BASIC",
-					id: faker.string.uuid(),
-					name: faker.person.firstName(),
-					startAt: dayjs().subtract(2, "day").toDate(),
-					endAt: dayjs().subtract(1, "day").toDate(),
-				},
-			});
+
+			const fiveDaysAhead = DateTime.now().plus({ days: 5 }).toMillis();
+			Settings.now = () => fiveDaysAhead;
 
 			/**
 			 * Act
 			 *
 			 * 1. Get all events with { onlyFutureEvents: true }
 			 */
-			const events = await eventService.findMany({ onlyFutureEvents: true });
+			const actualEvents = await events.findMany({
+				onlyFutureEvents: true,
+			});
 
 			/**
 			 * Assert
@@ -165,8 +183,14 @@ describe("EventService", () => {
 			 * 1. The event in the past should not be returned
 			 * 2. The event in the future should be returned
 			 */
-			expect(events.map((event) => event.id)).not.toContain(eventInThePast.id);
-			expect(events.map((event) => event.id)).toContain(eventInTheFuture.id);
+			assert(eventInThePast.ok);
+			assert(eventInTheFuture.ok);
+			expect(actualEvents.map((event) => event.id)).not.toContain(
+				eventInThePast.data.event.id,
+			);
+			expect(actualEvents.map((event) => event.id)).toContain(
+				eventInTheFuture.data.event.id,
+			);
 		});
 	});
 });

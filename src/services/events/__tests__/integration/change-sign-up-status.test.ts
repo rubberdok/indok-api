@@ -1,306 +1,159 @@
 import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
-import prisma from "~/lib/prisma.js";
-import type { EventService } from "../../service.js";
-import { makeDependencies } from "./dependencies-factory.js";
+import { makeMockContext } from "~/lib/context.js";
+import type { Services } from "~/lib/server.js";
+import { makeTestServices } from "~/__tests__/dependencies-factory.js";
+import assert, { fail } from "assert";
+import { makeUserWithOrganizationMembership } from "./dependencies-factory.js";
+import { NotFoundError } from "~/domain/errors.js";
 
 describe("EventService", () => {
-	let eventService: EventService;
+	let events: Services["events"];
 
 	beforeAll(() => {
-		({ eventService } = makeDependencies());
+		({ events } = makeTestServices());
 	});
 
-	describe("retractSignUp", () => {
-		interface TestCase {
-			name: string;
-			arrange: {
-				participationStatus: ParticipationStatus;
-				remainingCapacity: number;
-				slotId?: null;
-			};
-			expected: {
-				slotId: null | string;
-				remainingCapacity: number;
-				version?: number;
-				participationStatus?: ParticipationStatus;
-			};
-		}
+	describe("#retractSignUp", () => {
+		it("should retract confirmed sign up and increment the slot and event capacities", async () => {
+			const { user, organization } = await makeUserWithOrganizationMembership();
+			const ctx = makeMockContext(user);
 
-		const testCases: TestCase[] = [
-			{
-				name: "retract confirmed sign up and increment the slot and event capacities",
-				arrange: {
-					participationStatus: ParticipationStatus.CONFIRMED,
-					remainingCapacity: 0,
-				},
-				expected: {
-					slotId: null,
-					remainingCapacity: 1,
-				},
-			},
-			{
-				name: "retract wait list sign up and not increment the slot and event capacities",
-				arrange: {
-					participationStatus: ParticipationStatus.ON_WAITLIST,
-					remainingCapacity: 0,
-					slotId: null,
-				},
-				expected: {
-					slotId: null,
-					remainingCapacity: 0,
-				},
-			},
-			{
-				name: "not change an already retracted sign up",
-				arrange: {
-					participationStatus: ParticipationStatus.RETRACTED,
-					remainingCapacity: 0,
-					slotId: null,
-				},
-				expected: {
-					slotId: null,
-					remainingCapacity: 0,
-					version: 0,
-				},
-			},
-			{
-				name: "not change an already removed sign up",
-				arrange: {
-					participationStatus: ParticipationStatus.REMOVED,
-					remainingCapacity: 0,
-					slotId: null,
-				},
-				expected: {
-					slotId: null,
-					remainingCapacity: 0,
-					version: 0,
-					participationStatus: ParticipationStatus.REMOVED,
-				},
-			},
-		];
-
-		test.each(testCases)("should $name", async ({ arrange, expected }) => {
-			/**
-			 * Arrange
-			 *
-			 * 1. Create an event with capacity from the arrange object
-			 * 2. Create a slot with capacity from the arrange object
-			 * 3. Create a user
-			 * 4. Sign up the user to the event and slot, if arrange.slotId is null, sign up to the event without a slot
-			 */
-			const event = await prisma.event.create({
-				data: {
-					type: "SIGN_UPS",
+			const createEvent = await events.create(ctx, {
+				type: "SIGN_UPS",
+				event: {
+					organizationId: organization.id,
 					name: faker.word.adjective(),
 					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 					endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
-					remainingCapacity: arrange.remainingCapacity,
+					signUpsEnabled: true,
+					capacity: 1,
+					signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 				},
-			});
-			const slot = await prisma.eventSlot.create({
-				data: {
-					eventId: event.id,
-					remainingCapacity: arrange.remainingCapacity,
-				},
-			});
-			const user = await prisma.user.create({
-				data: {
-					email: faker.internet.email({ firstName: faker.string.uuid() }),
-					firstName: faker.person.firstName(),
-					lastName: faker.person.lastName(),
-					username: faker.string.sample(20),
-					feideId: faker.string.uuid(),
-				},
+				slots: [
+					{
+						capacity: 1,
+					},
+				],
 			});
 
-			const signUp = await prisma.eventSignUp.create({
-				data: {
-					eventId: event.id,
-					userId: user.id,
-					slotId: arrange.slotId === null ? null : slot.id,
-					participationStatus: arrange.participationStatus,
-				},
+			assert(createEvent.ok);
+			const { event } = createEvent.data;
+
+			await events.signUp(ctx, user.id, event.id);
+			const actual = await events.retractSignUp(user.id, event.id);
+			const actualEvent = await events.get(event.id);
+			const actualSlotsResult = await events.getSlots(ctx, {
+				eventId: event.id,
 			});
+			assert(actualSlotsResult.ok);
+			const { slots: actualSlots } = actualSlotsResult.data;
+			const actualSlot = actualSlots[0];
+			assert(actualSlot !== undefined);
 
-			/**
-			 * Act
-			 *
-			 * Retract the sign up
-			 */
-			const actual = await eventService.retractSignUp(user.id, event.id);
-
-			/**
-			 * Assert
-			 *
-			 * 1. Status should be retracted
-			 * 2. slotId should match the expected slotId
-			 * 3. version should be incremented
-			 * 4. remainingCapacity for evnet and slot should match the expected remainingCapacity
-			 */
-			expect(actual.participationStatus).toBe(
-				expected.participationStatus ?? ParticipationStatus.RETRACTED,
-			);
-			expect(actual.slotId).toBe(expected.slotId);
-			expect(actual.version).toBe(expected.version ?? signUp.version + 1);
-
-			const updatedSlot = await prisma.eventSlot.findUnique({
-				where: { id: slot.id },
-			});
-			const updatedEvent = await prisma.event.findUnique({
-				where: { id: event.id },
-			});
-
-			expect(updatedSlot?.remainingCapacity).toBe(expected.remainingCapacity);
-			expect(updatedEvent?.remainingCapacity).toBe(expected.remainingCapacity);
+			expect(actual.participationStatus).toBe(ParticipationStatus.RETRACTED);
+			expect(actual.slotId).toBe(null);
+			expect(actual.version).toBe(1);
+			expect(actualEvent.remainingCapacity).toBe(1);
+			expect(actualSlot.remainingCapacity).toBe(1);
 		});
-	});
 
-	describe("removeSignUp", () => {
-		interface TestCase {
-			name: string;
-			arrange: {
-				participationStatus: ParticipationStatus;
-				remainingCapacity: number;
-				slotId?: null;
-			};
-			expected: {
-				slotId: null | string;
-				remainingCapacity: number;
-				version?: number;
-				participationStatus?: ParticipationStatus;
-			};
-		}
+		it("retract wait list sign up and not increment the slot and event capacities", async () => {
+			const { user, organization } = await makeUserWithOrganizationMembership();
+			const ctx = makeMockContext(user);
 
-		const testCases: TestCase[] = [
-			{
-				name: "remove confirmed sign up and increment the slot and event capacities",
-				arrange: {
-					participationStatus: ParticipationStatus.CONFIRMED,
-					remainingCapacity: 0,
-				},
-				expected: {
-					slotId: null,
-					remainingCapacity: 1,
-				},
-			},
-			{
-				name: "remove wait list sign up and not increment the slot and event capacities",
-				arrange: {
-					participationStatus: ParticipationStatus.ON_WAITLIST,
-					remainingCapacity: 0,
-					slotId: null,
-				},
-				expected: {
-					slotId: null,
-					remainingCapacity: 0,
-				},
-			},
-			{
-				name: "not change an already retracted sign up",
-				arrange: {
-					participationStatus: ParticipationStatus.RETRACTED,
-					remainingCapacity: 0,
-					slotId: null,
-				},
-				expected: {
-					slotId: null,
-					remainingCapacity: 0,
-					version: 0,
-					participationStatus: ParticipationStatus.RETRACTED,
-				},
-			},
-			{
-				name: "not change an already removed sign up",
-				arrange: {
-					participationStatus: ParticipationStatus.REMOVED,
-					remainingCapacity: 0,
-					slotId: null,
-				},
-				expected: {
-					slotId: null,
-					remainingCapacity: 0,
-					version: 0,
-				},
-			},
-		];
-
-		test.each(testCases)("should $name", async ({ arrange, expected }) => {
-			/**
-			 * Arrange
-			 *
-			 * 1. Create an event with capacity from the arrange object
-			 * 2. Create a slot with capacity from the arrange object
-			 * 3. Create a user
-			 * 4. Sign up the user to the event and slot, if arrange.slotId is null, sign up to the event without a slot
-			 */
-			const event = await prisma.event.create({
-				data: {
-					type: "SIGN_UPS",
+			const createEvent = await events.create(ctx, {
+				type: "SIGN_UPS",
+				event: {
+					organizationId: organization.id,
 					name: faker.word.adjective(),
 					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 					endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
-					remainingCapacity: arrange.remainingCapacity,
+					signUpsEnabled: true,
+					capacity: 0,
+					signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 				},
+				slots: [
+					{
+						capacity: 0,
+					},
+				],
 			});
-			const slot = await prisma.eventSlot.create({
-				data: {
-					eventId: event.id,
-					remainingCapacity: arrange.remainingCapacity,
+
+			assert(createEvent.ok);
+			const { event } = createEvent.data;
+
+			await events.signUp(ctx, user.id, event.id);
+			const actual = await events.retractSignUp(user.id, event.id);
+			const actualEvent = await events.get(event.id);
+			const actualSlotsResult = await events.getSlots(ctx, {
+				eventId: event.id,
+			});
+			assert(actualSlotsResult.ok);
+			const { slots: actualSlots } = actualSlotsResult.data;
+			const actualSlot = actualSlots[0];
+			assert(actualSlot !== undefined);
+
+			expect(actual.participationStatus).toBe(ParticipationStatus.RETRACTED);
+			expect(actual.slotId).toBe(null);
+			expect(actual.version).toBe(1);
+			expect(actualEvent.remainingCapacity).toBe(0);
+			expect(actualSlot.remainingCapacity).toBe(0);
+		});
+
+		it("not change an already retracted sign up", async () => {
+			const { user, organization } = await makeUserWithOrganizationMembership();
+			const ctx = makeMockContext(user);
+
+			const createEvent = await events.create(ctx, {
+				type: "SIGN_UPS",
+				event: {
+					organizationId: organization.id,
+					name: faker.word.adjective(),
+					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+					signUpsEnabled: true,
+					capacity: 1,
+					signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 				},
-			});
-			const user = await prisma.user.create({
-				data: {
-					email: faker.internet.exampleEmail({
-						firstName: faker.string.uuid(),
-					}),
-					firstName: faker.person.firstName(),
-					lastName: faker.person.lastName(),
-					username: faker.string.sample(20),
-					feideId: faker.string.uuid(),
-				},
+				slots: [
+					{
+						capacity: 1,
+					},
+				],
 			});
 
-			const signUp = await prisma.eventSignUp.create({
-				data: {
-					eventId: event.id,
-					userId: user.id,
-					slotId: arrange.slotId === null ? null : slot.id,
-					participationStatus: arrange.participationStatus,
-				},
+			if (!createEvent.ok) {
+				throw createEvent.error;
+			}
+			assert(createEvent.ok);
+			const { event } = createEvent.data;
+
+			await events.signUp(ctx, user.id, event.id);
+			await events.retractSignUp(user.id, event.id);
+
+			try {
+				await events.retractSignUp(user.id, event.id);
+				fail("Expected an error");
+			} catch (err) {
+				expect(err).toBeInstanceOf(NotFoundError);
+			}
+			const actualEvent = await events.get(event.id);
+			const actualSlotsResult = await events.getSlots(ctx, {
+				eventId: event.id,
 			});
 
-			/**
-			 * Act
-			 *
-			 * Retract the sign up
-			 */
-			const actual = await eventService.removeSignUp(user.id, event.id);
+			assert(actualSlotsResult.ok);
+			const { slots: actualSlots } = actualSlotsResult.data;
+			const actualSlot = actualSlots[0];
+			assert(actualSlot !== undefined);
 
-			/**
-			 * Assert
-			 *
-			 * 1. Status should be retracted
-			 * 2. slotId should match the expected slotId
-			 * 3. version should be incremented
-			 * 4. remainingCapacity for evnet and slot should match the expected remainingCapacity
-			 */
-			expect(actual.participationStatus).toBe(
-				expected.participationStatus ?? ParticipationStatus.REMOVED,
-			);
-			expect(actual.slotId).toBe(expected.slotId);
-			expect(actual.version).toBe(expected.version ?? signUp.version + 1);
-
-			const updatedSlot = await prisma.eventSlot.findUnique({
-				where: { id: slot.id },
-			});
-			const updatedEvent = await prisma.event.findUnique({
-				where: { id: event.id },
-			});
-
-			expect(updatedSlot?.remainingCapacity).toBe(expected.remainingCapacity);
-			expect(updatedEvent?.remainingCapacity).toBe(expected.remainingCapacity);
+			expect(actualEvent.remainingCapacity).toBe(1);
+			expect(actualSlot.remainingCapacity).toBe(1);
 		});
 	});
 });

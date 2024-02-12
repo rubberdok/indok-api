@@ -31,26 +31,22 @@ describe("Event Sign Up", () => {
 			const createEventResult = await eventService.create(
 				makeMockContext(user),
 				{
-					data: {
+					event: {
 						name: faker.color.human(),
 						description: faker.lorem.paragraph(),
 						startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 						endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
 						signUpsEnabled: true,
 						organizationId: organization.id,
-						signUpDetails: {
-							capacity: 1,
-							signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-							signUpsEndAt: DateTime.now()
-								.plus({ days: 1, hours: 2 })
-								.toJSDate(),
-							slots: [
-								{
-									capacity: 1,
-								},
-							],
-						},
+						capacity: 1,
+						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+						signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
 					},
+					slots: [
+						{
+							capacity: 1,
+						},
+					],
 					type: "SIGN_UPS",
 				},
 			);
@@ -94,27 +90,23 @@ describe("Event Sign Up", () => {
 				makeMockContext(user),
 				{
 					type: "SIGN_UPS",
-					data: {
+					event: {
 						organizationId: organization.id,
 						name: faker.color.human(),
 						description: faker.lorem.paragraph(),
 						startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 						endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
 						signUpsEnabled: true,
-						signUpDetails: {
-							capacity: 1,
-							signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-							signUpsEndAt: DateTime.now()
-								.plus({ days: 1, hours: 2 })
-								.toJSDate(),
-							slots: [
-								{
-									gradeYears: [1, 2, 3],
-									capacity: 1,
-								},
-							],
-						},
+						capacity: 1,
+						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+						signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
 					},
+					slots: [
+						{
+							gradeYears: [1, 2, 3],
+							capacity: 1,
+						},
+					],
 				},
 			);
 			assert(createEventResult.ok);
@@ -154,25 +146,23 @@ describe("Event Sign Up", () => {
 				graduationYear: DateTime.now().plus({ years: 1 }).year,
 			});
 			const event = await eventService.create(makeMockContext(user), {
-				data: {
+				event: {
 					organizationId: organization.id,
 					name: faker.color.human(),
 					description: faker.lorem.paragraph(),
 					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 					endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
 					signUpsEnabled: true,
-					signUpDetails: {
-						capacity: 1,
-						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-						signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
-						slots: [
-							{
-								gradeYears: [1],
-								capacity: 1,
-							},
-						],
-					},
+					capacity: 1,
+					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+					signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
 				},
+				slots: [
+					{
+						gradeYears: [1],
+						capacity: 1,
+					},
+				],
 				type: "SIGN_UPS",
 			});
 
@@ -236,29 +226,27 @@ describe("Event Sign Up", () => {
 						await makeUserWithOrganizationMembership();
 					const event = await eventService.create(makeMockContext(user), {
 						type: "SIGN_UPS",
-						data: {
+						event: {
 							organizationId: organization.id,
 							name: faker.color.human(),
 							description: faker.lorem.paragraph(),
 							startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 							endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
 							signUpsEnabled: true,
-							signUpDetails: {
-								capacity: eventCapacity,
-								signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-								signUpsEndAt: DateTime.now()
-									.plus({ days: 1, hours: 2 })
-									.toJSDate(),
-								slots: [
-									{
-										capacity: slotCapacity,
-									},
-								],
-							},
+							capacity: eventCapacity,
+							signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+							signUpsEndAt: DateTime.now()
+								.plus({ days: 1, hours: 2 })
+								.toJSDate(),
 						},
+						slots: [
+							{
+								capacity: slotCapacity,
+							},
+						],
 					});
 
-					assert(event.ok);
+					if (!event.ok) throw event.error;
 
 					/**
 					 * Act.
@@ -301,24 +289,22 @@ describe("Event Sign Up", () => {
 			const { user, organization } = await makeUserWithOrganizationMembership();
 
 			const event = await eventService.create(makeMockContext(user), {
-				data: {
+				event: {
 					organizationId: organization.id,
 					name: faker.color.human(),
 					description: faker.lorem.paragraph(),
 					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 					endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
 					signUpsEnabled: true,
-					signUpDetails: {
-						capacity: concurrentUsers,
-						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-						signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
-						slots: [
-							{
-								capacity: concurrentUsers,
-							},
-						],
-					},
+					capacity: concurrentUsers,
+					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+					signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
 				},
+				slots: [
+					{
+						capacity: concurrentUsers,
+					},
+				],
 				type: "SIGN_UPS",
 			});
 
@@ -383,24 +369,22 @@ describe("Event Sign Up", () => {
 			const { user, organization } = await makeUserWithOrganizationMembership();
 
 			const event = await eventService.create(makeMockContext(user), {
-				data: {
+				event: {
 					organizationId: organization.id,
 					name: faker.color.human(),
 					description: faker.lorem.paragraph(),
 					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 					endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
 					signUpsEnabled: true,
-					signUpDetails: {
-						capacity,
-						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-						signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
-						slots: [
-							{
-								capacity,
-							},
-						],
-					},
+					capacity,
+					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+					signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
 				},
+				slots: [
+					{
+						capacity,
+					},
+				],
 				type: "SIGN_UPS",
 			});
 			assert(event.ok);
@@ -466,22 +450,20 @@ describe("Event Sign Up", () => {
 			 */
 			const { organization, user } = await makeUserWithOrganizationMembership();
 			const event = await eventService.create(makeMockContext(user), {
-				data: {
+				event: {
 					organizationId: organization.id,
 					name: faker.word.adjective(),
 					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 					signUpsEnabled: false,
-					signUpDetails: {
-						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-						signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-						capacity: 1,
-						slots: [
-							{
-								capacity: 1,
-							},
-						],
-					},
+					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+					signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					capacity: 1,
 				},
+				slots: [
+					{
+						capacity: 1,
+					},
+				],
 				type: "SIGN_UPS",
 			});
 			assert(event.ok);
@@ -515,22 +497,20 @@ describe("Event Sign Up", () => {
 			 */
 			const { organization, user } = await makeUserWithOrganizationMembership();
 			const event = await eventService.create(makeMockContext(user), {
-				data: {
+				event: {
 					organizationId: organization.id,
 					name: faker.word.adjective(),
 					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 					signUpsEnabled: true,
-					signUpDetails: {
-						signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-						signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
-						capacity: 1,
-						slots: [
-							{
-								capacity: 1,
-							},
-						],
-					},
+					signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+					capacity: 1,
 				},
+				slots: [
+					{
+						capacity: 1,
+					},
+				],
 				type: "SIGN_UPS",
 			});
 			assert(event.ok);

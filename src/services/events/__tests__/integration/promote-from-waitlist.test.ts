@@ -30,23 +30,21 @@ describe("EventService", () => {
 			 */
 			const { user, organization } = await makeUserWithOrganizationMembership();
 			const createEvent = await eventService.create(makeMockContext(user), {
-				data: {
+				event: {
 					organizationId: organization.id,
 					name: faker.word.adjective(),
 					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 					endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
 					signUpsEnabled: true,
-					signUpDetails: {
-						capacity: 1,
-						signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-						slots: [
-							{
-								capacity: 1,
-							},
-						],
-					},
+					capacity: 1,
+					signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 				},
+				slots: [
+					{
+						capacity: 1,
+					},
+				],
 				type: "SIGN_UPS",
 			});
 
@@ -115,7 +113,7 @@ describe("EventService", () => {
 			});
 			assert(event.type === "SIGN_UPS");
 			expect(updatedEvent?.remainingCapacity).toBe(
-				(event.signUpDetails?.remainingCapacity ?? Number.NaN) - 1,
+				(event.remainingCapacity ?? Number.NaN) - 1,
 			);
 		});
 	});

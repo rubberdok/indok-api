@@ -1,4 +1,3 @@
-import assert from "assert";
 import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
@@ -25,16 +24,14 @@ describe("EventService", () => {
 					graduationYear?: number;
 				};
 				signUpsEnabled: boolean;
-				signUpDetails: {
+				capacity: number;
+				signUpsStartAt: Date;
+				signUpsEndAt: Date;
+				slots: {
 					capacity: number;
-					signUpsStartAt: Date;
-					signUpsEndAt: Date;
-					slots: {
-						capacity: number;
-						gradeYears?: number[];
-					}[];
-				};
-				signUp?: { participationStatus: ParticipationStatus; active: boolean };
+					gradeYears?: number[];
+				}[];
+				signUp?: { participationStatus: ParticipationStatus };
 			};
 			expected: boolean;
 		}
@@ -44,16 +41,14 @@ describe("EventService", () => {
 				name: "if the user does not have a sign up for the event, and there is capacity on the event and a slot",
 				arrange: {
 					signUpsEnabled: true,
-					signUpDetails: {
-						signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-						capacity: 1,
-						slots: [
-							{
-								capacity: 1,
-							},
-						],
-					},
+					signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+					capacity: 1,
+					slots: [
+						{
+							capacity: 1,
+						},
+					],
 				},
 				expected: true,
 			},
@@ -61,19 +56,16 @@ describe("EventService", () => {
 				name: "if the user has an inactive sign up for the event, and there is capacity on the event and a slot",
 				arrange: {
 					signUpsEnabled: true,
-					signUpDetails: {
-						signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-						capacity: 1,
-						slots: [
-							{
-								capacity: 1,
-							},
-						],
-					},
+					signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+					capacity: 2,
+					slots: [
+						{
+							capacity: 2,
+						},
+					],
 					signUp: {
-						participationStatus: ParticipationStatus.ON_WAITLIST,
-						active: false,
+						participationStatus: ParticipationStatus.REMOVED,
 					},
 				},
 				expected: true,
@@ -82,19 +74,16 @@ describe("EventService", () => {
 				name: "if the user has an active sign up for the event, even if there is capacity on the event and slot",
 				arrange: {
 					signUpsEnabled: true,
-					signUpDetails: {
-						signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-						capacity: 1,
-						slots: [
-							{
-								capacity: 1,
-							},
-						],
-					},
+					signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+					capacity: 1,
+					slots: [
+						{
+							capacity: 1,
+						},
+					],
 					signUp: {
 						participationStatus: ParticipationStatus.CONFIRMED,
-						active: true,
 					},
 				},
 				expected: false,
@@ -103,16 +92,14 @@ describe("EventService", () => {
 				name: "if there is no capacity on the event, even if there is capacity in a slot",
 				arrange: {
 					signUpsEnabled: true,
-					signUpDetails: {
-						signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-						capacity: 0,
-						slots: [
-							{
-								capacity: 1,
-							},
-						],
-					},
+					signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+					capacity: 0,
+					slots: [
+						{
+							capacity: 1,
+						},
+					],
 				},
 				expected: false,
 			},
@@ -120,16 +107,14 @@ describe("EventService", () => {
 				name: "if signUpsEnabled: false, even if there is capacity",
 				arrange: {
 					signUpsEnabled: false,
-					signUpDetails: {
-						signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-						capacity: 1,
-						slots: [
-							{
-								capacity: 1,
-							},
-						],
-					},
+					signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+					capacity: 1,
+					slots: [
+						{
+							capacity: 1,
+						},
+					],
 				},
 				expected: false,
 			},
@@ -137,16 +122,14 @@ describe("EventService", () => {
 				name: "if there is no slot with capacity on the event, even if there is capacity on the event",
 				arrange: {
 					signUpsEnabled: true,
-					signUpDetails: {
-						signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-						capacity: 1,
-						slots: [
-							{
-								capacity: 0,
-							},
-						],
-					},
+					signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+					capacity: 1,
+					slots: [
+						{
+							capacity: 0,
+						},
+					],
 				},
 				expected: false,
 			},
@@ -154,16 +137,14 @@ describe("EventService", () => {
 				name: "if sign ups have not started",
 				arrange: {
 					signUpsEnabled: true,
-					signUpDetails: {
-						signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
-						signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-						capacity: 1,
-						slots: [
-							{
-								capacity: 1,
-							},
-						],
-					},
+					signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+					signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					capacity: 1,
+					slots: [
+						{
+							capacity: 1,
+						},
+					],
 				},
 				expected: false,
 			},
@@ -174,17 +155,15 @@ describe("EventService", () => {
 						graduationYear: DateTime.now().year + 1,
 					},
 					signUpsEnabled: true,
-					signUpDetails: {
-						signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
-						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-						capacity: 1,
-						slots: [
-							{
-								gradeYears: [1, 2, 3, 4, 5],
-								capacity: 1,
-							},
-						],
-					},
+					signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+					capacity: 1,
+					slots: [
+						{
+							gradeYears: [1, 2, 3, 4, 5],
+							capacity: 1,
+						},
+					],
 				},
 				expected: true,
 			},
@@ -195,17 +174,15 @@ describe("EventService", () => {
 						graduationYear: DateTime.now().year + 3,
 					},
 					signUpsEnabled: true,
-					signUpDetails: {
-						signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
-						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-						capacity: 1,
-						slots: [
-							{
-								gradeYears: [1],
-								capacity: 1,
-							},
-						],
-					},
+					signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+					capacity: 1,
+					slots: [
+						{
+							gradeYears: [1],
+							capacity: 1,
+						},
+					],
 				},
 				expected: false,
 			},
@@ -216,29 +193,27 @@ describe("EventService", () => {
 						graduationYear: DateTime.now().year + 3,
 					},
 					signUpsEnabled: true,
-					signUpDetails: {
-						signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
-						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-						capacity: 1,
-						slots: [
-							{
-								gradeYears: [1, 2, 3, 4, 5],
-								capacity: 1,
-							},
-							{
-								gradeYears: [1, 2, 3, 4, 5],
-								capacity: 1,
-							},
-							{
-								gradeYears: [1, 2, 3, 4, 5],
-								capacity: 1,
-							},
-							{
-								gradeYears: [1, 2, 3, 4, 5],
-								capacity: 1,
-							},
-						],
-					},
+					signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+					capacity: 1,
+					slots: [
+						{
+							gradeYears: [1, 2, 3, 4, 5],
+							capacity: 1,
+						},
+						{
+							gradeYears: [1, 2, 3, 4, 5],
+							capacity: 1,
+						},
+						{
+							gradeYears: [1, 2, 3, 4, 5],
+							capacity: 1,
+						},
+						{
+							gradeYears: [1, 2, 3, 4, 5],
+							capacity: 1,
+						},
+					],
 				},
 				expected: true,
 			},
@@ -247,17 +222,15 @@ describe("EventService", () => {
 				arrange: {
 					user: {},
 					signUpsEnabled: true,
-					signUpDetails: {
-						signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
-						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-						capacity: 1,
-						slots: [
-							{
-								gradeYears: [1, 2, 3, 4, 5],
-								capacity: 1,
-							},
-						],
-					},
+					signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+					capacity: 1,
+					slots: [
+						{
+							gradeYears: [1, 2, 3, 4, 5],
+							capacity: 1,
+						},
+					],
 				},
 				expected: true,
 			},
@@ -266,17 +239,15 @@ describe("EventService", () => {
 				arrange: {
 					user: {},
 					signUpsEnabled: true,
-					signUpDetails: {
-						signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
-						signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-						capacity: 1,
-						slots: [
-							{
-								gradeYears: [2, 3, 4, 5],
-								capacity: 1,
-							},
-						],
-					},
+					signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+					capacity: 1,
+					slots: [
+						{
+							gradeYears: [2, 3, 4, 5],
+							capacity: 1,
+						},
+					],
 				},
 				expected: false,
 			},
@@ -297,28 +268,31 @@ describe("EventService", () => {
 				const { user, organization } = await makeUserWithOrganizationMembership(
 					arrange.user,
 				);
-				const event = await eventService.create(makeMockContext(user), {
-					data: {
+				const ctx = makeMockContext(user);
+				const event = await eventService.create(ctx, {
+					event: {
 						organizationId: organization.id,
 						name: faker.word.adjective(),
 						startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 						endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
 						signUpsEnabled: arrange.signUpsEnabled,
-						signUpDetails: arrange.signUpDetails,
+						capacity: arrange.capacity,
+						signUpsStartAt: arrange.signUpsStartAt,
+						signUpsEndAt: arrange.signUpsEndAt,
 					},
+					slots: arrange.slots,
 					type: "SIGN_UPS",
 				});
-				assert(event.ok);
+				if (!event.ok) throw event.error;
 
 				if (arrange.signUp) {
-					await prisma.eventSignUp.create({
-						data: {
-							event: { connect: { id: event.data.event.id } },
-							user: { connect: { id: user.id } },
-							participationStatus: arrange.signUp.participationStatus,
-							active: arrange.signUp.active,
-						},
-					});
+					await eventService.signUp(ctx, user.id, event.data.event.id);
+					if (
+						arrange.signUp.participationStatus === "RETRACTED" ||
+						arrange.signUp.participationStatus === "REMOVED"
+					) {
+						await eventService.retractSignUp(user.id, event.data.event.id);
+					}
 				}
 
 				/**

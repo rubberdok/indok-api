@@ -27,8 +27,10 @@ import type { User } from "~/domain/users.js";
 import type { Result, ResultAsync } from "~/lib/result.js";
 import type { Context } from "../../lib/context.js";
 import type { SignUpQueueType } from "./worker.js";
-import type { EventUpdateFn } from "~/repositories/events/index.js";
-import type { EventUpdateFields } from "~/domain/events/event.js";
+import type {
+	EventUpdateFields,
+	EventUpdateFn,
+} from "~/domain/events/event.js";
 import type { NewSlotParams, UpdateSlotFields } from "~/domain/events/slot.js";
 import type { CategoryType } from "~/domain/events/category.js";
 
@@ -42,6 +44,7 @@ export type {
 	CreateBasicEventParams,
 	CreateSignUpEventParams,
 	CreateTicketEventParams,
+	UpdateEventParams,
 };
 
 interface CreateConfirmedSignUpData {
@@ -73,18 +76,35 @@ interface UpdateToInactiveSignUpData {
 interface EventRepository {
 	create(
 		ctx: Context,
-		params: { event: EventType; slots?: SlotType[] },
+		params: {
+			event: EventType;
+			slots?: SlotType[];
+			categories?: { id: string }[];
+		},
 	): ResultAsync<
-		{ event: EventType; slots?: SlotType[] },
+		{ event: EventType; slots?: SlotType[]; categories?: CategoryType[] },
 		InternalServerError | InvalidArgumentError
 	>;
 	update(
 		ctx: Context,
 		id: string,
-		updateFn: EventUpdateFn,
-	): ResultAsync<{ event: EventType }, InternalServerError>;
+		updateFn: EventUpdateFn<
+			EventType,
+			InternalServerError | InvalidArgumentError | PermissionDeniedError
+		>,
+	): ResultAsync<
+		{ event: EventType; slots: SlotType[]; categories: CategoryType[] },
+		InternalServerError | InvalidArgumentError | PermissionDeniedError
+	>;
 	get(id: string): Promise<EventType>;
-	getWithSlots(id: string): Promise<EventType & { slots: EventSlot[] }>;
+	getWithSlotsAndCategories(params: { id: string }): ResultAsync<
+		{
+			event: EventType;
+			slots?: SlotType[];
+			categories?: CategoryType[];
+		},
+		InternalServerError | NotFoundError
+	>;
 	getSlotWithRemainingCapacity(
 		eventId: string,
 		gradeYear?: number,
@@ -112,7 +132,7 @@ interface EventRepository {
 	findManySlots(data: { gradeYear?: number; eventId: string }): Promise<
 		EventSlot[]
 	>;
-	getCategories(): Promise<CategoryType[]>;
+	getCategories(by?: { eventId?: string }): Promise<CategoryType[]>;
 	createCategory(data: { name: string }): Promise<CategoryType>;
 	updateCategory(data: CategoryType): Promise<CategoryType>;
 	deleteCategory(data: { id: string }): Promise<CategoryType>;
@@ -168,11 +188,7 @@ type BaseCreateEventFields = {
 
 type CreateBasicEventParams = {
 	type: typeof EventTypeEnum.BASIC;
-	event: BaseCreateEventFields & {
-		capacity?: undefined | null;
-		signUpsStartAt?: undefined | null;
-		signUpsEndAt?: undefined | null;
-	};
+	event: BaseCreateEventFields;
 	slots?: undefined;
 	tickets?: undefined;
 };
@@ -204,6 +220,16 @@ type CreateEventParams =
 	| CreateSignUpEventParams
 	| CreateTicketEventParams;
 
+type UpdateEventParams = {
+	event: EventUpdateFields & { id: string };
+	slots?: {
+		create?: NewSlotParams[] | null;
+		update?: UpdateSlotFields[] | null;
+		delete?: { id: string }[] | null;
+	} | null;
+	categories?: { id: string }[] | null;
+};
+
 class EventService {
 	constructor(
 		private eventRepository: EventRepository,
@@ -217,7 +243,7 @@ class EventService {
 		ctx: Context,
 		params: CreateEventParams,
 	): ResultAsync<
-		{ event: EventType; slots?: SlotType[] },
+		{ event: EventType; slots?: SlotType[]; categories?: CategoryType[] },
 		InternalServerError | InvalidArgumentError | PermissionDeniedError
 	> {
 		const { event: eventData, slots: slotData, tickets, type } = params;
@@ -341,8 +367,15 @@ class EventService {
 				error: new InternalServerError("Unexpected error in repository", error),
 			};
 		}
-		const { event: createdEvent, slots: createdSlots } = createEventResult.data;
-		return { ok: true, data: { event: createdEvent, slots: createdSlots } };
+		const {
+			event: createdEvent,
+			slots: createdSlots,
+			categories,
+		} = createEventResult.data;
+		return {
+			ok: true,
+			data: { event: createdEvent, slots: createdSlots, categories },
+		};
 	}
 
 	/**
@@ -356,15 +389,11 @@ class EventService {
 	 */
 	async update(
 		ctx: Context,
-		params: {
-			event: EventUpdateFields & { id: string };
-			slots?: {
-				create?: NewSlotParams[];
-				update?: UpdateSlotFields[];
-				delete?: string[];
-			};
-		},
-	): ResultAsync<{ event: EventType; slots?: SlotType[] }> {
+		params: UpdateEventParams,
+	): ResultAsync<
+		{ event: EventType; slots: SlotType[]; categories: CategoryType[] },
+		InvalidArgumentError | PermissionDeniedError | InternalServerError
+	> {
 		const updateResult = await this.eventRepository.update(
 			ctx,
 			params.event.id,
@@ -377,6 +406,8 @@ class EventService {
 						),
 					};
 				}
+
+				// Updating an event requires that the user is a member of the organization
 				const isMember = await this.permissionService.hasRole({
 					userId: ctx.user?.id,
 					organizationId: event.organizationId,
@@ -457,14 +488,31 @@ class EventService {
 				}
 
 				if (params.slots?.delete) {
-					for (const slotId of params.slots.delete) {
-						const slotToDelete = existingSlotsById[slotId];
+					for (const slot of params.slots.delete) {
+						const slotToDelete = existingSlotsById[slot.id];
+						/**
+						 * If we try to delete a slot which doesn't exist, we abort early.
+						 */
 						if (!slotToDelete) {
 							return {
 								ok: false,
 								error: new InvalidArgumentError("Slot to delete not found"),
 							};
 						}
+						/**
+						 * If remaining capacity does not match the total capacity, then we have a slot
+						 * where users have active sign ups. To limit the complexity of handling those cases,
+						 * we simply do not permit deleting those slots.
+						 */
+						if (slotToDelete.remainingCapacity !== slotToDelete.capacity) {
+							return {
+								ok: false,
+								error: new InvalidArgumentError(
+									"Cannot delete a slot with existing sign ups",
+								),
+							};
+						}
+
 						slotsToDelete.push(slotToDelete);
 					}
 				}
@@ -478,21 +526,13 @@ class EventService {
 							update: slotsToUpdate,
 							delete: slotsToDelete,
 						},
+						categories: params.categories ?? undefined,
 					},
 				};
 			},
 		);
 
-		if (!updateResult.ok) {
-			return {
-				ok: false,
-				error: new InternalServerError(
-					"Unexpected error when updating event",
-					updateResult.error,
-				),
-			};
-		}
-		return { ok: true, data: updateResult.data };
+		return updateResult;
 	}
 
 	/**
@@ -627,7 +667,7 @@ class EventService {
 
 		let endAtGte: Date | undefined;
 		if (data.onlyFutureEvents) {
-			endAtGte = new Date();
+			endAtGte = DateTime.now().toJSDate();
 		}
 
 		return await this.eventRepository.findMany({ endAtGte });
@@ -845,7 +885,13 @@ class EventService {
 		userId: string | undefined,
 		eventId: string,
 	): Promise<SignUpAvailability> {
-		const event = await this.eventRepository.getWithSlots(eventId);
+		const getEventResult = await this.eventRepository.getWithSlotsAndCategories(
+			{
+				id: eventId,
+			},
+		);
+		if (!getEventResult.ok) return signUpAvailability.UNAVAILABLE;
+		const { event } = getEventResult.data;
 		if (!Event.isSignUpEvent(event)) return signUpAvailability.DISABLED;
 
 		/**
@@ -985,8 +1031,22 @@ class EventService {
 		}
 	}
 
-	public getCategories(_ctx: Context): Promise<CategoryType[]> {
-		return this.eventRepository.getCategories();
+	public getCategories(
+		_ctx: Context,
+		by?: { eventId?: string },
+	): Promise<CategoryType[]> {
+		return this.eventRepository.getCategories(by);
+	}
+
+	public async getSlots(
+		ctx: Context,
+		params: { eventId: string },
+	): ResultAsync<{ slots: SlotType[] }> {
+		const { eventId } = params;
+		const slots = await this.eventRepository.findManySlots({
+			eventId,
+		});
+		return { ok: true, data: { slots } };
 	}
 
 	private async eventCapacityChanged(eventId: string): Promise<void> {

@@ -138,6 +138,7 @@ describe("EventService", () => {
 		await signUpWorker.close();
 		await emailWorker.close();
 		await signUpQueueEvents.close();
+		await emailQueueEvents.close();
 		redis.disconnect();
 		queueEventsRedis.disconnect();
 	});
@@ -179,19 +180,17 @@ describe("EventService", () => {
 			const createEvent = await eventService.create(
 				makeMockContext(eventOwner),
 				{
-					data: {
+					event: {
 						organizationId: organization.id,
 						name: faker.string.sample(20),
 						startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 						endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
 						signUpsEnabled: true,
-						signUpDetails: {
-							capacity: 1,
-							signUpsStartAt: faker.date.past(),
-							signUpsEndAt: faker.date.future(),
-							slots: [{ capacity: 1, gradeYears: [1, 2, 3, 4, 5] }],
-						},
+						capacity: 1,
+						signUpsStartAt: faker.date.past(),
+						signUpsEndAt: faker.date.future(),
 					},
+					slots: [{ capacity: 1, gradeYears: [1, 2, 3, 4, 5] }],
 					type: "SIGN_UPS",
 				},
 			);
@@ -215,7 +214,7 @@ describe("EventService", () => {
 			expect(waitListSignUp.participationStatus).toBe("ON_WAITLIST");
 			event = await eventService.get(event.id);
 			assert(event.type === "SIGN_UPS");
-			expect(event.signUpDetails?.remainingCapacity).toBe(0);
+			expect(event.remainingCapacity).toBe(0);
 
 			/**
 			 * Act
@@ -238,7 +237,7 @@ describe("EventService", () => {
 
 			event = await eventService.get(event.id);
 			assert(event.type === "SIGN_UPS");
-			expect(event.signUpDetails?.remainingCapacity).toBe(0);
+			expect(event.remainingCapacity).toBe(0);
 
 			/**
 			 * Assert
@@ -333,23 +332,21 @@ describe("EventService", () => {
 			const createEvent = await eventService.create(
 				makeMockContext(eventOwner),
 				{
-					data: {
+					event: {
 						organizationId: organization.id,
 						name: faker.string.sample(20),
 						startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 						endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
 						signUpsEnabled: true,
 
-						signUpDetails: {
-							capacity: 20,
-							signUpsStartAt: faker.date.past(),
-							signUpsEndAt: faker.date.future(),
-							slots: [
-								{ capacity: 10, gradeYears: [1, 2, 3, 4, 5] },
-								{ capacity: 10, gradeYears: [1, 2, 3, 4, 5] },
-							],
-						},
+						capacity: 20,
+						signUpsStartAt: faker.date.past(),
+						signUpsEndAt: faker.date.future(),
 					},
+					slots: [
+						{ capacity: 10, gradeYears: [1, 2, 3, 4, 5] },
+						{ capacity: 10, gradeYears: [1, 2, 3, 4, 5] },
+					],
 					type: "SIGN_UPS",
 				},
 			);
@@ -389,7 +386,7 @@ describe("EventService", () => {
 
 			event = await eventService.get(event.id);
 			assert(event.type === "SIGN_UPS");
-			expect(event.signUpDetails?.remainingCapacity).toBe(0);
+			expect(event.remainingCapacity).toBe(0);
 
 			/**
 			 * Act
@@ -416,7 +413,7 @@ describe("EventService", () => {
 
 			event = await eventService.get(event.id);
 			assert(event.type === "SIGN_UPS");
-			expect(event.signUpDetails?.remainingCapacity).toBe(0);
+			expect(event.remainingCapacity).toBe(0);
 
 			/**
 			 * Assert
