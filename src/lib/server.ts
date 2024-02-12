@@ -20,7 +20,9 @@ import type { BookingStatus } from "~/domain/cabins.js";
 import {
 	InternalServerError,
 	type InvalidArgumentError,
+	type NotFoundError,
 	type PermissionDeniedError,
+	type UnauthorizedError,
 } from "~/domain/errors.js";
 import type {
 	CategoryType,
@@ -225,7 +227,7 @@ export interface IEventService {
 	getSlots(
 		ctx: Context,
 		params: { eventId: string },
-	): ResultAsync<{ slots: SlotType[] }>;
+	): ResultAsync<{ slots: SlotType[] }, never>;
 }
 
 export interface IListingService {
@@ -276,13 +278,16 @@ export type IProductService = {
 	orders: {
 		create(
 			ctx: Context,
-			data: { productId: string },
-		): ResultAsync<{ order: OrderType }>;
+			data: Pick<OrderType, "productId">,
+		): ResultAsync<{ order: OrderType }, UnauthorizedError | NotFoundError>;
 	};
 	products: {
 		findMany(
-			ctx: Context,
-		): ResultAsync<{ products: ProductType[]; total: number }>;
+			_ctx: Context,
+		): ResultAsync<
+			{ products: ProductType[]; total: number },
+			InternalServerError
+		>;
 	};
 };
 

@@ -29,12 +29,16 @@ describe("ProductService", () => {
 			const orderId = faker.string.uuid();
 			const price = 100;
 			productRepository.getOrder.mockResolvedValueOnce({
-				order: {
-					attempt: 0,
-					id: orderId,
-					productId: faker.string.uuid(),
-					version: 0,
-					paymentStatus: "PENDING",
+				ok: true,
+				data: {
+					order: {
+						attempt: 0,
+						id: orderId,
+						productId: faker.string.uuid(),
+						version: 0,
+						paymentStatus: "PENDING",
+						userId: null,
+					},
 				},
 			});
 			productRepository.getProduct.mockResolvedValueOnce({
@@ -69,6 +73,7 @@ describe("ProductService", () => {
 					productId: faker.string.uuid(),
 					version: 0,
 					paymentStatus: "CREATED",
+					userId: null,
 				},
 			});
 			mockVippsClient.payment.create.mockImplementation((_token, body) => {
@@ -139,7 +144,10 @@ describe("ProductService", () => {
 
 		it("should fail with NotFoundError if the order does not exist", async () => {
 			productRepository.getOrder.mockResolvedValueOnce({
-				order: null,
+				ok: true,
+				data: {
+					order: null,
+				},
 			});
 
 			const result = await productService.payments.initiatePaymentAttempt(
@@ -159,9 +167,12 @@ describe("ProductService", () => {
 
 		it("should fail with InvalidArgumentError if the order is captured", async () => {
 			productRepository.getOrder.mockResolvedValueOnce({
-				order: mock<OrderType>({
-					paymentStatus: "CAPTURED",
-				}),
+				ok: true,
+				data: {
+					order: mock<OrderType>({
+						paymentStatus: "CAPTURED",
+					}),
+				},
 			});
 
 			const result = await productService.payments.initiatePaymentAttempt(
@@ -182,9 +193,12 @@ describe("ProductService", () => {
 
 		it("should fail with InvalidArgumentError if the order is cancelled", async () => {
 			productRepository.getOrder.mockResolvedValueOnce({
-				order: mock<OrderType>({
-					paymentStatus: "CANCELLED",
-				}),
+				ok: true,
+				data: {
+					order: mock<OrderType>({
+						paymentStatus: "CANCELLED",
+					}),
+				},
 			});
 
 			const result = await productService.payments.initiatePaymentAttempt(
@@ -205,9 +219,12 @@ describe("ProductService", () => {
 
 		it("should fail with InvalidArgumentError if the order is refunded", async () => {
 			productRepository.getOrder.mockResolvedValueOnce({
-				order: mock<OrderType>({
-					paymentStatus: "REFUNDED",
-				}),
+				ok: true,
+				data: {
+					order: mock<OrderType>({
+						paymentStatus: "REFUNDED",
+					}),
+				},
 			});
 
 			const result = await productService.payments.initiatePaymentAttempt(
@@ -228,9 +245,12 @@ describe("ProductService", () => {
 
 		it("should fail with NotFoundError if the related product does not exist", async () => {
 			productRepository.getOrder.mockResolvedValueOnce({
-				order: mock<OrderType>({
-					paymentStatus: "CREATED",
-				}),
+				ok: true,
+				data: {
+					order: mock<OrderType>({
+						paymentStatus: "CREATED",
+					}),
+				},
 			});
 
 			productRepository.getProduct.mockResolvedValueOnce({
@@ -255,11 +275,14 @@ describe("ProductService", () => {
 
 		it("should fail with InternalServerError if the request to Vipps fails", async () => {
 			productRepository.getOrder.mockResolvedValueOnce({
-				order: mock<OrderType>({
-					paymentStatus: "CREATED",
-					id: faker.string.uuid(),
-					attempt: 0,
-				}),
+				ok: true,
+				data: {
+					order: mock<OrderType>({
+						paymentStatus: "CREATED",
+						id: faker.string.uuid(),
+						attempt: 0,
+					}),
+				},
 			});
 
 			productRepository.getProduct.mockResolvedValueOnce({
@@ -295,7 +318,10 @@ describe("ProductService", () => {
 		it("should succeed if the user is not logged in", async () => {
 			const ctx = makeMockContext(null);
 			productRepository.getPaymentAttempt.mockResolvedValueOnce({
-				paymentAttempt: mock<PaymentAttempt>({}),
+				ok: true,
+				data: {
+					paymentAttempt: mock<PaymentAttempt>({}),
+				},
 			});
 
 			const result = await productService.payments.get(ctx, {
@@ -308,7 +334,10 @@ describe("ProductService", () => {
 		it("should succeed if the user is logged in", async () => {
 			const ctx = makeMockContext(mock<User>({}));
 			productRepository.getPaymentAttempt.mockResolvedValueOnce({
-				paymentAttempt: mock<PaymentAttempt>({}),
+				ok: true,
+				data: {
+					paymentAttempt: mock<PaymentAttempt>({}),
+				},
 			});
 
 			const result = await productService.payments.get(ctx, {

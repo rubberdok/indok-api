@@ -1,10 +1,12 @@
 import type { Client } from "@vippsmobilepay/sdk";
+import type { InternalServerError } from "~/domain/errors.js";
 import type {
 	MerchantType,
 	OrderType,
 	PaymentAttempt,
 	ProductType,
 } from "~/domain/products.js";
+import type { ResultAsync } from "~/lib/result.js";
 import { buildMerchants } from "./merchants.js";
 import { buildOrders } from "./orders.js";
 import { buildPayments } from "./payments.js";
@@ -13,7 +15,9 @@ import type { PaymentProcessingQueueType } from "./worker.js";
 
 interface ProductRepository {
 	getProduct(id: string): Promise<{ product: ProductType | null }>;
-	getOrder(id: string): Promise<{ order: OrderType | null }>;
+	getOrder(
+		id: string,
+	): ResultAsync<{ order: OrderType | null }, InternalServerError>;
 	createOrder(order: {
 		userId: string;
 		product: {
@@ -30,7 +34,10 @@ interface ProductRepository {
 	}): Promise<{ paymentAttempt: PaymentAttempt; order: OrderType }>;
 	getPaymentAttempt(
 		by: { id: string } | { reference: string },
-	): Promise<{ paymentAttempt: PaymentAttempt | null }>;
+	): ResultAsync<
+		{ paymentAttempt: PaymentAttempt | null },
+		InternalServerError
+	>;
 	updatePaymentAttempt(
 		paymentAttempt: Pick<PaymentAttempt, "id" | "version" | "state">,
 		order: Pick<OrderType, "id" | "version" | "paymentStatus">,

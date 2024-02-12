@@ -84,7 +84,7 @@ function buildPayments({
 		ctx: Context,
 		paymentAttempt: PaymentAttempt,
 		order: OrderType,
-	): ResultAsync<{ state: PaymentAttemptState }> {
+	): ResultAsync<{ state: PaymentAttemptState }, InternalServerError> {
 		const { reference } = paymentAttempt;
 		const { product } = await productRepository.getProduct(order.productId);
 		if (product === null) {
@@ -97,13 +97,12 @@ function buildPayments({
 
 		if (!response.ok) {
 			ctx.log.error("Failed to fetch payment status from Vipps");
-			const interalErr = new InternalServerError(
-				"Failed to fetch payment status from Vipps",
-			);
-			interalErr.cause = response.error;
 			return {
 				ok: false,
-				error: interalErr,
+				error: new InternalServerError(
+					"Failed to fetch payment status from Vipps",
+					response.error,
+				),
 			};
 		}
 
@@ -154,7 +153,11 @@ function buildPayments({
 				};
 			}
 
-			const { order } = await productRepository.getOrder(params.orderId);
+			const getOrderResult = await productRepository.getOrder(params.orderId);
+			if (!getOrderResult.ok) {
+				return getOrderResult;
+			}
+			const { order } = getOrderResult.data;
 			if (order === null) {
 				return {
 					ok: false,
@@ -270,12 +273,19 @@ function buildPayments({
 		async updatePaymentAttemptState(
 			ctx: Context,
 			paymentAttempt: PaymentAttempt,
-		): ResultAsync<{ paymentAttempt: PaymentAttempt }> {
+		): ResultAsync<
+			{ paymentAttempt: PaymentAttempt },
+			NotFoundError | InternalServerError
+		> {
 			const { reference } = paymentAttempt;
 
-			const { order } = await productRepository.getOrder(
+			const getOrderResult = await productRepository.getOrder(
 				paymentAttempt.orderId,
 			);
+			if (!getOrderResult.ok) {
+				return getOrderResult;
+			}
+			const { order } = getOrderResult.data;
 			if (order === null) {
 				return {
 					ok: false,
@@ -289,6 +299,7 @@ function buildPayments({
 					ok: false,
 					error: new InternalServerError(
 						"Failed to fetch payment status from Vipps",
+						result.error,
 					),
 				};
 			}
@@ -351,14 +362,16 @@ function buildPayments({
 		async get(
 			ctx: Context,
 			params: { reference: string },
-		): ResultAsync<{ paymentAttempt: PaymentAttempt | null }> {
+		): ResultAsync<
+			{ paymentAttempt: PaymentAttempt | null },
+			InternalServerError
+		> {
 			const { reference } = params;
 			ctx.log.info({ reference }, "Fetching payment attempt");
 
-			const { paymentAttempt } = await productRepository.getPaymentAttempt({
+			return await productRepository.getPaymentAttempt({
 				reference,
 			});
-			return { ok: true, data: { paymentAttempt } };
 		},
 	} as const;
 }

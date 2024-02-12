@@ -1,6 +1,7 @@
 import {
 	InternalServerError,
 	InvalidArgumentError,
+	PermissionDeniedError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
 import type { MerchantType } from "~/domain/products.js";
@@ -22,12 +23,26 @@ function buildMerchants({ productRepository }: BuildProductsDependencies) {
 				clientId: string;
 				clientSecret: string;
 			},
-		): ResultAsync<{ merchant: MerchantType }> {
+		): ResultAsync<
+			{ merchant: MerchantType },
+			| PermissionDeniedError
+			| UnauthorizedError
+			| InvalidArgumentError
+			| InternalServerError
+		> {
 			const { user } = ctx;
-			if (!user?.isSuperUser) {
+			if (ctx.user === null) {
 				return {
 					ok: false,
 					error: new UnauthorizedError(
+						"You must be logged in to create a merchant",
+					),
+				};
+			}
+			if (!user?.isSuperUser) {
+				return {
+					ok: false,
+					error: new PermissionDeniedError(
 						"You must be logged in as a super user to create a merchant",
 					),
 				};

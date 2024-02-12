@@ -1,6 +1,10 @@
 import type { PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
-import { InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
+import {
+	InternalServerError,
+	InvalidArgumentError,
+	NotFoundError,
+} from "~/domain/errors.js";
 import {
 	type MerchantType,
 	type OrderType,
@@ -9,6 +13,7 @@ import {
 	type ProductType,
 } from "~/domain/products.js";
 import { prismaKnownErrorCodes } from "~/lib/prisma.js";
+import type { ResultAsync } from "~/lib/result.js";
 
 export class ProductRepository {
 	constructor(private db: PrismaClient) {}
@@ -213,13 +218,22 @@ export class ProductRepository {
 	/**
 	 * getOrder returns an order.
 	 */
-	async getOrder(id: string): Promise<{ order: OrderType | null }> {
-		const order = await this.db.order.findUnique({
-			where: {
-				id,
-			},
-		});
-		return { order };
+	async getOrder(
+		id: string,
+	): ResultAsync<{ order: OrderType | null }, InternalServerError> {
+		try {
+			const order = await this.db.order.findUnique({
+				where: {
+					id,
+				},
+			});
+			return { ok: true, data: { order } };
+		} catch (err) {
+			return {
+				ok: false,
+				error: new InternalServerError("Failed to get order", err),
+			};
+		}
 	}
 
 	/**
@@ -227,14 +241,30 @@ export class ProductRepository {
 	 */
 	async getPaymentAttempt(
 		by: { id: string } | { reference: string },
-	): Promise<{ paymentAttempt: PaymentAttempt | null }> {
-		const attempt = await this.db.paymentAttempt.findUnique({
-			where: by,
-		});
-		if (!attempt) {
-			return { paymentAttempt: null };
+	): ResultAsync<
+		{ paymentAttempt: PaymentAttempt | null },
+		InternalServerError
+	> {
+		try {
+			const attempt = await this.db.paymentAttempt.findUnique({
+				where: by,
+			});
+			if (!attempt) {
+				return { data: { paymentAttempt: null }, ok: true };
+			}
+			return {
+				data: { paymentAttempt: PaymentAttemptFromDSO(attempt) },
+				ok: true,
+			};
+		} catch (err) {
+			return {
+				ok: false,
+				error: new InternalServerError(
+					"Unexpected error getting payment attempt",
+					err,
+				),
+			};
 		}
-		return { paymentAttempt: PaymentAttemptFromDSO(attempt) };
 	}
 
 	/**

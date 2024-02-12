@@ -1,4 +1,8 @@
-import { InternalServerError, UnauthorizedError } from "~/domain/errors.js";
+import {
+	InternalServerError,
+	type InvalidArgumentError,
+	UnauthorizedError,
+} from "~/domain/errors.js";
 import { Product, type ProductType } from "~/domain/products.js";
 import type { ResultAsync } from "~/lib/result.js";
 import type { Context } from "../../lib/context.js";
@@ -11,7 +15,10 @@ function buildProducts({ productRepository }: BuildProductsDependencies) {
 			data: Pick<ProductType, "price" | "description" | "name"> & {
 				merchantId: string;
 			},
-		): ResultAsync<{ product: ProductType }> {
+		): ResultAsync<
+			{ product: ProductType },
+			UnauthorizedError | InvalidArgumentError
+		> {
 			if (!ctx.user) {
 				return {
 					ok: false,
@@ -40,7 +47,10 @@ function buildProducts({ productRepository }: BuildProductsDependencies) {
 		 */
 		async findMany(
 			_ctx: Context,
-		): ResultAsync<{ products: ProductType[]; total: number }> {
+		): ResultAsync<
+			{ products: ProductType[]; total: number },
+			InternalServerError
+		> {
 			try {
 				const { products, total } = await productRepository.getProducts();
 				return { ok: true, data: { products, total } };

@@ -11,6 +11,7 @@ import {
 	InvalidArgumentError,
 	NotFoundError,
 	PermissionDeniedError,
+	UnauthorizedError,
 } from "~/domain/errors.js";
 import type { CategoryType } from "~/domain/events/category.js";
 import type {
@@ -52,6 +53,7 @@ interface CreateConfirmedSignUpData {
 	eventId: string;
 	slotId: string;
 	participationStatus: Extract<ParticipationStatus, "CONFIRMED">;
+	orderId?: string;
 }
 
 interface CreateOnWaitlistSignUpData {
@@ -129,6 +131,12 @@ interface EventRepository {
 		slot?: EventSlot;
 		event: EventType;
 	}>;
+	addOrderToSignUp(params: {
+		orderId: string;
+		signUpId: string;
+	}): Promise<
+		ResultAsync<{ signUp: EventSignUp }, NotFoundError | InternalServerError>
+	>;
 	findManySlots(data: { gradeYear?: number; eventId: string }): Promise<
 		EventSlot[]
 	>;
@@ -159,16 +167,19 @@ interface ProductService {
 	products: {
 		create(
 			ctx: Context,
-			product: Pick<ProductType, "price" | "description" | "name"> & {
+			data: Pick<ProductType, "price" | "description" | "name"> & {
 				merchantId: string;
 			},
-		): ResultAsync<{ product: ProductType }>;
+		): ResultAsync<
+			{ product: ProductType },
+			UnauthorizedError | InvalidArgumentError
+		>;
 	};
 	orders: {
 		create(
 			ctx: Context,
-			order: Pick<OrderType, "productId">,
-		): ResultAsync<{ order: OrderType }>;
+			data: Pick<OrderType, "productId">,
+		): ResultAsync<{ order: OrderType }, UnauthorizedError | NotFoundError>;
 	};
 }
 
@@ -554,6 +565,12 @@ class EventService {
 		userId: string,
 		eventId: string,
 	): Promise<EventSignUp> {
+		if (ctx.user === null) {
+			throw new UnauthorizedError(
+				"You must be logged in to sign up for an event",
+			);
+		}
+
 		const maxAttempts = 20;
 		const user = await this.userService.get(userId);
 
@@ -602,7 +619,7 @@ class EventService {
 					});
 					return signUp;
 				}
-				const { signUp } = await this.eventRepository.createSignUp({
+				let { signUp } = await this.eventRepository.createSignUp({
 					userId,
 					participationStatus: ParticipationStatus.CONFIRMED,
 					eventId,
@@ -612,17 +629,34 @@ class EventService {
 					{ signUp, attempt },
 					"Successfully signed up user for event.",
 				);
-				if (event.type === EventTypeEnum.TICKETS) {
+				if (event.type === "TICKETS") {
+					ctx.log.info("Creating order for event");
 					const orderResult = await this.productService.orders.create(ctx, {
 						productId: event.productId,
 					});
-					if (orderResult.ok) {
-						ctx.log.info(
-							{ order: orderResult.data.order },
-							"Successfully created order for event.",
+					if (!orderResult.ok) {
+						ctx.log.error(
+							{ error: orderResult.error },
+							"Failed to create order for event",
 						);
-						return signUp;
+						throw orderResult.error;
 					}
+					const { order } = orderResult.data;
+					const updatedSignUp = await this.eventRepository.addOrderToSignUp({
+						orderId: order.id,
+						signUpId: signUp.id,
+					});
+					if (!updatedSignUp.ok) {
+						ctx.log.error(
+							{ error: updatedSignUp.error },
+							"Failed to add order to sign up",
+						);
+						throw new InternalServerError(
+							"failed to add order to confirmed sign up on ticket event",
+							updatedSignUp.error,
+						);
+					}
+					signUp = updatedSignUp.data.signUp;
 				}
 				return signUp;
 			} catch (err) {
@@ -1041,7 +1075,7 @@ class EventService {
 	public async getSlots(
 		ctx: Context,
 		params: { eventId: string },
-	): ResultAsync<{ slots: SlotType[] }> {
+	): ResultAsync<{ slots: SlotType[] }, never> {
 		const { eventId } = params;
 		const slots = await this.eventRepository.findManySlots({
 			eventId,

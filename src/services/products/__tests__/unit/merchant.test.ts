@@ -1,5 +1,5 @@
 import { mock } from "jest-mock-extended";
-import { UnauthorizedError } from "~/domain/errors.js";
+import { PermissionDeniedError } from "~/domain/errors.js";
 import type { MerchantType } from "~/domain/products.js";
 import type { User } from "~/domain/users.js";
 import { makeMockContext } from "~/lib/context.js";
@@ -22,7 +22,7 @@ describe("ProductService", () => {
 
 			expect(result).toEqual({
 				ok: false,
-				error: expect.any(UnauthorizedError),
+				error: expect.any(PermissionDeniedError),
 			});
 			expect(productRepository.createMerchant).not.toHaveBeenCalled();
 		});

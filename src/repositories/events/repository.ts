@@ -1228,6 +1228,44 @@ export class EventRepository {
 			throw err;
 		}
 	}
+
+	public async addOrderToSignUp(params: {
+		orderId: string;
+		signUpId: string;
+	}): Promise<
+		ResultAsync<{ signUp: EventSignUp }, NotFoundError | InternalServerError>
+	> {
+		const { orderId, signUpId } = params;
+		try {
+			const signUp = await this.db.eventSignUp.update({
+				where: {
+					id: signUpId,
+				},
+				data: {
+					orderId,
+				},
+			});
+			return {
+				ok: true,
+				data: {
+					signUp,
+				},
+			};
+		} catch (err) {
+			if (err instanceof PrismaClientKnownRequestError) {
+				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) {
+					return {
+						ok: false,
+						error: new NotFoundError("Sign up or order not found", err),
+					};
+				}
+			}
+			return {
+				ok: false,
+				error: new InternalServerError("Failed to add order to sign up", err),
+			};
+		}
+	}
 }
 
 interface CreateConfirmedSignUpData {

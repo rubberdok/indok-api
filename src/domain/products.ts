@@ -1,4 +1,7 @@
-import type { PaymentAttempt as PrismaPaymentAttempt } from "@prisma/client";
+import type {
+	Order as PrismaOrder,
+	PaymentAttempt as PrismaPaymentAttempt,
+} from "@prisma/client";
 import { z } from "zod";
 import type { Result } from "~/lib/result.js";
 import { InvalidArgumentError } from "./errors.js";
@@ -57,6 +60,7 @@ type OrderType = {
 	 * - CANCELLED: The order has been cancelled
 	 */
 	paymentStatus: OrderPaymentStatus;
+	userId: string | null;
 };
 
 type PaymentAttempt = {
@@ -130,7 +134,25 @@ const Product = {
 	},
 };
 
-export { PaymentAttemptFromDSO, Product };
+const Order = {
+	fromDSO: (order: PrismaOrder): Result<{ order: OrderType }, never> => {
+		return {
+			ok: true,
+			data: {
+				order: {
+					id: order.id,
+					productId: order.productId,
+					attempt: order.attempt,
+					version: order.version,
+					paymentStatus: order.paymentStatus,
+					userId: order.userId,
+				},
+			},
+		};
+	},
+};
+
+export { PaymentAttemptFromDSO, Product, Order };
 export type {
 	MerchantType,
 	NewProductParams,

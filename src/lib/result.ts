@@ -15,7 +15,7 @@ type Result<
 
 type ResultAsync<
 	TData extends Record<string, unknown>,
-	TError extends Error = KnownDomainError,
+	TError extends Error,
 > = Promise<Result<TData, TError>>;
 
 export type { Result, ResultAsync };

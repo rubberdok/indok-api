@@ -136,6 +136,8 @@ model EventSignUp {
   eventId             String              @db.Uuid
   participationStatus ParticipationStatus @default(CONFIRMED)
   active              Boolean             @default(true)
+  orderId             String?             @unique @db.Uuid
+  order               Order?              @relation(fields: [orderId], references: [id], onDelete: SetNull)
 
   @@unique([userId, eventId, active])
 }
@@ -287,6 +289,7 @@ model Order {
   version         Int                @default(0)
   paymentStatus   OrderPaymentStatus @default(PENDING)
   attempt         Int                @default(0)
+  eventSignUp     EventSignUp?
 }
 
 enum OrderPaymentStatus {
