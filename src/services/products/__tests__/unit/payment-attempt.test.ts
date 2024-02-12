@@ -3,7 +3,7 @@ import type { EPaymentErrorResponse } from "@vippsmobilepay/sdk";
 import { mock } from "jest-mock-extended";
 import type {
 	OrderType,
-	PaymentAttempt,
+	PaymentAttemptType,
 	ProductType,
 } from "~/domain/products.js";
 import type { User } from "~/domain/users.js";
@@ -320,7 +320,7 @@ describe("ProductService", () => {
 			productRepository.getPaymentAttempt.mockResolvedValueOnce({
 				ok: true,
 				data: {
-					paymentAttempt: mock<PaymentAttempt>({}),
+					paymentAttempt: mock<PaymentAttemptType>({}),
 				},
 			});
 
@@ -336,7 +336,7 @@ describe("ProductService", () => {
 			productRepository.getPaymentAttempt.mockResolvedValueOnce({
 				ok: true,
 				data: {
-					paymentAttempt: mock<PaymentAttempt>({}),
+					paymentAttempt: mock<PaymentAttemptType>({}),
 				},
 			});
 

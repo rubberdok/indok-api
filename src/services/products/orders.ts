@@ -1,7 +1,7 @@
 import {
 	type InternalServerError,
 	NotFoundError,
-	type PermissionDeniedError,
+	PermissionDeniedError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
 import type { OrderType } from "~/domain/products.js";
@@ -93,6 +93,25 @@ function buildOrders({ productRepository }: BuildProductsDependencies) {
 			}
 
 			return { ok: true, data: { order } };
+		},
+
+		async findMany(
+			ctx: Context,
+			params?: { userId?: string; productId?: string },
+		): ResultAsync<
+			{ orders: OrderType[]; total: number },
+			InternalServerError | PermissionDeniedError
+		> {
+			if (!ctx.user?.isSuperUser) {
+				return {
+					ok: false,
+					error: new PermissionDeniedError(
+						"You must be a super user to get orders",
+					),
+				};
+			}
+
+			return await productRepository.findManyOrders(params);
 		},
 	} as const;
 }

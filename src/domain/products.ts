@@ -63,7 +63,7 @@ type OrderType = {
 	userId: string | null;
 };
 
-type PaymentAttempt = {
+type PaymentAttemptType = {
 	id: string;
 	orderId: string;
 	version: number;
@@ -152,12 +152,16 @@ const Order = {
 	},
 };
 
-export { PaymentAttemptFromDSO, Product, Order };
+const PaymentAttempt = {
+	fromDSO: PaymentAttemptFromDSO,
+};
+
+export { PaymentAttempt, Product, Order };
 export type {
 	MerchantType,
 	OrderPaymentStatus,
 	OrderType,
-	PaymentAttempt,
+	PaymentAttemptType,
 	PaymentAttemptState,
 	ProductType,
 };

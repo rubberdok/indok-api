@@ -12,9 +12,21 @@ type InitiatePaymentAttemptResponse {
     redirectUrl: String!
 }
 
+enum OrderPaymentStatus {
+    PENDING
+    CREATED
+    CAPTURED
+    REFUNDED
+    CANCELLED
+    RESERVED
+}
 
 type Order {
     id: ID!
+    product: Product!
+    user: PrivateUser
+    attempt: Int!
+    paymentStatus: OrderPaymentStatus!
 }
 
 input CreateOrderInput {
@@ -87,6 +99,45 @@ type ProductResponse {
     total: Int!
 }
 
+type OrdersResponse {
+    orders: [Order!]!
+    total: Int!
+}
+
+enum PaymentAttemptState {
+    CREATED
+    AUTHORIZED
+    FAILED
+    TERMINATED
+    EXPIRED
+    ABORTED
+}
+
+type PaymentAttempt {
+    id: ID!
+    reference: String!
+    inProgress: Boolean!
+    state: PaymentAttemptState!
+    order: Order!
+
+}
+
+type PaymentAttemptsResponse {
+    paymentAttempts: [PaymentAttempt!]!
+    total: Int!
+}
+
+input OrdersInput {
+    userId: ID
+    productId: ID
+}
+
+input PaymentAttemptsInput {
+    userId: ID
+    orderId: ID
+    productId: ID
+}
+
 type Mutation {
     """
     Initiates a payment attempt for the given order.
@@ -104,7 +155,8 @@ type Mutation {
 }
 
 
-
 type Query {
     products: ProductResponse!
+    orders(data: OrdersInput): OrdersResponse!
+    paymentAttempts(data: PaymentAttemptsInput): PaymentAttemptsResponse!
 }

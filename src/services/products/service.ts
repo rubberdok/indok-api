@@ -3,7 +3,7 @@ import type { InternalServerError } from "~/domain/errors.js";
 import type {
 	MerchantType,
 	OrderType,
-	PaymentAttempt,
+	PaymentAttemptType,
 	ProductType,
 } from "~/domain/products.js";
 import type { ResultAsync } from "~/lib/result.js";
@@ -18,6 +18,10 @@ interface ProductRepository {
 	getOrder(
 		id: string,
 	): ResultAsync<{ order: OrderType | null }, InternalServerError>;
+	findManyOrders(params?: { userId?: string; productId?: string }): ResultAsync<
+		{ orders: OrderType[]; total: number },
+		InternalServerError
+	>;
 	createOrder(order: {
 		userId: string;
 		product: {
@@ -31,17 +35,25 @@ interface ProductRepository {
 			version: number;
 		};
 		reference: string;
-	}): Promise<{ paymentAttempt: PaymentAttempt; order: OrderType }>;
+	}): Promise<{ paymentAttempt: PaymentAttemptType; order: OrderType }>;
 	getPaymentAttempt(
 		by: { id: string } | { reference: string },
 	): ResultAsync<
-		{ paymentAttempt: PaymentAttempt | null },
+		{ paymentAttempt: PaymentAttemptType | null },
+		InternalServerError
+	>;
+	findManyPaymentAttempts(params?: {
+		userId?: string;
+		orderId?: string;
+		productId?: string;
+	}): ResultAsync<
+		{ paymentAttempts: PaymentAttemptType[]; total: number },
 		InternalServerError
 	>;
 	updatePaymentAttempt(
-		paymentAttempt: Pick<PaymentAttempt, "id" | "version" | "state">,
+		paymentAttempt: Pick<PaymentAttemptType, "id" | "version" | "state">,
 		order: Pick<OrderType, "id" | "version" | "paymentStatus">,
-	): Promise<{ paymentAttempt: PaymentAttempt; order: OrderType }>;
+	): Promise<{ paymentAttempt: PaymentAttemptType; order: OrderType }>;
 	getProducts(): Promise<{ products: ProductType[]; total: number }>;
 	createProduct(product: {
 		name: string;
