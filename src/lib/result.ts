@@ -1,9 +1,4 @@
-import type { KnownDomainError } from "~/domain/errors.js";
-
-type Result<
-	TData extends Record<string, unknown>,
-	TError extends Error = KnownDomainError,
-> =
+type Result<TData extends Record<string, unknown>, TError extends Error> =
 	| {
 			ok: true;
 			data: TData;

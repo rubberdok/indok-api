@@ -1,13 +1,17 @@
 import { type Processor, UnrecoverableError } from "bullmq";
 import type { Logger } from "pino";
+import type { InternalServerError, NotFoundError } from "~/domain/errors.js";
 import type { PaymentAttempt } from "~/domain/products.js";
 import type { Queue } from "~/lib/bullmq/queue.js";
 import type { Worker } from "~/lib/bullmq/worker.js";
-import type { Result } from "~/lib/result.js";
+import type { Result, ResultAsync } from "~/lib/result.js";
 import type { Context } from "../../lib/context.js";
 
 type PaymentProcessingDataType = { reference: string };
-type PaymentProcessingResultType = Result<Record<string, never>>;
+type PaymentProcessingResultType = Result<
+	Record<string, never>,
+	InternalServerError | NotFoundError
+>;
 type PaymentProcessingNameType = "payment-processing";
 
 type PaymentProcessingWorkerType = Worker<
@@ -26,12 +30,18 @@ type ProductService = {
 	payments: {
 		get(
 			ctx: Context,
-			by: { reference: string },
-		): Promise<Result<{ paymentAttempt: PaymentAttempt | null }>>;
+			params: { reference: string },
+		): ResultAsync<
+			{ paymentAttempt: PaymentAttempt | null },
+			InternalServerError
+		>;
 		updatePaymentAttemptState(
 			ctx: Context,
 			paymentAttempt: PaymentAttempt,
-		): Promise<Result<{ paymentAttempt: PaymentAttempt }>>;
+		): ResultAsync<
+			{ paymentAttempt: PaymentAttempt },
+			NotFoundError | InternalServerError
+		>;
 	};
 };
 

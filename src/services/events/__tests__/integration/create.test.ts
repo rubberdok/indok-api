@@ -30,11 +30,14 @@ describe("EventService", () => {
 			act: {
 				createEventParams: CreateEventParams;
 			};
-			expected: Result<{
-				event: EventType;
-				slots?: SlotType[];
-				categories?: CategoryType[];
-			}>;
+			expected: Result<
+				{
+					event: EventType;
+					slots?: SlotType[];
+					categories?: CategoryType[];
+				},
+				Error
+			>;
 		}
 
 		const testCases: TestCase[] = [

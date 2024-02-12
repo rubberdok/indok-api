@@ -11,7 +11,10 @@ import type { Context } from "../../lib/context.js";
 import type { EmailQueueDataType } from "../mail/worker.js";
 
 type SignUpQueueDataType = { eventId: string };
-type SignUpQueueReturnType = Result<Record<string, never>>;
+type SignUpQueueReturnType = Result<
+	Record<string, never>,
+	InvalidArgumentError
+>;
 type SignUpQueueNameType = "event-capacity-increased";
 
 type SignUpQueueType = Queue<

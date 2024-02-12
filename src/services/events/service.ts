@@ -17,6 +17,7 @@ import type { CategoryType } from "~/domain/events/category.js";
 import type {
 	EventUpdateFields,
 	EventUpdateFn,
+	NewEventReturnType,
 } from "~/domain/events/event.js";
 import {
 	Event,
@@ -31,7 +32,7 @@ import type { NewSlotParams, UpdateSlotFields } from "~/domain/events/slot.js";
 import { Role } from "~/domain/organizations.js";
 import type { OrderType, ProductType } from "~/domain/products.js";
 import type { User } from "~/domain/users.js";
-import type { Result, ResultAsync } from "~/lib/result.js";
+import type { ResultAsync } from "~/lib/result.js";
 import type { Context } from "../../lib/context.js";
 import type { SignUpQueueType } from "./worker.js";
 
@@ -290,7 +291,7 @@ class EventService {
 			}
 		}
 
-		let result: Result<{ event: EventType; slots?: SlotType }>;
+		let result: NewEventReturnType;
 		switch (type) {
 			case "BASIC":
 				result = Event.new({ type: "BASIC", event: eventData });

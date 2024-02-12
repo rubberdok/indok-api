@@ -14,6 +14,7 @@ import type {
 } from "@prisma/client";
 import * as Sentry from "@sentry/node";
 import { Client } from "@vippsmobilepay/sdk";
+import type { Job } from "bullmq";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { type Configuration, env } from "~/config.js";
 import type { BookingStatus } from "~/domain/cabins.js";
@@ -31,7 +32,11 @@ import type {
 	SlotType,
 } from "~/domain/events/index.js";
 import type { Role } from "~/domain/organizations.js";
-import type { OrderType, ProductType } from "~/domain/products.js";
+import type {
+	OrderType,
+	PaymentAttempt,
+	ProductType,
+} from "~/domain/products.js";
 import type { StudyProgram, User } from "~/domain/users.js";
 import type { Context } from "~/lib/context.js";
 import { CabinRepository } from "~/repositories/cabins/repository.js";
@@ -55,14 +60,19 @@ import { buildMailService } from "~/services/mail/index.js";
 import { OrganizationService } from "~/services/organizations/index.js";
 import { PermissionService } from "~/services/permissions/index.js";
 import { ProductService } from "~/services/products/index.js";
-import { PaymentProcessingQueueName } from "~/services/products/worker.js";
+import {
+	type PaymentProcessingDataType,
+	type PaymentProcessingNameType,
+	PaymentProcessingQueueName,
+	type PaymentProcessingResultType,
+} from "~/services/products/worker.js";
 import { UserService } from "~/services/users/index.js";
 import fastifyMessageQueue from "./fastify/message-queue.js";
 import fastifyPrisma from "./fastify/prisma.js";
 import fastifyService from "./fastify/service.js";
 import { postmark } from "./postmark.js";
 import prisma from "./prisma.js";
-import type { Result, ResultAsync } from "./result.js";
+import type { ResultAsync } from "./result.js";
 
 interface IOrganizationService {
 	create(
@@ -268,11 +278,22 @@ type IProductService = {
 	payments: {
 		initiatePaymentAttempt(
 			ctx: Context,
-			data: { orderId: string },
-		): Promise<
-			Result<{
+			params: { orderId: string },
+		): ResultAsync<
+			{
 				redirectUrl: string;
-			}>
+				paymentAttempt: PaymentAttempt;
+				order: OrderType;
+				pollingJob: Job<
+					PaymentProcessingDataType,
+					PaymentProcessingResultType,
+					PaymentProcessingNameType
+				>;
+			},
+			| UnauthorizedError
+			| NotFoundError
+			| InvalidArgumentError
+			| InternalServerError
 		>;
 	};
 	orders: {

@@ -313,7 +313,10 @@ function updateEvent(params: {
 	data: {
 		event: EventUpdateFields;
 	};
-}): Result<UpdateEvenFnReturnType> {
+}): Result<
+	UpdateEvenFnReturnType,
+	InvalidArgumentError | InvalidCapacityError
+> {
 	const { previous, data } = params;
 	const { startAt, endAt } = data.event;
 
