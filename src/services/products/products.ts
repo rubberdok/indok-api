@@ -1,5 +1,5 @@
 import { InternalServerError, UnauthorizedError } from "~/domain/errors.js";
-import type { ProductType } from "~/domain/products.js";
+import { Product, type ProductType } from "~/domain/products.js";
 import type { ResultAsync } from "~/lib/result.js";
 import type { Context } from "../../lib/context.js";
 import type { BuildProductsDependencies } from "./service.js";
@@ -21,11 +21,14 @@ function buildProducts({ productRepository }: BuildProductsDependencies) {
 				};
 			}
 
-			const { product } = await productRepository.createProduct({
-				name: data.name,
-				price: data.price,
-				merchantId: data.merchantId,
-			});
+			const newProductResult = Product.new(data);
+			if (!newProductResult.ok) {
+				return newProductResult;
+			}
+
+			const { product } = await productRepository.createProduct(
+				newProductResult.data.product,
+			);
 
 			ctx.log.info({ userId: ctx.user.id }, "ProductType created");
 

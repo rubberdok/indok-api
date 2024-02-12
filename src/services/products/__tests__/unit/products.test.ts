@@ -1,3 +1,4 @@
+import { faker } from "@faker-js/faker";
 import { mock } from "jest-mock-extended";
 import { UnauthorizedError } from "~/domain/errors.js";
 import type { ProductType } from "~/domain/products.js";
@@ -33,11 +34,13 @@ describe("ProductService", () => {
 			});
 
 			const result = await productService.products.create(ctx, {
-				merchantId: "123456",
+				merchantId: faker.string.uuid(),
 				name: "Test",
 				price: 123,
 				description: "test",
 			});
+
+			if (!result.ok) throw result.error;
 
 			expect(result.ok).toBe(true);
 			expect(productRepository.createProduct).toHaveBeenCalled();
