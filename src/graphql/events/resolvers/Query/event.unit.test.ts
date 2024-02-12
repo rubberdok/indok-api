@@ -131,5 +131,155 @@ describe("Event queries", () => {
 				expect(data?.event.event.canSignUp).toBe(false);
 			});
 		});
+
+		it("should return signUpDetails for sign up events", async () => {
+			const { client, eventService, organizationService } =
+				createMockApolloServer();
+
+			const event: EventType = {
+				id: faker.string.uuid(),
+				organizationId: faker.string.uuid(),
+				type: "SIGN_UPS",
+				contactEmail: faker.internet.email(),
+				capacity: 10,
+				description: faker.lorem.paragraph(),
+				endAt: new Date(),
+				startAt: new Date(),
+				location: faker.location.streetAddress(),
+				name: faker.company.buzzNoun(),
+				remainingCapacity: 10,
+				signUpsEnabled: true,
+				signUpsEndAt: new Date(),
+				signUpsStartAt: new Date(),
+				version: 1,
+			};
+			eventService.get.mockResolvedValue(event);
+			organizationService.get.mockResolvedValue(
+				mock<Organization>({ id: event.organizationId ?? faker.string.uuid() }),
+			);
+			eventService.getCategories.mockResolvedValue([
+				{ id: faker.string.uuid(), name: faker.color.human() },
+			]);
+
+			const { errors, data } = await client.query({
+				query: graphql(`
+          query eventWithAllFields($data: EventInput!) {
+            event(data: $data) {
+              event {
+                id
+				signUpDetails {
+					signUpsStartAt
+					signUpsEndAt
+					capacity
+				}
+                organization {
+                  id
+                }
+				contactEmail
+				endAt
+				location
+				signUpsEnabled
+				startAt
+				type
+				categories {
+					id
+					name
+				}
+              }
+            }
+          }
+        `),
+				variables: {
+					data: { id: faker.string.uuid() },
+				},
+			});
+
+			expect(errors).toBeUndefined();
+			expect(eventService.get).toHaveBeenCalledWith(expect.any(String));
+			expect(organizationService.get).toHaveBeenCalledWith(expect.any(String));
+			expect(data?.event.event).toEqual(
+				expect.objectContaining({
+					type: "SIGN_UPS",
+					signUpDetails: {
+						capacity: 10,
+						signUpsEndAt: event.signUpsEndAt,
+						signUpsStartAt: event.signUpsStartAt,
+					},
+				}),
+			);
+		});
+
+		it("should return signUpDetails: null for basic events", async () => {
+			const { client, eventService, organizationService } =
+				createMockApolloServer();
+
+			const event: EventType = {
+				id: faker.string.uuid(),
+				organizationId: faker.string.uuid(),
+				type: "BASIC",
+				contactEmail: faker.internet.email(),
+				capacity: 10,
+				description: faker.lorem.paragraph(),
+				endAt: new Date(),
+				startAt: new Date(),
+				location: faker.location.streetAddress(),
+				name: faker.company.buzzNoun(),
+				remainingCapacity: 10,
+				signUpsEnabled: true,
+				signUpsEndAt: new Date(),
+				signUpsStartAt: new Date(),
+				version: 1,
+			};
+			eventService.get.mockResolvedValue(event);
+			organizationService.get.mockResolvedValue(
+				mock<Organization>({ id: event.organizationId ?? faker.string.uuid() }),
+			);
+			eventService.getCategories.mockResolvedValue([
+				{ id: faker.string.uuid(), name: faker.color.human() },
+			]);
+
+			const { errors, data } = await client.query({
+				query: graphql(`
+          query eventWithAllFields($data: EventInput!) {
+            event(data: $data) {
+              event {
+                id
+				signUpDetails {
+					signUpsStartAt
+					signUpsEndAt
+					capacity
+				}
+                organization {
+                  id
+                }
+				contactEmail
+				endAt
+				location
+				signUpsEnabled
+				startAt
+				type
+				categories {
+					id
+					name
+				}
+              }
+            }
+          }
+        `),
+				variables: {
+					data: { id: faker.string.uuid() },
+				},
+			});
+
+			expect(errors).toBeUndefined();
+			expect(eventService.get).toHaveBeenCalledWith(expect.any(String));
+			expect(organizationService.get).toHaveBeenCalledWith(expect.any(String));
+			expect(data?.event.event).toEqual(
+				expect.objectContaining({
+					type: "BASIC",
+					signUpDetails: null,
+				}),
+			);
+		});
 	});
 });
