@@ -11,6 +11,7 @@ import {
 	type PaymentAttempt,
 	PaymentAttemptFromDSO,
 	type ProductType,
+	Order,
 } from "~/domain/products.js";
 import { prismaKnownErrorCodes } from "~/lib/prisma.js";
 import type { ResultAsync } from "~/lib/result.js";
@@ -227,7 +228,13 @@ export class ProductRepository {
 					id,
 				},
 			});
-			return { ok: true, data: { order } };
+			if (order === null) {
+				return {
+					ok: true,
+					data: { order: null },
+				};
+			}
+			return Order.fromDSO(order);
 		} catch (err) {
 			return {
 				ok: false,
