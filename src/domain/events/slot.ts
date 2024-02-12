@@ -1,15 +1,16 @@
 import { z } from "zod";
 import type { Result } from "~/lib/result.js";
-import { InvalidArgumentError } from "../errors.js";
+import { type InternalServerError, InvalidArgumentError } from "../errors.js";
 import { randomUUID } from "crypto";
 import { isNil, omitBy } from "lodash-es";
+import type { EventSlot as PrismaSlot } from "@prisma/client";
 
 type SlotType = {
 	capacity: number;
 	remainingCapacity: number;
 	gradeYears?: number[];
-	id: string;
-	version: number;
+	readonly id: string;
+	readonly version: number;
 };
 
 type NewSlotParams = {
@@ -29,7 +30,7 @@ function updateSlot(params: {
 	data: UpdateSlotFields;
 }): Result<{ slot: SlotType }, InvalidArgumentError> {
 	const { previous, data } = params;
-	const updated = { ...previous };
+	const updated = previous;
 
 	const schema = z.object({
 		capacity: z.number().int().positive().optional(),
@@ -46,9 +47,11 @@ function updateSlot(params: {
 			),
 		};
 	}
-	const validatedUpdateFields = parseResult.data;
-	if (validatedUpdateFields.capacity) {
-		const changeInCapacity = validatedUpdateFields.capacity - previous.capacity;
+	const { gradeYears, capacity } = parseResult.data;
+	updated.gradeYears = gradeYears;
+
+	if (capacity !== undefined) {
+		const changeInCapacity = capacity - previous.capacity;
 		const newRemainingCapacity = previous.remainingCapacity + changeInCapacity;
 		if (newRemainingCapacity < 0) {
 			return {
@@ -58,9 +61,8 @@ function updateSlot(params: {
 				),
 			};
 		}
-		updated.capacity = validatedUpdateFields.capacity;
+		updated.capacity = capacity;
 		updated.remainingCapacity = newRemainingCapacity;
-		updated.version += 1;
 	}
 	return {
 		ok: true,
@@ -71,8 +73,7 @@ function updateSlot(params: {
 const Slot = {
 	new(parmas: NewSlotParams): Result<{ slot: SlotType }, InvalidArgumentError> {
 		const schema = z.object({
-			capacity: z.number().int().positive(),
-			remainingCapacity: z.number().int().positive(),
+			capacity: z.number().int().min(0),
 			gradeYears: z.array(z.number().int().positive()).nullish(),
 			id: z.string().nullish(),
 			version: z.number().nullish(),
@@ -87,8 +88,7 @@ const Slot = {
 				),
 			};
 		}
-		const { capacity, gradeYears, id, remainingCapacity, version } =
-			parseResult.data;
+		const { capacity, gradeYears, id, version } = parseResult.data;
 		return {
 			ok: true,
 			data: {
@@ -96,13 +96,29 @@ const Slot = {
 					capacity,
 					gradeYears: gradeYears ?? [1, 2, 3, 4, 5],
 					id: id ?? randomUUID(),
-					remainingCapacity: remainingCapacity ?? capacity,
+					remainingCapacity: capacity,
 					version: version ?? 0,
 				},
 			},
 		};
 	},
 	update: updateSlot,
+	fromDataStorage(
+		data: PrismaSlot,
+	): Result<{ slot: SlotType }, InternalServerError> {
+		return {
+			ok: true,
+			data: {
+				slot: {
+					capacity: data.capacity,
+					gradeYears: data.gradeYears,
+					id: data.id,
+					remainingCapacity: data.remainingCapacity,
+					version: data.version,
+				},
+			},
+		};
+	},
 };
 
 export { Slot };

@@ -4,13 +4,14 @@ import { DateTime } from "luxon";
 import { z } from "zod";
 import type { Result, ResultAsync } from "~/lib/result.js";
 import {
-	InternalServerError,
+	type InternalServerError,
 	InvalidArgumentError,
 	KnownDomainError,
 	errorCodes,
 } from "../errors.js";
 import { randomUUID } from "crypto";
 import type { SlotType } from "./slot.js";
+import type { CategoryType } from "./category.js";
 
 class AlreadySignedUpError extends KnownDomainError {
 	constructor(description: string) {
@@ -34,8 +35,8 @@ const EventTypeEnum = {
 } as const;
 
 type EventFields = {
-	id: string;
-	version: number;
+	readonly id: string;
+	readonly version: number;
 	name: string;
 	organizationId: string | null;
 	description: string;
@@ -103,7 +104,6 @@ type NewSignUpEventData = NewBasicEventData & {
 	signUpsStartAt: Date;
 	signUpsEndAt: Date;
 	capacity: number;
-	remainingCapacity?: number;
 };
 
 type NewTicketEventData = NewSignUpEventData & {
@@ -129,8 +129,7 @@ function newSignUpEvent(event: NewSignUpEventData): NewSignUpEventReturn {
 			signUpsEnabled: z.boolean().optional().default(false),
 			signUpsStartAt: z.date(),
 			signUpsEndAt: z.date(),
-			capacity: z.number().int().positive(),
-			remainingCapacity: z.number().int().positive().optional(),
+			capacity: z.number().int().min(0),
 		})
 		.refine(
 			({ signUpsEndAt, signUpsStartAt }) => {
@@ -153,13 +152,8 @@ function newSignUpEvent(event: NewSignUpEventData): NewSignUpEventReturn {
 		};
 	}
 
-	const {
-		signUpsEnabled,
-		signUpsEndAt,
-		signUpsStartAt,
-		capacity,
-		remainingCapacity,
-	} = signUpSchemaResult.data;
+	const { signUpsEnabled, signUpsEndAt, signUpsStartAt, capacity } =
+		signUpSchemaResult.data;
 
 	return {
 		ok: true,
@@ -170,7 +164,7 @@ function newSignUpEvent(event: NewSignUpEventData): NewSignUpEventReturn {
 				signUpsStartAt,
 				signUpsEnabled,
 				capacity,
-				remainingCapacity: remainingCapacity ?? capacity,
+				remainingCapacity: capacity,
 				type: EventTypeEnum.SIGN_UPS,
 			},
 		},
@@ -181,15 +175,22 @@ function newBasicEvent(basicEvent: NewBasicEventData): NewBasicEventReturn {
 	const schema = z
 		.object({
 			id: z.string().uuid().optional(),
-			version: z.number().int().positive().optional(),
+			version: z.number().int().min(0).optional(),
 			name: z.string().min(1).max(200),
 			description: z.string().max(10_000).default(""),
 			startAt: z.date().min(new Date()),
 			endAt: z.date().min(new Date()),
-			contactEmail: z.string().email(),
+			contactEmail: z
+				.string()
+				.email()
+				.nullish()
+				.transform((val) => val ?? ""),
 			location: z.string().default(""),
 			organizationId: z.string().uuid(),
-			signUpsEnabled: z.literal(false),
+			signUpsEnabled: z
+				.boolean()
+				.nullish()
+				.transform((val) => val ?? false),
 			categories: z.array(z.object({ id: z.string().uuid() })).optional(),
 		})
 		.refine(
@@ -340,14 +341,15 @@ function updateEvent(params: {
 	}
 
 	const schema = z.object({
-		name: z.string().max(200).optional(),
+		name: z.string().max(200).min(1).optional(),
 		description: z.string().max(10_000).optional(),
 		location: z.string().optional(),
 		signUpsEnabled: z.boolean().optional(),
 		signUpsEndAt: z.date().optional(),
 		signUpsStartAt: z.date().optional(),
-		capacity: z.number().int().positive().optional(),
+		capacity: z.number().int().min(0).optional(),
 		productId: z.string().uuid().optional(),
+		contactEmail: z.string().email().optional(),
 	});
 
 	const updatedFields = omitBy(data.event, isNil);
@@ -395,12 +397,16 @@ type EventUpdateFields = Partial<{
 	capacity: number | null;
 	signUpsStartAt: Date | null;
 	signUpsEndAt: Date | null;
+	contactEmail: string | null;
 }>;
 
 function updateSignUpEvent(params: {
 	previous: { event: SignUpEvent | TicketEvent };
 	data: { event: EventUpdateFields };
-}): Result<UpdateEvenFnReturnType> {
+}): Result<
+	UpdateEvenFnReturnType,
+	InvalidCapacityError | InvalidArgumentError
+> {
 	const { previous, data } = params;
 	const newEvent = previous.event;
 
@@ -410,9 +416,15 @@ function updateSignUpEvent(params: {
 				signUpsStartAt: z.date(),
 				signUpsEndAt: z.date(),
 			})
-			.refine(({ signUpsEndAt, signUpsStartAt }) => {
-				return signUpsStartAt < signUpsEndAt;
-			}, "signUpsStartAt must be before signUpsEndAt");
+			.refine(
+				({ signUpsEndAt, signUpsStartAt }) => {
+					return signUpsStartAt < signUpsEndAt;
+				},
+				{
+					message: "signUpsStartAt must be before signUpsEndAt",
+					path: ["signUpsStartAt"],
+				},
+			);
 		const durationResult = durationSchema.safeParse(
 			merge({}, previous.event, data.event),
 		);
@@ -431,8 +443,9 @@ function updateSignUpEvent(params: {
 		signUpsEnabled: z.boolean().optional(),
 		signUpsEndAt: z.date().optional(),
 		signUpsStartAt: z.date().optional(),
-		capacity: z.number().int().positive().optional(),
+		capacity: z.number().int().min(0).optional(),
 	});
+
 	const updatedFields = omitBy(data.event, isNil);
 	const result = schema.safeParse(updatedFields);
 	if (!result.success) {
@@ -445,7 +458,7 @@ function updateSignUpEvent(params: {
 		};
 	}
 	const validatedUpdateFields = result.data;
-	if (validatedUpdateFields.capacity) {
+	if (validatedUpdateFields.capacity !== undefined) {
 		const changeInCapacity =
 			validatedUpdateFields.capacity - previous.event.capacity;
 		const newRemainingCapacity =
@@ -454,14 +467,13 @@ function updateSignUpEvent(params: {
 		if (newRemainingCapacity < 0) {
 			return {
 				ok: false,
-				error: new InvalidCapacityError(
+				error: new InvalidArgumentError(
 					"New capacity would result in negative remaining capacity",
 				),
 			};
 		}
 		newEvent.capacity = validatedUpdateFields.capacity;
 		newEvent.remainingCapacity = newRemainingCapacity;
-		newEvent.version += 1;
 	}
 
 	return {
@@ -513,15 +525,20 @@ const Event = {
 			.object({
 				signUpsStartAt: z.date(),
 				signUpsEndAt: z.date(),
-				capacity: z.number().int().positive(),
-				remainingCapacity: z.number().int().positive(),
+				capacity: z.number().int().min(0),
+				remainingCapacity: z.number().int().min(0),
 			})
 			.safeParse(event);
 
 		if (!result.success) {
 			return {
-				ok: false,
-				error: new InternalServerError("Invalid sign up data for event"),
+				ok: true,
+				data: {
+					event: {
+						...event,
+						type: EventTypeEnum.BASIC,
+					},
+				},
 			};
 		}
 		const signUpDetails = result.data;
@@ -530,8 +547,13 @@ const Event = {
 			const { productId } = event;
 			if (productId === null) {
 				return {
-					ok: false,
-					error: new InternalServerError("Event is missing product"),
+					ok: true,
+					data: {
+						event: {
+							...event,
+							type: EventTypeEnum.BASIC,
+						},
+					},
 				};
 			}
 			return {
@@ -566,11 +588,16 @@ type UpdateEvenFnReturnType = {
 		create?: SlotType[];
 		delete?: SlotType[];
 	};
+	categories?: { id: string }[];
 };
-type EventUpdateFn<T extends EventType = EventType> = (params: {
+type EventUpdateFn<
+	T extends EventType = EventType,
+	TError extends KnownDomainError = KnownDomainError,
+> = (params: {
 	event: T;
 	slots?: SlotType[];
-}) => ResultAsync<UpdateEvenFnReturnType>;
+	categories?: CategoryType[];
+}) => ResultAsync<UpdateEvenFnReturnType, TError>;
 
 export { Event, AlreadySignedUpError, InvalidCapacityError, EventTypeEnum };
 export type {
