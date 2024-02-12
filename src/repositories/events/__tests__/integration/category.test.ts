@@ -1,5 +1,6 @@
 import { faker } from "@faker-js/faker";
 import { InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
+import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import { EventRepository } from "../../repository.js";
 
@@ -134,6 +135,59 @@ describe("EventRepository", () => {
 			});
 
 			await expect(deletedCategory).rejects.toThrow(NotFoundError);
+		});
+	});
+
+	describe("#getCategories", () => {
+		it("should return all categories", async () => {
+			const category = await eventRepository.createCategory({
+				name: faker.string.uuid(),
+			});
+
+			const categories = await eventRepository.getCategories();
+
+			expect(categories).toContainEqual(
+				expect.objectContaining({
+					id: category.id,
+					name: category.name,
+				}),
+			);
+		});
+
+		it("should return all for an event", async () => {
+			const category = await eventRepository.createCategory({
+				name: faker.string.uuid(),
+			});
+
+			const event = await eventRepository.create(makeMockContext(), {
+				categories: [{ id: category.id }],
+				event: {
+					id: faker.string.uuid(),
+					organizationId: null,
+					startAt: new Date(),
+					type: "BASIC",
+					signUpsEnabled: false,
+					version: 0,
+					name: faker.string.uuid(),
+					contactEmail: faker.string.uuid(),
+					description: faker.string.uuid(),
+					endAt: new Date(),
+					location: faker.string.uuid(),
+				},
+			});
+
+			if (!event.ok) throw event.error;
+
+			const categories = await eventRepository.getCategories({
+				eventId: event.data.event.id,
+			});
+
+			expect(categories).toEqual([
+				expect.objectContaining({
+					id: category.id,
+					name: category.name,
+				}),
+			]);
 		});
 	});
 });
