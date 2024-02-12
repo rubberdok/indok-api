@@ -8,13 +8,17 @@ import prisma from "~/lib/prisma.js";
 import { EventRepository } from "~/repositories/events/repository.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
 import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
+import { ProductRepository } from "~/repositories/products/repository.js";
 import { UserRepository } from "~/repositories/users/index.js";
 import { buildMailService } from "~/services/mail/index.js";
 import type { EmailQueueType } from "~/services/mail/worker.js";
 import { OrganizationService } from "~/services/organizations/service.js";
 import { PermissionService } from "~/services/permissions/service.js";
+import { MockVippsClientFactory } from "~/services/products/__tests__/mock-vipps-client.js";
+import { ProductService } from "~/services/products/service.js";
+import type { PaymentProcessingQueueType } from "~/services/products/worker.js";
 import { UserService } from "~/services/users/service.js";
-import { EventService, type ProductService } from "../../service.js";
+import { EventService } from "../../service.js";
 import type { SignUpQueueType } from "../../worker.js";
 
 export function makeDependencies() {
@@ -22,6 +26,7 @@ export function makeDependencies() {
 	const organizationRepository = new OrganizationRepository(prisma);
 	const memberRepository = new MemberRepository(prisma);
 	const userRepository = new UserRepository(prisma);
+	const productRepository = new ProductRepository(prisma);
 	const permissionService = new PermissionService(
 		memberRepository,
 		userRepository,
@@ -52,14 +57,25 @@ export function makeDependencies() {
 		permissionService,
 		mailService,
 	);
+
+	const vipps = MockVippsClientFactory();
+	const productService = ProductService({
+		productRepository,
+		paymentProcessingQueue: mockDeep<PaymentProcessingQueueType>(),
+		vippsFactory: vipps.factory,
+		config: {
+			returnUrl: "https://example.com",
+			useTestMode: true,
+		},
+	});
 	const eventService = new EventService(
 		eventRepository,
 		permissionService,
 		userService,
-		mockDeep<ProductService>(),
+		productService,
 		mockDeep<SignUpQueueType>(),
 	);
-	return { eventService, userService, organizationService };
+	return { eventService, userService, organizationService, productService };
 }
 
 export async function makeUserWithOrganizationMembership(

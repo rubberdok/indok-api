@@ -1,3 +1,4 @@
+import { faker } from "@faker-js/faker";
 import { DateTime } from "luxon";
 import { makeTestServices } from "~/__tests__/dependencies-factory.js";
 import type {
@@ -9,7 +10,10 @@ import { makeMockContext } from "~/lib/context.js";
 import type { Result } from "~/lib/result.js";
 import type { Services } from "~/lib/server.js";
 import type { CreateEventParams } from "../../service.js";
-import { makeUserWithOrganizationMembership } from "./dependencies-factory.js";
+import {
+	makeDependencies,
+	makeUserWithOrganizationMembership,
+} from "./dependencies-factory.js";
 
 describe("EventService", () => {
 	let events: Services["events"];
@@ -136,6 +140,55 @@ describe("EventService", () => {
 			const actual = await events.create(ctx, createEventParams);
 
 			expect(actual).toEqual(expected);
+		});
+
+		describe("type: TICKETS", () => {
+			it("should create a product for the event", async () => {
+				// Arrange, set up a user and an organization
+				const { user, organization } = await makeUserWithOrganizationMembership(
+					{ isSuperUser: true },
+				);
+				const ctx = makeMockContext(user);
+				const { productService } = makeDependencies();
+				const createMerchantResult = await productService.merchants.create(
+					ctx,
+					{
+						name: faker.string.sample(20),
+						serialNumber: faker.string.uuid(),
+						clientId: faker.string.uuid(),
+						clientSecret: faker.string.uuid(),
+						subscriptionKey: faker.string.uuid(),
+					},
+				);
+				if (!createMerchantResult.ok) throw createMerchantResult.error;
+
+				/**
+				 * Act
+				 *
+				 * Create a event with type: TICKETS
+				 */
+				const actual = await events.create(ctx, {
+					type: "TICKETS",
+					event: {
+						capacity: 10,
+						name: faker.color.human(),
+						organizationId: organization.id,
+						signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
+						signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+						endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
+						startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+						signUpsEnabled: true,
+					},
+					slots: [{ capacity: 10 }],
+					tickets: {
+						merchantId: createMerchantResult.data.merchant.id,
+						price: 100 * 300,
+					},
+				});
+				if (!actual.ok) throw actual.error;
+
+				expect(actual.data.event.productId).toEqual(expect.any(String));
+			});
 		});
 	});
 });
