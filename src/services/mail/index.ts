@@ -1,5 +1,5 @@
 import { merge } from "lodash-es";
-import type { IMailClient } from "~/lib/postmark.js";
+import type { EmailClient } from "~/lib/postmark.js";
 import type { EmailQueueDataType, EmailQueueType } from "./worker.js";
 
 type LayoutContent = {
@@ -60,7 +60,7 @@ export type MailContent =
 
 type MailServiceDependencies = {
 	emailQueue: EmailQueueType;
-	emailClient: IMailClient;
+	emailClient: EmailClient;
 };
 
 type MailServiceOptions = {

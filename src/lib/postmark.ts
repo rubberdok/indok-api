@@ -23,5 +23,4 @@ function postmark(
 }
 
 export { postmark };
-
-export type IMailClient = EmailClient;
+export type { EmailClient };
