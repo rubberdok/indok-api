@@ -60,9 +60,10 @@ export function makeDependencies() {
 	});
 
 	const close = async () => {
-		await paymentProcessingQueue.disconnect();
-		await worker.disconnect();
-		await queueEvents.disconnect();
+		await paymentProcessingQueue.close();
+		await worker.close();
+		await queueEvents.close();
+		queueEventsRedis.disconnect();
 		redis.disconnect();
 	};
 
