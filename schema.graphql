@@ -112,6 +112,32 @@ type CreateListingResponse {
   listing: Listing!
 }
 
+input CreateMerchantInput {
+  """Client ID for the merchant, retrieved from the payment provider."""
+  clientId: String!
+
+  """Client secret for the merchant, retrieved from the payment provider."""
+  clientSecret: String!
+
+  """The name of the merchant to create."""
+  name: String!
+
+  """
+  Merchant serial number for the merchant, retrieved from the payment provider.
+  """
+  serialNumber: String!
+
+  """
+  Subscription key for the merchant, retrieved from the payment provider.
+  """
+  subscriptionKey: String!
+}
+
+type CreateMerchantResponse {
+  """The merchant that was created."""
+  merchant: Merchant!
+}
+
 input CreateOrderInput {
   """The ID of the product to create an order for."""
   productId: ID!
@@ -403,6 +429,11 @@ type Member {
   user: PublicUser!
 }
 
+type Merchant {
+  id: ID!
+  name: String!
+}
+
 type Mutation {
   """Add a member to the organization"""
   addMember(data: AddMemberInput!): AddMemberResponse!
@@ -415,6 +446,12 @@ type Mutation {
   """Create a new event category, requires super user status"""
   createEventCategory(data: CreateEventCategoryInput!): CreateEventCategoryResponse!
   createListing(data: CreateListingInput!): CreateListingResponse!
+
+  """
+  Create a new Vipps merchant, and return the created merchant.
+  Requires super user status.
+  """
+  createMerchant(data: CreateMerchantInput!): CreateMerchantResponse!
 
   """Creates an order for the given product."""
   createOrder(data: CreateOrderInput!): CreateOrderResponse!

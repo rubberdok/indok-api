@@ -33,6 +33,7 @@ import type {
 } from "~/domain/events/index.js";
 import type { Role } from "~/domain/organizations.js";
 import type {
+	MerchantType,
 	OrderType,
 	PaymentAttempt,
 	ProductType,
@@ -308,6 +309,24 @@ type IProductService = {
 		): ResultAsync<
 			{ products: ProductType[]; total: number },
 			InternalServerError
+		>;
+	};
+	merchants: {
+		create(
+			ctx: Context,
+			data: {
+				name: string;
+				serialNumber: string;
+				subscriptionKey: string;
+				clientId: string;
+				clientSecret: string;
+			},
+		): ResultAsync<
+			{ merchant: MerchantType },
+			| PermissionDeniedError
+			| UnauthorizedError
+			| InvalidArgumentError
+			| InternalServerError
 		>;
 	};
 };

@@ -47,6 +47,41 @@ type Price {
     unit: String!
 }
 
+type Merchant {
+    id: ID!
+    name: String!
+}
+
+input CreateMerchantInput {
+    """
+    The name of the merchant to create.
+    """
+    name: String!
+    """
+    Client ID for the merchant, retrieved from the payment provider.
+    """
+    clientId: String!
+    """
+    Client secret for the merchant, retrieved from the payment provider.
+    """
+    clientSecret: String!
+    """
+    Merchant serial number for the merchant, retrieved from the payment provider.
+    """
+    serialNumber: String!
+    """
+    Subscription key for the merchant, retrieved from the payment provider.
+    """
+    subscriptionKey: String!
+}
+
+type CreateMerchantResponse {
+    """
+    The merchant that was created.
+    """
+    merchant: Merchant!
+}
+
 type ProductResponse {
     products: [Product!]!
     total: Int!
@@ -61,6 +96,11 @@ type Mutation {
     Creates an order for the given product.
     """
     createOrder(data: CreateOrderInput!): CreateOrderResponse!
+    """
+    Create a new Vipps merchant, and return the created merchant.
+    Requires super user status.
+    """
+    createMerchant(data: CreateMerchantInput!): CreateMerchantResponse!
 }
 
 
