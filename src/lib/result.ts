@@ -1,6 +1,9 @@
 import type { KnownDomainError } from "~/domain/errors.js";
 
-type Result<TData, TError extends Error = KnownDomainError> =
+type Result<
+	TData extends Record<string, unknown>,
+	TError extends Error = KnownDomainError,
+> =
 	| {
 			ok: true;
 			data: TData;
@@ -10,8 +13,9 @@ type Result<TData, TError extends Error = KnownDomainError> =
 			error: TError;
 	  };
 
-type ResultAsync<TData, TError extends Error = KnownDomainError> = Promise<
-	Result<TData, TError>
->;
+type ResultAsync<
+	TData extends Record<string, unknown>,
+	TError extends Error = KnownDomainError,
+> = Promise<Result<TData, TError>>;
 
 export type { Result, ResultAsync };
