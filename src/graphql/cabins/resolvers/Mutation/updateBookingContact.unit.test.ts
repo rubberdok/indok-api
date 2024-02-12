@@ -47,8 +47,7 @@ describe("Cabin mutations", () => {
 			const phoneNumber = faker.phone.number();
 			const userId = faker.string.uuid();
 			const authenticatedContext = createMockContext({
-				userId,
-				authenticated: true,
+				user: { id: userId },
 			});
 			cabinService.updateBookingContact.mockResolvedValueOnce({
 				id: "booking-contact",

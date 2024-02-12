@@ -16,10 +16,7 @@ describe("User queries", () => {
 			const { client, createMockContext, organizationService, userService } =
 				createMockApolloServer();
 			const userId = faker.string.uuid();
-			const authenticatedContext = createMockContext({
-				userId,
-				authenticated: true,
-			});
+			const authenticatedContext = createMockContext({ user: { id: userId } });
 			const user = mock<User>({ id: userId });
 			userService.get.mockResolvedValue(user);
 			organizationService.findMany.mockResolvedValue([

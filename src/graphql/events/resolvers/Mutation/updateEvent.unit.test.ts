@@ -10,8 +10,7 @@ describe("Event mutations", () => {
 			const { client, createMockContext, eventService } =
 				createMockApolloServer();
 			const authenticatedContext = createMockContext({
-				userId: faker.string.uuid(),
-				authenticated: true,
+				user: { id: faker.string.uuid() },
 			});
 			eventService.update.mockResolvedValueOnce({
 				ok: true,

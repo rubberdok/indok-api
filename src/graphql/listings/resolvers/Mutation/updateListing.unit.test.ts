@@ -11,8 +11,7 @@ describe("Listing mutations", () => {
 			const { client, listingService, createMockContext } =
 				createMockApolloServer();
 			const authenticatedContext = createMockContext({
-				userId: faker.string.uuid(),
-				authenticated: true,
+				user: { id: faker.string.uuid() },
 			});
 			listingService.update.mockResolvedValue(
 				mock<Listing>({ id: faker.string.uuid() }),
@@ -53,7 +52,7 @@ describe("Listing mutations", () => {
 			const { client, listingService, createMockContext } =
 				createMockApolloServer();
 			const unauthenticatedContext = createMockContext({
-				authenticated: false,
+				user: null,
 			});
 
 			const { errors } = await client.mutate(

@@ -23,7 +23,7 @@ describe("OrganizationResolvers", () => {
 				 * 2. Create the mock context without a userId in session
 				 */
 				const { createMockContext, client } = createMockApolloServer();
-				const contextValue = createMockContext({ userId: undefined });
+				const contextValue = createMockContext({ user: null });
 
 				/**
 				 * Act
@@ -62,8 +62,7 @@ describe("OrganizationResolvers", () => {
 				const { createMockContext, client, organizationService } =
 					createMockApolloServer();
 				const contextValue = createMockContext({
-					userId: faker.string.uuid(),
-					authenticated: true,
+					user: { id: faker.string.uuid() },
 				});
 				organizationService.create.mockResolvedValueOnce(
 					mock<Organization>({
@@ -119,7 +118,7 @@ describe("OrganizationResolvers", () => {
 				 * 2. Create the mock context without a userId in session
 				 */
 				const { createMockContext, client } = createMockApolloServer();
-				const contextValue = createMockContext({ userId: undefined });
+				const contextValue = createMockContext({ user: null });
 
 				/**
 				 * Act
@@ -158,8 +157,7 @@ describe("OrganizationResolvers", () => {
 				const { createMockContext, client, organizationService } =
 					createMockApolloServer();
 				const contextValue = createMockContext({
-					userId: faker.string.uuid(),
-					authenticated: true,
+					user: { id: faker.string.uuid() },
 				});
 				organizationService.update.mockResolvedValueOnce(
 					mock<Organization>({
@@ -215,7 +213,7 @@ describe("OrganizationResolvers", () => {
 				 * 2. Create the mock context without a userId in session
 				 */
 				const { createMockContext, client } = createMockApolloServer();
-				const contextValue = createMockContext({ userId: undefined });
+				const contextValue = createMockContext({ user: null });
 
 				/**
 				 * Act
@@ -259,8 +257,7 @@ describe("OrganizationResolvers", () => {
 				const { createMockContext, client, organizationService } =
 					createMockApolloServer();
 				const contextValue = createMockContext({
-					userId: faker.string.uuid(),
-					authenticated: true,
+					user: { id: faker.string.uuid() },
 				});
 				organizationService.addMember.mockResolvedValueOnce({
 					id: faker.string.uuid(),
@@ -390,7 +387,7 @@ describe("OrganizationResolvers", () => {
 				const userId = faker.string.uuid();
 				const { createMockContext, client, organizationService } =
 					createMockApolloServer();
-				const contextValue = createMockContext({ userId, authenticated: true });
+				const contextValue = createMockContext({ user: { id: userId } });
 				organizationService.removeMember.mockResolvedValueOnce({
 					id: faker.string.uuid(),
 					createdAt: new Date(),

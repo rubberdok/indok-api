@@ -250,5 +250,84 @@ describe("Event mutations", () => {
 				expect(err.extensions?.code).toBe(ApolloServerErrorCode.BAD_USER_INPUT),
 			);
 		});
+
+		it("should raise bad input error if you create a ticket event without tickets", async () => {
+			/**
+			 * Arrange
+			 *
+			 * Create an authenticated context,
+			 * and set up the mock return value for the eventService.create method.
+			 */
+			const { client, createMockContext, eventService } =
+				createMockApolloServer();
+
+			const contextValue = createMockContext({
+				user: {
+					id: faker.string.uuid(),
+				},
+			});
+
+			eventService.create.mockResolvedValue({
+				ok: true,
+				data: {
+					event: mock<EventType>({
+						id: faker.string.uuid(),
+						name: faker.person.fullName(),
+						description: faker.lorem.paragraph(),
+					}),
+				},
+			});
+			/**
+			 * Act
+			 *
+			 * Create an event using the authenticated context
+			 */
+			const { errors } = await client.mutate(
+				{
+					mutation: graphql(`
+            mutation createEvent($data: CreateEventInput!) {
+              createEvent(data: $data) {
+                event {
+                  id
+                  name
+                  description
+                }
+              }
+            }
+          `),
+					variables: {
+						data: {
+							event: {
+								type: "TICKETS",
+								organizationId: faker.string.uuid(),
+								name: faker.person.fullName(),
+								startAt: faker.date.future(),
+								signUpsEnabled: true,
+								signUpDetails: {
+									capacity: 10,
+									signUpsEndAt: faker.date.future(),
+									signUpsStartAt: faker.date.future(),
+									slots: [{ capacity: 10 }],
+								},
+							},
+						},
+					},
+				},
+				{
+					contextValue,
+				},
+			);
+
+			/**
+			 * Assert
+			 *
+			 * Ensure that the event creation was attempted with the correct arguments,
+			 * and that no errors were returned.
+			 */
+			expect(errors).toBeDefined();
+			errors?.map((err) =>
+				expect(err.extensions?.code).toBe(ApolloServerErrorCode.BAD_USER_INPUT),
+			);
+		});
 	});
 });

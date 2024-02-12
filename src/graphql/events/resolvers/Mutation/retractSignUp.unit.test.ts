@@ -21,8 +21,9 @@ describe("Event mutations", () => {
 				createMockApolloServer();
 
 			const contextValue = createMockContext({
-				authenticated: true,
-				userId: faker.string.uuid(),
+				user: {
+					id: faker.string.uuid(),
+				},
 			});
 
 			eventService.retractSignUp.mockResolvedValue(
@@ -105,7 +106,7 @@ describe("Event mutations", () => {
 				createMockApolloServer();
 
 			const contextValue = createMockContext({
-				authenticated: false,
+				user: null,
 			});
 
 			/**

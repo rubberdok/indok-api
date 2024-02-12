@@ -68,7 +68,7 @@ describe("Event queries", () => {
 						},
 					},
 					{
-						contextValue: createMockContext({ userId, authenticated: true }),
+						contextValue: createMockContext({ user: { id: userId } }),
 					},
 				);
 
