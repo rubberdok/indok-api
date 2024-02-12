@@ -361,7 +361,7 @@ describe("Event mutations", () => {
 			 *
 			 * Create an event using the authenticated context
 			 */
-			const { errors, data } = await client.mutate(
+			const { errors } = await client.mutate(
 				{
 					mutation: graphql(`
             mutation createEvent($data: CreateEventInput!) {

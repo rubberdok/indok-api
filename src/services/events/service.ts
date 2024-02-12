@@ -200,8 +200,8 @@ type BaseCreateEventFields = {
 type CreateBasicEventParams = {
 	type: typeof EventTypeEnum.BASIC;
 	event: BaseCreateEventFields;
-	slots?: undefined;
-	tickets?: undefined;
+	slots?: never;
+	tickets?: never;
 };
 
 type CreateSignUpEventParams = {
@@ -212,7 +212,7 @@ type CreateSignUpEventParams = {
 		signUpsEndAt: Date;
 	};
 	slots: { capacity: number; gradeYears?: number[] | null }[];
-	tickets?: undefined;
+	tickets?: never;
 };
 
 type CreateTicketEventParams = {

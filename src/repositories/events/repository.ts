@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import {
 	type Event as PrismaEvent,
 	type EventSignUp,
@@ -5,7 +6,6 @@ import {
 	ParticipationStatus,
 	type PrismaClient,
 } from "@prisma/client";
-import type { Prisma } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 import { pick } from "lodash-es";
 import {
