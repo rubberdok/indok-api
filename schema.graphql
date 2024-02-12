@@ -141,6 +141,11 @@ type CreateOrganizationResponse {
   organization: Organization!
 }
 
+input CreateSlotInput {
+  capacity: Int!
+  gradeYears: [Int!]
+}
+
 scalar DateTime
 
 input DeleteEventCategoryInput {
@@ -157,6 +162,10 @@ input DeleteListingInput {
 
 type DeleteListingResponse {
   listing: Listing!
+}
+
+input DeleteSlotInput {
+  id: ID!
 }
 
 type Event {
@@ -211,9 +220,13 @@ type EventCategory {
   name: String!
 }
 
+input EventCategoryInput {
+  id: ID!
+}
+
 input EventData {
   """categories is a list of cateogry IDs to which the event belongs"""
-  categories: [ID!]
+  categories: [EventCategoryInput!]
 
   """
   The description of the event, defaults to "". We support markdown on the client, so this can be markdown.
@@ -809,6 +822,10 @@ input UpdateBookingStatusInput {
   status: Status!
 }
 
+input UpdateCategoriesInput {
+  id: ID!
+}
+
 input UpdateEventCategoryInput {
   id: ID!
   name: String!
@@ -827,7 +844,7 @@ input UpdateEventInput {
   capacity: Int
 
   """categories is a list of cateogry IDs to which the event belongs"""
-  categories: [ID!]
+  categories: [UpdateCategoriesInput!]
 
   """
   The description of the event, defaults to "". We support markdown on the client, so this can be markdown.
@@ -843,6 +860,7 @@ input UpdateEventInput {
 
   """The name of the event, this will be displayed to users"""
   name: String
+  slots: UpdateSlotsInput
 
   """
   The start time of the event. Must be before endAt and after the current time.
@@ -899,6 +917,18 @@ input UpdateOrganizationInput {
 
 type UpdateOrganizationResponse {
   organization: Organization!
+}
+
+input UpdateSlotInput {
+  capacity: Int
+  gradeYears: [Int!]
+  id: ID!
+}
+
+input UpdateSlotsInput {
+  create: [CreateSlotInput!]
+  delete: [DeleteSlotInput!]
+  update: [UpdateSlotInput!]
 }
 
 input UpdateUserInput {
