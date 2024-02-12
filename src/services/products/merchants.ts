@@ -43,7 +43,7 @@ function buildMerchants({ productRepository }: BuildProductsDependencies) {
 				return {
 					ok: false,
 					error: new PermissionDeniedError(
-						"You must be logged in as a super user to create a merchant",
+						"You must be a super user to create a merchant",
 					),
 				};
 			}
