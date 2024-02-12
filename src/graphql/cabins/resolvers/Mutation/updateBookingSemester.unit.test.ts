@@ -21,8 +21,7 @@ describe("Cabin mutations", () => {
 				}),
 			);
 			const authenticatedContext = createMockContext({
-				userId: faker.string.uuid(),
-				authenticated: true,
+				user: { id: faker.string.uuid() },
 			});
 			const data: UpdateBookingSemesterInput = {
 				semester: "SPRING",

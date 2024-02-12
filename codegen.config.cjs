@@ -117,6 +117,11 @@ const config = {
 				typesPluginsConfig: {
 					contextType: "~/lib/apollo-server.js#ApolloContext",
 				},
+				scalarsOverrides: {
+					DateTime: {
+						type: "Date"
+					}
+				}
 			},
 			{ schema: "src/graphql/**/*.{graphql}" },
 		),

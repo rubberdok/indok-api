@@ -56,7 +56,8 @@ describe("ProductRepository", () => {
 			});
 
 			// Assert the result
-			expect(result.paymentAttempt).toBeDefined();
+			if (!result.ok) throw result.error;
+			expect(result.data.paymentAttempt).toBeDefined();
 		});
 
 		it("returns null if the payment attempt does not exist", async () => {
@@ -67,7 +68,8 @@ describe("ProductRepository", () => {
 			});
 
 			// Assert the result
-			expect(result.paymentAttempt).toBeNull();
+			if (!result.ok) throw result.error;
+			expect(result.data.paymentAttempt).toBeNull();
 		});
 	});
 

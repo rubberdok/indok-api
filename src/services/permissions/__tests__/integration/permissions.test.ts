@@ -239,6 +239,15 @@ describe("OrganizationsService", () => {
 				await expect(result).resolves.toEqual(expected);
 			},
 		);
+
+		it("should return `false` if `userId` is null", async () => {
+			const result = await permissionService.hasRole({
+				userId: null,
+				organizationId: faker.string.uuid(),
+				role: Role.MEMBER,
+			});
+			expect(result).toBe(false);
+		});
 	});
 
 	describe("#isSuperUser", () => {

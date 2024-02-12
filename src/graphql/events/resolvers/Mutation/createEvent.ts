@@ -1,40 +1,62 @@
-import { assertIsAuthenticated } from "~/graphql/auth.js";
+import { ApolloServerErrorCode } from "@apollo/server/errors";
+import { GraphQLError } from "graphql";
 import type { MutationResolvers } from "./../../../types.generated.js";
+
 export const createEvent: NonNullable<MutationResolvers["createEvent"]> =
 	async (_parent, { data }, ctx) => {
-		assertIsAuthenticated(ctx);
+		const { type, signUpDetails, ...event } = data.event;
+		const { tickets } = signUpDetails ?? {};
 
-		const {
-			organizationId,
-			event: { name, description, startAt, endAt },
-			signUpDetails,
-		} = data;
-		if (signUpDetails) {
-			const event = await ctx.events.create(
-				ctx.user.id,
-				organizationId,
-				{
-					name,
-					description,
-					startAt: new Date(startAt),
-					endAt: endAt ? new Date(endAt) : undefined,
-				},
-				{
-					signUpsEndAt: new Date(signUpDetails.signUpsEndAt),
-					signUpsStartAt: new Date(signUpDetails.signUpsStartAt),
-					capacity: signUpDetails.capacity,
-					slots: signUpDetails.slots,
-					signUpsEnabled: signUpDetails.enabled,
-				},
+		let createEventResult: Awaited<ReturnType<typeof ctx.events.create>>;
+		if (type === "BASIC") {
+			createEventResult = await ctx.events.create(ctx, {
+				type: "BASIC",
+				event: event,
+			});
+		} else if (!signUpDetails) {
+			throw new GraphQLError(
+				"signUpDetails must be provided for this event type",
+				{ extensions: { code: ApolloServerErrorCode.BAD_USER_INPUT } },
 			);
-			return { event };
+		} else if (type === "SIGN_UPS") {
+			createEventResult = await ctx.events.create(ctx, {
+				type: "SIGN_UPS",
+				event: {
+					...event,
+					capacity: signUpDetails.capacity,
+					signUpsEndAt: signUpDetails.signUpsEndAt,
+					signUpsStartAt: signUpDetails.signUpsStartAt,
+				},
+				slots: signUpDetails.slots,
+			});
+		} else if (!tickets) {
+			throw new GraphQLError(
+				"signUpDetails.tickets must be provided for this event type",
+				{ extensions: { code: ApolloServerErrorCode.BAD_USER_INPUT } },
+			);
+		} else if (type === "TICKETS") {
+			createEventResult = await ctx.events.create(ctx, {
+				type: "TICKETS",
+				event: {
+					...event,
+					capacity: signUpDetails.capacity,
+					signUpsEndAt: signUpDetails.signUpsEndAt,
+					signUpsStartAt: signUpDetails.signUpsStartAt,
+				},
+				slots: signUpDetails.slots,
+				tickets: tickets,
+			});
+		} else {
+			throw new GraphQLError("Unexpected invalid input", {
+				extensions: { code: ApolloServerErrorCode.BAD_USER_INPUT },
+			});
 		}
-		const event = await ctx.events.create(ctx.user.id, organizationId, {
-			name,
-			description,
-			startAt: new Date(startAt),
-			endAt: endAt ? new Date(endAt) : undefined,
-		});
 
-		return { event };
+		if (!createEventResult.ok) {
+			throw createEventResult.error;
+		}
+
+		const { event: createdEvent } = createEventResult.data;
+
+		return { event: createdEvent };
 	};

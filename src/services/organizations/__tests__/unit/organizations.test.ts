@@ -1,3 +1,4 @@
+import assert, { fail } from "assert";
 import { faker } from "@faker-js/faker";
 import type { Member, Organization } from "@prisma/client";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
@@ -160,7 +161,7 @@ describe("OrganizationService", () => {
 					name?: string;
 					description?: string;
 				};
-				expectedError: typeof KnownDomainError;
+				expectedError: string;
 			}[] = [
 				{
 					name: "if the user is not a member of the organization",
@@ -172,7 +173,7 @@ describe("OrganizationService", () => {
 						organizationId: "o1",
 						name: faker.company.name(),
 					},
-					expectedError: PermissionDeniedError,
+					expectedError: PermissionDeniedError.name,
 				},
 				{
 					name: "if the description is too long",
@@ -184,7 +185,7 @@ describe("OrganizationService", () => {
 						organizationId: "o1",
 						description: faker.string.sample(10001),
 					},
-					expectedError: InvalidArgumentError,
+					expectedError: InvalidArgumentError.name,
 				},
 				{
 					name: "if the name is too long",
@@ -196,7 +197,7 @@ describe("OrganizationService", () => {
 						organizationId: "o1",
 						name: faker.string.sample(101),
 					},
-					expectedError: InvalidArgumentError,
+					expectedError: InvalidArgumentError.name,
 				},
 			];
 
@@ -224,12 +225,16 @@ describe("OrganizationService", () => {
 					 * new organization name.
 					 */
 					const { organizationId, name, description } = input;
-					await expect(
-						organizationService.update(state.user.id, organizationId, {
+					try {
+						await organizationService.update(state.user.id, organizationId, {
 							name,
 							description,
-						}),
-					).rejects.toThrow(expectedError);
+						});
+						fail("Expected to throw");
+					} catch (err) {
+						assert(err instanceof Error);
+						expect(err.name).toBe(expectedError);
+					}
 				},
 			);
 		});
@@ -346,7 +351,7 @@ describe("OrganizationService", () => {
 					name: string;
 					description?: string;
 				};
-				expectedError: typeof KnownDomainError;
+				expectedError: typeof KnownDomainError.name;
 			}[] = [
 				{
 					name: "if the description is too long",
@@ -358,7 +363,7 @@ describe("OrganizationService", () => {
 						name: faker.company.name(),
 						description: faker.string.sample(10001),
 					},
-					expectedError: InvalidArgumentError,
+					expectedError: InvalidArgumentError.name,
 				},
 				{
 					name: "if the name is too long",
@@ -369,7 +374,7 @@ describe("OrganizationService", () => {
 						userId: "1",
 						name: faker.string.sample(101),
 					},
-					expectedError: InvalidArgumentError,
+					expectedError: InvalidArgumentError.name,
 				},
 				{
 					name: "if name is blank",
@@ -380,7 +385,7 @@ describe("OrganizationService", () => {
 						userId: "1",
 						name: "",
 					},
-					expectedError: InvalidArgumentError,
+					expectedError: InvalidArgumentError.name,
 				},
 			];
 
@@ -401,9 +406,13 @@ describe("OrganizationService", () => {
 					 * We call the update method with the user ID, organization ID, and the
 					 * new organization name.
 					 */
-					await expect(
-						organizationService.create(userId, rest),
-					).rejects.toThrow(expectedError);
+					try {
+						await organizationService.create(userId, rest);
+						fail("Expected to throw");
+					} catch (err) {
+						assert(err instanceof Error);
+						expect(err.name).toBe(expectedError);
+					}
 				},
 			);
 		});
@@ -527,7 +536,7 @@ describe("OrganizationService", () => {
 					userId: string;
 					role: Role;
 				};
-				expectedError: typeof KnownDomainError;
+				expectedError: typeof KnownDomainError.name;
 			}
 			const testCases: TestCase[] = [
 				{
@@ -541,7 +550,7 @@ describe("OrganizationService", () => {
 						userId: "2",
 						role: Role.MEMBER,
 					},
-					expectedError: PermissionDeniedError,
+					expectedError: PermissionDeniedError.name,
 				},
 				{
 					name: "if the user is not an admin of the organization",
@@ -554,7 +563,7 @@ describe("OrganizationService", () => {
 						userId: "2",
 						role: Role.MEMBER,
 					},
-					expectedError: PermissionDeniedError,
+					expectedError: PermissionDeniedError.name,
 				},
 			];
 
@@ -581,9 +590,13 @@ describe("OrganizationService", () => {
 					 * We call the addMember method with the user ID, organization ID, and the
 					 * new member's user ID and role.
 					 */
-					await expect(
-						organizationService.addMember(state.user.id, input),
-					).rejects.toThrow(expectedError);
+					try {
+						await organizationService.addMember(state.user.id, input);
+						fail("Expected to throw");
+					} catch (err) {
+						assert(err instanceof Error);
+						expect(err.name).toBe(expectedError);
+					}
 				},
 			);
 		});
@@ -602,7 +615,7 @@ describe("OrganizationService", () => {
 					organizationId: string;
 					userId: string;
 				};
-				expectedError: typeof KnownDomainError;
+				expectedError: typeof KnownDomainError.name;
 			}
 			const testCases: TestCase[] = [
 				{
@@ -616,7 +629,7 @@ describe("OrganizationService", () => {
 						organizationId: "o1",
 						userId: "1",
 					},
-					expectedError: PermissionDeniedError,
+					expectedError: PermissionDeniedError.name,
 				},
 				{
 					name: "if the user is not an admin of the organization, and not leaving, i.e. removing themselves",
@@ -629,7 +642,7 @@ describe("OrganizationService", () => {
 						organizationId: "o1",
 						userId: "2",
 					},
-					expectedError: PermissionDeniedError,
+					expectedError: PermissionDeniedError.name,
 				},
 				{
 					name: "if the user is the last user of the organization",
@@ -649,7 +662,7 @@ describe("OrganizationService", () => {
 						organizationId: "o1",
 						userId: "1",
 					},
-					expectedError: InvalidArgumentError,
+					expectedError: InvalidArgumentError.name,
 				},
 				{
 					name: "if the user is the last ADMIN user of the organization",
@@ -675,7 +688,7 @@ describe("OrganizationService", () => {
 						organizationId: "o1",
 						userId: "1",
 					},
-					expectedError: InvalidArgumentError,
+					expectedError: InvalidArgumentError.name,
 				},
 			];
 
@@ -711,9 +724,12 @@ describe("OrganizationService", () => {
 					 * We call the addMember method with the user ID, organization ID, and the
 					 * new member's user ID and role.
 					 */
-					await expect(
-						organizationService.removeMember(state.user.id, input),
-					).rejects.toThrow(expectedError);
+					try {
+						await organizationService.removeMember(state.user.id, input);
+					} catch (err) {
+						assert(err instanceof Error);
+						expect(err.name).toBe(expectedError);
+					}
 				},
 			);
 		});

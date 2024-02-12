@@ -1,9 +1,13 @@
 import { faker } from "@faker-js/faker";
 import type { EPaymentErrorResponse } from "@vippsmobilepay/sdk";
 import { mock } from "jest-mock-extended";
-import type { Order, PaymentAttempt, Product } from "~/domain/products.js";
+import type {
+	OrderType,
+	PaymentAttempt,
+	ProductType,
+} from "~/domain/products.js";
 import type { User } from "~/domain/users.js";
-import { makeMockContext } from "~/services/context.js";
+import { makeMockContext } from "~/lib/context.js";
 import { makeDependencies } from "./dependencies.js";
 
 describe("ProductService", () => {
@@ -25,18 +29,23 @@ describe("ProductService", () => {
 			const orderId = faker.string.uuid();
 			const price = 100;
 			productRepository.getOrder.mockResolvedValueOnce({
-				order: {
-					attempt: 0,
-					id: orderId,
-					productId: faker.string.uuid(),
-					version: 0,
-					paymentStatus: "PENDING",
+				ok: true,
+				data: {
+					order: {
+						attempt: 0,
+						id: orderId,
+						productId: faker.string.uuid(),
+						version: 0,
+						paymentStatus: "PENDING",
+						userId: null,
+					},
 				},
 			});
 			productRepository.getProduct.mockResolvedValueOnce({
 				product: {
 					id: faker.string.uuid(),
 					price,
+					name: faker.word.adjective(),
 					description: faker.lorem.sentence(),
 					version: 0,
 					merchant: {
@@ -64,6 +73,7 @@ describe("ProductService", () => {
 					productId: faker.string.uuid(),
 					version: 0,
 					paymentStatus: "CREATED",
+					userId: null,
 				},
 			});
 			mockVippsClient.payment.create.mockImplementation((_token, body) => {
@@ -81,7 +91,7 @@ describe("ProductService", () => {
 			 *
 			 * Initiate a payment attempt
 			 */
-			await productService.initiatePaymentAttempt(
+			await productService.payments.initiatePaymentAttempt(
 				makeMockContext(
 					mock<User>({
 						id: faker.string.uuid(),
@@ -117,7 +127,7 @@ describe("ProductService", () => {
 		});
 
 		it("should fail with UnauthorizedError if not logged in", async () => {
-			const result = await productService.initiatePaymentAttempt(
+			const result = await productService.payments.initiatePaymentAttempt(
 				makeMockContext(null),
 				{
 					orderId: faker.string.uuid(),
@@ -134,10 +144,13 @@ describe("ProductService", () => {
 
 		it("should fail with NotFoundError if the order does not exist", async () => {
 			productRepository.getOrder.mockResolvedValueOnce({
-				order: null,
+				ok: true,
+				data: {
+					order: null,
+				},
 			});
 
-			const result = await productService.initiatePaymentAttempt(
+			const result = await productService.payments.initiatePaymentAttempt(
 				makeMockContext(mock<User>({})),
 				{
 					orderId: faker.string.uuid(),
@@ -154,12 +167,15 @@ describe("ProductService", () => {
 
 		it("should fail with InvalidArgumentError if the order is captured", async () => {
 			productRepository.getOrder.mockResolvedValueOnce({
-				order: mock<Order>({
-					paymentStatus: "CAPTURED",
-				}),
+				ok: true,
+				data: {
+					order: mock<OrderType>({
+						paymentStatus: "CAPTURED",
+					}),
+				},
 			});
 
-			const result = await productService.initiatePaymentAttempt(
+			const result = await productService.payments.initiatePaymentAttempt(
 				makeMockContext(mock<User>({})),
 				{
 					orderId: faker.string.uuid(),
@@ -177,12 +193,15 @@ describe("ProductService", () => {
 
 		it("should fail with InvalidArgumentError if the order is cancelled", async () => {
 			productRepository.getOrder.mockResolvedValueOnce({
-				order: mock<Order>({
-					paymentStatus: "CANCELLED",
-				}),
+				ok: true,
+				data: {
+					order: mock<OrderType>({
+						paymentStatus: "CANCELLED",
+					}),
+				},
 			});
 
-			const result = await productService.initiatePaymentAttempt(
+			const result = await productService.payments.initiatePaymentAttempt(
 				makeMockContext(mock<User>({})),
 				{
 					orderId: faker.string.uuid(),
@@ -200,12 +219,15 @@ describe("ProductService", () => {
 
 		it("should fail with InvalidArgumentError if the order is refunded", async () => {
 			productRepository.getOrder.mockResolvedValueOnce({
-				order: mock<Order>({
-					paymentStatus: "REFUNDED",
-				}),
+				ok: true,
+				data: {
+					order: mock<OrderType>({
+						paymentStatus: "REFUNDED",
+					}),
+				},
 			});
 
-			const result = await productService.initiatePaymentAttempt(
+			const result = await productService.payments.initiatePaymentAttempt(
 				makeMockContext(mock<User>({})),
 				{
 					orderId: faker.string.uuid(),
@@ -223,16 +245,19 @@ describe("ProductService", () => {
 
 		it("should fail with NotFoundError if the related product does not exist", async () => {
 			productRepository.getOrder.mockResolvedValueOnce({
-				order: mock<Order>({
-					paymentStatus: "CREATED",
-				}),
+				ok: true,
+				data: {
+					order: mock<OrderType>({
+						paymentStatus: "CREATED",
+					}),
+				},
 			});
 
 			productRepository.getProduct.mockResolvedValueOnce({
 				product: null,
 			});
 
-			const result = await productService.initiatePaymentAttempt(
+			const result = await productService.payments.initiatePaymentAttempt(
 				makeMockContext(mock<User>({})),
 				{
 					orderId: faker.string.uuid(),
@@ -243,22 +268,25 @@ describe("ProductService", () => {
 				ok: false,
 				error: expect.objectContaining({
 					name: "NotFoundError",
-					description: expect.stringContaining("Product"),
+					description: expect.stringContaining("ProductType"),
 				}),
 			});
 		});
 
 		it("should fail with InternalServerError if the request to Vipps fails", async () => {
 			productRepository.getOrder.mockResolvedValueOnce({
-				order: mock<Order>({
-					paymentStatus: "CREATED",
-					id: faker.string.uuid(),
-					attempt: 0,
-				}),
+				ok: true,
+				data: {
+					order: mock<OrderType>({
+						paymentStatus: "CREATED",
+						id: faker.string.uuid(),
+						attempt: 0,
+					}),
+				},
 			});
 
 			productRepository.getProduct.mockResolvedValueOnce({
-				product: mock<Product>({
+				product: mock<ProductType>({
 					id: faker.string.uuid(),
 					price: 100,
 				}),
@@ -269,7 +297,7 @@ describe("ProductService", () => {
 				error: mock<EPaymentErrorResponse>({}),
 			});
 
-			const result = await productService.initiatePaymentAttempt(
+			const result = await productService.payments.initiatePaymentAttempt(
 				makeMockContext(mock<User>({})),
 				{
 					orderId: faker.string.uuid(),
@@ -290,10 +318,13 @@ describe("ProductService", () => {
 		it("should succeed if the user is not logged in", async () => {
 			const ctx = makeMockContext(null);
 			productRepository.getPaymentAttempt.mockResolvedValueOnce({
-				paymentAttempt: mock<PaymentAttempt>({}),
+				ok: true,
+				data: {
+					paymentAttempt: mock<PaymentAttempt>({}),
+				},
 			});
 
-			const result = await productService.getPaymentAttempt(ctx, {
+			const result = await productService.payments.get(ctx, {
 				reference: faker.string.uuid(),
 			});
 
@@ -303,10 +334,13 @@ describe("ProductService", () => {
 		it("should succeed if the user is logged in", async () => {
 			const ctx = makeMockContext(mock<User>({}));
 			productRepository.getPaymentAttempt.mockResolvedValueOnce({
-				paymentAttempt: mock<PaymentAttempt>({}),
+				ok: true,
+				data: {
+					paymentAttempt: mock<PaymentAttempt>({}),
+				},
 			});
 
-			const result = await productService.getPaymentAttempt(ctx, {
+			const result = await productService.payments.get(ctx, {
 				reference: faker.string.uuid(),
 			});
 

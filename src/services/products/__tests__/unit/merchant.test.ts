@@ -1,8 +1,8 @@
 import { mock } from "jest-mock-extended";
-import { UnauthorizedError } from "~/domain/errors.js";
-import type { Merchant } from "~/domain/products.js";
+import { PermissionDeniedError } from "~/domain/errors.js";
+import type { MerchantType } from "~/domain/products.js";
 import type { User } from "~/domain/users.js";
-import { makeMockContext } from "~/services/context.js";
+import { makeMockContext } from "~/lib/context.js";
 import { makeDependencies } from "./dependencies.js";
 
 describe("ProductService", () => {
@@ -12,7 +12,7 @@ describe("ProductService", () => {
 		it("should fail if the user is not a super user", async () => {
 			const ctx = makeMockContext(mock<User>({ isSuperUser: false }));
 
-			const result = await productService.createMerchant(ctx, {
+			const result = await productService.merchants.create(ctx, {
 				name: "Test",
 				serialNumber: "123456",
 				subscriptionKey: "123456",
@@ -22,7 +22,7 @@ describe("ProductService", () => {
 
 			expect(result).toEqual({
 				ok: false,
-				error: expect.any(UnauthorizedError),
+				error: expect.any(PermissionDeniedError),
 			});
 			expect(productRepository.createMerchant).not.toHaveBeenCalled();
 		});
@@ -30,10 +30,10 @@ describe("ProductService", () => {
 		it("should succeed if the user is a super user", async () => {
 			const ctx = makeMockContext(mock<User>({ isSuperUser: true }));
 			productRepository.createMerchant.mockResolvedValueOnce({
-				merchant: mock<Merchant>({}),
+				merchant: mock<MerchantType>({}),
 			});
 
-			const result = await productService.createMerchant(ctx, {
+			const result = await productService.merchants.create(ctx, {
 				name: "Test",
 				serialNumber: "123456",
 				subscriptionKey: "123456",

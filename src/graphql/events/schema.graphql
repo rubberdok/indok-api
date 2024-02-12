@@ -43,6 +43,22 @@ type Event {
   categories describes the categories that the event belongs to.
   """
   categories: [EventCategory!]
+  type: EventType!
+}
+
+enum EventType {
+  """
+  Basic event has no sign ups, and no tickets
+  """
+  BASIC
+  """
+  Sign up event has sign ups, but no tickets
+  """
+  SIGN_UPS
+  """
+  Ticketed event has tickets and sign ups
+  """
+  TICKETS
 }
 
 type EventCategory {
@@ -96,20 +112,10 @@ type CreateEventResponse {
 }
 
 input CreateEventInput {
-  """
-  The organization that is hosting the event. Events must be hosted by an organization, and the user
-  creating the event must be a member of the organization.
-  """
-  organizationId: ID!
   event: EventData!
-  signUpDetails: SignUpData
 }
 
 input SignUpData {
-  """
-  If true, users can sign up for the event. If false, users cannot sign up for the event.
-  """
-  enabled: Boolean!
   """
   The time that sign ups open for the event. This must be before the start time of the event.
   """
@@ -128,6 +134,21 @@ input SignUpData {
   The slots for the event. If this is not provided, but capacity is, then all users can attend the event.
   """
   slots: [CreateEventSlot!]!
+  """
+  Ticket purchase details for the event. If this is not provided, then the event is free.
+  """
+  tickets: EventTicketData
+}
+
+input EventTicketData {
+  """
+  Price in øre, i.e. 100 = 1 NOK
+  """
+  price: Int!
+  """
+  MerchantID is the ID for the merchant, this will be the recipient of the payments.
+  """
+  merchantId: String!
 }
 
 input EventData {
@@ -152,7 +173,32 @@ input EventData {
   """
   categories is a list of cateogry IDs to which the event belongs
   """
-  categories: [ID!]
+  categories: [EventCategoryInput!]
+  """
+  The event type
+  - BASIC has no sign ups, and no tickets
+  - SIGN_UPS has sign ups, but no tickets (free event)
+  - TICKETS has tickets and sign ups (paid event)
+  """
+  type: EventType!
+  """
+  The ID of the organization that is hosting the event. Events must be hosted by an organization, and the user
+  creating the event must be a member of the organization.
+  """
+  organizationId: ID!
+  """
+  If the event is a sign up event, this will be the sign up details.
+  """
+  signUpDetails: SignUpData
+  """
+  If sign ups are currently enabled for the event. If this is false, users cannot sign up for the event. Defaults to
+  false
+  """
+  signUpsEnabled: Boolean
+}
+
+input EventCategoryInput {
+  id: ID!
 }
 
 input CreateEventSlot {
@@ -291,7 +337,33 @@ input UpdateEventInput {
   """
   categories is a list of cateogry IDs to which the event belongs
   """
-  categories: [ID!]
+  categories: [UpdateCategoriesInput!]
+  slots: UpdateSlotsInput
+}
+
+input UpdateSlotsInput {
+  create: [CreateSlotInput!]
+  update: [UpdateSlotInput!]
+  delete: [DeleteSlotInput!]
+}
+
+input CreateSlotInput {
+  capacity: Int!
+  gradeYears: [Int!]
+}
+
+input UpdateSlotInput {
+  id: ID!
+  capacity: Int
+  gradeYears: [Int!]
+}
+
+input DeleteSlotInput {
+  id: ID!
+}
+
+input UpdateCategoriesInput {
+  id: ID!
 }
 
 input CreateEventCategoryInput {

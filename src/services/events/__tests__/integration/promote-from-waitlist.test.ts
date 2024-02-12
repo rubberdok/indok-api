@@ -1,9 +1,10 @@
+import assert from "assert";
 import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
+import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
-import { makeMockContext } from "~/services/context.js";
 import type { EventService } from "../../service.js";
 import {
 	makeDependencies,
@@ -28,27 +29,27 @@ describe("EventService", () => {
 			 * 4. Create 3 sign ups for the event, one for each user, with status ON_WAITLIST
 			 */
 			const { user, organization } = await makeUserWithOrganizationMembership();
-			const event = await eventService.create(
-				user.id,
-				organization.id,
-				{
+			const createEvent = await eventService.create(makeMockContext(user), {
+				event: {
+					organizationId: organization.id,
 					name: faker.word.adjective(),
 					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 					endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
-				},
-				{
 					signUpsEnabled: true,
 					capacity: 1,
 					signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-					slots: [
-						{
-							capacity: 1,
-						},
-					],
 				},
-			);
+				slots: [
+					{
+						capacity: 1,
+					},
+				],
+				type: "SIGN_UPS",
+			});
 
+			assert(createEvent.ok);
+			const { event } = createEvent.data;
 			const slot = await prisma.eventSlot.findFirstOrThrow({
 				where: {
 					eventId: event.id,
@@ -110,8 +111,9 @@ describe("EventService", () => {
 			const updatedEvent = await prisma.event.findUnique({
 				where: { id: event.id },
 			});
+			assert(event.type === "SIGN_UPS");
 			expect(updatedEvent?.remainingCapacity).toBe(
-				(event.signUpDetails?.remainingCapacity ?? Number.NaN) - 1,
+				(event.remainingCapacity ?? Number.NaN) - 1,
 			);
 		});
 	});

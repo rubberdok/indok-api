@@ -1,385 +1,312 @@
+import type { Prisma } from "@prisma/client";
 import {
-	type Event,
+	type Event as PrismaEvent,
 	type EventSignUp,
 	type EventSlot,
 	ParticipationStatus,
 	type PrismaClient,
-	type PrismaPromise,
 } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
-import { merge } from "lodash-es";
+import { pick } from "lodash-es";
 import {
 	InternalServerError,
 	InvalidArgumentError,
+	KnownDomainError,
 	NotFoundError,
 } from "~/domain/errors.js";
+import type { CategoryType } from "~/domain/events/category.js";
+import { AlreadySignedUpError, Event } from "~/domain/events/event.js";
 import {
-	AlreadySignedUpError,
-	type Category,
-	type Event as DomainEvent,
-	InvalidCapacityError,
-	eventFromDataStorage,
-} from "~/domain/events.js";
+	type EventType,
+	type EventUpdateFn,
+	Slot,
+	type SlotType,
+} from "~/domain/events/index.js";
+import type { Context } from "~/lib/context.js";
 import { prismaKnownErrorCodes } from "~/lib/prisma.js";
+import type { ResultAsync } from "~/lib/result.js";
 
 export class EventRepository {
 	constructor(private db: PrismaClient) {}
 
 	/**
 	 * Create a new event.
-	 *
-	 * @param data.name - The name of the event
-	 * @param data.description - The description of the event
-	 * @param data.startAt - The start datetime of the event
-	 * @param data.endAt - The end datetime of the event
-	 * @param data.organizationId - The ID of the organization that the event belongs to
-	 * @param data.contactEamil - The email address of the contact person for the event
-	 * @param signUpDetails - The sign up details for the event
-	 * @returns The created event
 	 */
 	async create(
-		eventData: EventData,
-		signUpDetails?: SignUpData,
-	): Promise<DomainEvent> {
+		_ctx: Context,
+		params: {
+			event: EventType;
+			slots?: SlotType[];
+			categories?: { id: string }[];
+		},
+	): ResultAsync<
+		{ event: EventType; slots: SlotType[]; categories: CategoryType[] },
+		InternalServerError | InvalidArgumentError
+	> {
 		const {
-			name,
-			description,
-			startAt,
-			endAt,
-			contactEmail,
-			location,
-			organizationId,
-			categories,
-		} = eventData;
-		if (signUpDetails) {
-			const slots = signUpDetails.slots.map((slot) => ({
-				capacity: slot.capacity,
-				remainingCapacity: slot.capacity,
-				gradeYears: slot.gradeYears,
-			}));
-			const { signUpsEndAt, signUpsStartAt, capacity, signUpsEnabled } =
-				signUpDetails;
-			const event = await this.db.event.create({
+			event: eventData,
+			slots: slotsData,
+			categories: categoriesData,
+		} = params;
+
+		let createManySlots:
+			| Prisma.EventSlotCreateManyEventInputEnvelope
+			| undefined = undefined;
+		if (slotsData) {
+			createManySlots = {
+				data: slotsData.map((slot) => ({
+					id: slot.id,
+					version: slot.version,
+					remainingCapacity: slot.remainingCapacity,
+					capacity: slot.capacity,
+					gradeYears: slot.gradeYears,
+				})),
+			};
+		}
+
+		const createFields = pick(eventData, [
+			"name",
+			"description",
+			"contactEmail",
+			"endAt",
+			"location",
+			"organizationId",
+			"signUpsEnabled",
+			"startAt",
+			"type",
+			"capacity",
+			"productId",
+			"remainingCapacity",
+			"signUpsEndAt",
+			"signUpsStartAt",
+		]);
+		try {
+			const {
+				slots: dbSlots,
+				categories: dbCategories,
+				...dbEvent
+			} = await this.db.event.create({
 				include: {
+					slots: true,
 					categories: true,
 				},
 				data: {
-					name,
-					description,
-					startAt,
-					endAt,
-					contactEmail,
+					...createFields,
 					categories: {
-						connect: categories?.map((category) => ({
-							id: category,
+						connect: categoriesData?.map((category) => ({
+							id: category.id,
 						})),
 					},
-					location,
 					slots: {
-						createMany: {
-							data: slots,
-						},
+						createMany: createManySlots,
 					},
-					signUpsEndAt,
-					signUpsStartAt,
-					capacity,
-					remainingCapacity: capacity,
-					signUpsEnabled,
 				},
 			});
-			return eventFromDataStorage(event);
-		}
-		const event = await this.db.event.create({
-			include: {
-				categories: true,
-			},
-			data: {
-				name: name,
-				description,
-				startAt,
-				endAt,
-				organizationId,
-				contactEmail,
-				location,
-				categories: {
-					connect: categories?.map((category) => ({
-						id: category,
-					})),
+
+			const eventResult = Event.fromDataStorage(dbEvent);
+			if (!eventResult.ok) {
+				return {
+					ok: false,
+					error: new InternalServerError(
+						"Failed to convert event from data storage",
+					),
+				};
+			}
+			const slotResults = dbSlots.map((slot) => Slot.fromDataStorage(slot));
+			const slots: SlotType[] = [];
+			for (const slotResult of slotResults) {
+				if (!slotResult.ok) {
+					return {
+						ok: false,
+						error: new InternalServerError(
+							"Failed to convert slot from data storage",
+						),
+					};
+				}
+				slots.push(slotResult.data.slot);
+			}
+			const categories = dbCategories;
+			return {
+				ok: true,
+				data: {
+					event: eventResult.data.event,
+					slots,
+					categories,
 				},
-			},
-		});
-		return eventFromDataStorage(event);
+			};
+		} catch (err) {
+			if (err instanceof PrismaClientKnownRequestError) {
+				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) {
+					return {
+						ok: false,
+						error: new InvalidArgumentError(
+							"Related entity not found when creating a new event",
+							err,
+						),
+					};
+				}
+			}
+			return {
+				ok: false,
+				error: new InternalServerError(
+					"Unexpected error when creating a new event",
+					err,
+				),
+			};
+		}
 	}
 
 	/**
 	 * Update an event
 	 *
 	 * Values that are undefined will be left unchanged.
+	 * @param _ctx - The context
 	 * @param id - The ID of the event to update
-	 * @param data.name - The new name of the event
-	 * @param data.description - The new description of the event
-	 * @param data.startAt - The new start datetime of the event
-	 * @param data.endAt - The new end datetime of the event
+	 * @param updateFn - A function that takes the current event, with the slots and categories, and returns the updated event, with the slots and categories
 	 * @returns The updated event
 	 */
 	async update(
+		_ctx: Context,
 		id: string,
-		eventData: Partial<EventData>,
-		signUpDetails?: UpdateSignUpData,
-	): Promise<DomainEvent> {
-		if (signUpDetails !== undefined) {
-			const event = await this.updateWithCapacity(id, eventData, signUpDetails);
-			return eventFromDataStorage(event);
-		}
-
-		const {
-			name,
-			description,
-			startAt,
-			endAt,
-			contactEmail,
-			location,
-			categories,
-		} = eventData;
-
-		const event = await this.db.event.update({
-			include: {
-				categories: true,
-			},
-			data: {
-				name,
-				description,
-				startAt,
-				endAt,
-				contactEmail,
-				location,
-				categories: {
-					set: categories?.map((category) => ({
-						id: category,
-					})),
-				},
-			},
-			where: {
-				id,
-			},
-		});
-		return eventFromDataStorage(event);
-	}
-
-	/**
-	 * updateWithCapacity updates an event with a capacity. If the capacity is increased, the remaining capacity is incremented by the difference.
-	 * If the capacity is decreased, the remaining capacity is decremented by the difference. If the resulting
-	 * remaining capacity would be less than 0, an InvalidCapacityError is thrown.
-	 * If the event does not exist, a NotFoundError is thrown.
-	 * If the event does not have a capacity, we set the capacity and remaining capacity to the given capacity.
-	 *
-	 *
-	 * @param id - The ID of the event to update
-	 * @param data - The data to update the event with
-	 * @returns The updated event
-	 */
-	private async updateWithCapacity(
-		id: string,
-		event: Partial<EventData>,
-		signUpDetails: UpdateSignUpData,
-	): Promise<Event> {
-		const { signUpsEnabled, signUpsEndAt, signUpsStartAt } = signUpDetails;
-		const updateData = {
-			...event,
-			signUpsEnabled,
-			signUpsEndAt,
-			signUpsStartAt,
-		};
-
-		const previousEvent = await this.db.event.findUnique({
-			where: {
-				id,
-			},
-		});
-
-		if (previousEvent === null) {
-			throw new NotFoundError(`Event { id: ${id} } not found`);
-		}
-
-		const existingSlots = await this.db.eventSlot.findMany({
-			where: {
-				eventId: id,
-			},
-		});
-		const existingSlotsById = Object.fromEntries(
-			existingSlots.map((slot) => [slot.id, slot]),
-		);
-
-		const createOrUpdateSlotPromises = signUpDetails.slots.map((slot) => {
-			const { id: slotId, capacity } = slot;
-			if (slotId) {
-				const existingSlot = existingSlotsById[slotId];
-				if (!existingSlot)
-					throw new NotFoundError(`Event slot { id: ${slotId} } not found`);
-				return this.updateExistingSlot(existingSlot, {
-					id: slotId,
-					capacity,
-					gradeYears: slot.gradeYears,
-				});
-			}
-			return this.db.eventSlot.create({
-				data: {
-					eventId: id,
-					capacity,
-					remainingCapacity: capacity,
-				},
-			});
-		});
-
-		const slotIdsToDelete = Object.keys(existingSlotsById).filter((slotId) =>
-			signUpDetails.slots.every((slot) => slot.id !== slotId),
-		);
-
-		const slotDeletePromises = slotIdsToDelete.map((slotId) => {
-			return this.db.eventSlot.delete({
-				where: {
-					remainingCapacity: {
-						equals: this.db.eventSlot.fields.capacity,
-					},
-					id: slotId,
-				},
-			});
-		});
-
-		const updateEventPromise = this.updateEventWithCapacity(
-			previousEvent,
-			updateData,
-			signUpDetails,
-		);
-
+		updateFn: EventUpdateFn,
+	): ResultAsync<
+		{ event: EventType; slots: SlotType[]; categories: CategoryType[] },
+		InternalServerError
+	> {
 		try {
-			const [event] = await this.db.$transaction([
-				updateEventPromise,
-				...createOrUpdateSlotPromises,
-				...slotDeletePromises,
-			]);
-			return event;
-		} catch (err) {
-			if (err instanceof PrismaClientKnownRequestError) {
-				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND)
-					throw new InvalidCapacityError(
-						"Cannot delete a slot with sign ups, or cannot update a slot or event to have a capacity less than the number of sign ups",
-					);
+			const event = await this.db.$transaction(async (tx) => {
+				const getEventResult = await this.getWithSlotsAndCategories({ id });
+
+				if (!getEventResult.ok) {
+					throw getEventResult.error;
+				}
+
+				const { event, slots, categories } = getEventResult.data;
+
+				const updateEventResult = await updateFn({ event, slots, categories });
+				if (!updateEventResult.ok) {
+					throw updateEventResult.error;
+				}
+
+				const {
+					event: newEvent,
+					slots: newSlots,
+					categories: newCategories,
+				} = updateEventResult.data;
+				const { id: _, ...data } = newEvent;
+				let createManySlots:
+					| Prisma.EventSlotCreateManyEventInputEnvelope
+					| undefined = undefined;
+				if (newSlots?.create) {
+					createManySlots = {
+						data: newSlots.create.map((slot) => ({
+							remainingCapacity: slot.remainingCapacity,
+							capacity: slot.capacity,
+							gradeYears: slot.gradeYears,
+						})),
+					};
+				}
+
+				const updateFields = pick(data, [
+					"capacity",
+					"name",
+					"description",
+					"location",
+					"contactEmail",
+					"startAt",
+					"endAt",
+					"signUpsEnabled",
+					"signUpsStartAt",
+					"signUpsEndAt",
+					"remainingCapacity",
+				]);
+
+				const updatedEvent = await tx.event.update({
+					include: {
+						slots: true,
+						categories: true,
+					},
+					where: {
+						id,
+						version: event.version,
+					},
+					data: {
+						...updateFields,
+						categories: {
+							set: newCategories?.map((category) => ({
+								id: category.id,
+							})),
+						},
+						slots: {
+							createMany: createManySlots,
+							deleteMany: newSlots?.delete?.map((slot) => ({
+								id: slot.id,
+								version: slot.version,
+							})),
+							updateMany: newSlots?.update?.map((slot) => ({
+								where: {
+									id: slot.id,
+									version: slot.version,
+								},
+								data: {
+									remainingCapacity: slot.remainingCapacity,
+									capacity: slot.capacity,
+									gradeYears: slot.gradeYears,
+									version: {
+										increment: 1,
+									},
+								},
+							})),
+						},
+					},
+				});
+				return updatedEvent;
+			});
+			const {
+				slots: updatedSlots,
+				categories: updatedCategories,
+				...updatedEvent
+			} = event;
+			const eventResult = Event.fromDataStorage(updatedEvent);
+			const slots: SlotType[] = [];
+			for (const slot of updatedSlots) {
+				const slotResult = Slot.fromDataStorage(slot);
+				if (!slotResult.ok) {
+					return slotResult;
+				}
+				slots.push(slotResult.data.slot);
 			}
-			throw err;
-		}
-	}
+			const categories: CategoryType[] = [];
+			for (const category of updatedCategories) {
+				categories.push(category);
+			}
+			if (!eventResult.ok) {
+				return eventResult;
+			}
 
-	private updateExistingSlot(
-		existingSlot: EventSlot,
-		data: { id: string; capacity: number; gradeYears?: number[] },
-	): PrismaPromise<EventSlot> {
-		if (existingSlot === null) {
-			throw new NotFoundError(`Event slot { id: ${data.id} } not found`);
-		}
-
-		const changeInCapacity = data.capacity - existingSlot.capacity;
-
-		if (changeInCapacity > 0) {
-			return this.db.eventSlot.update({
-				where: {
-					id: data.id,
-					capacity: existingSlot.capacity,
-				},
+			return {
+				ok: true,
 				data: {
-					gradeYears: data.gradeYears,
-					remainingCapacity: {
-						increment: changeInCapacity,
-					},
-					capacity: data.capacity,
+					event: eventResult.data.event,
+					categories,
+					slots,
 				},
-			});
+			};
+		} catch (err) {
+			if (err instanceof KnownDomainError) {
+				return {
+					ok: false,
+					error: err,
+				};
+			}
+			return {
+				ok: false,
+				error: new InternalServerError(
+					"Unexpected error when updating an event",
+					err,
+				),
+			};
 		}
-
-		return this.db.eventSlot.update({
-			where: {
-				id: data.id,
-				capacity: existingSlot.capacity,
-				remainingCapacity: {
-					gte: -changeInCapacity,
-				},
-			},
-			data: {
-				gradeYears: data.gradeYears,
-				remainingCapacity: {
-					increment: changeInCapacity,
-				},
-				capacity: data.capacity,
-			},
-		});
-	}
-
-	private updateEventWithCapacity(
-		existingEvent: Event,
-		event: Partial<EventData>,
-		signUpDetails: UpdateSignUpData,
-	) {
-		const { capacity, signUpsEnabled, signUpsEndAt, signUpsStartAt } =
-			signUpDetails;
-		const { id } = existingEvent;
-		const updateData = {
-			...event,
-			capacity,
-			signUpsEnabled,
-			signUpsEndAt,
-			signUpsStartAt,
-			categories: {
-				set: event.categories?.map((category) => ({
-					id: category,
-				})),
-			},
-		};
-		const previousCapacity = existingEvent.capacity;
-		if (previousCapacity === null) {
-			return this.db.event.update({
-				data: {
-					...updateData,
-					remainingCapacity: capacity,
-				},
-				where: {
-					capacity: previousCapacity,
-					id,
-				},
-			});
-		}
-
-		const changeInCapacity = capacity - previousCapacity;
-
-		if (changeInCapacity > 0) {
-			return this.db.event.update({
-				data: {
-					...updateData,
-					remainingCapacity: {
-						increment: changeInCapacity,
-					},
-				},
-				where: {
-					capacity: previousCapacity,
-					id,
-				},
-			});
-		}
-
-		return this.db.event.update({
-			where: {
-				id,
-				capacity: previousCapacity,
-				remainingCapacity: {
-					gte: -changeInCapacity,
-				},
-			},
-			data: {
-				...updateData,
-				remainingCapacity: {
-					increment: changeInCapacity,
-				},
-			},
-		});
 	}
 
 	/**
@@ -433,49 +360,91 @@ export class EventRepository {
 	 *
 	 * @throws {NotFoundError} If an event with the given ID does not exist
 	 */
-	async get(id: string): Promise<DomainEvent> {
-		const event = await this.db.event.findUnique({
+	async get(id: string): Promise<EventType & { slots?: SlotType[] }> {
+		const findEventResult = await this.db.event.findUnique({
 			where: {
 				id,
 			},
 		});
 
-		if (event === null) {
+		if (findEventResult === null) {
 			throw new NotFoundError(`Event { id: ${id} } not found`);
 		}
 
-		return eventFromDataStorage(event);
+		const res = Event.fromDataStorage(findEventResult);
+		if (res.ok) {
+			return res.data.event;
+		}
+		throw new InternalServerError("Failed to convert event from data storage");
+	}
+
+	/**
+	 * getWithSlotsAndCategories returns the event with the given ID, with its slots and categories.
+	 */
+	async getWithSlotsAndCategories({ id }: { id: string }): ResultAsync<
+		{
+			event: EventType;
+			slots?: SlotType[];
+			categories?: CategoryType[];
+		},
+		InternalServerError | NotFoundError
+	> {
+		const findEventResult = await this.db.event.findUnique({
+			include: {
+				slots: true,
+				categories: true,
+			},
+			where: {
+				id,
+			},
+		});
+
+		if (findEventResult === null) {
+			return {
+				ok: false,
+				error: new NotFoundError(`Event { id: ${id} } not found`),
+			};
+		}
+
+		const { slots, categories, ...eventFromDSO } = findEventResult;
+
+		const res = Event.fromDataStorage(eventFromDSO);
+		if (!res.ok) {
+			return {
+				ok: false,
+				error: new InternalServerError(
+					"Failed to convert event from data storage",
+				),
+			};
+		}
+
+		return {
+			ok: true,
+			data: {
+				event: res.data.event,
+				slots,
+				categories,
+			},
+		};
 	}
 
 	/**
 	 * getCategories returns a list of all event categories
 	 */
-	getCategories(): Promise<Category[]> {
-		return this.db.eventCategory.findMany();
-	}
-
-	/**
-	 * get returns the event with the given ID.
-	 *
-	 * @throws {NotFoundError} If an event with the given ID does not exist
-	 */
-	async getWithSlots(
-		id: string,
-	): Promise<DomainEvent & { slots: EventSlot[] }> {
-		const event = await this.db.event.findUnique({
-			include: {
-				slots: true,
-			},
-			where: {
-				id,
-			},
-		});
-
-		if (event === null) {
-			throw new NotFoundError(`Event { id: ${id} } not found`);
+	getCategories(by?: { eventId?: string }): Promise<CategoryType[]> {
+		let where: Prisma.EventCategoryWhereInput | undefined;
+		if (by?.eventId) {
+			where = {
+				events: {
+					some: {
+						id: by.eventId,
+					},
+				},
+			};
 		}
-
-		return merge({}, eventFromDataStorage(event), { slots: event.slots });
+		return this.db.eventCategory.findMany({
+			where,
+		});
 	}
 
 	/**
@@ -483,7 +452,7 @@ export class EventRepository {
 	 * @param data.endAtGte - Only return events that end after this date
 	 * @returns A list of events
 	 */
-	async findMany(data?: { endAtGte?: Date }): Promise<DomainEvent[]> {
+	async findMany(data?: { endAtGte?: Date }): Promise<EventType[]> {
 		if (data) {
 			const { endAtGte } = data;
 			const events = await this.db.event.findMany({
@@ -494,11 +463,29 @@ export class EventRepository {
 				},
 			});
 
-			return events.map((event) => eventFromDataStorage(event));
+			return events
+				.map((event) => Event.fromDataStorage(event))
+				.map((res) => {
+					if (res.ok) {
+						return res.data.event;
+					}
+					throw new InternalServerError(
+						"Failed to convert event from data storage",
+					);
+				});
 		}
 
 		const events = await this.db.event.findMany();
-		return events.map((event) => eventFromDataStorage(event));
+		return events
+			.map((event) => Event.fromDataStorage(event))
+			.map((res) => {
+				if (res.ok) {
+					return res.data.event;
+				}
+				throw new InternalServerError(
+					"Failed to convert event from data storage",
+				);
+			});
 	}
 
 	/**
@@ -539,7 +526,7 @@ export class EventRepository {
 	 */
 	public async createSignUp(
 		data: CreateConfirmedSignUpData,
-	): Promise<{ event: DomainEvent; signUp: EventSignUp; slot: EventSlot }>;
+	): Promise<{ event: EventType; signUp: EventSignUp; slot: EventSlot }>;
 	/**
 	 * Create a new sign up for the event the given participation status. All newly created events are set as active,
 	 * which is either `ON_WAITLIST` or `CONFIRMED`. Leaves the remaining capacity of the event and slot unchanged.
@@ -553,7 +540,7 @@ export class EventRepository {
 	 */
 	public async createSignUp(
 		data: CreateOnWaitlistSignUpData,
-	): Promise<{ event: DomainEvent; signUp: EventSignUp }>;
+	): Promise<{ event: EventType; signUp: EventSignUp }>;
 
 	/**
 	 * Create a new sign up for the event the given participation status. All newly created events are set as active,
@@ -570,14 +557,18 @@ export class EventRepository {
 	 */
 	public async createSignUp(
 		data: CreateConfirmedSignUpData | CreateOnWaitlistSignUpData,
-	): Promise<{ event: DomainEvent; signUp: EventSignUp; slot?: EventSlot }> {
+	): Promise<{
+		event: EventType;
+		signUp: EventSignUp;
+		slot?: EventSlot;
+	}> {
 		try {
 			if ("slotId" in data) {
 				const { event, signUp, slot } = await this.createConfirmedSignUp(data);
-				return { event: eventFromDataStorage(event), signUp, slot };
+				return { event, signUp, slot };
 			}
 			const { event, signUp } = await this.createOnWaitlistSignUp(data);
-			return { event: eventFromDataStorage(event), signUp };
+			return { event, signUp };
 		} catch (err) {
 			if (err instanceof PrismaClientKnownRequestError) {
 				if (err.code === "P2002") throw new AlreadySignedUpError(err.message);
@@ -646,7 +637,7 @@ export class EventRepository {
 			},
 		});
 
-		const { slots, signUps, ...event } = updatedEvent;
+		const { slots, signUps } = updatedEvent;
 		const [slot] = slots;
 		const [signUp] = signUps;
 		if (slot === undefined)
@@ -655,7 +646,14 @@ export class EventRepository {
 			throw new InternalServerError(
 				"Expected exactly one sign up to be created",
 			);
-		return { event, slot, signUp };
+
+		const res = Event.fromDataStorage(updatedEvent);
+		if (!res.ok) {
+			throw new InternalServerError(
+				"Failed to convert event from data storage",
+			);
+		}
+		return { event: res.data.event, slot, signUp };
 	}
 
 	private async createOnWaitlistSignUp(data: CreateOnWaitlistSignUpData) {
@@ -687,13 +685,21 @@ export class EventRepository {
 			},
 		});
 
-		const { signUps, ...event } = updatedEvent;
+		const { signUps } = updatedEvent;
 		const [signUp] = signUps;
 		if (signUp === undefined)
 			throw new InternalServerError(
 				"Expected exactly one sign up to be created",
 			);
-		return { event, signUp };
+
+		const res = Event.fromDataStorage(updatedEvent);
+		if (!res.ok) {
+			throw new InternalServerError(
+				"Failed to convert event from data storage",
+			);
+		}
+
+		return { event: res.data.event, signUp };
 	}
 
 	/**
@@ -710,7 +716,7 @@ export class EventRepository {
 	 */
 	public async updateSignUp(
 		data: UpdateToConfirmedSignUpData,
-	): Promise<{ event: DomainEvent; signUp: EventSignUp; slot: EventSlot }>;
+	): Promise<{ event: EventType; signUp: EventSignUp; slot: EventSlot }>;
 	/**
 	 * updateSignUp - updates the participation status for the active sign up for the given user and event to
 	 * one of the inactive statuses. If the current participation status CONFIRMED, the sign up is removed from the slot
@@ -726,7 +732,7 @@ export class EventRepository {
 	 */
 	public async updateSignUp(
 		data: UpdateToInactiveSignUpData,
-	): Promise<{ event: DomainEvent; signUp: EventSignUp; slot: undefined }>;
+	): Promise<{ event: EventType; signUp: EventSignUp; slot: undefined }>;
 	/**
 	 * updateSignUp - updates the participation status for the active sign up for the given user and event to
 	 * to data.newParticipationStatus.
@@ -752,7 +758,7 @@ export class EventRepository {
 	public async updateSignUp(
 		data: UpdateToConfirmedSignUpData | UpdateToInactiveSignUpData,
 	): Promise<{
-		event: DomainEvent;
+		event: EventType;
 		signUp: EventSignUp;
 		slot?: EventSlot | null;
 	}> {
@@ -782,7 +788,13 @@ export class EventRepository {
 		if (currentParticipationStatus === newParticipationStatus) {
 			// No change, we can just return.
 			const { event, slot, ...signUp } = currentSignUp;
-			return { event: eventFromDataStorage(event), slot, signUp };
+			const res = Event.fromDataStorage(event);
+			if (!res.ok) {
+				throw new InternalServerError(
+					"Failed to convert event from data storage",
+				);
+			}
+			return { event: res.data.event, slot, signUp };
 		}
 
 		if (newParticipationStatus === ParticipationStatus.CONFIRMED) {
@@ -792,7 +804,13 @@ export class EventRepository {
 					eventId: data.eventId,
 					slotId: data.slotId,
 				});
-			return { event: eventFromDataStorage(event), slot, signUp };
+			const res = Event.fromDataStorage(event);
+			if (!res.ok) {
+				throw new InternalServerError(
+					"Failed to convert event from data storage",
+				);
+			}
+			return { event: res.data.event, slot, signUp };
 		}
 
 		const { event, signUp } = await this.newParticipationStatusInactiveHandler({
@@ -801,7 +819,13 @@ export class EventRepository {
 			eventId: data.eventId,
 			newParticipationStatus,
 		});
-		return { event: eventFromDataStorage(event), signUp };
+		const res = Event.fromDataStorage(event);
+		if (!res.ok) {
+			throw new InternalServerError(
+				"Failed to convert event from data storage",
+			);
+		}
+		return { event: res.data.event, signUp };
 	}
 
 	private async newParticipationStatusConfirmedHandler(data: {
@@ -992,7 +1016,9 @@ export class EventRepository {
 	}) {
 		const { userId, eventId, currentSignUp, newParticipationStatus } = data;
 
-		let result: { event: Event } & EventSignUp;
+		let result: {
+			event: PrismaEvent;
+		} & EventSignUp;
 
 		switch (currentSignUp.participationStatus) {
 			case ParticipationStatus.ON_WAITLIST: {
@@ -1140,7 +1166,7 @@ export class EventRepository {
 	 * createCategory creates a new event category
 	 * @throws {InvalidArgumentError} If a category with the given name already exists
 	 */
-	async createCategory(data: { name: string }): Promise<Category> {
+	async createCategory(data: { name: string }): Promise<CategoryType> {
 		const { name } = data;
 		try {
 			return await this.db.eventCategory.create({
@@ -1165,7 +1191,7 @@ export class EventRepository {
 	 * @throws {NotFoundError} If a category with the given ID does not exist
 	 * @throws {InvalidArgumentError} If a category with the given name already exists
 	 */
-	async updateCategory(category: Category): Promise<Category> {
+	async updateCategory(category: CategoryType): Promise<CategoryType> {
 		try {
 			return await this.db.eventCategory.update({
 				where: {
@@ -1190,7 +1216,7 @@ export class EventRepository {
 		}
 	}
 
-	public async deleteCategory(category: { id: string }): Promise<Category> {
+	public async deleteCategory(category: { id: string }): Promise<CategoryType> {
 		try {
 			return await this.db.eventCategory.delete({ where: { id: category.id } });
 		} catch (err) {
@@ -1200,6 +1226,44 @@ export class EventRepository {
 				}
 			}
 			throw err;
+		}
+	}
+
+	public async addOrderToSignUp(params: {
+		orderId: string;
+		signUpId: string;
+	}): Promise<
+		ResultAsync<{ signUp: EventSignUp }, NotFoundError | InternalServerError>
+	> {
+		const { orderId, signUpId } = params;
+		try {
+			const signUp = await this.db.eventSignUp.update({
+				where: {
+					id: signUpId,
+				},
+				data: {
+					orderId,
+				},
+			});
+			return {
+				ok: true,
+				data: {
+					signUp,
+				},
+			};
+		} catch (err) {
+			if (err instanceof PrismaClientKnownRequestError) {
+				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) {
+					return {
+						ok: false,
+						error: new NotFoundError("Sign up or order not found", err),
+					};
+				}
+			}
+			return {
+				ok: false,
+				error: new InternalServerError("Failed to add order to sign up", err),
+			};
 		}
 	}
 }
@@ -1228,38 +1292,4 @@ interface UpdateToInactiveSignUpData {
 	userId: string;
 	eventId: string;
 	newParticipationStatus: Extract<ParticipationStatus, "REMOVED" | "RETRACTED">;
-}
-
-interface UpdateSignUpData {
-	signUpsEnabled: boolean;
-	signUpsStartAt: Date;
-	signUpsEndAt: Date;
-	capacity: number;
-	slots: {
-		id?: string;
-		gradeYears?: number[];
-		capacity: number;
-	}[];
-}
-
-interface EventData {
-	name: string;
-	startAt: Date;
-	endAt: Date;
-	organizationId: string;
-	contactEmail: string;
-	description?: string;
-	location?: string;
-	categories?: string[];
-}
-
-interface SignUpData {
-	signUpsEnabled: boolean;
-	signUpsStartAt: Date;
-	signUpsEndAt: Date;
-	capacity: number;
-	slots: {
-		capacity: number;
-		gradeYears?: number[];
-	}[];
 }

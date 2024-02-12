@@ -1,4 +1,10 @@
-import type { PaymentAttempt as PrismaPaymentAttempt } from "@prisma/client";
+import type {
+	Order as PrismaOrder,
+	PaymentAttempt as PrismaPaymentAttempt,
+} from "@prisma/client";
+import { z } from "zod";
+import type { Result } from "~/lib/result.js";
+import { InvalidArgumentError } from "./errors.js";
 
 /**
  * - CREATED: The payment attempt has been created, but the user has not interacted with it yet.
@@ -22,16 +28,17 @@ type OrderPaymentStatus =
 	| "CANCELLED"
 	| "RESERVED";
 
-type Product = {
+type ProductType = {
 	id: string;
 	// Price in øre, i.e. 100 = 1 NOK
 	price: number;
+	name: string;
 	description: string;
 	version: number;
-	merchant: Merchant;
+	merchant: MerchantType;
 };
 
-type Merchant = {
+type MerchantType = {
 	id: string;
 	name: string;
 	clientId: string;
@@ -40,7 +47,7 @@ type Merchant = {
 	subscriptionKey: string;
 };
 
-type Order = {
+type OrderType = {
 	id: string;
 	productId: string;
 	attempt: number;
@@ -53,6 +60,7 @@ type Order = {
 	 * - CANCELLED: The order has been cancelled
 	 */
 	paymentStatus: OrderPaymentStatus;
+	userId: string | null;
 };
 
 type PaymentAttempt = {
@@ -62,15 +70,6 @@ type PaymentAttempt = {
 	reference: string;
 	inProgress: boolean;
 	state: PaymentAttemptState;
-};
-
-export type {
-	Product,
-	Order,
-	PaymentAttempt,
-	OrderPaymentStatus,
-	PaymentAttemptState,
-	Merchant,
 };
 
 function isInProgress(paymentAttempt: { state: PaymentAttemptState }): boolean {
@@ -88,4 +87,79 @@ function PaymentAttemptFromDSO(paymentAttempt: PrismaPaymentAttempt) {
 	};
 }
 
-export { PaymentAttemptFromDSO };
+type NewProductParams = {
+	merchantId: string;
+	name: string;
+	description: string;
+	/* Price in øre, i.e. 100 = 1 NOK */
+	price: number;
+};
+
+type NewProductReturn = Result<
+	{
+		product: Omit<ProductType, "version" | "id" | "merchant"> & {
+			merchantId: string;
+		};
+	},
+	InvalidArgumentError
+>;
+const Product = {
+	new(product: NewProductParams): NewProductReturn {
+		const schema = z.object({
+			merchantId: z.string().uuid(),
+			name: z.string(),
+			description: z.string(),
+			price: z.number().int().positive(),
+		});
+
+		const result = schema.safeParse(product);
+		if (!result.success) {
+			return {
+				ok: false,
+				error: new InvalidArgumentError("Invalid product data", result.error),
+			};
+		}
+
+		return {
+			ok: true,
+			data: {
+				product: {
+					name: result.data.name,
+					description: result.data.description,
+					price: result.data.price,
+					merchantId: result.data.merchantId,
+				},
+			},
+		};
+	},
+};
+
+const Order = {
+	fromDSO: (order: PrismaOrder): Result<{ order: OrderType }, never> => {
+		return {
+			ok: true,
+			data: {
+				order: {
+					id: order.id,
+					productId: order.productId,
+					attempt: order.attempt,
+					version: order.version,
+					paymentStatus: order.paymentStatus,
+					userId: order.userId,
+				},
+			},
+		};
+	},
+};
+
+export { PaymentAttemptFromDSO, Product, Order };
+export type {
+	MerchantType,
+	NewProductParams,
+	NewProductReturn,
+	OrderPaymentStatus,
+	OrderType,
+	PaymentAttempt,
+	PaymentAttemptState,
+	ProductType,
+};

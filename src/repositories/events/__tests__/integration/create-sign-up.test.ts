@@ -1,8 +1,9 @@
+import assert from "assert";
 import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
 import { type ErrorCode, errorCodes } from "~/domain/errors.js";
-import { AlreadySignedUpError } from "~/domain/events.js";
+import { AlreadySignedUpError } from "~/domain/events/event.js";
 import prisma from "~/lib/prisma.js";
 import { EventRepository } from "../../repository.js";
 
@@ -90,9 +91,10 @@ describe("EventRepository", () => {
 			 *
 			 * Should return the sign up with `active: true`
 			 */
+			assert(actual.event.type === "SIGN_UPS");
 			expect(actual.signUp.active).toBe(true);
 			expect(actual.slot.remainingCapacity).toBe(slot.remainingCapacity - 1);
-			expect(actual.event.signUpDetails?.remainingCapacity).toBe(
+			expect(actual.event.remainingCapacity).toBe(
 				(event.remainingCapacity ?? Number.NaN) - 1,
 			);
 			expect(actual.slot.version).toBe(slot.version + 1);
@@ -127,10 +129,9 @@ describe("EventRepository", () => {
 			 *
 			 * Should return the sign up with `active: true`
 			 */
+			assert(actual.event.type === "SIGN_UPS");
 			expect(actual.signUp.active).toBe(true);
-			expect(actual.event.signUpDetails?.remainingCapacity).toBe(
-				event.remainingCapacity,
-			);
+			expect(actual.event.remainingCapacity).toBe(event.remainingCapacity);
 			expect(actual.event.version).toBe(event.version + 1);
 		});
 
@@ -169,9 +170,10 @@ describe("EventRepository", () => {
 			 *
 			 * Should return the sign up with `active: true`
 			 */
+			assert(actual.event.type === "SIGN_UPS");
 			expect(actual.signUp.active).toBe(true);
 			expect(actual.signUp.id).not.toBe(existingSignUp.id);
-			expect(actual.event.signUpDetails?.remainingCapacity).toBe(
+			expect(actual.event.remainingCapacity).toBe(
 				(event.remainingCapacity ?? Number.NaN) - 1,
 			);
 			expect(actual.event.version).toBe(event.version + 1);
@@ -205,10 +207,9 @@ describe("EventRepository", () => {
 			 *
 			 * Should return the sign up with `active: true`
 			 */
+			assert(actual.event.type === "SIGN_UPS");
 			expect(actual.signUp.active).toBe(true);
-			expect(actual.event.signUpDetails?.remainingCapacity).toBe(
-				event.remainingCapacity,
-			);
+			expect(actual.event.remainingCapacity).toBe(event.remainingCapacity);
 		});
 
 		describe("should raise", () => {
@@ -312,6 +313,7 @@ function makeEvent(data: { capacity: number }) {
 			signUpsEnabled: true,
 			signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 			signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+			type: "SIGN_UPS",
 		},
 	});
 }

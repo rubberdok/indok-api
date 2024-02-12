@@ -1,3 +1,4 @@
+import assert from "assert";
 import { faker } from "@faker-js/faker";
 import { QueueEvents } from "bullmq";
 import { Redis } from "ioredis";
@@ -9,13 +10,13 @@ import type { ServerClient } from "postmark";
 import { env } from "~/config.js";
 import { Queue } from "~/lib/bullmq/queue.js";
 import { Worker } from "~/lib/bullmq/worker.js";
+import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import type { IOrganizationService } from "~/lib/server.js";
 import { EventRepository } from "~/repositories/events/repository.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
 import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
 import { UserRepository } from "~/repositories/users/index.js";
-import { makeMockContext } from "~/services/context.js";
 import { buildMailService } from "~/services/mail/index.js";
 import {
 	type CabinService,
@@ -26,7 +27,7 @@ import {
 import { OrganizationService } from "~/services/organizations/service.js";
 import { PermissionService } from "~/services/permissions/service.js";
 import { UserService } from "~/services/users/service.js";
-import { EventService } from "../../service.js";
+import { EventService, type ProductService } from "../../service.js";
 import {
 	type SignUpQueueType,
 	type SignUpWorkerType,
@@ -89,10 +90,12 @@ describe("EventService", () => {
 			permissionService,
 			mailService,
 		);
+		const productService = mockDeep<ProductService>();
 		eventService = new EventService(
 			eventRepository,
 			permissionService,
 			userService,
+			productService,
 			signUpQueue,
 		);
 		organizationService = new OrganizationService(
@@ -135,6 +138,7 @@ describe("EventService", () => {
 		await signUpWorker.close();
 		await emailWorker.close();
 		await signUpQueueEvents.close();
+		await emailQueueEvents.close();
 		redis.disconnect();
 		queueEventsRedis.disconnect();
 	});
@@ -173,22 +177,26 @@ describe("EventService", () => {
 				name: faker.string.sample(20),
 			});
 
-			let event = await eventService.create(
-				eventOwner.id,
-				organization.id,
+			const createEvent = await eventService.create(
+				makeMockContext(eventOwner),
 				{
-					name: faker.string.sample(20),
-					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-					endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
-				},
-				{
-					capacity: 1,
-					signUpsStartAt: faker.date.past(),
-					signUpsEndAt: faker.date.future(),
+					event: {
+						organizationId: organization.id,
+						name: faker.string.sample(20),
+						startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+						endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
+						signUpsEnabled: true,
+						capacity: 1,
+						signUpsStartAt: faker.date.past(),
+						signUpsEndAt: faker.date.future(),
+					},
 					slots: [{ capacity: 1, gradeYears: [1, 2, 3, 4, 5] }],
-					signUpsEnabled: true,
+					type: "SIGN_UPS",
 				},
 			);
+
+			assert(createEvent.ok);
+			let event = createEvent.data.event;
 
 			const ctx = makeMockContext(confirmedUser);
 			const confirmedSignUp = await eventService.signUp(
@@ -205,7 +213,8 @@ describe("EventService", () => {
 			expect(confirmedSignUp.participationStatus).toBe("CONFIRMED");
 			expect(waitListSignUp.participationStatus).toBe("ON_WAITLIST");
 			event = await eventService.get(event.id);
-			expect(event.signUpDetails?.remainingCapacity).toBe(0);
+			assert(event.type === "SIGN_UPS");
+			expect(event.remainingCapacity).toBe(0);
 
 			/**
 			 * Act
@@ -227,7 +236,8 @@ describe("EventService", () => {
 			);
 
 			event = await eventService.get(event.id);
-			expect(event.signUpDetails?.remainingCapacity).toBe(0);
+			assert(event.type === "SIGN_UPS");
+			expect(event.remainingCapacity).toBe(0);
 
 			/**
 			 * Assert
@@ -319,25 +329,30 @@ describe("EventService", () => {
 				name: faker.string.sample(20),
 			});
 
-			let event = await eventService.create(
-				eventOwner.id,
-				organization.id,
+			const createEvent = await eventService.create(
+				makeMockContext(eventOwner),
 				{
-					name: faker.string.sample(20),
-					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-					endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
-				},
-				{
-					capacity: 20,
-					signUpsStartAt: faker.date.past(),
-					signUpsEndAt: faker.date.future(),
+					event: {
+						organizationId: organization.id,
+						name: faker.string.sample(20),
+						startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+						endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
+						signUpsEnabled: true,
+
+						capacity: 20,
+						signUpsStartAt: faker.date.past(),
+						signUpsEndAt: faker.date.future(),
+					},
 					slots: [
 						{ capacity: 10, gradeYears: [1, 2, 3, 4, 5] },
 						{ capacity: 10, gradeYears: [1, 2, 3, 4, 5] },
 					],
-					signUpsEnabled: true,
+					type: "SIGN_UPS",
 				},
 			);
+
+			assert(createEvent.ok);
+			let event = createEvent.data.event;
 
 			for (const user of confirmedUsers) {
 				const ctx = makeMockContext(user);
@@ -370,7 +385,8 @@ describe("EventService", () => {
 			}
 
 			event = await eventService.get(event.id);
-			expect(event.signUpDetails?.remainingCapacity).toBe(0);
+			assert(event.type === "SIGN_UPS");
+			expect(event.remainingCapacity).toBe(0);
 
 			/**
 			 * Act
@@ -396,7 +412,8 @@ describe("EventService", () => {
 			);
 
 			event = await eventService.get(event.id);
-			expect(event.signUpDetails?.remainingCapacity).toBe(0);
+			assert(event.type === "SIGN_UPS");
+			expect(event.remainingCapacity).toBe(0);
 
 			/**
 			 * Assert

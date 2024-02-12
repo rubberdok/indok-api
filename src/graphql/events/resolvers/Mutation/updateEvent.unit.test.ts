@@ -1,56 +1,25 @@
 import { faker } from "@faker-js/faker";
 import { mock } from "jest-mock-extended";
-import { errorCodes } from "~/domain/errors.js";
-import type { Event } from "~/domain/events.js";
+import type { EventType } from "~/domain/events/event.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
 describe("Event mutations", () => {
 	describe("updateEvent", () => {
-		it("should raise PermissionDeniedError if user is not authenticated", async () => {
-			const { client } = createMockApolloServer();
-
-			const { errors } = await client.mutate({
-				mutation: graphql(`
-          mutation UpdateEventWithNoAuth($id: ID!, $data: UpdateEventInput!) {
-            updateEvent(id: $id, data: $data) {
-              event {
-                id
-              }
-            }
-          }
-        `),
-				variables: {
-					id: faker.string.uuid(),
-					data: {
-						name: faker.lorem.words(3),
-						description: faker.lorem.paragraph(),
-						startAt: faker.date.future(),
-						endAt: faker.date.future(),
-						location: faker.location.streetAddress(),
-						capacity: faker.number.int({ min: 1, max: 100 }),
-					},
-				},
-			});
-
-			expect(errors).toBeDefined();
-			expect(
-				errors?.every(
-					(e) => e.extensions?.code === errorCodes.ERR_PERMISSION_DENIED,
-				),
-			).toBe(true);
-		});
-
-		it("should pass all arugments to update if authenticated", async () => {
+		it("should pass all arugments to update", async () => {
 			const { client, createMockContext, eventService } =
 				createMockApolloServer();
 			const authenticatedContext = createMockContext({
-				userId: faker.string.uuid(),
-				authenticated: true,
+				user: { id: faker.string.uuid() },
 			});
-			eventService.update.mockResolvedValueOnce(
-				mock<Event>({ id: faker.string.uuid() }),
-			);
+			eventService.update.mockResolvedValueOnce({
+				ok: true,
+				data: {
+					event: mock<EventType>({ id: faker.string.uuid() }),
+					categories: [],
+					slots: [],
+				},
+			});
 			const eventId = faker.string.uuid();
 
 			const { errors } = await client.mutate(
@@ -82,10 +51,9 @@ describe("Event mutations", () => {
 			);
 
 			expect(errors).toBeUndefined();
-			expect(eventService.update).toHaveBeenCalledWith(
-				authenticatedContext.user?.id,
-				eventId,
-				{
+			expect(eventService.update).toHaveBeenCalledWith(authenticatedContext, {
+				event: {
+					id: eventId,
 					name: expect.any(String),
 					description: expect.any(String),
 					startAt: expect.any(Date),
@@ -93,7 +61,7 @@ describe("Event mutations", () => {
 					location: expect.any(String),
 					capacity: expect.any(Number),
 				},
-			);
+			});
 		});
 	});
 });

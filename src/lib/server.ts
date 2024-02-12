@@ -17,11 +17,23 @@ import { Client } from "@vippsmobilepay/sdk";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { type Configuration, env } from "~/config.js";
 import type { BookingStatus } from "~/domain/cabins.js";
-import { InternalServerError } from "~/domain/errors.js";
-import type { Category, Event, SignUpAvailability } from "~/domain/events.js";
+import {
+	InternalServerError,
+	type InvalidArgumentError,
+	type NotFoundError,
+	type PermissionDeniedError,
+	type UnauthorizedError,
+} from "~/domain/errors.js";
+import type {
+	CategoryType,
+	EventType,
+	SignUpAvailability,
+	SlotType,
+} from "~/domain/events/index.js";
 import type { Role } from "~/domain/organizations.js";
-import type { Order, Product } from "~/domain/products.js";
+import type { OrderType, ProductType } from "~/domain/products.js";
 import type { StudyProgram, User } from "~/domain/users.js";
+import type { Context } from "~/lib/context.js";
 import { CabinRepository } from "~/repositories/cabins/repository.js";
 import { EventRepository } from "~/repositories/events/repository.js";
 import { ListingRepository } from "~/repositories/listings/repository.js";
@@ -32,8 +44,11 @@ import { UserRepository } from "~/repositories/users/index.js";
 import { feideClient } from "~/services/auth/clients.js";
 import { AuthService } from "~/services/auth/service.js";
 import { CabinService } from "~/services/cabins/service.js";
-import type { Context } from "~/services/context.js";
-import { EventService } from "~/services/events/index.js";
+import {
+	type CreateEventParams,
+	EventService,
+} from "~/services/events/index.js";
+import type { UpdateEventParams } from "~/services/events/service.js";
 import { SignUpQueueName } from "~/services/events/worker.js";
 import { ListingService } from "~/services/listings/index.js";
 import { buildMailService } from "~/services/mail/index.js";
@@ -177,37 +192,21 @@ export interface ICabinService {
 
 export interface IEventService {
 	create(
-		userId: string,
-		organizationId: string,
-		event: {
-			name: string;
-			description?: string | null;
-			startAt: Date;
-			endAt?: Date | null;
-			location?: string | null;
-		},
-		signUpDetails?: {
-			signUpsEnabled: boolean;
-			signUpsStartAt: Date;
-			signUpsEndAt: Date;
-			capacity: number;
-			slots: { capacity: number }[];
-		} | null,
-	): Promise<Event>;
+		ctx: Context,
+		params: CreateEventParams,
+	): ResultAsync<
+		{ event: EventType; slots?: SlotType[] },
+		InvalidArgumentError | PermissionDeniedError | InternalServerError
+	>;
 	update(
-		userId: string,
-		id: string,
-		data: Partial<{
-			name: string | null;
-			description: string | null;
-			startAt: Date | null;
-			endAt: Date | null;
-			location: string | null;
-			capacity: number | null;
-		}>,
-	): Promise<Event>;
-	get(id: string): Promise<Event>;
-	findMany(data?: { onlyFutureEvents?: boolean | null }): Promise<Event[]>;
+		ctx: Context,
+		params: UpdateEventParams,
+	): ResultAsync<
+		{ event: EventType; slots: SlotType[]; categories: CategoryType[] },
+		InvalidArgumentError | PermissionDeniedError | InternalServerError
+	>;
+	get(id: string): Promise<EventType>;
+	findMany(data?: { onlyFutureEvents?: boolean | null }): Promise<EventType[]>;
 	signUp(ctx: Context, userId: string, eventId: string): Promise<EventSignUp>;
 	retractSignUp(userId: string, eventId: string): Promise<EventSignUp>;
 	canSignUpForEvent(userId: string, eventId: string): Promise<boolean>;
@@ -215,10 +214,20 @@ export interface IEventService {
 		userId: string | undefined,
 		eventId: string,
 	): Promise<SignUpAvailability>;
-	createCategory(ctx: UserContext, data: { name: string }): Promise<Category>;
-	updateCategory(ctx: UserContext, data: Category): Promise<Category>;
-	getCategories(ctx: UserContext): Promise<Category[]>;
-	deleteCategory(ctx: UserContext, data: { id: string }): Promise<Category>;
+	createCategory(
+		ctx: UserContext,
+		data: { name: string },
+	): Promise<CategoryType>;
+	updateCategory(ctx: UserContext, data: CategoryType): Promise<CategoryType>;
+	getCategories(
+		ctx: UserContext,
+		by?: { eventId?: string },
+	): Promise<CategoryType[]>;
+	deleteCategory(ctx: UserContext, data: { id: string }): Promise<CategoryType>;
+	getSlots(
+		ctx: Context,
+		params: { eventId: string },
+	): ResultAsync<{ slots: SlotType[] }, never>;
 }
 
 export interface IListingService {
@@ -256,21 +265,30 @@ export interface IPermissionService {
 }
 
 export type IProductService = {
-	initiatePaymentAttempt(
-		ctx: Context,
-		data: { orderId: string },
-	): Promise<
-		Result<{
-			redirectUrl: string;
-		}>
-	>;
-	createOrder(
-		ctx: Context,
-		data: { productId: string },
-	): ResultAsync<{ order: Order }>;
-	getProducts(
-		ctx: Context,
-	): ResultAsync<{ products: Product[]; total: number }>;
+	payments: {
+		initiatePaymentAttempt(
+			ctx: Context,
+			data: { orderId: string },
+		): Promise<
+			Result<{
+				redirectUrl: string;
+			}>
+		>;
+	};
+	orders: {
+		create(
+			ctx: Context,
+			data: Pick<OrderType, "productId">,
+		): ResultAsync<{ order: OrderType }, UnauthorizedError | NotFoundError>;
+	};
+	products: {
+		findMany(
+			_ctx: Context,
+		): ResultAsync<
+			{ products: ProductType[]; total: number },
+			InternalServerError
+		>;
+	};
 };
 
 type UserContext = {
@@ -403,6 +421,22 @@ async function registerServices(
 	);
 
 	await serverInstance.register(fastifyMessageQueue, {
+		name: PaymentProcessingQueueName,
+	});
+	if (!serverInstance.queues[PaymentProcessingQueueName]) {
+		throw new InternalServerError("Payment processing queue not initialized");
+	}
+	const productService = ProductService({
+		vippsFactory: Client,
+		paymentProcessingQueue: serverInstance.queues[PaymentProcessingQueueName],
+		productRepository,
+		config: {
+			useTestMode: configuration?.VIPPS_TEST_MODE,
+			returnUrl: env.SERVER_URL,
+		},
+	});
+
+	await serverInstance.register(fastifyMessageQueue, {
 		name: SignUpQueueName,
 	});
 	if (!serverInstance.queues[SignUpQueueName]) {
@@ -413,24 +447,10 @@ async function registerServices(
 		eventRepository,
 		permissionService,
 		userService,
+		productService,
 		serverInstance.queues[SignUpQueueName],
 	);
 	const authService = new AuthService(userService, feideClient);
-
-	await serverInstance.register(fastifyMessageQueue, {
-		name: PaymentProcessingQueueName,
-	});
-	if (!serverInstance.queues[PaymentProcessingQueueName]) {
-		throw new InternalServerError("Payment processing queue not initialized");
-	}
-	const productService = new ProductService(
-		Client,
-		serverInstance.queues[PaymentProcessingQueueName],
-		productRepository,
-		{
-			useTestMode: configuration?.VIPPS_TEST_MODE,
-		},
-	);
 
 	const services: Services = {
 		users: userService,

@@ -1,4 +1,7 @@
+import assert from "assert";
 import { faker } from "@faker-js/faker";
+import type { CategoryType } from "~/domain/events/category.js";
+import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import { EventRepository } from "../../repository.js";
 
@@ -25,6 +28,7 @@ describe("EventRepository", () => {
 					prisma.event.create({
 						data: {
 							id,
+							type: "BASIC",
 							name: faker.person.firstName(),
 							startAt: faker.date.soon({
 								refDate: new Date(2021, 0, 1),
@@ -72,6 +76,7 @@ describe("EventRepository", () => {
 				eventIds.map((id) =>
 					prisma.event.create({
 						data: {
+							type: "BASIC",
 							id,
 							name: faker.person.firstName(),
 							startAt: faker.date.soon({
@@ -89,6 +94,7 @@ describe("EventRepository", () => {
 
 			const eventInThePast = await prisma.event.create({
 				data: {
+					type: "BASIC",
 					id: faker.string.uuid(),
 					name: faker.person.firstName(),
 					startAt: new Date(2020, 0, 1),
@@ -128,37 +134,64 @@ describe("EventRepository", () => {
 					name: faker.string.sample(20),
 				},
 			});
-			const event = await eventRepository.create(
-				{
+			const event = await eventRepository.create(makeMockContext(), {
+				event: {
+					id: faker.string.uuid(),
+					version: 0,
 					name: faker.word.adjective(),
 					startAt: new Date(),
 					endAt: new Date(),
 					contactEmail: faker.internet.email(),
 					organizationId: organization.id,
-				},
-				{
-					slots: [{ capacity: 1 }, { capacity: 2 }, { capacity: 3 }],
-					capacity: 5,
 					signUpsEnabled: true,
+					type: "SIGN_UPS",
+					location: "",
+					description: "",
+					capacity: 5,
+					remainingCapacity: 5,
 					signUpsStartAt: new Date(),
 					signUpsEndAt: new Date(),
 				},
-			);
+				slots: [
+					{
+						capacity: 1,
+						remainingCapacity: 1,
+						id: faker.string.uuid(),
+						version: 0,
+					},
+					{
+						capacity: 2,
+						remainingCapacity: 2,
+						id: faker.string.uuid(),
+						version: 0,
+					},
+					{
+						capacity: 3,
+						remainingCapacity: 3,
+						id: faker.string.uuid(),
+						version: 0,
+					},
+				],
+			});
+			assert(event.ok);
 
 			/**
 			 * Act
 			 *
 			 * 1. Get the event
 			 */
-			const result = await eventRepository.getWithSlots(event.id);
+			const result = await eventRepository.getWithSlotsAndCategories({
+				id: event.data.event.id,
+			});
+			assert(result.ok);
 
 			/**
 			 * Assert
 			 *
 			 * 1. The event should have slots
 			 */
-			expect(result.slots).toBeDefined();
-			expect(result.slots.length).toEqual(3);
+			expect(result.data.slots).toBeDefined();
+			expect(result.data.slots?.length).toEqual(3);
 		});
 	});
 
@@ -169,39 +202,31 @@ describe("EventRepository", () => {
 			 *
 			 * 1. Create several categories
 			 */
-			const categoryIds = [
-				faker.string.uuid(),
-				faker.string.uuid(),
-				faker.string.uuid(),
-			];
-			await Promise.all(
-				categoryIds.map((id) =>
-					prisma.eventCategory.create({
-						data: {
-							id,
-							name: faker.person.firstName(),
-						},
-					}),
-				),
-			);
+			const expectedCategories: CategoryType[] = [];
+			for (let i = 0; i < 3; i++) {
+				const category = await eventRepository.createCategory({
+					name: faker.string.sample(20),
+				});
+				expectedCategories.push(category);
+			}
 
 			/**
 			 * Act
 			 *
 			 * 1. Get the categories
 			 */
-			const categories = await eventRepository.getCategories();
+			const actualCategories = await eventRepository.getCategories();
 
 			/**
 			 * Assert
 			 *
 			 * 1. The categories should be returned
 			 */
-			expect(categories.length).toBeGreaterThanOrEqual(3);
-			for (const categoryId of categoryIds) {
-				expect(categories.map((category) => category.id)).toContainEqual(
-					categoryId,
-				);
+			expect(actualCategories.length).toBeGreaterThanOrEqual(3);
+			const actualCategoryIds = actualCategories.map((category) => category.id);
+			for (const expected of expectedCategories) {
+				const id = expected.id;
+				expect(actualCategoryIds).toContain(id);
 			}
 		});
 	});

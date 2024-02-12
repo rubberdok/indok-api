@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { env } from "~/config.js";
-import type { Merchant } from "~/domain/products.js";
+import type { MerchantType } from "~/domain/products.js";
 
 faker.seed(12334143143);
 
@@ -20,7 +20,7 @@ const products: Prisma.ProductCreateInput[] = [
 ];
 
 const load = async (db: PrismaClient) => {
-	let merchant: Merchant | null = null;
+	let merchant: MerchantType | null = null;
 	if (
 		env.VIPPS_DEFAULT_CLIENT_ID &&
 		env.VIPPS_DEFAULT_CLIENT_SECRET &&

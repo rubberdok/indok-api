@@ -6,7 +6,7 @@ describe("Product queries", () => {
 	describe("#products", () => {
 		it("should return a list of products", async () => {
 			const { productService, client } = createMockApolloServer();
-			productService.getProducts.mockResolvedValueOnce({
+			productService.products.findMany.mockResolvedValueOnce({
 				ok: true,
 				data: {
 					products: [],
@@ -36,7 +36,7 @@ describe("Product queries", () => {
 
 		it("should throw if ok: false", async () => {
 			const { productService, client } = createMockApolloServer();
-			productService.getProducts.mockResolvedValueOnce({
+			productService.products.findMany.mockResolvedValueOnce({
 				ok: false,
 				error: new InternalServerError("Some error"),
 			});

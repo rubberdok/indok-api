@@ -8,11 +8,15 @@ function makeDependencies() {
 	const mockVippsClient = client;
 	const productRepository = mockDeep<ProductRepository>();
 	const mockPaymentProcessingQueue = mockDeep<PaymentProcessingQueueType>();
-	const productService = new ProductService(
-		factory,
-		mockPaymentProcessingQueue,
+	const productService = ProductService({
+		vippsFactory: factory,
+		paymentProcessingQueue: mockPaymentProcessingQueue,
 		productRepository,
-	);
+		config: {
+			useTestMode: true,
+			returnUrl: "http://localhost:3000",
+		},
+	});
 	return {
 		mockVippsClient,
 		productRepository,

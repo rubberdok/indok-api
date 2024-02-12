@@ -7,65 +7,80 @@
  * @param description - Human-readable description of the error, e.g. "The email address is invalid"
  * @param code - A code that can be used to identify the error, e.g. "BAD_USER_INPUT", should be one of `codes`
  */
-export class KnownDomainError extends Error {
+export class KnownDomainError<TName extends string = string> extends Error {
+	public name: TName;
 	constructor(
-		name: string,
+		name: TName,
 		public description: string,
 		public code: ErrorCode = errorCodes.ERR_INTERNAL_SERVER_ERROR,
+		options?: { cause?: unknown },
 	) {
-		super(description);
+		super(description, options);
 		this.name = name;
 		Error.captureStackTrace(this);
 	}
 }
 
-export class InvalidArgumentError extends KnownDomainError {
-	constructor(description: string) {
-		super("InvalidArgumentError", description, errorCodes.ERR_BAD_USER_INPUT);
+export class InvalidArgumentError extends KnownDomainError<"InvalidArgumentError"> {
+	constructor(description: string, cause?: unknown) {
+		super("InvalidArgumentError", description, errorCodes.ERR_BAD_USER_INPUT, {
+			cause,
+		});
 	}
 }
 
-export class InternalServerError extends KnownDomainError {
-	constructor(description: string) {
+export class InternalServerError extends KnownDomainError<"InternalServerError"> {
+	constructor(description: string, cause?: unknown) {
 		super(
 			"InternalServerError",
 			description,
 			errorCodes.ERR_INTERNAL_SERVER_ERROR,
+			{ cause },
 		);
 	}
 }
 
-export class PermissionDeniedError extends KnownDomainError {
-	constructor(description: string) {
+export class PermissionDeniedError extends KnownDomainError<"PermissionDeniedError"> {
+	constructor(description: string, cause?: unknown) {
 		super(
 			"PermissionDeniedError",
 			description,
 			errorCodes.ERR_PERMISSION_DENIED,
+			{ cause },
 		);
 	}
 }
 
-export class AuthenticationError extends KnownDomainError {
-	constructor(description: string) {
-		super("AuthenticationError", description, errorCodes.ERR_PERMISSION_DENIED);
+export class AuthenticationError extends KnownDomainError<"AuthenticationError"> {
+	constructor(description: string, cause?: unknown) {
+		super(
+			"AuthenticationError",
+			description,
+			errorCodes.ERR_PERMISSION_DENIED,
+			{ cause },
+		);
 	}
 }
 
-export class NotFoundError extends KnownDomainError {
-	constructor(description: string) {
-		super("NotFoundError", description, errorCodes.ERR_NOT_FOUND);
+export class NotFoundError extends KnownDomainError<"NotFoundError"> {
+	constructor(description: string, cause?: unknown) {
+		super("NotFoundError", description, errorCodes.ERR_NOT_FOUND, { cause });
 	}
 }
 
-export class BadRequestError extends KnownDomainError {
-	constructor(description: string) {
-		super("BadRequestError", description, errorCodes.ERR_BAD_REQUEST);
+export class BadRequestError extends KnownDomainError<"BadRequestError"> {
+	constructor(description: string, cause?: unknown) {
+		super("BadRequestError", description, errorCodes.ERR_BAD_REQUEST, {
+			cause,
+		});
 	}
 }
 
-export class UnauthorizedError extends KnownDomainError {
-	constructor(description: string) {
-		super("UnauthorizedError", description, errorCodes.ERR_UNAUTHORIZED);
+export class UnauthorizedError extends KnownDomainError<"UnauthorizedError"> {
+	constructor(description: string, cause?: unknown) {
+		super("UnauthorizedError", description, errorCodes.ERR_UNAUTHORIZED, {
+			cause,
+		});
 	}
 }
 

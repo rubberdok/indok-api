@@ -1,6 +1,5 @@
 import assert from "assert";
 import { ApolloServer } from "@apollo/server";
-import { faker } from "@faker-js/faker";
 import type {
 	ResultOf,
 	TypedDocumentNode,
@@ -90,19 +89,7 @@ export const createMockApolloServer = (logger?: Partial<FastifyBaseLogger>) => {
 
 	function createMockContext(data: CreateMockContextData = {}): ApolloContext {
 		let user: User | null = null;
-
-		if ("authenticated" in data) {
-			console.warn(
-				"createMockContext: `authenticated` is deprecated, use `user` instead",
-			);
-
-			if (data.authenticated === true) {
-				const id = data.userId ?? faker.string.uuid();
-				user = mock<User>({ id });
-			} else {
-				user = null;
-			}
-		} else if ("user" in data && data.user !== null) {
+		if ("user" in data && data.user !== null) {
 			user = { ...mock<User>(), ...data.user };
 		}
 

@@ -518,7 +518,10 @@ export class CabinService {
 		return await this.cabinRepository.getBookingContact();
 	}
 
-	async getBooking(by: { id: string }): ResultAsync<{ booking: Booking }> {
+	async getBooking(by: { id: string }): ResultAsync<
+		{ booking: Booking },
+		InternalServerError | KnownDomainError
+	> {
 		try {
 			const booking = await this.cabinRepository.getBookingById(by.id);
 			return {

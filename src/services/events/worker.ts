@@ -2,15 +2,16 @@ import type { EventSignUp } from "@prisma/client";
 import type { Processor } from "bullmq";
 import type { Logger } from "pino";
 import { InvalidArgumentError } from "~/domain/errors.js";
-import type { Event } from "~/domain/events.js";
+import type { EventType } from "~/domain/events/index.js";
+import { Event } from "~/domain/events/index.js";
 import type { Queue } from "~/lib/bullmq/queue.js";
 import type { Worker } from "~/lib/bullmq/worker.js";
 import type { Result } from "~/lib/result.js";
-import type { Context } from "../context.js";
+import type { Context } from "../../lib/context.js";
 import type { EmailQueueDataType } from "../mail/worker.js";
 
 type SignUpQueueDataType = { eventId: string };
-type SignUpQueueReturnType = Result<undefined>;
+type SignUpQueueReturnType = Result<Record<string, never>>;
 type SignUpQueueNameType = "event-capacity-increased";
 
 type SignUpQueueType = Queue<
@@ -40,7 +41,7 @@ type EventService = {
 		ctx: Context,
 		eventId: string,
 	): Promise<EventSignUp | null>;
-	get(id: string): Promise<Event>;
+	get(id: string): Promise<EventType>;
 };
 
 type MailService = {
@@ -66,8 +67,8 @@ const getSignUpWorkerHandler = ({
 
 			switch (job.name) {
 				case "event-capacity-increased": {
-					if (event.signUpsEnabled) {
-						const maxAttempts = event.signUpDetails.remainingCapacity;
+					if (Event.isSignUpEvent(event)) {
+						const maxAttempts = event.remainingCapacity;
 						const newSignUps: EventSignUp[] = [];
 						for (let attempt = 0; attempt < maxAttempts; attempt++) {
 							const signUp = await events.promoteFromWaitList(
@@ -91,12 +92,14 @@ const getSignUpWorkerHandler = ({
 						);
 						return {
 							ok: true,
-							data: undefined,
+							data: {},
 						};
 					}
 					return {
 						ok: false,
-						error: new InvalidArgumentError("Event is not accepting sign-ups"),
+						error: new InvalidArgumentError(
+							"EventType is not accepting sign-ups",
+						),
 					};
 				}
 			}

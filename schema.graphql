@@ -78,13 +78,6 @@ type CreateEventCategoryResponse {
 
 input CreateEventInput {
   event: EventData!
-
-  """
-  The organization that is hosting the event. Events must be hosted by an organization, and the user
-  creating the event must be a member of the organization.
-  """
-  organizationId: ID!
-  signUpDetails: SignUpData
 }
 
 type CreateEventResponse {
@@ -148,6 +141,11 @@ type CreateOrganizationResponse {
   organization: Organization!
 }
 
+input CreateSlotInput {
+  capacity: Int!
+  gradeYears: [Int!]
+}
+
 scalar DateTime
 
 input DeleteEventCategoryInput {
@@ -164,6 +162,10 @@ input DeleteListingInput {
 
 type DeleteListingResponse {
   listing: Listing!
+}
+
+input DeleteSlotInput {
+  id: ID!
 }
 
 type Event {
@@ -206,6 +208,7 @@ type Event {
 
   """The start time of the event."""
   startAt: DateTime!
+  type: EventType!
 }
 
 type EventCategoriesResponse {
@@ -217,9 +220,13 @@ type EventCategory {
   name: String!
 }
 
+input EventCategoryInput {
+  id: ID!
+}
+
 input EventData {
   """categories is a list of cateogry IDs to which the event belongs"""
-  categories: [ID!]
+  categories: [EventCategoryInput!]
 
   """
   The description of the event, defaults to "". We support markdown on the client, so this can be markdown.
@@ -236,8 +243,31 @@ input EventData {
   """The name of the event, this will be displayed to users"""
   name: String!
 
+  """
+  The ID of the organization that is hosting the event. Events must be hosted by an organization, and the user
+  creating the event must be a member of the organization.
+  """
+  organizationId: ID!
+
+  """If the event is a sign up event, this will be the sign up details."""
+  signUpDetails: SignUpData
+
+  """
+  If sign ups are currently enabled for the event. If this is false, users cannot sign up for the event. Defaults to
+  false
+  """
+  signUpsEnabled: Boolean
+
   """The start time of the event. Events must have a start time."""
   startAt: DateTime!
+
+  """
+  The event type
+  - BASIC has no sign ups, and no tickets
+  - SIGN_UPS has sign ups, but no tickets (free event)
+  - TICKETS has tickets and sign ups (paid event)
+  """
+  type: EventType!
 }
 
 input EventInput {
@@ -252,6 +282,27 @@ type EventSignUpDetails {
   capacity: Int!
   signUpsEndAt: DateTime!
   signUpsStartAt: DateTime!
+}
+
+input EventTicketData {
+  """
+  MerchantID is the ID for the merchant, this will be the recipient of the payments.
+  """
+  merchantId: String!
+
+  """Price in øre, i.e. 100 = 1 NOK"""
+  price: Int!
+}
+
+enum EventType {
+  """Basic event has no sign ups, and no tickets"""
+  BASIC
+
+  """Sign up event has sign ups, but no tickets"""
+  SIGN_UPS
+
+  """Ticketed event has tickets and sign ups"""
+  TICKETS
 }
 
 input EventsInput {
@@ -666,11 +717,6 @@ input SignUpData {
   capacity: Int!
 
   """
-  If true, users can sign up for the event. If false, users cannot sign up for the event.
-  """
-  enabled: Boolean!
-
-  """
   The time that sign ups close for the event. This must be after signUpsOpenAt.
   """
   signUpsEndAt: DateTime!
@@ -684,6 +730,11 @@ input SignUpData {
   The slots for the event. If this is not provided, but capacity is, then all users can attend the event.
   """
   slots: [CreateEventSlot!]!
+
+  """
+  Ticket purchase details for the event. If this is not provided, then the event is free.
+  """
+  tickets: EventTicketData
 }
 
 input SignUpInput {
@@ -771,6 +822,10 @@ input UpdateBookingStatusInput {
   status: Status!
 }
 
+input UpdateCategoriesInput {
+  id: ID!
+}
+
 input UpdateEventCategoryInput {
   id: ID!
   name: String!
@@ -789,7 +844,7 @@ input UpdateEventInput {
   capacity: Int
 
   """categories is a list of cateogry IDs to which the event belongs"""
-  categories: [ID!]
+  categories: [UpdateCategoriesInput!]
 
   """
   The description of the event, defaults to "". We support markdown on the client, so this can be markdown.
@@ -805,6 +860,7 @@ input UpdateEventInput {
 
   """The name of the event, this will be displayed to users"""
   name: String
+  slots: UpdateSlotsInput
 
   """
   The start time of the event. Must be before endAt and after the current time.
@@ -861,6 +917,18 @@ input UpdateOrganizationInput {
 
 type UpdateOrganizationResponse {
   organization: Organization!
+}
+
+input UpdateSlotInput {
+  capacity: Int
+  gradeYears: [Int!]
+  id: ID!
+}
+
+input UpdateSlotsInput {
+  create: [CreateSlotInput!]
+  delete: [DeleteSlotInput!]
+  update: [UpdateSlotInput!]
 }
 
 input UpdateUserInput {

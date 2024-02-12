@@ -11,8 +11,7 @@ describe("User mutations", () => {
 			const { client, createMockContext, userService } =
 				createMockApolloServer();
 			const contextValue = createMockContext({
-				userId: faker.string.uuid(),
-				authenticated: true,
+				user: { id: faker.string.uuid() },
 			});
 			userService.update.mockResolvedValue(
 				mock<User>({ id: faker.string.uuid() }),
@@ -49,7 +48,7 @@ describe("User mutations", () => {
 		it("should raise PermissionDenied if not logged in", async () => {
 			const { client, createMockContext, userService } =
 				createMockApolloServer();
-			const contextValue = createMockContext({ authenticated: false });
+			const contextValue = createMockContext({ user: null });
 
 			const { errors } = await client.mutate(
 				{

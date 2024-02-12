@@ -1,4 +1,4 @@
-import { BaseEvent as EventMapper } from "~/domain/events.js";
+import { EventType as EventMapper } from "~/domain/events/event.js";
 
 interface EventsResponseMapper {
 	events: EventMapper[];

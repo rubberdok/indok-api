@@ -4,15 +4,15 @@ import type { EPaymentGetPaymentOKResponse } from "@vippsmobilepay/sdk";
 import type { QueueEvents } from "bullmq";
 import { mockDeep } from "jest-mock-extended";
 import { newUserFromDSO } from "~/domain/users.js";
+import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
-import { makeMockContext } from "~/services/context.js";
-import type { ProductService } from "../../service.js";
+import type { ProductServiceType } from "../../service.js";
 import type { PaymentProcessingQueueType } from "../../worker.js";
 import type { MockVippsClientFactory } from "../mock-vipps-client.js";
 import { makeDependencies } from "./deps.js";
 
 describe("ProductService", () => {
-	let productService: ProductService;
+	let productService: ProductServiceType;
 	let close: () => Promise<void>;
 	let vippsMock: ReturnType<typeof MockVippsClientFactory>["client"];
 	let queueEvents: QueueEvents;
@@ -50,7 +50,7 @@ describe("ProductService", () => {
 				},
 			});
 			const ctx = makeMockContext(newUserFromDSO(user));
-			const merchantResult = await productService.createMerchant(ctx, {
+			const merchantResult = await productService.merchants.create(ctx, {
 				name: faker.company.name(),
 				serialNumber: faker.string.sample(6),
 				subscriptionKey: faker.string.uuid(),
@@ -58,18 +58,19 @@ describe("ProductService", () => {
 				clientSecret: faker.string.uuid(),
 			});
 			assert(merchantResult.ok);
-			const productResult = await productService.createProduct(ctx, {
+			const productResult = await productService.products.create(ctx, {
 				name: faker.word.noun(),
 				price: 100 * 100,
 				merchantId: merchantResult.data.merchant.id,
+				description: faker.lorem.sentence(),
 			});
 			assert(productResult.ok);
-			const orderResult = await productService.createOrder(ctx, {
+			const orderResult = await productService.orders.create(ctx, {
 				productId: productResult.data.product.id,
 			});
 			assert(orderResult.ok);
 			const { order } = orderResult.data;
-			const reference = productService.getPaymentReference(order, 1);
+			const reference = productService.payments.getPaymentReference(order, 1);
 			vippsMock.payment.create.mockResolvedValue({
 				ok: true,
 				data: {
@@ -94,7 +95,7 @@ describe("ProductService", () => {
 			 *
 			 * Initiate a payment attempt, which should create a payment attempt, and trigger polling.
 			 */
-			const result = await productService.initiatePaymentAttempt(ctx, {
+			const result = await productService.payments.initiatePaymentAttempt(ctx, {
 				orderId: order.id,
 			});
 
@@ -105,10 +106,12 @@ describe("ProductService", () => {
 			 */
 			assert(result.ok);
 			const { pollingJob } = result.data;
-			const initialPaymentAttemptResult =
-				await productService.getPaymentAttempt(ctx, {
+			const initialPaymentAttemptResult = await productService.payments.get(
+				ctx,
+				{
 					reference,
-				});
+				},
+			);
 			assert(initialPaymentAttemptResult.ok);
 			const {
 				data: { paymentAttempt: initialPaymentAttempt },
@@ -133,7 +136,7 @@ describe("ProductService", () => {
 			const jobResult = await pollingJob.waitUntilFinished(queueEvents);
 			assert(jobResult.ok);
 
-			const finalPaymentResult = await productService.getPaymentAttempt(ctx, {
+			const finalPaymentResult = await productService.payments.get(ctx, {
 				reference,
 			});
 			assert(finalPaymentResult.ok);

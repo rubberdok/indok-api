@@ -17,6 +17,7 @@ const fakeName = () => {
 
 const eventCreateInput: Prisma.EventCreateInput[] = [
 	{
+		type: "BASIC",
 		id: faker.string.uuid(),
 		location: faker.location.streetAddress(),
 		description: fakeMarkdown(),
@@ -46,6 +47,7 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		},
 	},
 	{
+		type: "BASIC",
 		id: faker.string.uuid(),
 		location: faker.location.streetAddress(),
 		description: fakeMarkdown(),
@@ -75,6 +77,7 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		},
 	},
 	{
+		type: "BASIC",
 		id: faker.string.uuid(),
 		location: faker.location.streetAddress(),
 		description: fakeMarkdown(),
@@ -94,6 +97,7 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		},
 	},
 	{
+		type: "BASIC",
 		id: faker.string.uuid(),
 		location: faker.location.streetAddress(),
 		description: fakeMarkdown(),
@@ -113,6 +117,7 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		},
 	},
 	{
+		type: "BASIC",
 		id: faker.string.uuid(),
 		location: faker.location.streetAddress(),
 		description: fakeMarkdown(),
@@ -142,6 +147,7 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		},
 	},
 	{
+		type: "BASIC",
 		id: faker.string.uuid(),
 		location: faker.location.streetAddress(),
 		description: fakeMarkdown(),
@@ -161,6 +167,7 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		},
 	},
 	{
+		type: "BASIC",
 		id: faker.string.uuid(),
 		location: faker.location.streetAddress(),
 		description: fakeMarkdown(),
@@ -180,6 +187,7 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		},
 	},
 	{
+		type: "BASIC",
 		id: faker.string.uuid(),
 		location: faker.location.streetAddress(),
 		description: fakeMarkdown(),
@@ -199,6 +207,7 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		},
 	},
 	{
+		type: "SIGN_UPS",
 		id: faker.string.uuid(),
 		location: faker.location.streetAddress(),
 		name: fakeName(),
@@ -231,6 +240,7 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		},
 	},
 	{
+		type: "SIGN_UPS",
 		id: faker.string.uuid(),
 		name: fakeName(),
 		location: faker.location.streetAddress(),
@@ -263,6 +273,7 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		},
 	},
 	{
+		type: "SIGN_UPS",
 		id: faker.string.uuid(),
 		name: fakeName(),
 		location: faker.location.streetAddress(),

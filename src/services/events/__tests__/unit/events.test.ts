@@ -1,269 +1,408 @@
+import assert from "assert";
 import { faker } from "@faker-js/faker";
 import type { EventSlot } from "@prisma/client";
 import { mock, mockDeep } from "jest-mock-extended";
+import { merge } from "lodash-es";
 import { DateTime } from "luxon";
 import {
+	InternalServerError,
 	InvalidArgumentError,
-	type KnownDomainError,
 	PermissionDeniedError,
 } from "~/domain/errors.js";
-import type { Event } from "~/domain/events.js";
+import type { EventType } from "~/domain/events/index.js";
 import { Role } from "~/domain/organizations.js";
 import type { User } from "~/domain/users.js";
-import { makeMockContext } from "~/services/context.js";
+import { makeMockContext } from "~/lib/context.js";
+import type { Result } from "~/lib/result.js";
 import {
+	type CreateBasicEventParams,
+	type CreateEventParams,
+	type CreateSignUpEventParams,
+	type CreateTicketEventParams,
 	type EventRepository,
 	EventService,
 	type PermissionService,
+	type ProductService,
+	type UpdateEventParams,
 	type UserService,
 } from "../../service.js";
 import type { SignUpQueueType } from "../../worker.js";
+import { makeBasicEvent, makeSignUpEvent } from "../dependencies.js";
 
 function setup() {
 	const permissionService = mockDeep<PermissionService>();
 	const eventsRepository = mockDeep<EventRepository>();
 	const userService = mockDeep<UserService>();
+	const productService = mockDeep<ProductService>();
 	const service = new EventService(
 		eventsRepository,
 		permissionService,
 		userService,
+		productService,
 		mockDeep<SignUpQueueType>(),
 	);
-	return { permissionService, eventsRepository, service, userService };
-}
-
-function mockSignUpDetails(
-	data: Partial<Event["signUpDetails"]> = {},
-): Event["signUpDetails"] {
 	return {
-		signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-		signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
-		capacity: 10,
-		remainingCapacity: 10,
-		...data,
+		permissionService,
+		eventsRepository,
+		service,
+		userService,
+		productService,
 	};
 }
 
-function mockEvent(
-	data: Partial<Event & { slots: EventSlot[] }> = {},
-): Event & { slots: EventSlot[] } {
-	const startAt = faker.date.soon();
-	const endAt = faker.date.future({ refDate: startAt });
-	return mock<Event & { slots: EventSlot[] }>({
-		id: faker.string.uuid(),
-		name: faker.commerce.productName(),
-		description: faker.lorem.paragraph(),
-		startAt,
-		endAt,
-		organizationId: faker.string.uuid(),
-		contactEmail: faker.internet.email(),
-		location: faker.location.streetAddress(),
-		...data,
-		signUpDetails: {
-			remainingCapacity: 0,
-			capacity: 0,
-			signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-			signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-			...data.signUpDetails,
+function makeBasicEventParams(
+	event?: Partial<CreateBasicEventParams["event"]>,
+): CreateBasicEventParams {
+	const basicEvent = merge<
+		CreateBasicEventParams["event"],
+		Partial<CreateBasicEventParams["event"]> | undefined
+	>(
+		{
+			name: faker.commerce.productName(),
+			description: faker.lorem.paragraph(),
+			startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+			endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
+			location: faker.location.streetAddress(),
+			contactEmail: faker.internet.email(),
+			organizationId: faker.string.uuid(),
+			signUpsEnabled: false,
 		},
+		event,
+	);
+	return {
+		event: basicEvent,
+		type: "BASIC",
+	};
+}
+
+function makeSignUpEventParams(
+	event?: Partial<CreateSignUpEventParams["event"]>,
+	slots?: CreateSignUpEventParams["slots"],
+): CreateSignUpEventParams {
+	const { capacity, signUpsStartAt, signUpsEndAt, ...basicEventData } =
+		event ?? {};
+	const { event: basicEvent } = makeBasicEventParams(basicEventData);
+	const signUpEvent = {
+		...basicEvent,
 		signUpsEnabled: true,
-	});
+		signUpsStartAt:
+			signUpsStartAt ?? DateTime.now().plus({ days: 1 }).toJSDate(),
+		signUpsEndAt: signUpsEndAt ?? DateTime.now().plus({ days: 2 }).toJSDate(),
+		capacity: 1,
+	};
+	const slotData = slots ?? [{ capacity: 1 }];
+
+	return {
+		type: "SIGN_UPS",
+		event: merge<
+			CreateSignUpEventParams["event"],
+			Partial<CreateSignUpEventParams["event"]> | undefined
+		>(signUpEvent, event),
+		slots: slotData,
+	};
+}
+
+function makeTicketEventParams(
+	data?: Partial<CreateTicketEventParams["event"]>,
+	slots?: CreateTicketEventParams["slots"],
+	tickets?: Partial<CreateTicketEventParams["tickets"]>,
+): CreateTicketEventParams {
+	const { event: signUpEvent, slots: signUpSlots } = makeSignUpEventParams(
+		data,
+		slots,
+	);
+	const ticketData = {
+		merchantId: faker.string.uuid(),
+		price: 100,
+		...tickets,
+	};
+	return {
+		type: "TICKETS",
+		event: signUpEvent,
+		slots: signUpSlots,
+		tickets: ticketData,
+	};
+}
+
+function makeReturnType<T extends Record<string, unknown>>(
+	result: { data: T } | { error: InvalidArgumentError | InternalServerError },
+): Result<T, InvalidArgumentError | InternalServerError> {
+	if ("data" in result) {
+		return {
+			ok: true,
+			data: result.data,
+		};
+	}
+	return {
+		ok: false,
+		error: result.error,
+	};
+}
+
+function makeUser(user?: Partial<User>): User {
+	return mock<User>(user ?? { id: faker.string.uuid() });
 }
 
 describe("EventsService", () => {
 	describe("#create", () => {
-		describe("should raise", () => {
+		describe("should return", () => {
 			interface TestCase {
 				name: string;
 				act: {
-					userId: string;
-					organizationId: string;
+					createEventParams: CreateEventParams;
+					user: User | null;
 					role?: Role | null;
-					event: {
-						name: string;
-						description?: string;
-						startAt: Date;
-						endAt?: Date;
-						location?: string;
-					};
-					signUpDetails?: {
-						signUpsEnabled: boolean;
-						signUpsStartAt: Date;
-						signUpsEndAt: Date;
-						capacity: number;
-						slots: { capacity: number }[];
-					};
+					repository?: Result<
+						{ event: EventType },
+						InvalidArgumentError | InternalServerError
+					>;
 				};
-				expectedError: typeof KnownDomainError;
+				assertion: {
+					return: Result<
+						{ event: EventType },
+						InternalServerError | InvalidArgumentError | PermissionDeniedError
+					>;
+				};
 			}
 
 			const testCases: TestCase[] = [
 				{
 					name: "if name is empty",
 					act: {
-						userId: faker.string.uuid(),
-						organizationId: faker.string.uuid(),
+						user: makeUser(),
 						role: Role.MEMBER,
-						event: {
-							name: "",
-							startAt: faker.date.future(),
-						},
+						createEventParams: makeBasicEventParams({ name: "" }),
 					},
-					expectedError: InvalidArgumentError,
+					assertion: {
+						return: makeReturnType({
+							error: expect.objectContaining({
+								name: InvalidArgumentError.name,
+							}),
+						}),
+					},
 				},
 				{
 					name: "if startAt is in the past",
 					act: {
-						userId: faker.string.uuid(),
-						organizationId: faker.string.uuid(),
+						user: makeUser(),
 						role: Role.MEMBER,
-						event: {
-							name: faker.commerce.productName(),
-							startAt: faker.date.past(),
-						},
+						createEventParams: makeBasicEventParams({
+							startAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+						}),
 					},
-					expectedError: InvalidArgumentError,
+					assertion: {
+						return: makeReturnType({
+							error: expect.objectContaining({
+								name: InvalidArgumentError.name,
+							}),
+						}),
+					},
 				},
 				{
 					name: "if endAt is in the past and earlier than startAt",
 					act: {
-						userId: faker.string.uuid(),
-						organizationId: faker.string.uuid(),
+						user: makeUser(),
 						role: Role.MEMBER,
-						event: {
-							name: faker.commerce.productName(),
-							startAt: faker.date.future(),
-							endAt: faker.date.past(),
-						},
+						createEventParams: makeBasicEventParams({
+							startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+							endAt: DateTime.now().minus({ days: 2 }).toJSDate(),
+						}),
 					},
-					expectedError: InvalidArgumentError,
+					assertion: {
+						return: makeReturnType({
+							error: expect.objectContaining({
+								name: InvalidArgumentError.name,
+							}),
+						}),
+					},
 				},
 				{
 					name: "if endAt is in the future and earlier than startAt",
 					act: {
-						userId: faker.string.uuid(),
-						organizationId: faker.string.uuid(),
+						user: makeUser(),
 						role: Role.MEMBER,
-						event: {
-							name: faker.commerce.productName(),
-							startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-							endAt: DateTime.now().plus({ days: 1, hours: -2 }).toJSDate(),
-						},
+						createEventParams: makeBasicEventParams({
+							startAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+							endAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+						}),
 					},
-					expectedError: InvalidArgumentError,
+					assertion: {
+						return: makeReturnType({
+							error: expect.objectContaining({
+								name: InvalidArgumentError.name,
+							}),
+						}),
+					},
 				},
 				{
 					name: "if the description is too long",
 					act: {
-						userId: faker.string.uuid(),
-						organizationId: faker.string.uuid(),
+						user: makeUser(),
 						role: Role.MEMBER,
-						event: {
-							name: faker.commerce.productName(),
+						createEventParams: makeBasicEventParams({
 							description: faker.string.sample(10_001),
-							startAt: faker.date.future(),
-						},
+						}),
 					},
-					expectedError: InvalidArgumentError,
+					assertion: {
+						return: makeReturnType({
+							error: expect.objectContaining({
+								name: InvalidArgumentError.name,
+							}),
+						}),
+					},
 				},
 				{
 					name: "if the name is too long",
 					act: {
-						userId: faker.string.uuid(),
-						organizationId: faker.string.uuid(),
+						user: makeUser(),
 						role: Role.MEMBER,
-						event: {
-							name: faker.string.sample(101),
-							startAt: faker.date.future(),
-						},
+						createEventParams: makeBasicEventParams({
+							name: faker.string.sample(201),
+						}),
 					},
-					expectedError: InvalidArgumentError,
+					assertion: {
+						return: makeReturnType({
+							error: expect.objectContaining({
+								name: InvalidArgumentError.name,
+							}),
+						}),
+					},
 				},
 				{
 					name: "if signUpDetails have negative capacity",
 					act: {
-						userId: faker.string.uuid(),
-						organizationId: faker.string.uuid(),
+						user: makeUser(),
 						role: Role.MEMBER,
-						event: {
-							name: faker.string.sample(10),
-							startAt: faker.date.future(),
-						},
-						signUpDetails: {
-							signUpsEnabled: true,
-							signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-							signUpsEndAt: DateTime.now()
-								.plus({ days: 1, hours: 2 })
-								.toJSDate(),
-							capacity: -1,
-							slots: [{ capacity: 1 }],
-						},
+						createEventParams: makeSignUpEventParams(
+							{
+								signUpsEnabled: true,
+								capacity: -1,
+								signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+								signUpsEndAt: DateTime.now()
+									.plus({ days: 1, hours: 2 })
+									.toJSDate(),
+							},
+							[{ capacity: 1 }],
+						),
 					},
-					expectedError: InvalidArgumentError,
+					assertion: {
+						return: makeReturnType({
+							error: expect.objectContaining({
+								name: InvalidArgumentError.name,
+							}),
+						}),
+					},
 				},
 				{
 					name: "if signUpDetails have a slot with negative capacity",
 					act: {
-						userId: faker.string.uuid(),
-						organizationId: faker.string.uuid(),
+						user: makeUser(),
 						role: Role.MEMBER,
-						event: {
-							name: faker.string.sample(10),
-							startAt: faker.date.future(),
-						},
-						signUpDetails: {
-							signUpsEnabled: true,
-							signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-							signUpsEndAt: DateTime.now()
-								.plus({ days: 1, hours: 2 })
-								.toJSDate(),
-							capacity: 1,
-							slots: [{ capacity: -1 }, { capacity: 1 }],
-						},
+						createEventParams: makeSignUpEventParams(
+							{
+								signUpsEnabled: true,
+								capacity: 1,
+								signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+								signUpsEndAt: DateTime.now()
+									.plus({ days: 1, hours: 2 })
+									.toJSDate(),
+							},
+							[{ capacity: -1 }],
+						),
 					},
-					expectedError: InvalidArgumentError,
+					assertion: {
+						return: makeReturnType({
+							error: expect.objectContaining({
+								name: InvalidArgumentError.name,
+							}),
+						}),
+					},
 				},
 				{
 					name: "if signUpsEndAt is earlier than signUpsStartAt",
 					act: {
-						userId: faker.string.uuid(),
-						organizationId: faker.string.uuid(),
+						user: makeUser(),
 						role: Role.MEMBER,
-						event: {
-							name: faker.string.sample(10),
-							startAt: faker.date.future(),
-						},
-						signUpDetails: {
-							signUpsEnabled: true,
-							signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-							signUpsEndAt: DateTime.now()
-								.plus({ days: 1, hours: -2 })
-								.toJSDate(),
-							capacity: 1,
-							slots: [{ capacity: 1 }],
-						},
+						createEventParams: makeSignUpEventParams(
+							{
+								signUpsEnabled: true,
+								capacity: 1,
+
+								signUpsStartAt: DateTime.now()
+									.plus({ days: 1, hours: 2 })
+									.toJSDate(),
+								signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+							},
+							[{ capacity: 1 }],
+						),
 					},
-					expectedError: InvalidArgumentError,
+					assertion: {
+						return: makeReturnType({
+							error: expect.objectContaining({
+								name: InvalidArgumentError.name,
+							}),
+						}),
+					},
 				},
 				{
 					name: "if the user does not have a role in the organization",
 					act: {
-						userId: faker.string.uuid(),
-						organizationId: faker.string.uuid(),
+						user: makeUser(),
 						role: null,
-						event: {
-							name: faker.string.sample(10),
-							startAt: faker.date.future(),
+						createEventParams: makeBasicEventParams(),
+					},
+					assertion: {
+						return: makeReturnType({
+							error: expect.objectContaining({
+								name: PermissionDeniedError.name,
+							}),
+						}),
+					},
+				},
+				{
+					name: "if the user is not logged in",
+					act: {
+						user: makeUser(),
+						role: null,
+						createEventParams: makeBasicEventParams(),
+					},
+					assertion: {
+						return: makeReturnType({
+							error: expect.objectContaining({
+								name: PermissionDeniedError.name,
+							}),
+						}),
+					},
+				},
+				{
+					name: "and an event is created",
+					act: {
+						user: makeUser(),
+						role: Role.MEMBER,
+						createEventParams: makeBasicEventParams(),
+						repository: makeReturnType({
+							data: { event: makeBasicEvent() },
+						}),
+					},
+					assertion: {
+						return: {
+							ok: true,
+							data: expect.any(Object),
 						},
 					},
-					expectedError: PermissionDeniedError,
 				},
 			];
 
 			test.each(testCases)(
-				"$expectedError.name, $name",
-				async ({ act, expectedError }) => {
-					const { service, permissionService } = setup();
+				"ok: $assertion.return.ok $name",
+				async ({ act, assertion }) => {
+					const { service, permissionService, eventsRepository } = setup();
+					eventsRepository.create.mockResolvedValueOnce(
+						act.repository ?? {
+							ok: false,
+							error: new InternalServerError("No return value expected"),
+						},
+					);
 					/**
 					 * Arrange
 					 * 1. Set up the mock repository to handle the create method
@@ -275,586 +414,480 @@ describe("EventsService", () => {
 					/**
 					 * Act
 					 */
-					const result = service.create(
-						act.userId,
-						act.organizationId,
-						act.event,
-						act.signUpDetails,
+					const result = await service.create(
+						makeMockContext(mock<User>({ id: faker.string.uuid() })),
+						act.createEventParams,
 					);
 
 					/**
-					 * Assert that the expected error is thrown
+					 * assertion that the expected error is thrown
 					 */
-					await expect(result).rejects.toThrow(expectedError);
+					expect(result).toEqual(assertion.return);
 				},
-			);
-		});
-
-		it("should create an event without sign up details", async () => {
-			const { service, eventsRepository, permissionService } = setup();
-			/**
-			 * Arrange
-			 *
-			 * Mock permission service to return true
-			 */
-			permissionService.hasRole.mockResolvedValueOnce(true);
-
-			/**
-			 * Act
-			 */
-			const userId = faker.string.uuid();
-			const organizationId = faker.string.uuid();
-			const startAt = faker.date.soon();
-			const event = {
-				name: faker.commerce.productName(),
-				description: faker.lorem.paragraph(),
-				startAt,
-				endAt: faker.date.soon({ refDate: startAt }),
-				location: faker.location.streetAddress(),
-			};
-			const result = service.create(userId, organizationId, event);
-
-			/**
-			 * Assert that the event is created
-			 */
-			await expect(result).resolves.not.toThrow();
-			expect(eventsRepository.create).toHaveBeenCalledWith(
-				expect.objectContaining({ organizationId }),
-				undefined,
-			);
-		});
-
-		it("should create an event with sign up details", async () => {
-			const { service, eventsRepository, permissionService } = setup();
-			/**
-			 * Arrange
-			 *
-			 * Mock permission service to return true
-			 */
-			permissionService.hasRole.mockResolvedValueOnce(true);
-
-			/**
-			 * Act
-			 */
-			const userId = faker.string.uuid();
-			const organizationId = faker.string.uuid();
-			const startAt = faker.date.soon();
-			const event = {
-				name: faker.commerce.productName(),
-				description: faker.lorem.paragraph(),
-				startAt,
-				endAt: faker.date.soon({ refDate: startAt }),
-				location: faker.location.streetAddress(),
-			};
-			const signUpDetails = {
-				signUpsEnabled: true,
-				signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-				signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
-				capacity: 10,
-				slots: [{ capacity: 10 }],
-			};
-			const result = service.create(
-				userId,
-				organizationId,
-				event,
-				signUpDetails,
-			);
-
-			/**
-			 * Assert that the event is created
-			 */
-			await expect(result).resolves.not.toThrow();
-			expect(eventsRepository.create).toHaveBeenCalledWith(
-				expect.any(Object),
-				expect.objectContaining({
-					signUpsStartAt: signUpDetails.signUpsStartAt,
-					signUpsEndAt: signUpDetails.signUpsEndAt,
-					capacity: signUpDetails.capacity,
-					slots: signUpDetails.slots,
-				}),
-			);
-		});
-
-		it("should default `endAt` to `startAt` + 2 hours", async () => {
-			const { service, eventsRepository, permissionService } = setup();
-
-			/**
-			 * Arrange
-			 *
-			 * Mock permission service to return true
-			 */
-			permissionService.hasRole.mockResolvedValueOnce(true);
-
-			/**
-			 * Act
-			 */
-			const userId = faker.string.uuid();
-			const organizationId = faker.string.uuid();
-			const startAt = faker.date.soon();
-			const data = {
-				name: faker.commerce.productName(),
-				description: faker.lorem.paragraph(),
-				startAt,
-				location: faker.location.streetAddress(),
-			};
-			const result = service.create(userId, organizationId, data);
-
-			/**
-			 * Assert that the expected error is thrown
-			 */
-			await expect(result).resolves.not.toThrow();
-			expect(eventsRepository.create).toHaveBeenCalledWith(
-				expect.objectContaining({
-					endAt: new Date(startAt.getTime() + 2 * 60 * 60 * 1000),
-					organizationId,
-				}),
-				undefined,
 			);
 		});
 	});
 
-	describe("#update", () => {
-		describe("should raise", () => {
-			interface TestCase {
-				name: string;
-				arrange: {
-					hasRole: boolean;
-					event: Event & { slots: EventSlot[] };
-				};
-				act: {
-					event: Partial<{
-						name: string;
-						description: string;
-						startAt: Date;
-						endAt: Date;
-						location: string;
-					}>;
-					signUpDetails?: Partial<{
-						signUpsEnabled: boolean;
-						signUpsStartAt: Date;
-						signUpsEndAt: Date;
-						capacity: number;
-						slots: { capacity: number }[];
-					}>;
-				};
-				assert: {
-					error: typeof KnownDomainError;
-				};
-			}
-			const startAt = faker.date.soon();
-			const endAt = faker.date.future({ refDate: startAt });
+	describe("#update, should return", () => {
+		interface TestCase {
+			name: string;
+			arrange: {
+				hasRole: boolean;
+				event: EventType;
+				slots?: EventSlot[];
+			};
+			act: {
+				updateEventParams: UpdateEventParams;
+			};
+			assertion: {
+				result: Result<
+					{ event: EventType },
+					InvalidArgumentError | InternalServerError
+				>;
+			};
+		}
+		const startAt = faker.date.soon();
+		const endAt = faker.date.future({ refDate: startAt });
 
-			const testCases: TestCase[] = [
-				{
-					name: "update name to empty string",
-					arrange: {
-						hasRole: true,
-						event: mockEvent(),
-					},
-					act: {
+		const testCases: TestCase[] = [
+			{
+				name: "update name to empty string",
+				arrange: {
+					hasRole: true,
+					event: makeBasicEvent(),
+				},
+				act: {
+					updateEventParams: {
 						event: {
+							id: faker.string.uuid(),
 							name: "",
 						},
 					},
-					assert: {
-						error: InvalidArgumentError,
-					},
 				},
-				{
-					name: "Date.now() < endAt < startAt, changing endAt",
-					arrange: {
-						hasRole: true,
-						event: mockEvent({ startAt, endAt }),
-					},
-					act: {
+				assertion: {
+					result: makeReturnType({
+						error: expect.objectContaining({
+							name: InvalidArgumentError.name,
+						}),
+					}),
+				},
+			},
+			{
+				name: "Date.now() < endAt < startAt, changing endAt",
+				arrange: {
+					hasRole: true,
+					event: makeBasicEvent({ startAt, endAt }),
+				},
+				act: {
+					updateEventParams: {
 						event: {
+							id: faker.string.uuid(),
 							endAt: faker.date.recent({ refDate: startAt }),
 						},
 					},
-					assert: {
-						error: InvalidArgumentError,
-					},
 				},
-				{
-					name: "Date.now() < endAt < startAt, changing endAt and startAt",
-					arrange: {
-						hasRole: true,
-						event: mockEvent({ startAt, endAt }),
-					},
-					act: {
+				assertion: {
+					result: makeReturnType({
+						error: expect.objectContaining({
+							name: InvalidArgumentError.name,
+						}),
+					}),
+				},
+			},
+			{
+				name: "Date.now() < endAt < startAt, changing endAt and startAt",
+				arrange: {
+					hasRole: true,
+					event: makeBasicEvent({ startAt, endAt }),
+				},
+				act: {
+					updateEventParams: {
 						event: {
+							id: faker.string.uuid(),
 							endAt: faker.date.between({ from: startAt, to: endAt }),
 							startAt: faker.date.soon({ refDate: endAt, days: 2 }),
 						},
 					},
-					assert: {
-						error: InvalidArgumentError,
-					},
 				},
-				{
-					name: "Date.now() < endAt < startAt, changing startAt",
-					arrange: {
-						hasRole: true,
-						event: mockEvent({ startAt, endAt }),
-					},
-					act: {
+				assertion: {
+					result: makeReturnType({
+						error: expect.objectContaining({
+							name: InvalidArgumentError.name,
+						}),
+					}),
+				},
+			},
+			{
+				name: "Date.now() < endAt < startAt, changing startAt",
+				arrange: {
+					hasRole: true,
+					event: makeBasicEvent({ startAt, endAt }),
+				},
+				act: {
+					updateEventParams: {
 						event: {
+							id: faker.string.uuid(),
 							startAt: faker.date.future({ refDate: endAt }),
 						},
 					},
-					assert: {
-						error: InvalidArgumentError,
-					},
 				},
-				{
-					name: "startAt < Date.now() < endAt",
-					arrange: {
-						hasRole: true,
-						event: mockEvent({ startAt, endAt }),
-					},
-					act: {
-						event: {
-							startAt: faker.date.recent(),
-						},
-					},
-					assert: {
-						error: InvalidArgumentError,
-					},
-				},
-				{
-					name: "startAt < endAt < Date.now()",
-					arrange: {
-						hasRole: true,
-						event: mockEvent({ startAt, endAt }),
-					},
-					act: {
-						event: {
-							endAt: faker.date.recent(),
-						},
-					},
-					assert: {
-						error: InvalidArgumentError,
-					},
-				},
-				{
-					name: "startAt < endAt < Date.now(), changing endAt",
-					arrange: {
-						hasRole: true,
-						event: mockEvent({ startAt, endAt }),
-					},
-					act: {
-						event: {
-							endAt: faker.date.recent(),
-						},
-					},
-					assert: {
-						error: InvalidArgumentError,
-					},
-				},
-				{
-					name: "endAt < startAt < Date.now(), changing endAt and startAt",
-					arrange: {
-						hasRole: true,
-						event: mockEvent({ startAt, endAt }),
-					},
-					act: {
-						event: {
-							startAt: faker.date.recent(),
-							endAt: faker.date.past(),
-						},
-					},
-					assert: {
-						error: InvalidArgumentError,
-					},
-				},
-				{
-					name: "endAt < startAt < Date.now(), changing endAt and startAt",
-					arrange: {
-						hasRole: true,
-						event: mockEvent({ startAt, endAt }),
-					},
-					act: {
-						event: {
-							startAt: faker.date.recent(),
-							endAt: faker.date.past(),
-						},
-					},
-					assert: {
-						error: InvalidArgumentError,
-					},
-				},
-				{
-					name: "signUpsEndAt < signUpsStartAt, changing signUpsStartAt",
-					arrange: {
-						hasRole: true,
-						event: mockEvent({
-							signUpDetails: mockSignUpDetails({
-								signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-							}),
+				assertion: {
+					result: makeReturnType({
+						error: expect.objectContaining({
+							name: InvalidArgumentError.name,
 						}),
+					}),
+				},
+			},
+			{
+				name: "startAt < Date.now() < endAt",
+				arrange: {
+					hasRole: true,
+					event: makeBasicEvent({ startAt, endAt }),
+				},
+				act: {
+					updateEventParams: {
+						event: {
+							id: faker.string.uuid(),
+							startAt: faker.date.recent(),
+						},
 					},
-					act: {
-						event: {},
-						signUpDetails: {
+				},
+				assertion: {
+					result: makeReturnType({
+						data: expect.objectContaining({
+							event: expect.anything(),
+						}),
+					}),
+				},
+			},
+			{
+				name: "startAt < endAt < Date.now()",
+				arrange: {
+					hasRole: true,
+					event: makeBasicEvent({ startAt, endAt }),
+				},
+				act: {
+					updateEventParams: {
+						event: {
+							id: faker.string.uuid(),
+							endAt: faker.date.recent(),
+						},
+					},
+				},
+				assertion: {
+					result: makeReturnType({
+						error: expect.objectContaining({
+							name: InvalidArgumentError.name,
+						}),
+					}),
+				},
+			},
+			{
+				name: "startAt < endAt < Date.now(), changing endAt",
+				arrange: {
+					hasRole: true,
+					event: makeBasicEvent({ startAt, endAt }),
+				},
+				act: {
+					updateEventParams: {
+						event: {
+							id: faker.string.uuid(),
+							endAt: faker.date.recent(),
+						},
+					},
+				},
+				assertion: {
+					result: makeReturnType({
+						error: expect.objectContaining({
+							name: InvalidArgumentError.name,
+						}),
+					}),
+				},
+			},
+			{
+				name: "endAt < startAt < Date.now(), changing endAt and startAt",
+				arrange: {
+					hasRole: true,
+					event: makeBasicEvent({ startAt, endAt }),
+				},
+				act: {
+					updateEventParams: {
+						event: {
+							id: faker.string.uuid(),
+							startAt: faker.date.recent(),
+							endAt: faker.date.past(),
+						},
+					},
+				},
+				assertion: {
+					result: makeReturnType({
+						error: expect.objectContaining({
+							name: InvalidArgumentError.name,
+						}),
+					}),
+				},
+			},
+			{
+				name: "endAt < startAt < Date.now(), changing endAt and startAt",
+				arrange: {
+					hasRole: true,
+					event: makeBasicEvent({ startAt, endAt }),
+				},
+				act: {
+					updateEventParams: {
+						event: {
+							id: faker.string.uuid(),
+							startAt: faker.date.recent(),
+							endAt: faker.date.past(),
+						},
+					},
+				},
+				assertion: {
+					result: makeReturnType({
+						error: expect.objectContaining({
+							name: InvalidArgumentError.name,
+						}),
+					}),
+				},
+			},
+			{
+				name: "signUpsEndAt < signUpsStartAt, changing signUpsStartAt",
+				arrange: {
+					hasRole: true,
+					event: makeSignUpEvent({
+						signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					}),
+				},
+				act: {
+					updateEventParams: {
+						event: {
+							id: faker.string.uuid(),
 							signUpsStartAt: DateTime.now().plus({ days: 2 }).toJSDate(),
 						},
 					},
-					assert: {
-						error: InvalidArgumentError,
-					},
 				},
-				{
-					name: "signUpsEndAt < signUpsStartAt, changing signUpsEndAt",
-					arrange: {
-						hasRole: true,
-						event: mockEvent({
-							signUpDetails: mockSignUpDetails({
-								signUpsEndAt: DateTime.now().plus({ days: 3 }).toJSDate(),
-								signUpsStartAt: DateTime.now().plus({ days: 2 }).toJSDate(),
-							}),
+				assertion: {
+					result: makeReturnType({
+						error: expect.objectContaining({
+							name: InvalidArgumentError.name,
 						}),
-					},
-					act: {
-						event: {},
-						signUpDetails: {
+					}),
+				},
+			},
+			{
+				name: "signUpsEndAt < signUpsStartAt, changing signUpsEndAt",
+				arrange: {
+					hasRole: true,
+					event: makeSignUpEvent({
+						signUpsEndAt: DateTime.now().plus({ days: 3 }).toJSDate(),
+						signUpsStartAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+					}),
+				},
+				act: {
+					updateEventParams: {
+						event: {
+							id: faker.string.uuid(),
 							signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 						},
 					},
-					assert: {
-						error: InvalidArgumentError,
-					},
 				},
-				{
-					name: "signUpsEndAt in the past, changing signUpsEndAt",
-					arrange: {
-						hasRole: true,
-						event: mockEvent({
-							signUpDetails: mockSignUpDetails({
-								signUpsEndAt: DateTime.now().plus({ days: 3 }).toJSDate(),
-								signUpsStartAt: DateTime.now().minus({ days: 2 }).toJSDate(),
-							}),
+				assertion: {
+					result: makeReturnType({
+						error: expect.objectContaining({
+							name: InvalidArgumentError.name,
 						}),
-					},
-					act: {
-						event: {},
-						signUpDetails: {
+					}),
+				},
+			},
+			{
+				name: "signUpsEndAt in the past, changing signUpsEndAt",
+				arrange: {
+					hasRole: true,
+					event: makeSignUpEvent({
+						signUpsEndAt: DateTime.now().plus({ days: 3 }).toJSDate(),
+						signUpsStartAt: DateTime.now().minus({ days: 2 }).toJSDate(),
+					}),
+				},
+				act: {
+					updateEventParams: {
+						event: {
+							id: faker.string.uuid(),
 							signUpsEndAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 						},
 					},
-					assert: {
-						error: InvalidArgumentError,
-					},
 				},
-			];
-
-			test.each(testCases)(
-				"$assert.error.name, $name",
-				async ({ assert, arrange, act }) => {
-					const { service, eventsRepository, permissionService } = setup();
-
-					/**
-					 * Arrange
-					 *
-					 * 1. Set up the mock for `eventsRepository.get` to return the event in {arrange.event}
-					 * 2. Set up the mock for `permissionService.hasRole` to return `true`
-					 */
-					// 1.
-					eventsRepository.getWithSlots.mockResolvedValueOnce(arrange.event);
-					// 2.
-					permissionService.hasRole.mockResolvedValueOnce(arrange.hasRole);
-
-					/**
-					 * Act
-					 */
-					const result = service.update(
-						faker.string.uuid(),
-						faker.string.uuid(),
-						act.event,
-						act.signUpDetails,
-					);
-
-					/**
-					 * Assert
-					 */
-					await expect(result).rejects.toThrow(assert.error);
-					expect(eventsRepository.update).not.toHaveBeenCalled();
+				assertion: {
+					result: makeReturnType({
+						data: expect.objectContaining({ event: expect.anything() }),
+					}),
 				},
-			);
-		});
-		describe("should update", () => {
-			interface TestCase {
-				name: string;
+			},
+			{
+				name: "update name",
 				arrange: {
-					event: Event & { slots: EventSlot[] };
-				};
+					hasRole: true,
+					event: makeBasicEvent(),
+				},
 				act: {
-					event: Partial<{
-						name?: string;
-						description?: string;
-						startAt?: Date;
-						endAt?: Date;
-						location?: string;
-					}>;
-					signUpDetails?: Partial<{
-						signUpsEnabled: boolean;
-						signUpsStartAt: Date;
-						signUpsEndAt: Date;
-						capacity: number;
-						slots: { capacity: number }[];
-					}>;
-				};
-				assert: {
-					event: {
-						name?: string;
-						description?: string;
-						startAt?: Date;
-						endAt?: Date;
-						location?: string;
-					};
-					signUpDetails?: Partial<{
-						signUpsEnabled: boolean;
-						signUpsStartAt: Date;
-						signUpsEndAt: Date;
-						capacity: number;
-						slots: { capacity: number }[];
-					}>;
-				};
-			}
-			const startAt = faker.date.soon();
-			const endAt = faker.date.future({ refDate: startAt });
-
-			const testCases: TestCase[] = [
-				{
-					name: "update name",
-					arrange: {
-						event: mockEvent(),
-					},
-					act: {
+					updateEventParams: {
 						event: {
-							name: faker.company.name(),
+							id: faker.string.uuid(),
+							name: faker.string.uuid(),
 						},
 					},
-					assert: {
-						event: {},
-					},
 				},
-				{
-					name: "all defined fields are updated",
-					arrange: {
-						event: mockEvent({ startAt, endAt }),
-					},
-					act: {
+				assertion: {
+					result: makeReturnType({
+						data: expect.objectContaining({
+							event: expect.objectContaining({
+								name: expect.any(String),
+							}),
+						}),
+					}),
+				},
+			},
+			{
+				name: "nullish fields are not updated",
+				arrange: {
+					hasRole: true,
+					event: makeBasicEvent(),
+				},
+				act: {
+					updateEventParams: {
 						event: {
-							name: faker.company.name(),
+							name: null,
 							description: faker.lorem.paragraph(),
 							startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 							endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
-							location: faker.location.streetAddress(),
-						},
-					},
-					assert: {
-						event: {},
-					},
-				},
-				{
-					name: "undefined fields are not updated",
-					arrange: {
-						event: mockEvent({ startAt, endAt }),
-					},
-					act: {
-						event: {
-							name: faker.company.name(),
-							startAt: undefined,
-							endAt: faker.date.future({ refDate: endAt }),
-							location: undefined,
-						},
-					},
-					assert: {
-						event: {
-							location: expect.any(String),
-							startAt: expect.any(Date),
-							endAt: expect.any(Date),
-							name: expect.any(String),
+							location: null,
+							id: faker.string.uuid(),
 						},
 					},
 				},
-				{
-					name: "update `startAt` to be in the future, before `endAt`",
-					arrange: {
-						event: mockEvent({ startAt, endAt }),
-					},
-					act: {
+				assertion: {
+					result: makeReturnType({
+						data: expect.objectContaining({
+							event: expect.objectContaining({
+								name: expect.any(String),
+								description: expect.any(String),
+								startAt: expect.any(Date),
+								endAt: expect.any(Date),
+								location: expect.any(String),
+							}),
+						}),
+					}),
+				},
+			},
+			{
+				name: "update `startAt` to be in the future, before `endAt`",
+				arrange: {
+					hasRole: true,
+					event: makeBasicEvent({ startAt, endAt }),
+				},
+				act: {
+					updateEventParams: {
 						event: {
+							id: faker.string.uuid(),
 							startAt: faker.date.recent({ refDate: endAt }),
 						},
 					},
-					assert: {
-						event: {
-							startAt: expect.any(Date),
-							endAt: expect.any(Date),
-						},
-					},
 				},
-				{
-					name: "update `endAt` to be in the future, after `startAt`",
-					arrange: {
-						event: mockEvent({ startAt, endAt }),
-					},
-					act: {
+				assertion: {
+					result: makeReturnType({
+						data: expect.objectContaining({
+							event: expect.objectContaining({
+								startAt: expect.any(Date),
+								endAt: expect.any(Date),
+							}),
+						}),
+					}),
+				},
+			},
+			{
+				name: "update `endAt` to be in the future, after `startAt`",
+				arrange: {
+					hasRole: true,
+					event: makeBasicEvent({ startAt, endAt }),
+				},
+				act: {
+					updateEventParams: {
 						event: {
+							id: faker.string.uuid(),
 							endAt: faker.date.soon({ refDate: startAt }),
 						},
 					},
-					assert: {
-						event: {
-							startAt: expect.any(Date),
-							endAt: expect.any(Date),
-						},
-					},
 				},
-				{
-					name: "update `startAt` and `endAt`, with `previousEndAt` < `startAt` < `endAt`",
-					arrange: {
-						event: mockEvent({ startAt, endAt }),
-					},
-					act: {
+				assertion: {
+					result: makeReturnType({
+						data: expect.objectContaining({
+							event: expect.objectContaining({
+								startAt: expect.any(Date),
+								endAt: expect.any(Date),
+							}),
+						}),
+					}),
+				},
+			},
+			{
+				name: "update `startAt` and `endAt`, with `previousEndAt` < `startAt` < `endAt`",
+				arrange: {
+					hasRole: true,
+					event: makeBasicEvent({ startAt, endAt }),
+				},
+				act: {
+					updateEventParams: {
 						event: {
+							id: faker.string.uuid(),
 							startAt: faker.date.soon({ refDate: endAt }),
 							endAt: faker.date.future({ refDate: endAt }),
 						},
 					},
-					assert: {
-						event: {},
-					},
 				},
-				{
-					name: "update signUpDetails when signUpsEndAt is in the past",
-					arrange: {
-						event: mockEvent({
-							signUpsEnabled: true,
-							signUpDetails: mockSignUpDetails({
-								signUpsEndAt: DateTime.now().minus({ days: 2 }).toJSDate(),
-								signUpsStartAt: DateTime.now().minus({ days: 3 }).toJSDate(),
+				assertion: {
+					result: makeReturnType({
+						data: expect.objectContaining({
+							event: expect.objectContaining({
+								startAt: expect.any(Date),
+								endAt: expect.any(Date),
 							}),
 						}),
-					},
-					act: {
-						event: {},
-						signUpDetails: {
-							slots: [],
-							signUpsEnabled: false,
-						},
-					},
-					assert: {
-						event: {},
-						signUpDetails: {
+					}),
+				},
+			},
+			{
+				name: "update signUpDetails when signUpsEndAt is in the past",
+				arrange: {
+					hasRole: true,
+					event: makeSignUpEvent({
+						signUpsEnabled: true,
+						signUpsEndAt: DateTime.now().minus({ days: 2 }).toJSDate(),
+						signUpsStartAt: DateTime.now().minus({ days: 3 }).toJSDate(),
+					}),
+				},
+				act: {
+					updateEventParams: {
+						event: {
+							id: faker.string.uuid(),
 							signUpsEnabled: false,
 						},
 					},
 				},
-			];
+				assertion: {
+					result: makeReturnType({
+						data: expect.objectContaining({
+							event: expect.objectContaining({
+								signUpsEnabled: false,
+							}),
+						}),
+					}),
+				},
+			},
+		];
 
-			test.each(testCases)("$name", async ({ arrange, act, assert }) => {
+		test.each(testCases)(
+			"ok: $assertion.result.ok, $name",
+			async ({ assertion, arrange, act }) => {
 				const { service, eventsRepository, permissionService } = setup();
 
 				/**
@@ -864,31 +897,42 @@ describe("EventsService", () => {
 				 * 2. Set up the mock for `permissionService.hasRole` to return `true`
 				 */
 				// 1.
-				eventsRepository.getWithSlots.mockResolvedValueOnce(arrange.event);
+				eventsRepository.update.mockImplementation(
+					async (_ctx, _id, updateFn) => {
+						const { event, slots } = arrange;
+						const result = await updateFn({ event, slots });
+						if (result.ok) {
+							return {
+								ok: true,
+								data: {
+									categories: [],
+									slots: [],
+									event: result.data.event,
+								},
+							};
+						}
+						return result;
+					},
+				);
 				// 2.
-				permissionService.hasRole.mockResolvedValueOnce(true);
+				permissionService.hasRole.mockResolvedValueOnce(arrange.hasRole);
 
 				/**
 				 * Act
 				 */
-				const result = service.update(
-					faker.string.uuid(),
-					faker.string.uuid(),
-					act.event,
-					act.signUpDetails,
+				const result = await service.update(
+					makeMockContext(mock<User>({ id: faker.string.uuid() })),
+					act.updateEventParams,
 				);
-
-				/**
-				 * Assert
-				 */
-				await expect(result).resolves.not.toThrow();
-				expect(eventsRepository.update).toHaveBeenCalledWith(
-					expect.any(String),
-					expect.objectContaining(assert.event),
-					assert.signUpDetails && expect.objectContaining(assert.signUpDetails),
-				);
-			});
-		});
+				expect(result.ok).toEqual(assertion.result.ok);
+				assert(result.ok === assertion.result.ok);
+				if (assertion.result.ok && result.ok) {
+					expect(result.data).toEqual(assertion.result.data);
+				} else if (!result.ok && !assertion.result.ok) {
+					expect(result.error).toEqual(assertion.result.error);
+				}
+			},
+		);
 	});
 
 	describe("#createCategory", () => {
@@ -915,7 +959,7 @@ describe("EventsService", () => {
 			);
 
 			/**
-			 * Assert
+			 * assertion
 			 */
 			await expect(result).resolves.not.toThrow();
 			expect(eventsRepository.createCategory).toHaveBeenCalled();
@@ -944,7 +988,7 @@ describe("EventsService", () => {
 			);
 
 			/**
-			 * Assert
+			 * assertion
 			 */
 			await expect(result).rejects.toThrow(PermissionDeniedError);
 			expect(eventsRepository.createCategory).not.toHaveBeenCalled();
@@ -973,7 +1017,7 @@ describe("EventsService", () => {
 			);
 
 			/**
-			 * Assert
+			 * assertion
 			 */
 			await expect(result).rejects.toThrow(InvalidArgumentError);
 			expect(eventsRepository.createCategory).not.toHaveBeenCalled();
@@ -1002,7 +1046,7 @@ describe("EventsService", () => {
 			);
 
 			/**
-			 * Assert
+			 * assertion
 			 */
 			await expect(result).rejects.toThrow(InvalidArgumentError);
 			expect(eventsRepository.createCategory).not.toHaveBeenCalled();
@@ -1034,7 +1078,7 @@ describe("EventsService", () => {
 			);
 
 			/**
-			 * Assert
+			 * assertion
 			 */
 			await expect(result).resolves.not.toThrow();
 			expect(eventsRepository.updateCategory).toHaveBeenCalled();
@@ -1064,7 +1108,7 @@ describe("EventsService", () => {
 			);
 
 			/**
-			 * Assert
+			 * assertion
 			 */
 			await expect(result).rejects.toThrow(PermissionDeniedError);
 			expect(eventsRepository.updateCategory).not.toHaveBeenCalled();
@@ -1094,7 +1138,7 @@ describe("EventsService", () => {
 			);
 
 			/**
-			 * Assert
+			 * assertion
 			 */
 			await expect(result).rejects.toThrow(InvalidArgumentError);
 			expect(eventsRepository.updateCategory).not.toHaveBeenCalled();
@@ -1124,7 +1168,7 @@ describe("EventsService", () => {
 			);
 
 			/**
-			 * Assert
+			 * assertion
 			 */
 			await expect(result).rejects.toThrow(InvalidArgumentError);
 			expect(eventsRepository.updateCategory).not.toHaveBeenCalled();
@@ -1155,7 +1199,7 @@ describe("EventsService", () => {
 			);
 
 			/**
-			 * Assert
+			 * assertion
 			 */
 			await expect(result).resolves.not.toThrow();
 			expect(eventsRepository.deleteCategory).toHaveBeenCalled();
@@ -1184,7 +1228,7 @@ describe("EventsService", () => {
 			);
 
 			/**
-			 * Assert
+			 * assertion
 			 */
 			await expect(result).rejects.toThrow(PermissionDeniedError);
 			expect(eventsRepository.deleteCategory).not.toHaveBeenCalled();

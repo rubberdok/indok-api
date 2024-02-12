@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { mock } from "jest-mock-extended";
 import { DateTime } from "luxon";
-import type { Event } from "~/domain/events.js";
+import type { EventType } from "~/domain/events/event.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
@@ -10,7 +10,7 @@ describe("Event queries", () => {
 		it("should return a list of events", async () => {
 			const { client, eventService } = createMockApolloServer();
 			eventService.findMany.mockResolvedValue([
-				mock<Event>({ id: faker.string.uuid() }),
+				mock<EventType>({ id: faker.string.uuid() }),
 			]);
 
 			const { errors, data } = await client.query({
@@ -33,7 +33,7 @@ describe("Event queries", () => {
 		it("should filter on only future events with { futureEventsOnly: true }", async () => {
 			const { client, eventService } = createMockApolloServer();
 			eventService.findMany.mockResolvedValue([
-				mock<Event>({ id: faker.string.uuid() }),
+				mock<EventType>({ id: faker.string.uuid() }),
 			]);
 
 			const { errors } = await client.query({
@@ -62,22 +62,22 @@ describe("Event queries", () => {
 		it("should split events into this week, next week, and two weeks ahead or more", async () => {
 			const { client, eventService } = createMockApolloServer();
 			const eventThisWeek = {
-				...mock<Event>(),
+				...mock<EventType>(),
 				id: faker.string.uuid(),
 				startAt: DateTime.now().toJSDate(),
 			};
 			const eventNextWeek = {
-				...mock<Event>(),
+				...mock<EventType>(),
 				id: faker.string.uuid(),
 				startAt: DateTime.now().plus({ week: 1 }).toJSDate(),
 			};
 			const eventInTwoWeeks = {
-				...mock<Event>(),
+				...mock<EventType>(),
 				id: faker.string.uuid(),
 				startAt: DateTime.now().plus({ week: 2 }).toJSDate(),
 			};
 			const eventFarInTheFuture = {
-				...mock<Event>(),
+				...mock<EventType>(),
 				id: faker.string.uuid(),
 				startAt: DateTime.now().plus({ week: 5 }).toJSDate(),
 			};
@@ -87,12 +87,12 @@ describe("Event queries", () => {
 			 * this week.
 			 */
 			const eventOneYearInTheFuture = {
-				...mock<Event>(),
+				...mock<EventType>(),
 				id: faker.string.uuid(),
 				startAt: DateTime.now().plus({ year: 1 }).toJSDate(),
 			};
 			const eventOneYearAndOneWeekInTheFuture = {
-				...mock<Event>(),
+				...mock<EventType>(),
 				id: faker.string.uuid(),
 				startAt: DateTime.now().plus({ year: 1, week: 1 }).toJSDate(),
 			};

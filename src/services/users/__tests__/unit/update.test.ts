@@ -3,7 +3,7 @@ import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
 import { PermissionDeniedError } from "~/domain/errors.js";
 import type { User } from "~/domain/users.js";
-import { makeMockContext } from "~/services/context.js";
+import { makeMockContext } from "~/lib/context.js";
 import {
 	type MailService,
 	type PermissionService,

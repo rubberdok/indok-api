@@ -252,12 +252,12 @@ export async function initWorkers(): Promise<{
 			throw new InternalServerError("Payment processing queue not initialized");
 		}
 		const productRepository = new ProductRepository(instance.database);
-		const productService = new ProductService(
-			Client,
-			instance.queues?.[PaymentProcessingQueueName],
+		const productService = ProductService({
+			vippsFactory: Client,
+			paymentProcessingQueue: instance.queues?.[PaymentProcessingQueueName],
 			productRepository,
-			{ useTestMode: env.VIPPS_TEST_MODE },
-		);
+			config: { useTestMode: env.VIPPS_TEST_MODE, returnUrl: env.SERVER_URL },
+		});
 
 		const eventRepositroy = new EventRepository(instance.database);
 
@@ -268,6 +268,7 @@ export async function initWorkers(): Promise<{
 			eventRepositroy,
 			permissionService,
 			userService,
+			productService,
 			instance.queues?.[SignUpQueueName],
 		);
 

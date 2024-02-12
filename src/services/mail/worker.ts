@@ -2,7 +2,8 @@ import type { Booking } from "@prisma/client";
 import type { Job, Processor } from "bullmq";
 import { DateTime } from "luxon";
 import { env } from "~/config.js";
-import type { Event } from "~/domain/events.js";
+import type { InternalServerError, KnownDomainError } from "~/domain/errors.js";
+import type { EventType } from "~/domain/events/index.js";
 import type { StudyProgram, User } from "~/domain/users.js";
 import type { Queue } from "~/lib/bullmq/queue.js";
 import type { Worker } from "~/lib/bullmq/worker.js";
@@ -15,11 +16,14 @@ export type UserService = {
 };
 
 export type EventService = {
-	get(id: string): Promise<Event>;
+	get(id: string): Promise<EventType>;
 };
 
 export type CabinService = {
-	getBooking(by: { id: string }): ResultAsync<{ booking: Booking }>;
+	getBooking(by: { id: string }): ResultAsync<
+		{ booking: Booking },
+		KnownDomainError | InternalServerError
+	>;
 };
 
 type MailService = {

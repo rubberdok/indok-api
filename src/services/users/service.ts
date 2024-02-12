@@ -10,7 +10,7 @@ import {
 	type User,
 	newStudyProgram,
 } from "~/domain/users.js";
-import type { Context } from "../context.js";
+import type { Context } from "../../lib/context.js";
 import type { EmailQueueDataType } from "../mail/worker.js";
 import { createUserSchema } from "./validation.js";
 

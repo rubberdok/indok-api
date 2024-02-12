@@ -55,6 +55,15 @@ model StudyProgram {
   featurePermissions FeaturePermission[] @default([])
 }
 
+enum EventType {
+  /// A regular event without sign ups
+  BASIC
+  /// A regular event with sign ups
+  SIGN_UPS
+  /// An event with ticket sales
+  TICKETS
+}
+
 // Events
 model Event {
   id             String        @id @default(uuid()) @db.Uuid
@@ -65,6 +74,7 @@ model Event {
   startAt        DateTime
   endAt          DateTime
   location       String        @default("")
+  type           EventType
   // If an organization is deleted, we keep the event and set the organizationId to null
   // as it could be related to payments and other stuff.
   organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
@@ -126,6 +136,8 @@ model EventSignUp {
   eventId             String              @db.Uuid
   participationStatus ParticipationStatus @default(CONFIRMED)
   active              Boolean             @default(true)
+  orderId             String?             @unique @db.Uuid
+  order               Order?              @relation(fields: [orderId], references: [id], onDelete: SetNull)
 
   @@unique([userId, eventId, active])
 }
@@ -277,6 +289,7 @@ model Order {
   version         Int                @default(0)
   paymentStatus   OrderPaymentStatus @default(PENDING)
   attempt         Int                @default(0)
+  eventSignUp     EventSignUp?
 }
 
 enum OrderPaymentStatus {

@@ -107,12 +107,13 @@ export class PermissionService {
 	 * @returns
 	 */
 	async hasRole(data: {
-		userId: string;
+		userId?: string | null;
 		organizationId: string;
 		role: Role;
 		featurePermission?: FeaturePermission;
 	}): Promise<boolean> {
 		const { userId, organizationId, role, featurePermission } = data;
+		if (!userId) return false;
 
 		const { isSuperUser } = await this.isSuperUser(userId);
 		if (isSuperUser) return true;

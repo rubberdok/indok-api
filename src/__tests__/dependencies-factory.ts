@@ -78,21 +78,24 @@ export function makeTestServices(
 		permissionService,
 		mailService,
 	);
+	const products = ProductService({
+		vippsFactory: mockDeep<typeof Client>(),
+		paymentProcessingQueue: mockDeep<PaymentProcessingQueueType>(),
+		productRepository,
+		config: {
+			useTestMode: true,
+			returnUrl: env.SERVER_URL,
+		},
+	});
 	const eventService = new EventService(
 		eventRepository,
 		permissionService,
 		userService,
+		products,
 		mockDeep<SignUpQueueType>(),
 	);
 	const authService = new AuthService(userService, openIdClient);
-	const products = new ProductService(
-		mockDeep<typeof Client>(),
-		mockDeep<PaymentProcessingQueueType>(),
-		productRepository,
-		{
-			useTestMode: true,
-		},
-	);
+
 	const services: Services = {
 		users: userService,
 		auth: authService,

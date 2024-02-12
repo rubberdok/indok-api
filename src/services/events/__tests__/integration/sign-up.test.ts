@@ -1,23 +1,19 @@
+import assert from "assert";
 import { faker } from "@faker-js/faker";
-import {
-	type Organization,
-	ParticipationStatus,
-	type User as PrismaUser,
-} from "@prisma/client";
+import { type Organization, ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
 import { InvalidArgumentError } from "~/domain/errors.js";
-import type { User } from "~/domain/users.js";
+import { type User, newUserFromDSO } from "~/domain/users.js";
+import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
-import { makeMockContext } from "~/services/context.js";
 import type { EventService } from "../../service.js";
 import { makeDependencies } from "./dependencies-factory.js";
 
 describe("Event Sign Up", () => {
 	let eventService: EventService;
 
-	beforeAll(async () => {
+	beforeAll(() => {
 		({ eventService } = makeDependencies());
-		await prisma.organization.deleteMany({});
 	});
 
 	describe("signUp", () => {
@@ -31,37 +27,37 @@ describe("Event Sign Up", () => {
 			 * 4. Create a user to sign up for the event.
 			 */
 			const { organization, user } = await makeUserWithOrganizationMembership();
-			const event = await eventService.create(
-				user.id,
-				organization.id,
-				{
+			const ctx = makeMockContext(user);
+			const createEventResult = await eventService.create(ctx, {
+				event: {
 					name: faker.color.human(),
 					description: faker.lorem.paragraph(),
 					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 					endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
-				},
-				{
-					capacity: 1,
 					signUpsEnabled: true,
+					organizationId: organization.id,
+					capacity: 1,
 					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 					signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
-					slots: [
-						{
-							capacity: 1,
-						},
-					],
 				},
-			);
+				slots: [
+					{
+						capacity: 1,
+					},
+				],
+				type: "SIGN_UPS",
+			});
 
+			assert(createEventResult.ok);
 			/**
 			 * Act.
 			 *
 			 * 1. Sign up the user for the event.
 			 */
 			const actual = await eventService.signUp(
-				makeMockContext(),
+				ctx,
 				user.id,
-				event.id,
+				createEventResult.data.event.id,
 			);
 
 			/**
@@ -71,8 +67,85 @@ describe("Event Sign Up", () => {
 			 */
 			expect(actual.participationStatus).toEqual(ParticipationStatus.CONFIRMED);
 			expect(actual.userId).toEqual(user.id);
-			expect(actual.eventId).toEqual(event.id);
+			expect(actual.eventId).toEqual(createEventResult.data.event.id);
 			expect(actual.slotId).not.toBeNull();
+		});
+
+		it("should create an order for the event's product for a ticket event for a confirmed sign up", async () => {
+			/**
+			 * Arrange.
+			 *
+			 * 1. Create an organization to host the event.
+			 * 2. Create an event with capacity.
+			 * 3. Create a slot for the event with capacity.
+			 * 4. Create a user to sign up for the event.
+			 */
+			const { productService } = makeDependencies();
+			const { organization, user } = await makeUserWithOrganizationMembership({
+				isSuperUser: true,
+			});
+			const ctx = makeMockContext(user);
+			const createMerchantResult = await productService.merchants.create(ctx, {
+				clientId: faker.string.uuid(),
+				clientSecret: faker.string.uuid(),
+				name: faker.string.uuid(),
+				serialNumber: faker.string.uuid(),
+				subscriptionKey: faker.string.uuid(),
+			});
+			if (!createMerchantResult.ok) throw createMerchantResult.error;
+			const createEventResult = await eventService.create(ctx, {
+				event: {
+					name: faker.color.human(),
+					description: faker.lorem.paragraph(),
+					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
+					signUpsEnabled: true,
+					organizationId: organization.id,
+					capacity: 1,
+					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+					signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
+				},
+				slots: [
+					{
+						capacity: 1,
+					},
+				],
+				tickets: {
+					price: 100 * 300,
+					merchantId: createMerchantResult.data.merchant.id,
+				},
+				type: "TICKETS",
+			});
+
+			assert(createEventResult.ok);
+			/**
+			 * Act.
+			 *
+			 * 1. Sign up the user for the event.
+			 */
+			const actual = await eventService.signUp(
+				ctx,
+				user.id,
+				createEventResult.data.event.id,
+			);
+
+			/**
+			 * Assert.
+			 *
+			 * 1. User should be signed up for the event with status CONFIRMED
+			 * 2. There should be an order created for the user
+			 */
+			expect(actual.participationStatus).toEqual(ParticipationStatus.CONFIRMED);
+			assert(actual.orderId !== undefined && actual.orderId !== null);
+			const getOrder = await productService.orders.get(ctx, {
+				id: actual.orderId,
+			});
+
+			if (!getOrder.ok) throw getOrder.error;
+			const { order } = getOrder.data;
+			expect(order.userId).toEqual(user.id);
+			expect(order.attempt).toEqual(0);
+			expect(order.paymentStatus).toEqual("PENDING");
 		});
 
 		it("should sign up a user for an event with remaining capacity if there is a slot for their grade year", async () => {
@@ -87,28 +160,28 @@ describe("Event Sign Up", () => {
 			const { organization, user } = await makeUserWithOrganizationMembership({
 				graduationYear: DateTime.now().plus({ years: 3 }).year,
 			});
-			const event = await eventService.create(
-				user.id,
-				organization.id,
-				{
+			const ctx = makeMockContext(user);
+			const createEventResult = await eventService.create(ctx, {
+				type: "SIGN_UPS",
+				event: {
+					organizationId: organization.id,
 					name: faker.color.human(),
 					description: faker.lorem.paragraph(),
 					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 					endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
-				},
-				{
-					capacity: 1,
 					signUpsEnabled: true,
+					capacity: 1,
 					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 					signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
-					slots: [
-						{
-							gradeYears: [1, 2, 3],
-							capacity: 1,
-						},
-					],
 				},
-			);
+				slots: [
+					{
+						gradeYears: [1, 2, 3],
+						capacity: 1,
+					},
+				],
+			});
+			assert(createEventResult.ok);
 
 			/**
 			 * Act.
@@ -116,9 +189,9 @@ describe("Event Sign Up", () => {
 			 * 1. Sign up the user for the event.
 			 */
 			const actual = await eventService.signUp(
-				makeMockContext(),
+				ctx,
 				user.id,
-				event.id,
+				createEventResult.data.event.id,
 			);
 
 			/**
@@ -128,7 +201,7 @@ describe("Event Sign Up", () => {
 			 */
 			expect(actual.participationStatus).toEqual(ParticipationStatus.CONFIRMED);
 			expect(actual.userId).toEqual(user.id);
-			expect(actual.eventId).toEqual(event.id);
+			expect(actual.eventId).toEqual(createEventResult.data.event.id);
 			expect(actual.slotId).not.toBeNull();
 		});
 
@@ -144,28 +217,29 @@ describe("Event Sign Up", () => {
 			const { organization, user } = await makeUserWithOrganizationMembership({
 				graduationYear: DateTime.now().plus({ years: 1 }).year,
 			});
-			const event = await eventService.create(
-				user.id,
-				organization.id,
-				{
+			const ctx = makeMockContext(user);
+			const event = await eventService.create(ctx, {
+				event: {
+					organizationId: organization.id,
 					name: faker.color.human(),
 					description: faker.lorem.paragraph(),
 					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 					endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
-				},
-				{
-					capacity: 1,
 					signUpsEnabled: true,
+					capacity: 1,
 					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 					signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
-					slots: [
-						{
-							gradeYears: [1],
-							capacity: 1,
-						},
-					],
 				},
-			);
+				slots: [
+					{
+						gradeYears: [1],
+						capacity: 1,
+					},
+				],
+				type: "SIGN_UPS",
+			});
+
+			assert(event.ok);
 
 			/**
 			 * Act.
@@ -173,9 +247,9 @@ describe("Event Sign Up", () => {
 			 * 1. Sign up the user for the event.
 			 */
 			const actual = await eventService.signUp(
-				makeMockContext(),
+				ctx,
 				user.id,
-				event.id,
+				event.data.event.id,
 			);
 
 			/**
@@ -187,7 +261,7 @@ describe("Event Sign Up", () => {
 				ParticipationStatus.ON_WAITLIST,
 			);
 			expect(actual.userId).toEqual(user.id);
-			expect(actual.eventId).toEqual(event.id);
+			expect(actual.eventId).toEqual(event.data.event.id);
 			expect(actual.slotId).toBeNull();
 		});
 
@@ -223,29 +297,30 @@ describe("Event Sign Up", () => {
 					 */
 					const { organization, user } =
 						await makeUserWithOrganizationMembership();
-					const event = await eventService.create(
-						user.id,
-						organization.id,
-						{
+					const ctx = makeMockContext(user);
+					const event = await eventService.create(ctx, {
+						type: "SIGN_UPS",
+						event: {
+							organizationId: organization.id,
 							name: faker.color.human(),
 							description: faker.lorem.paragraph(),
 							startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 							endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
-						},
-						{
-							capacity: eventCapacity,
 							signUpsEnabled: true,
+							capacity: eventCapacity,
 							signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 							signUpsEndAt: DateTime.now()
 								.plus({ days: 1, hours: 2 })
 								.toJSDate(),
-							slots: [
-								{
-									capacity: slotCapacity,
-								},
-							],
 						},
-					);
+						slots: [
+							{
+								capacity: slotCapacity,
+							},
+						],
+					});
+
+					if (!event.ok) throw event.error;
 
 					/**
 					 * Act.
@@ -253,9 +328,9 @@ describe("Event Sign Up", () => {
 					 * 1. Sign up the user for the event.
 					 */
 					const actual = await eventService.signUp(
-						makeMockContext(),
+						ctx,
 						user.id,
-						event.id,
+						event.data.event.id,
 					);
 
 					/**
@@ -267,7 +342,7 @@ describe("Event Sign Up", () => {
 						ParticipationStatus.ON_WAITLIST,
 					);
 					expect(actual.userId).toEqual(user.id);
-					expect(actual.eventId).toEqual(event.id);
+					expect(actual.eventId).toEqual(event.data.event.id);
 					expect(actual.slotId).toBeNull();
 				},
 			);
@@ -287,27 +362,27 @@ describe("Event Sign Up", () => {
 			const concurrentUsers = 500;
 			const { user, organization } = await makeUserWithOrganizationMembership();
 
-			const event = await eventService.create(
-				user.id,
-				organization.id,
-				{
+			const event = await eventService.create(makeMockContext(user), {
+				event: {
+					organizationId: organization.id,
 					name: faker.color.human(),
 					description: faker.lorem.paragraph(),
 					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 					endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
-				},
-				{
-					capacity: concurrentUsers,
 					signUpsEnabled: true,
+					capacity: concurrentUsers,
 					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 					signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
-					slots: [
-						{
-							capacity: concurrentUsers,
-						},
-					],
 				},
-			);
+				slots: [
+					{
+						capacity: concurrentUsers,
+					},
+				],
+				type: "SIGN_UPS",
+			});
+
+			assert(event.ok);
 
 			await prisma.user.createMany({
 				data: Array(concurrentUsers)
@@ -324,7 +399,11 @@ describe("Event Sign Up", () => {
 			 * Sign up all users for the event.
 			 */
 			const promises = users.map((user) =>
-				eventService.signUp(makeMockContext(), user.id, event.id),
+				eventService.signUp(
+					makeMockContext({ ...user, canUpdateYear: true }),
+					user.id,
+					event.data.event.id,
+				),
 			);
 			const actual = await Promise.all(promises);
 
@@ -344,12 +423,12 @@ describe("Event Sign Up", () => {
 			).toBe(true);
 
 			const updatedEvent = await prisma.event.findUniqueOrThrow({
-				where: { id: event.id },
+				where: { id: event.data.event.id },
 			});
 			expect(updatedEvent.remainingCapacity).toEqual(0);
 
 			const updatedSlot = await prisma.eventSlot.findFirstOrThrow({
-				where: { eventId: event.id },
+				where: { eventId: event.data.event.id },
 			});
 			expect(updatedSlot.remainingCapacity).toEqual(0);
 		});
@@ -366,28 +445,27 @@ describe("Event Sign Up", () => {
 			const concurrentUsers = 500;
 			const capacity = 50;
 			const { user, organization } = await makeUserWithOrganizationMembership();
-
-			const event = await eventService.create(
-				user.id,
-				organization.id,
-				{
+			const ctx = makeMockContext(user);
+			const event = await eventService.create(ctx, {
+				event: {
+					organizationId: organization.id,
 					name: faker.color.human(),
 					description: faker.lorem.paragraph(),
 					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 					endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
-				},
-				{
-					capacity,
 					signUpsEnabled: true,
+					capacity,
 					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 					signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
-					slots: [
-						{
-							capacity,
-						},
-					],
 				},
-			);
+				slots: [
+					{
+						capacity,
+					},
+				],
+				type: "SIGN_UPS",
+			});
+			assert(event.ok);
 
 			await prisma.user.createMany({
 				data: Array(concurrentUsers)
@@ -404,7 +482,11 @@ describe("Event Sign Up", () => {
 			 * Sign up all users for the event.
 			 */
 			const promises = users.map((user) =>
-				eventService.signUp(makeMockContext(), user.id, event.id),
+				eventService.signUp(
+					makeMockContext({ ...user, canUpdateYear: true }),
+					user.id,
+					event.data.event.id,
+				),
 			);
 			const actual = await Promise.all(promises);
 
@@ -430,12 +512,12 @@ describe("Event Sign Up", () => {
 			).toEqual(concurrentUsers - capacity);
 
 			const updatedEvent = await prisma.event.findUniqueOrThrow({
-				where: { id: event.id },
+				where: { id: event.data.event.id },
 			});
 			expect(updatedEvent.remainingCapacity).toEqual(0);
 
 			const updatedSlot = await prisma.eventSlot.findFirstOrThrow({
-				where: { eventId: event.id },
+				where: { eventId: event.data.event.id },
 			});
 			expect(updatedSlot.remainingCapacity).toEqual(0);
 		});
@@ -449,32 +531,32 @@ describe("Event Sign Up", () => {
 			 * 3. Create a user to sign up for the event.
 			 */
 			const { organization, user } = await makeUserWithOrganizationMembership();
-			const event = await eventService.create(
-				user.id,
-				organization.id,
-				{
+			const ctx = makeMockContext(user);
+			const event = await eventService.create(ctx, {
+				event: {
+					organizationId: organization.id,
 					name: faker.word.adjective(),
 					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-				},
-				{
 					signUpsEnabled: false,
 					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 					signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 					capacity: 1,
-					slots: [
-						{
-							capacity: 1,
-						},
-					],
 				},
-			);
+				slots: [
+					{
+						capacity: 1,
+					},
+				],
+				type: "SIGN_UPS",
+			});
+			assert(event.ok);
 
 			/**
 			 * Act
 			 *
 			 * Sign up for the event with sign ups disabled.
 			 */
-			const signUp = eventService.signUp(makeMockContext(), user.id, event.id);
+			const signUp = eventService.signUp(ctx, user.id, event.data.event.id);
 
 			/**
 			 * Assert
@@ -493,32 +575,32 @@ describe("Event Sign Up", () => {
 			 * 3. Create a user to sign up for the event.
 			 */
 			const { organization, user } = await makeUserWithOrganizationMembership();
-			const event = await eventService.create(
-				user.id,
-				organization.id,
-				{
+			const ctx = makeMockContext(user);
+			const event = await eventService.create(ctx, {
+				event: {
+					organizationId: organization.id,
 					name: faker.word.adjective(),
 					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-				},
-				{
 					signUpsEnabled: true,
 					signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 					signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
 					capacity: 1,
-					slots: [
-						{
-							capacity: 1,
-						},
-					],
 				},
-			);
+				slots: [
+					{
+						capacity: 1,
+					},
+				],
+				type: "SIGN_UPS",
+			});
+			assert(event.ok);
 
 			/**
 			 * Act
 			 *
 			 * Sign up for the event with sign ups disabled.
 			 */
-			const signUp = eventService.signUp(makeMockContext(), user.id, event.id);
+			const signUp = eventService.signUp(ctx, user.id, event.data.event.id);
 
 			/**
 			 * Assert
@@ -542,17 +624,19 @@ function getCreateUserData() {
 
 async function makeUserWithOrganizationMembership(
 	userData: Partial<User> = {},
-): Promise<{ user: PrismaUser; organization: Organization }> {
-	const user = await prisma.user.create({
-		data: {
-			firstName: faker.person.firstName(),
-			lastName: faker.person.lastName(),
-			username: faker.string.sample(30),
-			feideId: faker.string.uuid(),
-			email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
-			...userData,
-		},
-	});
+): Promise<{ user: User; organization: Organization }> {
+	const user = newUserFromDSO(
+		await prisma.user.create({
+			data: {
+				firstName: faker.person.firstName(),
+				lastName: faker.person.lastName(),
+				username: faker.string.sample(30),
+				feideId: faker.string.uuid(),
+				email: faker.internet.exampleEmail({ firstName: faker.string.uuid() }),
+				...userData,
+			},
+		}),
+	);
 	const organization = await prisma.organization.create({
 		data: {
 			name: faker.string.sample(20),
