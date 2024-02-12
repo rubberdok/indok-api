@@ -383,24 +383,44 @@ function buildPayments({
 			} | null,
 		): ResultAsync<
 			{ paymentAttempts: PaymentAttemptType[]; total: number },
-			InternalServerError | PermissionDeniedError
+			InternalServerError | PermissionDeniedError | UnauthorizedError
 		> {
-			if (!ctx.user?.isSuperUser) {
+			if (!ctx.user) {
 				return {
 					ok: false,
-					error: new PermissionDeniedError("You must be a super user"),
+					error: new UnauthorizedError(
+						"You must be logged in to get payment attempts",
+					),
 				};
 			}
 
-			const { userId, productId, orderId } = params ?? {};
-			const findManyPaymentAttemptsResult =
-				await productRepository.findManyPaymentAttempts({
-					userId: userId ?? undefined,
-					productId: productId ?? undefined,
-					orderId: orderId ?? undefined,
-				});
+			if (ctx.user.isSuperUser) {
+				return await productRepository.findManyPaymentAttempts(
+					params
+						? {
+								userId: params.userId ?? undefined,
+								productId: params.productId ?? undefined,
+								orderId: params.orderId ?? undefined,
+						  }
+						: undefined,
+				);
+			}
 
-			return findManyPaymentAttemptsResult;
+			const { userId, productId, orderId } = params ?? {};
+			if (userId && userId !== ctx.user.id) {
+				return {
+					ok: false,
+					error: new PermissionDeniedError(
+						"You are not allowed to view payment attempts for other users",
+					),
+				};
+			}
+
+			return await productRepository.findManyPaymentAttempts({
+				userId: ctx.user.id,
+				productId: productId ?? undefined,
+				orderId: orderId ?? undefined,
+			});
 		},
 	} as const;
 }

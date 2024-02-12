@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker";
 import { mock } from "jest-mock-extended";
-import { UnauthorizedError } from "~/domain/errors.js";
+import { NotFoundError, UnauthorizedError } from "~/domain/errors.js";
 import type { ProductType } from "~/domain/products.js";
 import type { User } from "~/domain/users.js";
 import { makeMockContext } from "~/lib/context.js";
@@ -59,6 +59,39 @@ describe("ProductService", () => {
 			const result = await productService.products.findMany(ctx);
 
 			expect(result.ok).toBe(true);
+		});
+	});
+
+	describe("#get", () => {
+		it("should return a product", async () => {
+			const ctx = makeMockContext(mock<User>({ isSuperUser: false }));
+
+			productRepository.getProduct.mockResolvedValueOnce({
+				product: mock<ProductType>({}),
+			});
+
+			const result = await productService.products.get(ctx, {
+				id: faker.string.uuid(),
+			});
+
+			expect(result.ok).toBe(true);
+		});
+
+		it("should return NotFound if it doesn't exist", async () => {
+			const ctx = makeMockContext(mock<User>({ isSuperUser: false }));
+
+			productRepository.getProduct.mockResolvedValueOnce({
+				product: null,
+			});
+
+			const result = await productService.products.get(ctx, {
+				id: faker.string.uuid(),
+			});
+
+			expect(result).toEqual({
+				ok: false,
+				error: expect.any(NotFoundError),
+			});
 		});
 	});
 });

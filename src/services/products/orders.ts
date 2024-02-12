@@ -100,18 +100,30 @@ function buildOrders({ productRepository }: BuildProductsDependencies) {
 			params?: { userId?: string; productId?: string },
 		): ResultAsync<
 			{ orders: OrderType[]; total: number },
-			InternalServerError | PermissionDeniedError
+			InternalServerError | PermissionDeniedError | UnauthorizedError
 		> {
-			if (!ctx.user?.isSuperUser) {
+			if (ctx.user === null) {
 				return {
 					ok: false,
-					error: new PermissionDeniedError(
-						"You must be a super user to get orders",
-					),
+					error: new UnauthorizedError("You must be logged in to get orders"),
+				};
+			}
+			if (ctx.user.isSuperUser) {
+				return await productRepository.findManyOrders(params);
+			}
+
+			const { userId, productId } = params ?? {};
+			if (userId && userId !== ctx.user.id) {
+				return {
+					ok: false,
+					error: new PermissionDeniedError("You can only get your own orders"),
 				};
 			}
 
-			return await productRepository.findManyOrders(params);
+			return await productRepository.findManyOrders({
+				userId: ctx.user.id,
+				productId,
+			});
 		},
 	} as const;
 }
