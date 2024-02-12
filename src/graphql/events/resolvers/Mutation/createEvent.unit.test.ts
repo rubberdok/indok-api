@@ -1,7 +1,7 @@
 import { ApolloServerErrorCode } from "@apollo/server/errors";
 import { faker } from "@faker-js/faker";
 import { mock } from "jest-mock-extended";
-import type { EventTypeFromDSO } from "~/domain/events/event.js";
+import type { EventType } from "~/domain/events/event.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
@@ -26,7 +26,7 @@ describe("Event mutations", () => {
 			eventService.create.mockResolvedValue({
 				ok: true,
 				data: {
-					event: mock<EventTypeFromDSO>({
+					event: mock<EventType>({
 						id: faker.string.uuid(),
 						name: faker.person.fullName(),
 						description: faker.lorem.paragraph(),
@@ -81,7 +81,7 @@ describe("Event mutations", () => {
 				}),
 				{
 					type: "BASIC",
-					data: {
+					event: {
 						name: expect.any(String),
 						organizationId: expect.any(String),
 						startAt: expect.any(Date),
@@ -109,7 +109,7 @@ describe("Event mutations", () => {
 			eventService.create.mockResolvedValue({
 				ok: true,
 				data: {
-					event: mock<EventTypeFromDSO>({
+					event: mock<EventType>({
 						id: faker.string.uuid(),
 						name: faker.person.fullName(),
 						description: faker.lorem.paragraph(),
@@ -166,17 +166,15 @@ describe("Event mutations", () => {
 			expect(errors).toBeUndefined();
 			expect(eventService.create).toHaveBeenCalledWith(expect.any(Object), {
 				type: "SIGN_UPS",
-				data: expect.objectContaining({
+				event: expect.objectContaining({
 					name: expect.any(String),
 					startAt: expect.any(Date),
 					signUpsEnabled: true,
-					signUpDetails: {
-						signUpsStartAt: expect.any(Date),
-						signUpsEndAt: expect.any(Date),
-						capacity: 1,
-						slots: [{ capacity: 1 }],
-					},
+					signUpsStartAt: expect.any(Date),
+					signUpsEndAt: expect.any(Date),
+					capacity: 1,
 				}),
+				slots: [{ capacity: 1 }],
 			});
 		});
 
@@ -199,7 +197,7 @@ describe("Event mutations", () => {
 			eventService.create.mockResolvedValue({
 				ok: true,
 				data: {
-					event: mock<EventTypeFromDSO>({
+					event: mock<EventType>({
 						id: faker.string.uuid(),
 						name: faker.person.fullName(),
 						description: faker.lorem.paragraph(),

@@ -5,13 +5,13 @@ import type { MutationResolvers } from "./../../../types.generated.js";
 export const createEvent: NonNullable<MutationResolvers["createEvent"]> =
 	async (_parent, { data }, ctx) => {
 		const { type, signUpDetails, ...event } = data.event;
-		const tickets = signUpDetails?.tickets;
+		const { tickets } = signUpDetails ?? {};
 
 		let createEventResult: Awaited<ReturnType<typeof ctx.events.create>>;
 		if (type === "BASIC") {
 			createEventResult = await ctx.events.create(ctx, {
 				type: "BASIC",
-				data: event,
+				event: event,
 			});
 		} else if (!signUpDetails) {
 			throw new GraphQLError(
@@ -21,10 +21,13 @@ export const createEvent: NonNullable<MutationResolvers["createEvent"]> =
 		} else if (type === "SIGN_UPS") {
 			createEventResult = await ctx.events.create(ctx, {
 				type: "SIGN_UPS",
-				data: {
+				event: {
 					...event,
-					signUpDetails,
+					capacity: signUpDetails.capacity,
+					signUpsEndAt: signUpDetails.signUpsEndAt,
+					signUpsStartAt: signUpDetails.signUpsStartAt,
 				},
+				slots: signUpDetails.slots,
 			});
 		} else if (!tickets) {
 			throw new GraphQLError(
@@ -34,14 +37,14 @@ export const createEvent: NonNullable<MutationResolvers["createEvent"]> =
 		} else if (type === "TICKETS") {
 			createEventResult = await ctx.events.create(ctx, {
 				type: "TICKETS",
-				data: {
+				event: {
 					...event,
-					signUpDetails,
-					price: {
-						value: tickets.price,
-						merchantId: tickets.merchantId,
-					},
+					capacity: signUpDetails.capacity,
+					signUpsEndAt: signUpDetails.signUpsEndAt,
+					signUpsStartAt: signUpDetails.signUpsStartAt,
 				},
+				slots: signUpDetails.slots,
+				tickets: tickets,
 			});
 		} else {
 			throw new GraphQLError("Unexpected invalid input", {

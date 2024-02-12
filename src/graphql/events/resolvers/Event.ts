@@ -1,5 +1,5 @@
 import { AuthenticationError } from "~/domain/errors.js";
-import { isSignUpEvent } from "~/domain/events/event.js";
+import { Event as DomainEvent } from "~/domain/events/index.js";
 import { assertIsAuthenticated } from "~/graphql/auth.js";
 import type { EventResolvers } from "./../../types.generated.js";
 export const Event: EventResolvers = {
@@ -30,11 +30,16 @@ export const Event: EventResolvers = {
 	},
 
 	signUpDetails: (event) => {
-		if (!isSignUpEvent(event)) return null;
-		return event.signUpDetails;
+		if (!DomainEvent.isSignUpEvent(event)) return null;
+		return {
+			capacity: event.capacity,
+			remainingCapacity: event.remainingCapacity,
+			signUpsStartAt: event.signUpsStartAt,
+			signUpsEndAt: event.signUpsEndAt,
+		};
 	},
-	categories: (event) => {
-		return event.categories;
+	categories: (event, _args, ctx) => {
+		return ctx.events.getCategories(ctx, { eventId: event.id });
 	},
 	contactEmail: ({ contactEmail }) => {
 		return contactEmail;

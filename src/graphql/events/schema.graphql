@@ -173,7 +173,7 @@ input EventData {
   """
   categories is a list of cateogry IDs to which the event belongs
   """
-  categories: [ID!]
+  categories: [EventCategoryInput!]
   """
   The event type
   - BASIC has no sign ups, and no tickets
@@ -195,6 +195,10 @@ input EventData {
   false
   """
   signUpsEnabled: Boolean
+}
+
+input EventCategoryInput {
+  id: ID!
 }
 
 input CreateEventSlot {
@@ -333,7 +337,33 @@ input UpdateEventInput {
   """
   categories is a list of cateogry IDs to which the event belongs
   """
-  categories: [ID!]
+  categories: [UpdateCategoriesInput!]
+  slots: UpdateSlotsInput
+}
+
+input UpdateSlotsInput {
+  create: [CreateSlotInput!]
+  update: [UpdateSlotInput!]
+  delete: [DeleteSlotInput!]
+}
+
+input CreateSlotInput {
+  capacity: Int!
+  gradeYears: [Int!]
+}
+
+input UpdateSlotInput {
+  id: ID!
+  capacity: Int
+  gradeYears: [Int!]
+}
+
+input DeleteSlotInput {
+  id: ID!
+}
+
+input UpdateCategoriesInput {
+  id: ID!
 }
 
 input CreateEventCategoryInput {

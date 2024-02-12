@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker";
 import { mock } from "jest-mock-extended";
-import type { Category } from "~/domain/events/event.js";
+import type { CategoryType } from "~/domain/events/index.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
@@ -10,7 +10,7 @@ describe("Event mutations", () => {
 			const { client, eventService, createMockContext } =
 				createMockApolloServer();
 			eventService.deleteCategory.mockResolvedValue(
-				mock<Category>({
+				mock<CategoryType>({
 					id: faker.string.uuid(),
 					name: faker.string.sample(20),
 				}),
