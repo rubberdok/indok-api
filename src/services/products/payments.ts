@@ -55,11 +55,10 @@ function buildPayments({
 		client: ReturnType<typeof Client>,
 		merchant: MerchantType,
 	): Promise<string> {
-		const accessToken = await client.auth.getToken({
-			clientId: merchant.clientId,
-			clientSecret: merchant.clientSecret,
-			subscriptionKey: merchant.subscriptionKey,
-		});
+		const accessToken = await client.auth.getToken(
+			merchant.clientId,
+			merchant.clientSecret,
+		);
 
 		if (!accessToken.ok) {
 			ctx.log.error("Failed to fetch vipps access token");
