@@ -545,7 +545,14 @@ enum OrderPaymentStatus {
 }
 
 input OrdersInput {
+  """Only get orders for the given product ID."""
   productId: ID
+
+  """
+  Only get orders for the given user ID. Requires super user status,
+  or the user ID to match the user ID of the order. Omit to default to
+  the current user.
+  """
   userId: ID
 }
 
@@ -607,8 +614,17 @@ enum PaymentAttemptState {
 }
 
 input PaymentAttemptsInput {
+  """Only get payment atttempts for the given order ID."""
   orderId: ID
+
+  """Only get payment attempts for the given product ID."""
   productId: ID
+
+  """
+  Only get payment attempts for the given user ID. Requires super user status,
+  or the user ID to match the user ID of the payment attempt. Omit to default to
+  the current user.
+  """
   userId: ID
 }
 
@@ -706,10 +722,20 @@ type Query {
   hasFeaturePermission(data: HasFeaturePermissionInput!): HasFeaturePermissionResponse!
   listing(data: ListingInput!): ListingResponse!
   listings: ListingsResponse!
+
+  """
+  Get orders, filtered by the given input. Unless the user is a super user, only
+  orders for the current user will be returned.
+  """
   orders(data: OrdersInput): OrdersResponse!
 
   """Get all organizations"""
   organizations: OrganizationsResponse
+
+  """
+  Get payment attempts, filtered by the given input. Unless the user is a super user, only
+  payment attempts for the current user will be returned.
+  """
   paymentAttempts(data: PaymentAttemptsInput): PaymentAttemptsResponse!
   products: ProductResponse!
   serverTime: ServerTimeResponse!
