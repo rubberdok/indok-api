@@ -48,8 +48,8 @@ dependencies:
     specifier: 7.100.1
     version: 7.100.1
   '@vippsmobilepay/sdk':
-    specifier: ^1.0.0
-    version: 1.0.0
+    specifier: ^1.2.0
+    version: 1.2.0
   avvio:
     specifier: ^8.3.0
     version: 8.3.0
@@ -3130,8 +3130,8 @@ packages:
       '@types/yargs-parser': 21.0.3
     dev: true
 
-  /@vippsmobilepay/sdk@1.0.0:
-    resolution: {integrity: sha512-0Bw/xJoWCgDjN3i1w27+1N6b6+Np4ZQ0xMT6sNttlrJ0SeEBxBxt6fExVqsvTThnrrClXWhvi9BiD3o7cK2JEg==}
+  /@vippsmobilepay/sdk@1.2.0:
+    resolution: {integrity: sha512-ErgiwTkB7EQgrKUyOYUIgcrhBZq3ASFCtt8KwT9CSZUFLUPMqhQHk+wa9MQbzPCFRRKoPaJkFDwL4eVN+ChHPA==}
     dev: false
 
   /@whatwg-node/events@0.0.3:

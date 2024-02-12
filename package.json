@@ -90,7 +90,7 @@
 		"@sentry/node": "^7.100.1",
 		"@sentry/tracing": "7.100.1",
 		"avvio": "^8.3.0",
-		"@vippsmobilepay/sdk": "^1.0.0",
+		"@vippsmobilepay/sdk": "^1.2.0",
 		"body-parser": "^1.20.2",
 		"bullmq": "^5.1.10",
 		"connect-redis": "^7.1.1",
