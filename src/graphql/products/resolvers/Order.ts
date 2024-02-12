@@ -11,7 +11,7 @@ export const Order: OrderResolvers = {
 		return getProductResult.data.product;
 	},
 	user: (order, _args, ctx) => {
-		if (order.userId === ctx.user?.id) {
+		if (ctx.user && order.userId === ctx.user.id) {
 			return ctx.user;
 		}
 		return null;
