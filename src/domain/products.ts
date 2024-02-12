@@ -155,8 +155,6 @@ const Order = {
 export { PaymentAttemptFromDSO, Product, Order };
 export type {
 	MerchantType,
-	NewProductParams,
-	NewProductReturn,
 	OrderPaymentStatus,
 	OrderType,
 	PaymentAttempt,

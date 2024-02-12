@@ -599,7 +599,7 @@ type EventUpdateFn<
 	categories?: CategoryType[];
 }) => ResultAsync<UpdateEvenFnReturnType, TError>;
 
-export { Event, AlreadySignedUpError, InvalidCapacityError, EventTypeEnum };
+export { Event, AlreadySignedUpError, EventTypeEnum };
 export type {
 	EventType,
 	TicketEvent,

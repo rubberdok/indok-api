@@ -1,22 +1,6 @@
-import type { FastifyPluginAsync, FastifyRequest } from "fastify";
+import type { FastifyPluginAsync } from "fastify";
 import { env } from "~/config.js";
 import { InvalidArgumentError, UnauthorizedError } from "~/domain/errors.js";
-import type { User } from "~/domain/users.js";
-
-export interface AuthService {
-	authorizationUrl(
-		req: FastifyRequest,
-		redirect?: string | null,
-		kind?: "login" | "studyProgram",
-	): string;
-	userLoginCallback(req: FastifyRequest, data: { code: string }): Promise<User>;
-	studyProgramCallback(
-		req: FastifyRequest,
-		data: { code: string },
-	): Promise<User>;
-	login(req: FastifyRequest, user: User): Promise<User>;
-	logout(req: FastifyRequest): Promise<void>;
-}
 
 function assertValidRedirectUrl(url: string): void {
 	const parsedUrl = new URL(url);

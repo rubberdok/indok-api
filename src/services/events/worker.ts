@@ -26,13 +26,7 @@ type SignUpWorkerType = Worker<
 	SignUpQueueNameType
 >;
 
-export type {
-	SignUpQueueDataType,
-	SignUpQueueNameType,
-	SignUpQueueReturnType,
-	SignUpQueueType,
-	SignUpWorkerType,
-};
+export type { SignUpQueueType, SignUpWorkerType };
 
 const SignUpQueueName = "sign-up" as const;
 

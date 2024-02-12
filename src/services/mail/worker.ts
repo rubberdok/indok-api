@@ -173,11 +173,6 @@ function getEmailHandler(dependencies: {
 	};
 }
 
-export type {
-	EmailQueueNameType,
-	EmailQueueType,
-	EmailWorkerType,
-	EmailQueueDataType,
-};
+export type { EmailQueueType, EmailWorkerType, EmailQueueDataType };
 
-export { EmailHandler, getEmailHandler };
+export { getEmailHandler };
