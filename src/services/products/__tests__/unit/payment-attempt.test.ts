@@ -264,6 +264,32 @@ describe("ProductService", () => {
 			});
 		});
 
+		it("should fail with InvalidArgumentError if the order is reserved", async () => {
+			productRepository.getOrder.mockResolvedValueOnce({
+				ok: true,
+				data: {
+					order: mock<OrderType>({
+						paymentStatus: "RESERVED",
+					}),
+				},
+			});
+
+			const result = await productService.payments.initiatePaymentAttempt(
+				makeMockContext(mock<User>({})),
+				{
+					orderId: faker.string.uuid(),
+				},
+			);
+
+			expect(result).toEqual({
+				ok: false,
+				error: expect.objectContaining({
+					name: "InvalidArgumentError",
+					description: expect.stringContaining("refunded"),
+				}),
+			});
+		});
+
 		it("should fail with NotFoundError if the related product does not exist", async () => {
 			productRepository.getOrder.mockResolvedValueOnce({
 				ok: true,

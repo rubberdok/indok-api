@@ -1,6 +1,6 @@
-import { fail } from "assert";
+import assert, { fail } from "assert";
 import { faker } from "@faker-js/faker";
-import { InvalidArgumentError } from "~/domain/errors.js";
+import { InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
 import { makeDependencies } from "./dependencies.js";
 
 describe("productRepository", () => {
@@ -118,6 +118,17 @@ describe("productRepository", () => {
 
 				if (!actual.ok) throw actual.error;
 				expect(actual.data.merchant).toEqual(merchant);
+			});
+
+			it("returns NotFoundError if the merchant does not exist", async () => {
+				const { productRepository } = await makeDependencies();
+
+				const actual = await productRepository.getMerchant({
+					merchantId: faker.string.uuid(),
+				});
+
+				assert(!actual.ok, "Expected NotFoundError to be returned");
+				expect(actual.error).toBeInstanceOf(NotFoundError);
 			});
 		});
 	});
