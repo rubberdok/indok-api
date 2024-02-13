@@ -66,8 +66,8 @@ dependencies:
     specifier: ^1.11.10
     version: 1.11.10
   dotenv:
-    specifier: ^16.4.2
-    version: 16.4.2
+    specifier: ^16.4.3
+    version: 16.4.3
   fastify:
     specifier: ^4.26.1
     version: 4.26.1
@@ -1844,7 +1844,7 @@ packages:
       '@whatwg-node/fetch': 0.9.14
       chalk: 4.1.2
       debug: 4.3.4(supports-color@5.5.0)
-      dotenv: 16.4.2
+      dotenv: 16.4.3
       graphql: 16.8.1
       graphql-request: 6.1.0(graphql@16.8.1)
       http-proxy-agent: 7.0.0
@@ -4263,7 +4263,7 @@ packages:
     hasBin: true
     dependencies:
       cross-spawn: 7.0.3
-      dotenv: 16.4.2
+      dotenv: 16.4.3
       dotenv-expand: 10.0.0
       minimist: 1.2.8
     dev: true
@@ -4273,8 +4273,8 @@ packages:
     engines: {node: '>=12'}
     dev: true
 
-  /dotenv@16.4.2:
-    resolution: {integrity: sha512-rZSSFxke7d9nYQ5NeMIwp5PP+f8wXgKNljpOb7KtH6SKW1cEqcXAz9VSJYVLKe7Jhup/gUYOkaeSVyK8GJ+nBg==}
+  /dotenv@16.4.3:
+    resolution: {integrity: sha512-II98GFrje5psQTSve0E7bnwMFybNLqT8Vu8JIFWRjsE3khyNUm/loZupuy5DVzG2IXf/ysxvrixYOQnM6mjD3A==}
     engines: {node: '>=12'}
 
   /dset@3.1.3:
