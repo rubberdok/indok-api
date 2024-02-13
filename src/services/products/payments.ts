@@ -81,6 +81,45 @@ function buildPayments({
 		return { ok: true, data: { token: accessToken.data.access_token } };
 	}
 
+	async function newClientWithToken(
+		ctx: Context,
+		merchantBy:
+			| { merchantId: string }
+			| { orderId: string }
+			| { productId: string },
+	): ResultAsync<
+		{ client: ReturnType<typeof Client>; token: string },
+		DownstreamServiceError | InternalServerError
+	> {
+		const vipps = await newClient(merchantBy);
+		if (!vipps.ok) {
+			ctx.log.error(
+				{ merchantBy },
+				"Failed to create Vipps client for merchant by",
+			);
+			return {
+				ok: false,
+				error: new InternalServerError(
+					"Failed to create Vipps client for merchant",
+					vipps.error,
+				),
+			};
+		}
+		const { client, merchant } = vipps.data;
+		const tokenResult = await getToken(ctx, client, merchant);
+		if (!tokenResult.ok) {
+			return tokenResult;
+		}
+		const { token } = tokenResult.data;
+		return {
+			ok: true,
+			data: {
+				client,
+				token,
+			},
+		};
+	}
+
 	function isFinalPaymentState(status: PaymentAttemptState): boolean {
 		return (
 			status === "FAILED" ||
@@ -99,27 +138,13 @@ function buildPayments({
 	> {
 		const { reference } = paymentAttempt;
 		ctx.log.info({ reference }, "Fetching latest payment status from Vipps");
-		const vipps = await newClient({ orderId: paymentAttempt.orderId });
-		if (!vipps.ok) {
-			ctx.log.error(
-				{ orderId: paymentAttempt.orderId },
-				"Failed to create Vipps client for merchant by order id",
-			);
-			return {
-				ok: false,
-				error: new InternalServerError(
-					"Failed to create Vipps client for merchant",
-					vipps.error,
-				),
-			};
+		const newClientResult = await newClientWithToken(ctx, {
+			orderId: paymentAttempt.orderId,
+		});
+		if (!newClientResult.ok) {
+			return newClientResult;
 		}
-		const { client, merchant } = vipps.data;
-		const tokenResult = await getToken(ctx, client, merchant);
-		if (!tokenResult.ok) {
-			return tokenResult;
-		}
-		const { token } = tokenResult.data;
-
+		const { client, token } = newClientResult.data;
 		const response = await client.payment.info(token, reference);
 
 		if (!response.ok) {
@@ -236,26 +261,13 @@ function buildPayments({
 			 */
 			const reference = getPaymentReference(order, order.attempt + 1);
 
-			const vipps = await newClient({ orderId: order.id });
-			if (!vipps.ok) {
-				ctx.log.error(
-					{ orderId: order.id },
-					"Failed to create Vipps client for merchant by order id",
-				);
-				return {
-					ok: false,
-					error: new InternalServerError(
-						"Failed to create Vipps client for merchant",
-						vipps.error,
-					),
-				};
+			const newClientResult = await newClientWithToken(ctx, {
+				orderId: order.id,
+			});
+			if (!newClientResult.ok) {
+				return newClientResult;
 			}
-			const { client, merchant } = vipps.data;
-			const tokenResult = await getToken(ctx, client, merchant);
-			if (!tokenResult.ok) {
-				return tokenResult;
-			}
-			const { token } = tokenResult.data;
+			const { client, token } = newClientResult.data;
 			const vippsPayment = await client.payment.create(token, {
 				reference: getPaymentReference(order, order.attempt + 1),
 				amount: {
@@ -567,17 +579,13 @@ function buildPayments({
 				};
 			}
 
-			const vipps = await newClient({ orderId: order.id });
-			if (!vipps.ok) {
-				return vipps;
+			const newClientResult = await newClientWithToken(ctx, {
+				orderId: order.id,
+			});
+			if (!newClientResult.ok) {
+				return newClientResult;
 			}
-
-			const { client, merchant } = vipps.data;
-			const tokenResult = await getToken(ctx, client, merchant);
-			if (!tokenResult.ok) {
-				return tokenResult;
-			}
-			const { token } = tokenResult.data;
+			const { client, token } = newClientResult.data;
 			const response = await client.payment.capture(token, reference, {
 				modificationAmount: {
 					currency: "NOK",
