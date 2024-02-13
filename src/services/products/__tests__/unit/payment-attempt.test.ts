@@ -285,7 +285,7 @@ describe("ProductService", () => {
 				ok: false,
 				error: expect.objectContaining({
 					name: "InvalidArgumentError",
-					description: expect.stringContaining("refunded"),
+					description: expect.stringContaining("reserved"),
 				}),
 			});
 		});
