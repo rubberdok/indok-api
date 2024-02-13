@@ -1,8 +1,13 @@
 import { faker } from "@faker-js/faker";
 import type { EPaymentErrorResponse } from "@vippsmobilepay/sdk";
 import { mock } from "jest-mock-extended";
-import { PermissionDeniedError, UnauthorizedError } from "~/domain/errors.js";
+import {
+	DownstreamServiceError,
+	PermissionDeniedError,
+	UnauthorizedError,
+} from "~/domain/errors.js";
 import type {
+	MerchantType,
 	OrderType,
 	PaymentAttemptType,
 	ProductType,
@@ -77,6 +82,19 @@ describe("ProductService", () => {
 					paymentStatus: "CREATED",
 					userId: null,
 					totalPrice: price,
+				},
+			});
+			productRepository.getMerchant.mockResolvedValueOnce({
+				ok: true,
+				data: {
+					merchant: mock<MerchantType>({
+						id: faker.string.uuid(),
+						serialNumber: faker.string.sample(6),
+						subscriptionKey: faker.string.uuid(),
+						name: faker.company.name(),
+						clientId: faker.string.uuid(),
+						clientSecret: faker.string.uuid(),
+					}),
 				},
 			});
 			mockVippsClient.payment.create.mockImplementation((_token, body) => {
@@ -271,7 +289,7 @@ describe("ProductService", () => {
 				ok: false,
 				error: expect.objectContaining({
 					name: "NotFoundError",
-					description: expect.stringContaining("ProductType"),
+					description: expect.stringContaining("Product"),
 				}),
 			});
 		});
@@ -295,6 +313,20 @@ describe("ProductService", () => {
 				}),
 			});
 
+			productRepository.getMerchant.mockResolvedValueOnce({
+				ok: true,
+				data: {
+					merchant: mock<MerchantType>({
+						id: faker.string.uuid(),
+						serialNumber: faker.string.sample(6),
+						subscriptionKey: faker.string.uuid(),
+						name: faker.company.name(),
+						clientId: faker.string.uuid(),
+						clientSecret: faker.string.uuid(),
+					}),
+				},
+			});
+
 			mockVippsClient.payment.create.mockResolvedValueOnce({
 				ok: false,
 				error: mock<EPaymentErrorResponse>({}),
@@ -310,7 +342,7 @@ describe("ProductService", () => {
 			expect(result).toEqual({
 				ok: false,
 				error: expect.objectContaining({
-					name: "InternalServerError",
+					name: DownstreamServiceError.name,
 					description: expect.stringContaining("vipps"),
 				}),
 			});

@@ -28,7 +28,7 @@ describe("ProductService", () => {
 	});
 
 	describe("#initiatePaymentAttempt", () => {
-		it("should create a payment attempt and poll Vipps until it reaches a final state.", async () => {
+		it("should create a payment attempt, start polling until a final state is reached, and when the payment attempt is AUTHORIZED, should capture payment.", async () => {
 			/**
 			 * Arrange
 			 *

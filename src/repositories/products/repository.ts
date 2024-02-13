@@ -8,14 +8,13 @@ import {
 import {
 	type MerchantType,
 	Order,
-	type OrderPaymentStatus,
 	type OrderType,
 	PaymentAttempt,
 	type PaymentAttemptType,
 	type ProductType,
 } from "~/domain/products.js";
 import { prismaKnownErrorCodes } from "~/lib/prisma.js";
-import type { ResultAsync } from "~/lib/result.js";
+import type { Result, ResultAsync } from "~/lib/result.js";
 
 export class ProductRepository {
 	constructor(private db: PrismaClient) {}
@@ -283,53 +282,69 @@ export class ProductRepository {
 	 */
 	async updatePaymentAttempt(
 		paymentAttempt: Pick<PaymentAttemptType, "state" | "id" | "version">,
-		order: Pick<OrderType, "id" | "version">,
-	): Promise<{ paymentAttempt: PaymentAttemptType; order: OrderType }> {
-		try {
-			const paymentAttemptPromise = this.db.paymentAttempt.update({
-				where: {
-					id: paymentAttempt.id,
-					version: paymentAttempt.version,
+		order: Pick<OrderType, "id" | "version" | "paymentStatus">,
+	): ResultAsync<
+		{ paymentAttempt: PaymentAttemptType; order: OrderType },
+		NotFoundError | InternalServerError
+	> {
+		const paymentAttemptPromise = this.db.paymentAttempt.update({
+			where: {
+				id: paymentAttempt.id,
+				version: paymentAttempt.version,
+			},
+			data: {
+				state: paymentAttempt.state,
+				version: {
+					increment: 1,
 				},
-				data: {
-					state: paymentAttempt.state,
-					version: {
-						increment: 1,
-					},
+			},
+		});
+		const orderPromise = this.db.order.update({
+			where: {
+				id: order.id,
+				version: order.version,
+			},
+			data: {
+				paymentStatus: order.paymentStatus,
+				version: {
+					increment: 1,
 				},
-			});
-			const orderPromise = this.db.order.update({
-				where: {
-					id: order.id,
-					version: order.version,
-				},
-				data: {
-					version: {
-						increment: 1,
-					},
-				},
-			});
+			},
+		});
 
+		try {
 			const [updatedPaymentAttempt, updatedOrder] = await this.db.$transaction([
 				paymentAttemptPromise,
 				orderPromise,
 			]);
 
 			return {
-				paymentAttempt: PaymentAttempt.fromDSO(updatedPaymentAttempt),
-				order: updatedOrder,
+				ok: true,
+				data: {
+					paymentAttempt: PaymentAttempt.fromDSO(updatedPaymentAttempt),
+					order: updatedOrder,
+				},
 			};
 		} catch (err) {
 			if (err instanceof PrismaClientKnownRequestError) {
 				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) {
-					throw new NotFoundError(`
-					Payment attempt could not be found.
-					This is either because the payment attempt does not exist,
-					or someone else has updated the payment attempt in the meantime.
-				`);
+					return {
+						ok: false,
+						error: new NotFoundError(
+							`
+							Payment attempt could not be found.
+							This is either because the payment attempt does not exist,
+							or someone else has updated the payment attempt in the meantime.
+						`,
+							err,
+						),
+					};
 				}
 			}
-			throw err;
+			return {
+				ok: false,
+				error: new InternalServerError("Failed to update payment attempt", err),
+			};
 		}
 	}
 
@@ -443,17 +458,36 @@ export class ProductRepository {
 		};
 	}
 
-	async updateOrder(orderData: {
-		id: string;
-		version: number;
-		paymentStatus: OrderPaymentStatus;
-	}): ResultAsync<{ order: OrderType }, NotFoundError | InternalServerError> {
-		const { id, version, paymentStatus } = orderData;
+	async updateOrder(
+		params: {
+			id: string;
+		},
+		updateFn: (order: OrderType) => Result<{ order: OrderType }, never>,
+	): ResultAsync<{ order: OrderType }, NotFoundError | InternalServerError> {
+		const getOrder = await this.getOrder(params.id);
+		if (!getOrder.ok) {
+			return getOrder;
+		}
+		const { order } = getOrder.data;
+		if (order === null) {
+			return {
+				ok: false,
+				error: new NotFoundError("Order not found"),
+			};
+		}
+
+		const updateResult = updateFn(order);
+		if (!updateResult.ok) {
+			return updateResult;
+		}
+		const { order: updatedOrder } = updateResult.data;
+
+		const { id, paymentStatus } = updatedOrder;
 		try {
-			const order = await this.db.order.update({
+			const orderAfterUpdate = await this.db.order.update({
 				where: {
 					id,
-					version,
+					version: order.version,
 				},
 				data: {
 					paymentStatus,
@@ -464,7 +498,7 @@ export class ProductRepository {
 			});
 			return {
 				ok: true,
-				data: { order },
+				data: { order: orderAfterUpdate },
 			};
 		} catch (err) {
 			if (err instanceof PrismaClientKnownRequestError) {
@@ -483,17 +517,17 @@ export class ProductRepository {
 	}
 
 	async getMerchant(
-		by: { id: string } | { orderId: string } | { productId: string },
+		by: { merchantId: string } | { orderId: string } | { productId: string },
 	): ResultAsync<
 		{ merchant: MerchantType },
 		NotFoundError | InternalServerError
 	> {
 		let merchant: MerchantType | null = null;
 		try {
-			if ("id" in by) {
+			if ("merchantId" in by) {
 				merchant = await this.db.merchant.findUnique({
 					where: {
-						id: by.id,
+						id: by.merchantId,
 					},
 				});
 			} else if ("orderId" in by) {

@@ -94,13 +94,15 @@ describe("ProductRepository", () => {
 				{
 					id: updatedOrder.id,
 					version: updatedOrder.version,
+					paymentStatus: "RESERVED",
 				},
 			);
+			if (!result.ok) throw result.error;
 
 			// Assert the result
-			expect(result.paymentAttempt).toBeDefined();
-			expect(result.paymentAttempt.state).toEqual("AUTHORIZED");
-			expect(result.order.version).toEqual(updatedOrder.version + 1);
+			expect(result.data.paymentAttempt).toBeDefined();
+			expect(result.data.paymentAttempt.state).toEqual("AUTHORIZED");
+			expect(result.data.order.version).toEqual(updatedOrder.version + 1);
 		});
 
 		it("should raise NotFoundError if the version of the payment attempt does not match", async () => {
@@ -112,43 +114,39 @@ describe("ProductRepository", () => {
 			});
 
 			// Call the method under test
-			try {
-				await productRepository.updatePaymentAttempt(
-					{
-						id: paymentAttempt.id,
-						version: paymentAttempt.version + 1,
-						state: "AUTHORIZED",
-					},
-					{
-						id: order.id,
-						version: order.version,
-					},
-				);
-				fail("Expected NotFoundError to be raised");
-			} catch (err) {
-				expect(err).toBeInstanceOf(NotFoundError);
-			}
+			const result = await productRepository.updatePaymentAttempt(
+				{
+					id: paymentAttempt.id,
+					version: paymentAttempt.version + 1,
+					state: "AUTHORIZED",
+				},
+				{
+					id: order.id,
+					version: order.version,
+					paymentStatus: "RESERVED",
+				},
+			);
+			assert(!result.ok, "Expected NotFoundError to be returned");
+			expect(result.error).toBeInstanceOf(NotFoundError);
 		});
 
-		it("should raise NotFoundError if the payment attempt does not exist", async () => {
+		it("should return NotFoundError if the payment attempt does not exist", async () => {
 			const { productRepository } = await makeDependencies();
 			// Call the method under test
-			try {
-				await productRepository.updatePaymentAttempt(
-					{
-						id: faker.string.uuid(),
-						version: 1,
-						state: "AUTHORIZED",
-					},
-					{
-						id: faker.string.uuid(),
-						version: 1,
-					},
-				);
-				fail("Expected NotFoundError to be raised");
-			} catch (err) {
-				expect(err).toBeInstanceOf(NotFoundError);
-			}
+			const result = await productRepository.updatePaymentAttempt(
+				{
+					id: faker.string.uuid(),
+					version: 1,
+					state: "AUTHORIZED",
+				},
+				{
+					id: faker.string.uuid(),
+					version: 1,
+					paymentStatus: "RESERVED",
+				},
+			);
+			assert(!result.ok, "Expected NotFoundError to be returned");
+			expect(result.error).toBeInstanceOf(NotFoundError);
 		});
 	});
 

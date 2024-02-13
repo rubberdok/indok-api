@@ -2,12 +2,11 @@ import type { Client } from "@vippsmobilepay/sdk";
 import type { InternalServerError, NotFoundError } from "~/domain/errors.js";
 import type {
 	MerchantType,
-	OrderPaymentStatus,
 	OrderType,
 	PaymentAttemptType,
 	ProductType,
 } from "~/domain/products.js";
-import type { ResultAsync } from "~/lib/result.js";
+import type { Result, ResultAsync } from "~/lib/result.js";
 import { buildMerchants } from "./merchants.js";
 import { buildOrders } from "./orders.js";
 import { buildPayments } from "./payments.js";
@@ -19,11 +18,12 @@ interface ProductRepository {
 	getOrder(
 		id: string,
 	): ResultAsync<{ order: OrderType | null }, InternalServerError>;
-	updateOrder(params: {
-		id: string;
-		version: number;
-		paymentStatus: OrderPaymentStatus;
-	}): ResultAsync<{ order: OrderType }, NotFoundError | InternalServerError>;
+	updateOrder(
+		params: {
+			id: string;
+		},
+		updateOrderFn: (order: OrderType) => Result<{ order: OrderType }, never>,
+	): ResultAsync<{ order: OrderType }, NotFoundError | InternalServerError>;
 	findManyOrders(params?: { userId?: string; productId?: string }): ResultAsync<
 		{ orders: OrderType[]; total: number },
 		InternalServerError
@@ -59,8 +59,11 @@ interface ProductRepository {
 	>;
 	updatePaymentAttempt(
 		paymentAttempt: Pick<PaymentAttemptType, "id" | "version" | "state">,
-		order: Pick<OrderType, "id" | "version">,
-	): Promise<{ paymentAttempt: PaymentAttemptType; order: OrderType }>;
+		order: Pick<OrderType, "id" | "version" | "paymentStatus">,
+	): ResultAsync<
+		{ paymentAttempt: PaymentAttemptType; order: OrderType },
+		InternalServerError | NotFoundError
+	>;
 	getProducts(): Promise<{ products: ProductType[]; total: number }>;
 	createProduct(product: {
 		name: string;
@@ -75,7 +78,7 @@ interface ProductRepository {
 		clientSecret: string;
 	}): Promise<{ merchant: MerchantType }>;
 	getMerchant(
-		by: { productId: string } | { id: string } | { orderId: string },
+		by: { productId: string } | { merchantId: string } | { orderId: string },
 	): ResultAsync<
 		{ merchant: MerchantType },
 		NotFoundError | InternalServerError

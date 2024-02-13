@@ -183,5 +183,37 @@ describe("ProductRepository", () => {
 				expect(actual.data.orders).toContainEqual(differentUserOrder);
 			});
 		});
+
+		describe("#updateOrder", () => {
+			it("updates an order", async () => {
+				/**
+				 * Act
+				 *
+				 * Create an order
+				 */
+				const { order, productRepository } = await makeDependencies();
+
+				/**
+				 * Act
+				 *
+				 * Update the order
+				 */
+				const actual = await productRepository.updateOrder(
+					{
+						id: order.id,
+					},
+					(order) => {
+						order.paymentStatus = "CREATED";
+						return {
+							ok: true,
+							data: { order },
+						};
+					},
+				);
+				if (!actual.ok) throw actual.error;
+
+				expect(actual.data.order.paymentStatus).toBe("CREATED");
+			});
+		});
 	});
 });
