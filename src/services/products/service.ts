@@ -1,7 +1,8 @@
 import type { Client } from "@vippsmobilepay/sdk";
-import type { InternalServerError } from "~/domain/errors.js";
+import type { InternalServerError, NotFoundError } from "~/domain/errors.js";
 import type {
 	MerchantType,
+	OrderPaymentStatus,
 	OrderType,
 	PaymentAttemptType,
 	ProductType,
@@ -18,6 +19,11 @@ interface ProductRepository {
 	getOrder(
 		id: string,
 	): ResultAsync<{ order: OrderType | null }, InternalServerError>;
+	updateOrder(params: {
+		id: string;
+		version: number;
+		paymentStatus: OrderPaymentStatus;
+	}): ResultAsync<{ order: OrderType }, NotFoundError | InternalServerError>;
 	findManyOrders(params?: { userId?: string; productId?: string }): ResultAsync<
 		{ orders: OrderType[]; total: number },
 		InternalServerError
@@ -28,6 +34,7 @@ interface ProductRepository {
 			id: string;
 			version: number;
 		};
+		totalPrice: number;
 	}): Promise<{ order: OrderType; product: ProductType }>;
 	createPaymentAttempt(params: {
 		order: {
@@ -52,7 +59,7 @@ interface ProductRepository {
 	>;
 	updatePaymentAttempt(
 		paymentAttempt: Pick<PaymentAttemptType, "id" | "version" | "state">,
-		order: Pick<OrderType, "id" | "version" | "paymentStatus">,
+		order: Pick<OrderType, "id" | "version">,
 	): Promise<{ paymentAttempt: PaymentAttemptType; order: OrderType }>;
 	getProducts(): Promise<{ products: ProductType[]; total: number }>;
 	createProduct(product: {
@@ -67,6 +74,12 @@ interface ProductRepository {
 		clientId: string;
 		clientSecret: string;
 	}): Promise<{ merchant: MerchantType }>;
+	getMerchant(
+		by: { productId: string } | { id: string } | { orderId: string },
+	): ResultAsync<
+		{ merchant: MerchantType },
+		NotFoundError | InternalServerError
+	>;
 }
 
 type BuildProductsDependencies = {

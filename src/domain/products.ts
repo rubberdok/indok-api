@@ -61,6 +61,7 @@ type OrderType = {
 	 */
 	paymentStatus: OrderPaymentStatus;
 	userId: string | null;
+	totalPrice: number;
 };
 
 type PaymentAttemptType = {
@@ -146,6 +147,7 @@ const Order = {
 					version: order.version,
 					paymentStatus: order.paymentStatus,
 					userId: order.userId,
+					totalPrice: order.totalPrice,
 				},
 			},
 		};

@@ -39,6 +39,7 @@ describe("ProductService", () => {
 						version: 0,
 						paymentStatus: "PENDING",
 						userId: null,
+						totalPrice: price,
 					},
 				},
 			});
@@ -75,6 +76,7 @@ describe("ProductService", () => {
 					version: 0,
 					paymentStatus: "CREATED",
 					userId: null,
+					totalPrice: price,
 				},
 			});
 			mockVippsClient.payment.create.mockImplementation((_token, body) => {
@@ -114,7 +116,7 @@ describe("ProductService", () => {
 				}),
 			);
 			expect(mockPaymentProcessingQueue.add).toHaveBeenCalledWith(
-				"payment-processing",
+				"payment-attempt-polling",
 				{ reference: expect.any(String) },
 				{
 					jobId: expect.any(String),

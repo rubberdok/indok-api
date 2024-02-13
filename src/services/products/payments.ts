@@ -1,6 +1,7 @@
 import type { Client } from "@vippsmobilepay/sdk";
 import type { Job } from "bullmq";
 import {
+	DownstreamServiceError,
 	InternalServerError,
 	InvalidArgumentError,
 	NotFoundError,
@@ -9,7 +10,6 @@ import {
 } from "~/domain/errors.js";
 import type {
 	MerchantType,
-	OrderPaymentStatus,
 	OrderType,
 	PaymentAttemptState,
 	PaymentAttemptType,
@@ -29,33 +29,38 @@ function buildPayments({
 	config,
 	paymentProcessingQueue,
 }: BuildProductsDependencies) {
-	function paymentAttemptStateToOrderPaymentStatus(
-		paymentAttempt: PaymentAttemptType,
-		order: OrderType,
-	): OrderPaymentStatus {
-		switch (paymentAttempt.state) {
-			case "CREATED":
-				return "CREATED";
-			case "AUTHORIZED":
-				return "RESERVED";
-			default:
-				return order.paymentStatus;
+	async function newClient(
+		by: { id: string } | { orderId: string } | { productId: string },
+	): ResultAsync<
+		{ client: ReturnType<typeof Client>; merchant: MerchantType },
+		NotFoundError | InternalServerError
+	> {
+		const getMerchant = await productRepository.getMerchant(by);
+		if (!getMerchant.ok) {
+			return getMerchant;
 		}
-	}
-	function newClient(merchant: MerchantType): ReturnType<typeof Client> {
-		return vippsFactory({
-			merchantSerialNumber: merchant.serialNumber,
-			useTestMode: config?.useTestMode,
-			subscriptionKey: merchant.subscriptionKey,
-			retryRequests: false,
-		});
+
+		const { merchant } = getMerchant.data;
+
+		return {
+			ok: true,
+			data: {
+				client: vippsFactory({
+					merchantSerialNumber: merchant.serialNumber,
+					useTestMode: config?.useTestMode,
+					subscriptionKey: merchant.subscriptionKey,
+					retryRequests: false,
+				}),
+				merchant,
+			},
+		};
 	}
 
 	async function getToken(
 		ctx: Context,
 		client: ReturnType<typeof Client>,
 		merchant: MerchantType,
-	): Promise<string> {
+	): ResultAsync<{ token: string }, DownstreamServiceError> {
 		const accessToken = await client.auth.getToken(
 			merchant.clientId,
 			merchant.clientSecret,
@@ -63,12 +68,16 @@ function buildPayments({
 
 		if (!accessToken.ok) {
 			ctx.log.error("Failed to fetch vipps access token");
-			const err = new InternalServerError("Failed to fetch vipps access token");
-			err.cause = accessToken.error;
-			throw err;
+			return {
+				ok: false,
+				error: new DownstreamServiceError(
+					"Failed to fetch vipps access token",
+					accessToken.error,
+				),
+			};
 		}
 
-		return accessToken.data.access_token;
+		return { ok: true, data: { token: accessToken.data.access_token } };
 	}
 
 	function isFinalPaymentState(status: PaymentAttemptState): boolean {
@@ -84,16 +93,34 @@ function buildPayments({
 		ctx: Context,
 		paymentAttempt: PaymentAttemptType,
 		order: OrderType,
-	): ResultAsync<{ state: PaymentAttemptState }, InternalServerError> {
+	): ResultAsync<
+		{ state: PaymentAttemptState },
+		InternalServerError | DownstreamServiceError
+	> {
 		const { reference } = paymentAttempt;
-		const { product } = await productRepository.getProduct(order.productId);
-		if (product === null) {
-			throw new NotFoundError("ProductType not found");
-		}
 		ctx.log.info({ reference }, "Fetching latest payment status from Vipps");
-		const vipps = newClient(product.merchant);
-		const token = await getToken(ctx, vipps, product.merchant);
-		const response = await vipps.payment.info(token, reference);
+		const vipps = await newClient({ orderId: order.id });
+		if (!vipps.ok) {
+			ctx.log.error(
+				{ orderId: order.id },
+				"Failed to create Vipps client for merchant by order id",
+			);
+			return {
+				ok: false,
+				error: new InternalServerError(
+					"Failed to create Vipps client for merchant",
+					vipps.error,
+				),
+			};
+		}
+		const { client, merchant } = vipps.data;
+		const tokenResult = await getToken(ctx, client, merchant);
+		if (!tokenResult.ok) {
+			return tokenResult;
+		}
+		const { token } = tokenResult.data;
+
+		const response = await client.payment.info(token, reference);
 
 		if (!response.ok) {
 			ctx.log.error("Failed to fetch payment status from Vipps");
@@ -143,6 +170,7 @@ function buildPayments({
 			| NotFoundError
 			| InvalidArgumentError
 			| InternalServerError
+			| DownstreamServiceError
 		> {
 			if (!ctx.user) {
 				return {
@@ -200,10 +228,27 @@ function buildPayments({
 			 */
 			const reference = getPaymentReference(order, order.attempt + 1);
 
-			const vipps = newClient(product.merchant);
-			ctx.log.info(product.merchant);
-			const token = await getToken(ctx, vipps, product.merchant);
-			const vippsPayment = await vipps.payment.create(token, {
+			const vipps = await newClient({ orderId: order.id });
+			if (!vipps.ok) {
+				ctx.log.error(
+					{ orderId: order.id },
+					"Failed to create Vipps client for merchant by order id",
+				);
+				return {
+					ok: false,
+					error: new InternalServerError(
+						"Failed to create Vipps client for merchant",
+						vipps.error,
+					),
+				};
+			}
+			const { client, merchant } = vipps.data;
+			const tokenResult = await getToken(ctx, client, merchant);
+			if (!tokenResult.ok) {
+				return tokenResult;
+			}
+			const { token } = tokenResult.data;
+			const vippsPayment = await client.payment.create(token, {
 				reference: getPaymentReference(order, order.attempt + 1),
 				amount: {
 					value: product.price,
@@ -218,11 +263,12 @@ function buildPayments({
 			});
 
 			if (!vippsPayment.ok) {
-				const error = new InternalServerError("Failed to create vipps payment");
-				error.cause = vippsPayment.error;
 				return {
 					ok: false,
-					error,
+					error: new InternalServerError(
+						"Failed to create vipps payment",
+						vippsPayment.error,
+					),
 				};
 			}
 
@@ -245,7 +291,7 @@ function buildPayments({
 			 * - Poll every 2 seconds
 			 */
 			const pollingJob = await paymentProcessingQueue.add(
-				"payment-processing",
+				"payment-attempt-polling",
 				{
 					reference,
 				},
@@ -275,7 +321,7 @@ function buildPayments({
 			paymentAttempt: PaymentAttemptType,
 		): ResultAsync<
 			{ paymentAttempt: PaymentAttemptType },
-			NotFoundError | InternalServerError
+			NotFoundError | InternalServerError | DownstreamServiceError
 		> {
 			const { reference } = paymentAttempt;
 
@@ -289,28 +335,18 @@ function buildPayments({
 			if (order === null) {
 				return {
 					ok: false,
-					error: new NotFoundError("OrderType not found"),
+					error: new NotFoundError("Order not found"),
 				};
 			}
 
 			const result = await getRemotePaymentState(ctx, paymentAttempt, order);
 			if (!result.ok) {
-				return {
-					ok: false,
-					error: new InternalServerError(
-						"Failed to fetch payment status from Vipps",
-						result.error,
-					),
-				};
+				return result;
 			}
 			const { state: newState } = result.data;
 
 			let updatedPaymentAttempt = paymentAttempt;
 			if (newState !== paymentAttempt.state) {
-				const orderPaymentStatus = paymentAttemptStateToOrderPaymentStatus(
-					paymentAttempt,
-					order,
-				);
 				const updated = await productRepository.updatePaymentAttempt(
 					{
 						id: paymentAttempt.id,
@@ -320,7 +356,6 @@ function buildPayments({
 					{
 						id: order.id,
 						version: order.version,
-						paymentStatus: orderPaymentStatus,
 					},
 				);
 				updatedPaymentAttempt = updated.paymentAttempt;
@@ -330,7 +365,7 @@ function buildPayments({
 				// Stop polling for this payment attempt as we have reached a final state.
 				ctx.log.info({ reference }, "payment processed, removing from queue");
 				const ok = await paymentProcessingQueue.removeRepeatable(
-					"payment-processing",
+					"payment-attempt-polling",
 					{
 						every: 2 * 1000,
 						limit: 300,
@@ -347,6 +382,14 @@ function buildPayments({
 						{ reference },
 						"Successfully removed payment attempt from payment processing queue",
 					);
+				}
+
+				if (newState === "AUTHORIZED") {
+					ctx.log.info(
+						{ reference },
+						"Payment attempt authorized, capturing payment",
+					);
+					await paymentProcessingQueue.add("capture-payment", { reference });
 				}
 			}
 
@@ -421,6 +464,114 @@ function buildPayments({
 				productId: productId ?? undefined,
 				orderId: orderId ?? undefined,
 			});
+		},
+
+		async capture(
+			ctx: Context,
+			{ reference }: { reference: string },
+		): ResultAsync<
+			{ paymentAttempt: PaymentAttemptType; order: OrderType },
+			| NotFoundError
+			| InternalServerError
+			| InvalidArgumentError
+			| DownstreamServiceError
+		> {
+			const getPaymentAttempt = await productRepository.getPaymentAttempt({
+				reference,
+			});
+
+			if (!getPaymentAttempt.ok) {
+				return getPaymentAttempt;
+			}
+
+			const { paymentAttempt } = getPaymentAttempt.data;
+
+			if (paymentAttempt === null) {
+				return {
+					ok: false,
+					error: new NotFoundError("Payment attempt not found"),
+				};
+			}
+
+			if (paymentAttempt.state !== "AUTHORIZED") {
+				return {
+					ok: false,
+					error: new InvalidArgumentError(
+						"Payment attempt must be in state AUTHORIZED to capture",
+					),
+				};
+			}
+
+			const getOrderResult = await productRepository.getOrder(
+				paymentAttempt.orderId,
+			);
+			if (!getOrderResult.ok) {
+				return getOrderResult;
+			}
+
+			const { order } = getOrderResult.data;
+			if (order === null) {
+				return {
+					ok: false,
+					error: new NotFoundError("Order not found"),
+				};
+			}
+
+			const vipps = await newClient({ orderId: order.id });
+			if (!vipps.ok) {
+				ctx.log.error(
+					{ orderId: order.id },
+					"Failed to create Vipps client for merchant by order id",
+				);
+				return {
+					ok: false,
+					error: new InternalServerError(
+						"Failed to create Vipps client for merchant",
+						vipps.error,
+					),
+				};
+			}
+
+			const { client, merchant } = vipps.data;
+			const tokenResult = await getToken(ctx, client, merchant);
+			if (!tokenResult.ok) {
+				return tokenResult;
+			}
+			const { token } = tokenResult.data;
+			const response = await client.payment.capture(token, reference, {
+				modificationAmount: {
+					currency: "NOK",
+					value: order.totalPrice,
+				},
+			});
+
+			if (!response.ok) {
+				return {
+					ok: false,
+					error: new DownstreamServiceError(
+						"Failed to capture payment",
+						response.error,
+					),
+				};
+			}
+
+			const updateOrder = await productRepository.updateOrder({
+				id: order.id,
+				version: order.version,
+				paymentStatus: "CAPTURED",
+			});
+
+			if (!updateOrder.ok) {
+				return updateOrder;
+			}
+
+			return {
+				ok: true,
+				data: {
+					paymentAttempt,
+					order: updateOrder.data.order,
+				},
+			};
 		},
 	} as const;
 }

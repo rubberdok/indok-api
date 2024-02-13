@@ -94,14 +94,12 @@ describe("ProductRepository", () => {
 				{
 					id: updatedOrder.id,
 					version: updatedOrder.version,
-					paymentStatus: "RESERVED",
 				},
 			);
 
 			// Assert the result
 			expect(result.paymentAttempt).toBeDefined();
 			expect(result.paymentAttempt.state).toEqual("AUTHORIZED");
-			expect(result.order.paymentStatus).toEqual("RESERVED");
 			expect(result.order.version).toEqual(updatedOrder.version + 1);
 		});
 
@@ -124,7 +122,6 @@ describe("ProductRepository", () => {
 					{
 						id: order.id,
 						version: order.version,
-						paymentStatus: "RESERVED",
 					},
 				);
 				fail("Expected NotFoundError to be raised");
@@ -146,7 +143,6 @@ describe("ProductRepository", () => {
 					{
 						id: faker.string.uuid(),
 						version: 1,
-						paymentStatus: "RESERVED",
 					},
 				);
 				fail("Expected NotFoundError to be raised");
@@ -230,6 +226,7 @@ describe("ProductRepository", () => {
 			const { order: otherUserOrder } = await productRepository.createOrder({
 				userId: otherUser.id,
 				product: product,
+				totalPrice: product.price,
 			});
 			await productRepository.createPaymentAttempt({
 				order: otherUserOrder,
@@ -240,6 +237,7 @@ describe("ProductRepository", () => {
 			const { order: otherProductOrder } = await productRepository.createOrder({
 				userId: user.id,
 				product: otherProduct,
+				totalPrice: otherProduct.price,
 			});
 			await productRepository.createPaymentAttempt({
 				order: otherProductOrder,
@@ -254,6 +252,7 @@ describe("ProductRepository", () => {
 			const { order: otherOrder } = await productRepository.createOrder({
 				userId: user.id,
 				product: sameProduct,
+				totalPrice: sameProduct.price,
 			});
 			await productRepository.createPaymentAttempt({
 				order: otherOrder,
@@ -289,6 +288,7 @@ describe("ProductRepository", () => {
 			const { order: otherUserOrder } = await productRepository.createOrder({
 				userId: otherUser.id,
 				product: product,
+				totalPrice: product.price,
 			});
 			const { paymentAttempt: otherUserPaymentAttempt } =
 				await productRepository.createPaymentAttempt({
@@ -300,6 +300,7 @@ describe("ProductRepository", () => {
 			const { order: otherProductOrder } = await productRepository.createOrder({
 				userId: user.id,
 				product: otherProduct,
+				totalPrice: otherProduct.price,
 			});
 			const { paymentAttempt: otherProductPaymentAttempt } =
 				await productRepository.createPaymentAttempt({
@@ -315,6 +316,7 @@ describe("ProductRepository", () => {
 			const { order: otherOrder } = await productRepository.createOrder({
 				userId: user.id,
 				product: sameProduct,
+				totalPrice: sameProduct.price,
 			});
 			const { paymentAttempt: otherOrderPaymentAttempt } =
 				await productRepository.createPaymentAttempt({

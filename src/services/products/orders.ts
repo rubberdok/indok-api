@@ -43,6 +43,7 @@ function buildOrders({ productRepository }: BuildProductsDependencies) {
 			const { order } = await productRepository.createOrder({
 				userId: ctx.user.id,
 				product: product,
+				totalPrice: product.price,
 			});
 
 			ctx.log.info(

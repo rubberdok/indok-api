@@ -84,6 +84,19 @@ export class UnauthorizedError extends KnownDomainError<"UnauthorizedError"> {
 	}
 }
 
+export class DownstreamServiceError extends KnownDomainError<"DownstreamServiceError"> {
+	constructor(description: string, cause?: unknown) {
+		super(
+			"DownstreamServiceError",
+			description,
+			errorCodes.ERR_DOWNSTREAM_SERVICE,
+			{
+				cause,
+			},
+		);
+	}
+}
+
 export const errorCodes = {
 	/**
 	 * ERR_NOT_FOUND should be used for errors that arise as a result of a resource not being found,
@@ -116,6 +129,7 @@ export const errorCodes = {
 	 */
 	ERR_INTERNAL_SERVER_ERROR: "INTERNAL_SERVER_ERROR",
 	ERR_UNAUTHORIZED: "UNAUTHORIZED",
+	ERR_DOWNSTREAM_SERVICE: "DOWNSTREAM_SERVICE",
 } as const;
 
 export type ErrorCode = (typeof errorCodes)[keyof typeof errorCodes];

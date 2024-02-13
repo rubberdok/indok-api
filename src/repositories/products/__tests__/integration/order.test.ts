@@ -16,6 +16,7 @@ describe("ProductRepository", () => {
 				const actual = await productRepository.createOrder({
 					product,
 					userId: user.id,
+					totalPrice: product.price,
 				});
 
 				expect(actual.order).toBeDefined();
@@ -34,11 +35,13 @@ describe("ProductRepository", () => {
 				await productRepository.createOrder({
 					product,
 					userId: user.id,
+					totalPrice: product.price,
 				});
 				try {
 					await productRepository.createOrder({
 						product,
 						userId: user.id,
+						totalPrice: product.price,
 					});
 					fail("Expected NotFoundError to be raised");
 				} catch (err) {
@@ -109,6 +112,7 @@ describe("ProductRepository", () => {
 				await productRepository.createOrder({
 					userId: otherUser.id,
 					product,
+					totalPrice: product.price,
 				});
 
 				/**
@@ -117,6 +121,7 @@ describe("ProductRepository", () => {
 				await productRepository.createOrder({
 					userId: user.id,
 					product: otherProduct,
+					totalPrice: product.price,
 				});
 
 				/**
@@ -152,6 +157,7 @@ describe("ProductRepository", () => {
 					await productRepository.createOrder({
 						userId: otherUser.id,
 						product,
+						totalPrice: product.price,
 					});
 
 				/**
@@ -161,6 +167,7 @@ describe("ProductRepository", () => {
 					await productRepository.createOrder({
 						userId: user.id,
 						product: otherProduct,
+						totalPrice: otherProduct.price,
 					});
 
 				/**

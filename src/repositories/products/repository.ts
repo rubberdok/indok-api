@@ -8,6 +8,7 @@ import {
 import {
 	type MerchantType,
 	Order,
+	type OrderPaymentStatus,
 	type OrderType,
 	PaymentAttempt,
 	type PaymentAttemptType,
@@ -95,10 +96,12 @@ export class ProductRepository {
 			id: string;
 			version: number;
 		};
+		totalPrice: number;
 	}): Promise<{ order: OrderType; product: ProductType }> {
-		const { userId, product } = order;
+		const { userId, product, totalPrice } = order;
 		const orderPromise = this.db.order.create({
 			data: {
+				totalPrice,
 				userId,
 				productId: product.id,
 			},
@@ -164,6 +167,7 @@ export class ProductRepository {
 				version: order.version,
 			},
 			data: {
+				paymentStatus: "CREATED",
 				attempt: {
 					increment: 1,
 				},
@@ -279,7 +283,7 @@ export class ProductRepository {
 	 */
 	async updatePaymentAttempt(
 		paymentAttempt: Pick<PaymentAttemptType, "state" | "id" | "version">,
-		order: Pick<OrderType, "id" | "version" | "paymentStatus">,
+		order: Pick<OrderType, "id" | "version">,
 	): Promise<{ paymentAttempt: PaymentAttemptType; order: OrderType }> {
 		try {
 			const paymentAttemptPromise = this.db.paymentAttempt.update({
@@ -300,7 +304,6 @@ export class ProductRepository {
 					version: order.version,
 				},
 				data: {
-					paymentStatus: order.paymentStatus,
 					version: {
 						increment: 1,
 					},
@@ -438,5 +441,105 @@ export class ProductRepository {
 				total: count,
 			},
 		};
+	}
+
+	async updateOrder(orderData: {
+		id: string;
+		version: number;
+		paymentStatus: OrderPaymentStatus;
+	}): ResultAsync<{ order: OrderType }, NotFoundError | InternalServerError> {
+		const { id, version, paymentStatus } = orderData;
+		try {
+			const order = await this.db.order.update({
+				where: {
+					id,
+					version,
+				},
+				data: {
+					paymentStatus,
+					version: {
+						increment: 1,
+					},
+				},
+			});
+			return {
+				ok: true,
+				data: { order },
+			};
+		} catch (err) {
+			if (err instanceof PrismaClientKnownRequestError) {
+				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) {
+					return {
+						ok: false,
+						error: new NotFoundError("Order not found"),
+					};
+				}
+			}
+			return {
+				ok: false,
+				error: new InternalServerError("Failed to update order", err),
+			};
+		}
+	}
+
+	async getMerchant(
+		by: { id: string } | { orderId: string } | { productId: string },
+	): ResultAsync<
+		{ merchant: MerchantType },
+		NotFoundError | InternalServerError
+	> {
+		let merchant: MerchantType | null = null;
+		try {
+			if ("id" in by) {
+				merchant = await this.db.merchant.findUnique({
+					where: {
+						id: by.id,
+					},
+				});
+			} else if ("orderId" in by) {
+				merchant = await this.db.merchant.findFirst({
+					where: {
+						products: {
+							some: {
+								orders: {
+									some: {
+										id: by.orderId,
+									},
+								},
+							},
+						},
+					},
+				});
+			} else if ("productId" in by) {
+				merchant = await this.db.merchant.findFirst({
+					where: {
+						products: {
+							some: {
+								id: by.productId,
+							},
+						},
+					},
+				});
+			}
+			if (merchant === null) {
+				return {
+					ok: false,
+					error: new NotFoundError("Merchant not found"),
+				};
+			}
+
+			return {
+				ok: true,
+				data: { merchant },
+			};
+		} catch (err) {
+			return {
+				ok: false,
+				error: new InternalServerError(
+					"Unexpected error getting merchant",
+					err,
+				),
+			};
+		}
 	}
 }

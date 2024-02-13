@@ -1,7 +1,12 @@
 import { type Processor, UnrecoverableError } from "bullmq";
 import type { Logger } from "pino";
-import type { InternalServerError, NotFoundError } from "~/domain/errors.js";
-import type { PaymentAttemptType } from "~/domain/products.js";
+import type {
+	DownstreamServiceError,
+	InternalServerError,
+	InvalidArgumentError,
+	NotFoundError,
+} from "~/domain/errors.js";
+import type { OrderType, PaymentAttemptType } from "~/domain/products.js";
 import type { Queue } from "~/lib/bullmq/queue.js";
 import type { Worker } from "~/lib/bullmq/worker.js";
 import type { Result, ResultAsync } from "~/lib/result.js";
@@ -12,7 +17,7 @@ type PaymentProcessingResultType = Result<
 	Record<string, never>,
 	InternalServerError | NotFoundError
 >;
-type PaymentProcessingNameType = "payment-processing";
+type PaymentProcessingNameType = "payment-attempt-polling" | "capture-payment";
 
 type PaymentProcessingWorkerType = Worker<
 	PaymentProcessingDataType,
@@ -40,7 +45,17 @@ type ProductService = {
 			paymentAttempt: PaymentAttemptType,
 		): ResultAsync<
 			{ paymentAttempt: PaymentAttemptType },
-			NotFoundError | InternalServerError
+			NotFoundError | InternalServerError | DownstreamServiceError
+		>;
+		capture(
+			ctx: Context,
+			{ reference }: { reference: string },
+		): ResultAsync<
+			{ paymentAttempt: PaymentAttemptType; order: OrderType },
+			| NotFoundError
+			| InternalServerError
+			| InvalidArgumentError
+			| DownstreamServiceError
 		>;
 	};
 };
@@ -61,11 +76,46 @@ function getPaymentProcessingHandler({
 		PaymentProcessingNameType
 	>;
 } {
+	const paymentAttemptPollingHandler = buildPaymentAttemptPollingHandler({
+		log,
+		productService,
+	});
+	const capturePaymentHandler = buildCapturePaymentHandler({
+		log,
+		productService,
+	});
+
 	const processor: Processor<
 		PaymentProcessingDataType,
 		PaymentProcessingResultType,
 		PaymentProcessingNameType
-	> = async (job) => {
+	> = (job) => {
+		switch (job.name) {
+			case "payment-attempt-polling":
+				return paymentAttemptPollingHandler(job);
+			case "capture-payment":
+				return capturePaymentHandler(job);
+			default:
+				throw new UnrecoverableError("Unknown job name");
+		}
+	};
+
+	return {
+		name: PaymentProcessingQueueName,
+		handler: processor,
+	};
+}
+
+function buildPaymentAttemptPollingHandler(dependencies: {
+	productService: ProductService;
+	log: Logger;
+}) {
+	const { productService, log } = dependencies;
+	const paymentAttemptPollingHandler: Processor<
+		PaymentProcessingDataType,
+		PaymentProcessingResultType,
+		PaymentProcessingNameType
+	> = async (job, token) => {
 		const { reference } = job.data;
 		const ctx = { log, user: null };
 
@@ -75,10 +125,7 @@ function getPaymentProcessingHandler({
 
 		if (!result.ok) {
 			log.error({ error: result.error }, "Failed to get payment attempt");
-			return {
-				ok: false,
-				error: result.error,
-			};
+			throw result.error;
 		}
 
 		const { paymentAttempt } = result.data;
@@ -100,20 +147,84 @@ function getPaymentProcessingHandler({
 				data: {},
 			};
 		}
+
 		log.error(
 			{ error: updateResult.error },
 			"Failed to update payment attempt",
 		);
+		switch (updateResult.error.name) {
+			case "DownstreamServiceError": {
+				await job.moveToDelayed(60_000, token);
+				throw updateResult.error;
+			}
+			case "NotFoundError": {
+				throw updateResult.error;
+			}
+			case "InternalServerError": {
+				throw updateResult.error;
+			}
+			default: {
+				throw new UnrecoverableError("Unknown error");
+			}
+		}
+	};
+	return paymentAttemptPollingHandler;
+}
+
+function buildCapturePaymentHandler(dependencies: {
+	productService: ProductService;
+	log: Logger;
+}) {
+	const { productService, log } = dependencies;
+	const paymentAttemptPollingHandler: Processor<
+		PaymentProcessingDataType,
+		PaymentProcessingResultType,
+		PaymentProcessingNameType
+	> = async (job, token) => {
+		const { reference } = job.data;
+		const ctx = { log, user: null };
+
+		const result = await productService.payments.capture(ctx, { reference });
+
+		if (!result.ok) {
+			switch (result.error.name) {
+				case "DownstreamServiceError": {
+					log.error(
+						{ error: result.error },
+						"Failed to capture payment with downstream service",
+					);
+					await job.moveToDelayed(60_000, token);
+					throw result.error;
+				}
+				case "NotFoundError": {
+					log.error(
+						{ error: result.error },
+						"Failed to capture payment, payment attempt not found",
+					);
+					throw new UnrecoverableError("Payment attempt not found");
+				}
+				case "InternalServerError": {
+					log.error(
+						{ error: result.error },
+						"Failed to capture payment, internal server error",
+					);
+					throw new UnrecoverableError("Internal server error");
+				}
+				case "InvalidArgumentError": {
+					log.error(
+						{ error: result.error },
+						"Failed to capture payment, invalid argument error",
+					);
+					throw new UnrecoverableError("Invalid argument error");
+				}
+			}
+		}
 		return {
-			ok: false,
-			error: updateResult.error,
+			ok: true,
+			data: {},
 		};
 	};
-
-	return {
-		name: PaymentProcessingQueueName,
-		handler: processor,
-	};
+	return paymentAttemptPollingHandler;
 }
 
 export { getPaymentProcessingHandler, PaymentProcessingQueueName };

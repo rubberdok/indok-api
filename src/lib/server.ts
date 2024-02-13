@@ -19,6 +19,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { type Configuration, env } from "~/config.js";
 import type { BookingStatus } from "~/domain/cabins.js";
 import {
+	type DownstreamServiceError,
 	InternalServerError,
 	type InvalidArgumentError,
 	type NotFoundError,
@@ -295,6 +296,7 @@ type IProductService = {
 			| NotFoundError
 			| InvalidArgumentError
 			| InternalServerError
+			| DownstreamServiceError
 		>;
 		findMany(
 			ctx: Context,
