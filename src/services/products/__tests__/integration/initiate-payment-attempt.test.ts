@@ -2,7 +2,7 @@ import assert from "assert";
 import { faker } from "@faker-js/faker";
 import type { EPaymentGetPaymentOKResponse } from "@vippsmobilepay/sdk";
 import type { QueueEvents } from "bullmq";
-import { mockDeep } from "jest-mock-extended";
+import { mock, mockDeep } from "jest-mock-extended";
 import { newUserFromDSO } from "~/domain/users.js";
 import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
@@ -18,9 +18,9 @@ describe("ProductService", () => {
 	let queueEvents: QueueEvents;
 	let paymentProcessingQueue: PaymentProcessingQueueType;
 
-	beforeAll(() => {
+	beforeAll(async () => {
 		({ productService, close, vippsMock, queueEvents, paymentProcessingQueue } =
-			makeDependencies());
+			await makeDependencies());
 	});
 
 	afterAll(async () => {
@@ -28,7 +28,7 @@ describe("ProductService", () => {
 	});
 
 	describe("#initiatePaymentAttempt", () => {
-		it("should create a payment attempt and poll Vipps until it reaches a final state.", async () => {
+		it("should create a payment attempt, start polling until a final state is reached, and when the payment attempt is AUTHORIZED, should capture payment.", async () => {
 			/**
 			 * Arrange
 			 *
@@ -57,18 +57,18 @@ describe("ProductService", () => {
 				clientId: faker.string.uuid(),
 				clientSecret: faker.string.uuid(),
 			});
-			assert(merchantResult.ok);
+			if (!merchantResult.ok) throw merchantResult.error;
 			const productResult = await productService.products.create(ctx, {
 				name: faker.word.noun(),
 				price: 100 * 100,
 				merchantId: merchantResult.data.merchant.id,
 				description: faker.lorem.sentence(),
 			});
-			assert(productResult.ok);
+			if (!productResult.ok) throw productResult.error;
 			const orderResult = await productService.orders.create(ctx, {
 				productId: productResult.data.product.id,
 			});
-			assert(orderResult.ok);
+			if (!orderResult.ok) throw orderResult.error;
 			const { order } = orderResult.data;
 			const reference = productService.payments.getPaymentReference(order, 1);
 			vippsMock.payment.create.mockResolvedValue({
@@ -98,21 +98,21 @@ describe("ProductService", () => {
 			const result = await productService.payments.initiatePaymentAttempt(ctx, {
 				orderId: order.id,
 			});
+			if (!result.ok) throw result.error;
 
 			/**
 			 * Assert
 			 *
 			 * Initially, the payment attempt should be in progress, and the status should be CREATED.
 			 */
-			assert(result.ok);
-			const { pollingJob } = result.data;
 			const initialPaymentAttemptResult = await productService.payments.get(
 				ctx,
 				{
 					reference,
 				},
 			);
-			assert(initialPaymentAttemptResult.ok);
+			if (!initialPaymentAttemptResult.ok)
+				throw initialPaymentAttemptResult.error;
 			const {
 				data: { paymentAttempt: initialPaymentAttempt },
 			} = initialPaymentAttemptResult;
@@ -133,13 +133,38 @@ describe("ProductService", () => {
 					state: "AUTHORIZED",
 				}),
 			});
-			const jobResult = await pollingJob.waitUntilFinished(queueEvents);
-			assert(jobResult.ok);
+			/**
+			 * Mock capture endpoint, as a payment attempt with AUTHORIZED should prompt captures.
+			 */
+			vippsMock.payment.capture.mockResolvedValue({
+				ok: true,
+				data: {
+					amount: {
+						value: 100 * 100,
+						currency: "NOK",
+					},
+					state: "AUTHORIZED",
+					aggregate: mock(),
+					pspReference: mock(),
+					reference,
+				},
+			});
+			/**
+			 * Wait for the polling job to finish
+			 */
+			const jobs = await paymentProcessingQueue.getJobs();
+			const results = await Promise.all(
+				jobs.map((job) => job.waitUntilFinished(queueEvents)),
+			);
+			results.map((result) => assert(result.ok));
 
+			/**
+			 *
+			 */
 			const finalPaymentResult = await productService.payments.get(ctx, {
 				reference,
 			});
-			assert(finalPaymentResult.ok);
+			if (!finalPaymentResult.ok) throw finalPaymentResult.error;
 			const {
 				data: { paymentAttempt: finalPaymentAttempt },
 			} = finalPaymentResult;
@@ -153,6 +178,21 @@ describe("ProductService", () => {
 			expect(finalPaymentAttempt?.version).toBe(1);
 			const pendingJobs = await paymentProcessingQueue.getRepeatableJobs();
 			expect(pendingJobs).toHaveLength(0);
+
+			/**
+			 * Wait for the capture job to finish up, and assert that the order is now in CAPTURED state.
+			 */
+			const pendingCaptureJobs = await paymentProcessingQueue.getJobs();
+			await Promise.all(
+				pendingCaptureJobs.map((job) => job.waitUntilFinished(queueEvents)),
+			);
+
+			const updatedOrderResult = await productService.orders.get(ctx, {
+				id: order.id,
+			});
+			if (!updatedOrderResult.ok) throw updatedOrderResult.error;
+			const { order: updatedOrder } = updatedOrderResult.data;
+			expect(updatedOrder.paymentStatus).toEqual("CAPTURED");
 		});
 	});
 });

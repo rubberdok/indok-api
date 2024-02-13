@@ -1,12 +1,12 @@
 import type { Client } from "@vippsmobilepay/sdk";
-import type { InternalServerError } from "~/domain/errors.js";
+import type { InternalServerError, NotFoundError } from "~/domain/errors.js";
 import type {
 	MerchantType,
 	OrderType,
 	PaymentAttemptType,
 	ProductType,
 } from "~/domain/products.js";
-import type { ResultAsync } from "~/lib/result.js";
+import type { Result, ResultAsync } from "~/lib/result.js";
 import { buildMerchants } from "./merchants.js";
 import { buildOrders } from "./orders.js";
 import { buildPayments } from "./payments.js";
@@ -18,6 +18,12 @@ interface ProductRepository {
 	getOrder(
 		id: string,
 	): ResultAsync<{ order: OrderType | null }, InternalServerError>;
+	updateOrder(
+		params: {
+			id: string;
+		},
+		updateOrderFn: (order: OrderType) => Result<{ order: OrderType }, never>,
+	): ResultAsync<{ order: OrderType }, NotFoundError | InternalServerError>;
 	findManyOrders(params?: { userId?: string; productId?: string }): ResultAsync<
 		{ orders: OrderType[]; total: number },
 		InternalServerError
@@ -28,6 +34,7 @@ interface ProductRepository {
 			id: string;
 			version: number;
 		};
+		totalPrice: number;
 	}): Promise<{ order: OrderType; product: ProductType }>;
 	createPaymentAttempt(params: {
 		order: {
@@ -53,7 +60,10 @@ interface ProductRepository {
 	updatePaymentAttempt(
 		paymentAttempt: Pick<PaymentAttemptType, "id" | "version" | "state">,
 		order: Pick<OrderType, "id" | "version" | "paymentStatus">,
-	): Promise<{ paymentAttempt: PaymentAttemptType; order: OrderType }>;
+	): ResultAsync<
+		{ paymentAttempt: PaymentAttemptType; order: OrderType },
+		InternalServerError | NotFoundError
+	>;
 	getProducts(): Promise<{ products: ProductType[]; total: number }>;
 	createProduct(product: {
 		name: string;
@@ -67,6 +77,12 @@ interface ProductRepository {
 		clientId: string;
 		clientSecret: string;
 	}): Promise<{ merchant: MerchantType }>;
+	getMerchant(
+		by: { productId: string } | { merchantId: string } | { orderId: string },
+	): ResultAsync<
+		{ merchant: MerchantType },
+		NotFoundError | InternalServerError
+	>;
 }
 
 type BuildProductsDependencies = {

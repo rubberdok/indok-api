@@ -1,6 +1,6 @@
-import { fail } from "assert";
+import assert, { fail } from "assert";
 import { faker } from "@faker-js/faker";
-import { InvalidArgumentError } from "~/domain/errors.js";
+import { InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
 import { makeDependencies } from "./dependencies.js";
 
 describe("productRepository", () => {
@@ -82,6 +82,53 @@ describe("productRepository", () => {
 				} catch (err) {
 					expect(err).toBeInstanceOf(InvalidArgumentError);
 				}
+			});
+		});
+
+		describe("#getMerchant", () => {
+			it("returns a merchant by merchant id", async () => {
+				const { merchant, productRepository } = await makeDependencies();
+
+				const actual = await productRepository.getMerchant({
+					merchantId: merchant.id,
+				});
+
+				if (!actual.ok) throw actual.error;
+				expect(actual.data.merchant).toEqual(merchant);
+			});
+
+			it("returns a merchant by product id", async () => {
+				const { productRepository, product, merchant } =
+					await makeDependencies();
+
+				const actual = await productRepository.getMerchant({
+					productId: product.id,
+				});
+
+				if (!actual.ok) throw actual.error;
+				expect(actual.data.merchant).toEqual(merchant);
+			});
+
+			it("returns a merchant by order id", async () => {
+				const { productRepository, order, merchant } = await makeDependencies();
+
+				const actual = await productRepository.getMerchant({
+					orderId: order.id,
+				});
+
+				if (!actual.ok) throw actual.error;
+				expect(actual.data.merchant).toEqual(merchant);
+			});
+
+			it("returns NotFoundError if the merchant does not exist", async () => {
+				const { productRepository } = await makeDependencies();
+
+				const actual = await productRepository.getMerchant({
+					merchantId: faker.string.uuid(),
+				});
+
+				assert(!actual.ok, "Expected NotFoundError to be returned");
+				expect(actual.error).toBeInstanceOf(NotFoundError);
 			});
 		});
 	});

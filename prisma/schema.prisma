@@ -290,6 +290,7 @@ model Order {
   paymentStatus   OrderPaymentStatus @default(PENDING)
   attempt         Int                @default(0)
   eventSignUp     EventSignUp?
+  totalPrice      Int                @default(0)
 }
 
 enum OrderPaymentStatus {

@@ -1,4 +1,5 @@
-import { fail } from "assert";
+import assert, { fail } from "assert";
+import { faker } from "@faker-js/faker";
 import { NotFoundError } from "~/domain/errors.js";
 import { makeDependencies } from "./dependencies.js";
 
@@ -16,6 +17,7 @@ describe("ProductRepository", () => {
 				const actual = await productRepository.createOrder({
 					product,
 					userId: user.id,
+					totalPrice: product.price,
 				});
 
 				expect(actual.order).toBeDefined();
@@ -34,11 +36,13 @@ describe("ProductRepository", () => {
 				await productRepository.createOrder({
 					product,
 					userId: user.id,
+					totalPrice: product.price,
 				});
 				try {
 					await productRepository.createOrder({
 						product,
 						userId: user.id,
+						totalPrice: product.price,
 					});
 					fail("Expected NotFoundError to be raised");
 				} catch (err) {
@@ -109,6 +113,7 @@ describe("ProductRepository", () => {
 				await productRepository.createOrder({
 					userId: otherUser.id,
 					product,
+					totalPrice: product.price,
 				});
 
 				/**
@@ -117,6 +122,7 @@ describe("ProductRepository", () => {
 				await productRepository.createOrder({
 					userId: user.id,
 					product: otherProduct,
+					totalPrice: product.price,
 				});
 
 				/**
@@ -152,6 +158,7 @@ describe("ProductRepository", () => {
 					await productRepository.createOrder({
 						userId: otherUser.id,
 						product,
+						totalPrice: product.price,
 					});
 
 				/**
@@ -161,6 +168,7 @@ describe("ProductRepository", () => {
 					await productRepository.createOrder({
 						userId: user.id,
 						product: otherProduct,
+						totalPrice: otherProduct.price,
 					});
 
 				/**
@@ -174,6 +182,62 @@ describe("ProductRepository", () => {
 				expect(actual.data.orders).toContainEqual(order);
 				expect(actual.data.orders).toContainEqual(differentProductOrder);
 				expect(actual.data.orders).toContainEqual(differentUserOrder);
+			});
+		});
+
+		describe("#updateOrder", () => {
+			it("updates an order", async () => {
+				/**
+				 * Act
+				 *
+				 * Create an order
+				 */
+				const { order, productRepository } = await makeDependencies();
+
+				/**
+				 * Act
+				 *
+				 * Update the order
+				 */
+				const actual = await productRepository.updateOrder(
+					{
+						id: order.id,
+					},
+					(order) => {
+						order.paymentStatus = "CREATED";
+						return {
+							ok: true,
+							data: { order },
+						};
+					},
+				);
+				if (!actual.ok) throw actual.error;
+
+				expect(actual.data.order.paymentStatus).toBe("CREATED");
+			});
+
+			it("returns NotFoundError if the order does not exist", async () => {
+				/**
+				 * Act
+				 *
+				 * Update the order
+				 */
+				const { productRepository } = await makeDependencies();
+
+				const actual = await productRepository.updateOrder(
+					{
+						id: faker.string.uuid(),
+					},
+					(order) => {
+						order.paymentStatus = "CREATED";
+						return {
+							ok: true,
+							data: { order },
+						};
+					},
+				);
+				assert(!actual.ok, "Expected NotFoundError to be returned");
+				expect(actual.error).toBeInstanceOf(NotFoundError);
 			});
 		});
 	});

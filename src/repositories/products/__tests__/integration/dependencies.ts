@@ -31,6 +31,7 @@ async function makeDependencies() {
 	const { order } = await productRepository.createOrder({
 		userId: user.id,
 		product: createProduct.product,
+		totalPrice: createProduct.product.price,
 	});
 
 	const { product } = await productRepository.getProduct(
