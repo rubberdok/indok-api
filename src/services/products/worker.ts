@@ -126,14 +126,16 @@ function buildPaymentAttemptPollingHandler(dependencies: {
 
 		if (!result.ok) {
 			log.error({ error: result.error }, "Failed to get payment attempt");
-			throw result.error;
+			return Promise.reject(result.error);
 		}
 
 		const { paymentAttempt } = result.data;
 
 		if (paymentAttempt === null) {
 			log.error({ reference }, "Payment attempt not found for reference");
-			throw new UnrecoverableError("Payment attempt not found");
+			return Promise.reject(
+				new UnrecoverableError("Payment attempt not found"),
+			);
 		}
 
 		const updateResult =
@@ -143,10 +145,10 @@ function buildPaymentAttemptPollingHandler(dependencies: {
 			);
 		if (updateResult.ok) {
 			log.info({ reference }, "Payment attempt updated");
-			return {
+			return Promise.resolve({
 				ok: true,
 				data: {},
-			};
+			});
 		}
 
 		log.error(
@@ -156,16 +158,16 @@ function buildPaymentAttemptPollingHandler(dependencies: {
 		switch (updateResult.error.name) {
 			case "DownstreamServiceError": {
 				await job.moveToDelayed(60_000, token);
-				throw updateResult.error;
+				return Promise.reject(updateResult.error);
 			}
 			case "NotFoundError": {
-				throw updateResult.error;
+				return Promise.reject(updateResult.error);
 			}
 			case "InternalServerError": {
-				throw updateResult.error;
+				return Promise.reject(updateResult.error);
 			}
 			default: {
-				throw new UnrecoverableError("Unknown error");
+				return Promise.reject(new UnrecoverableError("Unknown error"));
 			}
 		}
 	};
@@ -198,37 +200,41 @@ function buildCapturePaymentHandler(dependencies: {
 						DateTime.now().plus({ minutes: 1 }).toMillis(),
 						token,
 					);
-					throw result.error;
+					return Promise.reject(result.error);
 				}
 				case "NotFoundError": {
 					log.error(
 						{ error: result.error },
 						"Failed to capture payment, payment attempt not found",
 					);
-					throw result.error;
+					return Promise.reject(result.error);
 				}
 				case "InternalServerError": {
 					log.error(
 						{ error: result.error },
 						"Failed to capture payment, internal server error",
 					);
-					throw new UnrecoverableError("Internal server error");
+					return Promise.reject(
+						new UnrecoverableError("Internal server error"),
+					);
 				}
 				case "InvalidArgumentError": {
 					log.error(
 						{ error: result.error },
 						"Failed to capture payment, invalid argument error",
 					);
-					throw new UnrecoverableError(
-						"Failed to capture payment, recevied invalid argument error",
+					return Promise.reject(
+						new UnrecoverableError(
+							"Failed to capture payment, recevied invalid argument error",
+						),
 					);
 				}
 			}
 		}
-		return {
+		return Promise.resolve({
 			ok: true,
 			data: {},
-		};
+		});
 	};
 	return paymentAttemptPollingHandler;
 }

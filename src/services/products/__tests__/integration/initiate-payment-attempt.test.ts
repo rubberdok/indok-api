@@ -18,9 +18,9 @@ describe("ProductService", () => {
 	let queueEvents: QueueEvents;
 	let paymentProcessingQueue: PaymentProcessingQueueType;
 
-	beforeAll(() => {
+	beforeAll(async () => {
 		({ productService, close, vippsMock, queueEvents, paymentProcessingQueue } =
-			makeDependencies());
+			await makeDependencies());
 	});
 
 	afterAll(async () => {

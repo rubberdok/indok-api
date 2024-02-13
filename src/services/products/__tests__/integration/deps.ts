@@ -16,7 +16,7 @@ import {
 } from "../../worker.js";
 import { MockVippsClientFactory } from "../mock-vipps-client.js";
 
-export function makeDependencies(overrides?: {
+export async function makeDependencies(overrides?: {
 	productService?: ProductServiceType;
 }) {
 	const queueName = faker.string.uuid();
@@ -62,12 +62,16 @@ export function makeDependencies(overrides?: {
 	});
 
 	const close = async () => {
-		await paymentProcessingQueue.close();
-		await worker.close();
 		await queueEvents.close();
+		await paymentProcessingQueue.close();
+		await worker.close(true);
 		queueEventsRedis.disconnect();
 		redis.disconnect();
 	};
+
+	await worker.waitUntilReady();
+	await queueEvents.waitUntilReady();
+	await paymentProcessingQueue.waitUntilReady();
 
 	return {
 		productService,
