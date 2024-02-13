@@ -84,5 +84,41 @@ describe("productRepository", () => {
 				}
 			});
 		});
+
+		describe("#getMerchant", () => {
+			it("returns a merchant by merchant id", async () => {
+				const { merchant, productRepository } = await makeDependencies();
+
+				const actual = await productRepository.getMerchant({
+					merchantId: merchant.id,
+				});
+
+				if (!actual.ok) throw actual.error;
+				expect(actual.data.merchant).toEqual(merchant);
+			});
+
+			it("returns a merchant by product id", async () => {
+				const { productRepository, product, merchant } =
+					await makeDependencies();
+
+				const actual = await productRepository.getMerchant({
+					productId: product.id,
+				});
+
+				if (!actual.ok) throw actual.error;
+				expect(actual.data.merchant).toEqual(merchant);
+			});
+
+			it("returns a merchant by order id", async () => {
+				const { productRepository, order, merchant } = await makeDependencies();
+
+				const actual = await productRepository.getMerchant({
+					orderId: order.id,
+				});
+
+				if (!actual.ok) throw actual.error;
+				expect(actual.data.merchant).toEqual(merchant);
+			});
+		});
 	});
 });

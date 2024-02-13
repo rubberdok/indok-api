@@ -1,4 +1,5 @@
-import { fail } from "assert";
+import assert, { fail } from "assert";
+import { faker } from "@faker-js/faker";
 import { NotFoundError } from "~/domain/errors.js";
 import { makeDependencies } from "./dependencies.js";
 
@@ -213,6 +214,30 @@ describe("ProductRepository", () => {
 				if (!actual.ok) throw actual.error;
 
 				expect(actual.data.order.paymentStatus).toBe("CREATED");
+			});
+
+			it("returns NotFoundError if the order does not exist", async () => {
+				/**
+				 * Act
+				 *
+				 * Update the order
+				 */
+				const { productRepository } = await makeDependencies();
+
+				const actual = await productRepository.updateOrder(
+					{
+						id: faker.string.uuid(),
+					},
+					(order) => {
+						order.paymentStatus = "CREATED";
+						return {
+							ok: true,
+							data: { order },
+						};
+					},
+				);
+				assert(!actual.ok, "Expected NotFoundError to be returned");
+				expect(actual.error).toBeInstanceOf(NotFoundError);
 			});
 		});
 	});
