@@ -1,11 +1,10 @@
 import { faker } from "@faker-js/faker";
 import { QueueEvents } from "bullmq";
 import { Redis } from "ioredis";
-import { pino } from "pino";
+import { mockDeep } from "jest-mock-extended";
 import { env } from "~/config.js";
 import { Queue } from "~/lib/bullmq/queue.js";
 import { Worker } from "~/lib/bullmq/worker.js";
-import { envToLogger } from "~/lib/fastify/logging.js";
 import prisma from "~/lib/prisma.js";
 import { ProductRepository } from "~/repositories/products/repository.js";
 import { ProductService, type ProductServiceType } from "../../service.js";
@@ -43,10 +42,9 @@ export async function makeDependencies(overrides?: {
 				returnUrl: env.SERVER_URL,
 			},
 		});
-
 	const { handler } = getPaymentProcessingHandler({
 		productService,
-		log: pino(envToLogger.test),
+		log: mockDeep(),
 	});
 
 	const worker: PaymentProcessingWorkerType = new Worker(queueName, handler, {
