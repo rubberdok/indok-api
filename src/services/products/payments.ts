@@ -600,7 +600,7 @@ function buildPayments({
 					id: order.id,
 				},
 				(order) => {
-					if (order.paymentStatus !== "CREATED") {
+					if (order.paymentStatus !== "RESERVED") {
 						ctx.log.warn(
 							{ order },
 							"Order had an unexpected payment status during capture",

@@ -1,4 +1,5 @@
 import { type Processor, UnrecoverableError } from "bullmq";
+import { DateTime } from "luxon";
 import type { Logger } from "pino";
 import type {
 	DownstreamServiceError,
@@ -193,7 +194,10 @@ function buildCapturePaymentHandler(dependencies: {
 						{ error: result.error },
 						"Failed to capture payment with downstream service",
 					);
-					await job.moveToDelayed(60_000, token);
+					await job.moveToDelayed(
+						DateTime.now().plus({ minutes: 1 }).toMillis(),
+						token,
+					);
 					throw result.error;
 				}
 				case "NotFoundError": {
@@ -215,7 +219,9 @@ function buildCapturePaymentHandler(dependencies: {
 						{ error: result.error },
 						"Failed to capture payment, invalid argument error",
 					);
-					throw new UnrecoverableError("Invalid argument error");
+					throw new UnrecoverableError(
+						"Failed to capture payment, recevied invalid argument error",
+					);
 				}
 			}
 		}
