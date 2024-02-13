@@ -201,7 +201,7 @@ function buildCapturePaymentHandler(dependencies: {
 						{ error: result.error },
 						"Failed to capture payment, payment attempt not found",
 					);
-					throw new UnrecoverableError("Payment attempt not found");
+					throw result.error;
 				}
 				case "InternalServerError": {
 					log.error(
