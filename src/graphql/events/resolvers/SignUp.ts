@@ -21,8 +21,6 @@ export const SignUp: SignUpResolvers = {
 		return ctx.users.get(signUp.userId);
 	},
 	order: async (signUp, _args, ctx) => {
-		if (!ctx.user) return null;
-		if (ctx.user.id !== signUp.userId) return null;
 		const getOrderResult = await ctx.events.getOrderForSignUp(ctx, {
 			eventId: signUp.eventId,
 			userId: signUp.userId,
