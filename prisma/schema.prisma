@@ -81,10 +81,11 @@ model Event {
   organizationId String?       @db.Uuid
   contactEmail   String        @default("")
 
-  signUpsEnabled     Boolean   @default(false)
-  signUpsStartAt     DateTime?
-  signUpsEndAt       DateTime?
-  signUpsRetractable Boolean   @default(false)
+  signUpsEnabled                        Boolean   @default(false)
+  signUpsStartAt                        DateTime?
+  signUpsEndAt                          DateTime?
+  signUpsRetractable                    Boolean   @default(false)
+  signUpsRequireUserProvidedInformation Boolean   @default(false)
 
   // Versioning for optimistic concurrency control
   version           Int             @default(0)
@@ -125,20 +126,26 @@ enum ParticipationStatus {
 }
 
 model EventSignUp {
-  id                  String              @id @default(uuid()) @db.Uuid
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
-  version             Int                 @default(0)
-  userId              String              @db.Uuid
-  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  slot                EventSlot?          @relation(fields: [slotId], references: [id], onDelete: Cascade)
-  slotId              String?             @db.Uuid
-  event               Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  eventId             String              @db.Uuid
+  id                      String   @id @default(uuid()) @db.Uuid
+  version                 Int      @default(0)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  userProvidedInformation String   @default("")
+
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  slot   EventSlot? @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  slotId String?    @db.Uuid
+
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String @db.Uuid
+
   participationStatus ParticipationStatus @default(CONFIRMED)
   active              Boolean             @default(true)
-  orderId             String?             @unique @db.Uuid
-  order               Order?              @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  orderId String? @unique @db.Uuid
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
 
   @@unique([userId, eventId, active])
 }

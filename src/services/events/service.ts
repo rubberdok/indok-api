@@ -55,12 +55,14 @@ interface CreateConfirmedSignUpData {
 	slotId: string;
 	participationStatus: Extract<ParticipationStatus, "CONFIRMED">;
 	orderId?: string;
+	userProvidedInformation?: string | null;
 }
 
 interface CreateOnWaitlistSignUpData {
 	userId: string;
 	eventId: string;
 	participationStatus: Extract<ParticipationStatus, "ON_WAITLIST">;
+	userProvidedInformation?: string | null;
 }
 
 interface UpdateToConfirmedSignUpData {
@@ -207,6 +209,7 @@ type BaseCreateEventFields = {
 	signUpsEndAt?: Date | null;
 	signUpsEnabled?: boolean | null;
 	signUpsRetractable?: boolean | null;
+	signUpsRequireUserProvidedInformation?: boolean | null;
 };
 
 type CreateBasicEventParams = {
@@ -574,13 +577,53 @@ class EventService {
 	 */
 	async signUp(
 		ctx: Context,
-		userId: string,
-		eventId: string,
-	): Promise<EventSignUp> {
+		params: {
+			userId?: string | null;
+			eventId: string;
+			userProvidedInformation?: string | null;
+		},
+	): ResultAsync<
+		{ signUp: EventSignUp },
+		UnauthorizedError | InvalidArgumentError | InternalServerError
+	> {
 		if (ctx.user === null) {
-			throw new UnauthorizedError(
-				"You must be logged in to sign up for an event",
-			);
+			return {
+				ok: false,
+				error: new UnauthorizedError(
+					"You must be logged in to sign up for an event",
+				),
+			};
+		}
+		let userId = ctx.user.id;
+		const { eventId, userProvidedInformation } = params;
+		const event = await this.eventRepository.get(eventId);
+		if (!event.organizationId) {
+			return {
+				ok: false,
+				error: new InvalidArgumentError(
+					"Cannot sign up to events that do not belong to an organization",
+				),
+			};
+		}
+		if (
+			event.signUpsRequireUserProvidedInformation &&
+			!userProvidedInformation
+		) {
+			return {
+				ok: false,
+				error: new InvalidArgumentError(
+					"User provided information is required for this event",
+				),
+			};
+		}
+
+		const isMember = await this.permissionService.hasRole({
+			userId: ctx.user.id,
+			organizationId: event.organizationId,
+			role: Role.MEMBER,
+		});
+		if (isMember === true && params.userId) {
+			userId = params.userId;
 		}
 
 		const maxAttempts = 20;
@@ -601,7 +644,10 @@ class EventService {
 			// Fetch the event to check if it has available slots or not
 			const event = await this.eventRepository.get(eventId);
 			if (!Event.areSignUpsAvailable(event)) {
-				throw new InvalidArgumentError("Cannot sign up for the event.");
+				return {
+					ok: false,
+					error: new InvalidArgumentError("Cannot sign up for the event."),
+				};
 			}
 
 			// If there is no remaining capacity on the event, it doesn't matter if there is any remaining capacity in slots.
@@ -611,8 +657,9 @@ class EventService {
 					userId,
 					participationStatus: ParticipationStatus.ON_WAITLIST,
 					eventId,
+					userProvidedInformation,
 				});
-				return signUp;
+				return { ok: true, data: { signUp } };
 			}
 
 			try {
@@ -628,14 +675,20 @@ class EventService {
 						userId,
 						participationStatus: ParticipationStatus.ON_WAITLIST,
 						eventId,
+						userProvidedInformation,
 					});
-					return signUp;
+					return {
+						ok: true,
+						data: { signUp },
+					};
 				}
+
 				let { signUp } = await this.eventRepository.createSignUp({
 					userId,
 					participationStatus: ParticipationStatus.CONFIRMED,
 					eventId,
 					slotId: slotToSignUp.id,
+					userProvidedInformation,
 				});
 				ctx.log.info(
 					{ signUp, attempt },
@@ -651,7 +704,13 @@ class EventService {
 							{ error: orderResult.error },
 							"Failed to create order for event",
 						);
-						throw orderResult.error;
+						return {
+							ok: false,
+							error: new InternalServerError(
+								"Failed to create order for the event",
+								orderResult.error,
+							),
+						};
 					}
 					const { order } = orderResult.data;
 					const updatedSignUp = await this.eventRepository.addOrderToSignUp({
@@ -663,18 +722,27 @@ class EventService {
 							{ error: updatedSignUp.error },
 							"Failed to add order to sign up",
 						);
-						throw new InternalServerError(
-							"failed to add order to confirmed sign up on ticket event",
-							updatedSignUp.error,
-						);
+						return {
+							ok: false,
+							error: new InternalServerError(
+								"failed to add order to confirmed sign up on ticket event",
+								updatedSignUp.error,
+							),
+						};
 					}
 					signUp = updatedSignUp.data.signUp;
 				}
-				return signUp;
+				return { ok: true, data: { signUp } };
 			} catch (err) {
 				// If there are no slots with remaining capacity, we add the user to the wait list.
 				if (err instanceof NotFoundError) continue;
-				throw err;
+				return {
+					ok: false,
+					error: new InternalServerError(
+						"Failed to sign up user for event",
+						err,
+					),
+				};
 			}
 		}
 
@@ -686,7 +754,12 @@ class EventService {
 		ctx.log.error(
 			"Failed to sign up user after 20 attempts. If this happens often, consider increasing the number of attempts.",
 		);
-		throw new InternalServerError("Failed to sign up user after 20 attempts");
+		return {
+			ok: false,
+			error: new InternalServerError(
+				"Failed to sign up user after 20 attempts",
+			),
+		};
 	}
 
 	/**
@@ -852,14 +925,17 @@ class EventService {
 	 * @returns The updated sign up
 	 */
 	async retractSignUp(userId: string, eventId: string): Promise<EventSignUp> {
+		const signUp = await this.eventRepository.getSignUp(userId, eventId);
+
 		const event = await this.eventRepository.get(eventId);
-		if (event.signUpsRetractable === false) {
+		if (
+			signUp.participationStatus === "CONFIRMED" &&
+			event.signUpsRetractable === false
+		) {
 			throw new InvalidArgumentError(
 				"Sign ups are not retractable for this event",
 			);
 		}
-
-		const signUp = await this.eventRepository.getSignUp(userId, eventId);
 
 		switch (signUp.participationStatus) {
 			case ParticipationStatus.CONFIRMED:

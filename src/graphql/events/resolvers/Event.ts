@@ -79,4 +79,10 @@ export const Event: EventResolvers = {
 		if (parent.type !== "TICKETS") return null;
 		return parent;
 	},
+	signUpsRetractable: () => {
+		/* Event.signUpsRetractable resolver is required because Event.signUpsRetractable exists but EventMapper.signUpsRetractable does not */
+	},
+	signUpsRequireUserProvidedInformation: () => {
+		/* Event.signUpsRequireUserProvidedInformation resolver is required because Event.signUpsRequireUserProvidedInformation exists but EventMapper.signUpsRequireUserProvidedInformation does not */
+	},
 };

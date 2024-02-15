@@ -219,7 +219,17 @@ interface IEventService {
 	>;
 	get(id: string): Promise<EventType>;
 	findMany(data?: { onlyFutureEvents?: boolean | null }): Promise<EventType[]>;
-	signUp(ctx: Context, userId: string, eventId: string): Promise<EventSignUp>;
+	signUp(
+		ctx: Context,
+		params: {
+			userId?: string | null;
+			eventId: string;
+			userProvidedInformation?: string | null;
+		},
+	): ResultAsync<
+		{ signUp: EventSignUp },
+		InvalidArgumentError | UnauthorizedError | InternalServerError
+	>;
 	retractSignUp(userId: string, eventId: string): Promise<EventSignUp>;
 	canSignUpForEvent(userId: string, eventId: string): Promise<boolean>;
 	getSignUpAvailability(

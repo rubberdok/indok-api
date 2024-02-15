@@ -1,7 +1,6 @@
 import { faker } from "@faker-js/faker";
 import { type EventSignUp, ParticipationStatus } from "@prisma/client";
 import { mock } from "jest-mock-extended";
-import { errorCodes } from "~/domain/errors.js";
 import type { EventType } from "~/domain/events/event.js";
 import type { User } from "~/domain/users.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
@@ -24,12 +23,15 @@ describe("Event mutations", () => {
 				user: { id: faker.string.uuid() },
 			});
 
-			eventService.signUp.mockResolvedValue(
-				mock<EventSignUp>({
-					id: faker.string.uuid(),
-					participationStatus: ParticipationStatus.CONFIRMED,
-				}),
-			);
+			eventService.signUp.mockResolvedValue({
+				ok: true,
+				data: {
+					signUp: mock<EventSignUp>({
+						id: faker.string.uuid(),
+						participationStatus: ParticipationStatus.CONFIRMED,
+					}),
+				},
+			});
 			eventService.get.mockResolvedValue(
 				mock<EventType>({ id: faker.string.uuid() }),
 			);
@@ -63,6 +65,7 @@ describe("Event mutations", () => {
 					variables: {
 						data: {
 							eventId: faker.string.uuid(),
+							userProvidedInformation: faker.lorem.paragraph(),
 						},
 					},
 				},
@@ -90,71 +93,12 @@ describe("Event mutations", () => {
 			});
 			expect(eventService.signUp).toHaveBeenCalledWith(
 				expect.objectContaining({ user: contextValue.user }),
-				contextValue.user?.id,
-				expect.any(String),
-			);
-		});
-
-		it("should err if not logged in", async () => {
-			/**
-			 * Arrange
-			 *
-			 * Create an unauthenticated context,
-			 */
-			const { client, createMockContext, eventService } =
-				createMockApolloServer();
-
-			const contextValue = createMockContext({
-				user: null,
-			});
-
-			/**
-			 * Act
-			 *
-			 * Attempt to sign up for an event
-			 */
-			const { errors } = await client.mutate(
 				{
-					mutation: graphql(`
-            mutation signUp($data: SignUpInput!) {
-              signUp(data: $data) {
-                signUp {
-                  id
-                  event {
-                    id
-                  }
-                  user {
-                    id
-                  }
-                  participationStatus
-                }
-              }
-            }
-          `),
-					variables: {
-						data: {
-							eventId: faker.string.uuid(),
-						},
-					},
-				},
-				{
-					contextValue,
+					userId: contextValue.user?.id,
+					eventId: expect.any(String),
+					userProvidedInformation: expect.any(String),
 				},
 			);
-
-			/**
-			 * Assert
-			 *
-			 * Ensure that the sign up was not performed and that a permission denied error was returned.
-			 */
-			expect(errors).toBeDefined();
-			expect(
-				errors?.every(
-					(error) =>
-						error.extensions?.code === errorCodes.ERR_PERMISSION_DENIED,
-				),
-			).toBe(true);
-			expect(eventService.signUp).not.toHaveBeenCalled();
 		});
 	});
 });

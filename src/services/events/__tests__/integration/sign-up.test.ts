@@ -54,21 +54,89 @@ describe("Event Sign Up", () => {
 			 *
 			 * 1. Sign up the user for the event.
 			 */
-			const actual = await eventService.signUp(
-				ctx,
-				user.id,
-				createEventResult.data.event.id,
-			);
+			const actual = await eventService.signUp(ctx, {
+				userId: user.id,
+				eventId: createEventResult.data.event.id,
+			});
+			if (!actual.ok) throw actual.error;
 
 			/**
 			 * Assert.
 			 *
 			 * 1. User should be signed up for the event with status CONFIRMED
 			 */
-			expect(actual.participationStatus).toEqual(ParticipationStatus.CONFIRMED);
-			expect(actual.userId).toEqual(user.id);
-			expect(actual.eventId).toEqual(createEventResult.data.event.id);
-			expect(actual.slotId).not.toBeNull();
+			expect(actual.data.signUp.participationStatus).toEqual(
+				ParticipationStatus.CONFIRMED,
+			);
+			expect(actual.data.signUp.userId).toEqual(user.id);
+			expect(actual.data.signUp.eventId).toEqual(
+				createEventResult.data.event.id,
+			);
+			expect(actual.data.signUp.slotId).not.toBeNull();
+		});
+
+		it("should add user provided information to the sign up", async () => {
+			/**
+			 * Arrange.
+			 *
+			 * 1. Create an organization to host the event.
+			 * 2. Create an event with capacity.
+			 * 3. Create a slot for the event with capacity.
+			 * 4. Create a user to sign up for the event.
+			 */
+			const { organization, user } = await makeUserWithOrganizationMembership();
+			const ctx = makeMockContext(user);
+			const createEventResult = await eventService.create(ctx, {
+				event: {
+					name: faker.color.human(),
+					description: faker.lorem.paragraph(),
+					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
+					signUpsEnabled: true,
+					organizationId: organization.id,
+					capacity: 1,
+					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+					signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
+					signUpsRequireUserProvidedInformation: true,
+				},
+				slots: [
+					{
+						capacity: 1,
+					},
+				],
+				type: "SIGN_UPS",
+			});
+
+			if (!createEventResult.ok) throw createEventResult.error;
+			/**
+			 * Act.
+			 *
+			 * 1. Sign up the user for the event.
+			 */
+			const userProvidedInformation = faker.lorem.paragraph();
+			const actual = await eventService.signUp(ctx, {
+				userId: user.id,
+				eventId: createEventResult.data.event.id,
+				userProvidedInformation,
+			});
+			if (!actual.ok) throw actual.error;
+
+			/**
+			 * Assert.
+			 *
+			 * 1. User should be signed up for the event with status CONFIRMED
+			 */
+			expect(actual.data.signUp.participationStatus).toEqual(
+				ParticipationStatus.CONFIRMED,
+			);
+			expect(actual.data.signUp.userId).toEqual(user.id);
+			expect(actual.data.signUp.eventId).toEqual(
+				createEventResult.data.event.id,
+			);
+			expect(actual.data.signUp.slotId).not.toBeNull();
+			expect(actual.data.signUp.userProvidedInformation).toEqual(
+				userProvidedInformation,
+			);
 		});
 
 		it("should create an order for the event's product for a ticket event for a confirmed sign up", async () => {
@@ -123,11 +191,11 @@ describe("Event Sign Up", () => {
 			 *
 			 * 1. Sign up the user for the event.
 			 */
-			const actual = await eventService.signUp(
-				ctx,
-				user.id,
-				createEventResult.data.event.id,
-			);
+			const actual = await eventService.signUp(ctx, {
+				userId: user.id,
+				eventId: createEventResult.data.event.id,
+			});
+			if (!actual.ok) throw actual.error;
 
 			/**
 			 * Assert.
@@ -135,10 +203,15 @@ describe("Event Sign Up", () => {
 			 * 1. User should be signed up for the event with status CONFIRMED
 			 * 2. There should be an order created for the user
 			 */
-			expect(actual.participationStatus).toEqual(ParticipationStatus.CONFIRMED);
-			assert(actual.orderId !== undefined && actual.orderId !== null);
+			expect(actual.data.signUp.participationStatus).toEqual(
+				ParticipationStatus.CONFIRMED,
+			);
+			assert(
+				actual.data.signUp.orderId !== undefined &&
+					actual.data.signUp.orderId !== null,
+			);
 			const getOrder = await productService.orders.get(ctx, {
-				id: actual.orderId,
+				id: actual.data.signUp.orderId,
 			});
 
 			if (!getOrder.ok) throw getOrder.error;
@@ -188,21 +261,25 @@ describe("Event Sign Up", () => {
 			 *
 			 * 1. Sign up the user for the event.
 			 */
-			const actual = await eventService.signUp(
-				ctx,
-				user.id,
-				createEventResult.data.event.id,
-			);
+			const actual = await eventService.signUp(ctx, {
+				userId: user.id,
+				eventId: createEventResult.data.event.id,
+			});
+			if (!actual.ok) throw actual.error;
 
 			/**
 			 * Assert.
 			 *
 			 * 1. User should be signed up for the event with status CONFIRMED
 			 */
-			expect(actual.participationStatus).toEqual(ParticipationStatus.CONFIRMED);
-			expect(actual.userId).toEqual(user.id);
-			expect(actual.eventId).toEqual(createEventResult.data.event.id);
-			expect(actual.slotId).not.toBeNull();
+			expect(actual.data.signUp.participationStatus).toEqual(
+				ParticipationStatus.CONFIRMED,
+			);
+			expect(actual.data.signUp.userId).toEqual(user.id);
+			expect(actual.data.signUp.eventId).toEqual(
+				createEventResult.data.event.id,
+			);
+			expect(actual.data.signUp.slotId).not.toBeNull();
 		});
 
 		it("should add the user to the wait list if there are no slots for their year", async () => {
@@ -246,23 +323,23 @@ describe("Event Sign Up", () => {
 			 *
 			 * 1. Sign up the user for the event.
 			 */
-			const actual = await eventService.signUp(
-				ctx,
-				user.id,
-				event.data.event.id,
-			);
+			const actual = await eventService.signUp(ctx, {
+				userId: user.id,
+				eventId: event.data.event.id,
+			});
+			if (!actual.ok) throw actual.error;
 
 			/**
 			 * Assert.
 			 *
 			 * 1. User should be signed up for the event with status CONFIRMED
 			 */
-			expect(actual.participationStatus).toEqual(
+			expect(actual.data.signUp.participationStatus).toEqual(
 				ParticipationStatus.ON_WAITLIST,
 			);
-			expect(actual.userId).toEqual(user.id);
-			expect(actual.eventId).toEqual(event.data.event.id);
-			expect(actual.slotId).toBeNull();
+			expect(actual.data.signUp.userId).toEqual(user.id);
+			expect(actual.data.signUp.eventId).toEqual(event.data.event.id);
+			expect(actual.data.signUp.slotId).toBeNull();
 		});
 
 		describe("should add the user to wait list when", () => {
@@ -327,23 +404,23 @@ describe("Event Sign Up", () => {
 					 *
 					 * 1. Sign up the user for the event.
 					 */
-					const actual = await eventService.signUp(
-						ctx,
-						user.id,
-						event.data.event.id,
-					);
+					const actual = await eventService.signUp(ctx, {
+						userId: user.id,
+						eventId: event.data.event.id,
+					});
+					if (!actual.ok) throw actual.error;
 
 					/**
 					 * Assert.
 					 *
 					 * 1. User should be signed up for the event with status CONFIRMED
 					 */
-					expect(actual.participationStatus).toEqual(
+					expect(actual.data.signUp.participationStatus).toEqual(
 						ParticipationStatus.ON_WAITLIST,
 					);
-					expect(actual.userId).toEqual(user.id);
-					expect(actual.eventId).toEqual(event.data.event.id);
-					expect(actual.slotId).toBeNull();
+					expect(actual.data.signUp.userId).toEqual(user.id);
+					expect(actual.data.signUp.eventId).toEqual(event.data.event.id);
+					expect(actual.data.signUp.slotId).toBeNull();
 				},
 			);
 		});
@@ -399,11 +476,10 @@ describe("Event Sign Up", () => {
 			 * Sign up all users for the event.
 			 */
 			const promises = users.map((user) =>
-				eventService.signUp(
-					makeMockContext({ ...user, canUpdateYear: true }),
-					user.id,
-					event.data.event.id,
-				),
+				eventService.signUp(makeMockContext({ ...user, canUpdateYear: true }), {
+					userId: user.id,
+					eventId: event.data.event.id,
+				}),
 			);
 			const actual = await Promise.all(promises);
 
@@ -416,10 +492,13 @@ describe("Event Sign Up", () => {
 			 */
 			expect(actual.length).toEqual(concurrentUsers);
 			expect(
-				actual.every(
-					(signUp) =>
-						signUp.participationStatus === ParticipationStatus.CONFIRMED,
-				),
+				actual.every((result) => {
+					if (!result.ok) throw result.error;
+					return (
+						result.data.signUp.participationStatus ===
+						ParticipationStatus.CONFIRMED
+					);
+				}),
 			).toBe(true);
 
 			const updatedEvent = await prisma.event.findUniqueOrThrow({
@@ -482,11 +561,10 @@ describe("Event Sign Up", () => {
 			 * Sign up all users for the event.
 			 */
 			const promises = users.map((user) =>
-				eventService.signUp(
-					makeMockContext({ ...user, canUpdateYear: true }),
-					user.id,
-					event.data.event.id,
-				),
+				eventService.signUp(makeMockContext({ ...user, canUpdateYear: true }), {
+					userId: user.id,
+					eventId: event.data.event.id,
+				}),
 			);
 			const actual = await Promise.all(promises);
 
@@ -499,16 +577,22 @@ describe("Event Sign Up", () => {
 			 */
 			expect(actual.length).toEqual(concurrentUsers);
 			expect(
-				actual.filter(
-					(signUp) =>
-						signUp.participationStatus === ParticipationStatus.CONFIRMED,
-				).length,
+				actual.filter((result) => {
+					if (!result.ok) throw result.error;
+					return (
+						result.data.signUp.participationStatus ===
+						ParticipationStatus.CONFIRMED
+					);
+				}).length,
 			).toEqual(capacity);
 			expect(
-				actual.filter(
-					(signUp) =>
-						signUp.participationStatus === ParticipationStatus.ON_WAITLIST,
-				).length,
+				actual.filter((result) => {
+					if (!result.ok) throw result.error;
+					return (
+						result.data.signUp.participationStatus ===
+						ParticipationStatus.ON_WAITLIST
+					);
+				}).length,
 			).toEqual(concurrentUsers - capacity);
 
 			const updatedEvent = await prisma.event.findUniqueOrThrow({
@@ -522,7 +606,7 @@ describe("Event Sign Up", () => {
 			expect(updatedSlot.remainingCapacity).toEqual(0);
 		});
 
-		it("should throw InvalidArgumentError if sign ups are disabled for the event", async () => {
+		it("should return InvalidArgumentError if sign ups are disabled for the event", async () => {
 			/**
 			 * Arrange
 			 *
@@ -556,17 +640,23 @@ describe("Event Sign Up", () => {
 			 *
 			 * Sign up for the event with sign ups disabled.
 			 */
-			const signUp = eventService.signUp(ctx, user.id, event.data.event.id);
+			const signUpResult = await eventService.signUp(ctx, {
+				userId: user.id,
+				eventId: event.data.event.id,
+			});
 
 			/**
 			 * Assert
 			 *
-			 * InvalidArgumentError should be thrown.
+			 * InvalidArgumentError should be returned.
 			 */
-			await expect(signUp).rejects.toThrow(InvalidArgumentError);
+			expect(signUpResult).toEqual({
+				ok: false,
+				error: expect.any(InvalidArgumentError),
+			});
 		});
 
-		it("should throw InvalidArgumentError if sign ups have not opened", async () => {
+		it("should return InvalidArgumentError if sign ups have not opened", async () => {
 			/**
 			 * Arrange
 			 *
@@ -593,21 +683,78 @@ describe("Event Sign Up", () => {
 				],
 				type: "SIGN_UPS",
 			});
-			assert(event.ok);
+			if (!event.ok) throw event.error;
 
 			/**
 			 * Act
 			 *
 			 * Sign up for the event with sign ups disabled.
 			 */
-			const signUp = eventService.signUp(ctx, user.id, event.data.event.id);
+			const signUpResult = await eventService.signUp(ctx, {
+				userId: user.id,
+				eventId: event.data.event.id,
+			});
 
 			/**
 			 * Assert
 			 *
-			 * InvalidArgumentError should be thrown.
+			 * InvalidArgumentError should be returned.
 			 */
-			await expect(signUp).rejects.toThrow(InvalidArgumentError);
+			expect(signUpResult).toEqual({
+				ok: false,
+				error: expect.any(InvalidArgumentError),
+			});
+		});
+
+		it("should return InvalidArgumentError if user provided information is required, but not provided", async () => {
+			/**
+			 * Arrange
+			 *
+			 * 1. Create an organization to host the event.
+			 * 2. Create an event with sign ups disabled.
+			 * 3. Create a user to sign up for the event.
+			 */
+			const { organization, user } = await makeUserWithOrganizationMembership();
+			const ctx = makeMockContext(user);
+			const event = await eventService.create(ctx, {
+				event: {
+					organizationId: organization.id,
+					name: faker.word.adjective(),
+					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					signUpsEnabled: true,
+					signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					signUpsEndAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+					capacity: 1,
+					signUpsRequireUserProvidedInformation: true,
+				},
+				slots: [
+					{
+						capacity: 1,
+					},
+				],
+				type: "SIGN_UPS",
+			});
+			if (!event.ok) throw event.error;
+
+			/**
+			 * Act
+			 *
+			 * Sign up for the event without user provided information
+			 */
+			const signUpResult = await eventService.signUp(ctx, {
+				userId: user.id,
+				eventId: event.data.event.id,
+			});
+
+			/**
+			 * Assert
+			 *
+			 * InvalidArgumentError should be returned.
+			 */
+			expect(signUpResult).toEqual({
+				ok: false,
+				error: expect.any(InvalidArgumentError),
+			});
 		});
 	});
 });

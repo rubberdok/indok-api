@@ -80,6 +80,7 @@ export class EventRepository {
 			"signUpsEndAt",
 			"signUpsStartAt",
 			"signUpsRetractable",
+			"signUpsRequireUserProvidedInformation",
 		]);
 		try {
 			const {
@@ -581,7 +582,13 @@ export class EventRepository {
 	}
 
 	private async createConfirmedSignUp(data: CreateConfirmedSignUpData) {
-		const { eventId, userId, participationStatus, slotId } = data;
+		const {
+			eventId,
+			userId,
+			participationStatus,
+			slotId,
+			userProvidedInformation,
+		} = data;
 		const updatedEvent = await this.db.event.update({
 			include: {
 				slots: {
@@ -630,6 +637,7 @@ export class EventRepository {
 				},
 				signUps: {
 					create: {
+						userProvidedInformation,
 						slotId,
 						userId,
 						active: true,
@@ -659,7 +667,8 @@ export class EventRepository {
 	}
 
 	private async createOnWaitlistSignUp(data: CreateOnWaitlistSignUpData) {
-		const { eventId, userId, participationStatus } = data;
+		const { eventId, userId, participationStatus, userProvidedInformation } =
+			data;
 		const updatedEvent = await this.db.event.update({
 			include: {
 				signUps: {
@@ -679,6 +688,7 @@ export class EventRepository {
 				},
 				signUps: {
 					create: {
+						userProvidedInformation,
 						userId,
 						active: true,
 						participationStatus,
@@ -1275,12 +1285,14 @@ interface CreateConfirmedSignUpData {
 	userId: string;
 	slotId: string;
 	participationStatus: Extract<ParticipationStatus, "CONFIRMED">;
+	userProvidedInformation?: string;
 }
 
 interface CreateOnWaitlistSignUpData {
 	eventId: string;
 	userId: string;
 	participationStatus: Extract<ParticipationStatus, "ON_WAITLIST">;
+	userProvidedInformation?: string;
 }
 
 interface UpdateToConfirmedSignUpData {

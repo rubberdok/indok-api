@@ -87,6 +87,7 @@ describe("EventsRepository", () => {
 					location: faker.location.streetAddress(),
 					signUpsEnabled: false,
 					signUpsRetractable: false,
+					signUpsRequireUserProvidedInformation: false,
 				},
 			});
 			if (!event.ok) throw event.error;

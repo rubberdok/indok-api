@@ -174,6 +174,7 @@ describe("EventRepository", () => {
 					endAt: new Date(),
 					location: faker.string.uuid(),
 					signUpsRetractable: false,
+					signUpsRequireUserProvidedInformation: false,
 				},
 			});
 

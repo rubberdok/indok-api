@@ -24,6 +24,8 @@ function makeSignUpEvent(data?: Partial<SignUpEvent>): SignUpEvent {
 			signUpsStartAt ?? DateTime.now().plus({ days: 1 }).toJSDate(),
 		signUpsEndAt: signUpsEndAt ?? DateTime.now().plus({ days: 2 }).toJSDate(),
 		type: type ?? "SIGN_UPS",
+		signUpsRetractable: true,
+		signUpsRequireUserProvidedInformation: false,
 	};
 }
 
@@ -34,6 +36,7 @@ function makeTicketEvent(data?: Partial<TicketEvent>): TicketEvent {
 		...signUpEvent,
 		productId: productId ?? faker.string.uuid(),
 		type: type ?? "TICKETS",
+		signUpsRetractable: false,
 	};
 }
 

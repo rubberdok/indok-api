@@ -100,6 +100,48 @@ describe("EventService", () => {
 					}),
 				},
 			},
+			{
+				name: "should create an event with retractable sign ups and require user provided information",
+				act: {
+					createEventParams: {
+						type: "SIGN_UPS",
+						event: {
+							name: "test",
+							organizationId: "",
+							startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+							endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
+							capacity: 10,
+							signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+							signUpsStartAt: DateTime.now().toJSDate(),
+							signUpsEnabled: true,
+							signUpsRetractable: true,
+							signUpsRequireUserProvidedInformation: true,
+						},
+						slots: [{ capacity: 10, gradeYears: [1, 2, 3] }],
+					},
+				},
+				expected: {
+					ok: true,
+					data: expect.objectContaining({
+						event: expect.objectContaining({
+							capacity: 10,
+							remainingCapacity: 10,
+							signUpsEnabled: true,
+							type: "SIGN_UPS",
+							signUpsRetractable: true,
+							signUpsRequireUserProvidedInformation: true,
+						}),
+						slots: [
+							expect.objectContaining({
+								capacity: 10,
+
+								gradeYears: [1, 2, 3],
+								remainingCapacity: 10,
+							}),
+						],
+					}),
+				},
+			},
 		];
 
 		test.each(testCases)("$name", async ({ act, expected }) => {

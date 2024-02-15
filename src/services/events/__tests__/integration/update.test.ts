@@ -236,7 +236,10 @@ describe("EventService", () => {
 
 				if (!createEventResult.ok) throw createEventResult.error;
 				// Sign up a user for the event so that remaining capacity != capacity
-				await events.signUp(ctx, user.id, createEventResult.data.event.id);
+				await events.signUp(ctx, {
+					userId: user.id,
+					eventId: createEventResult.data.event.id,
+				});
 
 				// Set capacity to 0 with a user signed up
 				const updateEventResult = await events.update(ctx, {
@@ -283,7 +286,10 @@ describe("EventService", () => {
 				);
 
 				// Sign up a user for the event so that remaining capacity != capacity
-				await events.signUp(ctx, user.id, createEventResult.data.event.id);
+				await events.signUp(ctx, {
+					userId: user.id,
+					eventId: createEventResult.data.event.id,
+				});
 
 				// Set capacity to 0 with a user signed up
 				const updateEventResult = await events.update(ctx, {
@@ -343,7 +349,10 @@ describe("EventService", () => {
 
 				if (!createEventResult.ok) throw createEventResult.error;
 				// Sign up a user for the event so that remaining capacity != capacity
-				await events.signUp(ctx, user.id, createEventResult.data.event.id);
+				await events.signUp(ctx, {
+					userId: user.id,
+					eventId: createEventResult.data.event.id,
+				});
 				const existingSlot = createEventResult.data.slots?.[0];
 				assert(
 					existingSlot !== undefined,
@@ -394,7 +403,10 @@ describe("EventService", () => {
 
 				if (!createEventResult.ok) throw createEventResult.error;
 				// Sign up a user for the event so that remaining capacity != capacity
-				await events.signUp(ctx, user.id, createEventResult.data.event.id);
+				await events.signUp(ctx, {
+					userId: user.id,
+					eventId: createEventResult.data.event.id,
+				});
 				const existingSlot = createEventResult.data.slots?.[0];
 				assert(
 					existingSlot !== undefined,
