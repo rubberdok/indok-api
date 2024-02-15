@@ -118,7 +118,7 @@ describe("ProductService", () => {
 				data: { paymentAttempt: initialPaymentAttempt },
 			} = initialPaymentAttemptResult;
 			expect(initialPaymentAttempt?.state).toBe("CREATED");
-			expect(initialPaymentAttempt?.isFinalState()).toBe(true);
+			expect(initialPaymentAttempt?.isFinalState()).toBe(false);
 
 			/**
 			 * Update the Vipps info mock to return a final state, authorized.
@@ -175,7 +175,7 @@ describe("ProductService", () => {
 			 * The payment attempt should now be in a final state, and the polling job should be removed.
 			 */
 			expect(finalPaymentAttempt?.state).toBe("AUTHORIZED");
-			expect(finalPaymentAttempt?.isFinalState()).toBe(false);
+			expect(finalPaymentAttempt?.isFinalState()).toBe(true);
 			expect(finalPaymentAttempt?.version).toBe(1);
 			const pendingJobs = await paymentProcessingQueue.getRepeatableJobs();
 			expect(pendingJobs).toHaveLength(0);
@@ -194,6 +194,7 @@ describe("ProductService", () => {
 			if (!updatedOrderResult.ok) throw updatedOrderResult.error;
 			const { order: updatedOrder } = updatedOrderResult.data;
 			expect(updatedOrder.paymentStatus).toEqual("CAPTURED");
+			expect(updatedOrder.isFinalState()).toBe(true);
 		});
 	});
 });
