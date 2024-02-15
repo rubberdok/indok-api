@@ -7,8 +7,6 @@ import type {
 	EventRepository,
 	EventService,
 	PermissionService,
-	ProductService,
-	UserService,
 } from "../../service.js";
 import { makeSignUpEvent } from "../dependencies.js";
 import { makeDependencies } from "./dependencies.js";
@@ -17,17 +15,9 @@ describe("EventService", () => {
 	let service: EventService;
 	let eventsRepository: DeepMockProxy<EventRepository>;
 	let permissionService: DeepMockProxy<PermissionService>;
-	let userService: DeepMockProxy<UserService>;
-	let productService: DeepMockProxy<ProductService>;
 
 	beforeAll(() => {
-		({
-			eventsRepository,
-			service,
-			permissionService,
-			productService,
-			userService,
-		} = makeDependencies());
+		({ eventsRepository, service, permissionService } = makeDependencies());
 		eventsRepository.update.mockImplementation(async (_ctx, id, updateFn) => {
 			const res = await updateFn({
 				event: makeSignUpEvent(),
