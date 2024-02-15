@@ -1,7 +1,7 @@
 import assert from "assert";
 import { faker } from "@faker-js/faker";
 import type { EventSlot } from "@prisma/client";
-import { mock, mockDeep } from "jest-mock-extended";
+import { mock } from "jest-mock-extended";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
 import {
@@ -14,41 +14,15 @@ import { Role } from "~/domain/organizations.js";
 import type { User } from "~/domain/users.js";
 import { makeMockContext } from "~/lib/context.js";
 import type { Result } from "~/lib/result.js";
-import {
-	type CreateBasicEventParams,
-	type CreateEventParams,
-	type CreateSignUpEventParams,
-	type CreateTicketEventParams,
-	type EventRepository,
-	EventService,
-	type PermissionService,
-	type ProductService,
-	type UpdateEventParams,
-	type UserService,
+import type {
+	CreateBasicEventParams,
+	CreateEventParams,
+	CreateSignUpEventParams,
+	CreateTicketEventParams,
+	UpdateEventParams,
 } from "../../service.js";
-import type { SignUpQueueType } from "../../worker.js";
 import { makeBasicEvent, makeSignUpEvent } from "../dependencies.js";
-
-function setup() {
-	const permissionService = mockDeep<PermissionService>();
-	const eventsRepository = mockDeep<EventRepository>();
-	const userService = mockDeep<UserService>();
-	const productService = mockDeep<ProductService>();
-	const service = new EventService(
-		eventsRepository,
-		permissionService,
-		userService,
-		productService,
-		mockDeep<SignUpQueueType>(),
-	);
-	return {
-		permissionService,
-		eventsRepository,
-		service,
-		userService,
-		productService,
-	};
-}
+import { makeDependencies } from "./dependencies.js";
 
 function makeBasicEventParams(
 	event?: Partial<CreateBasicEventParams["event"]>,
@@ -396,7 +370,8 @@ describe("EventsService", () => {
 			test.each(testCases)(
 				"ok: $assertion.return.ok $name",
 				async ({ act, assertion }) => {
-					const { service, permissionService, eventsRepository } = setup();
+					const { service, permissionService, eventsRepository } =
+						makeDependencies();
 					eventsRepository.create.mockResolvedValueOnce(
 						act.repository ?? {
 							ok: false,
@@ -888,7 +863,8 @@ describe("EventsService", () => {
 		test.each(testCases)(
 			"ok: $assertion.result.ok, $name",
 			async ({ assertion, arrange, act }) => {
-				const { service, eventsRepository, permissionService } = setup();
+				const { service, eventsRepository, permissionService } =
+					makeDependencies();
 
 				/**
 				 * Arrange
@@ -937,7 +913,8 @@ describe("EventsService", () => {
 
 	describe("#createCategory", () => {
 		it("should create a category", async () => {
-			const { service, eventsRepository, permissionService } = setup();
+			const { service, eventsRepository, permissionService } =
+				makeDependencies();
 
 			/**
 			 * Arrange
@@ -966,7 +943,8 @@ describe("EventsService", () => {
 		});
 
 		it("should raise PermissionDeniedError if the user is not a super user", async () => {
-			const { service, eventsRepository, permissionService } = setup();
+			const { service, eventsRepository, permissionService } =
+				makeDependencies();
 
 			/**
 			 * Arrange
@@ -995,7 +973,8 @@ describe("EventsService", () => {
 		});
 
 		it("should raise InvalidArgumentError if the name is too long", async () => {
-			const { service, eventsRepository, permissionService } = setup();
+			const { service, eventsRepository, permissionService } =
+				makeDependencies();
 
 			/**
 			 * Arrange
@@ -1024,7 +1003,8 @@ describe("EventsService", () => {
 		});
 
 		it("should raise InvalidArgumentError if the name is too short", async () => {
-			const { service, eventsRepository, permissionService } = setup();
+			const { service, eventsRepository, permissionService } =
+				makeDependencies();
 
 			/**
 			 * Arrange
@@ -1055,7 +1035,8 @@ describe("EventsService", () => {
 
 	describe("#updateCategory", () => {
 		it("should update a category", async () => {
-			const { service, eventsRepository, permissionService } = setup();
+			const { service, eventsRepository, permissionService } =
+				makeDependencies();
 
 			/**
 			 * Arrange
@@ -1085,7 +1066,8 @@ describe("EventsService", () => {
 		});
 
 		it("should raise PermissionDeniedError if the user is not a super user", async () => {
-			const { service, eventsRepository, permissionService } = setup();
+			const { service, eventsRepository, permissionService } =
+				makeDependencies();
 
 			/**
 			 * Arrange
@@ -1115,7 +1097,8 @@ describe("EventsService", () => {
 		});
 
 		it("should raise InvalidArgumentError if the name is too long", async () => {
-			const { service, eventsRepository, permissionService } = setup();
+			const { service, eventsRepository, permissionService } =
+				makeDependencies();
 
 			/**
 			 * Arrange
@@ -1145,7 +1128,8 @@ describe("EventsService", () => {
 		});
 
 		it("should raise InvalidArgumentError if the name is too short", async () => {
-			const { service, eventsRepository, permissionService } = setup();
+			const { service, eventsRepository, permissionService } =
+				makeDependencies();
 
 			/**
 			 * Arrange
@@ -1177,7 +1161,8 @@ describe("EventsService", () => {
 
 	describe("#deleteCategory", () => {
 		it("should delete a category", async () => {
-			const { service, eventsRepository, permissionService } = setup();
+			const { service, eventsRepository, permissionService } =
+				makeDependencies();
 
 			/**
 			 * Arrange
@@ -1206,7 +1191,8 @@ describe("EventsService", () => {
 		});
 
 		it("should raise PermissionDeniedError if the user is not a super user", async () => {
-			const { service, eventsRepository, permissionService } = setup();
+			const { service, eventsRepository, permissionService } =
+				makeDependencies();
 
 			/**
 			 * Arrange

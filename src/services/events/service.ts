@@ -295,22 +295,25 @@ class EventService {
 					},
 				);
 				if (!createProductResult.ok) {
-					if (createProductResult.error.name === "InvalidArgumentError") {
-						return {
-							ok: false,
-							error: new InvalidArgumentError(
-								"Could not create product for event",
-								createProductResult.error,
-							),
-						};
+					switch (createProductResult.error.name) {
+						case "InvalidArgumentError":
+							return {
+								ok: false,
+								error: new InvalidArgumentError(
+									"Could not create product for event",
+									createProductResult.error,
+								),
+							};
+						case "UnauthorizedError": {
+							return {
+								ok: false,
+								error: new InternalServerError(
+									"Failed to create product",
+									createProductResult.error,
+								),
+							};
+						}
 					}
-					return {
-						ok: false,
-						error: new InternalServerError(
-							"Unexpected error when creating product for event",
-							createProductResult.error,
-						),
-					};
 				}
 				result = Event.new({
 					type: "TICKETS",
@@ -324,23 +327,16 @@ class EventService {
 		}
 
 		if (!result.ok) {
-			const { error } = result;
-			if (error.name === "InvalidArgumentError") {
-				return {
-					ok: false,
-					error: new InvalidArgumentError(
-						`Event constructor for ${type}`,
-						error,
-					),
-				};
+			switch (result.error.name) {
+				case "InvalidArgumentError":
+					return {
+						ok: false,
+						error: new InvalidArgumentError(
+							`Invalid event data ${type}`,
+							result.error,
+						),
+					};
 			}
-			return {
-				ok: false,
-				error: new InternalServerError(
-					"Unexpected error in event constructor",
-					error,
-				),
-			};
 		}
 
 		const { event } = result.data;
@@ -349,20 +345,26 @@ class EventService {
 			slots,
 		});
 		if (!createEventResult.ok) {
-			const { error } = createEventResult;
-			if (error.name === "InvalidArgumentError") {
-				return {
-					ok: false,
-					error: new InvalidArgumentError(
-						`Could not create event in repository for ${type}`,
-						error,
-					),
-				};
+			switch (createEventResult.error.name) {
+				case "InternalServerError": {
+					return {
+						ok: false,
+						error: new InternalServerError(
+							"Unexpected error in repository",
+							createEventResult.error,
+						),
+					};
+				}
+				case "InvalidArgumentError": {
+					return {
+						ok: false,
+						error: new InvalidArgumentError(
+							`Could not create event in repository for ${type}`,
+							createEventResult.error,
+						),
+					};
+				}
 			}
-			return {
-				ok: false,
-				error: new InternalServerError("Unexpected error in repository", error),
-			};
 		}
 		const {
 			event: createdEvent,
