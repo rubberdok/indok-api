@@ -68,4 +68,11 @@ export const Event: EventResolvers = {
 	type: ({ type }) => {
 		return type;
 	},
+	user: (_parent, _args, ctx) => {
+		if (!ctx.user) return null;
+		return {
+			id: ctx.user.id,
+			eventId: _parent.id,
+		};
+	},
 };

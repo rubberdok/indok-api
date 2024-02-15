@@ -181,6 +181,16 @@ interface ProductService {
 			ctx: Context,
 			data: Pick<OrderType, "productId">,
 		): ResultAsync<{ order: OrderType }, UnauthorizedError | NotFoundError>;
+		get(
+			ctx: Context,
+			params: { id: string },
+		): ResultAsync<
+			{ order: OrderType },
+			| NotFoundError
+			| UnauthorizedError
+			| PermissionDeniedError
+			| InternalServerError
+		>;
 	};
 }
 
@@ -1060,5 +1070,116 @@ class EventService {
 		await this.signUpQueue.add("event-capacity-increased", {
 			eventId,
 		});
+	}
+
+	/**
+	 * getOrderForSignUp returns the order for the sign up for the specified user and event.
+	 * If the user is a super user, they can get the order for any user.
+	 * If the user is not a super user, they can only get their own order.
+	 */
+	async getOrderForSignUp(
+		ctx: Context,
+		params: { eventId: string; userId?: string },
+	): ResultAsync<
+		{ order: OrderType },
+		| NotFoundError
+		| InternalServerError
+		| InvalidArgumentError
+		| UnauthorizedError
+		| PermissionDeniedError
+	> {
+		if (!ctx.user) {
+			return {
+				ok: false,
+				error: new UnauthorizedError(
+					"You must be logged in to get an order for a sign up",
+				),
+			};
+		}
+		let userId = ctx.user.id;
+		if (ctx.user.isSuperUser && params.userId) {
+			userId = params.userId;
+		}
+
+		const { eventId } = params;
+		try {
+			const signUp = await this.eventRepository.getSignUp(userId, eventId);
+			if (signUp.participationStatus !== "CONFIRMED") {
+				return {
+					ok: false,
+					error: new InvalidArgumentError(
+						"Cannot get order for sign up with status other than CONFIRMED",
+					),
+				};
+			}
+			if (signUp.orderId === null) {
+				return {
+					ok: false,
+					error: new NotFoundError("Sign up does not have an order"),
+				};
+			}
+			const getOrderResult = await this.productService.orders.get(ctx, {
+				id: signUp.orderId,
+			});
+			if (!getOrderResult.ok) {
+				return {
+					ok: false,
+					error: getOrderResult.error,
+				};
+			}
+			return {
+				ok: true,
+				data: { order: getOrderResult.data.order },
+			};
+		} catch (err) {
+			if (err instanceof NotFoundError) {
+				return {
+					ok: false,
+					error: new NotFoundError("Sign up not found", err),
+				};
+			}
+			return {
+				ok: false,
+				error: new InternalServerError("Failed to get sign up", err),
+			};
+		}
+	}
+
+	/**
+	 * getSignUp returns the sign up for the specified user and event.
+	 * If the user is a super user, they can get the sign up for any user.
+	 * If the user is not a super user, they can only get their own sign up.
+	 */
+	async getSignUp(
+		ctx: Context,
+		params: { userId?: string; eventId: string },
+	): ResultAsync<
+		{ signUp: EventSignUp },
+		NotFoundError | UnauthorizedError | InternalServerError
+	> {
+		if (!ctx.user) {
+			return {
+				ok: false,
+				error: new UnauthorizedError("You must be logged in to get a sign up"),
+			};
+		}
+		let userId = ctx.user.id;
+		if (ctx.user.isSuperUser && params.userId) {
+			userId = params.userId;
+		}
+
+		const { eventId } = params;
+		try {
+			const signUp = await this.eventRepository.getSignUp(userId, eventId);
+			return { ok: true, data: { signUp } };
+		} catch (err) {
+			if (err instanceof NotFoundError) {
+				return { ok: false, error: err };
+			}
+			return {
+				ok: false,
+				error: new InternalServerError("Failed to get sign up", err),
+			};
+		}
 	}
 }

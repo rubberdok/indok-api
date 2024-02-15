@@ -44,6 +44,25 @@ type Event {
   """
   categories: [EventCategory!]
   type: EventType!
+  user: EventUser
+}
+
+enum EventTicketStatus {
+  BOUGHT
+  NOT_BOUGHT
+}
+
+type EventUser {
+  """
+  The ID of the user
+  """
+  id: ID!
+  """
+  The ticket status for the user on the event, null if it's not a ticket event
+  """
+  ticketStatus: EventTicketStatus
+  ticket: Order
+  signUp: SignUp
 }
 
 enum EventType {
@@ -285,6 +304,7 @@ type SignUp {
   The user that signed up for the event
   """
   user: PublicUser!
+  order: Order
 }
 
 type SignUpResponse {

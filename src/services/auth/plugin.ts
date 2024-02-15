@@ -1,15 +1,7 @@
 import type { FastifyPluginAsync } from "fastify";
 import { env } from "~/config.js";
-import { InvalidArgumentError, UnauthorizedError } from "~/domain/errors.js";
-
-function assertValidRedirectUrl(url: string): void {
-	const parsedUrl = new URL(url);
-	if (!env.REDIRECT_ORIGINS.some((origin) => origin === parsedUrl.origin)) {
-		throw new InvalidArgumentError(
-			`Invalid redirect URL. Must be one of ${env.REDIRECT_ORIGINS.join(", ")}`,
-		);
-	}
-}
+import { UnauthorizedError } from "~/domain/errors.js";
+import { assertValidRedirectUrl } from "~/utils/validateRedirectUrl.js";
 
 const fastifyAuthPlugin: FastifyPluginAsync = (fastify) => {
 	fastify.route<{

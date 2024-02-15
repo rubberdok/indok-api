@@ -97,6 +97,7 @@ describe("ProductService", () => {
 			 */
 			const result = await productService.payments.initiatePaymentAttempt(ctx, {
 				orderId: order.id,
+				returnUrl: faker.internet.url(),
 			});
 			if (!result.ok) throw result.error;
 
@@ -117,7 +118,7 @@ describe("ProductService", () => {
 				data: { paymentAttempt: initialPaymentAttempt },
 			} = initialPaymentAttemptResult;
 			expect(initialPaymentAttempt?.state).toBe("CREATED");
-			expect(initialPaymentAttempt?.inProgress).toBe(true);
+			expect(initialPaymentAttempt?.isFinalState()).toBe(true);
 
 			/**
 			 * Update the Vipps info mock to return a final state, authorized.
@@ -174,7 +175,7 @@ describe("ProductService", () => {
 			 * The payment attempt should now be in a final state, and the polling job should be removed.
 			 */
 			expect(finalPaymentAttempt?.state).toBe("AUTHORIZED");
-			expect(finalPaymentAttempt?.inProgress).toBe(false);
+			expect(finalPaymentAttempt?.isFinalState()).toBe(false);
 			expect(finalPaymentAttempt?.version).toBe(1);
 			const pendingJobs = await paymentProcessingQueue.getRepeatableJobs();
 			expect(pendingJobs).toHaveLength(0);

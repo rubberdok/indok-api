@@ -29,6 +29,7 @@ describe("Product mutations", () => {
 				variables: {
 					data: {
 						orderId: faker.string.uuid(),
+						returnUrl: faker.internet.url(),
 					},
 				},
 			});
@@ -55,6 +56,7 @@ describe("Product mutations", () => {
 				variables: {
 					data: {
 						orderId: faker.string.uuid(),
+						returnUrl: faker.internet.url(),
 					},
 				},
 			});

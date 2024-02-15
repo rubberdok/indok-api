@@ -1,189 +1,277 @@
 input InitiatePaymentAttemptInput {
-    """
-    The ID of the order to initiate a payment attempt for.
-    """
-    orderId: ID!
+  """
+  The ID of the order to initiate a payment attempt for.
+  """
+  orderId: ID!
+  """
+  The return URL to redirect the user to after the payment attempt has been completed.
+  """
+  returnUrl: String!
 }
 
 type InitiatePaymentAttemptResponse {
-    """
-    The URL to redirect the user to in order to complete the payment.
-    """
-    redirectUrl: String!
+  """
+  The URL to redirect the user to in order to complete the payment.
+  """
+  redirectUrl: String!
 }
 
 enum OrderPaymentStatus {
-    PENDING
-    CREATED
-    CAPTURED
-    REFUNDED
-    CANCELLED
-    RESERVED
+  """
+  The order has been created, but no payment attempt has been made.
+  """
+  PENDING
+  """
+  The order has been created, and a payment attempt has been made.
+  """
+  CREATED
+  """
+  The payment attempt has been authorized, but and the payment has been captured. This is a final state.
+  """
+  CAPTURED
+  """
+  The payment attempt has been authorized, but the payment has been refunded. This is a final state.
+  """
+  REFUNDED
+  """
+  The order has been cancelled. This is a final state.
+  """
+  CANCELLED
+  """
+  The payment attempt has been authorized, but the payment has been reserved, but not captured.
+  """
+  RESERVED
 }
 
 type Order {
-    id: ID!
-    product: Product!
-    user: PrivateUser
-    attempt: Int!
-    paymentStatus: OrderPaymentStatus!
+  id: ID!
+  """
+  The product that the order is for.
+  """
+  product: Product!
+  user: PrivateUser
+  """
+  Number of attempts to pay for the order.
+  """
+  attempt: Int!
+  """
+  The current payment status of the order. This is updated asynchronously, so if the payment status is PENDING or CREATED,
+  it is recommended to poll the order to get the current status.
+  """
+  paymentStatus: OrderPaymentStatus!
+  """
+  """
+  totalPrice: Price!
+  purchasedAt: DateTime
+  paymentAttempt(reference: String): PaymentAttempt
+  isFinalState: Boolean!
 }
 
 input CreateOrderInput {
-    """
-    The ID of the product to create an order for.
-    """
-    productId: ID!
+  """
+  The ID of the product to create an order for.
+  """
+  productId: ID!
 }
 
 type CreateOrderResponse {
-    order: Order!
+  order: Order!
 }
 
 type Product {
-    id: ID!
-    """
-    price in øre, i.e. 100 = 1 NOK
-    """
-    price: Price!
+  id: ID!
+  """
+  price in øre, i.e. 100 = 1 NOK
+  """
+  price: Price!
+  """
+  The name of the product
+  """
+  name: String!
+  """
+  The description of the product.
+  """
+  description: String!
 }
 
 type Price {
-    """
-    The value of the price, in the given unit.
-    """
-    value: Int!
-    """
-    The unit of the price, e.g. NOK, USD, EUR, etc.
-    """
-    unit: String!
+  """
+  The value of the price, in the given unit.
+  """
+  value: Int!
+  """
+  The unit of the price, e.g. NOK, USD, EUR, etc.
+  """
+  unit: String!
+  valueInNok: Float!
 }
 
 type Merchant {
-    id: ID!
-    name: String!
+  id: ID!
+  name: String!
 }
 
 input CreateMerchantInput {
-    """
-    The name of the merchant to create.
-    """
-    name: String!
-    """
-    Client ID for the merchant, retrieved from the payment provider.
-    """
-    clientId: String!
-    """
-    Client secret for the merchant, retrieved from the payment provider.
-    """
-    clientSecret: String!
-    """
-    Merchant serial number for the merchant, retrieved from the payment provider.
-    """
-    serialNumber: String!
-    """
-    Subscription key for the merchant, retrieved from the payment provider.
-    """
-    subscriptionKey: String!
+  """
+  The name of the merchant to create.
+  """
+  name: String!
+  """
+  Client ID for the merchant, retrieved from the payment provider.
+  """
+  clientId: String!
+  """
+  Client secret for the merchant, retrieved from the payment provider.
+  """
+  clientSecret: String!
+  """
+  Merchant serial number for the merchant, retrieved from the payment provider.
+  """
+  serialNumber: String!
+  """
+  Subscription key for the merchant, retrieved from the payment provider.
+  """
+  subscriptionKey: String!
 }
 
 type CreateMerchantResponse {
-    """
-    The merchant that was created.
-    """
-    merchant: Merchant!
+  """
+  The merchant that was created.
+  """
+  merchant: Merchant!
 }
 
 type ProductResponse {
-    products: [Product!]!
-    total: Int!
+  products: [Product!]!
+  total: Int!
 }
 
 type OrdersResponse {
-    orders: [Order!]!
-    total: Int!
+  orders: [Order!]!
+  total: Int!
 }
 
 enum PaymentAttemptState {
-    CREATED
-    AUTHORIZED
-    FAILED
-    TERMINATED
-    EXPIRED
-    ABORTED
+  """
+  The payment attempt has been started, but not completed.
+  """
+  CREATED
+  """
+  The payment attempt was successful, and the user has authorized the payment. This is a final state.
+  """
+  AUTHORIZED
+  """
+  The payment attempt failed. This is a final state.
+  """
+  FAILED
+  """
+  The payment attempt was terminated (typically by us). This is a final state.
+  """
+  TERMINATED
+  """
+  The payment attempt expired. This is a final state.
+  """
+  EXPIRED
+  """
+  The payment attempt was aborted by the user. This is a final state.
+  """
+  ABORTED
 }
 
 type PaymentAttempt {
-    id: ID!
-    reference: String!
-    inProgress: Boolean!
-    state: PaymentAttemptState!
-    order: Order!
-
+  id: ID!
+  """
+  The reference for the payment attempt with the payment provider.
+  """
+  reference: String!
+  isFinalState: Boolean!
+  """
+  The current state of the payment attempt. If the payment attempt is CREATED, it is recommended to poll
+  to get the most current state, as it can change asynchronously.
+  """
+  state: PaymentAttemptState!
+  """
+  The order that the payment attempt is for.
+  """
+  order: Order!
 }
 
 type PaymentAttemptsResponse {
-    paymentAttempts: [PaymentAttempt!]!
-    total: Int!
+  paymentAttempts: [PaymentAttempt!]!
+  total: Int!
 }
 
 input OrdersInput {
-    """
-    Only get orders for the given user ID. Requires super user status,
-    or the user ID to match the user ID of the order. Omit to default to
-    the current user.
-    """
-    userId: ID
-    """
-    Only get orders for the given product ID.
-    """
-    productId: ID
+  """
+  Only get orders for the given user ID. Requires super user status,
+  or the user ID to match the user ID of the order. Omit to default to
+  the current user.
+  """
+  userId: ID
+  """
+  Only get orders for the given product ID.
+  """
+  productId: ID
 }
 
 input PaymentAttemptsInput {
-    """
-    Only get payment attempts for the given user ID. Requires super user status,
-    or the user ID to match the user ID of the payment attempt. Omit to default to
-    the current user.
-    """
-    userId: ID
-    """
-    Only get payment atttempts for the given order ID.
-    """
-    orderId: ID
-    """
-    Only get payment attempts for the given product ID.
-    """
-    productId: ID
+  """
+  Only get payment attempts for the given user ID. Requires super user status,
+  or the user ID to match the user ID of the payment attempt. Omit to default to
+  the current user.
+  """
+  userId: ID
+  """
+  Only get payment atttempts for the given order ID.
+  """
+  orderId: ID
+  """
+  Only get payment attempts for the given product ID.
+  """
+  productId: ID
+}
+
+input OrderInput {
+  id: ID!
+}
+
+type OrderResponse {
+  order: Order!
 }
 
 type Mutation {
-    """
-    Initiates a payment attempt for the given order.
-    """
-    initiatePaymentAttempt(data: InitiatePaymentAttemptInput!): InitiatePaymentAttemptResponse!
-    """
-    Creates an order for the given product.
-    """
-    createOrder(data: CreateOrderInput!): CreateOrderResponse!
-    """
-    Create a new Vipps merchant, and return the created merchant.
-    Requires super user status.
-    """
-    createMerchant(data: CreateMerchantInput!): CreateMerchantResponse!
+  """
+  Initiates a payment attempt for the given order.
+  """
+  initiatePaymentAttempt(
+    data: InitiatePaymentAttemptInput!
+  ): InitiatePaymentAttemptResponse!
+  """
+  Creates an order for the given product.
+  """
+  createOrder(data: CreateOrderInput!): CreateOrderResponse!
+  """
+  Create a new Vipps merchant, and return the created merchant.
+  Requires super user status.
+  """
+  createMerchant(data: CreateMerchantInput!): CreateMerchantResponse!
 }
 
-
 type Query {
-    products: ProductResponse!
-    """
-    Get orders, filtered by the given input. Unless the user is a super user, only
-    orders for the current user will be returned.
-    """
-    orders(data: OrdersInput): OrdersResponse!
-    """
-    Get payment attempts, filtered by the given input. Unless the user is a super user, only
-    payment attempts for the current user will be returned.
-    """
-    paymentAttempts(data: PaymentAttemptsInput): PaymentAttemptsResponse!
+  """
+  Get an order by its ID.
+  """
+  order(data: OrderInput!): OrderResponse!
+
+  products: ProductResponse!
+  """
+  Get orders, filtered by the given input. Unless the user is a super user, only
+  orders for the current user will be returned.
+  """
+  orders(data: OrdersInput): OrdersResponse!
+  """
+  Get payment attempts, filtered by the given input. Unless the user is a super user, only
+  payment attempts for the current user will be returned.
+  """
+  paymentAttempts(data: PaymentAttemptsInput): PaymentAttemptsResponse!
 }

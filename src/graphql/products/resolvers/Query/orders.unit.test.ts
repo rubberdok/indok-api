@@ -7,7 +7,7 @@ import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-serve
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
 describe("Product queries", () => {
-	describe("#paymentAttempts", () => {
+	describe("#orders", () => {
 		it("should return a list of orders with product and user: null if not making the request as that user", async () => {
 			const { productService, userService, client } = createMockApolloServer();
 			const user = mock<User>({ id: faker.string.uuid() });

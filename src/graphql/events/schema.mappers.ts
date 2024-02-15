@@ -4,5 +4,10 @@ interface EventsResponseMapper {
 	events: EventMapper[];
 }
 
-export { EventMapper, type EventsResponseMapper };
+interface EventUserMapper {
+	id: string;
+	eventId: string;
+}
+
+export { EventMapper, type EventsResponseMapper, type EventUserMapper };
 export { EventSignUp as SignUpMapper } from "@prisma/client";
