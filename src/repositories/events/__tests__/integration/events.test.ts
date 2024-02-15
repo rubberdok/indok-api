@@ -86,7 +86,7 @@ describe("EventsRepository", () => {
 					contactEmail: faker.internet.email(),
 					location: faker.location.streetAddress(),
 					signUpsEnabled: false,
-					signUpsRetractable: false,
+					signUpsRetractable: true,
 					signUpsRequireUserProvidedInformation: false,
 				},
 			});

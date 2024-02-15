@@ -66,6 +66,8 @@ type SignUpFields = {
 
 type BasicEvent = EventFields & {
 	type: typeof EventTypeEnum.BASIC;
+	signUpsRetractable: true;
+	signUpsRequireUserProvidedInformation: false;
 };
 
 type SignUpEvent = EventFields &
@@ -261,6 +263,8 @@ function newBasicEvent(basicEvent: NewBasicEventData): NewBasicEventReturn {
 				id: id ?? randomUUID(),
 				version: version ?? 0,
 				type: EventTypeEnum.BASIC,
+				signUpsRetractable: true,
+				signUpsRequireUserProvidedInformation: false,
 			},
 		},
 	};
@@ -560,6 +564,8 @@ const Event = {
 					event: {
 						...event,
 						type: EventTypeEnum.BASIC,
+						signUpsRequireUserProvidedInformation: false,
+						signUpsRetractable: true,
 					},
 				},
 			};
@@ -582,6 +588,8 @@ const Event = {
 					event: {
 						...event,
 						type: EventTypeEnum.BASIC,
+						signUpsRetractable: true,
+						signUpsRequireUserProvidedInformation: false,
 					},
 				},
 			};
@@ -597,6 +605,8 @@ const Event = {
 						event: {
 							...event,
 							type: EventTypeEnum.BASIC,
+							signUpsRetractable: true,
+							signUpsRequireUserProvidedInformation: false,
 						},
 					},
 				};

@@ -491,6 +491,7 @@ export class ProductRepository {
 			"attempt",
 			"totalPrice",
 			"purchasedAt",
+			"capturedPaymentAttemptReference",
 		]);
 		try {
 			const orderAfterUpdate = await this.db.order.update({

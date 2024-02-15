@@ -635,6 +635,7 @@ function buildPayments({
 
 					order.paymentStatus = "CAPTURED";
 					order.purchasedAt = new Date();
+					order.capturedPaymentAttemptReference = reference;
 					return {
 						ok: true,
 						data: { order },

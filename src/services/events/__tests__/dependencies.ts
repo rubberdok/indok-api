@@ -13,6 +13,8 @@ function makeSignUpEvent(data?: Partial<SignUpEvent>): SignUpEvent {
 		signUpsEndAt,
 		remainingCapacity,
 		type,
+		signUpsRequireUserProvidedInformation,
+		signUpsRetractable,
 		...basicEventData
 	} = data ?? {};
 	const basicEvent = makeBasicEvent(basicEventData);
@@ -24,8 +26,9 @@ function makeSignUpEvent(data?: Partial<SignUpEvent>): SignUpEvent {
 			signUpsStartAt ?? DateTime.now().plus({ days: 1 }).toJSDate(),
 		signUpsEndAt: signUpsEndAt ?? DateTime.now().plus({ days: 2 }).toJSDate(),
 		type: type ?? "SIGN_UPS",
-		signUpsRetractable: true,
-		signUpsRequireUserProvidedInformation: false,
+		signUpsRetractable: signUpsRetractable ?? false,
+		signUpsRequireUserProvidedInformation:
+			signUpsRequireUserProvidedInformation ?? false,
 	};
 }
 
@@ -53,7 +56,8 @@ function makeBasicEvent(data?: Partial<BasicEvent>): BasicEvent {
 		signUpsEnabled: false,
 		version: 0,
 		type: "BASIC",
-		signUpsRetractable: false,
+		signUpsRetractable: true,
+		signUpsRequireUserProvidedInformation: false,
 		...data,
 	};
 }

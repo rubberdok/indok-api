@@ -35,4 +35,29 @@ export const Order: OrderResolvers = {
 	isFinalState: (order) => {
 		return order.isFinalState();
 	},
+	paymentAttempts: async (order, _args, ctx) => {
+		const findManyPaymentsResult = await ctx.products.payments.findMany(ctx, {
+			orderId: order.id,
+		});
+		if (!findManyPaymentsResult.ok) {
+			if (findManyPaymentsResult.error.name === "UnauthorizedError")
+				return { paymentAttempts: [], total: 0 };
+			throw findManyPaymentsResult.error;
+		}
+		return findManyPaymentsResult.data;
+	},
+	capturedPaymentAttempt: async (
+		{ capturedPaymentAttemptReference },
+		_args,
+		ctx,
+	) => {
+		if (!capturedPaymentAttemptReference) return null;
+		const getPaymentAttemptResult = await ctx.products.payments.get(ctx, {
+			reference: capturedPaymentAttemptReference,
+		});
+		if (!getPaymentAttemptResult.ok) {
+			throw getPaymentAttemptResult.error;
+		}
+		return getPaymentAttemptResult.data.paymentAttempt;
+	},
 };

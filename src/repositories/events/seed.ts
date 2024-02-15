@@ -253,6 +253,7 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		signUpsEnabled: true,
 		signUpsStartAt: DateTime.now().minus({ day: 1 }).toJSDate(),
 		signUpsEndAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
+		signUpsRetractable: true,
 		organization: {
 			connectOrCreate: {
 				where: {
@@ -286,6 +287,8 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		signUpsEnabled: true,
 		signUpsStartAt: DateTime.now().plus({ minutes: 2 }).toJSDate(),
 		signUpsEndAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
+		signUpsRequireUserProvidedInformation: true,
+		signUpsRetractable: true,
 		organization: {
 			connectOrCreate: {
 				where: {

@@ -173,7 +173,7 @@ describe("EventRepository", () => {
 					description: faker.string.uuid(),
 					endAt: new Date(),
 					location: faker.string.uuid(),
-					signUpsRetractable: false,
+					signUpsRetractable: true,
 					signUpsRequireUserProvidedInformation: false,
 				},
 			});

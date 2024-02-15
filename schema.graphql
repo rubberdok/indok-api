@@ -580,9 +580,14 @@ type NewBookingResponse {
 type Order {
   """Number of attempts to pay for the order."""
   attempt: Int!
+  capturedPaymentAttempt: PaymentAttempt
+
+  """The date and time the order was created."""
+  createdAt: DateTime!
   id: ID!
   isFinalState: Boolean!
   paymentAttempt(reference: String): PaymentAttempt
+  paymentAttempts: PaymentAttemptsResponse!
 
   """
   The current payment status of the order. This is updated asynchronously, so if the payment status is PENDING or CREATED,

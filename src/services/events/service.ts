@@ -1162,7 +1162,7 @@ class EventService {
 			if (signUp.participationStatus !== "CONFIRMED") {
 				return {
 					ok: false,
-					error: new InvalidArgumentError(
+					error: new NotFoundError(
 						"Cannot get order for sign up with status other than CONFIRMED",
 					),
 				};

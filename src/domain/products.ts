@@ -50,6 +50,7 @@ type MerchantType = {
 type OrderType = {
 	readonly id: string;
 	readonly version: number;
+	readonly createdAt: Date;
 	productId: string;
 	attempt: number;
 	/**
@@ -67,6 +68,10 @@ type OrderType = {
 	 */
 	purchasedAt: Date | null;
 	isFinalState: () => boolean;
+	/**
+	 * The reference of the payment attempt that was used to pay for the order.
+	 */
+	capturedPaymentAttemptReference: string | null;
 };
 
 type PaymentAttemptType = {
@@ -113,12 +118,14 @@ class PaymentAttempt implements PaymentAttemptType {
 class Order implements OrderType {
 	readonly id: string;
 	readonly version: number;
+	readonly createdAt: Date;
 	productId: string;
 	attempt: number;
 	paymentStatus: OrderPaymentStatus;
 	userId: string | null;
 	totalPrice: number;
 	purchasedAt: Date | null;
+	capturedPaymentAttemptReference: string | null;
 
 	constructor({
 		id,
@@ -129,6 +136,8 @@ class Order implements OrderType {
 		totalPrice,
 		purchasedAt,
 		version,
+		createdAt,
+		capturedPaymentAttemptReference,
 	}: PrismaOrder) {
 		this.id = id;
 		this.productId = productId;
@@ -137,7 +146,9 @@ class Order implements OrderType {
 		this.userId = userId;
 		this.totalPrice = totalPrice;
 		this.purchasedAt = purchasedAt;
+		this.createdAt = createdAt;
 		this.version = version;
+		this.capturedPaymentAttemptReference = capturedPaymentAttemptReference;
 	}
 
 	isFinalState() {

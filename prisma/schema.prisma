@@ -286,20 +286,22 @@ model Merchant {
 }
 
 model Order {
-  id              String             @id @default(uuid()) @db.Uuid
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
-  userId          String?            @db.Uuid
-  user            User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
-  product         Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId       String             @db.Uuid
-  paymentAttempts PaymentAttempt[]
-  version         Int                @default(0)
-  paymentStatus   OrderPaymentStatus @default(PENDING)
-  attempt         Int                @default(0)
-  eventSignUp     EventSignUp?
-  totalPrice      Int                @default(0)
-  purchasedAt     DateTime?
+  id                              String             @id @default(uuid()) @db.Uuid
+  createdAt                       DateTime           @default(now())
+  updatedAt                       DateTime           @updatedAt
+  userId                          String?            @db.Uuid
+  user                            User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  product                         Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId                       String             @db.Uuid
+  paymentAttempts                 PaymentAttempt[]
+  version                         Int                @default(0)
+  paymentStatus                   OrderPaymentStatus @default(PENDING)
+  attempt                         Int                @default(0)
+  eventSignUp                     EventSignUp?
+  totalPrice                      Int                @default(0)
+  purchasedAt                     DateTime?
+  capturedPaymentAttemptReference String?            @unique
+  capturedPaymentAttempt          PaymentAttempt?    @relation(name: "OrderCapturedPaymentAttempt", fields: [capturedPaymentAttemptReference], references: [reference], onDelete: SetNull)
 }
 
 enum OrderPaymentStatus {
@@ -321,14 +323,15 @@ enum PaymentAttemptState {
 }
 
 model PaymentAttempt {
-  id        String              @id @default(uuid()) @db.Uuid
-  createdAt DateTime            @default(now())
-  updatedAt DateTime            @updatedAt
-  orderId   String              @db.Uuid
-  order     Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  state     PaymentAttemptState @default(CREATED)
-  version   Int                 @default(0)
-  reference String              @unique
+  id              String              @id @default(uuid()) @db.Uuid
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  orderId         String              @db.Uuid
+  order           Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  state           PaymentAttemptState @default(CREATED)
+  version         Int                 @default(0)
+  reference       String              @unique
+  capturedByOrder Order?              @relation(name: "OrderCapturedPaymentAttempt")
 }
 
 // Listings
