@@ -97,7 +97,7 @@ describe("ProductService", () => {
 			 */
 			const result = await productService.payments.initiatePaymentAttempt(ctx, {
 				orderId: order.id,
-				returnUrl: faker.internet.url(),
+				returnUrl: "https://example.com",
 			});
 			if (!result.ok) throw result.error;
 
