@@ -181,7 +181,7 @@ const Product = {
 		const schema = z.object({
 			merchantId: z.string().uuid(),
 			name: z.string(),
-			description: z.string(),
+			description: z.string().min(3).max(100),
 			price: z.number().int().positive(),
 		});
 
