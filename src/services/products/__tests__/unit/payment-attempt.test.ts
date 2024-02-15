@@ -45,6 +45,10 @@ describe("ProductService", () => {
 						paymentStatus: "PENDING",
 						userId: null,
 						totalPrice: price,
+						purchasedAt: null,
+						isFinalState() {
+							return false;
+						},
 					},
 				},
 			});
@@ -72,7 +76,9 @@ describe("ProductService", () => {
 					state: "CREATED",
 					version: 0,
 					orderId,
-					inProgress: true,
+					isFinalState() {
+						return false;
+					},
 				},
 				order: {
 					attempt: 1,
@@ -82,6 +88,10 @@ describe("ProductService", () => {
 					paymentStatus: "CREATED",
 					userId: null,
 					totalPrice: price,
+					purchasedAt: null,
+					isFinalState() {
+						return false;
+					},
 				},
 			});
 			productRepository.getMerchant.mockResolvedValueOnce({
@@ -94,6 +104,15 @@ describe("ProductService", () => {
 						name: faker.company.name(),
 						clientId: faker.string.uuid(),
 						clientSecret: faker.string.uuid(),
+					}),
+				},
+			});
+			productRepository.updateOrder.mockResolvedValueOnce({
+				ok: true,
+				data: {
+					order: mock<OrderType>({
+						id: orderId,
+						paymentStatus: "CREATED",
 					}),
 				},
 			});
@@ -120,6 +139,7 @@ describe("ProductService", () => {
 				),
 				{
 					orderId,
+					returnUrl: "https://example.com",
 				},
 			);
 
@@ -152,6 +172,7 @@ describe("ProductService", () => {
 				makeMockContext(null),
 				{
 					orderId: faker.string.uuid(),
+					returnUrl: "https://example.com",
 				},
 			);
 
@@ -175,6 +196,7 @@ describe("ProductService", () => {
 				makeMockContext(mock<User>({})),
 				{
 					orderId: faker.string.uuid(),
+					returnUrl: "https://example.com",
 				},
 			);
 
@@ -200,6 +222,7 @@ describe("ProductService", () => {
 				makeMockContext(mock<User>({})),
 				{
 					orderId: faker.string.uuid(),
+					returnUrl: "https://example.com",
 				},
 			);
 
@@ -226,6 +249,7 @@ describe("ProductService", () => {
 				makeMockContext(mock<User>({})),
 				{
 					orderId: faker.string.uuid(),
+					returnUrl: "https://example.com",
 				},
 			);
 
@@ -252,6 +276,7 @@ describe("ProductService", () => {
 				makeMockContext(mock<User>({})),
 				{
 					orderId: faker.string.uuid(),
+					returnUrl: "https://example.com",
 				},
 			);
 
@@ -278,6 +303,7 @@ describe("ProductService", () => {
 				makeMockContext(mock<User>({})),
 				{
 					orderId: faker.string.uuid(),
+					returnUrl: "https://example.com",
 				},
 			);
 
@@ -308,6 +334,7 @@ describe("ProductService", () => {
 				makeMockContext(mock<User>({})),
 				{
 					orderId: faker.string.uuid(),
+					returnUrl: "https://example.com",
 				},
 			);
 
@@ -362,6 +389,7 @@ describe("ProductService", () => {
 				makeMockContext(mock<User>({})),
 				{
 					orderId: faker.string.uuid(),
+					returnUrl: "https://example.com",
 				},
 			);
 

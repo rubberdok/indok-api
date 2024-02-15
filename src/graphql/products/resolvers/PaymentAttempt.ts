@@ -10,4 +10,7 @@ export const PaymentAttempt: PaymentAttemptResolvers = {
 		}
 		return getOrderResult.data.order;
 	},
+	isFinalState: (paymentAttempt) => {
+		return paymentAttempt.isFinalState();
+	},
 };

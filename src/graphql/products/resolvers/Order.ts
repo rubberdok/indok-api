@@ -16,4 +16,23 @@ export const Order: OrderResolvers = {
 		}
 		return null;
 	},
+	totalPrice: ({ totalPrice }) => {
+		return {
+			value: totalPrice,
+			unit: "Øre (NOK)",
+		};
+	},
+	paymentAttempt: async (_parent, { reference }, ctx) => {
+		if (!reference) return null;
+		const paymentAttemptResult = await ctx.products.payments.get(ctx, {
+			reference,
+		});
+		if (!paymentAttemptResult.ok) {
+			throw paymentAttemptResult.error;
+		}
+		return paymentAttemptResult.data.paymentAttempt;
+	},
+	isFinalState: (order) => {
+		return order.isFinalState();
+	},
 };

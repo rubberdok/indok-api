@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
+import { pick } from "lodash-es";
 import {
 	InternalServerError,
 	InvalidArgumentError,
@@ -127,7 +128,7 @@ export class ProductRepository {
 				orderPromise,
 				productPromise,
 			]);
-			return { order: orderResult, product: productResult };
+			return { order: new Order(orderResult), product: productResult };
 		} catch (err) {
 			if (err instanceof PrismaClientKnownRequestError) {
 				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) {
@@ -187,8 +188,8 @@ export class ProductRepository {
 			]);
 
 			return {
-				paymentAttempt: PaymentAttempt.fromDSO(paymentAttemptResult),
-				order: orderResult,
+				paymentAttempt: new PaymentAttempt(paymentAttemptResult),
+				order: new Order(orderResult),
 			};
 		} catch (err) {
 			if (err instanceof PrismaClientKnownRequestError) {
@@ -237,7 +238,10 @@ export class ProductRepository {
 					data: { order: null },
 				};
 			}
-			return Order.fromDSO(order);
+			return {
+				ok: true,
+				data: { order: new Order(order) },
+			};
 		} catch (err) {
 			return {
 				ok: false,
@@ -263,7 +267,7 @@ export class ProductRepository {
 				return { data: { paymentAttempt: null }, ok: true };
 			}
 			return {
-				data: { paymentAttempt: PaymentAttempt.fromDSO(attempt) },
+				data: { paymentAttempt: new PaymentAttempt(attempt) },
 				ok: true,
 			};
 		} catch (err) {
@@ -321,8 +325,8 @@ export class ProductRepository {
 			return {
 				ok: true,
 				data: {
-					paymentAttempt: PaymentAttempt.fromDSO(updatedPaymentAttempt),
-					order: updatedOrder,
+					paymentAttempt: new PaymentAttempt(updatedPaymentAttempt),
+					order: new Order(updatedOrder),
 				},
 			};
 		} catch (err) {
@@ -406,7 +410,7 @@ export class ProductRepository {
 		return {
 			ok: true,
 			data: {
-				orders: orders,
+				orders: orders.map((order) => new Order(order)),
 				total: count,
 			},
 		};
@@ -446,7 +450,7 @@ export class ProductRepository {
 		]);
 		const paymentAttempts: PaymentAttemptType[] = [];
 		for (const paymentAttempt of paymentAttemptsFromDSO) {
-			paymentAttempts.push(PaymentAttempt.fromDSO(paymentAttempt));
+			paymentAttempts.push(new PaymentAttempt(paymentAttempt));
 		}
 
 		return {
@@ -481,16 +485,21 @@ export class ProductRepository {
 			return updateResult;
 		}
 		const { order: updatedOrder } = updateResult.data;
-
-		const { id, paymentStatus } = updatedOrder;
+		const updateFields = pick(updatedOrder, [
+			"paymentStatus",
+			"version",
+			"attempt",
+			"totalPrice",
+			"purchasedAt",
+		]);
 		try {
 			const orderAfterUpdate = await this.db.order.update({
 				where: {
-					id,
+					id: order.id,
 					version: order.version,
 				},
 				data: {
-					paymentStatus,
+					...updateFields,
 					version: {
 						increment: 1,
 					},
@@ -498,7 +507,7 @@ export class ProductRepository {
 			});
 			return {
 				ok: true,
-				data: { order: orderAfterUpdate },
+				data: { order: new Order(orderAfterUpdate) },
 			};
 		} catch (err) {
 			if (err instanceof PrismaClientKnownRequestError) {

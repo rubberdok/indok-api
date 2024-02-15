@@ -20,4 +20,22 @@ export const SignUp: SignUpResolvers = {
 	user: (signUp, _args, ctx) => {
 		return ctx.users.get(signUp.userId);
 	},
+	order: async (signUp, _args, ctx) => {
+		const getOrderResult = await ctx.events.getOrderForSignUp(ctx, {
+			eventId: signUp.eventId,
+			userId: signUp.userId,
+		});
+		if (!getOrderResult.ok) {
+			switch (getOrderResult.error.name) {
+				case "UnauthorizedError":
+				case "NotFoundError":
+					return null;
+				case "InternalServerError":
+				case "PermissionDeniedError":
+				case "InvalidArgumentError":
+					throw getOrderResult.error;
+			}
+		}
+		return getOrderResult.data.order;
+	},
 };

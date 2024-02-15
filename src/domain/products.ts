@@ -29,17 +29,17 @@ type OrderPaymentStatus =
 	| "RESERVED";
 
 type ProductType = {
-	id: string;
+	readonly id: string;
+	readonly version: number;
 	// Price in øre, i.e. 100 = 1 NOK
 	price: number;
 	name: string;
 	description: string;
-	version: number;
 	merchant: MerchantType;
 };
 
 type MerchantType = {
-	id: string;
+	readonly id: string;
 	name: string;
 	clientId: string;
 	clientSecret: string;
@@ -48,10 +48,10 @@ type MerchantType = {
 };
 
 type OrderType = {
-	id: string;
+	readonly id: string;
+	readonly version: number;
 	productId: string;
 	attempt: number;
-	version: number;
 	/**
 	 * - PENDING: The order has been created, by no payment attempts have been made
 	 * - CREATED: A payment attempt has been made, but the user has not yet paid
@@ -62,30 +62,91 @@ type OrderType = {
 	paymentStatus: OrderPaymentStatus;
 	userId: string | null;
 	totalPrice: number;
+	/**
+	 * The date and time the payment was captured/completed.
+	 */
+	purchasedAt: Date | null;
+	isFinalState: () => boolean;
 };
 
 type PaymentAttemptType = {
-	id: string;
+	readonly id: string;
+	readonly version: number;
 	orderId: string;
-	version: number;
 	reference: string;
-	inProgress: boolean;
+	isFinalState: () => boolean;
 	state: PaymentAttemptState;
 };
 
-function isInProgress(paymentAttempt: { state: PaymentAttemptState }): boolean {
-	return paymentAttempt.state === "CREATED";
+class PaymentAttempt implements PaymentAttemptType {
+	readonly id: string;
+	readonly version: number;
+	orderId: string;
+	reference: string;
+	state: PaymentAttemptState;
+
+	constructor({
+		id,
+		orderId,
+		reference,
+		state,
+		version,
+	}: PrismaPaymentAttempt) {
+		this.id = id;
+		this.orderId = orderId;
+		this.reference = reference;
+		this.state = state;
+		this.version = version;
+	}
+
+	isFinalState() {
+		return (
+			this.state === "ABORTED" ||
+			this.state === "EXPIRED" ||
+			this.state === "FAILED" ||
+			this.state === "TERMINATED" ||
+			this.state === "AUTHORIZED"
+		);
+	}
 }
 
-function PaymentAttemptFromDSO(paymentAttempt: PrismaPaymentAttempt) {
-	return {
-		id: paymentAttempt.id,
-		orderId: paymentAttempt.orderId,
-		version: paymentAttempt.version,
-		reference: paymentAttempt.reference,
-		state: paymentAttempt.state,
-		inProgress: isInProgress(paymentAttempt),
-	};
+class Order implements OrderType {
+	readonly id: string;
+	readonly version: number;
+	productId: string;
+	attempt: number;
+	paymentStatus: OrderPaymentStatus;
+	userId: string | null;
+	totalPrice: number;
+	purchasedAt: Date | null;
+
+	constructor({
+		id,
+		productId,
+		attempt,
+		paymentStatus,
+		userId,
+		totalPrice,
+		purchasedAt,
+		version,
+	}: PrismaOrder) {
+		this.id = id;
+		this.productId = productId;
+		this.attempt = attempt;
+		this.paymentStatus = paymentStatus;
+		this.userId = userId;
+		this.totalPrice = totalPrice;
+		this.purchasedAt = purchasedAt;
+		this.version = version;
+	}
+
+	isFinalState() {
+		return (
+			this.paymentStatus === "CANCELLED" ||
+			this.paymentStatus === "CAPTURED" ||
+			this.paymentStatus === "REFUNDED"
+		);
+	}
 }
 
 type NewProductParams = {
@@ -133,29 +194,6 @@ const Product = {
 			},
 		};
 	},
-};
-
-const Order = {
-	fromDSO: (order: PrismaOrder): Result<{ order: OrderType }, never> => {
-		return {
-			ok: true,
-			data: {
-				order: {
-					id: order.id,
-					productId: order.productId,
-					attempt: order.attempt,
-					version: order.version,
-					paymentStatus: order.paymentStatus,
-					userId: order.userId,
-					totalPrice: order.totalPrice,
-				},
-			},
-		};
-	},
-};
-
-const PaymentAttempt = {
-	fromDSO: PaymentAttemptFromDSO,
 };
 
 export { PaymentAttempt, Product, Order };

@@ -2,6 +2,7 @@ import { faker } from "@faker-js/faker";
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { startCase, toLower } from "lodash-es";
 import { DateTime } from "luxon";
+import { env } from "~/config.js";
 
 faker.seed(42);
 
@@ -302,6 +303,62 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 					{ capacity: 5, remainingCapacity: 5, gradeYears: [1, 2, 3] },
 					{ capacity: 5, remainingCapacity: 5, gradeYears: [3, 4, 5] },
 				],
+			},
+		},
+	},
+	{
+		type: "TICKETS",
+		id: faker.string.uuid(),
+		name: fakeName(),
+		location: faker.location.streetAddress(),
+		startAt: DateTime.now().plus({ year: 1 }).toJSDate(),
+		endAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
+		capacity: 10,
+		remainingCapacity: 0,
+		description: fakeMarkdown(),
+		signUpsEnabled: true,
+		signUpsStartAt: DateTime.now().plus({ minutes: 2 }).toJSDate(),
+		signUpsEndAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
+		organization: {
+			connectOrCreate: {
+				where: {
+					name: "Rubberdøk",
+				},
+				create: {
+					name: "Rubberdøk",
+					description: faker.lorem.paragraph(),
+				},
+			},
+		},
+		slots: {
+			createMany: {
+				data: [
+					{ capacity: 5, remainingCapacity: 5, gradeYears: [1, 2, 3] },
+					{ capacity: 5, remainingCapacity: 5, gradeYears: [3, 4, 5] },
+				],
+			},
+		},
+		product: {
+			create: {
+				name: "Billett",
+				price: 100 * 100,
+				merchant: {
+					connectOrCreate: {
+						where: {
+							clientId: env.VIPPS_DEFAULT_CLIENT_ID,
+						},
+						create: {
+							clientId: env.VIPPS_DEFAULT_CLIENT_ID ?? faker.string.uuid(),
+							clientSecret:
+								env.VIPPS_DEFAULT_CLIENT_SECRET ?? faker.string.uuid(),
+							serialNumber:
+								env.VIPPS_DEFAULT_MERCHANT_SERIAL_NUMBER ?? faker.string.uuid(),
+							name: "Indøk NTNU",
+							subscriptionKey:
+								env.VIPPS_DEFAULT_SUBSCRIPTION_KEY ?? faker.string.uuid(),
+						},
+					},
+				},
 			},
 		},
 	},

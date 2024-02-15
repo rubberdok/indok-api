@@ -291,6 +291,7 @@ model Order {
   attempt         Int                @default(0)
   eventSignUp     EventSignUp?
   totalPrice      Int                @default(0)
+  purchasedAt     DateTime?
 }
 
 enum OrderPaymentStatus {

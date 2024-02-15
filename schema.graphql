@@ -235,6 +235,7 @@ type Event {
   """The start time of the event."""
   startAt: DateTime!
   type: EventType!
+  user: EventUser
 }
 
 type EventCategoriesResponse {
@@ -320,6 +321,11 @@ input EventTicketData {
   price: Int!
 }
 
+enum EventTicketStatus {
+  BOUGHT
+  NOT_BOUGHT
+}
+
 enum EventType {
   """Basic event has no sign ups, and no tickets"""
   BASIC
@@ -329,6 +335,18 @@ enum EventType {
 
   """Ticketed event has tickets and sign ups"""
   TICKETS
+}
+
+type EventUser {
+  """The ID of the user"""
+  id: ID!
+  signUp: SignUp
+  ticket: Order
+
+  """
+  The ticket status for the user on the event, null if it's not a ticket event
+  """
+  ticketStatus: EventTicketStatus
 }
 
 input EventsInput {
@@ -375,6 +393,11 @@ type HasFeaturePermissionResponse {
 input InitiatePaymentAttemptInput {
   """The ID of the order to initiate a payment attempt for."""
   orderId: ID!
+
+  """
+  The return URL to redirect the user to after the payment attempt has been completed.
+  """
+  returnUrl: String!
 }
 
 type InitiatePaymentAttemptResponse {
@@ -528,20 +551,59 @@ type NewBookingResponse {
 }
 
 type Order {
+  """Number of attempts to pay for the order."""
   attempt: Int!
   id: ID!
+  isFinalState: Boolean!
+  paymentAttempt(reference: String): PaymentAttempt
+
+  """
+  The current payment status of the order. This is updated asynchronously, so if the payment status is PENDING or CREATED,
+  it is recommended to poll the order to get the current status.
+  """
   paymentStatus: OrderPaymentStatus!
+
+  """The product that the order is for."""
   product: Product!
+  purchasedAt: DateTime
+
+  """"""
+  totalPrice: Price!
   user: PrivateUser
 }
 
+input OrderInput {
+  id: ID!
+}
+
 enum OrderPaymentStatus {
+  """The order has been cancelled. This is a final state."""
   CANCELLED
+
+  """
+  The payment attempt has been authorized, but and the payment has been captured. This is a final state.
+  """
   CAPTURED
+
+  """The order has been created, and a payment attempt has been made."""
   CREATED
+
+  """The order has been created, but no payment attempt has been made."""
   PENDING
+
+  """
+  The payment attempt has been authorized, but the payment has been refunded. This is a final state.
+  """
   REFUNDED
+
+  """
+  The payment attempt has been authorized, but the payment has been reserved, but not captured.
+  """
   RESERVED
+}
+
+type OrderResponse {
+  order: Order!
 }
 
 input OrdersInput {
@@ -598,18 +660,42 @@ enum ParticipationStatus {
 
 type PaymentAttempt {
   id: ID!
-  inProgress: Boolean!
+  isFinalState: Boolean!
+
+  """The order that the payment attempt is for."""
   order: Order!
+
+  """The reference for the payment attempt with the payment provider."""
   reference: String!
+
+  """
+  The current state of the payment attempt. If the payment attempt is CREATED, it is recommended to poll
+  to get the most current state, as it can change asynchronously.
+  """
   state: PaymentAttemptState!
 }
 
 enum PaymentAttemptState {
+  """The payment attempt was aborted by the user. This is a final state."""
   ABORTED
+
+  """
+  The payment attempt was successful, and the user has authorized the payment. This is a final state.
+  """
   AUTHORIZED
+
+  """The payment attempt has been started, but not completed."""
   CREATED
+
+  """The payment attempt expired. This is a final state."""
   EXPIRED
+
+  """The payment attempt failed. This is a final state."""
   FAILED
+
+  """
+  The payment attempt was terminated (typically by us). This is a final state.
+  """
   TERMINATED
 }
 
@@ -639,6 +725,7 @@ type Price {
 
   """The value of the price, in the given unit."""
   value: Int!
+  valueInNok: Float!
 }
 
 """
@@ -681,7 +768,12 @@ type PrivateUser {
 }
 
 type Product {
+  """The description of the product."""
+  description: String!
   id: ID!
+
+  """The name of the product"""
+  name: String!
 
   """price in øre, i.e. 100 = 1 NOK"""
   price: Price!
@@ -722,6 +814,9 @@ type Query {
   hasFeaturePermission(data: HasFeaturePermissionInput!): HasFeaturePermissionResponse!
   listing(data: ListingInput!): ListingResponse!
   listings: ListingsResponse!
+
+  """Get an order by its ID."""
+  order(data: OrderInput!): OrderResponse!
 
   """
   Get orders, filtered by the given input. Unless the user is a super user, only
@@ -787,6 +882,7 @@ type SignUp {
   """The event the user signed up for"""
   event: Event!
   id: ID!
+  order: Order
 
   """The status of the user's participation in the event"""
   participationStatus: ParticipationStatus!

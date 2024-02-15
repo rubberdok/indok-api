@@ -240,6 +240,24 @@ interface IEventService {
 		ctx: Context,
 		params: { eventId: string },
 	): ResultAsync<{ slots: SlotType[] }, never>;
+	getSignUp(
+		ctx: Context,
+		params: { userId?: string; eventId: string },
+	): ResultAsync<
+		{ signUp: EventSignUp },
+		NotFoundError | UnauthorizedError | InternalServerError
+	>;
+	getOrderForSignUp(
+		ctx: Context,
+		params: { eventId: string; userId?: string },
+	): ResultAsync<
+		{ order: OrderType },
+		| NotFoundError
+		| InternalServerError
+		| InvalidArgumentError
+		| UnauthorizedError
+		| PermissionDeniedError
+	>;
 }
 
 interface IListingService {
@@ -280,7 +298,7 @@ type IProductService = {
 	payments: {
 		initiatePaymentAttempt(
 			ctx: Context,
-			params: { orderId: string },
+			params: { orderId: string; returnUrl: string },
 		): ResultAsync<
 			{
 				redirectUrl: string;
@@ -308,6 +326,13 @@ type IProductService = {
 		): ResultAsync<
 			{ paymentAttempts: PaymentAttemptType[]; total: number },
 			InternalServerError | PermissionDeniedError | UnauthorizedError
+		>;
+		get(
+			ctx: Context,
+			params: { reference: string },
+		): ResultAsync<
+			{ paymentAttempt: PaymentAttemptType | null },
+			InternalServerError
 		>;
 	};
 	orders: {

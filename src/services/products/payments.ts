@@ -16,6 +16,7 @@ import type {
 	PaymentAttemptType,
 } from "~/domain/products.js";
 import type { ResultAsync } from "~/lib/result.js";
+import { isValidRedirectUrl } from "~/utils/validate-redirect-url.js";
 import type { Context } from "../../lib/context.js";
 import type { BuildProductsDependencies } from "./service.js";
 import type {
@@ -125,7 +126,8 @@ function buildPayments({
 			status === "FAILED" ||
 			status === "TERMINATED" ||
 			status === "EXPIRED" ||
-			status === "AUTHORIZED"
+			status === "AUTHORIZED" ||
+			status === "ABORTED"
 		);
 	}
 
@@ -179,7 +181,7 @@ function buildPayments({
 		 */
 		async initiatePaymentAttempt(
 			ctx: Context,
-			params: { orderId: string },
+			params: { orderId: string; returnUrl: string },
 		): ResultAsync<
 			{
 				redirectUrl: string;
@@ -204,6 +206,10 @@ function buildPayments({
 						"You must be logged in to initiate payment",
 					),
 				};
+			}
+			const redirectUrlResult = isValidRedirectUrl(params.returnUrl);
+			if (!redirectUrlResult.ok) {
+				return redirectUrlResult;
 			}
 
 			const getOrderResult = await productRepository.getOrder(params.orderId);
@@ -260,6 +266,8 @@ function buildPayments({
 			 * easily identify multiple attempts for the same order.
 			 */
 			const reference = getPaymentReference(order, order.attempt + 1);
+			const returnUrl = redirectUrlResult.data.url;
+			returnUrl.searchParams.set("reference", reference);
 
 			const newClientResult = await newClientWithToken(ctx, {
 				orderId: order.id,
@@ -278,7 +286,7 @@ function buildPayments({
 					type: "WALLET",
 				},
 				userFlow: "WEB_REDIRECT",
-				returnUrl: config.returnUrl,
+				returnUrl: returnUrl.toString(),
 				paymentDescription: product.description,
 			});
 
@@ -299,6 +307,23 @@ function buildPayments({
 				},
 				reference,
 			});
+			const updatedOrder = await productRepository.updateOrder(
+				{
+					id: order.id,
+				},
+				(order) => {
+					if (order.paymentStatus === "PENDING") {
+						order.paymentStatus = "CREATED";
+					}
+					return {
+						ok: true,
+						data: { order },
+					};
+				},
+			);
+			if (!updatedOrder.ok) {
+				return updatedOrder;
+			}
 
 			/**
 			 * While Vipps has support for webhooks, they make no guarantees about the success of the webhook delivery,
@@ -373,10 +398,13 @@ function buildPayments({
 				return result;
 			}
 			const { state: newState } = result.data;
+			ctx.log.fatal({ newState, reference });
 
-			let paymentStatus: OrderPaymentStatus = "CREATED";
+			let paymentStatus: OrderPaymentStatus = order.paymentStatus;
 			if (newState === "AUTHORIZED") {
-				paymentStatus = "RESERVED";
+				if (!order.isFinalState()) {
+					paymentStatus = "RESERVED";
+				}
 			}
 
 			const updatePaymentAttemptResult =
@@ -616,6 +644,7 @@ function buildPayments({
 					}
 
 					order.paymentStatus = "CAPTURED";
+					order.purchasedAt = new Date();
 					return {
 						ok: true,
 						data: { order },
