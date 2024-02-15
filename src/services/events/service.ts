@@ -16,7 +16,6 @@ import {
 import type { CategoryType } from "~/domain/events/category.js";
 import type {
 	EventUpdateFields,
-	EventUpdateFn,
 	NewEventReturnType,
 } from "~/domain/events/event.js";
 import {
@@ -35,6 +34,7 @@ import type { User } from "~/domain/users.js";
 import type { ResultAsync } from "~/lib/result.js";
 import type {
 	CreateSignUpParams,
+	UpdateEvent,
 	UpdateSignUpParams,
 } from "~/repositories/events/index.js";
 import type { Context } from "../../lib/context.js";
@@ -65,16 +65,8 @@ interface EventRepository {
 		{ event: EventType; slots?: SlotType[]; categories?: CategoryType[] },
 		InternalServerError | InvalidArgumentError
 	>;
-	update(
-		ctx: Context,
-		id: string,
-		updateFn: EventUpdateFn<
-			EventType,
-			InternalServerError | InvalidArgumentError | PermissionDeniedError
-		>,
-	): ResultAsync<
-		{ event: EventType; slots: SlotType[]; categories: CategoryType[] },
-		InternalServerError | InvalidArgumentError | PermissionDeniedError
+	update: UpdateEvent<
+		PermissionDeniedError | InvalidArgumentError | NotFoundError
 	>;
 	get(id: string): Promise<EventType>;
 	getWithSlotsAndCategories(params: { id: string }): ResultAsync<
@@ -391,7 +383,10 @@ class EventService {
 		params: UpdateEventParams,
 	): ResultAsync<
 		{ event: EventType; slots: SlotType[]; categories: CategoryType[] },
-		InvalidArgumentError | PermissionDeniedError | InternalServerError
+		| InvalidArgumentError
+		| PermissionDeniedError
+		| InternalServerError
+		| NotFoundError
 	> {
 		const updateResult = await this.eventRepository.update(
 			ctx,
@@ -466,7 +461,7 @@ class EventService {
 						if (!previousSlot) {
 							return {
 								ok: false,
-								error: new InvalidArgumentError("Slot to update not found"),
+								error: new NotFoundError("Slot to update not found"),
 							};
 						}
 						const slotResult = Slot.update({
@@ -495,7 +490,7 @@ class EventService {
 						if (!slotToDelete) {
 							return {
 								ok: false,
-								error: new InvalidArgumentError("Slot to delete not found"),
+								error: new NotFoundError("Slot to delete not found"),
 							};
 						}
 						/**

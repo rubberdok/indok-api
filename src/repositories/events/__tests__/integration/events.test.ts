@@ -16,7 +16,7 @@ describe("EventsRepository", () => {
 	describe("update", () => {
 		interface TestCase {
 			name: string;
-			updateFn: EventUpdateFn;
+			updateFn: EventUpdateFn<InternalServerError>;
 			expected: Result<{ event: EventType }, InternalServerError>;
 		}
 

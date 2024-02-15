@@ -167,13 +167,13 @@ export class EventRepository {
 	 * @param updateFn - A function that takes the current event, with the slots and categories, and returns the updated event, with the slots and categories
 	 * @returns The updated event
 	 */
-	async update(
+	async update<TError extends Error>(
 		_ctx: Context,
 		id: string,
-		updateFn: EventUpdateFn,
+		updateFn: EventUpdateFn<TError>,
 	): ResultAsync<
 		{ event: EventType; slots: SlotType[]; categories: CategoryType[] },
-		InternalServerError
+		InternalServerError | TError
 	> {
 		try {
 			const event = await this.db.$transaction(async (tx) => {
@@ -1315,4 +1315,13 @@ type UpdateSignUpParams =
 	| UpdateToConfirmedSignUpData
 	| UpdateToInactiveSignUpData;
 
-export type { CreateSignUpParams, UpdateSignUpParams };
+type UpdateEvent<TError extends Error> = (
+	_ctx: Context,
+	id: string,
+	updateFn: EventUpdateFn<TError>,
+) => ResultAsync<
+	{ event: EventType; slots: SlotType[]; categories: CategoryType[] },
+	InternalServerError | TError
+>;
+
+export type { CreateSignUpParams, UpdateSignUpParams, UpdateEvent };

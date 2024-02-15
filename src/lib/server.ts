@@ -215,7 +215,10 @@ interface IEventService {
 		params: UpdateEventParams,
 	): ResultAsync<
 		{ event: EventType; slots: SlotType[]; categories: CategoryType[] },
-		InvalidArgumentError | PermissionDeniedError | InternalServerError
+		| InvalidArgumentError
+		| PermissionDeniedError
+		| InternalServerError
+		| NotFoundError
 	>;
 	get(id: string): Promise<EventType>;
 	findMany(data?: { onlyFutureEvents?: boolean | null }): Promise<EventType[]>;

@@ -646,11 +646,8 @@ type UpdateEvenFnReturnType = {
 	};
 	categories?: { id: string }[];
 };
-type EventUpdateFn<
-	T extends EventType = EventType,
-	TError extends KnownDomainError = KnownDomainError,
-> = (params: {
-	event: T;
+type EventUpdateFn<TError extends Error> = (params: {
+	event: EventType;
 	slots?: SlotType[];
 	categories?: CategoryType[];
 }) => ResultAsync<UpdateEvenFnReturnType, TError>;
