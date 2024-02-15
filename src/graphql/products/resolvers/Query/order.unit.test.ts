@@ -25,6 +25,7 @@ describe("Product queries", () => {
 						totalPrice: 100,
 						updatedAt: new Date(),
 						version: 1,
+						capturedPaymentAttemptReference: null,
 					}),
 				},
 			});
@@ -110,6 +111,7 @@ describe("Product queries", () => {
 						totalPrice: 100,
 						updatedAt: new Date(),
 						version: 1,
+						capturedPaymentAttemptReference: null,
 					}),
 				},
 			});

@@ -37,7 +37,7 @@ describe("ProductService", () => {
 			productRepository.getOrder.mockResolvedValueOnce({
 				ok: true,
 				data: {
-					order: {
+					order: mock<OrderType>({
 						attempt: 0,
 						id: orderId,
 						productId: faker.string.uuid(),
@@ -46,10 +46,11 @@ describe("ProductService", () => {
 						userId: null,
 						totalPrice: price,
 						purchasedAt: null,
+						createdAt: new Date(),
 						isFinalState() {
 							return false;
 						},
-					},
+					}),
 				},
 			});
 			productRepository.getProduct.mockResolvedValueOnce({
@@ -80,7 +81,7 @@ describe("ProductService", () => {
 						return false;
 					},
 				},
-				order: {
+				order: mock<OrderType>({
 					attempt: 1,
 					id: orderId,
 					productId: faker.string.uuid(),
@@ -92,7 +93,7 @@ describe("ProductService", () => {
 					isFinalState() {
 						return false;
 					},
-				},
+				}),
 			});
 			productRepository.getMerchant.mockResolvedValueOnce({
 				ok: true,
