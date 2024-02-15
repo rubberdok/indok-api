@@ -81,9 +81,10 @@ model Event {
   organizationId String?       @db.Uuid
   contactEmail   String        @default("")
 
-  signUpsEnabled Boolean   @default(false)
-  signUpsStartAt DateTime?
-  signUpsEndAt   DateTime?
+  signUpsEnabled     Boolean   @default(false)
+  signUpsStartAt     DateTime?
+  signUpsEndAt       DateTime?
+  signUpsRetractable Boolean   @default(false)
 
   // Versioning for optimistic concurrency control
   version           Int             @default(0)

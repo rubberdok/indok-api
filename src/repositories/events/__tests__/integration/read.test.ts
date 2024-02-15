@@ -151,6 +151,7 @@ describe("EventRepository", () => {
 					remainingCapacity: 5,
 					signUpsStartAt: new Date(),
 					signUpsEndAt: new Date(),
+					signUpsRetractable: false,
 				},
 				slots: [
 					{

@@ -1,9 +1,9 @@
 import { faker } from "@faker-js/faker";
 import type { EventSignUp, Organization } from "@prisma/client";
 import { mock } from "jest-mock-extended";
-import { UnauthorizedError } from "~/domain/errors.js";
+import { NotFoundError, UnauthorizedError } from "~/domain/errors.js";
 import type { EventType } from "~/domain/events/event.js";
-import type { OrderType } from "~/domain/products.js";
+import type { OrderType, ProductType } from "~/domain/products.js";
 import type { User } from "~/domain/users.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
@@ -139,7 +139,7 @@ describe("Event queries", () => {
 			const { client, eventService, organizationService } =
 				createMockApolloServer();
 
-			const event: EventType = {
+			const event: EventType = mock<EventType>({
 				id: faker.string.uuid(),
 				organizationId: faker.string.uuid(),
 				type: "SIGN_UPS",
@@ -155,7 +155,7 @@ describe("Event queries", () => {
 				signUpsEndAt: new Date(),
 				signUpsStartAt: new Date(),
 				version: 1,
-			};
+			});
 			eventService.get.mockResolvedValue(event);
 			organizationService.get.mockResolvedValue(
 				mock<Organization>({ id: event.organizationId ?? faker.string.uuid() }),
@@ -216,7 +216,7 @@ describe("Event queries", () => {
 			const { client, eventService, organizationService } =
 				createMockApolloServer();
 
-			const event: EventType = {
+			const event: EventType = mock<EventType>({
 				id: faker.string.uuid(),
 				organizationId: faker.string.uuid(),
 				type: "BASIC",
@@ -232,7 +232,7 @@ describe("Event queries", () => {
 				signUpsEndAt: new Date(),
 				signUpsStartAt: new Date(),
 				version: 1,
-			};
+			});
 			eventService.get.mockResolvedValue(event);
 			organizationService.get.mockResolvedValue(
 				mock<Organization>({ id: event.organizationId ?? faker.string.uuid() }),
@@ -519,6 +519,154 @@ describe("Event queries", () => {
 			);
 
 			expect(data?.event.event.user?.signUp?.order).toEqual(null);
+		});
+
+		it("ticket event should resolve product on a TICKETS event", async () => {
+			const { client, eventService, productService, createMockContext } =
+				createMockApolloServer();
+			const event = mock<EventType>({
+				id: faker.string.uuid(),
+				productId: faker.string.uuid(),
+				type: "TICKETS",
+			});
+			const user = mock<User>({
+				id: faker.string.uuid(),
+			});
+			eventService.get.mockResolvedValue(event);
+			productService.products.get.mockResolvedValue({
+				ok: true,
+				data: {
+					product: mock<ProductType>({
+						id: faker.string.uuid(),
+					}),
+				},
+			});
+
+			const { data } = await client.query(
+				{
+					query: graphql(`
+				query ticketEventWithProduct($data: EventInput!) {
+					event(data: $data) {
+						event {
+							ticketInformation {
+								product {
+									id
+								}
+							}
+						}
+					}
+				}
+			`),
+					variables: {
+						data: {
+							id: faker.string.uuid(),
+						},
+					},
+				},
+				{
+					contextValue: createMockContext({ user }),
+				},
+			);
+
+			expect(data?.event.event.ticketInformation?.product).toEqual({
+				id: expect.any(String),
+			});
+		});
+
+		it("event { ticketInformation { product { id } } } should be null if product is NotFound", async () => {
+			const { client, eventService, productService, createMockContext } =
+				createMockApolloServer();
+			const event = mock<EventType>({
+				id: faker.string.uuid(),
+				productId: faker.string.uuid(),
+				type: "TICKETS",
+			});
+			const user = mock<User>({
+				id: faker.string.uuid(),
+			});
+			eventService.get.mockResolvedValue(event);
+			productService.products.get.mockResolvedValue({
+				ok: false,
+				error: new NotFoundError(""),
+			});
+
+			const { data } = await client.query(
+				{
+					query: graphql(`
+				query ticketEventWithProduct($data: EventInput!) {
+					event(data: $data) {
+						event {
+							ticketInformation {
+								product {
+									id
+								}
+							}
+						}
+					}
+				}
+			`),
+					variables: {
+						data: {
+							id: faker.string.uuid(),
+						},
+					},
+				},
+				{
+					contextValue: createMockContext({ user }),
+				},
+			);
+
+			expect(data?.event.event.ticketInformation?.product).toBeNull();
+		});
+
+		it("ticket information should be null for a non-ticket event", async () => {
+			const { client, eventService, productService, createMockContext } =
+				createMockApolloServer();
+			const event = mock<EventType>({
+				id: faker.string.uuid(),
+				productId: faker.string.uuid(),
+				type: "SIGN_UPS",
+			});
+			const user = mock<User>({
+				id: faker.string.uuid(),
+			});
+			eventService.get.mockResolvedValue(event);
+			productService.products.get.mockResolvedValue({
+				ok: true,
+				data: {
+					product: mock<ProductType>({
+						id: faker.string.uuid(),
+					}),
+				},
+			});
+
+			const { data } = await client.query(
+				{
+					query: graphql(`
+				query ticketEventWithProduct($data: EventInput!) {
+					event(data: $data) {
+						event {
+							ticketInformation {
+								product {
+									id
+								}
+							}
+						}
+					}
+				}
+			`),
+					variables: {
+						data: {
+							id: faker.string.uuid(),
+						},
+					},
+				},
+				{
+					contextValue: createMockContext({ user }),
+				},
+			);
+
+			expect(data?.event.event.ticketInformation).toBeNull();
 		});
 	});
 });

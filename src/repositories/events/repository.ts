@@ -79,6 +79,7 @@ export class EventRepository {
 			"remainingCapacity",
 			"signUpsEndAt",
 			"signUpsStartAt",
+			"signUpsRetractable",
 		]);
 		try {
 			const {
@@ -218,6 +219,7 @@ export class EventRepository {
 					"signUpsEnabled",
 					"signUpsStartAt",
 					"signUpsEndAt",
+					"signUpsRetractable",
 					"remainingCapacity",
 				]);
 

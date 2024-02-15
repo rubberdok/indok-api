@@ -86,6 +86,7 @@ describe("EventsRepository", () => {
 					contactEmail: faker.internet.email(),
 					location: faker.location.streetAddress(),
 					signUpsEnabled: false,
+					signUpsRetractable: false,
 				},
 			});
 			if (!event.ok) throw event.error;

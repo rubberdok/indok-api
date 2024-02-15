@@ -206,6 +206,7 @@ type BaseCreateEventFields = {
 	signUpsStartAt?: Date | null;
 	signUpsEndAt?: Date | null;
 	signUpsEnabled?: boolean | null;
+	signUpsRetractable?: boolean | null;
 };
 
 type CreateBasicEventParams = {
@@ -851,6 +852,13 @@ class EventService {
 	 * @returns The updated sign up
 	 */
 	async retractSignUp(userId: string, eventId: string): Promise<EventSignUp> {
+		const event = await this.eventRepository.get(eventId);
+		if (event.signUpsRetractable === false) {
+			throw new InvalidArgumentError(
+				"Sign ups are not retractable for this event",
+			);
+		}
+
 		const signUp = await this.eventRepository.getSignUp(userId, eventId);
 
 		switch (signUp.participationStatus) {

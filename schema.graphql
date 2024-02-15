@@ -234,6 +234,9 @@ type Event {
 
   """The start time of the event."""
   startAt: DateTime!
+
+  """The ticket information for the event, if the event is a TICKETS event."""
+  ticketInformation: EventTicketInformation
   type: EventType!
   user: EventUser
 }
@@ -285,6 +288,11 @@ input EventData {
   """
   signUpsEnabled: Boolean
 
+  """
+  If true, users can retract their sign up for the event. Defaults to false
+  """
+  signUpsRetractable: Boolean
+
   """The start time of the event. Events must have a start time."""
   startAt: DateTime!
 
@@ -319,6 +327,10 @@ input EventTicketData {
 
   """Price in øre, i.e. 100 = 1 NOK"""
   price: Int!
+}
+
+type EventTicketInformation {
+  product: Product
 }
 
 enum EventTicketStatus {

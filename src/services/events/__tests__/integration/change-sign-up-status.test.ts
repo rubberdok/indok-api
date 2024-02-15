@@ -3,7 +3,7 @@ import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
 import { makeTestServices } from "~/__tests__/dependencies-factory.js";
-import { NotFoundError } from "~/domain/errors.js";
+import { InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
 import { makeMockContext } from "~/lib/context.js";
 import type { Services } from "~/lib/server.js";
 import { makeUserWithOrganizationMembership } from "./dependencies-factory.js";
@@ -154,6 +154,44 @@ describe("EventService", () => {
 
 			expect(actualEvent.remainingCapacity).toBe(1);
 			expect(actualSlot.remainingCapacity).toBe(1);
+		});
+
+		it("should throw InvalidArgumentError if trying to retract a sign up on a non-retractable event", async () => {
+			const { user, organization } = await makeUserWithOrganizationMembership();
+			const ctx = makeMockContext(user);
+
+			const createEvent = await events.create(ctx, {
+				type: "SIGN_UPS",
+				event: {
+					organizationId: organization.id,
+					name: faker.word.adjective(),
+					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+					signUpsEnabled: true,
+					capacity: 1,
+					signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+					signUpsRetractable: false,
+				},
+				slots: [
+					{
+						capacity: 1,
+					},
+				],
+			});
+
+			if (!createEvent.ok) {
+				throw createEvent.error;
+			}
+			const { event } = createEvent.data;
+
+			await events.signUp(ctx, user.id, event.id);
+			try {
+				await events.retractSignUp(user.id, event.id);
+				fail("Expected an error");
+			} catch (err) {
+				expect(err).toBeInstanceOf(InvalidArgumentError);
+			}
 		});
 	});
 });

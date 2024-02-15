@@ -47,6 +47,7 @@ type EventFields = {
 	signUpsEnabled: boolean;
 	signUpsStartAt?: Date | null;
 	signUpsEndAt?: Date | null;
+	signUpsRetractable: boolean;
 	capacity?: number | null;
 	remainingCapacity?: number | null;
 	productId?: string | null;
@@ -192,6 +193,7 @@ function newBasicEvent(basicEvent: NewBasicEventData): NewBasicEventReturn {
 				.nullish()
 				.transform((val) => val ?? false),
 			categories: z.array(z.object({ id: z.string().uuid() })).optional(),
+			signUpsRetractable: z.boolean().default(false),
 		})
 		.refine(
 			({ endAt, startAt }) => {
@@ -258,6 +260,7 @@ function newTicketEvent(ticketEvent: NewTicketEventData): NewTicketEventReturn {
 			event: {
 				...signUpEventResult.data.event,
 				productId,
+				signUpsRetractable: false,
 				type: EventTypeEnum.TICKETS,
 			},
 		},
@@ -447,6 +450,7 @@ function updateSignUpEvent(params: {
 		signUpsEndAt: z.date().optional(),
 		signUpsStartAt: z.date().optional(),
 		capacity: z.number().int().min(0).optional(),
+		signUpsRetractable: z.boolean().optional(),
 	});
 
 	const updatedFields = omitBy(data.event, isNil);
@@ -479,13 +483,14 @@ function updateSignUpEvent(params: {
 		newEvent.remainingCapacity = newRemainingCapacity;
 	}
 
+	if (newEvent.type === "TICKETS") {
+		validatedUpdateFields.signUpsRetractable = false;
+	}
+	merge(newEvent, validatedUpdateFields);
 	return {
 		ok: true,
 		data: {
-			event: {
-				...newEvent,
-				...validatedUpdateFields,
-			},
+			event: newEvent,
 		},
 	};
 }

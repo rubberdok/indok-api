@@ -45,6 +45,14 @@ type Event {
   categories: [EventCategory!]
   type: EventType!
   user: EventUser
+  """
+  The ticket information for the event, if the event is a TICKETS event.
+  """
+  ticketInformation: EventTicketInformation
+}
+
+type EventTicketInformation {
+  product: Product
 }
 
 enum EventTicketStatus {
@@ -214,6 +222,10 @@ input EventData {
   false
   """
   signUpsEnabled: Boolean
+  """
+  If true, users can retract their sign up for the event. Defaults to false
+  """
+  signUpsRetractable: Boolean
 }
 
 input EventCategoryInput {
@@ -434,15 +446,21 @@ type Mutation {
   """
   Create a new event category, requires super user status
   """
-  createEventCategory(data: CreateEventCategoryInput!): CreateEventCategoryResponse!
+  createEventCategory(
+    data: CreateEventCategoryInput!
+  ): CreateEventCategoryResponse!
   """
   Update an event category, requires super user status
   """
-  updateEventCategory(data: UpdateEventCategoryInput!): UpdateEventCategoryResponse!
+  updateEventCategory(
+    data: UpdateEventCategoryInput!
+  ): UpdateEventCategoryResponse!
   """
   Delete an event category, requires super user status
   """
-  deleteEventCategory(data: DeleteEventCategoryInput!): DeleteEventCategoryResponse!
+  deleteEventCategory(
+    data: DeleteEventCategoryInput!
+  ): DeleteEventCategoryResponse!
 }
 
 type Query {

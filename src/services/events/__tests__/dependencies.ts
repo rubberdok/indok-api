@@ -50,6 +50,7 @@ function makeBasicEvent(data?: Partial<BasicEvent>): BasicEvent {
 		signUpsEnabled: false,
 		version: 0,
 		type: "BASIC",
+		signUpsRetractable: false,
 		...data,
 	};
 }
