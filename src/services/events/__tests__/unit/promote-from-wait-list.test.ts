@@ -4,31 +4,16 @@ import { type DeepMockProxy, mock } from "jest-mock-extended";
 import { InvalidArgumentError } from "~/domain/errors.js";
 import type { User } from "~/domain/users.js";
 import { makeMockContext } from "~/lib/context.js";
-import type {
-	EventRepository,
-	EventService,
-	PermissionService,
-	ProductService,
-	UserService,
-} from "../../service.js";
+import type { EventRepository, EventService } from "../../service.js";
 import { makeBasicEvent, makeSignUpEvent } from "../dependencies.js";
 import { makeDependencies } from "./dependencies.js";
 
 describe("EventService", () => {
 	let service: EventService;
 	let eventsRepository: DeepMockProxy<EventRepository>;
-	let permissionService: DeepMockProxy<PermissionService>;
-	let userService: DeepMockProxy<UserService>;
-	let productService: DeepMockProxy<ProductService>;
 
 	beforeAll(() => {
-		({
-			eventsRepository,
-			service,
-			permissionService,
-			productService,
-			userService,
-		} = makeDependencies());
+		({ eventsRepository, service } = makeDependencies());
 	});
 
 	describe("#promoteFromWaitList", () => {

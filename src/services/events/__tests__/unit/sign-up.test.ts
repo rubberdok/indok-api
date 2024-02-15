@@ -13,7 +13,6 @@ import { makeMockContext } from "~/lib/context.js";
 import type {
 	EventRepository,
 	EventService,
-	PermissionService,
 	ProductService,
 	UserService,
 } from "../../service.js";
@@ -23,18 +22,12 @@ import { makeDependencies } from "./dependencies.js";
 describe("EventService", () => {
 	let service: EventService;
 	let eventsRepository: DeepMockProxy<EventRepository>;
-	let permissionService: DeepMockProxy<PermissionService>;
 	let userService: DeepMockProxy<UserService>;
 	let productService: DeepMockProxy<ProductService>;
 
 	beforeAll(() => {
-		({
-			eventsRepository,
-			service,
-			permissionService,
-			productService,
-			userService,
-		} = makeDependencies());
+		({ eventsRepository, service, productService, userService } =
+			makeDependencies());
 	});
 
 	describe("#signUp", () => {
