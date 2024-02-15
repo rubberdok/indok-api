@@ -100,6 +100,48 @@ describe("EventService", () => {
 					}),
 				},
 			},
+			{
+				name: "should create an event with retractable sign ups and require user provided information",
+				act: {
+					createEventParams: {
+						type: "SIGN_UPS",
+						event: {
+							name: "test",
+							organizationId: "",
+							startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+							endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
+							capacity: 10,
+							signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+							signUpsStartAt: DateTime.now().toJSDate(),
+							signUpsEnabled: true,
+							signUpsRetractable: true,
+							signUpsRequireUserProvidedInformation: true,
+						},
+						slots: [{ capacity: 10, gradeYears: [1, 2, 3] }],
+					},
+				},
+				expected: {
+					ok: true,
+					data: expect.objectContaining({
+						event: expect.objectContaining({
+							capacity: 10,
+							remainingCapacity: 10,
+							signUpsEnabled: true,
+							type: "SIGN_UPS",
+							signUpsRetractable: true,
+							signUpsRequireUserProvidedInformation: true,
+						}),
+						slots: [
+							expect.objectContaining({
+								capacity: 10,
+
+								gradeYears: [1, 2, 3],
+								remainingCapacity: 10,
+							}),
+						],
+					}),
+				},
+			},
 		];
 
 		test.each(testCases)("$name", async ({ act, expected }) => {
@@ -193,6 +235,54 @@ describe("EventService", () => {
 				if (!actual.ok) throw actual.error;
 
 				expect(actual.data.event.productId).toEqual(expect.any(String));
+			});
+
+			it("should set signUpsRetractable: false", async () => {
+				// Arrange, set up a user and an organization
+				const { user, organization } = await makeUserWithOrganizationMembership(
+					{ isSuperUser: true },
+				);
+				const ctx = makeMockContext(user);
+				const { productService } = makeDependencies();
+				const createMerchantResult = await productService.merchants.create(
+					ctx,
+					{
+						name: faker.string.sample(20),
+						serialNumber: faker.string.uuid(),
+						clientId: faker.string.uuid(),
+						clientSecret: faker.string.uuid(),
+						subscriptionKey: faker.string.uuid(),
+					},
+				);
+				if (!createMerchantResult.ok) throw createMerchantResult.error;
+
+				/**
+				 * Act
+				 *
+				 * Create a event with type: TICKETS
+				 */
+				const actual = await events.create(ctx, {
+					type: "TICKETS",
+					event: {
+						capacity: 10,
+						name: faker.color.human(),
+						organizationId: organization.id,
+						signUpsEndAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
+						signUpsStartAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+						endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
+						startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+						signUpsEnabled: true,
+						signUpsRetractable: true,
+					},
+					slots: [{ capacity: 10 }],
+					tickets: {
+						merchantId: createMerchantResult.data.merchant.id,
+						price: 100 * 300,
+					},
+				});
+				if (!actual.ok) throw actual.error;
+
+				expect(actual.data.event.signUpsRetractable).toBe(false);
 			});
 
 			it("should return ok: false if price is negative", async () => {

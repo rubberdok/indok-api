@@ -75,4 +75,14 @@ export const Event: EventResolvers = {
 			eventId: _parent.id,
 		};
 	},
+	ticketInformation: (parent) => {
+		if (parent.type !== "TICKETS") return null;
+		return parent;
+	},
+	signUpsRequireUserProvidedInformation: (parent) => {
+		return parent.signUpsRequireUserProvidedInformation ?? false;
+	},
+	signUpsRetractable: (parent) => {
+		return parent.signUpsRetractable ?? false;
+	},
 };

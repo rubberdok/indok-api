@@ -79,6 +79,8 @@ export class EventRepository {
 			"remainingCapacity",
 			"signUpsEndAt",
 			"signUpsStartAt",
+			"signUpsRetractable",
+			"signUpsRequireUserProvidedInformation",
 		]);
 		try {
 			const {
@@ -165,13 +167,13 @@ export class EventRepository {
 	 * @param updateFn - A function that takes the current event, with the slots and categories, and returns the updated event, with the slots and categories
 	 * @returns The updated event
 	 */
-	async update(
+	async update<TError extends Error>(
 		_ctx: Context,
 		id: string,
-		updateFn: EventUpdateFn,
+		updateFn: EventUpdateFn<TError>,
 	): ResultAsync<
 		{ event: EventType; slots: SlotType[]; categories: CategoryType[] },
-		InternalServerError
+		InternalServerError | TError
 	> {
 		try {
 			const event = await this.db.$transaction(async (tx) => {
@@ -218,6 +220,7 @@ export class EventRepository {
 					"signUpsEnabled",
 					"signUpsStartAt",
 					"signUpsEndAt",
+					"signUpsRetractable",
 					"remainingCapacity",
 				]);
 
@@ -555,9 +558,7 @@ export class EventRepository {
 	 * @param data.slotId - The ID of the slot to sign up for
 	 * @returns The created sign up, and the updated event and slot
 	 */
-	public async createSignUp(
-		data: CreateConfirmedSignUpData | CreateOnWaitlistSignUpData,
-	): Promise<{
+	public async createSignUp(data: CreateSignUpParams): Promise<{
 		event: EventType;
 		signUp: EventSignUp;
 		slot?: EventSlot;
@@ -579,7 +580,13 @@ export class EventRepository {
 	}
 
 	private async createConfirmedSignUp(data: CreateConfirmedSignUpData) {
-		const { eventId, userId, participationStatus, slotId } = data;
+		const {
+			eventId,
+			userId,
+			participationStatus,
+			slotId,
+			userProvidedInformation,
+		} = data;
 		const updatedEvent = await this.db.event.update({
 			include: {
 				slots: {
@@ -628,6 +635,7 @@ export class EventRepository {
 				},
 				signUps: {
 					create: {
+						userProvidedInformation,
 						slotId,
 						userId,
 						active: true,
@@ -657,7 +665,8 @@ export class EventRepository {
 	}
 
 	private async createOnWaitlistSignUp(data: CreateOnWaitlistSignUpData) {
-		const { eventId, userId, participationStatus } = data;
+		const { eventId, userId, participationStatus, userProvidedInformation } =
+			data;
 		const updatedEvent = await this.db.event.update({
 			include: {
 				signUps: {
@@ -677,7 +686,12 @@ export class EventRepository {
 				},
 				signUps: {
 					create: {
-						userId,
+						user: {
+							connect: {
+								id: userId,
+							},
+						},
+						userProvidedInformation,
 						active: true,
 						participationStatus,
 					},
@@ -755,9 +769,7 @@ export class EventRepository {
 	 * @param data.newParticipationStatus - The new participation status of the sign up
 	 * @returns The updated sign up, event and slot
 	 */
-	public async updateSignUp(
-		data: UpdateToConfirmedSignUpData | UpdateToInactiveSignUpData,
-	): Promise<{
+	public async updateSignUp(data: UpdateSignUpParams): Promise<{
 		event: EventType;
 		signUp: EventSignUp;
 		slot?: EventSlot | null;
@@ -1232,8 +1244,9 @@ export class EventRepository {
 	public async addOrderToSignUp(params: {
 		orderId: string;
 		signUpId: string;
-	}): Promise<
-		ResultAsync<{ signUp: EventSignUp }, NotFoundError | InternalServerError>
+	}): ResultAsync<
+		{ signUp: EventSignUp },
+		NotFoundError | InternalServerError
 	> {
 		const { orderId, signUpId } = params;
 		try {
@@ -1273,13 +1286,19 @@ interface CreateConfirmedSignUpData {
 	userId: string;
 	slotId: string;
 	participationStatus: Extract<ParticipationStatus, "CONFIRMED">;
+	userProvidedInformation?: string;
 }
 
 interface CreateOnWaitlistSignUpData {
 	eventId: string;
 	userId: string;
 	participationStatus: Extract<ParticipationStatus, "ON_WAITLIST">;
+	userProvidedInformation?: string;
 }
+
+type CreateSignUpParams =
+	| CreateConfirmedSignUpData
+	| CreateOnWaitlistSignUpData;
 
 interface UpdateToConfirmedSignUpData {
 	userId: string;
@@ -1293,3 +1312,17 @@ interface UpdateToInactiveSignUpData {
 	eventId: string;
 	newParticipationStatus: Extract<ParticipationStatus, "REMOVED" | "RETRACTED">;
 }
+type UpdateSignUpParams =
+	| UpdateToConfirmedSignUpData
+	| UpdateToInactiveSignUpData;
+
+type UpdateEvent<TError extends Error> = (
+	_ctx: Context,
+	id: string,
+	updateFn: EventUpdateFn<TError>,
+) => ResultAsync<
+	{ event: EventType; slots: SlotType[]; categories: CategoryType[] },
+	InternalServerError | TError
+>;
+
+export type { CreateSignUpParams, UpdateSignUpParams, UpdateEvent };

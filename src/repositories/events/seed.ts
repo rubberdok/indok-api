@@ -22,7 +22,7 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		id: faker.string.uuid(),
 		location: faker.location.streetAddress(),
 		description: fakeMarkdown(),
-		name: fakeName(),
+		name: `${fakeName()} [BASIC]`,
 		startAt: DateTime.now().plus({ week: 1 }).toJSDate(),
 		endAt: DateTime.now().plus({ week: 1, hours: 2 }).toJSDate(),
 		categories: {
@@ -38,36 +38,6 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		organization: {
 			connectOrCreate: {
 				where: {
-					name: "Eksperter i Alkoholfri Vin",
-				},
-				create: {
-					name: "Eksperter i Alkoholfri Vin",
-					description: faker.lorem.paragraph(),
-				},
-			},
-		},
-	},
-	{
-		type: "BASIC",
-		id: faker.string.uuid(),
-		location: faker.location.streetAddress(),
-		description: fakeMarkdown(),
-		name: fakeName(),
-		startAt: DateTime.now().plus({ day: 1 }).toJSDate(),
-		endAt: DateTime.now().plus({ day: 1, hours: 2 }).toJSDate(),
-		categories: {
-			connectOrCreate: {
-				where: {
-					name: "Kultur",
-				},
-				create: {
-					name: "Kultur",
-				},
-			},
-		},
-		organization: {
-			connectOrCreate: {
-				where: {
 					name: "Rubberdøk",
 				},
 				create: {
@@ -82,7 +52,7 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		id: faker.string.uuid(),
 		location: faker.location.streetAddress(),
 		description: fakeMarkdown(),
-		name: fakeName(),
+		name: `${fakeName()} [BASIC]`,
 		startAt: DateTime.now().plus({ weeks: 2 }).toJSDate(),
 		endAt: DateTime.now().plus({ weeks: 2, hours: 2 }).toJSDate(),
 		organization: {
@@ -102,9 +72,9 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		id: faker.string.uuid(),
 		location: faker.location.streetAddress(),
 		description: fakeMarkdown(),
-		name: fakeName(),
-		startAt: DateTime.now().plus({ weeks: 3 }).toJSDate(),
-		endAt: DateTime.now().plus({ weeks: 3, hours: 2 }).toJSDate(),
+		name: `${fakeName()} [BASIC]`,
+		startAt: DateTime.now().plus({ year: 1 }).toJSDate(),
+		endAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
 		organization: {
 			connectOrCreate: {
 				where: {
@@ -112,96 +82,6 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 				},
 				create: {
 					name: "Bindeleddet",
-					description: faker.lorem.paragraph(),
-				},
-			},
-		},
-	},
-	{
-		type: "BASIC",
-		id: faker.string.uuid(),
-		location: faker.location.streetAddress(),
-		description: fakeMarkdown(),
-		name: fakeName(),
-		startAt: DateTime.now().plus({ year: 1 }).toJSDate(),
-		endAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
-		categories: {
-			connectOrCreate: {
-				where: {
-					name: "Bedriftspresentasjon",
-				},
-				create: {
-					name: "Bedriftspresentasjon",
-				},
-			},
-		},
-		organization: {
-			connectOrCreate: {
-				where: {
-					name: "Bindeleddet",
-				},
-				create: {
-					name: "Bindeleddet",
-					description: faker.lorem.paragraph(),
-				},
-			},
-		},
-	},
-	{
-		type: "BASIC",
-		id: faker.string.uuid(),
-		location: faker.location.streetAddress(),
-		description: fakeMarkdown(),
-		name: fakeName(),
-		startAt: DateTime.now().plus({ year: 1 }).toJSDate(),
-		endAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
-		organization: {
-			connectOrCreate: {
-				where: {
-					name: "Rubberdøk",
-				},
-				create: {
-					name: "Rubberdøk",
-					description: faker.lorem.paragraph(),
-				},
-			},
-		},
-	},
-	{
-		type: "BASIC",
-		id: faker.string.uuid(),
-		location: faker.location.streetAddress(),
-		description: fakeMarkdown(),
-		name: fakeName(),
-		startAt: DateTime.now().plus({ year: 1 }).toJSDate(),
-		endAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
-		organization: {
-			connectOrCreate: {
-				where: {
-					name: "Janus",
-				},
-				create: {
-					name: "Janus",
-					description: faker.lorem.paragraph(),
-				},
-			},
-		},
-	},
-	{
-		type: "BASIC",
-		id: faker.string.uuid(),
-		location: faker.location.streetAddress(),
-		description: fakeMarkdown(),
-		name: fakeName(),
-		startAt: DateTime.now().plus({ year: 1 }).toJSDate(),
-		endAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
-		organization: {
-			connectOrCreate: {
-				where: {
-					name: "ESTIEM",
-				},
-				create: {
-					name: "ESTIEM",
 					description: faker.lorem.paragraph(),
 				},
 			},
@@ -211,7 +91,7 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		type: "SIGN_UPS",
 		id: faker.string.uuid(),
 		location: faker.location.streetAddress(),
-		name: fakeName(),
+		name: `${fakeName()} [SIGN_UPS] [RETRACTABLE]`,
 		startAt: DateTime.now().plus({ year: 1 }).toJSDate(),
 		endAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
 		capacity: 10,
@@ -220,6 +100,7 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		signUpsEnabled: true,
 		signUpsStartAt: DateTime.now().minus({ day: 1 }).toJSDate(),
 		signUpsEndAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
+		signUpsRetractable: true,
 		organization: {
 			connectOrCreate: {
 				where: {
@@ -243,16 +124,17 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 	{
 		type: "SIGN_UPS",
 		id: faker.string.uuid(),
-		name: fakeName(),
+		name: `${fakeName()} [SIGN_UPS] [USER_PROVIDED_INFORMATION]`,
 		location: faker.location.streetAddress(),
 		startAt: DateTime.now().plus({ year: 1 }).toJSDate(),
 		endAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
 		capacity: 10,
-		remainingCapacity: 0,
+		remainingCapacity: 10,
 		description: fakeMarkdown(),
 		signUpsEnabled: true,
 		signUpsStartAt: DateTime.now().minus({ day: 1 }).toJSDate(),
 		signUpsEndAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
+		signUpsRequireUserProvidedInformation: true,
 		organization: {
 			connectOrCreate: {
 				where: {
@@ -276,7 +158,7 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 	{
 		type: "SIGN_UPS",
 		id: faker.string.uuid(),
-		name: fakeName(),
+		name: `${fakeName()} [SIGN_UPS] [WAIT_LIST]`,
 		location: faker.location.streetAddress(),
 		startAt: DateTime.now().plus({ year: 1 }).toJSDate(),
 		endAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
@@ -286,6 +168,43 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 		signUpsEnabled: true,
 		signUpsStartAt: DateTime.now().plus({ minutes: 2 }).toJSDate(),
 		signUpsEndAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
+		signUpsRequireUserProvidedInformation: true,
+		signUpsRetractable: true,
+		organization: {
+			connectOrCreate: {
+				where: {
+					name: "Bandøk",
+				},
+				create: {
+					name: "Bandøk",
+					description: faker.lorem.paragraph(),
+				},
+			},
+		},
+		slots: {
+			createMany: {
+				data: [
+					{ capacity: 5, remainingCapacity: 5, gradeYears: [1, 2, 3] },
+					{ capacity: 5, remainingCapacity: 5, gradeYears: [3, 4, 5] },
+				],
+			},
+		},
+	},
+	{
+		type: "SIGN_UPS",
+		id: faker.string.uuid(),
+		name: `${fakeName()} [SIGN_UPS] [FUTURE]`,
+		location: faker.location.streetAddress(),
+		startAt: DateTime.now().plus({ year: 1 }).toJSDate(),
+		endAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
+		capacity: 10,
+		remainingCapacity: 0,
+		description: fakeMarkdown(),
+		signUpsEnabled: true,
+		signUpsStartAt: DateTime.now().plus({ year: 1 }).toJSDate(),
+		signUpsEndAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
+		signUpsRequireUserProvidedInformation: true,
+		signUpsRetractable: true,
 		organization: {
 			connectOrCreate: {
 				where: {
@@ -309,15 +228,15 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 	{
 		type: "TICKETS",
 		id: faker.string.uuid(),
-		name: fakeName(),
+		name: `${fakeName()} [TICKETS]`,
 		location: faker.location.streetAddress(),
 		startAt: DateTime.now().plus({ year: 1 }).toJSDate(),
 		endAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
 		capacity: 10,
-		remainingCapacity: 0,
+		remainingCapacity: 10,
 		description: fakeMarkdown(),
 		signUpsEnabled: true,
-		signUpsStartAt: DateTime.now().plus({ minutes: 2 }).toJSDate(),
+		signUpsStartAt: DateTime.now().minus({ minutes: 2 }).toJSDate(),
 		signUpsEndAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
 		organization: {
 			connectOrCreate: {
@@ -342,6 +261,64 @@ const eventCreateInput: Prisma.EventCreateInput[] = [
 			create: {
 				name: "Billett",
 				price: 100 * 100,
+				description: "Billett til noe",
+				merchant: {
+					connectOrCreate: {
+						where: {
+							clientId: env.VIPPS_DEFAULT_CLIENT_ID,
+						},
+						create: {
+							clientId: env.VIPPS_DEFAULT_CLIENT_ID ?? faker.string.uuid(),
+							clientSecret:
+								env.VIPPS_DEFAULT_CLIENT_SECRET ?? faker.string.uuid(),
+							serialNumber:
+								env.VIPPS_DEFAULT_MERCHANT_SERIAL_NUMBER ?? faker.string.uuid(),
+							name: "Indøk NTNU",
+							subscriptionKey:
+								env.VIPPS_DEFAULT_SUBSCRIPTION_KEY ?? faker.string.uuid(),
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		type: "TICKETS",
+		id: faker.string.uuid(),
+		name: `${fakeName()} [TICKETS] [WAIT_LIST]`,
+		location: faker.location.streetAddress(),
+		startAt: DateTime.now().plus({ year: 1 }).toJSDate(),
+		endAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
+		capacity: 10,
+		remainingCapacity: 0,
+		description: fakeMarkdown(),
+		signUpsEnabled: true,
+		signUpsStartAt: DateTime.now().minus({ minutes: 2 }).toJSDate(),
+		signUpsEndAt: DateTime.now().plus({ year: 1, hours: 2 }).toJSDate(),
+		organization: {
+			connectOrCreate: {
+				where: {
+					name: "Rubberdøk",
+				},
+				create: {
+					name: "Rubberdøk",
+					description: faker.lorem.paragraph(),
+				},
+			},
+		},
+		slots: {
+			createMany: {
+				data: [
+					{ capacity: 5, remainingCapacity: 5, gradeYears: [1, 2, 3] },
+					{ capacity: 5, remainingCapacity: 5, gradeYears: [3, 4, 5] },
+				],
+			},
+		},
+		product: {
+			create: {
+				name: "Billett",
+				price: 100 * 100,
+				description: "Billett til noe",
 				merchant: {
 					connectOrCreate: {
 						where: {

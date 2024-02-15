@@ -279,6 +279,7 @@ describe("EventService", () => {
 						capacity: arrange.capacity,
 						signUpsStartAt: arrange.signUpsStartAt,
 						signUpsEndAt: arrange.signUpsEndAt,
+						signUpsRetractable: true,
 					},
 					slots: arrange.slots,
 					type: "SIGN_UPS",
@@ -286,7 +287,10 @@ describe("EventService", () => {
 				if (!event.ok) throw event.error;
 
 				if (arrange.signUp) {
-					await eventService.signUp(ctx, user.id, event.data.event.id);
+					await eventService.signUp(ctx, {
+						userId: user.id,
+						eventId: event.data.event.id,
+					});
 					if (
 						arrange.signUp.participationStatus === "RETRACTED" ||
 						arrange.signUp.participationStatus === "REMOVED"

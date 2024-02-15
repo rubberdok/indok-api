@@ -40,11 +40,27 @@ type Event {
   signUpDetails: EventSignUpDetails
   signUpsEnabled: Boolean!
   """
+  If true, sign ups can be retracted for the event. Otherwise, sign ups are final.
+  """
+  signUpsRetractable: Boolean!
+  """
+  If true, signing up for the event requires that the user submits additional information.
+  """
+  signUpsRequireUserProvidedInformation: Boolean!
+  """
   categories describes the categories that the event belongs to.
   """
   categories: [EventCategory!]
   type: EventType!
   user: EventUser
+  """
+  The ticket information for the event, if the event is a TICKETS event.
+  """
+  ticketInformation: EventTicketInformation
+}
+
+type EventTicketInformation {
+  product: Product
 }
 
 enum EventTicketStatus {
@@ -214,6 +230,14 @@ input EventData {
   false
   """
   signUpsEnabled: Boolean
+  """
+  If true, users can retract their sign up for the event. Defaults to false
+  """
+  signUpsRetractable: Boolean
+  """
+  If true, signing up requires that the user submits additional information. Defaults to false
+  """
+  signUpsRequireUserProvidedInformation: Boolean
 }
 
 input EventCategoryInput {
@@ -269,6 +293,10 @@ input SignUpInput {
   The event to sign up for
   """
   eventId: ID!
+  """
+  If the event requires user provided information, this field must be set
+  """
+  userProvidedInformation: String
 }
 
 enum ParticipationStatus {
@@ -305,6 +333,7 @@ type SignUp {
   """
   user: PublicUser!
   order: Order
+  userProvidedInformation: String
 }
 
 type SignUpResponse {
@@ -358,6 +387,14 @@ input UpdateEventInput {
   categories is a list of cateogry IDs to which the event belongs
   """
   categories: [UpdateCategoriesInput!]
+  """
+  If true, sign ups are retractable for the event
+  """
+  signUpsRetractable: Boolean
+  """
+  If true, sign ups require user provided information
+  """
+  signUpsRequireUserProvidedInformation: Boolean
   slots: UpdateSlotsInput
 }
 
@@ -434,15 +471,21 @@ type Mutation {
   """
   Create a new event category, requires super user status
   """
-  createEventCategory(data: CreateEventCategoryInput!): CreateEventCategoryResponse!
+  createEventCategory(
+    data: CreateEventCategoryInput!
+  ): CreateEventCategoryResponse!
   """
   Update an event category, requires super user status
   """
-  updateEventCategory(data: UpdateEventCategoryInput!): UpdateEventCategoryResponse!
+  updateEventCategory(
+    data: UpdateEventCategoryInput!
+  ): UpdateEventCategoryResponse!
   """
   Delete an event category, requires super user status
   """
-  deleteEventCategory(data: DeleteEventCategoryInput!): DeleteEventCategoryResponse!
+  deleteEventCategory(
+    data: DeleteEventCategoryInput!
+  ): DeleteEventCategoryResponse!
 }
 
 type Query {

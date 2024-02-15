@@ -16,7 +16,7 @@ describe("EventsRepository", () => {
 	describe("update", () => {
 		interface TestCase {
 			name: string;
-			updateFn: EventUpdateFn;
+			updateFn: EventUpdateFn<InternalServerError>;
 			expected: Result<{ event: EventType }, InternalServerError>;
 		}
 
@@ -86,6 +86,8 @@ describe("EventsRepository", () => {
 					contactEmail: faker.internet.email(),
 					location: faker.location.streetAddress(),
 					signUpsEnabled: false,
+					signUpsRetractable: true,
+					signUpsRequireUserProvidedInformation: false,
 				},
 			});
 			if (!event.ok) throw event.error;

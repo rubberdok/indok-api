@@ -1,11 +1,7 @@
 import { faker } from "@faker-js/faker";
 import type { EventSignUp } from "@prisma/client";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
-import {
-	InvalidArgumentError,
-	NotFoundError,
-	UnauthorizedError,
-} from "~/domain/errors.js";
+import { NotFoundError, UnauthorizedError } from "~/domain/errors.js";
 import { Order } from "~/domain/products.js";
 import type { User } from "~/domain/users.js";
 import { makeMockContext } from "~/lib/context.js";
@@ -50,7 +46,7 @@ describe("EventService", () => {
 			});
 		});
 
-		it("should return InvalidArgumentError if the sign up is not confirmed", async () => {
+		it("should return NotFoundError if the sign up is not confirmed", async () => {
 			mockEventRepository.getSignUp.mockResolvedValueOnce(
 				mock<EventSignUp>({
 					participationStatus: "ON_WAITLIST",
@@ -66,7 +62,7 @@ describe("EventService", () => {
 
 			expect(result).toEqual({
 				ok: false,
-				error: expect.any(InvalidArgumentError),
+				error: expect.any(NotFoundError),
 			});
 		});
 
@@ -112,6 +108,7 @@ describe("EventService", () => {
 						totalPrice: 100,
 						updatedAt: new Date(),
 						version: 1,
+						capturedPaymentAttemptReference: null,
 					}),
 				},
 			});
@@ -152,6 +149,7 @@ describe("EventService", () => {
 						totalPrice: 100,
 						updatedAt: new Date(),
 						version: 1,
+						capturedPaymentAttemptReference: null,
 					}),
 				},
 			});
@@ -191,6 +189,7 @@ describe("EventService", () => {
 						totalPrice: 100,
 						updatedAt: new Date(),
 						version: 1,
+						capturedPaymentAttemptReference: null,
 					}),
 				},
 			});

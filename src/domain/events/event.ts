@@ -47,32 +47,40 @@ type EventFields = {
 	signUpsEnabled: boolean;
 	signUpsStartAt?: Date | null;
 	signUpsEndAt?: Date | null;
+	signUpsRetractable?: boolean;
+	signUpsRequireUserProvidedInformation?: boolean;
 	capacity?: number | null;
 	remainingCapacity?: number | null;
 	productId?: string | null;
 	type: (typeof EventTypeEnum)[keyof typeof EventTypeEnum];
 };
 
+type SignUpFields = {
+	signUpsRetractable: boolean;
+	signUpsRequireUserProvidedInformation: boolean;
+	signUpsStartAt: Date;
+	signUpsEndAt: Date;
+	capacity: number;
+	remainingCapacity: number;
+};
+
 type BasicEvent = EventFields & {
 	type: typeof EventTypeEnum.BASIC;
+	signUpsRetractable: true;
+	signUpsRequireUserProvidedInformation: false;
 };
 
-type SignUpEvent = EventFields & {
-	type: typeof EventTypeEnum.SIGN_UPS;
-	signUpsStartAt: Date;
-	signUpsEndAt: Date;
-	capacity: number;
-	remainingCapacity: number;
-};
+type SignUpEvent = EventFields &
+	SignUpFields & {
+		type: typeof EventTypeEnum.SIGN_UPS;
+	};
 
-type TicketEvent = EventFields & {
-	productId: string;
-	type: typeof EventTypeEnum.TICKETS;
-	signUpsStartAt: Date;
-	signUpsEndAt: Date;
-	capacity: number;
-	remainingCapacity: number;
-};
+type TicketEvent = EventFields &
+	SignUpFields & {
+		productId: string;
+		type: typeof EventTypeEnum.TICKETS;
+		signUpsRetractable: false;
+	};
 
 type EventType = BasicEvent | SignUpEvent | TicketEvent;
 
@@ -126,10 +134,24 @@ function newSignUpEvent(event: NewSignUpEventData): NewSignUpEventReturn {
 
 	const signUpSchema = z
 		.object({
-			signUpsEnabled: z.boolean().optional().default(false),
+			signUpsEnabled: z
+				.boolean()
+				.nullish()
+				.transform((val) => Boolean(val))
+				.default(false),
 			signUpsStartAt: z.date(),
 			signUpsEndAt: z.date(),
 			capacity: z.number().int().min(0),
+			signUpsRetractable: z
+				.boolean()
+				.nullish()
+				.transform((val) => Boolean(val))
+				.default(false),
+			signUpsRequireUserProvidedInformation: z
+				.boolean()
+				.nullish()
+				.transform((val) => Boolean(val))
+				.default(false),
 		})
 		.refine(
 			({ signUpsEndAt, signUpsStartAt }) => {
@@ -152,8 +174,14 @@ function newSignUpEvent(event: NewSignUpEventData): NewSignUpEventReturn {
 		};
 	}
 
-	const { signUpsEnabled, signUpsEndAt, signUpsStartAt, capacity } =
-		signUpSchemaResult.data;
+	const {
+		signUpsEnabled,
+		signUpsEndAt,
+		signUpsStartAt,
+		capacity,
+		signUpsRequireUserProvidedInformation,
+		signUpsRetractable,
+	} = signUpSchemaResult.data;
 
 	return {
 		ok: true,
@@ -163,6 +191,8 @@ function newSignUpEvent(event: NewSignUpEventData): NewSignUpEventReturn {
 				signUpsEndAt,
 				signUpsStartAt,
 				signUpsEnabled,
+				signUpsRequireUserProvidedInformation,
+				signUpsRetractable,
 				capacity,
 				remainingCapacity: capacity,
 				type: EventTypeEnum.SIGN_UPS,
@@ -192,6 +222,16 @@ function newBasicEvent(basicEvent: NewBasicEventData): NewBasicEventReturn {
 				.nullish()
 				.transform((val) => val ?? false),
 			categories: z.array(z.object({ id: z.string().uuid() })).optional(),
+			signUpsRetractable: z
+				.boolean()
+				.nullish()
+				.transform((val) => Boolean(val))
+				.default(false),
+			signUpsRequireUserProvidedInformation: z
+				.boolean()
+				.nullish()
+				.transform((val) => Boolean(val))
+				.default(false),
 		})
 		.refine(
 			({ endAt, startAt }) => {
@@ -223,6 +263,8 @@ function newBasicEvent(basicEvent: NewBasicEventData): NewBasicEventReturn {
 				id: id ?? randomUUID(),
 				version: version ?? 0,
 				type: EventTypeEnum.BASIC,
+				signUpsRetractable: true,
+				signUpsRequireUserProvidedInformation: false,
 			},
 		},
 	};
@@ -258,6 +300,7 @@ function newTicketEvent(ticketEvent: NewTicketEventData): NewTicketEventReturn {
 			event: {
 				...signUpEventResult.data.event,
 				productId,
+				signUpsRetractable: false,
 				type: EventTypeEnum.TICKETS,
 			},
 		},
@@ -447,6 +490,7 @@ function updateSignUpEvent(params: {
 		signUpsEndAt: z.date().optional(),
 		signUpsStartAt: z.date().optional(),
 		capacity: z.number().int().min(0).optional(),
+		signUpsRetractable: z.boolean().optional(),
 	});
 
 	const updatedFields = omitBy(data.event, isNil);
@@ -479,13 +523,14 @@ function updateSignUpEvent(params: {
 		newEvent.remainingCapacity = newRemainingCapacity;
 	}
 
+	if (newEvent.type === "TICKETS") {
+		validatedUpdateFields.signUpsRetractable = false;
+	}
+	merge(newEvent, validatedUpdateFields);
 	return {
 		ok: true,
 		data: {
-			event: {
-				...newEvent,
-				...validatedUpdateFields,
-			},
+			event: newEvent,
 		},
 	};
 }
@@ -519,6 +564,8 @@ const Event = {
 					event: {
 						...event,
 						type: EventTypeEnum.BASIC,
+						signUpsRequireUserProvidedInformation: false,
+						signUpsRetractable: true,
 					},
 				},
 			};
@@ -530,6 +577,7 @@ const Event = {
 				signUpsEndAt: z.date(),
 				capacity: z.number().int().min(0),
 				remainingCapacity: z.number().int().min(0),
+				signUpsRetractable: z.boolean(),
 			})
 			.safeParse(event);
 
@@ -540,6 +588,8 @@ const Event = {
 					event: {
 						...event,
 						type: EventTypeEnum.BASIC,
+						signUpsRetractable: true,
+						signUpsRequireUserProvidedInformation: false,
 					},
 				},
 			};
@@ -555,6 +605,8 @@ const Event = {
 						event: {
 							...event,
 							type: EventTypeEnum.BASIC,
+							signUpsRetractable: true,
+							signUpsRequireUserProvidedInformation: false,
 						},
 					},
 				};
@@ -565,6 +617,7 @@ const Event = {
 					event: {
 						...event,
 						...signUpDetails,
+						signUpsRetractable: false,
 						type: EventTypeEnum.TICKETS,
 						productId,
 					},
@@ -593,11 +646,8 @@ type UpdateEvenFnReturnType = {
 	};
 	categories?: { id: string }[];
 };
-type EventUpdateFn<
-	T extends EventType = EventType,
-	TError extends KnownDomainError = KnownDomainError,
-> = (params: {
-	event: T;
+type EventUpdateFn<TError extends Error> = (params: {
+	event: EventType;
 	slots?: SlotType[];
 	categories?: CategoryType[];
 }) => ResultAsync<UpdateEvenFnReturnType, TError>;

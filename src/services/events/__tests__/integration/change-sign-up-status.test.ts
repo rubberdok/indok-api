@@ -3,7 +3,7 @@ import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
 import { makeTestServices } from "~/__tests__/dependencies-factory.js";
-import { NotFoundError } from "~/domain/errors.js";
+import { InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
 import { makeMockContext } from "~/lib/context.js";
 import type { Services } from "~/lib/server.js";
 import { makeUserWithOrganizationMembership } from "./dependencies-factory.js";
@@ -31,6 +31,7 @@ describe("EventService", () => {
 					capacity: 1,
 					signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+					signUpsRetractable: true,
 				},
 				slots: [
 					{
@@ -42,7 +43,7 @@ describe("EventService", () => {
 			assert(createEvent.ok);
 			const { event } = createEvent.data;
 
-			await events.signUp(ctx, user.id, event.id);
+			await events.signUp(ctx, { userId: user.id, eventId: event.id });
 			const actual = await events.retractSignUp(user.id, event.id);
 			const actualEvent = await events.get(event.id);
 			const actualSlotsResult = await events.getSlots(ctx, {
@@ -75,6 +76,7 @@ describe("EventService", () => {
 					capacity: 0,
 					signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+					signUpsRetractable: false,
 				},
 				slots: [
 					{
@@ -86,7 +88,7 @@ describe("EventService", () => {
 			assert(createEvent.ok);
 			const { event } = createEvent.data;
 
-			await events.signUp(ctx, user.id, event.id);
+			await events.signUp(ctx, { userId: user.id, eventId: event.id });
 			const actual = await events.retractSignUp(user.id, event.id);
 			const actualEvent = await events.get(event.id);
 			const actualSlotsResult = await events.getSlots(ctx, {
@@ -119,6 +121,7 @@ describe("EventService", () => {
 					capacity: 1,
 					signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+					signUpsRetractable: true,
 				},
 				slots: [
 					{
@@ -133,7 +136,7 @@ describe("EventService", () => {
 			assert(createEvent.ok);
 			const { event } = createEvent.data;
 
-			await events.signUp(ctx, user.id, event.id);
+			await events.signUp(ctx, { userId: user.id, eventId: event.id });
 			await events.retractSignUp(user.id, event.id);
 
 			try {
@@ -154,6 +157,81 @@ describe("EventService", () => {
 
 			expect(actualEvent.remainingCapacity).toBe(1);
 			expect(actualSlot.remainingCapacity).toBe(1);
+		});
+
+		it("should return InvalidArgumentError if trying to retract a confirmed sign up on a non-retractable event", async () => {
+			const { user, organization } = await makeUserWithOrganizationMembership();
+			const ctx = makeMockContext(user);
+
+			const createEvent = await events.create(ctx, {
+				type: "SIGN_UPS",
+				event: {
+					organizationId: organization.id,
+					name: faker.word.adjective(),
+					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+					signUpsEnabled: true,
+					capacity: 1,
+					signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+					signUpsRetractable: false,
+				},
+				slots: [
+					{
+						capacity: 1,
+					},
+				],
+			});
+
+			if (!createEvent.ok) {
+				throw createEvent.error;
+			}
+			const { event } = createEvent.data;
+
+			await events.signUp(ctx, { userId: user.id, eventId: event.id });
+			try {
+				await events.retractSignUp(user.id, event.id);
+				fail("Expected an error");
+			} catch (err) {
+				expect(err).toBeInstanceOf(InvalidArgumentError);
+			}
+		});
+
+		it("should retract a non-confirmed sign up on a non-retractable event", async () => {
+			const { user, organization } = await makeUserWithOrganizationMembership();
+			const ctx = makeMockContext(user);
+
+			const createEvent = await events.create(ctx, {
+				type: "SIGN_UPS",
+				event: {
+					organizationId: organization.id,
+					name: faker.word.adjective(),
+					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+					signUpsEnabled: true,
+					capacity: 0,
+					signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
+					signUpsRetractable: false,
+				},
+				slots: [
+					{
+						capacity: 1,
+					},
+				],
+			});
+
+			if (!createEvent.ok) {
+				throw createEvent.error;
+			}
+			const { event } = createEvent.data;
+
+			// wait list sign up
+			await events.signUp(ctx, { userId: user.id, eventId: event.id });
+			const retactSignUpResult = await events.retractSignUp(user.id, event.id);
+			expect(retactSignUpResult.participationStatus).toBe(
+				ParticipationStatus.RETRACTED,
+			);
 		});
 	});
 });

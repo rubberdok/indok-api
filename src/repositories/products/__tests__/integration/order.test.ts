@@ -193,6 +193,12 @@ describe("ProductRepository", () => {
 				 * Create an order
 				 */
 				const { order, productRepository } = await makeDependencies();
+				const { paymentAttempt } = await productRepository.createPaymentAttempt(
+					{
+						order: { id: order.id, version: order.version },
+						reference: faker.string.uuid(),
+					},
+				);
 
 				/**
 				 * Act
@@ -205,6 +211,8 @@ describe("ProductRepository", () => {
 					},
 					(order) => {
 						order.paymentStatus = "CREATED";
+						order.capturedPaymentAttemptReference = paymentAttempt.reference;
+						order.purchasedAt = new Date();
 						return {
 							ok: true,
 							data: { order },
@@ -214,6 +222,10 @@ describe("ProductRepository", () => {
 				if (!actual.ok) throw actual.error;
 
 				expect(actual.data.order.paymentStatus).toBe("CREATED");
+				expect(actual.data.order.capturedPaymentAttemptReference).toBe(
+					paymentAttempt.reference,
+				);
+				expect(actual.data.order.purchasedAt).toBeDefined();
 			});
 
 			it("returns NotFoundError if the order does not exist", async () => {

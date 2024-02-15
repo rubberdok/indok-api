@@ -232,8 +232,21 @@ type Event {
   signUpDetails: EventSignUpDetails
   signUpsEnabled: Boolean!
 
+  """
+  If true, signing up for the event requires that the user submits additional information.
+  """
+  signUpsRequireUserProvidedInformation: Boolean!
+
+  """
+  If true, sign ups can be retracted for the event. Otherwise, sign ups are final.
+  """
+  signUpsRetractable: Boolean!
+
   """The start time of the event."""
   startAt: DateTime!
+
+  """The ticket information for the event, if the event is a TICKETS event."""
+  ticketInformation: EventTicketInformation
   type: EventType!
   user: EventUser
 }
@@ -285,6 +298,16 @@ input EventData {
   """
   signUpsEnabled: Boolean
 
+  """
+  If true, signing up requires that the user submits additional information. Defaults to false
+  """
+  signUpsRequireUserProvidedInformation: Boolean
+
+  """
+  If true, users can retract their sign up for the event. Defaults to false
+  """
+  signUpsRetractable: Boolean
+
   """The start time of the event. Events must have a start time."""
   startAt: DateTime!
 
@@ -319,6 +342,10 @@ input EventTicketData {
 
   """Price in øre, i.e. 100 = 1 NOK"""
   price: Int!
+}
+
+type EventTicketInformation {
+  product: Product
 }
 
 enum EventTicketStatus {
@@ -553,9 +580,14 @@ type NewBookingResponse {
 type Order {
   """Number of attempts to pay for the order."""
   attempt: Int!
+  capturedPaymentAttempt: PaymentAttempt
+
+  """The date and time the order was created."""
+  createdAt: DateTime!
   id: ID!
   isFinalState: Boolean!
   paymentAttempt(reference: String): PaymentAttempt
+  paymentAttempts: PaymentAttemptsResponse!
 
   """
   The current payment status of the order. This is updated asynchronously, so if the payment status is PENDING or CREATED,
@@ -889,6 +921,7 @@ type SignUp {
 
   """The user that signed up for the event"""
   user: PublicUser!
+  userProvidedInformation: String
 }
 
 enum SignUpAvailability {
@@ -952,6 +985,11 @@ input SignUpData {
 input SignUpInput {
   """The event to sign up for"""
   eventId: ID!
+
+  """
+  If the event requires user provided information, this field must be set
+  """
+  userProvidedInformation: String
 }
 
 type SignUpResponse {
@@ -1072,6 +1110,12 @@ input UpdateEventInput {
 
   """The name of the event, this will be displayed to users"""
   name: String
+
+  """If true, sign ups require user provided information"""
+  signUpsRequireUserProvidedInformation: Boolean
+
+  """If true, sign ups are retractable for the event"""
+  signUpsRetractable: Boolean
   slots: UpdateSlotsInput
 
   """

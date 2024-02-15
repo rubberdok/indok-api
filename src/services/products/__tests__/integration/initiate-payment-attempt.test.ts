@@ -195,6 +195,7 @@ describe("ProductService", () => {
 			const { order: updatedOrder } = updatedOrderResult.data;
 			expect(updatedOrder.paymentStatus).toEqual("CAPTURED");
 			expect(updatedOrder.isFinalState()).toBe(true);
+			expect(updatedOrder.capturedPaymentAttemptReference).toEqual(reference);
 		});
 	});
 });

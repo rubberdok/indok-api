@@ -64,7 +64,13 @@ type Order {
   totalPrice: Price!
   purchasedAt: DateTime
   paymentAttempt(reference: String): PaymentAttempt
+  paymentAttempts: PaymentAttemptsResponse!
+  capturedPaymentAttempt: PaymentAttempt
   isFinalState: Boolean!
+  """
+  The date and time the order was created.
+  """
+  createdAt: DateTime!
 }
 
 input CreateOrderInput {

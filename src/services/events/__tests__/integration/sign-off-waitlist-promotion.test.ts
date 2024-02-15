@@ -189,29 +189,35 @@ describe("EventService", () => {
 						capacity: 1,
 						signUpsStartAt: faker.date.past(),
 						signUpsEndAt: faker.date.future(),
+						signUpsRetractable: true,
 					},
 					slots: [{ capacity: 1, gradeYears: [1, 2, 3, 4, 5] }],
 					type: "SIGN_UPS",
 				},
 			);
 
-			assert(createEvent.ok);
+			if (!createEvent.ok) throw createEvent.error;
 			let event = createEvent.data.event;
 
 			const ctx = makeMockContext(confirmedUser);
-			const confirmedSignUp = await eventService.signUp(
-				ctx,
-				confirmedUser.id,
-				event.id,
-			);
+			const confirmedSignUp = await eventService.signUp(ctx, {
+				userId: confirmedUser.id,
+				eventId: event.id,
+			});
+			if (!confirmedSignUp.ok) throw confirmedSignUp.error;
 			const waitListSignUp = await eventService.signUp(
-				ctx,
-				waitListUser.id,
-				event.id,
+				makeMockContext(waitListUser),
+				{
+					userId: waitListUser.id,
+					eventId: event.id,
+				},
 			);
+			if (!waitListSignUp.ok) throw waitListSignUp.error;
 
-			expect(confirmedSignUp.participationStatus).toBe("CONFIRMED");
-			expect(waitListSignUp.participationStatus).toBe("ON_WAITLIST");
+			expect(confirmedSignUp.data.signUp.participationStatus).toBe("CONFIRMED");
+			expect(waitListSignUp.data.signUp.participationStatus).toBe(
+				"ON_WAITLIST",
+			);
 			event = await eventService.get(event.id);
 			assert(event.type === "SIGN_UPS");
 			expect(event.remainingCapacity).toBe(0);
@@ -342,6 +348,7 @@ describe("EventService", () => {
 						capacity: 20,
 						signUpsStartAt: faker.date.past(),
 						signUpsEndAt: faker.date.future(),
+						signUpsRetractable: true,
 					},
 					slots: [
 						{ capacity: 10, gradeYears: [1, 2, 3, 4, 5] },
@@ -356,32 +363,38 @@ describe("EventService", () => {
 
 			for (const user of confirmedUsers) {
 				const ctx = makeMockContext(user);
-				const confirmedSignUp = await eventService.signUp(
-					ctx,
-					user.id,
-					event.id,
+				const confirmedSignUp = await eventService.signUp(ctx, {
+					userId: user.id,
+					eventId: event.id,
+				});
+				if (!confirmedSignUp.ok) throw confirmedSignUp.error;
+				expect(confirmedSignUp.data.signUp.participationStatus).toBe(
+					"CONFIRMED",
 				);
-				expect(confirmedSignUp.participationStatus).toBe("CONFIRMED");
 			}
 
 			for (const user of waitListUsers) {
 				const ctx = makeMockContext(user);
-				const waitListSignUp = await eventService.signUp(
-					ctx,
-					user.id,
-					event.id,
+				const waitListSignUp = await eventService.signUp(ctx, {
+					userId: user.id,
+					eventId: event.id,
+				});
+				if (!waitListSignUp.ok) throw waitListSignUp.error;
+				expect(waitListSignUp.data.signUp.participationStatus).toBe(
+					"ON_WAITLIST",
 				);
-				expect(waitListSignUp.participationStatus).toBe("ON_WAITLIST");
 			}
 
 			for (const user of shouldRemainOnWaitListUsers) {
 				const ctx = makeMockContext(user);
-				const waitListSignUp = await eventService.signUp(
-					ctx,
-					user.id,
-					event.id,
+				const waitListSignUp = await eventService.signUp(ctx, {
+					userId: user.id,
+					eventId: event.id,
+				});
+				if (!waitListSignUp.ok) throw waitListSignUp.error;
+				expect(waitListSignUp.data.signUp.participationStatus).toBe(
+					"ON_WAITLIST",
 				);
-				expect(waitListSignUp.participationStatus).toBe("ON_WAITLIST");
 			}
 
 			event = await eventService.get(event.id);
