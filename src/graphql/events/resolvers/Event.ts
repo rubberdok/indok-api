@@ -79,4 +79,10 @@ export const Event: EventResolvers = {
 		if (parent.type !== "TICKETS") return null;
 		return parent;
 	},
+	signUpsRequireUserProvidedInformation: (parent) => {
+		return parent.signUpsRequireUserProvidedInformation ?? false;
+	},
+	signUpsRetractable: (parent) => {
+		return parent.signUpsRetractable ?? false;
+	},
 };
