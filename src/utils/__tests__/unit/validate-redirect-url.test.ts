@@ -1,7 +1,10 @@
 import { env } from "~/config.js";
 import { InvalidArgumentError } from "~/domain/errors.js";
 import type { Result } from "~/lib/result.js";
-import { isValidRedirectUrl } from "~/utils/validate-redirect-url.js";
+import {
+	assertValidRedirectUrl,
+	isValidRedirectUrl,
+} from "~/utils/validate-redirect-url.js";
 
 describe("Validate redirect URL", () => {
 	describe("#isValidRedirectUrl", () => {
@@ -76,5 +79,12 @@ describe("Validate redirect URL", () => {
 				expect(result).toEqual(expected);
 			},
 		);
+	});
+	describe("#assertValidRedirectUrl", () => {
+		it("should throw if the URL is invalid", () => {
+			expect(() => assertValidRedirectUrl("not-a-url")).toThrow(
+				InvalidArgumentError,
+			);
+		});
 	});
 });
