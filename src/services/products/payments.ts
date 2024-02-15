@@ -121,16 +121,6 @@ function buildPayments({
 		};
 	}
 
-	function isFinalPaymentState(status: PaymentAttemptState): boolean {
-		return (
-			status === "FAILED" ||
-			status === "TERMINATED" ||
-			status === "EXPIRED" ||
-			status === "AUTHORIZED" ||
-			status === "ABORTED"
-		);
-	}
-
 	async function getRemotePaymentState(
 		ctx: Context,
 		paymentAttempt: PaymentAttemptType,
@@ -374,7 +364,7 @@ function buildPayments({
 			NotFoundError | InternalServerError | DownstreamServiceError
 		> {
 			const { reference } = paymentAttempt;
-			if (isFinalPaymentState(paymentAttempt.state)) {
+			if (paymentAttempt.isFinalState()) {
 				ctx.log.info({ reference }, "Payment attempt is not in progress");
 				return { ok: true, data: { paymentAttempt } };
 			}
@@ -426,7 +416,7 @@ function buildPayments({
 			const { paymentAttempt: updatedPaymentAttempt } =
 				updatePaymentAttemptResult.data;
 
-			if (!isFinalPaymentState(updatedPaymentAttempt.state)) {
+			if (!updatedPaymentAttempt.isFinalState()) {
 				ctx.log.info({ reference }, "Payment attempt is still in progress");
 				return { ok: true, data: { paymentAttempt: updatedPaymentAttempt } };
 			}
