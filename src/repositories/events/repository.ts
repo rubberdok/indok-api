@@ -1244,8 +1244,9 @@ export class EventRepository {
 	public async addOrderToSignUp(params: {
 		orderId: string;
 		signUpId: string;
-	}): Promise<
-		ResultAsync<{ signUp: EventSignUp }, NotFoundError | InternalServerError>
+	}): ResultAsync<
+		{ signUp: EventSignUp },
+		NotFoundError | InternalServerError
 	> {
 		const { orderId, signUpId } = params;
 		try {

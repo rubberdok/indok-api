@@ -100,9 +100,7 @@ interface EventRepository {
 	addOrderToSignUp(params: {
 		orderId: string;
 		signUpId: string;
-	}): Promise<
-		ResultAsync<{ signUp: EventSignUp }, NotFoundError | InternalServerError>
-	>;
+	}): ResultAsync<{ signUp: EventSignUp }, NotFoundError | InternalServerError>;
 	findManySlots(data: { gradeYear?: number; eventId: string }): Promise<
 		EventSlot[]
 	>;
