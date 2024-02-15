@@ -16,7 +16,7 @@ import type {
 	PaymentAttemptType,
 } from "~/domain/products.js";
 import type { ResultAsync } from "~/lib/result.js";
-import { isValidRedirectUrl } from "~/utils/validateRedirectUrl.js";
+import { isValidRedirectUrl } from "~/utils/validate-redirect-url.js";
 import type { Context } from "../../lib/context.js";
 import type { BuildProductsDependencies } from "./service.js";
 import type {

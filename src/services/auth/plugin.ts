@@ -1,7 +1,7 @@
 import type { FastifyPluginAsync } from "fastify";
 import { env } from "~/config.js";
 import { UnauthorizedError } from "~/domain/errors.js";
-import { assertValidRedirectUrl } from "~/utils/validateRedirectUrl.js";
+import { assertValidRedirectUrl } from "~/utils/validate-redirect-url.js";
 
 const fastifyAuthPlugin: FastifyPluginAsync = (fastify) => {
 	fastify.route<{
