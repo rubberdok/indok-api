@@ -33,6 +33,10 @@ import { Role } from "~/domain/organizations.js";
 import type { OrderType, ProductType } from "~/domain/products.js";
 import type { User } from "~/domain/users.js";
 import type { ResultAsync } from "~/lib/result.js";
+import type {
+	CreateSignUpParams,
+	UpdateSignUpParams,
+} from "~/repositories/events/index.js";
 import type { Context } from "../../lib/context.js";
 import type { SignUpQueueType } from "./worker.js";
 
@@ -48,35 +52,6 @@ export type {
 	CreateTicketEventParams,
 	UpdateEventParams,
 };
-
-interface CreateConfirmedSignUpData {
-	userId: string;
-	eventId: string;
-	slotId: string;
-	participationStatus: Extract<ParticipationStatus, "CONFIRMED">;
-	orderId?: string;
-	userProvidedInformation?: string | null;
-}
-
-interface CreateOnWaitlistSignUpData {
-	userId: string;
-	eventId: string;
-	participationStatus: Extract<ParticipationStatus, "ON_WAITLIST">;
-	userProvidedInformation?: string | null;
-}
-
-interface UpdateToConfirmedSignUpData {
-	userId: string;
-	eventId: string;
-	slotId: string;
-	newParticipationStatus: Extract<ParticipationStatus, "CONFIRMED">;
-}
-
-interface UpdateToInactiveSignUpData {
-	userId: string;
-	eventId: string;
-	newParticipationStatus: Extract<ParticipationStatus, "REMOVED" | "RETRACTED">;
-}
 
 interface EventRepository {
 	create(
@@ -120,16 +95,12 @@ interface EventRepository {
 		status: ParticipationStatus;
 	}): Promise<EventSignUp[]>;
 	getSignUp(userId: string, eventId: string): Promise<EventSignUp>;
-	createSignUp(
-		data: CreateConfirmedSignUpData | CreateOnWaitlistSignUpData,
-	): Promise<{
+	createSignUp(data: CreateSignUpParams): Promise<{
 		signUp: EventSignUp;
 		slot?: EventSlot;
 		event: EventType;
 	}>;
-	updateSignUp(
-		data: UpdateToConfirmedSignUpData | UpdateToInactiveSignUpData,
-	): Promise<{
+	updateSignUp(data: UpdateSignUpParams): Promise<{
 		signUp: EventSignUp;
 		slot?: EventSlot;
 		event: EventType;
@@ -657,7 +628,7 @@ class EventService {
 					userId,
 					participationStatus: ParticipationStatus.ON_WAITLIST,
 					eventId,
-					userProvidedInformation,
+					userProvidedInformation: userProvidedInformation ?? "",
 				});
 				return { ok: true, data: { signUp } };
 			}
@@ -675,7 +646,7 @@ class EventService {
 						userId,
 						participationStatus: ParticipationStatus.ON_WAITLIST,
 						eventId,
-						userProvidedInformation,
+						userProvidedInformation: userProvidedInformation ?? "",
 					});
 					return {
 						ok: true,
@@ -688,7 +659,7 @@ class EventService {
 					participationStatus: ParticipationStatus.CONFIRMED,
 					eventId,
 					slotId: slotToSignUp.id,
-					userProvidedInformation,
+					userProvidedInformation: userProvidedInformation ?? "",
 				});
 				ctx.log.info(
 					{ signUp, attempt },

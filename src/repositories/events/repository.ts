@@ -558,9 +558,7 @@ export class EventRepository {
 	 * @param data.slotId - The ID of the slot to sign up for
 	 * @returns The created sign up, and the updated event and slot
 	 */
-	public async createSignUp(
-		data: CreateConfirmedSignUpData | CreateOnWaitlistSignUpData,
-	): Promise<{
+	public async createSignUp(data: CreateSignUpParams): Promise<{
 		event: EventType;
 		signUp: EventSignUp;
 		slot?: EventSlot;
@@ -688,8 +686,12 @@ export class EventRepository {
 				},
 				signUps: {
 					create: {
+						user: {
+							connect: {
+								id: userId,
+							},
+						},
 						userProvidedInformation,
-						userId,
 						active: true,
 						participationStatus,
 					},
@@ -767,9 +769,7 @@ export class EventRepository {
 	 * @param data.newParticipationStatus - The new participation status of the sign up
 	 * @returns The updated sign up, event and slot
 	 */
-	public async updateSignUp(
-		data: UpdateToConfirmedSignUpData | UpdateToInactiveSignUpData,
-	): Promise<{
+	public async updateSignUp(data: UpdateSignUpParams): Promise<{
 		event: EventType;
 		signUp: EventSignUp;
 		slot?: EventSlot | null;
@@ -1295,6 +1295,10 @@ interface CreateOnWaitlistSignUpData {
 	userProvidedInformation?: string;
 }
 
+type CreateSignUpParams =
+	| CreateConfirmedSignUpData
+	| CreateOnWaitlistSignUpData;
+
 interface UpdateToConfirmedSignUpData {
 	userId: string;
 	eventId: string;
@@ -1307,3 +1311,8 @@ interface UpdateToInactiveSignUpData {
 	eventId: string;
 	newParticipationStatus: Extract<ParticipationStatus, "REMOVED" | "RETRACTED">;
 }
+type UpdateSignUpParams =
+	| UpdateToConfirmedSignUpData
+	| UpdateToInactiveSignUpData;
+
+export type { CreateSignUpParams, UpdateSignUpParams };
