@@ -85,7 +85,14 @@ export class UnauthorizedError extends KnownDomainError<"UnauthorizedError"> {
 }
 
 export class DownstreamServiceError extends KnownDomainError<"DownstreamServiceError"> {
-	constructor(description: string, cause?: unknown) {
+	public detail?: string;
+	public path?: string;
+
+	constructor(
+		description: string,
+		cause?: unknown,
+		params?: { detail?: string; path?: string },
+	) {
 		super(
 			"DownstreamServiceError",
 			description,
@@ -94,6 +101,9 @@ export class DownstreamServiceError extends KnownDomainError<"DownstreamServiceE
 				cause,
 			},
 		);
+		const { detail, path } = params ?? {};
+		this.detail = detail;
+		this.path = path;
 	}
 }
 

@@ -89,7 +89,11 @@ function buildPayments({
 			| { orderId: string }
 			| { productId: string },
 	): ResultAsync<
-		{ client: ReturnType<typeof Client>; token: string },
+		{
+			client: ReturnType<typeof Client>;
+			token: string;
+			merchant: MerchantType;
+		},
 		DownstreamServiceError | InternalServerError
 	> {
 		const vipps = await newClient(merchantBy);
@@ -115,6 +119,7 @@ function buildPayments({
 		return {
 			ok: true,
 			data: {
+				merchant,
 				client,
 				token,
 			},
@@ -265,7 +270,7 @@ function buildPayments({
 			if (!newClientResult.ok) {
 				return newClientResult;
 			}
-			const { client, token } = newClientResult.data;
+			const { client, token, merchant } = newClientResult.data;
 			const vippsPayment = await client.payment.create(token, {
 				reference: getPaymentReference(order, order.attempt + 1),
 				amount: {
@@ -281,11 +286,23 @@ function buildPayments({
 			});
 
 			if (!vippsPayment.ok) {
+				let detail: string;
+				if ("message" in vippsPayment.error) {
+					detail = vippsPayment.error.message;
+				} else if (vippsPayment.error.detail) {
+					detail = vippsPayment.error.detail;
+				} else {
+					detail = "Unknown error";
+				}
 				return {
 					ok: false,
 					error: new DownstreamServiceError(
-						"Failed to create vipps payment",
+						`Failed to create vipps payment for merchant ${merchant.id}`,
 						vippsPayment.error,
+						{
+							detail,
+							path: "initiatePaymentAttempt",
+						},
 					),
 				};
 			}
