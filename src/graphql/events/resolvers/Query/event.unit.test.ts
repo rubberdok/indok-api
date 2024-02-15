@@ -469,5 +469,56 @@ describe("Event queries", () => {
 
 			expect(data?.event.event.user).toEqual(null);
 		});
+
+		it("signUp { order { id } } should return null if unauthorized", async () => {
+			const { client, eventService, createMockContext } =
+				createMockApolloServer();
+			const event = mock<EventType>({ id: faker.string.uuid() });
+			const user = mock<User>({ id: faker.string.uuid() });
+			eventService.get.mockResolvedValue(event);
+			eventService.getOrderForSignUp.mockResolvedValue({
+				ok: false,
+				error: new UnauthorizedError(""),
+			});
+			eventService.getSignUp.mockResolvedValue({
+				ok: true,
+				data: {
+					signUp: mock<EventSignUp>({
+						id: faker.string.uuid(),
+						orderId: faker.string.uuid(),
+					}),
+				},
+			});
+
+			const { data } = await client.query(
+				{
+					query: graphql(`
+				query eventUserSignUp($data: EventInput!) {
+					event(data: $data) {
+						event {
+							user {
+								signUp {
+									order {
+										id
+									}
+								}
+							}
+						}
+					}
+				}
+			`),
+					variables: {
+						data: {
+							id: faker.string.uuid(),
+						},
+					},
+				},
+				{
+					contextValue: createMockContext({ user }),
+				},
+			);
+
+			expect(data?.event.event.user?.signUp?.order).toEqual(null);
+		});
 	});
 });
