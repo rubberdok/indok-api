@@ -1,6 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { FeaturePermission, type Prisma } from "@prisma/client";
 import { Role } from "~/domain/organizations.js";
+import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
 import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
@@ -226,8 +227,7 @@ describe("OrganizationsService", () => {
 				 *
 				 * 1. Call the hasRole method on the permissionService with the userId and organizationId
 				 */
-				const result = permissionService.hasRole({
-					userId: user.id,
+				const result = permissionService.hasRole(makeMockContext(user), {
 					organizationId: organization.id,
 					role: requiredRole,
 					featurePermission: requiredFeaturePermission,
@@ -240,9 +240,8 @@ describe("OrganizationsService", () => {
 			},
 		);
 
-		it("should return `false` if `userId` is null", async () => {
-			const result = await permissionService.hasRole({
-				userId: null,
+		it("should return `false` if `ctx.user` is null", async () => {
+			const result = await permissionService.hasRole(makeMockContext(null), {
 				organizationId: faker.string.uuid(),
 				role: Role.MEMBER,
 			});
@@ -266,7 +265,7 @@ describe("OrganizationsService", () => {
 			 *
 			 * 1. Call the isSuperUser method on the permissionService with the userId
 			 */
-			const { isSuperUser } = await permissionService.isSuperUser(user.id);
+			const { isSuperUser } = permissionService.isSuperUser(user);
 
 			/**
 			 * Assert that the user is a super user
@@ -289,7 +288,7 @@ describe("OrganizationsService", () => {
 			 *
 			 * 1. Call the isSuperUser method on the permissionService with the userId
 			 */
-			const { isSuperUser } = await permissionService.isSuperUser(user.id);
+			const { isSuperUser } = permissionService.isSuperUser(user);
 
 			/**
 			 * Assert that the user is a super user
@@ -297,13 +296,13 @@ describe("OrganizationsService", () => {
 			expect(isSuperUser).toEqual(false);
 		});
 
-		it("should return false if user is undefined", async () => {
+		it("should return false if user is undefined", () => {
 			/**
 			 * Act
 			 *
 			 * 1. Call the isSuperUser method on the permissionService with the userId
 			 */
-			const { isSuperUser } = await permissionService.isSuperUser(undefined);
+			const { isSuperUser } = permissionService.isSuperUser();
 
 			/**
 			 * Assert that the user is a super user
@@ -327,10 +326,12 @@ describe("OrganizationsService", () => {
 			 * Act
 			 * 1. Call the hasFeaturePermission method on the permissionService with the userId and a feature permission
 			 */
-			const result = permissionService.hasFeaturePermission({
-				userId: user.id,
-				featurePermission: FeaturePermission.CABIN_ADMIN,
-			});
+			const result = permissionService.hasFeaturePermission(
+				makeMockContext(user),
+				{
+					featurePermission: FeaturePermission.CABIN_ADMIN,
+				},
+			);
 
 			/**
 			 * Assert that the user has the feature permission
@@ -352,10 +353,12 @@ describe("OrganizationsService", () => {
 			 * Act
 			 * 1. Call the hasFeaturePermission method on the permissionService with the userId and a feature permission
 			 */
-			const result = permissionService.hasFeaturePermission({
-				userId: user.id,
-				featurePermission: FeaturePermission.CABIN_ADMIN,
-			});
+			const result = permissionService.hasFeaturePermission(
+				makeMockContext(user),
+				{
+					featurePermission: FeaturePermission.CABIN_ADMIN,
+				},
+			);
 
 			/**
 			 * Assert that the user does not have the feature permission
@@ -393,10 +396,12 @@ describe("OrganizationsService", () => {
 			 * Act
 			 * 1. Call the hasFeaturePermission method on the permissionService with the userId and a feature permission
 			 */
-			const result = permissionService.hasFeaturePermission({
-				userId: user.id,
-				featurePermission: FeaturePermission.CABIN_ADMIN,
-			});
+			const result = permissionService.hasFeaturePermission(
+				makeMockContext(user),
+				{
+					featurePermission: FeaturePermission.CABIN_ADMIN,
+				},
+			);
 
 			/**
 			 * Assert that the user has the feature permission
@@ -430,10 +435,12 @@ describe("OrganizationsService", () => {
 			 * Act
 			 * 1. Call the hasFeaturePermission method on the permissionService with the userId and a feature permission
 			 */
-			const result = permissionService.hasFeaturePermission({
-				userId: user.id,
-				featurePermission: FeaturePermission.CABIN_ADMIN,
-			});
+			const result = permissionService.hasFeaturePermission(
+				makeMockContext(user),
+				{
+					featurePermission: FeaturePermission.CABIN_ADMIN,
+				},
+			);
 
 			/**
 			 * Assert that the user has the feature permission
@@ -473,10 +480,12 @@ describe("OrganizationsService", () => {
 			 * Act
 			 * 1. Call the hasFeaturePermission method on the permissionService with the userId and a feature permission
 			 */
-			const result = permissionService.hasFeaturePermission({
-				userId: user.id,
-				featurePermission: FeaturePermission.CABIN_ADMIN,
-			});
+			const result = permissionService.hasFeaturePermission(
+				makeMockContext(user),
+				{
+					featurePermission: FeaturePermission.CABIN_ADMIN,
+				},
+			);
 
 			/**
 			 * Assert that the user has the feature permission
@@ -518,10 +527,12 @@ describe("OrganizationsService", () => {
 			 * Act
 			 * 1. Call the hasFeaturePermission method on the permissionService with the userId and a feature permission
 			 */
-			const result = permissionService.hasFeaturePermission({
-				userId: user.id,
-				featurePermission: FeaturePermission.EVENT_WRITE_SIGN_UPS,
-			});
+			const result = permissionService.hasFeaturePermission(
+				makeMockContext(user),
+				{
+					featurePermission: FeaturePermission.EVENT_WRITE_SIGN_UPS,
+				},
+			);
 
 			/**
 			 * Assert that the user has the feature permission

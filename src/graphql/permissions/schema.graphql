@@ -14,6 +14,18 @@ input HasFeaturePermissionInput {
   featurePermission: FeaturePermission!
 }
 
+input HasRoleInput {
+  role: Role!
+  organizationId: ID!
+}
+
+type HasRoleResponse {
+  hasRole: Boolean!
+}
+
 type Query {
-  hasFeaturePermission(data: HasFeaturePermissionInput!): HasFeaturePermissionResponse!
+  hasRole(data: HasRoleInput!): HasRoleResponse!
+  hasFeaturePermission(
+    data: HasFeaturePermissionInput!
+  ): HasFeaturePermissionResponse!
 }

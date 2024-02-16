@@ -6,6 +6,7 @@ import {
 	InvalidArgumentError,
 	PermissionDeniedError,
 } from "~/domain/errors.js";
+import { makeMockContext } from "~/lib/context.js";
 import {
 	type CabinRepository,
 	CabinService,
@@ -48,7 +49,7 @@ describe("CabinService", () => {
 			 * Call updateBookingStatus
 			 */
 			const updateBookingStatus = cabinService.updateBookingStatus(
-				userId,
+				makeMockContext({ id: userId }),
 				faker.string.uuid(),
 				BookingStatus.CONFIRMED,
 			);
@@ -60,10 +61,12 @@ describe("CabinService", () => {
 			 * Expect permissionService.hasFeaturePermission to be called with the correct arguments
 			 */
 			await expect(updateBookingStatus).rejects.toThrow(PermissionDeniedError);
-			expect(permissionService.hasFeaturePermission).toHaveBeenCalledWith({
-				userId: userId,
-				featurePermission: FeaturePermission.CABIN_ADMIN,
-			});
+			expect(permissionService.hasFeaturePermission).toHaveBeenCalledWith(
+				expect.anything(),
+				{
+					featurePermission: FeaturePermission.CABIN_ADMIN,
+				},
+			);
 		});
 
 		it("should throw InvalidArgumentError if there are overlapping bookings", async () => {
@@ -95,7 +98,7 @@ describe("CabinService", () => {
 			 * Call updateBookingStatus
 			 */
 			const updateBookingStatus = cabinService.updateBookingStatus(
-				userId,
+				makeMockContext({ id: userId }),
 				faker.string.uuid(),
 				BookingStatus.CONFIRMED,
 			);

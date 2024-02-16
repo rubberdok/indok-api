@@ -5,6 +5,6 @@ export const deleteListing: NonNullable<MutationResolvers["deleteListing"]> =
 		assertIsAuthenticated(ctx);
 		const { id } = data;
 
-		const listing = await ctx.listings.delete(ctx.user.id, id);
+		const listing = await ctx.listings.delete(ctx, id);
 		return { listing };
 	};

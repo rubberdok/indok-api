@@ -8,6 +8,7 @@ import type {
 	Listing,
 	Member,
 	Organization,
+	ParticipationStatus,
 	Prisma,
 	PrismaClient,
 	Semester,
@@ -78,7 +79,7 @@ import type { ResultAsync } from "./result.js";
 
 interface IOrganizationService {
 	create(
-		userId: string,
+		ctx: Context,
 		data: {
 			name: string;
 			description?: string | null;
@@ -86,7 +87,7 @@ interface IOrganizationService {
 		},
 	): Promise<Organization>;
 	update(
-		userId: string,
+		ctx: Context,
 		organizationId: string,
 		data: {
 			name?: string | null;
@@ -95,14 +96,23 @@ interface IOrganizationService {
 		},
 	): Promise<Organization>;
 	addMember(
-		userId: string,
+		ctx: Context,
 		data: { userId: string; organizationId: string; role: Role },
-	): Promise<Member>;
+	): ResultAsync<{ member: Member }, PermissionDeniedError | UnauthorizedError>;
 	removeMember(
-		userId: string,
-		data: { userId: string; organizationId: string } | { id: string },
-	): Promise<Member>;
-	getMembers(userId: string, organizationId: string): Promise<Member[]>;
+		ctx: Context,
+		params: { memberId: string },
+	): ResultAsync<
+		{ member: Member },
+		InvalidArgumentError | PermissionDeniedError | UnauthorizedError
+	>;
+	getMembers(
+		ctx: Context,
+		organizationId: string,
+	): ResultAsync<
+		{ members: Member[] },
+		PermissionDeniedError | UnauthorizedError
+	>;
 	get(id: string): Promise<Organization>;
 	findMany(data?: { userId?: string }): Promise<Organization[]>;
 }
@@ -172,7 +182,7 @@ interface BookingData {
 interface ICabinService {
 	newBooking(data: BookingData): Promise<Booking>;
 	updateBookingStatus(
-		userId: string,
+		ctx: Context,
 		id: string,
 		status: BookingStatus,
 	): Promise<Booking>;
@@ -180,7 +190,7 @@ interface ICabinService {
 	getCabinByBookingId(bookingId: string): Promise<Cabin>;
 	findManyCabins(): Promise<Cabin[]>;
 	updateBookingSemester(
-		userId: string,
+		ctx: Context,
 		data: {
 			semester: Semester;
 			startAt?: Date | null;
@@ -193,7 +203,7 @@ interface ICabinService {
 		Pick<BookingContact, "email" | "name" | "phoneNumber" | "id">
 	>;
 	updateBookingContact(
-		userId: string,
+		ctx: Context,
 		data: Partial<{
 			name: string | null;
 			phoneNumber: string | null;
@@ -274,13 +284,27 @@ interface IEventService {
 		| UnauthorizedError
 		| PermissionDeniedError
 	>;
+	findManySignUps(
+		ctx: Context,
+		params: {
+			eventId: string;
+			participationStatus?: ParticipationStatus | null;
+		},
+	): ResultAsync<
+		{ signUps: EventSignUp[]; total: number },
+		| UnauthorizedError
+		| PermissionDeniedError
+		| InvalidArgumentError
+		| NotFoundError
+		| InternalServerError
+	>;
 }
 
 interface IListingService {
 	get(id: string): Promise<Listing>;
 	findMany(params?: { organizationId?: string | null }): Promise<Listing[]>;
 	create(
-		userId: string,
+		ctx: Context,
 		data: {
 			name: string;
 			description?: string | null;
@@ -290,7 +314,7 @@ interface IListingService {
 		},
 	): Promise<Listing>;
 	update(
-		userId: string,
+		ctx: Context,
 		id: string,
 		data: Partial<{
 			name: string | null;
@@ -299,15 +323,24 @@ interface IListingService {
 			closesAt: Date | null;
 		}>,
 	): Promise<Listing>;
-	delete(userId: string, id: string): Promise<Listing>;
+	delete(ctx: Context, id: string): Promise<Listing>;
 }
 
 interface IPermissionService {
-	isSuperUser(userId: string): Promise<{ isSuperUser: boolean }>;
-	hasFeaturePermission(data: {
-		userId: string;
-		featurePermission: FeaturePermission;
-	}): Promise<boolean>;
+	hasFeaturePermission(
+		ctx: Context,
+		data: {
+			featurePermission: FeaturePermission;
+		},
+	): Promise<boolean>;
+	hasRole(
+		ctx: Context,
+		data: {
+			organizationId: string;
+			role: Role;
+			featurePermission?: FeaturePermission;
+		},
+	): Promise<boolean>;
 }
 
 type IProductService = {
@@ -529,11 +562,7 @@ async function registerServices(
 		permissionService,
 	);
 
-	const userService = new UserService(
-		userRepository,
-		permissionService,
-		mailService,
-	);
+	const userService = new UserService(userRepository, mailService);
 
 	await serverInstance.register(fastifyMessageQueue, {
 		name: PaymentProcessingQueueName,

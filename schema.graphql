@@ -230,6 +230,7 @@ type Event {
   """
   signUpAvailability: SignUpAvailability!
   signUpDetails: EventSignUpDetails
+  signUps: SignUps
   signUpsEnabled: Boolean!
 
   """
@@ -415,6 +416,15 @@ input HasFeaturePermissionInput {
 type HasFeaturePermissionResponse {
   hasFeaturePermission: Boolean!
   id: FeaturePermission!
+}
+
+input HasRoleInput {
+  organizationId: ID!
+  role: Role!
+}
+
+type HasRoleResponse {
+  hasRole: Boolean!
 }
 
 input InitiatePaymentAttemptInput {
@@ -668,7 +678,7 @@ type Organization {
   listings: [Listing!]!
 
   """The members of the organization"""
-  members: [Member!]!
+  members: [Member!]
   name: String!
 }
 
@@ -854,6 +864,7 @@ type Query {
   event(data: EventInput!): EventResponse!
   events(data: EventsInput): EventsResponse!
   hasFeaturePermission(data: HasFeaturePermissionInput!): HasFeaturePermissionResponse!
+  hasRole(data: HasRoleInput!): HasRoleResponse!
   listing(data: ListingInput!): ListingResponse!
   listings: ListingsResponse!
 
@@ -1007,6 +1018,17 @@ input SignUpInput {
 
 type SignUpResponse {
   signUp: SignUp!
+}
+
+type SignUps {
+  confirmed: SignUpsWithTotalCount!
+  retracted: SignUpsWithTotalCount!
+  waitList: SignUpsWithTotalCount!
+}
+
+type SignUpsWithTotalCount {
+  signUps: [SignUp!]!
+  total: Int!
 }
 
 enum Status {

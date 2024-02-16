@@ -5,6 +5,7 @@ import {
 	PermissionDeniedError,
 } from "~/domain/errors.js";
 import { Role } from "~/domain/organizations.js";
+import { makeMockContext } from "~/lib/context.js";
 import {
 	type ListingRepository,
 	ListingService,
@@ -87,7 +88,7 @@ describe("ListingService", () => {
 				permissionService.hasRole.mockResolvedValue(true);
 
 				await expect(
-					listingService.create(faker.string.uuid(), data),
+					listingService.create(makeMockContext(), data),
 				).rejects.toThrow(InvalidArgumentError);
 			});
 		});
@@ -180,7 +181,7 @@ describe("ListingService", () => {
 				permissionService.hasRole.mockResolvedValue(true);
 
 				await expect(
-					listingService.create(faker.string.uuid(), data),
+					listingService.create(makeMockContext(), data),
 				).resolves.not.toThrow();
 				expect(listingRepository.create).toHaveBeenCalledWith(expected);
 			});
@@ -208,7 +209,7 @@ describe("ListingService", () => {
 				 * Call create
 				 */
 				await expect(
-					listingService.create(userId, data),
+					listingService.create(makeMockContext({ id: userId }), data),
 				).resolves.not.toThrow();
 
 				/**
@@ -216,11 +217,13 @@ describe("ListingService", () => {
 				 *
 				 * Has role should have been called with userId and organizationId
 				 */
-				expect(permissionService.hasRole).toHaveBeenCalledWith({
-					userId,
-					organizationId,
-					role: Role.MEMBER,
-				});
+				expect(permissionService.hasRole).toHaveBeenCalledWith(
+					expect.anything(),
+					{
+						organizationId,
+						role: Role.MEMBER,
+					},
+				);
 			});
 
 			it("should raise PermissionDeniedError if the user does not have the role", async () => {
@@ -243,9 +246,9 @@ describe("ListingService", () => {
 				 *
 				 * Call create
 				 */
-				await expect(listingService.create(userId, data)).rejects.toThrow(
-					PermissionDeniedError,
-				);
+				await expect(
+					listingService.create(makeMockContext({ id: userId }), data),
+				).rejects.toThrow(PermissionDeniedError);
 
 				/**
 				 * Assert

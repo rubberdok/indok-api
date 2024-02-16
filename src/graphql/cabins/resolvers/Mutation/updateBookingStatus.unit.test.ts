@@ -71,7 +71,7 @@ describe("Cabin mutations", () => {
 
 			expect(errors).toBeUndefined();
 			expect(cabinService.updateBookingStatus).toHaveBeenCalledWith(
-				userId,
+				expect.anything(),
 				id,
 				"PENDING",
 			);

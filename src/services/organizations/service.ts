@@ -7,8 +7,11 @@ import { z } from "zod";
 import {
 	InvalidArgumentError,
 	PermissionDeniedError,
+	UnauthorizedError,
 } from "~/domain/errors.js";
 import { Role } from "~/domain/organizations.js";
+import type { Context } from "~/lib/context.js";
+import type { ResultAsync } from "~/lib/result.js";
 
 export interface OrganizationRepository {
 	create(data: {
@@ -46,12 +49,13 @@ export interface MemberRepository {
 }
 
 export interface PermissionService {
-	hasRole(data: {
-		userId: string;
-		organizationId: string;
-		role: Role;
-	}): Promise<boolean>;
-	isSuperUser(userId: string): Promise<{ isSuperUser: boolean }>;
+	hasRole(
+		ctx: Context,
+		data: {
+			organizationId: string;
+			role: Role;
+		},
+	): Promise<boolean>;
 }
 
 export class OrganizationService {
@@ -74,14 +78,19 @@ export class OrganizationService {
 	 * @returns The created organization
 	 */
 	async create(
-		userId: string,
+		ctx: Context,
 		data: {
 			name: string;
 			description?: string | null;
 			featurePermissions?: FeaturePermission[] | null;
 		},
 	): Promise<Organization> {
-		const { isSuperUser } = await this.permissionService.isSuperUser(userId);
+		if (!ctx.user) {
+			throw new UnauthorizedError(
+				"You must be logged in to create an organization.",
+			);
+		}
+		const { isSuperUser, id: userId } = ctx.user;
 
 		const baseSchema = z.object({
 			name: z.string().min(1).max(100),
@@ -137,7 +146,7 @@ export class OrganizationService {
 	 * @returns The updated organization
 	 */
 	async update(
-		userId: string,
+		ctx: Context,
 		organizationId: string,
 		data: Partial<{
 			name: string | null;
@@ -145,6 +154,12 @@ export class OrganizationService {
 			featurePermissions: FeaturePermission[] | null;
 		}>,
 	): Promise<Organization> {
+		if (!ctx.user) {
+			throw new UnauthorizedError(
+				"You must be logged in to update an organization.",
+			);
+		}
+
 		const baseSchema = z.object({
 			name: z
 				.string()
@@ -159,7 +174,7 @@ export class OrganizationService {
 				.transform((val) => val ?? undefined),
 		});
 
-		const { isSuperUser } = await this.permissionService.isSuperUser(userId);
+		const { isSuperUser } = ctx.user;
 
 		try {
 			if (isSuperUser) {
@@ -178,8 +193,7 @@ export class OrganizationService {
 					featurePermissions,
 				});
 			}
-			const isMember = await this.permissionService.hasRole({
-				userId,
+			const isMember = await this.permissionService.hasRole(ctx, {
 				organizationId,
 				role: Role.MEMBER,
 			});
@@ -213,11 +227,20 @@ export class OrganizationService {
 	 * @returns The created membership
 	 */
 	async addMember(
-		userId: string,
+		ctx: Context,
 		data: { userId: string; organizationId: string; role: Role },
-	): Promise<Member> {
-		const isAdmin = await this.permissionService.hasRole({
-			userId,
+	): ResultAsync<
+		{ member: Member },
+		PermissionDeniedError | UnauthorizedError
+	> {
+		if (!ctx.user) {
+			return {
+				ok: false,
+				error: new UnauthorizedError("You must be logged in to add a member."),
+			};
+		}
+
+		const isAdmin = await this.permissionService.hasRole(ctx, {
 			organizationId: data.organizationId,
 			role: Role.ADMIN,
 		});
@@ -226,11 +249,15 @@ export class OrganizationService {
 		 * where this.permissionService.hasRole() returns a truthy value that is not a boolean.
 		 */
 		if (isAdmin !== true) {
-			throw new PermissionDeniedError(
-				"You must be an admin of the organization to add a member.",
-			);
+			return {
+				ok: false,
+				error: new PermissionDeniedError(
+					"You must be an admin of the organization to add a member.",
+				),
+			};
 		}
-		return await this.memberRepository.create(data);
+		const addedMember = await this.memberRepository.create(data);
+		return { ok: true, data: { member: addedMember } };
 	}
 
 	/**
@@ -256,18 +283,35 @@ export class OrganizationService {
 	 * @returns
 	 */
 	async removeMember(
-		userId: string,
-		data: { userId: string; organizationId: string },
-	): Promise<Member> {
+		ctx: Context,
+		params: { memberId: string },
+	): ResultAsync<
+		{ member: Member },
+		UnauthorizedError | PermissionDeniedError | InvalidArgumentError
+	> {
+		ctx.log.info({ params }, "removing member from organization");
+
+		if (!ctx.user) {
+			return {
+				ok: false,
+				error: new UnauthorizedError(
+					"You must be logged in to remove a member.",
+				),
+			};
+		}
+
+		const { memberId } = params;
+		const memberToRemove = await this.memberRepository.get({ id: memberId });
+		const { organizationId } = memberToRemove;
+
 		let requiredRole: Role = Role.ADMIN;
 		/* Removing yourself from an organization, i.e. leaving, does not require you to be an admin. */
-		if (userId === data.userId) {
+		if (ctx.user.id === memberToRemove.userId) {
 			requiredRole = Role.MEMBER;
 		}
 
-		const hasRequiredRole = await this.permissionService.hasRole({
-			userId,
-			organizationId: data.organizationId,
+		const hasRequiredRole = await this.permissionService.hasRole(ctx, {
+			organizationId,
 			role: requiredRole,
 		});
 		/**
@@ -275,14 +319,13 @@ export class OrganizationService {
 		 * where this.permissionService.hasRole() returns a truthy value that is not a boolean.
 		 */
 		if (hasRequiredRole !== true) {
-			throw new PermissionDeniedError(
-				"You must be an admin of the organization to remove a member.",
-			);
+			return {
+				ok: false,
+				error: new PermissionDeniedError(
+					"You must be an admin of the organization to remove a member.",
+				),
+			};
 		}
-		const memberToRemove = await this.memberRepository.get({
-			userId: data.userId,
-			organizationId: data.organizationId,
-		});
 
 		/**
 		 * We have to take extra care when removing admins, as we
@@ -294,12 +337,15 @@ export class OrganizationService {
 			 * If we're not removing an admin, we're safe to go ahead, as
 			 * a member cannot be the last remaining admin of an organization.
 			 */
-			return await this.memberRepository.remove(data);
+			const removedMember = await this.memberRepository.remove({
+				id: memberId,
+			});
+			return { ok: true, data: { member: removedMember } };
 		}
 
 		// Find all admins in the organization
 		const adminsInTheOrganization = await this.memberRepository.findMany({
-			organizationId: data.organizationId,
+			organizationId: organizationId,
 			role: Role.ADMIN,
 		});
 
@@ -312,15 +358,19 @@ export class OrganizationService {
 		 * So if the length here is 1, we abort.
 		 */
 		if (adminsInTheOrganization.length === 1) {
-			throw new InvalidArgumentError(`
-          Cannot remove the last admin of an organization.
-          To remove yourself as an admin, first add another admin to the organization.
-       `);
+			return {
+				ok: false,
+				error: new InvalidArgumentError(`
+				Cannot remove the last admin of an organization.
+				To remove yourself as an admin, first add another admin to the organization.
+			 `),
+			};
 		}
 
 		// If we've reached this point, we have more than one admin left, and
 		// we can safely remove this admin.
-		return await this.memberRepository.remove(data);
+		const removedMember = await this.memberRepository.remove({ id: memberId });
+		return { ok: true, data: { member: removedMember } };
 	}
 
 	/**
@@ -331,18 +381,36 @@ export class OrganizationService {
 	 * @param userId - The ID of the user making the request
 	 * @returns
 	 */
-	async getMembers(userId: string, organizationId: string): Promise<Member[]> {
-		const isMember = await this.permissionService.hasRole({
-			userId,
+	async getMembers(
+		ctx: Context,
+		organizationId: string,
+	): ResultAsync<
+		{ members: Member[] },
+		PermissionDeniedError | UnauthorizedError
+	> {
+		if (!ctx.user) {
+			return {
+				ok: false,
+				error: new UnauthorizedError(
+					"You must be logged in to get members of an organization.",
+				),
+			};
+		}
+
+		const isMember = await this.permissionService.hasRole(ctx, {
 			organizationId,
 			role: Role.MEMBER,
 		});
 		if (!isMember) {
-			throw new PermissionDeniedError(
-				"You must be a member of the organization to get its members.",
-			);
+			return {
+				ok: false,
+				error: new PermissionDeniedError(
+					"You must be a member of the organization to get its members.",
+				),
+			};
 		}
-		return await this.memberRepository.findMany({ organizationId });
+		const members = await this.memberRepository.findMany({ organizationId });
+		return { ok: true, data: { members } };
 	}
 
 	/**

@@ -4,6 +4,7 @@ import { mockDeep } from "jest-mock-extended";
 import type { ServerClient } from "postmark";
 import { env } from "~/config.js";
 import type { User } from "~/domain/users.js";
+import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import { EventRepository } from "~/repositories/events/index.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
@@ -52,11 +53,7 @@ export function makeDependencies() {
 			websiteUrl: env.CLIENT_URL,
 		},
 	);
-	const userService = new UserService(
-		userRepository,
-		permissionService,
-		mailService,
-	);
+	const userService = new UserService(userRepository, mailService);
 
 	const vipps = MockVippsClientFactory();
 	const productService = ProductService({
@@ -91,7 +88,7 @@ export async function makeUserWithOrganizationMembership(
 		...userData,
 	});
 
-	const organization = await organizationService.create(user.id, {
+	const organization = await organizationService.create(makeMockContext(user), {
 		name: faker.string.sample(20),
 	});
 	return { user, organization };

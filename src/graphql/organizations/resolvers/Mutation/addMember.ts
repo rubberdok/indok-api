@@ -1,19 +1,23 @@
 import { Role } from "~/domain/organizations.js";
-import { assertIsAuthenticated } from "~/graphql/auth.js";
 import type { MutationResolvers } from "./../../../types.generated.js";
 export const addMember: NonNullable<MutationResolvers["addMember"]> = async (
 	_parent,
 	{ data },
 	ctx,
 ) => {
-	assertIsAuthenticated(ctx);
-	const userId = ctx.user.id;
-
 	const { userId: memberId, organizationId, role } = data;
-	const member = await ctx.organizations.addMember(userId, {
+	const addMemberResult = await ctx.organizations.addMember(ctx, {
 		userId: memberId,
 		organizationId,
 		role: role ?? Role.MEMBER,
 	});
+	if (!addMemberResult.ok) {
+		switch (addMemberResult.error.name) {
+			case "PermissionDeniedError":
+			case "UnauthorizedError":
+				throw addMemberResult.error;
+		}
+	}
+	const { member } = addMemberResult.data;
 	return { member };
 };

@@ -85,4 +85,7 @@ export const Event: EventResolvers = {
 	signUpsRetractable: (parent) => {
 		return parent.signUpsRetractable ?? false;
 	},
+	signUps: (parent) => {
+		return parent;
+	},
 };

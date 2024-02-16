@@ -1,5 +1,5 @@
-import type { Member, Role } from "@prisma/client";
-import { NotFoundError } from "~/domain/errors.js";
+import type { Role } from "@prisma/client";
+import { type Context, makeMockContext } from "~/lib/context.js";
 
 /**
  * Create a mock implementation of the hasRole method on the MemberRepository.
@@ -18,39 +18,21 @@ export function getMockHasRoleImplementation(state: {
 	userId: string;
 	role: Role;
 }) => Promise<boolean> {
-	function hasRole(data: {
-		organizationId: string;
-		userId: string;
-		role: Role;
-	}): Promise<boolean> {
+	function hasRole(
+		ctx: Context,
+		data: {
+			organizationId: string;
+			role: Role;
+		},
+	): Promise<boolean> {
+		if (!ctx.user) return Promise.resolve(false);
 		if (data.organizationId !== state.organizationId)
 			return Promise.resolve(false);
-		if (data.userId !== state.userId) return Promise.resolve(false);
+		if (ctx.user.id !== state.userId) return Promise.resolve(false);
 		if (data.role !== state.role) return Promise.resolve(false);
 		return Promise.resolve(true);
 	}
-	return hasRole;
-}
 
-export function getMockGetImplementation(state: { members: Member[] }) {
-	function get(
-		data: { id: string } | { userId: string; organizationId: string },
-	): Promise<Member> {
-		let result: Member | undefined;
-		if ("id" in data) {
-			result = state.members.find((member) => member.id === data.id);
-		} else {
-			result = state.members.find(
-				(member) =>
-					member.userId === data.userId &&
-					member.organizationId === data.organizationId,
-			);
-		}
-
-		if (typeof result === "undefined")
-			throw new NotFoundError("Member not found");
-
-		return Promise.resolve(result);
-	}
-	return get;
+	return (data: { organizationId: string; userId: string; role: Role }) =>
+		hasRole(makeMockContext({ id: data.userId }), data);
 }

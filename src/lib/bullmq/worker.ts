@@ -242,11 +242,7 @@ export async function initWorkers(): Promise<{
 			},
 		);
 
-		const userService = new UserService(
-			userRepository,
-			permissionService,
-			mailService,
-		);
+		const userService = new UserService(userRepository, mailService);
 
 		if (!instance.queues?.[PaymentProcessingQueueName]) {
 			throw new InternalServerError("Payment processing queue not initialized");

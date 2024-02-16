@@ -5,7 +5,6 @@ import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import type { User } from "~/domain/users.js";
 import {
 	type MailService,
-	type PermissionService,
 	type UserRepository,
 	UserService,
 } from "../../service.js";
@@ -14,14 +13,12 @@ const time = new Date(`${dayjs().year() + 1}-01-01`);
 
 let service: UserService;
 let repo: DeepMockProxy<UserRepository>;
-let permissionService: DeepMockProxy<PermissionService>;
 let mailService: DeepMockProxy<MailService>;
 
 beforeAll(() => {
 	repo = mockDeep<UserRepository>();
-	permissionService = mockDeep<PermissionService>();
 	mailService = mockDeep<MailService>();
-	service = new UserService(repo, permissionService, mailService);
+	service = new UserService(repo, mailService);
 
 	jest.useFakeTimers().setSystemTime(time);
 });
@@ -115,7 +112,6 @@ describe("UserService", () => {
 		async ({ existing, input, expected }) => {
 			repo.get.mockResolvedValueOnce(existing);
 			repo.update.mockResolvedValueOnce(mock<User>());
-			permissionService.isSuperUser.mockResolvedValue({ isSuperUser: false });
 
 			await service.update(existing.id, input);
 

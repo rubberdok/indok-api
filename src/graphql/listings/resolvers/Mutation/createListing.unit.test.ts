@@ -40,14 +40,11 @@ describe("Listing mutations", () => {
 			);
 
 			expect(errors).toBeUndefined();
-			expect(listingService.create).toHaveBeenCalledWith(
-				authenticatedContext.user?.id,
-				{
-					closesAt: expect.any(Date),
-					name: expect.any(String),
-					organizationId: expect.any(String),
-				},
-			);
+			expect(listingService.create).toHaveBeenCalledWith(expect.anything(), {
+				closesAt: expect.any(Date),
+				name: expect.any(String),
+				organizationId: expect.any(String),
+			});
 		});
 
 		it("should raise permission denied if not authenticated", async () => {

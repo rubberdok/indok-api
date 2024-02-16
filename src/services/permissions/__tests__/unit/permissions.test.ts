@@ -3,6 +3,7 @@ import { FeaturePermission, type Organization } from "@prisma/client";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { Role } from "~/domain/organizations.js";
 import type { User } from "~/domain/users.js";
+import { makeMockContext } from "~/lib/context.js";
 import {
 	type MemberRepository,
 	type OrganizationRepository,
@@ -226,12 +227,14 @@ describe("PermissionService", () => {
 				 *
 				 * Call hasRole with the given arguments
 				 */
-				const result = permissionService.hasRole({
-					userId: arrange.user.id,
-					organizationId: faker.string.uuid(),
-					role: act.requiredRole,
-					featurePermission: act.requiredFeaturePermission,
-				});
+				const result = permissionService.hasRole(
+					makeMockContext(arrange.user),
+					{
+						organizationId: faker.string.uuid(),
+						role: act.requiredRole,
+						featurePermission: act.requiredFeaturePermission,
+					},
+				);
 
 				/**
 				 * Assert

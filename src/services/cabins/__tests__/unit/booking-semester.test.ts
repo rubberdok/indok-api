@@ -3,6 +3,7 @@ import { FeaturePermission, Semester } from "@prisma/client";
 import { type DeepMockProxy, mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
 import { NotFoundError, PermissionDeniedError } from "~/domain/errors.js";
+import { makeMockContext } from "~/lib/context.js";
 import {
 	type CabinRepository,
 	CabinService,
@@ -41,12 +42,15 @@ describe("CabinService", () => {
 			 *
 			 * Call updateBookingSemester
 			 */
-			const updateBookingSemester = cabinService.updateBookingSemester(userId, {
-				semester: Semester.SPRING,
-				startAt: new Date(2020, 0, 1),
-				endAt: new Date(2020, 0, 2),
-				bookingsEnabled: true,
-			});
+			const updateBookingSemester = cabinService.updateBookingSemester(
+				makeMockContext({ id: userId }),
+				{
+					semester: Semester.SPRING,
+					startAt: new Date(2020, 0, 1),
+					endAt: new Date(2020, 0, 2),
+					bookingsEnabled: true,
+				},
+			);
 
 			/**
 			 * Assert
@@ -57,10 +61,12 @@ describe("CabinService", () => {
 			await expect(updateBookingSemester).rejects.toThrow(
 				PermissionDeniedError,
 			);
-			expect(permissionSerivce.hasFeaturePermission).toHaveBeenCalledWith({
-				userId: userId,
-				featurePermission: FeaturePermission.CABIN_ADMIN,
-			});
+			expect(permissionSerivce.hasFeaturePermission).toHaveBeenCalledWith(
+				expect.anything(),
+				{
+					featurePermission: FeaturePermission.CABIN_ADMIN,
+				},
+			);
 		});
 
 		it("should update the booking semester with valid arguments", async () => {
@@ -78,12 +84,15 @@ describe("CabinService", () => {
 			 *
 			 * Call updateBookingSemester
 			 */
-			await cabinService.updateBookingSemester(userId, {
-				semester: Semester.SPRING,
-				startAt: new Date(2020, 0, 1),
-				endAt: new Date(2020, 0, 2),
-				bookingsEnabled: true,
-			});
+			await cabinService.updateBookingSemester(
+				makeMockContext({ id: userId }),
+				{
+					semester: Semester.SPRING,
+					startAt: new Date(2020, 0, 1),
+					endAt: new Date(2020, 0, 2),
+					bookingsEnabled: true,
+				},
+			);
 
 			/**
 			 * Assert
@@ -113,12 +122,15 @@ describe("CabinService", () => {
 			 *
 			 * Call updateBookingSemester
 			 */
-			await cabinService.updateBookingSemester(userId, {
-				semester: Semester.SPRING,
-				startAt: null,
-				endAt: null,
-				bookingsEnabled: null,
-			});
+			await cabinService.updateBookingSemester(
+				makeMockContext({ id: userId }),
+				{
+					semester: Semester.SPRING,
+					startAt: null,
+					endAt: null,
+					bookingsEnabled: null,
+				},
+			);
 
 			/**
 			 * Assert
@@ -152,12 +164,15 @@ describe("CabinService", () => {
 				 *
 				 * Call updateBookingSemester
 				 */
-				await cabinService.updateBookingSemester(userId, {
-					semester: Semester.SPRING,
-					startAt: new Date(2020, 0, 1),
-					endAt: new Date(2020, 0, 2),
-					bookingsEnabled: true,
-				});
+				await cabinService.updateBookingSemester(
+					makeMockContext({ id: userId }),
+					{
+						semester: Semester.SPRING,
+						startAt: new Date(2020, 0, 1),
+						endAt: new Date(2020, 0, 2),
+						bookingsEnabled: true,
+					},
+				);
 
 				/**
 				 * Assert
@@ -190,10 +205,13 @@ describe("CabinService", () => {
 				 *
 				 * Call updateBookingSemester
 				 */
-				await cabinService.updateBookingSemester(userId, {
-					semester: Semester.SPRING,
-					bookingsEnabled: true,
-				});
+				await cabinService.updateBookingSemester(
+					makeMockContext({ id: userId }),
+					{
+						semester: Semester.SPRING,
+						bookingsEnabled: true,
+					},
+				);
 
 				/**
 				 * Assert
@@ -226,10 +244,13 @@ describe("CabinService", () => {
 				 *
 				 * Call updateBookingSemester
 				 */
-				await cabinService.updateBookingSemester(userId, {
-					semester: Semester.FALL,
-					bookingsEnabled: true,
-				});
+				await cabinService.updateBookingSemester(
+					makeMockContext({ id: userId }),
+					{
+						semester: Semester.FALL,
+						bookingsEnabled: true,
+					},
+				);
 
 				/**
 				 * Assert
@@ -262,11 +283,14 @@ describe("CabinService", () => {
 				 *
 				 * Call updateBookingSemester
 				 */
-				await cabinService.updateBookingSemester(userId, {
-					semester: Semester.SPRING,
-					startAt: new Date(2020, 0, 1),
-					endAt: new Date(2020, 0, 2),
-				});
+				await cabinService.updateBookingSemester(
+					makeMockContext({ id: userId }),
+					{
+						semester: Semester.SPRING,
+						startAt: new Date(2020, 0, 1),
+						endAt: new Date(2020, 0, 2),
+					},
+				);
 
 				/**
 				 * Assert

@@ -6,6 +6,7 @@ import {
 	PermissionDeniedError,
 } from "~/domain/errors.js";
 import { Role } from "~/domain/organizations.js";
+import { makeMockContext } from "~/lib/context.js";
 import {
 	type ListingRepository,
 	ListingService,
@@ -68,7 +69,7 @@ describe("ListingService", () => {
 				permissionService.hasRole.mockResolvedValueOnce(true);
 
 				await expect(
-					listingService.update(faker.string.uuid(), faker.string.uuid(), data),
+					listingService.update(makeMockContext(), faker.string.uuid(), data),
 				).rejects.toThrow(InvalidArgumentError);
 			});
 		});
@@ -144,7 +145,7 @@ describe("ListingService", () => {
 
 				// Act
 				await expect(
-					listingService.update(faker.string.uuid(), faker.string.uuid(), data),
+					listingService.update(makeMockContext(), faker.string.uuid(), data),
 				).resolves.not.toThrow();
 
 				/**
@@ -183,7 +184,11 @@ describe("ListingService", () => {
 				 * Call update
 				 */
 				await expect(
-					listingService.update(userId, faker.string.uuid(), data),
+					listingService.update(
+						makeMockContext({ id: userId }),
+						faker.string.uuid(),
+						data,
+					),
 				).resolves.not.toThrow();
 
 				/**
@@ -191,11 +196,13 @@ describe("ListingService", () => {
 				 *
 				 * Has role should have been called with userId and organizationId
 				 */
-				expect(permissionService.hasRole).toHaveBeenCalledWith({
-					userId,
-					organizationId,
-					role: Role.MEMBER,
-				});
+				expect(permissionService.hasRole).toHaveBeenCalledWith(
+					expect.anything(),
+					{
+						organizationId,
+						role: Role.MEMBER,
+					},
+				);
 			});
 
 			it("should raise PermissionDeniedError if the user does not have the role", async () => {
@@ -220,7 +227,11 @@ describe("ListingService", () => {
 				 * Call update, assert that it throws
 				 */
 				await expect(
-					listingService.update(userId, faker.string.uuid(), data),
+					listingService.update(
+						makeMockContext({ id: userId }),
+						faker.string.uuid(),
+						data,
+					),
 				).rejects.toThrow(PermissionDeniedError);
 
 				/**
