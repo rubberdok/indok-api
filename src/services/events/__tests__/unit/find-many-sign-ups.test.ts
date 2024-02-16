@@ -1,12 +1,5 @@
-import { mock, type DeepMockProxy } from "jest-mock-extended";
-import type {
-	EventRepository,
-	EventService,
-	PermissionService,
-} from "../../service.js";
-import { makeDependencies } from "./dependencies.js";
 import { faker } from "@faker-js/faker";
-import { makeMockContext } from "~/lib/context.js";
+import { type DeepMockProxy, mock } from "jest-mock-extended";
 import {
 	InternalServerError,
 	InvalidArgumentError,
@@ -14,8 +7,15 @@ import {
 	PermissionDeniedError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
-import type { User } from "~/domain/users.js";
 import type { EventType } from "~/domain/events/event.js";
+import type { User } from "~/domain/users.js";
+import { makeMockContext } from "~/lib/context.js";
+import type {
+	EventRepository,
+	EventService,
+	PermissionService,
+} from "../../service.js";
+import { makeDependencies } from "./dependencies.js";
 
 describe("EventService", () => {
 	let eventService: InstanceType<typeof EventService>;

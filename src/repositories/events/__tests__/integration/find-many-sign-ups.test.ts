@@ -1,10 +1,10 @@
+import assert from "assert";
 import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
+import { NotFoundError } from "~/domain/errors.js";
 import prisma from "~/lib/prisma.js";
 import { EventRepository } from "../../repository.js";
-import assert from "assert";
-import { NotFoundError } from "~/domain/errors.js";
 
 describe("EventRepository", () => {
 	let eventRepository: EventRepository;
