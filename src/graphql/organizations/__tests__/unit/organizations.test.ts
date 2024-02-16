@@ -205,49 +205,7 @@ describe("OrganizationResolvers", () => {
 		});
 
 		describe("addMember", () => {
-			it("should raise AuthenticationError if the user is not authenticated", async () => {
-				/**
-				 * Arrange
-				 *
-				 * 1. Create a mock ApolloServer
-				 * 2. Create the mock context without a userId in session
-				 */
-				const { createMockContext, client } = createMockApolloServer();
-				const contextValue = createMockContext({ user: null });
-
-				/**
-				 * Act
-				 *
-				 * 1. Query the server with the createOrganization mutation
-				 */
-				const { errors } = await client.mutate(
-					{
-						mutation: graphql(`
-              mutation addMember1 {
-                addMember(data: { userId: "user", organizationId: "org" }) {
-                  member {
-                    id
-                    organization {
-                      members {
-                        id
-                      }
-                    }
-                  }
-                }
-              }
-            `),
-					},
-					{
-						contextValue,
-					},
-				);
-				assert(typeof errors !== "undefined");
-				expect(errors[0]?.extensions?.code).toBe(
-					errorCodes.ERR_PERMISSION_DENIED,
-				);
-			});
-
-			it("should call addMember if the user is authenticated", async () => {
+			it("should call addMember", async () => {
 				/**
 				 * Arrange
 				 *
@@ -260,12 +218,17 @@ describe("OrganizationResolvers", () => {
 					user: { id: faker.string.uuid() },
 				});
 				organizationService.addMember.mockResolvedValueOnce({
-					id: faker.string.uuid(),
-					createdAt: new Date(),
-					updatedAt: new Date(),
-					userId: faker.string.uuid(),
-					organizationId: faker.string.uuid(),
-					role: Role.MEMBER,
+					ok: true,
+					data: {
+						member: {
+							id: faker.string.uuid(),
+							createdAt: new Date(),
+							updatedAt: new Date(),
+							userId: faker.string.uuid(),
+							organizationId: faker.string.uuid(),
+							role: Role.MEMBER,
+						},
+					},
 				});
 				organizationService.get.mockResolvedValueOnce(
 					mock<Organization>({
@@ -335,49 +298,7 @@ describe("OrganizationResolvers", () => {
 		});
 
 		describe("removeMember", () => {
-			it("should raise AuthenticationError if the user is not authenticated", async () => {
-				/**
-				 * Arrange
-				 *
-				 * 1. Create a mock ApolloServer
-				 * 2. Create the mock context without a userId in session
-				 */
-				const { createMockContext, client } = createMockApolloServer();
-				const contextValue = createMockContext({ user: null });
-
-				/**
-				 * Act
-				 *
-				 * 1. Query the server with the createOrganization mutation
-				 */
-				const { errors } = await client.mutate(
-					{
-						mutation: graphql(`
-              mutation removeMember1 {
-                removeMember(data: { id: "id" }) {
-                  member {
-                    id
-                    organization {
-                      members {
-                        id
-                      }
-                    }
-                  }
-                }
-              }
-            `),
-					},
-					{
-						contextValue,
-					},
-				);
-				assert(typeof errors !== "undefined");
-				expect(errors[0]?.extensions?.code).toBe(
-					errorCodes.ERR_PERMISSION_DENIED,
-				);
-			});
-
-			it("should call removeMember if the user is authenticated", async () => {
+			it("should call removeMember", async () => {
 				/**
 				 * Arrange
 				 *
@@ -389,12 +310,17 @@ describe("OrganizationResolvers", () => {
 					createMockApolloServer();
 				const contextValue = createMockContext({ user: { id: userId } });
 				organizationService.removeMember.mockResolvedValueOnce({
-					id: faker.string.uuid(),
-					createdAt: new Date(),
-					updatedAt: new Date(),
-					userId: faker.string.uuid(),
-					organizationId: faker.string.uuid(),
-					role: Role.MEMBER,
+					ok: true,
+					data: {
+						member: {
+							id: faker.string.uuid(),
+							createdAt: new Date(),
+							updatedAt: new Date(),
+							userId: faker.string.uuid(),
+							organizationId: faker.string.uuid(),
+							role: Role.MEMBER,
+						},
+					},
 				});
 				organizationService.get.mockResolvedValueOnce(
 					mock<Organization>({
@@ -445,9 +371,12 @@ describe("OrganizationResolvers", () => {
 				);
 				expect(errors).toBeUndefined();
 				expect(data).toBeDefined();
-				expect(organizationService.removeMember).toHaveBeenCalledWith(userId, {
-					id: "id",
-				});
+				expect(organizationService.removeMember).toHaveBeenCalledWith(
+					expect.any(Object),
+					{
+						memberId: "id",
+					},
+				);
 				expect(data).toEqual<ResultOf<typeof RemoveMember2Document>>({
 					removeMember: {
 						member: {

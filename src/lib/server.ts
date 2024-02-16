@@ -96,13 +96,16 @@ interface IOrganizationService {
 		},
 	): Promise<Organization>;
 	addMember(
-		userId: string,
+		ctx: Context,
 		data: { userId: string; organizationId: string; role: Role },
-	): Promise<Member>;
+	): ResultAsync<{ member: Member }, PermissionDeniedError | UnauthorizedError>;
 	removeMember(
-		userId: string,
-		data: { userId: string; organizationId: string } | { id: string },
-	): Promise<Member>;
+		ctx: Context,
+		params: { memberId: string },
+	): ResultAsync<
+		{ member: Member },
+		InvalidArgumentError | PermissionDeniedError | UnauthorizedError
+	>;
 	getMembers(userId: string, organizationId: string): Promise<Member[]>;
 	get(id: string): Promise<Organization>;
 	findMany(data?: { userId?: string }): Promise<Organization[]>;

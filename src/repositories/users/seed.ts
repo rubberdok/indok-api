@@ -6,6 +6,7 @@ import {
 } from "@prisma/client";
 import dayjs from "dayjs";
 import { DateTime } from "luxon";
+import type { Role } from "~/domain/organizations.js";
 
 faker.seed(3491049213);
 
@@ -26,18 +27,33 @@ const userData: Prisma.UserCreateInput[] = [
 		lastName: "Er Dok",
 		graduationYear: dayjs().add(5, "year").year(),
 	},
-	makeUserWithMemberships({
-		firstName: "Eva",
-		lastName: "Student Åsen",
-		username: "eva_student",
-		email: "eva_student@feide.no",
-		feideId: "557669b3-af64-4a55-b97e-57c0836efef6",
-		graduationYear: DateTime.now().plus({ year: 4 }).year,
-	}),
+	makeUserWithMemberships(
+		{
+			firstName: "Eva",
+			lastName: "Student Åsen",
+			username: "eva_student",
+			email: "eva_student@feide.no",
+			feideId: "557669b3-af64-4a55-b97e-57c0836efef6",
+			graduationYear: DateTime.now().plus({ year: 4 }).year,
+		},
+		"ADMIN",
+	),
+	makeUserWithMemberships(
+		{
+			firstName: "Asbjørn",
+			lastName: "ElevG",
+			username: "asbjorn_elevg",
+			email: "asbjorn_elevg@feide.no",
+			feideId: "af761fdb-71fa-484b-9782-ababdc739559",
+			graduationYear: DateTime.now().plus({ year: 3 }).year,
+		},
+		"MEMBER",
+	),
 ];
 
 function makeUserWithMemberships(
 	data: Prisma.UserCreateInput,
+	role: Role,
 ): Prisma.UserCreateInput {
 	const organizationId = faker.string.uuid();
 	const userId = faker.string.uuid();
@@ -68,11 +84,11 @@ function makeUserWithMemberships(
 					},
 				},
 				create: {
-					role: "ADMIN",
+					role,
 					organization: {
 						connectOrCreate: {
 							where: {
-								id: organizationId,
+								name: "Rubberdøk",
 							},
 							create: {
 								id: organizationId,
