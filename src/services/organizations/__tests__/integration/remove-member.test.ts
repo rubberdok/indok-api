@@ -1,12 +1,12 @@
-import { makeTestServices } from "~/__tests__/dependencies-factory.js";
+import assert from "assert";
 import { faker } from "@faker-js/faker";
-import { makeMockContext } from "~/lib/context.js";
+import { makeTestServices } from "~/__tests__/dependencies-factory.js";
 import {
 	InvalidArgumentError,
 	PermissionDeniedError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
-import assert from "assert";
+import { makeMockContext } from "~/lib/context.js";
 
 describe("OrganizationService", () => {
 	describe("#removeMember", () => {
