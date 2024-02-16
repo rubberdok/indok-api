@@ -3,7 +3,7 @@ import { faker } from "@faker-js/faker";
 import type { ResultOf } from "@graphql-typed-document-node/core";
 import type { Organization } from "@prisma/client";
 import { mock } from "jest-mock-extended";
-import { errorCodes } from "~/domain/errors.js";
+import { PermissionDeniedError, errorCodes } from "~/domain/errors.js";
 import { Role } from "~/domain/organizations.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
@@ -300,6 +300,53 @@ describe("OrganizationResolvers", () => {
 					},
 				});
 			});
+
+			it("should raise error an error is returned", async () => {
+				/**
+				 * Arrange
+				 *
+				 * 1. Create a mock ApolloServer
+				 * 2. Create the mock context without a userId in session
+				 */
+				const userId = faker.string.uuid();
+				const { createMockContext, client, organizationService } =
+					createMockApolloServer();
+				const contextValue = createMockContext({ user: { id: userId } });
+				organizationService.addMember.mockResolvedValueOnce({
+					ok: false,
+					error: new PermissionDeniedError("error"),
+				});
+
+				/**
+				 * Act
+				 *
+				 * 1. Query the server with the createOrganization mutation
+				 */
+				const { data, errors } = await client.mutate(
+					{
+						mutation: graphql(`
+			  mutation addMember2 {
+				addMember(data: { userId: "user", organizationId: "org" }) {
+				  member {
+					id
+					organization {
+					  id
+					  members {
+						id
+					  }
+					}
+				  }
+				}
+			  }
+			`),
+					},
+					{
+						contextValue,
+					},
+				);
+				expect(errors).toBeDefined();
+				expect(data).toBeUndefined();
+			});
 		});
 
 		describe("removeMember", () => {
@@ -402,6 +449,53 @@ describe("OrganizationResolvers", () => {
 						},
 					},
 				});
+			});
+
+			it("should raise error an error is returned", async () => {
+				/**
+				 * Arrange
+				 *
+				 * 1. Create a mock ApolloServer
+				 * 2. Create the mock context without a userId in session
+				 */
+				const userId = faker.string.uuid();
+				const { createMockContext, client, organizationService } =
+					createMockApolloServer();
+				const contextValue = createMockContext({ user: { id: userId } });
+				organizationService.removeMember.mockResolvedValueOnce({
+					ok: false,
+					error: new PermissionDeniedError("error"),
+				});
+
+				/**
+				 * Act
+				 *
+				 * 1. Query the server with the createOrganization mutation
+				 */
+				const { data, errors } = await client.mutate(
+					{
+						mutation: graphql(`
+			  mutation removeMember2 {
+				removeMember(data: { id: "id" }) {
+				  member {
+					id
+					organization {
+					  id
+					  members {
+						id
+					  }
+					}
+				  }
+				}
+			  }
+			`),
+					},
+					{
+						contextValue,
+					},
+				);
+				expect(errors).toBeDefined();
+				expect(data).toBeUndefined();
 			});
 		});
 	});

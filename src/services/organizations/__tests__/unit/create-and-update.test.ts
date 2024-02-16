@@ -1,6 +1,8 @@
+import { fail } from "assert";
 import { faker } from "@faker-js/faker";
 import { FeaturePermission, type Organization } from "@prisma/client";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
+import { UnauthorizedError } from "~/domain/errors.js";
 import { makeMockContext } from "~/lib/context.js";
 import {
 	type MemberRepository,
@@ -106,6 +108,28 @@ describe("OrganizationService", () => {
 				});
 			});
 		});
+
+		it("should raise UnauthorizedError if not logged in", async () => {
+			/**
+			 * Act
+			 */
+			try {
+				await organizationService.create(makeMockContext(null), {
+					name: faker.company.name(),
+					description: faker.lorem.paragraph(),
+					featurePermissions: [
+						FeaturePermission.CABIN_ADMIN,
+						FeaturePermission.ARCHIVE_WRITE_DOCUMENTS,
+					],
+				});
+				fail("Expected an error");
+			} catch (err) {
+				/**
+				 * Assert
+				 */
+				expect(err).toBeInstanceOf(UnauthorizedError);
+			}
+		});
 	});
 
 	describe("update", () => {
@@ -194,6 +218,32 @@ describe("OrganizationService", () => {
 					},
 				);
 			});
+		});
+
+		it("should raise UnauthorizedError if not logged in", async () => {
+			/**
+			 * Act
+			 */
+			try {
+				await organizationService.update(
+					makeMockContext(null),
+					faker.string.uuid(),
+					{
+						name: faker.company.name(),
+						description: faker.lorem.paragraph(),
+						featurePermissions: [
+							FeaturePermission.CABIN_ADMIN,
+							FeaturePermission.ARCHIVE_WRITE_DOCUMENTS,
+						],
+					},
+				);
+				fail("Expected an error");
+			} catch (err) {
+				/**
+				 * Assert
+				 */
+				expect(err).toBeInstanceOf(UnauthorizedError);
+			}
 		});
 	});
 });

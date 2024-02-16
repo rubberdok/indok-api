@@ -7,7 +7,7 @@ export const Organization: OrganizationResolvers = {
 			switch (getMembersResult.error.name) {
 				case "PermissionDeniedError":
 				case "UnauthorizedError":
-					throw getMembersResult.error;
+					return null;
 			}
 		}
 		const { members } = getMembersResult.data;

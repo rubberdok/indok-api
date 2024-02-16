@@ -78,6 +78,48 @@ describe("User queries", () => {
 				expect(superIds).toContain(user3.id);
 			});
 		});
+
+		it("should return [] if not authenticated", async () => {
+			/**
+			 * Arrange
+			 *
+			 * Create a super user
+			 * Create 3 additional users
+			 */
+			await makeUser({ isSuperUser: true });
+			await makeUser();
+			await makeUser();
+			await makeUser();
+
+			/**
+			 * Act
+			 *
+			 * Perform a query to fetch all users
+			 */
+			const { data, errors } = await client.query({
+				query: graphql(`
+		  query users {
+			users {
+			  users {
+				id
+			  }
+			  super {
+				id
+				email
+			  }
+			}
+		  }
+		`),
+			});
+
+			/**
+			 * Assert
+			 *
+			 * Assert that all users are returned, both in users and super without errors
+			 */
+			expect(errors).toBeUndefined();
+			expect(data?.users.super).toEqual([]);
+		});
 	});
 
 	function makeUser(

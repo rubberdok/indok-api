@@ -1,7 +1,12 @@
 import { faker } from "@faker-js/faker";
 import type { EventSignUp, Organization } from "@prisma/client";
 import { mock } from "jest-mock-extended";
-import { NotFoundError, UnauthorizedError } from "~/domain/errors.js";
+import {
+	InternalServerError,
+	NotFoundError,
+	PermissionDeniedError,
+	UnauthorizedError,
+} from "~/domain/errors.js";
 import type { EventType } from "~/domain/events/event.js";
 import type { OrderType, ProductType } from "~/domain/products.js";
 import type { User } from "~/domain/users.js";
@@ -733,6 +738,102 @@ describe("Event queries", () => {
 					}),
 				}),
 			);
+		});
+
+		it("event { signUps { { confirmed } } } should return [] and 0 for PermissionDeniedError", async () => {
+			const { client, eventService } = createMockApolloServer();
+			eventService.get.mockResolvedValue(
+				mock<EventType>({
+					id: faker.string.uuid(),
+					organizationId: faker.string.uuid(),
+				}),
+			);
+			eventService.findManySignUps.mockResolvedValue({
+				ok: false,
+				error: new PermissionDeniedError(""),
+			});
+
+			const { data, errors } = await client.query({
+				query: graphql(`
+				query eventWithSignUps($data: EventInput!) {
+					event(data: $data) {
+						event {
+							signUps {
+								confirmed {
+									signUps {
+										id
+									}
+									total
+								}
+								waitList {
+									total
+								}
+								retracted {
+									total
+								}
+							}
+						}
+					}
+				}
+			`),
+				variables: { data: { id: faker.string.uuid() } },
+			});
+
+			expect(errors).toBeUndefined();
+			expect(data?.event.event.signUps).toEqual({
+				confirmed: {
+					signUps: [],
+					total: 0,
+				},
+				waitList: {
+					total: 0,
+				},
+				retracted: {
+					total: 0,
+				},
+			});
+		});
+
+		it("event { signUps { { confirmed } } } should result in error for InternalServerError", async () => {
+			const { client, eventService } = createMockApolloServer();
+			eventService.get.mockResolvedValue(
+				mock<EventType>({
+					id: faker.string.uuid(),
+					organizationId: faker.string.uuid(),
+				}),
+			);
+			eventService.findManySignUps.mockResolvedValue({
+				ok: false,
+				error: new InternalServerError(""),
+			});
+
+			const { data, errors } = await client.query({
+				query: graphql(`
+				query eventWithSignUps($data: EventInput!) {
+					event(data: $data) {
+						event {
+							signUps {
+								confirmed {
+									signUps {
+										id
+									}
+									total
+								}
+								waitList {
+									total
+								}
+								retracted {
+									total
+								}
+							}
+						}
+					}
+				}
+			`),
+				variables: { data: { id: faker.string.uuid() } },
+			});
+
+			expect(errors).toBeDefined();
 		});
 	});
 });

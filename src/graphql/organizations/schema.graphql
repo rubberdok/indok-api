@@ -43,7 +43,7 @@ type Organization {
   """
   The members of the organization
   """
-  members: [Member!]!
+  members: [Member!]
   """
   The features that are enabled for the organization.
   Changing these fields requires super user permissions.

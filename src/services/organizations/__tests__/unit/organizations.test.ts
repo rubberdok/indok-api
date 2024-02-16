@@ -6,6 +6,7 @@ import {
 	InvalidArgumentError,
 	type KnownDomainError,
 	PermissionDeniedError,
+	UnauthorizedError,
 } from "~/domain/errors.js";
 import { Role } from "~/domain/organizations.js";
 import type { User } from "~/domain/users.js";
@@ -432,6 +433,17 @@ describe("OrganizationService", () => {
 			expect(res).toEqual({
 				ok: false,
 				error: expect.any(PermissionDeniedError),
+			});
+		});
+
+		it("should return ok: false and unauthorized error if not logged in", async () => {
+			const result = await organizationService.getMembers(
+				makeMockContext(null),
+				faker.string.uuid(),
+			);
+			expect(result).toEqual({
+				ok: false,
+				error: expect.any(UnauthorizedError),
 			});
 		});
 	});
