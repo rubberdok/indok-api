@@ -3,6 +3,8 @@ import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
 import prisma from "~/lib/prisma.js";
 import { EventRepository } from "../../repository.js";
+import assert from "assert";
+import { NotFoundError } from "~/domain/errors.js";
 
 describe("EventRepository", () => {
 	let eventRepository: EventRepository;
@@ -32,16 +34,16 @@ describe("EventRepository", () => {
 				},
 			});
 
-			const signUp1 = await makeWaitlistSignUp({
+			const signUp1 = await makeSignUp({
 				userId: user1.id,
 				eventId: event.id,
 			});
-			await makeWaitlistSignUp({
+			await makeSignUp({
 				userId: user2.id,
 				eventId: event.id,
 				status: ParticipationStatus.CONFIRMED,
 			});
-			const signUp3 = await makeWaitlistSignUp({
+			const signUp3 = await makeSignUp({
 				userId: user3.id,
 				eventId: event.id,
 			});
@@ -55,6 +57,7 @@ describe("EventRepository", () => {
 				eventId: event.id,
 				status: ParticipationStatus.ON_WAITLIST,
 			});
+			if (!actual.ok) throw actual.error;
 
 			/**
 			 * Assert
@@ -62,13 +65,27 @@ describe("EventRepository", () => {
 			 * 1. The sign ups should be ordered by created at ascending
 			 * 2. Only the sign ups with status ON_WAITLIST should be returned, so the second sign up should not be returned
 			 */
-			expect(actual).toHaveLength(2);
-			expect(actual).toEqual([signUp1, signUp3]);
+			expect(actual.data.signUps).toEqual([signUp1, signUp3]);
+			expect(actual.data.total).toBe(2);
+		});
+
+		it("should NotFoundError if trying to fetch sign ups for an event that doesn't exist", async () => {
+			/**
+			 * Act
+			 *
+			 * Call findManySignUps
+			 */
+			const actual = await eventRepository.findManySignUps({
+				eventId: faker.string.uuid(),
+				status: ParticipationStatus.ON_WAITLIST,
+			});
+			assert(!actual.ok, "Expected an error");
+			expect(actual.error).toBeInstanceOf(NotFoundError);
 		});
 	});
 });
 
-function makeWaitlistSignUp({
+function makeSignUp({
 	userId,
 	eventId,
 	status,

@@ -1,3 +1,41 @@
+type Query {
+  """
+  Get an organization by its ID
+  """
+  organization(data: OrganizationInput!): OrganizationReseponse!
+  """
+  Get all organizations
+  """
+  organizations: OrganizationsResponse!
+}
+
+type Mutation {
+  """
+  Create a new organization, and add the current user as an admin of the organization.
+  """
+  createOrganization(
+    data: CreateOrganizationInput!
+  ): CreateOrganizationResponse!
+
+  """
+  Update an organization with the given name and description.
+  Passing null or omitting a value will leave the value unchanged.
+  """
+  updateOrganization(
+    data: UpdateOrganizationInput!
+  ): UpdateOrganizationResponse!
+
+  """
+  Add a member to the organization
+  """
+  addMember(data: AddMemberInput!): AddMemberResponse!
+
+  """
+  Remove a member from the organization by the ID of the membership.
+  """
+  removeMember(data: RemoveMemberInput!): RemoveMemberResponse!
+}
+
 type Organization {
   id: ID!
   name: String!
@@ -130,42 +168,4 @@ type OrganizationReseponse {
 
 input OrganizationInput {
   id: ID!
-}
-
-type Query {
-  """
-  Get an organization by its ID
-  """
-  organization(data: OrganizationInput!): OrganizationReseponse!
-  """
-  Get all organizations
-  """
-  organizations: OrganizationsResponse!
-}
-
-type Mutation {
-  """
-  Create a new organization, and add the current user as an admin of the organization.
-  """
-  createOrganization(
-    data: CreateOrganizationInput!
-  ): CreateOrganizationResponse!
-
-  """
-  Update an organization with the given name and description.
-  Passing null or omitting a value will leave the value unchanged.
-  """
-  updateOrganization(
-    data: UpdateOrganizationInput!
-  ): UpdateOrganizationResponse!
-
-  """
-  Add a member to the organization
-  """
-  addMember(data: AddMemberInput!): AddMemberResponse!
-
-  """
-  Remove a member from the organization by the ID of the membership.
-  """
-  removeMember(data: RemoveMemberInput!): RemoveMemberResponse!
 }

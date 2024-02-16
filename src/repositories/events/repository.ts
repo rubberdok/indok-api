@@ -501,12 +501,21 @@ export class EventRepository {
 	 * @param status - The status of the sign ups to get
 	 * @returns A list of event sign ups
 	 */
-	findManySignUps(data: {
+	async findManySignUps(data: {
 		eventId: string;
-		status: ParticipationStatus;
-	}): Promise<EventSignUp[]> {
+		status?: ParticipationStatus;
+	}): ResultAsync<
+		{ signUps: EventSignUp[]; total: number },
+		NotFoundError | InternalServerError
+	> {
 		const { eventId, status } = data;
-		return this.db.eventSignUp.findMany({
+		const totalPromise = this.db.eventSignUp.count({
+			where: {
+				eventId,
+				participationStatus: status,
+			},
+		});
+		const findManyPromise = this.db.eventSignUp.findMany({
 			where: {
 				eventId,
 				participationStatus: status,
@@ -515,6 +524,35 @@ export class EventRepository {
 				createdAt: "asc",
 			},
 		});
+		try {
+			const [total, signUps] = await this.db.$transaction([
+				totalPromise,
+				findManyPromise,
+			]);
+			return {
+				ok: true,
+				data: {
+					signUps,
+					total,
+				},
+			};
+		} catch (err) {
+			if (err instanceof PrismaClientKnownRequestError) {
+				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) {
+					return {
+						ok: false,
+						error: new NotFoundError(`Event with id ${eventId} not found`),
+					};
+				}
+			}
+			return {
+				ok: false,
+				error: new InternalServerError(
+					"Unexpected error when finding many event sign ups",
+					err,
+				),
+			};
+		}
 	}
 
 	/**

@@ -86,8 +86,11 @@ interface EventRepository {
 	>;
 	findManySignUps(data: {
 		eventId: string;
-		status: ParticipationStatus;
-	}): Promise<EventSignUp[]>;
+		status?: ParticipationStatus;
+	}): ResultAsync<
+		{ signUps: EventSignUp[]; total: number },
+		NotFoundError | InternalServerError
+	>;
 	getSignUp(userId: string, eventId: string): Promise<EventSignUp>;
 	createSignUp(data: CreateSignUpParams): Promise<{
 		signUp: EventSignUp;
@@ -789,10 +792,13 @@ class EventService {
 			throw new InvalidArgumentError("This event is full.");
 		}
 
-		const signUpsOnWaitlist = await this.eventRepository.findManySignUps({
+		const findManySignUpsResult = await this.eventRepository.findManySignUps({
 			eventId,
 			status: ParticipationStatus.ON_WAITLIST,
 		});
+		if (!findManySignUpsResult.ok) throw findManySignUpsResult.error;
+		const { signUps: signUpsOnWaitlist } = findManySignUpsResult.data;
+
 		for (const waitlistSignUp of signUpsOnWaitlist) {
 			try {
 				const slot =
@@ -1241,5 +1247,108 @@ class EventService {
 				error: new InternalServerError("Failed to get sign up", err),
 			};
 		}
+	}
+
+	/**
+	 * findManySignUps returns all sign ups for the specified event, optionally filtered by
+	 * participation status.
+	 *
+	 * Requires the user to be a member of the organization that the event belongs to.
+	 * Errors:
+	 * 	- UnauthorizedError: If the user is not logged in
+	 * 	- PermissionDeniedError: If the user is not a member of the organization that the event belongs to
+	 * 	- InvalidArgumentError: If the event does not belong to an organization
+	 * 	- NotFoundError: If the event does not exist
+	 * 	- InternalServerError: If an unexpected error occurs
+	 */
+	async findManySignUps(
+		ctx: Context,
+		params: {
+			eventId: string;
+			participationStatus?: ParticipationStatus | null;
+		},
+	): ResultAsync<
+		{ signUps: EventSignUp[]; total: number },
+		| UnauthorizedError
+		| PermissionDeniedError
+		| InvalidArgumentError
+		| NotFoundError
+		| InternalServerError
+	> {
+		if (!ctx.user) {
+			return {
+				ok: false,
+				error: new UnauthorizedError(
+					"You must be logged in to get sign ups for an event",
+				),
+			};
+		}
+
+		const { eventId, participationStatus } = params;
+		let event: EventType;
+		try {
+			event = await this.eventRepository.get(eventId);
+		} catch (err) {
+			if (err instanceof NotFoundError) {
+				return {
+					ok: false,
+					error: new NotFoundError("Event not found", err),
+				};
+			}
+			return {
+				ok: false,
+				error: new InternalServerError("Failed to get event", err),
+			};
+		}
+		if (!event.organizationId) {
+			return {
+				ok: false,
+				error: new InvalidArgumentError(
+					"Cannot get sign ups for events that do not belong to an organization",
+				),
+			};
+		}
+
+		const isMember = await this.permissionService.hasRole({
+			userId: ctx.user.id,
+			organizationId: event.organizationId,
+			role: Role.MEMBER,
+		});
+
+		if (isMember !== true) {
+			return {
+				ok: false,
+				error: new PermissionDeniedError(
+					"You do not have permission to get sign ups for this event",
+				),
+			};
+		}
+
+		const findManySignUpsResult = await this.eventRepository.findManySignUps({
+			eventId,
+			status: participationStatus ?? undefined,
+		});
+		if (!findManySignUpsResult.ok) {
+			switch (findManySignUpsResult.error.name) {
+				case "NotFoundError":
+					return {
+						ok: false,
+						error: new NotFoundError(
+							"Could not find sign ups for event",
+							findManySignUpsResult.error,
+						),
+					};
+				case "InternalServerError":
+					return {
+						ok: false,
+						error: new InternalServerError(
+							"Unexpected error in repository",
+							findManySignUpsResult.error,
+						),
+					};
+			}
+		}
+
+		return findManySignUpsResult;
 	}
 }

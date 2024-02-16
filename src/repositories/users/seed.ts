@@ -68,6 +68,7 @@ function makeUserWithMemberships(
 					},
 				},
 				create: {
+					role: "ADMIN",
 					organization: {
 						connectOrCreate: {
 							where: {

@@ -8,6 +8,7 @@ import type {
 	Listing,
 	Member,
 	Organization,
+	ParticipationStatus,
 	Prisma,
 	PrismaClient,
 	Semester,
@@ -274,6 +275,20 @@ interface IEventService {
 		| UnauthorizedError
 		| PermissionDeniedError
 	>;
+	findManySignUps(
+		ctx: Context,
+		params: {
+			eventId: string;
+			participationStatus?: ParticipationStatus | null;
+		},
+	): ResultAsync<
+		{ signUps: EventSignUp[]; total: number },
+		| UnauthorizedError
+		| PermissionDeniedError
+		| InvalidArgumentError
+		| NotFoundError
+		| InternalServerError
+	>;
 }
 
 interface IListingService {
@@ -307,6 +322,12 @@ interface IPermissionService {
 	hasFeaturePermission(data: {
 		userId: string;
 		featurePermission: FeaturePermission;
+	}): Promise<boolean>;
+	hasRole(data: {
+		userId?: string | null;
+		organizationId: string;
+		role: Role;
+		featurePermission?: FeaturePermission;
 	}): Promise<boolean>;
 }
 
