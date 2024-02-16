@@ -455,11 +455,14 @@ export class EventRepository {
 	 * @param data.endAtGte - Only return events that end after this date
 	 * @returns A list of events
 	 */
-	async findMany(data?: { endAtGte?: Date }): Promise<EventType[]> {
+	async findMany(data?: { endAtGte?: Date; organizationId?: string }): Promise<
+		EventType[]
+	> {
 		if (data) {
-			const { endAtGte } = data;
+			const { endAtGte, organizationId } = data;
 			const events = await this.db.event.findMany({
 				where: {
+					organizationId,
 					endAt: {
 						gte: endAtGte,
 					},

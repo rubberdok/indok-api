@@ -81,7 +81,9 @@ interface EventRepository {
 		eventId: string,
 		gradeYear?: number,
 	): Promise<EventSlot | null>;
-	findMany(data?: { endAtGte?: Date | null }): Promise<EventType[]>;
+	findMany(data?: { endAtGte?: Date | null; organizationId?: string }): Promise<
+		EventType[]
+	>;
 	findManySignUps(data: {
 		eventId: string;
 		status: ParticipationStatus;
@@ -745,17 +747,25 @@ class EventService {
 	 * @params data.onlyFutureEvents - If true, only future events that have an `endAt` in the future will be returned
 	 * @returns All events
 	 */
-	async findMany(data?: { onlyFutureEvents?: boolean }): Promise<EventType[]> {
+	async findMany(data?: {
+		onlyFutureEvents?: boolean;
+		organizationId?: string | null;
+	}): Promise<EventType[]> {
 		if (!data) {
 			return await this.eventRepository.findMany();
 		}
 
-		let endAtGte: Date | undefined;
+		let endAtGte: Date | undefined = undefined;
 		if (data.onlyFutureEvents) {
 			endAtGte = DateTime.now().toJSDate();
 		}
 
-		return await this.eventRepository.findMany({ endAtGte });
+		let organizationId: string | undefined = undefined;
+		if (data.organizationId) {
+			organizationId = data.organizationId;
+		}
+
+		return await this.eventRepository.findMany({ endAtGte, organizationId });
 	}
 
 	/**

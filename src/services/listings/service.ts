@@ -24,7 +24,7 @@ export interface ListingRepository {
 			applicationUrl: string;
 		}>,
 	): Promise<Listing>;
-	findMany(): Promise<Listing[]>;
+	findMany(params?: { organizationId?: string }): Promise<Listing[]>;
 	delete(id: string): Promise<Listing>;
 }
 
@@ -53,7 +53,12 @@ export class ListingService {
 	/**
 	 * findMany returns all listings
 	 */
-	findMany(): Promise<Listing[]> {
+	findMany(params?: { organizationId?: string | null }): Promise<Listing[]> {
+		if (params?.organizationId) {
+			return this.listingRepository.findMany({
+				organizationId: params.organizationId,
+			});
+		}
 		return this.listingRepository.findMany();
 	}
 

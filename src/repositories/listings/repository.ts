@@ -98,7 +98,14 @@ export class ListingRepository {
 	 * findMany returns all listings
 	 * @returns all listings
 	 */
-	findMany(): Promise<Listing[]> {
+	findMany(params?: { organizationId?: string }): Promise<Listing[]> {
+		if (params?.organizationId) {
+			return this.db.listing.findMany({
+				where: {
+					organizationId: params.organizationId,
+				},
+			});
+		}
 		return this.db.listing.findMany();
 	}
 }

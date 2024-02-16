@@ -11,6 +11,8 @@ type Organization {
   Changing these fields requires super user permissions.
   """
   featurePermissions: [FeaturePermission!]!
+  events: [Event!]!
+  listings: [Listing!]!
 }
 
 type Member {
@@ -122,24 +124,40 @@ type OrganizationsResponse {
   organizations: [Organization!]!
 }
 
+type OrganizationReseponse {
+  organization: Organization!
+}
+
+input OrganizationInput {
+  id: ID!
+}
+
 type Query {
+  """
+  Get an organization by its ID
+  """
+  organization(data: OrganizationInput!): OrganizationReseponse!
   """
   Get all organizations
   """
-  organizations: OrganizationsResponse
+  organizations: OrganizationsResponse!
 }
 
 type Mutation {
   """
   Create a new organization, and add the current user as an admin of the organization.
   """
-  createOrganization(data: CreateOrganizationInput!): CreateOrganizationResponse!
+  createOrganization(
+    data: CreateOrganizationInput!
+  ): CreateOrganizationResponse!
 
   """
   Update an organization with the given name and description.
   Passing null or omitting a value will leave the value unchanged.
   """
-  updateOrganization(data: UpdateOrganizationInput!): UpdateOrganizationResponse!
+  updateOrganization(
+    data: UpdateOrganizationInput!
+  ): UpdateOrganizationResponse!
 
   """
   Add a member to the organization
