@@ -57,8 +57,8 @@ dependencies:
     specifier: ^1.20.2
     version: 1.20.2
   bullmq:
-    specifier: ^5.1.11
-    version: 5.1.11
+    specifier: ^5.1.12
+    version: 5.1.12
   connect-redis:
     specifier: ^7.1.1
     version: 7.1.1(express-session@1.18.0)
@@ -3646,8 +3646,8 @@ packages:
       base64-js: 1.5.1
       ieee754: 1.2.1
 
-  /bullmq@5.1.11:
-    resolution: {integrity: sha512-+IOAOi9X2ne691UcHEKL6mVq8ee6VNwAx0eAEEtxcjJM0EKYEsCGbBmLwsSHGh9NvCtmTdPZn7yHQS1GrbzF1A==}
+  /bullmq@5.1.12:
+    resolution: {integrity: sha512-AG8UV0FdlyJSMrypjQMJUjhD4CgCSTmfXnPDPIV5Ceu2Ai2z1yckGGu2mR1C6X5iSEuzU5LP2v0Dtj/LZyJLJg==}
     dependencies:
       cron-parser: 4.9.0
       glob: 8.1.0
