@@ -120,6 +120,81 @@ describe("EventRepository", () => {
 				expect(event.id).not.toEqual(eventInThePast.id);
 			}
 		});
+
+		it("with organization id should only return events for that organization", async () => {
+			/**
+			 * Arrange
+			 *
+			 * 1. Create several events
+			 */
+			const organization = await prisma.organization.create({
+				data: {
+					name: faker.string.sample(20),
+				},
+			});
+			const eventIds = [
+				faker.string.uuid(),
+				faker.string.uuid(),
+				faker.string.uuid(),
+			];
+			await Promise.all(
+				eventIds.map((id) =>
+					prisma.event.create({
+						data: {
+							type: "BASIC",
+							id,
+							organizationId: organization.id,
+							name: faker.person.firstName(),
+							startAt: faker.date.soon({
+								refDate: new Date(2021, 0, 1),
+								days: 1,
+							}),
+							endAt: faker.date.soon({
+								refDate: new Date(2021, 0, 3),
+								days: 1,
+							}),
+						},
+					}),
+				),
+			);
+
+			const eventWithoutOrganization = await prisma.event.create({
+				data: {
+					type: "BASIC",
+					id: faker.string.uuid(),
+					name: faker.person.firstName(),
+					startAt: new Date(2020, 0, 1),
+					endAt: new Date(2020, 0, 3),
+				},
+			});
+
+			/**
+			 * Act
+			 *
+			 * 1. Get the event
+			 */
+			const events = await eventRepository.findMany({
+				organizationId: organization.id,
+			});
+
+			/**
+			 * Assert
+			 *
+			 * 1. The event in the past should not have been returned
+			 */
+			for (const event of events) {
+				expect(event.id).not.toEqual(eventWithoutOrganization.id);
+			}
+			expect(events).toContainEqual(
+				expect.objectContaining({ id: eventIds[0] }),
+			);
+			expect(events).toContainEqual(
+				expect.objectContaining({ id: eventIds[1] }),
+			);
+			expect(events).toContainEqual(
+				expect.objectContaining({ id: eventIds[2] }),
+			);
+		});
 	});
 
 	describe("#getWithSlots", () => {

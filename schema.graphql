@@ -657,6 +657,7 @@ type OrdersResponse {
 
 type Organization {
   description: String!
+  events: [Event!]!
 
   """
   The features that are enabled for the organization.
@@ -664,10 +665,19 @@ type Organization {
   """
   featurePermissions: [FeaturePermission!]!
   id: ID!
+  listings: [Listing!]!
 
   """The members of the organization"""
   members: [Member!]!
   name: String!
+}
+
+input OrganizationInput {
+  id: ID!
+}
+
+type OrganizationReseponse {
+  organization: Organization!
 }
 
 type OrganizationsResponse {
@@ -856,8 +866,11 @@ type Query {
   """
   orders(data: OrdersInput): OrdersResponse!
 
+  """Get an organization by its ID"""
+  organization(data: OrganizationInput!): OrganizationReseponse!
+
   """Get all organizations"""
-  organizations: OrganizationsResponse
+  organizations: OrganizationsResponse!
 
   """
   Get payment attempts, filtered by the given input. Unless the user is a super user, only

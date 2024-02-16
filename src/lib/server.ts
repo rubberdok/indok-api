@@ -221,7 +221,10 @@ interface IEventService {
 		| NotFoundError
 	>;
 	get(id: string): Promise<EventType>;
-	findMany(data?: { onlyFutureEvents?: boolean | null }): Promise<EventType[]>;
+	findMany(data?: {
+		onlyFutureEvents?: boolean | null;
+		organizationId?: string | null;
+	}): Promise<EventType[]>;
 	signUp(
 		ctx: Context,
 		params: {
@@ -275,7 +278,7 @@ interface IEventService {
 
 interface IListingService {
 	get(id: string): Promise<Listing>;
-	findMany(): Promise<Listing[]>;
+	findMany(params?: { organizationId?: string | null }): Promise<Listing[]>;
 	create(
 		userId: string,
 		data: {

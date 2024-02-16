@@ -139,6 +139,41 @@ describe("ListingRepository", () => {
 			expect(actual).toContainEqual(listing2);
 			expect(actual).toContainEqual(listing3);
 		});
+		it("retrieves all listings for an organization", async () => {
+			/**
+			 * Arrange
+			 *
+			 * Create 3 listings
+			 */
+			const otherOrganization = await prisma.organization.create({
+				data: {
+					name: faker.string.sample(20),
+				},
+			});
+			const listing1 = await makeListing({ organizationId: organization.id });
+			const listing2 = await makeListing({ organizationId: organization.id });
+			const listing3 = await makeListing({ organizationId: organization.id });
+			const listing4 = await makeListing({
+				organizationId: otherOrganization.id,
+			});
+
+			// Act
+			const actual = await listingRepository.findMany({
+				organizationId: organization.id,
+			});
+
+			/**
+			 * Assert
+			 *
+			 * All three listings should be present in the response
+			 */
+			expect(actual).toBeDefined();
+			expect(actual.length).toBeGreaterThanOrEqual(3);
+			expect(actual).toContainEqual(listing1);
+			expect(actual).toContainEqual(listing2);
+			expect(actual).toContainEqual(listing3);
+			expect(actual).not.toContainEqual(listing4);
+		});
 	});
 });
 
