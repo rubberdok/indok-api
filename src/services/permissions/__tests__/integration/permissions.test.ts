@@ -302,7 +302,7 @@ describe("OrganizationsService", () => {
 			 *
 			 * 1. Call the isSuperUser method on the permissionService with the userId
 			 */
-			const { isSuperUser } = permissionService.isSuperUser(undefined);
+			const { isSuperUser } = permissionService.isSuperUser();
 
 			/**
 			 * Assert that the user is a super user

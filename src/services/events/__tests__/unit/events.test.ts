@@ -986,7 +986,7 @@ describe("EventsService", () => {
 			 * Act
 			 */
 			try {
-				const result = await service.createCategory(
+				await service.createCategory(
 					makeMockContext(
 						mock<User>({ id: faker.string.uuid(), isSuperUser: true }),
 					),

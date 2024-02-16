@@ -670,8 +670,7 @@ describe("Event queries", () => {
 		});
 
 		it("event { signUps { { confirmed } } } should resolve sign ups", async () => {
-			const { client, eventService, createMockContext } =
-				createMockApolloServer();
+			const { client, eventService } = createMockApolloServer();
 			const user = mock<User>({ id: faker.string.uuid() });
 			eventService.get.mockResolvedValue(
 				mock<EventType>({

@@ -11,12 +11,8 @@ import { makeMockContext } from "~/lib/context.js";
 describe("OrganizationService", () => {
 	describe("#removeMember", () => {
 		it("should remove a member from an organization", async () => {
-			const {
-				adminUser,
-				memberUserMembership,
-				organization,
-				organizationService,
-			} = await makeDeps();
+			const { adminUser, memberUserMembership, organizationService } =
+				await makeDeps();
 
 			const result = await organizationService.removeMember(
 				makeMockContext(adminUser),

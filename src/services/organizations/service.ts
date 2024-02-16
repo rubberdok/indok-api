@@ -174,7 +174,7 @@ export class OrganizationService {
 				.transform((val) => val ?? undefined),
 		});
 
-		const { isSuperUser, id: userId } = ctx.user;
+		const { isSuperUser } = ctx.user;
 
 		try {
 			if (isSuperUser) {
