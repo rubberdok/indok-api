@@ -119,7 +119,7 @@ async function makeDeps() {
 	const userNotInOrganization = await makeUser();
 	const userNotInOrganization2 = await makeUser();
 
-	const organization = await organizationService.create(user.id, {
+	const organization = await organizationService.create(makeMockContext(user), {
 		name: faker.string.uuid(),
 	});
 

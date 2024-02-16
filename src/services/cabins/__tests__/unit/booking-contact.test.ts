@@ -11,6 +11,7 @@ import {
 	type MailService,
 	type PermissionService,
 } from "../../service.js";
+import { makeMockContext } from "~/lib/context.js";
 
 describe("CabinService", () => {
 	let cabinService: CabinService;
@@ -45,11 +46,14 @@ describe("CabinService", () => {
 			 *
 			 * Call updateBookingContact
 			 */
-			const updateBookingContact = cabinService.updateBookingContact(userId, {
-				name: faker.person.fullName(),
-				email: faker.internet.email(),
-				phoneNumber: "40000000",
-			});
+			const updateBookingContact = cabinService.updateBookingContact(
+				makeMockContext({ id: userId }),
+				{
+					name: faker.person.fullName(),
+					email: faker.internet.email(),
+					phoneNumber: "40000000",
+				},
+			);
 
 			/**
 			 * Assert
@@ -58,10 +62,12 @@ describe("CabinService", () => {
 			 * Expect permissionService.hasFeaturePermission to be called with the correct arguments
 			 */
 			await expect(updateBookingContact).rejects.toThrow(PermissionDeniedError);
-			expect(permissionService.hasFeaturePermission).toHaveBeenCalledWith({
-				userId: userId,
-				featurePermission: FeaturePermission.CABIN_ADMIN,
-			});
+			expect(permissionService.hasFeaturePermission).toHaveBeenCalledWith(
+				expect.anything(),
+				{
+					featurePermission: FeaturePermission.CABIN_ADMIN,
+				},
+			);
 		});
 
 		it("should update the booking contact with valid arguments", async () => {
@@ -86,7 +92,7 @@ describe("CabinService", () => {
 			const email = faker.internet.email();
 			const phoneNumber = "4740000000";
 
-			await cabinService.updateBookingContact(userId, {
+			await cabinService.updateBookingContact(makeMockContext({ id: userId }), {
 				name,
 				email,
 				phoneNumber,
@@ -122,7 +128,7 @@ describe("CabinService", () => {
 			 *
 			 * Call updateBookingContact
 			 */
-			await cabinService.updateBookingContact(userId, {
+			await cabinService.updateBookingContact(makeMockContext({ id: userId }), {
 				name: null,
 				email: null,
 				phoneNumber: null,
@@ -158,10 +164,13 @@ describe("CabinService", () => {
 			 *
 			 * Call updateBookingContact
 			 */
-			const updateBookingContact = cabinService.updateBookingContact(userId, {
-				email: "",
-				phoneNumber: "",
-			});
+			const updateBookingContact = cabinService.updateBookingContact(
+				makeMockContext({ id: userId }),
+				{
+					email: "",
+					phoneNumber: "",
+				},
+			);
 
 			/**
 			 * Assert

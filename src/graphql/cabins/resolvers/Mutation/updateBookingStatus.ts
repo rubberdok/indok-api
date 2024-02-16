@@ -5,6 +5,6 @@ export const updateBookingStatus: NonNullable<
 > = async (_parent, { data }, ctx) => {
 	assertIsAuthenticated(ctx);
 	const { id, status } = data;
-	const booking = await ctx.cabins.updateBookingStatus(ctx.user.id, id, status);
+	const booking = await ctx.cabins.updateBookingStatus(ctx, id, status);
 	return { booking };
 };

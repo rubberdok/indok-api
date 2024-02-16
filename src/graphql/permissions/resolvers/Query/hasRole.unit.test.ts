@@ -52,11 +52,13 @@ describe("Permission queries", () => {
 			expect(errors).toBeUndefined();
 			expect(data).toBeDefined();
 			expect(data?.hasRole.hasRole).toBe(true);
-			expect(permissionService.hasRole).toHaveBeenCalledWith({
-				organizationId,
-				role,
-				userId: user.id,
-			});
+			expect(permissionService.hasRole).toHaveBeenCalledWith(
+				expect.anything(),
+				{
+					organizationId,
+					role,
+				},
+			);
 		});
 	});
 });

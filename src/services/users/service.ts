@@ -4,6 +4,7 @@ import { z } from "zod";
 import {
 	InvalidArgumentError,
 	PermissionDeniedError,
+	UnauthorizedError,
 } from "~/domain/errors.js";
 import {
 	type StudyProgram,
@@ -29,10 +30,6 @@ export interface UserRepository {
 	): Promise<StudyProgram | null>;
 }
 
-export interface PermissionService {
-	isSuperUser(userId: string | undefined): Promise<{ isSuperUser: boolean }>;
-}
-
 export type MailService = {
 	sendAsync(jobData: EmailQueueDataType): Promise<void>;
 };
@@ -40,7 +37,6 @@ export type MailService = {
 export class UserService {
 	constructor(
 		private usersRepository: UserRepository,
-		private permissionService: PermissionService,
 		private mailService: MailService,
 	) {}
 
@@ -65,9 +61,11 @@ export class UserService {
 			studyProgramId?: string | null;
 		}>,
 	): Promise<User> {
-		const { isSuperUser } = await this.permissionService.isSuperUser(
-			ctx.user?.id,
-		);
+		if (!ctx.user)
+			throw new UnauthorizedError(
+				"You must be logged in to perform this action.",
+			);
+		const isSuperUser = ctx.user.isSuperUser;
 		if (isSuperUser !== true)
 			throw new PermissionDeniedError(
 				"You do not have permission to update this user",

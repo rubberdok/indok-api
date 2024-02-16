@@ -6,26 +6,19 @@ import type { User } from "~/domain/users.js";
 import { makeMockContext } from "~/lib/context.js";
 import {
 	type MailService,
-	type PermissionService,
 	type UserRepository,
 	UserService,
 } from "../../service.js";
 
 describe("UserService", () => {
 	let userService: UserService;
-	let permissionService: DeepMockProxy<PermissionService>;
 	let userRepository: DeepMockProxy<UserRepository>;
 	let mailService: DeepMockProxy<MailService>;
 
 	beforeAll(() => {
 		userRepository = mockDeep<UserRepository>();
-		permissionService = mockDeep<PermissionService>();
 		mailService = mockDeep<MailService>();
-		userService = new UserService(
-			userRepository,
-			permissionService,
-			mailService,
-		);
+		userService = new UserService(userRepository, mailService);
 	});
 
 	describe("superUpdateUser", () => {
@@ -33,11 +26,8 @@ describe("UserService", () => {
 			it("should update isSuperUser", async () => {
 				/**
 				 * Arrange
-				 *
-				 * Mock isSuperUser to return true
 				 * Mock superUpdateUser to return a user
 				 */
-				permissionService.isSuperUser.mockResolvedValue({ isSuperUser: true });
 				userRepository.update.mockResolvedValue(mock<User>());
 
 				/**
@@ -48,7 +38,7 @@ describe("UserService", () => {
 				const callerUserId = faker.string.uuid();
 				const updateUserId = faker.string.uuid();
 				const actual = userService.superUpdateUser(
-					makeMockContext(mock<User>({ id: callerUserId })),
+					makeMockContext(mock<User>({ id: callerUserId, isSuperUser: true })),
 					updateUserId,
 					{
 						isSuperUser: true,
@@ -64,19 +54,9 @@ describe("UserService", () => {
 				expect(userRepository.update).toHaveBeenCalledWith(updateUserId, {
 					isSuperUser: true,
 				});
-				expect(permissionService.isSuperUser).toHaveBeenCalledWith(
-					callerUserId,
-				);
 			});
 
 			it("should set graduationYearUpdatedAt or firstLogin", async () => {
-				/**
-				 * Arrange
-				 *
-				 * Mock isSuperUser to return true
-				 * Mock update to return a user
-				 */
-				permissionService.isSuperUser.mockResolvedValue({ isSuperUser: true });
 				userRepository.update.mockResolvedValue(mock<User>());
 
 				/**
@@ -87,7 +67,7 @@ describe("UserService", () => {
 				const callerUserId = faker.string.uuid();
 				const updateUserId = faker.string.uuid();
 				const actual = userService.superUpdateUser(
-					makeMockContext(mock<User>({ id: callerUserId })),
+					makeMockContext({ id: callerUserId, isSuperUser: true }),
 					updateUserId,
 					{
 						graduationYear: DateTime.now().year,
@@ -111,20 +91,13 @@ describe("UserService", () => {
 		describe("as a non-super user", () => {
 			it("should raise PermissionDeniedError", async () => {
 				/**
-				 * Arrange
-				 *
-				 * Mock isSuperUser to return true
-				 */
-				permissionService.isSuperUser.mockResolvedValue({ isSuperUser: false });
-
-				/**
 				 * Act
 				 *
 				 * Call update with isSuperUser set to true
 				 */
 				const callerUserId = faker.string.uuid();
 				const actual = userService.superUpdateUser(
-					makeMockContext(mock<User>({ id: callerUserId })),
+					makeMockContext({ id: callerUserId, isSuperUser: false }),
 					faker.string.uuid(),
 					{ isSuperUser: true },
 				);
@@ -136,9 +109,6 @@ describe("UserService", () => {
 				 */
 				await expect(actual).rejects.toThrow(PermissionDeniedError);
 				expect(userRepository.update).not.toHaveBeenCalled();
-				expect(permissionService.isSuperUser).toHaveBeenCalledWith(
-					callerUserId,
-				);
 			});
 		});
 	});

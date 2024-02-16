@@ -20,6 +20,7 @@ import type { PaymentProcessingQueueType } from "~/services/products/worker.js";
 import { UserService } from "~/services/users/service.js";
 import { EventService } from "../../service.js";
 import type { SignUpQueueType } from "../../worker.js";
+import { makeMockContext } from "~/lib/context.js";
 
 export function makeDependencies() {
 	const eventRepository = new EventRepository(prisma);
@@ -52,11 +53,7 @@ export function makeDependencies() {
 			websiteUrl: env.CLIENT_URL,
 		},
 	);
-	const userService = new UserService(
-		userRepository,
-		permissionService,
-		mailService,
-	);
+	const userService = new UserService(userRepository, mailService);
 
 	const vipps = MockVippsClientFactory();
 	const productService = ProductService({
@@ -91,7 +88,7 @@ export async function makeUserWithOrganizationMembership(
 		...userData,
 	});
 
-	const organization = await organizationService.create(user.id, {
+	const organization = await organizationService.create(makeMockContext(user), {
 		name: faker.string.sample(20),
 	});
 	return { user, organization };

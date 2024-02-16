@@ -79,11 +79,14 @@ describe("Cabin mutations", () => {
 			);
 
 			expect(errors).toBeUndefined();
-			expect(cabinService.updateBookingContact).toHaveBeenCalledWith(userId, {
-				name,
-				email,
-				phoneNumber,
-			});
+			expect(cabinService.updateBookingContact).toHaveBeenCalledWith(
+				expect.anything(),
+				{
+					name,
+					email,
+					phoneNumber,
+				},
+			);
 		});
 	});
 });

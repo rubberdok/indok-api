@@ -85,11 +85,7 @@ describe("EventService", () => {
 			organizationRepository,
 		);
 		const eventRepository = new EventRepository(prisma);
-		userService = new UserService(
-			userRepository,
-			permissionService,
-			mailService,
-		);
+		userService = new UserService(userRepository, mailService);
 		const productService = mockDeep<ProductService>();
 		eventService = new EventService(
 			eventRepository,
@@ -173,9 +169,12 @@ describe("EventService", () => {
 				graduationYear: DateTime.now().year + 2,
 			});
 
-			const organization = await organizationService.create(eventOwner.id, {
-				name: faker.string.sample(20),
-			});
+			const organization = await organizationService.create(
+				makeMockContext(eventOwner),
+				{
+					name: faker.string.sample(20),
+				},
+			);
 
 			const createEvent = await eventService.create(
 				makeMockContext(eventOwner),
@@ -331,9 +330,12 @@ describe("EventService", () => {
 				),
 			);
 
-			const organization = await organizationService.create(eventOwner.id, {
-				name: faker.string.sample(20),
-			});
+			const organization = await organizationService.create(
+				makeMockContext(eventOwner),
+				{
+					name: faker.string.sample(20),
+				},
+			);
 
 			const createEvent = await eventService.create(
 				makeMockContext(eventOwner),

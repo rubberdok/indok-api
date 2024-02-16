@@ -1,4 +1,4 @@
-import assert from "assert";
+import assert, { fail } from "assert";
 import { faker } from "@faker-js/faker";
 import type { EventSlot } from "@prisma/client";
 import { mock } from "jest-mock-extended";
@@ -913,23 +913,13 @@ describe("EventsService", () => {
 
 	describe("#createCategory", () => {
 		it("should create a category", async () => {
-			const { service, eventsRepository, permissionService } =
-				makeDependencies();
-
-			/**
-			 * Arrange
-			 *
-			 * 1. Set up the mock for `permissionService.isSuperUser` to return `true`
-			 */
-			permissionService.isSuperUser.mockResolvedValueOnce({
-				isSuperUser: true,
-			});
+			const { service, eventsRepository } = makeDependencies();
 
 			/**
 			 * Act
 			 */
-			const result = service.createCategory(
-				makeMockContext(mock<User>({ id: faker.string.uuid() })),
+			await service.createCategory(
+				makeMockContext({ id: faker.string.uuid(), isSuperUser: true }),
 				{
 					name: faker.commerce.productName(),
 				},
@@ -938,120 +928,94 @@ describe("EventsService", () => {
 			/**
 			 * assertion
 			 */
-			await expect(result).resolves.not.toThrow();
 			expect(eventsRepository.createCategory).toHaveBeenCalled();
 		});
 
 		it("should raise PermissionDeniedError if the user is not a super user", async () => {
-			const { service, eventsRepository, permissionService } =
-				makeDependencies();
-
-			/**
-			 * Arrange
-			 *
-			 * 1. Set up the mock for `permissionService.isSuperUser` to return `true`
-			 */
-			permissionService.isSuperUser.mockResolvedValueOnce({
-				isSuperUser: false,
-			});
+			const { service, eventsRepository } = makeDependencies();
 
 			/**
 			 * Act
 			 */
-			const result = service.createCategory(
-				makeMockContext(mock<User>({ id: faker.string.uuid() })),
-				{
-					name: faker.commerce.productName(),
-				},
-			);
-
-			/**
-			 * assertion
-			 */
-			await expect(result).rejects.toThrow(PermissionDeniedError);
-			expect(eventsRepository.createCategory).not.toHaveBeenCalled();
+			try {
+				await service.createCategory(
+					makeMockContext({ id: faker.string.uuid() }),
+					{
+						name: faker.commerce.productName(),
+					},
+				);
+				fail("Expected to throw");
+			} catch (err) {
+				/**
+				 * assertion
+				 */
+				expect(err).toBeInstanceOf(PermissionDeniedError);
+				expect(eventsRepository.createCategory).not.toHaveBeenCalled();
+			}
 		});
 
 		it("should raise InvalidArgumentError if the name is too long", async () => {
-			const { service, eventsRepository, permissionService } =
-				makeDependencies();
-
-			/**
-			 * Arrange
-			 *
-			 * 1. Set up the mock for `permissionService.isSuperUser` to return `true`
-			 */
-			permissionService.isSuperUser.mockResolvedValueOnce({
-				isSuperUser: true,
-			});
+			const { service, eventsRepository } = makeDependencies();
 
 			/**
 			 * Act
 			 */
-			const result = service.createCategory(
-				makeMockContext(mock<User>({ id: faker.string.uuid() })),
-				{
-					name: faker.string.sample(101),
-				},
-			);
-
-			/**
-			 * assertion
-			 */
-			await expect(result).rejects.toThrow(InvalidArgumentError);
-			expect(eventsRepository.createCategory).not.toHaveBeenCalled();
+			try {
+				await service.createCategory(
+					makeMockContext(
+						mock<User>({ id: faker.string.uuid(), isSuperUser: true }),
+					),
+					{
+						name: faker.string.sample(101),
+					},
+				);
+				fail("Expected to throw");
+			} catch (err) {
+				/**
+				 * assertion
+				 */
+				expect(err).toBeInstanceOf(InvalidArgumentError);
+				expect(eventsRepository.createCategory).not.toHaveBeenCalled();
+			}
 		});
 
 		it("should raise InvalidArgumentError if the name is too short", async () => {
-			const { service, eventsRepository, permissionService } =
-				makeDependencies();
-
-			/**
-			 * Arrange
-			 *
-			 * 1. Set up the mock for `permissionService.isSuperUser` to return `true`
-			 */
-			permissionService.isSuperUser.mockResolvedValueOnce({
-				isSuperUser: true,
-			});
+			const { service, eventsRepository } = makeDependencies();
 
 			/**
 			 * Act
 			 */
-			const result = service.createCategory(
-				makeMockContext(mock<User>({ id: faker.string.uuid() })),
-				{
-					name: "",
-				},
-			);
-
-			/**
-			 * assertion
-			 */
-			await expect(result).rejects.toThrow(InvalidArgumentError);
-			expect(eventsRepository.createCategory).not.toHaveBeenCalled();
+			try {
+				const result = await service.createCategory(
+					makeMockContext(
+						mock<User>({ id: faker.string.uuid(), isSuperUser: true }),
+					),
+					{
+						name: "",
+					},
+				);
+				fail("Expected to throw");
+			} catch (err) {
+				/**
+				 * assertion
+				 */
+				expect(err).toBeInstanceOf(InvalidArgumentError);
+				expect(eventsRepository.createCategory).not.toHaveBeenCalled();
+			}
 		});
 	});
 
 	describe("#updateCategory", () => {
 		it("should update a category", async () => {
-			const { service, eventsRepository, permissionService } =
-				makeDependencies();
-
-			/**
-			 * Arrange
-			 *
-			 * 1. Set up the mock for `permissionService.isSuperUser` to return `true`
-			 */
-			permissionService.isSuperUser.mockResolvedValueOnce({
-				isSuperUser: true,
-			});
+			const { service, eventsRepository } = makeDependencies();
 
 			/**
 			 * Act
 			 */
-			const result = service.updateCategory(
-				makeMockContext(mock<User>({ id: faker.string.uuid() })),
+			await service.updateCategory(
+				makeMockContext(
+					mock<User>({ id: faker.string.uuid(), isSuperUser: true }),
+				),
 				{
 					id: faker.string.uuid(),
 					name: faker.commerce.productName(),
@@ -1061,123 +1025,92 @@ describe("EventsService", () => {
 			/**
 			 * assertion
 			 */
-			await expect(result).resolves.not.toThrow();
 			expect(eventsRepository.updateCategory).toHaveBeenCalled();
 		});
 
 		it("should raise PermissionDeniedError if the user is not a super user", async () => {
-			const { service, eventsRepository, permissionService } =
-				makeDependencies();
-
-			/**
-			 * Arrange
-			 *
-			 * 1. Set up the mock for `permissionService.isSuperUser` to return `true`
-			 */
-			permissionService.isSuperUser.mockResolvedValueOnce({
-				isSuperUser: false,
-			});
+			const { service, eventsRepository } = makeDependencies();
 
 			/**
 			 * Act
 			 */
-			const result = service.updateCategory(
-				makeMockContext(mock<User>({ id: faker.string.uuid() })),
-				{
-					id: faker.string.uuid(),
-					name: faker.commerce.productName(),
-				},
-			);
-
-			/**
-			 * assertion
-			 */
-			await expect(result).rejects.toThrow(PermissionDeniedError);
-			expect(eventsRepository.updateCategory).not.toHaveBeenCalled();
+			try {
+				await service.updateCategory(
+					makeMockContext(mock<User>({ id: faker.string.uuid() })),
+					{
+						id: faker.string.uuid(),
+						name: faker.commerce.productName(),
+					},
+				);
+				fail("Expected to throw");
+			} catch (err) {
+				/**
+				 * assertion
+				 */
+				expect(err).toBeInstanceOf(PermissionDeniedError);
+				expect(eventsRepository.updateCategory).not.toHaveBeenCalled();
+			}
 		});
 
 		it("should raise InvalidArgumentError if the name is too long", async () => {
-			const { service, eventsRepository, permissionService } =
-				makeDependencies();
-
-			/**
-			 * Arrange
-			 *
-			 * 1. Set up the mock for `permissionService.isSuperUser` to return `true`
-			 */
-			permissionService.isSuperUser.mockResolvedValueOnce({
-				isSuperUser: true,
-			});
+			const { service, eventsRepository } = makeDependencies();
 
 			/**
 			 * Act
 			 */
-			const result = service.updateCategory(
-				makeMockContext(mock<User>({ id: faker.string.uuid() })),
-				{
-					id: faker.string.uuid(),
-					name: faker.string.sample(101),
-				},
-			);
-
-			/**
-			 * assertion
-			 */
-			await expect(result).rejects.toThrow(InvalidArgumentError);
-			expect(eventsRepository.updateCategory).not.toHaveBeenCalled();
+			try {
+				await service.updateCategory(
+					makeMockContext(
+						mock<User>({ id: faker.string.uuid(), isSuperUser: true }),
+					),
+					{
+						id: faker.string.uuid(),
+						name: faker.string.sample(101),
+					},
+				);
+				fail("Expected to throw");
+			} catch (err) {
+				/**
+				 * assertion
+				 */
+				expect(err).toBeInstanceOf(InvalidArgumentError);
+				expect(eventsRepository.updateCategory).not.toHaveBeenCalled();
+			}
 		});
 
 		it("should raise InvalidArgumentError if the name is too short", async () => {
-			const { service, eventsRepository, permissionService } =
-				makeDependencies();
-
-			/**
-			 * Arrange
-			 *
-			 * 1. Set up the mock for `permissionService.isSuperUser` to return `true`
-			 */
-			permissionService.isSuperUser.mockResolvedValueOnce({
-				isSuperUser: true,
-			});
+			const { service, eventsRepository } = makeDependencies();
 
 			/**
 			 * Act
 			 */
-			const result = service.updateCategory(
-				makeMockContext(mock<User>({ id: faker.string.uuid() })),
-				{
-					id: faker.string.uuid(),
-					name: "",
-				},
-			);
-
-			/**
-			 * assertion
-			 */
-			await expect(result).rejects.toThrow(InvalidArgumentError);
-			expect(eventsRepository.updateCategory).not.toHaveBeenCalled();
+			try {
+				await service.updateCategory(
+					makeMockContext(
+						mock<User>({ id: faker.string.uuid(), isSuperUser: true }),
+					),
+					{
+						id: faker.string.uuid(),
+						name: "",
+					},
+				);
+				fail("Expected to throw");
+			} catch (err) {
+				expect(err).toBeInstanceOf(InvalidArgumentError);
+				expect(eventsRepository.updateCategory).not.toHaveBeenCalled();
+			}
 		});
 	});
 
 	describe("#deleteCategory", () => {
 		it("should delete a category", async () => {
-			const { service, eventsRepository, permissionService } =
-				makeDependencies();
-
-			/**
-			 * Arrange
-			 *
-			 * 1. Set up the mock for `permissionService.isSuperUser` to return `true`
-			 */
-			permissionService.isSuperUser.mockResolvedValueOnce({
-				isSuperUser: true,
-			});
+			const { service, eventsRepository } = makeDependencies();
 
 			/**
 			 * Act
 			 */
-			const result = service.deleteCategory(
-				makeMockContext(mock<User>({ id: faker.string.uuid() })),
+			const result = await service.deleteCategory(
+				makeMockContext({ id: faker.string.uuid(), isSuperUser: true }),
 				{
 					id: faker.string.uuid(),
 				},
@@ -1186,38 +1119,31 @@ describe("EventsService", () => {
 			/**
 			 * assertion
 			 */
-			await expect(result).resolves.not.toThrow();
+			expect(result).toBeUndefined();
 			expect(eventsRepository.deleteCategory).toHaveBeenCalled();
 		});
 
 		it("should raise PermissionDeniedError if the user is not a super user", async () => {
-			const { service, eventsRepository, permissionService } =
-				makeDependencies();
-
-			/**
-			 * Arrange
-			 *
-			 * 1. Set up the mock for `permissionService.isSuperUser` to return `true`
-			 */
-			permissionService.isSuperUser.mockResolvedValueOnce({
-				isSuperUser: false,
-			});
+			const { service } = makeDependencies();
 
 			/**
 			 * Act
 			 */
-			const result = service.deleteCategory(
-				makeMockContext(mock<User>({ id: faker.string.uuid() })),
-				{
-					id: faker.string.uuid(),
-				},
-			);
 
 			/**
 			 * assertion
 			 */
-			await expect(result).rejects.toThrow(PermissionDeniedError);
-			expect(eventsRepository.deleteCategory).not.toHaveBeenCalled();
+			try {
+				await service.deleteCategory(
+					makeMockContext(mock<User>({ id: faker.string.uuid() })),
+					{
+						id: faker.string.uuid(),
+					},
+				);
+				fail("Expected to throw");
+			} catch (err) {
+				expect(err).toBeInstanceOf(PermissionDeniedError);
+			}
 		});
 	});
 });

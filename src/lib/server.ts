@@ -79,7 +79,7 @@ import type { ResultAsync } from "./result.js";
 
 interface IOrganizationService {
 	create(
-		userId: string,
+		ctx: Context,
 		data: {
 			name: string;
 			description?: string | null;
@@ -87,7 +87,7 @@ interface IOrganizationService {
 		},
 	): Promise<Organization>;
 	update(
-		userId: string,
+		ctx: Context,
 		organizationId: string,
 		data: {
 			name?: string | null;
@@ -106,7 +106,13 @@ interface IOrganizationService {
 		{ member: Member },
 		InvalidArgumentError | PermissionDeniedError | UnauthorizedError
 	>;
-	getMembers(userId: string, organizationId: string): Promise<Member[]>;
+	getMembers(
+		ctx: Context,
+		organizationId: string,
+	): ResultAsync<
+		{ members: Member[] },
+		PermissionDeniedError | UnauthorizedError
+	>;
 	get(id: string): Promise<Organization>;
 	findMany(data?: { userId?: string }): Promise<Organization[]>;
 }
@@ -176,7 +182,7 @@ interface BookingData {
 interface ICabinService {
 	newBooking(data: BookingData): Promise<Booking>;
 	updateBookingStatus(
-		userId: string,
+		ctx: Context,
 		id: string,
 		status: BookingStatus,
 	): Promise<Booking>;
@@ -184,7 +190,7 @@ interface ICabinService {
 	getCabinByBookingId(bookingId: string): Promise<Cabin>;
 	findManyCabins(): Promise<Cabin[]>;
 	updateBookingSemester(
-		userId: string,
+		ctx: Context,
 		data: {
 			semester: Semester;
 			startAt?: Date | null;
@@ -197,7 +203,7 @@ interface ICabinService {
 		Pick<BookingContact, "email" | "name" | "phoneNumber" | "id">
 	>;
 	updateBookingContact(
-		userId: string,
+		ctx: Context,
 		data: Partial<{
 			name: string | null;
 			phoneNumber: string | null;
@@ -298,7 +304,7 @@ interface IListingService {
 	get(id: string): Promise<Listing>;
 	findMany(params?: { organizationId?: string | null }): Promise<Listing[]>;
 	create(
-		userId: string,
+		ctx: Context,
 		data: {
 			name: string;
 			description?: string | null;
@@ -308,7 +314,7 @@ interface IListingService {
 		},
 	): Promise<Listing>;
 	update(
-		userId: string,
+		ctx: Context,
 		id: string,
 		data: Partial<{
 			name: string | null;
@@ -317,21 +323,24 @@ interface IListingService {
 			closesAt: Date | null;
 		}>,
 	): Promise<Listing>;
-	delete(userId: string, id: string): Promise<Listing>;
+	delete(ctx: Context, id: string): Promise<Listing>;
 }
 
 interface IPermissionService {
-	isSuperUser(userId: string): Promise<{ isSuperUser: boolean }>;
-	hasFeaturePermission(data: {
-		userId: string;
-		featurePermission: FeaturePermission;
-	}): Promise<boolean>;
-	hasRole(data: {
-		userId?: string | null;
-		organizationId: string;
-		role: Role;
-		featurePermission?: FeaturePermission;
-	}): Promise<boolean>;
+	hasFeaturePermission(
+		ctx: Context,
+		data: {
+			featurePermission: FeaturePermission;
+		},
+	): Promise<boolean>;
+	hasRole(
+		ctx: Context,
+		data: {
+			organizationId: string;
+			role: Role;
+			featurePermission?: FeaturePermission;
+		},
+	): Promise<boolean>;
 }
 
 type IProductService = {
@@ -553,11 +562,7 @@ async function registerServices(
 		permissionService,
 	);
 
-	const userService = new UserService(
-		userRepository,
-		permissionService,
-		mailService,
-	);
+	const userService = new UserService(userRepository, mailService);
 
 	await serverInstance.register(fastifyMessageQueue, {
 		name: PaymentProcessingQueueName,

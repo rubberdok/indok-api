@@ -4,7 +4,7 @@ export const createListing: NonNullable<MutationResolvers["createListing"]> =
 	async (_parent, { data }, ctx) => {
 		assertIsAuthenticated(ctx);
 		const { closesAt, ...rest } = data;
-		const listing = await ctx.listings.create(ctx.user.id, {
+		const listing = await ctx.listings.create(ctx, {
 			closesAt: new Date(closesAt),
 			...rest,
 		});

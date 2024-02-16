@@ -4,9 +4,8 @@ export const updateBookingContact: NonNullable<
 	MutationResolvers["updateBookingContact"]
 > = async (_parent, { data }, ctx) => {
 	assertIsAuthenticated(ctx);
-
 	const { name, email, phoneNumber } = data;
-	const bookingContact = await ctx.cabins.updateBookingContact(ctx.user.id, {
+	const bookingContact = await ctx.cabins.updateBookingContact(ctx, {
 		name,
 		email,
 		phoneNumber,

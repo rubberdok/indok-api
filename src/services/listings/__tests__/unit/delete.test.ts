@@ -8,6 +8,7 @@ import {
 	ListingService,
 	type PermissionService,
 } from "../../service.js";
+import { makeMockContext } from "~/lib/context.js";
 
 describe("ListingService", () => {
 	let listingService: ListingService;
@@ -43,7 +44,7 @@ describe("ListingService", () => {
 			 * Call delete and assert that it does not throw
 			 */
 			await expect(
-				listingService.delete(userId, listingId),
+				listingService.delete(makeMockContext({ id: userId }), listingId),
 			).resolves.not.toThrow();
 			expect(listingRepository.delete).toHaveBeenCalledWith(listingId);
 		});
@@ -68,7 +69,10 @@ describe("ListingService", () => {
 				 * Call delete and assert that it does not throw
 				 */
 				await expect(
-					listingService.delete(userId, faker.string.uuid()),
+					listingService.delete(
+						makeMockContext({ id: userId }),
+						faker.string.uuid(),
+					),
 				).resolves.not.toThrow();
 
 				/**
@@ -76,11 +80,13 @@ describe("ListingService", () => {
 				 *
 				 * Has role should have been called with userId and organizationId
 				 */
-				expect(permissionService.hasRole).toHaveBeenCalledWith({
-					userId,
-					organizationId,
-					role: Role.MEMBER,
-				});
+				expect(permissionService.hasRole).toHaveBeenCalledWith(
+					expect.anything(),
+					{
+						organizationId,
+						role: Role.MEMBER,
+					},
+				);
 			});
 
 			it("should raise PermissionDeniedError if the user does not have the role", async () => {
@@ -101,7 +107,10 @@ describe("ListingService", () => {
 				 * Call delete, assert that it throws
 				 */
 				await expect(
-					listingService.delete(userId, faker.string.uuid()),
+					listingService.delete(
+						makeMockContext({ id: userId }),
+						faker.string.uuid(),
+					),
 				).rejects.toThrow(PermissionDeniedError);
 
 				/**

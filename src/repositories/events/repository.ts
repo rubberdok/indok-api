@@ -509,22 +509,22 @@ export class EventRepository {
 		NotFoundError | InternalServerError
 	> {
 		const { eventId, status } = data;
-		const totalPromise = this.db.eventSignUp.count({
-			where: {
-				eventId,
-				participationStatus: status,
-			},
-		});
-		const findManyPromise = this.db.eventSignUp.findMany({
-			where: {
-				eventId,
-				participationStatus: status,
-			},
-			orderBy: {
-				createdAt: "asc",
-			},
-		});
 		try {
+			const totalPromise = this.db.eventSignUp.count({
+				where: {
+					eventId,
+					participationStatus: status,
+				},
+			});
+			const findManyPromise = this.db.eventSignUp.findMany({
+				where: {
+					eventId,
+					participationStatus: status,
+				},
+				orderBy: {
+					createdAt: "asc",
+				},
+			});
 			const [total, signUps] = await this.db.$transaction([
 				totalPromise,
 				findManyPromise,

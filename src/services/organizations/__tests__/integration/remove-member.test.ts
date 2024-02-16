@@ -184,9 +184,12 @@ async function makeDeps() {
 	const memberUser = await makeUser();
 	const notInOrganizationUser = await makeUser();
 
-	const organization = await organizationService.create(adminUser.id, {
-		name: faker.string.uuid(),
-	});
+	const organization = await organizationService.create(
+		makeMockContext(adminUser),
+		{
+			name: faker.string.uuid(),
+		},
+	);
 
 	const res = await organizationService.addMember(makeMockContext(adminUser), {
 		userId: memberUser.id,
@@ -196,10 +199,14 @@ async function makeDeps() {
 	if (!res.ok) throw res.error;
 
 	const members = await organizationService.getMembers(
-		adminUser.id,
+		makeMockContext(adminUser),
 		organization.id,
 	);
-	const adminUserMembership = members.find((m) => m.userId === adminUser.id);
+	if (!members.ok) throw members.error;
+
+	const adminUserMembership = members.data.members.find(
+		(m) => m.userId === adminUser.id,
+	);
 	assert(adminUserMembership);
 
 	return {

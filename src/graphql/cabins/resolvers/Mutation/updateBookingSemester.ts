@@ -4,7 +4,6 @@ export const updateBookingSemester: NonNullable<
 	MutationResolvers["updateBookingSemester"]
 > = async (_parent, { data }, ctx) => {
 	assertIsAuthenticated(ctx);
-
 	const {
 		startAt: rawStartAt,
 		endAt: rawEndAt,
@@ -14,7 +13,7 @@ export const updateBookingSemester: NonNullable<
 	const startAt = rawStartAt ? new Date(rawStartAt) : null;
 	const endAt = rawEndAt ? new Date(rawEndAt) : null;
 
-	const bookingSemester = await ctx.cabins.updateBookingSemester(ctx.user.id, {
+	const bookingSemester = await ctx.cabins.updateBookingSemester(ctx, {
 		semester,
 		startAt,
 		endAt,

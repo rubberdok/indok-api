@@ -73,11 +73,7 @@ export function makeTestServices(
 		permissionService,
 	);
 
-	const userService = new UserService(
-		userRepository,
-		permissionService,
-		mailService,
-	);
+	const userService = new UserService(userRepository, mailService);
 	const products = ProductService({
 		vippsFactory: mockDeep<typeof Client>(),
 		paymentProcessingQueue: mockDeep<PaymentProcessingQueueType>(),

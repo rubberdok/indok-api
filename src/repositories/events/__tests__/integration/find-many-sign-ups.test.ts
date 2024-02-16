@@ -1,8 +1,6 @@
-import assert from "assert";
 import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
-import { NotFoundError } from "~/domain/errors.js";
 import prisma from "~/lib/prisma.js";
 import { EventRepository } from "../../repository.js";
 
@@ -69,7 +67,7 @@ describe("EventRepository", () => {
 			expect(actual.data.total).toBe(2);
 		});
 
-		it("should NotFoundError if trying to fetch sign ups for an event that doesn't exist", async () => {
+		it("should return emtpy if trying to fetch sign ups for an event that doesn't exist", async () => {
 			/**
 			 * Act
 			 *
@@ -79,8 +77,13 @@ describe("EventRepository", () => {
 				eventId: faker.string.uuid(),
 				status: ParticipationStatus.ON_WAITLIST,
 			});
-			assert(!actual.ok, "Expected an error");
-			expect(actual.error).toBeInstanceOf(NotFoundError);
+			expect(actual).toEqual({
+				ok: true,
+				data: {
+					signUps: [],
+					total: 0,
+				},
+			});
 		});
 	});
 });

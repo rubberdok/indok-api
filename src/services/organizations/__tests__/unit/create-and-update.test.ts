@@ -7,6 +7,7 @@ import {
 	OrganizationService,
 	type PermissionService,
 } from "../../service.js";
+import { makeMockContext } from "~/lib/context.js";
 
 describe("OrganizationService", () => {
 	let organizationService: OrganizationService;
@@ -28,30 +29,26 @@ describe("OrganizationService", () => {
 		describe("as a super user", () => {
 			it("create an organization with feature permissions", async () => {
 				/**
-				 * Arrange
-				 *
-				 * Mock the permission service to return true for isSuperUser.
-				 */
-				permissionService.isSuperUser.mockResolvedValue({ isSuperUser: true });
-				/**
 				 * Mock the organization repository to return
 				 */
 				organizationRepository.create.mockResolvedValueOnce(
 					mock<Organization>(),
 				);
-				const callerUserId = faker.string.uuid();
 
 				/**
 				 * Act
 				 */
-				const actual = organizationService.create(callerUserId, {
-					name: faker.company.name(),
-					description: faker.lorem.paragraph(),
-					featurePermissions: [
-						FeaturePermission.CABIN_ADMIN,
-						FeaturePermission.ARCHIVE_WRITE_DOCUMENTS,
-					],
-				});
+				const actual = organizationService.create(
+					makeMockContext({ isSuperUser: true }),
+					{
+						name: faker.company.name(),
+						description: faker.lorem.paragraph(),
+						featurePermissions: [
+							FeaturePermission.CABIN_ADMIN,
+							FeaturePermission.ARCHIVE_WRITE_DOCUMENTS,
+						],
+					},
+				);
 
 				/**
 				 * Assert
@@ -66,20 +63,11 @@ describe("OrganizationService", () => {
 						FeaturePermission.ARCHIVE_WRITE_DOCUMENTS,
 					],
 				});
-				expect(permissionService.isSuperUser).toHaveBeenCalledWith(
-					callerUserId,
-				);
 			});
 		});
 
 		describe("as a member", () => {
 			it("should ignore feature permissions", async () => {
-				/**
-				 * Arrange
-				 *
-				 * Mock the permission service to return true for isSuperUser.
-				 */
-				permissionService.isSuperUser.mockResolvedValue({ isSuperUser: false });
 				/**
 				 * Mock the organization repository to return
 				 */
@@ -94,28 +82,28 @@ describe("OrganizationService", () => {
 				/**
 				 * Act
 				 */
-				const actual = organizationService.create(callerUserId, {
-					name: faker.company.name(),
-					description: faker.lorem.paragraph(),
-					featurePermissions: [
-						FeaturePermission.CABIN_ADMIN,
-						FeaturePermission.ARCHIVE_WRITE_DOCUMENTS,
-					],
-				});
+				const actual = organizationService.create(
+					makeMockContext({ id: callerUserId }),
+					{
+						name: faker.company.name(),
+						description: faker.lorem.paragraph(),
+						featurePermissions: [
+							FeaturePermission.CABIN_ADMIN,
+							FeaturePermission.ARCHIVE_WRITE_DOCUMENTS,
+						],
+					},
+				);
 
 				/**
 				 * Assert
 				 */
 				await expect(actual).resolves.not.toThrow();
 				expect(organizationRepository.create).toHaveBeenCalledWith({
-					userId: expect.any(String),
+					userId: callerUserId,
 					name: expect.any(String),
 					description: expect.any(String),
 					featurePermissions: undefined,
 				});
-				expect(permissionService.isSuperUser).toHaveBeenCalledWith(
-					callerUserId,
-				);
 			});
 		});
 	});
@@ -123,12 +111,6 @@ describe("OrganizationService", () => {
 	describe("update", () => {
 		describe("as a super user", () => {
 			it("update an organization with feature permissions", async () => {
-				/**
-				 * Arrange
-				 *
-				 * Mock the permission service to return true for isSuperUser.
-				 */
-				permissionService.isSuperUser.mockResolvedValue({ isSuperUser: true });
 				/**
 				 * Mock the organization repository to return
 				 */
@@ -140,7 +122,7 @@ describe("OrganizationService", () => {
 				 * Act
 				 */
 				const actual = organizationService.update(
-					faker.string.uuid(),
+					makeMockContext({ isSuperUser: true }),
 					faker.string.uuid(),
 					{
 						name: faker.company.name(),
@@ -173,12 +155,6 @@ describe("OrganizationService", () => {
 		describe("as a member", () => {
 			it("should ignore feature permissions", async () => {
 				/**
-				 * Arrange
-				 *
-				 * Mock the permission service to return true for isSuperUser.
-				 */
-				permissionService.isSuperUser.mockResolvedValue({ isSuperUser: false });
-				/**
 				 * Mock the organization repository to return
 				 */
 				organizationRepository.update.mockResolvedValueOnce(
@@ -193,7 +169,7 @@ describe("OrganizationService", () => {
 				 * Act
 				 */
 				const actual = organizationService.update(
-					faker.string.uuid(),
+					makeMockContext({ id: faker.string.uuid() }),
 					faker.string.uuid(),
 					{
 						name: faker.company.name(),

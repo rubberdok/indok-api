@@ -5,6 +5,7 @@ import {
 	PermissionDeniedError,
 } from "~/domain/errors.js";
 import { Role } from "~/domain/organizations.js";
+import type { Context } from "~/lib/context.js";
 
 export interface ListingRepository {
 	get(id: string): Promise<Listing>;
@@ -29,11 +30,13 @@ export interface ListingRepository {
 }
 
 export interface PermissionService {
-	hasRole(data: {
-		userId: string;
-		organizationId: string;
-		role: Role;
-	}): Promise<boolean>;
+	hasRole(
+		ctx: Context,
+		data: {
+			organizationId: string;
+			role: Role;
+		},
+	): Promise<boolean>;
 }
 
 export class ListingService {
@@ -69,7 +72,7 @@ export class ListingService {
 	 * @returns the created listing
 	 */
 	async create(
-		userId: string,
+		ctx: Context,
 		data: {
 			name: string;
 			description?: string | null;
@@ -78,7 +81,7 @@ export class ListingService {
 			organizationId: string;
 		},
 	): Promise<Listing> {
-		await this.assertHasPermission(userId, data.organizationId);
+		await this.assertHasPermission(ctx, data.organizationId);
 
 		const listingSchema = z.object({
 			name: z.string().min(2).max(100),
@@ -114,7 +117,7 @@ export class ListingService {
 	 * @returns the updated listing
 	 */
 	async update(
-		userId: string,
+		ctx: Context,
 		id: string,
 		data: {
 			name?: string | null;
@@ -124,7 +127,7 @@ export class ListingService {
 		},
 	): Promise<Listing> {
 		const listing = await this.listingRepository.get(id);
-		await this.assertHasPermission(userId, listing.organizationId);
+		await this.assertHasPermission(ctx, listing.organizationId);
 
 		const listingSchema = z.object({
 			name: z
@@ -165,20 +168,19 @@ export class ListingService {
 	 * @param userId - the id of the user
 	 * @param id - the id of the listing to delete
 	 */
-	async delete(userId: string, id: string): Promise<Listing> {
+	async delete(ctx: Context, id: string): Promise<Listing> {
 		const listing = await this.listingRepository.get(id);
-		await this.assertHasPermission(userId, listing.organizationId);
+		await this.assertHasPermission(ctx, listing.organizationId);
 
 		return this.listingRepository.delete(id);
 	}
 
 	private async assertHasPermission(
-		userId: string,
+		ctx: Context,
 		organizationId: string,
 	): Promise<void> {
-		const isMember = await this.permissionService.hasRole({
+		const isMember = await this.permissionService.hasRole(ctx, {
 			organizationId,
-			userId,
 			role: Role.MEMBER,
 		});
 

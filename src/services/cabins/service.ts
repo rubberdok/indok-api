@@ -18,6 +18,7 @@ import {
 } from "~/domain/errors.js";
 import type { ResultAsync } from "~/lib/result.js";
 import type { EmailQueueDataType } from "../mail/worker.js";
+import type { Context } from "~/lib/context.js";
 
 export interface BookingData {
 	email: string;
@@ -71,10 +72,12 @@ export interface CabinRepository {
 }
 
 export interface PermissionService {
-	hasFeaturePermission(data: {
-		userId: string;
-		featurePermission: FeaturePermission;
-	}): Promise<boolean>;
+	hasFeaturePermission(
+		ctx: Context,
+		data: {
+			featurePermission: FeaturePermission;
+		},
+	): Promise<boolean>;
 }
 
 export interface MailService {
@@ -278,14 +281,16 @@ export class CabinService {
 	 * @returns The updated booking
 	 */
 	async updateBookingStatus(
-		userId: string,
+		ctx: Context,
 		id: string,
 		status: BookingStatus,
 	): Promise<Booking> {
-		const hasPermission = await this.permissionService.hasFeaturePermission({
-			userId,
-			featurePermission: FeaturePermission.CABIN_ADMIN,
-		});
+		const hasPermission = await this.permissionService.hasFeaturePermission(
+			ctx,
+			{
+				featurePermission: FeaturePermission.CABIN_ADMIN,
+			},
+		);
 
 		if (!hasPermission)
 			throw new PermissionDeniedError(
@@ -328,7 +333,7 @@ export class CabinService {
 	 * @returns The updated booking semester
 	 */
 	async updateBookingSemester(
-		userId: string,
+		ctx: Context,
 		data: {
 			semester: Semester;
 			startAt?: Date | null;
@@ -336,10 +341,12 @@ export class CabinService {
 			bookingsEnabled?: boolean | null;
 		},
 	) {
-		const hasPermission = await this.permissionService.hasFeaturePermission({
-			userId,
-			featurePermission: FeaturePermission.CABIN_ADMIN,
-		});
+		const hasPermission = await this.permissionService.hasFeaturePermission(
+			ctx,
+			{
+				featurePermission: FeaturePermission.CABIN_ADMIN,
+			},
+		);
 
 		if (!hasPermission)
 			throw new PermissionDeniedError(
@@ -459,17 +466,19 @@ export class CabinService {
 	 *
 	 */
 	async updateBookingContact(
-		userId: string,
+		ctx: Context,
 		data: Partial<{
 			name: string | null;
 			email: string | null;
 			phoneNumber: string | null;
 		}>,
 	): Promise<BookingContact> {
-		const hasPermission = await this.permissionService.hasFeaturePermission({
-			userId,
-			featurePermission: FeaturePermission.CABIN_ADMIN,
-		});
+		const hasPermission = await this.permissionService.hasFeaturePermission(
+			ctx,
+			{
+				featurePermission: FeaturePermission.CABIN_ADMIN,
+			},
+		);
 
 		if (!hasPermission)
 			throw new PermissionDeniedError(

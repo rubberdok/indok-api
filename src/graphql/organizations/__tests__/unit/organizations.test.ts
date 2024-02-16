@@ -239,16 +239,21 @@ describe("OrganizationResolvers", () => {
 						description: "",
 					}),
 				);
-				organizationService.getMembers.mockResolvedValueOnce([
-					{
-						id: faker.string.uuid(),
-						createdAt: new Date(),
-						updatedAt: new Date(),
-						role: Role.MEMBER,
-						userId: faker.string.uuid(),
-						organizationId: faker.string.uuid(),
+				organizationService.getMembers.mockResolvedValueOnce({
+					ok: true,
+					data: {
+						members: [
+							{
+								id: faker.string.uuid(),
+								createdAt: new Date(),
+								updatedAt: new Date(),
+								role: Role.MEMBER,
+								userId: faker.string.uuid(),
+								organizationId: faker.string.uuid(),
+							},
+						],
 					},
-				]);
+				});
 
 				/**
 				 * Act
@@ -331,16 +336,21 @@ describe("OrganizationResolvers", () => {
 						description: "",
 					}),
 				);
-				organizationService.getMembers.mockResolvedValueOnce([
-					{
-						id: faker.string.uuid(),
-						createdAt: new Date(),
-						updatedAt: new Date(),
-						role: Role.MEMBER,
-						userId: faker.string.uuid(),
-						organizationId: faker.string.uuid(),
+				organizationService.getMembers.mockResolvedValueOnce({
+					ok: true,
+					data: {
+						members: [
+							{
+								id: faker.string.uuid(),
+								createdAt: new Date(),
+								updatedAt: new Date(),
+								role: Role.MEMBER,
+								userId: faker.string.uuid(),
+								organizationId: faker.string.uuid(),
+							},
+						],
 					},
-				]);
+				});
 
 				/**
 				 * Act

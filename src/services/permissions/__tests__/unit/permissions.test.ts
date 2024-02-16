@@ -9,6 +9,7 @@ import {
 	PermissionService,
 	type UserRepository,
 } from "../../service.js";
+import { makeMockContext } from "~/lib/context.js";
 
 describe("PermissionService", () => {
 	let permissionService: PermissionService;
@@ -226,12 +227,14 @@ describe("PermissionService", () => {
 				 *
 				 * Call hasRole with the given arguments
 				 */
-				const result = permissionService.hasRole({
-					userId: arrange.user.id,
-					organizationId: faker.string.uuid(),
-					role: act.requiredRole,
-					featurePermission: act.requiredFeaturePermission,
-				});
+				const result = permissionService.hasRole(
+					makeMockContext(arrange.user),
+					{
+						organizationId: faker.string.uuid(),
+						role: act.requiredRole,
+						featurePermission: act.requiredFeaturePermission,
+					},
+				);
 
 				/**
 				 * Assert

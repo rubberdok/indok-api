@@ -120,16 +120,21 @@ interface UserService {
 }
 
 interface PermissionService {
-	hasRole(data: {
-		userId?: string;
-		organizationId: string;
-		role: Role;
-	}): Promise<boolean>;
-	hasFeaturePermission(data: {
-		userId: string;
-		featurePermission: FeaturePermission;
-	}): Promise<boolean>;
-	isSuperUser(userId: string | undefined): Promise<{ isSuperUser: boolean }>;
+	hasRole(
+		ctx: Context,
+		data: {
+			organizationId: string;
+			role: Role;
+		},
+	): Promise<boolean>;
+	hasFeaturePermission(
+		ctx: Context,
+		data: {
+			userId: string;
+			featurePermission: FeaturePermission;
+		},
+	): Promise<boolean>;
+	isSuperUser(user: User | null | undefined): { isSuperUser: boolean };
 }
 
 interface ProductService {
@@ -240,8 +245,7 @@ class EventService {
 	> {
 		const { event: eventData, slots: slotData, tickets, type } = params;
 
-		const isMember = await this.permissionService.hasRole({
-			userId: ctx.user?.id,
+		const isMember = await this.permissionService.hasRole(ctx, {
 			organizationId: eventData.organizationId,
 			role: Role.MEMBER,
 		});
@@ -405,8 +409,7 @@ class EventService {
 				}
 
 				// Updating an event requires that the user is a member of the organization
-				const isMember = await this.permissionService.hasRole({
-					userId: ctx.user?.id,
+				const isMember = await this.permissionService.hasRole(ctx, {
 					organizationId: event.organizationId,
 					role: Role.MEMBER,
 				});
@@ -588,8 +591,7 @@ class EventService {
 			};
 		}
 
-		const isMember = await this.permissionService.hasRole({
-			userId: ctx.user.id,
+		const isMember = await this.permissionService.hasRole(ctx, {
 			organizationId: event.organizationId,
 			role: Role.MEMBER,
 		});
@@ -1035,14 +1037,11 @@ class EventService {
 		return signUpAvailability.AVAILABLE;
 	}
 
-	public async createCategory(
+	public createCategory(
 		ctx: Context,
 		data: { name: string },
 	): Promise<CategoryType> {
-		const { isSuperUser } = await this.permissionService.isSuperUser(
-			ctx.user?.id,
-		);
-		if (isSuperUser !== true) {
+		if (ctx.user?.isSuperUser !== true) {
 			throw new PermissionDeniedError(
 				"You do not have permission to create a category.",
 			);
@@ -1061,14 +1060,11 @@ class EventService {
 		}
 	}
 
-	public async updateCategory(
+	public updateCategory(
 		ctx: Context,
 		data: CategoryType,
 	): Promise<CategoryType> {
-		const { isSuperUser } = await this.permissionService.isSuperUser(
-			ctx.user?.id,
-		);
-		if (isSuperUser !== true) {
+		if (ctx.user?.isSuperUser !== true) {
 			throw new PermissionDeniedError(
 				"You do not have permission to create a category.",
 			);
@@ -1088,16 +1084,13 @@ class EventService {
 		}
 	}
 
-	public async deleteCategory(
+	public deleteCategory(
 		ctx: Context,
 		data: { id: string },
 	): Promise<CategoryType> {
-		const { isSuperUser } = await this.permissionService.isSuperUser(
-			ctx.user?.id,
-		);
-		if (isSuperUser !== true) {
+		if (ctx.user?.isSuperUser !== true) {
 			throw new PermissionDeniedError(
-				"You do not have permission to create a category.",
+				"You do not have permission to delete a category.",
 			);
 		}
 
@@ -1309,8 +1302,7 @@ class EventService {
 			};
 		}
 
-		const isMember = await this.permissionService.hasRole({
-			userId: ctx.user.id,
+		const isMember = await this.permissionService.hasRole(ctx, {
 			organizationId: event.organizationId,
 			role: Role.MEMBER,
 		});

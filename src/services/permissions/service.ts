@@ -1,6 +1,7 @@
 import type { FeaturePermission, Organization, User } from "@prisma/client";
 import { Role } from "~/domain/organizations.js";
 import type { StudyProgram } from "~/domain/users.js";
+import type { Context } from "~/lib/context.js";
 
 export interface MemberRepository {
 	hasRole(data: {
@@ -30,11 +31,8 @@ export class PermissionService {
 	/**
 	 * isSuperUser returns true if the user is a super user, false otherwise.
 	 */
-	public async isSuperUser(
-		userId: string | undefined,
-	): Promise<{ isSuperUser: boolean }> {
-		if (!userId) return { isSuperUser: false };
-		const user = await this.userRepository.get(userId);
+	public isSuperUser(user?: User | null): { isSuperUser: boolean } {
+		if (!user) return { isSuperUser: false };
 		return { isSuperUser: user.isSuperUser };
 	}
 
@@ -52,19 +50,22 @@ export class PermissionService {
 	 * @param data.role - The required role of the user in the organization
 	 * @returns true if the user has at least the given role in the organization, false otherwise
 	 */
-	private async hasOrganizationRole(data: {
-		userId: string;
-		organizationId: string;
-		role: Role;
-	}): Promise<boolean> {
-		const { userId, organizationId, role } = data;
+	private async hasOrganizationRole(
+		ctx: Context,
+		data: {
+			organizationId: string;
+			role: Role;
+		},
+	): Promise<boolean> {
+		const { organizationId, role } = data;
+		if (!ctx.user) return false;
 
 		/**
 		 * Check if the user has the admin role in the organization. Admins can perform
 		 * all actions in the organization, so we can return true immediately.
 		 */
 		const isAdmin = await this.memberRepository.hasRole({
-			userId,
+			userId: ctx.user.id,
 			organizationId,
 			role: Role.ADMIN,
 		});
@@ -75,7 +76,7 @@ export class PermissionService {
 		 * organization.
 		 */
 		return await this.memberRepository.hasRole({
-			userId,
+			userId: ctx.user.id,
 			organizationId,
 			role,
 		});
@@ -106,20 +107,21 @@ export class PermissionService {
 	 * @param data.featurePermission - The required feature permission for the organization
 	 * @returns
 	 */
-	async hasRole(data: {
-		userId?: string | null;
-		organizationId: string;
-		role: Role;
-		featurePermission?: FeaturePermission;
-	}): Promise<boolean> {
-		const { userId, organizationId, role, featurePermission } = data;
-		if (!userId) return false;
+	async hasRole(
+		ctx: Context,
+		data: {
+			organizationId: string;
+			role: Role;
+			featurePermission?: FeaturePermission;
+		},
+	): Promise<boolean> {
+		const { organizationId, role, featurePermission } = data;
+		if (!ctx.user) return false;
 
-		const { isSuperUser } = await this.isSuperUser(userId);
+		const { isSuperUser } = this.isSuperUser(ctx.user);
 		if (isSuperUser) return true;
 
-		const hasRole = await this.hasOrganizationRole({
-			userId,
+		const hasRole = await this.hasOrganizationRole(ctx, {
 			organizationId,
 			role,
 		});
@@ -148,17 +150,21 @@ export class PermissionService {
 	 * @param data.featurePermission - The required feature permission for the organization
 	 * @returns true if the user has a membership in an organization with the given feature permission, or is a super user, false otherwise
 	 */
-	async hasFeaturePermission(data: {
-		userId: string;
-		featurePermission: FeaturePermission;
-	}): Promise<boolean> {
-		const { userId, featurePermission } = data;
+	async hasFeaturePermission(
+		ctx: Context,
+		data: {
+			featurePermission: FeaturePermission;
+		},
+	): Promise<boolean> {
+		if (!ctx.user) return false;
 
-		const { isSuperUser } = await this.isSuperUser(userId);
+		const { featurePermission } = data;
+
+		const { isSuperUser } = this.isSuperUser(ctx.user);
 		if (isSuperUser) return true;
 
 		const organizations = await this.organizationRepository.findManyByUserId({
-			userId,
+			userId: ctx.user.id,
 		});
 
 		const hasFeaturePermission = organizations.some((organization) =>
@@ -166,7 +172,7 @@ export class PermissionService {
 		);
 		if (hasFeaturePermission) return true;
 
-		const user = await this.userRepository.get(userId);
+		const user = await this.userRepository.get(ctx.user.id);
 		if (!user.studyProgramId) return false;
 		const studyProgram = await this.userRepository.getStudyProgram({
 			id: user.studyProgramId,

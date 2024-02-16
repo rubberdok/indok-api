@@ -1,4 +1,5 @@
 import type { Role } from "@prisma/client";
+import { type Context, makeMockContext } from "~/lib/context.js";
 
 /**
  * Create a mock implementation of the hasRole method on the MemberRepository.
@@ -17,16 +18,21 @@ export function getMockHasRoleImplementation(state: {
 	userId: string;
 	role: Role;
 }) => Promise<boolean> {
-	function hasRole(data: {
-		organizationId: string;
-		userId: string;
-		role: Role;
-	}): Promise<boolean> {
+	function hasRole(
+		ctx: Context,
+		data: {
+			organizationId: string;
+			role: Role;
+		},
+	): Promise<boolean> {
+		if (!ctx.user) return Promise.resolve(false);
 		if (data.organizationId !== state.organizationId)
 			return Promise.resolve(false);
-		if (data.userId !== state.userId) return Promise.resolve(false);
+		if (ctx.user.id !== state.userId) return Promise.resolve(false);
 		if (data.role !== state.role) return Promise.resolve(false);
 		return Promise.resolve(true);
 	}
-	return hasRole;
+
+	return (data: { organizationId: string; userId: string; role: Role }) =>
+		hasRole(makeMockContext({ id: data.userId }), data);
 }

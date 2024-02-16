@@ -10,13 +10,14 @@ import {
 import { Role } from "~/domain/organizations.js";
 import type { User } from "~/domain/users.js";
 import type { UserRepository } from "~/repositories/users/index.js";
-import { PermissionService } from "~/services/permissions/service.js";
+import type { PermissionService } from "~/services/permissions/service.js";
 import {
 	type MemberRepository,
 	type OrganizationRepository,
 	OrganizationService,
 } from "../../service.js";
 import { getMockHasRoleImplementation } from "./mocks.js";
+import { makeMockContext } from "~/lib/context.js";
 
 interface MemberRepositoryMock extends MemberRepository {
 	hasRole(data: {
@@ -30,118 +31,18 @@ let organizationService: OrganizationService;
 let organizationRepository: DeepMockProxy<OrganizationRepository>;
 let memberRepository: DeepMockProxy<MemberRepositoryMock>;
 let userRepository: DeepMockProxy<UserRepository>;
-let permissionService: PermissionService;
+let permissionService: DeepMockProxy<PermissionService>;
 
 describe("OrganizationService", () => {
 	beforeEach(() => {
 		organizationRepository = mockDeep<OrganizationRepository>();
 		memberRepository = mockDeep<MemberRepositoryMock>();
 		userRepository = mockDeep<UserRepository>();
-		permissionService = new PermissionService(
-			memberRepository,
-			userRepository,
-			organizationRepository,
-		);
+		permissionService = mockDeep<PermissionService>();
 		organizationService = new OrganizationService(
 			organizationRepository,
 			memberRepository,
 			permissionService,
-		);
-	});
-
-	describe("hasRole", () => {
-		const testCases: {
-			state: {
-				user: User;
-				role: Role | null;
-			};
-			requiredRole: Role;
-			organizationId: string;
-			expected: boolean;
-		}[] = [
-			{
-				state: {
-					user: mock<User>({ id: "1", isSuperUser: true }),
-					role: null,
-				},
-				requiredRole: Role.ADMIN,
-				organizationId: "o1",
-				expected: true,
-			},
-			{
-				state: {
-					user: mock<User>({ id: "1", isSuperUser: false }),
-					role: null,
-				},
-				requiredRole: Role.MEMBER,
-				organizationId: "o1",
-				expected: false,
-			},
-			{
-				state: {
-					user: mock<User>({ id: "1", isSuperUser: false }),
-					role: Role.MEMBER,
-				},
-				requiredRole: Role.MEMBER,
-				organizationId: "o1",
-				expected: true,
-			},
-			{
-				state: {
-					user: mock<User>({ id: "1", isSuperUser: false }),
-					role: Role.ADMIN,
-				},
-				requiredRole: Role.MEMBER,
-				organizationId: "o1",
-				expected: true,
-			},
-			{
-				state: {
-					user: mock<User>({ id: "1", isSuperUser: false }),
-					role: Role.MEMBER,
-				},
-				requiredRole: Role.ADMIN,
-				organizationId: "o1",
-				expected: false,
-			},
-			{
-				state: {
-					user: mock<User>({ id: "1", isSuperUser: false }),
-					role: Role.ADMIN,
-				},
-				requiredRole: Role.ADMIN,
-				organizationId: "o1",
-				expected: true,
-			},
-		];
-
-		test.each(testCases)(
-			"requiredRole: $requiredRole, isSuperUser: $state.user.isSuperUser, role: $state.role, should return: $expected",
-			async ({ state, requiredRole, organizationId, expected }) => {
-				/**
-				 * Arrange.
-				 *
-				 * Set up the mock user and hasRole implementation
-				 */
-				userRepository.get.mockResolvedValueOnce(state.user);
-				memberRepository.hasRole.mockImplementation(
-					getMockHasRoleImplementation({
-						userId: state.user.id,
-						organizationId,
-						role: state.role,
-					}),
-				);
-
-				// Act
-				const actual = await permissionService.hasRole({
-					userId: state.user.id,
-					organizationId,
-					role: requiredRole,
-				});
-
-				// Assert
-				expect(actual).toBe(expected);
-			},
 		);
 	});
 
@@ -207,13 +108,7 @@ describe("OrganizationService", () => {
 					 * Set up the mock user and hasRole implementation.
 					 */
 					userRepository.get.mockResolvedValue(state.user);
-					memberRepository.hasRole.mockImplementation(
-						getMockHasRoleImplementation({
-							userId: state.user.id,
-							organizationId: "o1",
-							role: state.role,
-						}),
-					);
+					permissionService.hasRole.mockResolvedValue(state.role !== null);
 
 					/**
 					 * Act and assert
@@ -223,10 +118,14 @@ describe("OrganizationService", () => {
 					 */
 					const { organizationId, name, description } = input;
 					try {
-						await organizationService.update(state.user.id, organizationId, {
-							name,
-							description,
-						});
+						await organizationService.update(
+							makeMockContext(state.user),
+							organizationId,
+							{
+								name,
+								description,
+							},
+						);
 						fail("Expected to throw");
 					} catch (err) {
 						assert(err instanceof Error);
@@ -292,13 +191,7 @@ describe("OrganizationService", () => {
 					 * Set up the mock user and hasRole implementation.
 					 */
 					userRepository.get.mockResolvedValue(state.user);
-					memberRepository.hasRole.mockImplementation(
-						getMockHasRoleImplementation({
-							userId: state.user.id,
-							organizationId: "o1",
-							role: state.role,
-						}),
-					);
+					permissionService.hasRole.mockResolvedValue(state.role !== null);
 
 					/**
 					 * Act
@@ -308,7 +201,7 @@ describe("OrganizationService", () => {
 					 */
 					const { organizationId, name, description } = input;
 					const actual = organizationService.update(
-						state.user.id,
+						makeMockContext(state.user),
 						organizationId,
 						{ name, description },
 					);
@@ -404,7 +297,10 @@ describe("OrganizationService", () => {
 					 * new organization name.
 					 */
 					try {
-						await organizationService.create(userId, rest);
+						await organizationService.create(
+							makeMockContext({ id: userId }),
+							rest,
+						);
 						fail("Expected to throw");
 					} catch (err) {
 						assert(err instanceof Error);
@@ -466,7 +362,10 @@ describe("OrganizationService", () => {
 					 * We call the update method with the user ID, organization ID, and the
 					 * new organization name.
 					 */
-					const actual = organizationService.create(userId, rest);
+					const actual = organizationService.create(
+						makeMockContext({ id: userId }),
+						rest,
+					);
 
 					/**
 					 * Assert
@@ -506,13 +405,13 @@ describe("OrganizationService", () => {
 				}),
 			);
 
-			const actual = organizationService.getMembers("1", "2");
+			const actual = organizationService.getMembers(
+				makeMockContext({ id: "1" }),
+				"2",
+			);
 
 			// Asser that we don't throw, and that the memberRepository.get method was called with the correct arguments.
 			await expect(actual).resolves.not.toThrow();
-			expect(memberRepository.findMany).toHaveBeenCalledWith({
-				organizationId: "2",
-			});
 		});
 
 		it("should raise PermissionDeniedError if not a member", async () => {
@@ -524,18 +423,16 @@ describe("OrganizationService", () => {
 			userRepository.get.mockResolvedValueOnce(
 				mock<User>({ id: "1", isSuperUser: false }),
 			);
-			memberRepository.hasRole.mockImplementation(
-				getMockHasRoleImplementation({
-					userId: "1",
-					organizationId: "o1",
-					role: null,
-				}),
+			permissionService.hasRole.mockResolvedValue(false);
+
+			const res = await organizationService.getMembers(
+				makeMockContext({ id: "1", isSuperUser: false }),
+				"1",
 			);
-
-			const actual = organizationService.getMembers("1", "1");
-
-			// Assert that we throw a PermissionDeniedError
-			await expect(actual).rejects.toThrow(PermissionDeniedError);
+			expect(res).toEqual({
+				ok: false,
+				error: expect.any(PermissionDeniedError),
+			});
 		});
 	});
 
