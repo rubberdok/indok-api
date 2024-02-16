@@ -807,7 +807,7 @@ describe("Event queries", () => {
 				error: new InternalServerError(""),
 			});
 
-			const { data, errors } = await client.query({
+			const { errors } = await client.query({
 				query: graphql(`
 				query eventWithSignUps($data: EventInput!) {
 					event(data: $data) {
