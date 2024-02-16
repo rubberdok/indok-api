@@ -3,12 +3,12 @@ import type { Listing } from "@prisma/client";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { PermissionDeniedError } from "~/domain/errors.js";
 import { Role } from "~/domain/organizations.js";
+import { makeMockContext } from "~/lib/context.js";
 import {
 	type ListingRepository,
 	ListingService,
 	type PermissionService,
 } from "../../service.js";
-import { makeMockContext } from "~/lib/context.js";
 
 describe("ListingService", () => {
 	let listingService: ListingService;

@@ -9,6 +9,7 @@ import {
 } from "~/domain/errors.js";
 import { Role } from "~/domain/organizations.js";
 import type { User } from "~/domain/users.js";
+import { makeMockContext } from "~/lib/context.js";
 import type { UserRepository } from "~/repositories/users/index.js";
 import type { PermissionService } from "~/services/permissions/service.js";
 import {
@@ -17,7 +18,6 @@ import {
 	OrganizationService,
 } from "../../service.js";
 import { getMockHasRoleImplementation } from "./mocks.js";
-import { makeMockContext } from "~/lib/context.js";
 
 interface MemberRepositoryMock extends MemberRepository {
 	hasRole(data: {

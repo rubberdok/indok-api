@@ -16,9 +16,9 @@ import {
 	NotFoundError,
 	PermissionDeniedError,
 } from "~/domain/errors.js";
+import type { Context } from "~/lib/context.js";
 import type { ResultAsync } from "~/lib/result.js";
 import type { EmailQueueDataType } from "../mail/worker.js";
-import type { Context } from "~/lib/context.js";
 
 export interface BookingData {
 	email: string;

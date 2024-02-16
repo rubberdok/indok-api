@@ -6,13 +6,13 @@ import {
 	InvalidArgumentError,
 	PermissionDeniedError,
 } from "~/domain/errors.js";
+import { makeMockContext } from "~/lib/context.js";
 import {
 	type CabinRepository,
 	CabinService,
 	type MailService,
 	type PermissionService,
 } from "../../service.js";
-import { makeMockContext } from "~/lib/context.js";
 
 describe("CabinService", () => {
 	let cabinRepository: DeepMockProxy<CabinRepository>;

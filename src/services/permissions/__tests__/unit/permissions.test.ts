@@ -3,13 +3,13 @@ import { FeaturePermission, type Organization } from "@prisma/client";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { Role } from "~/domain/organizations.js";
 import type { User } from "~/domain/users.js";
+import { makeMockContext } from "~/lib/context.js";
 import {
 	type MemberRepository,
 	type OrganizationRepository,
 	PermissionService,
 	type UserRepository,
 } from "../../service.js";
-import { makeMockContext } from "~/lib/context.js";
 
 describe("PermissionService", () => {
 	let permissionService: PermissionService;

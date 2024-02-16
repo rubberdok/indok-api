@@ -1,13 +1,13 @@
 import { faker } from "@faker-js/faker";
 import { FeaturePermission, type Organization } from "@prisma/client";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
+import { makeMockContext } from "~/lib/context.js";
 import {
 	type MemberRepository,
 	type OrganizationRepository,
 	OrganizationService,
 	type PermissionService,
 } from "../../service.js";
-import { makeMockContext } from "~/lib/context.js";
 
 describe("OrganizationService", () => {
 	let organizationService: OrganizationService;

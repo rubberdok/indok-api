@@ -4,6 +4,7 @@ import { mockDeep } from "jest-mock-extended";
 import type { ServerClient } from "postmark";
 import { env } from "~/config.js";
 import type { User } from "~/domain/users.js";
+import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import { EventRepository } from "~/repositories/events/index.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
@@ -20,7 +21,6 @@ import type { PaymentProcessingQueueType } from "~/services/products/worker.js";
 import { UserService } from "~/services/users/service.js";
 import { EventService } from "../../service.js";
 import type { SignUpQueueType } from "../../worker.js";
-import { makeMockContext } from "~/lib/context.js";
 
 export function makeDependencies() {
 	const eventRepository = new EventRepository(prisma);

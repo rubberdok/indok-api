@@ -1,12 +1,12 @@
 import { faker } from "@faker-js/faker";
 import { FeaturePermission, type Prisma } from "@prisma/client";
 import { Role } from "~/domain/organizations.js";
+import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
 import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
 import { UserRepository } from "~/repositories/users/index.js";
 import { PermissionService } from "../../service.js";
-import { makeMockContext } from "~/lib/context.js";
 
 let permissionService: PermissionService;
 
