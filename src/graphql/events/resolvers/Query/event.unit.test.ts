@@ -668,5 +668,72 @@ describe("Event queries", () => {
 
 			expect(data?.event.event.ticketInformation).toBeNull();
 		});
+
+		it("event { signUps { { confirmed } } } should resolve sign ups", async () => {
+			const { client, eventService, createMockContext } =
+				createMockApolloServer();
+			const user = mock<User>({ id: faker.string.uuid() });
+			eventService.get.mockResolvedValue(
+				mock<EventType>({
+					id: faker.string.uuid(),
+					organizationId: faker.string.uuid(),
+				}),
+			);
+			eventService.findManySignUps.mockResolvedValue({
+				ok: true,
+				data: {
+					signUps: [
+						mock<EventSignUp>({
+							id: faker.string.uuid(),
+							userId: user.id,
+						}),
+					],
+					total: 1,
+				},
+			});
+
+			const { data, errors } = await client.query({
+				query: graphql(`
+				query eventWithSignUps($data: EventInput!) {
+					event(data: $data) {
+						event {
+							signUps {
+								confirmed {
+									signUps {
+										id
+									}
+									total
+								}
+								waitList {
+									total
+								}
+								retracted {
+									total
+								}
+							}
+						}
+					}
+				}
+			`),
+				variables: { data: { id: faker.string.uuid() } },
+			});
+
+			expect(errors).toBeUndefined();
+			expect(data?.event.event.signUps).toBeDefined();
+			expect(data?.event.event.signUps).toEqual(
+				expect.objectContaining({
+					confirmed: expect.objectContaining({
+						signUps: expect.any(Array),
+						total: expect.any(Number),
+					}),
+					waitList: expect.objectContaining({
+						total: expect.any(Number),
+					}),
+					retracted: expect.objectContaining({
+						total: expect.any(Number),
+					}),
+				}),
+			);
+		});
 	});
 });

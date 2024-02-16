@@ -57,6 +57,18 @@ type Event {
   The ticket information for the event, if the event is a TICKETS event.
   """
   ticketInformation: EventTicketInformation
+  signUps: SignUps
+}
+
+type SignUpsWithTotalCount {
+  signUps: [SignUp!]!
+  total: Int!
+}
+
+type SignUps {
+  confirmed: SignUpsWithTotalCount!
+  waitList: SignUpsWithTotalCount!
+  retracted: SignUpsWithTotalCount!
 }
 
 type EventTicketInformation {
