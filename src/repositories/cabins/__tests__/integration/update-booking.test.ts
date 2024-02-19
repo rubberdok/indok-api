@@ -1,0 +1,74 @@
+import { faker } from "@faker-js/faker";
+import type { PrismaClient } from "@prisma/client";
+import { mockDeep } from "jest-mock-extended";
+import { InternalServerError, NotFoundError } from "~/domain/errors.js";
+import prisma from "~/lib/prisma.js";
+import { CabinRepository } from "../../repository.js";
+import { makeDependencies } from "./dependencies.js";
+
+describe("CabinRepository", () => {
+	let cabinRepository: CabinRepository;
+
+	beforeAll(() => {
+		cabinRepository = new CabinRepository(prisma);
+	});
+
+	describe("#updateBooking", () => {
+		it("should update a booking status", async () => {
+			const { cabinRepository, oksenBooking } = await makeDependencies();
+
+			const updateBookingResult = await cabinRepository.updateBooking(
+				oksenBooking.id,
+				{
+					status: "REJECTED",
+				},
+			);
+
+			expect(updateBookingResult).toEqual({
+				ok: true,
+				data: {
+					booking: expect.objectContaining({
+						status: "REJECTED",
+					}),
+				},
+			});
+		});
+
+		it("should return NotFoundError if the booking does not exist", async () => {
+			const { cabinRepository } = await makeDependencies();
+
+			const updateBookingResult = await cabinRepository.updateBooking(
+				faker.string.uuid(),
+				{
+					status: "REJECTED",
+				},
+			);
+
+			expect(updateBookingResult).toEqual({
+				ok: false,
+				error: expect.any(NotFoundError),
+			});
+		});
+
+		it("should return InternalServerError if an unexpected error occurs", async () => {
+			const prisma = mockDeep<PrismaClient>();
+			const cabinRepository = new CabinRepository(prisma);
+
+			prisma.booking.update.mockRejectedValueOnce(
+				new Error("Unexpected error"),
+			);
+
+			const updateBookingResult = await cabinRepository.updateBooking(
+				faker.string.uuid(),
+				{
+					status: "REJECTED",
+				},
+			);
+
+			expect(updateBookingResult).toEqual({
+				ok: false,
+				error: expect.any(InternalServerError),
+			});
+		});
+	});
+});

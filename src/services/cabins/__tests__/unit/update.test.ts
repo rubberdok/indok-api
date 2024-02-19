@@ -5,6 +5,7 @@ import { BookingStatus, type BookingType } from "~/domain/cabins.js";
 import {
 	InvalidArgumentError,
 	PermissionDeniedError,
+	UnauthorizedError,
 } from "~/domain/errors.js";
 import { makeMockContext } from "~/lib/context.js";
 import {
@@ -70,6 +71,30 @@ describe("CabinService", () => {
 					featurePermission: FeaturePermission.CABIN_ADMIN,
 				},
 			);
+		});
+
+		it("should return UnauthorizedError if the user is not logged in", async () => {
+			/**
+			 * Act
+			 *
+			 * Call updateBookingStatus
+			 */
+			const updateBookingStatus = await cabinService.updateBookingStatus(
+				makeMockContext(null),
+				faker.string.uuid(),
+				BookingStatus.CONFIRMED,
+			);
+
+			/**
+			 * Assert
+			 *
+			 * Expect updateBookingStatus to throw a PermissionDeniedError
+			 * Expect permissionService.hasFeaturePermission to be called with the correct arguments
+			 */
+			expect(updateBookingStatus).toEqual({
+				ok: false,
+				error: expect.any(UnauthorizedError),
+			});
 		});
 
 		it("should throw InvalidArgumentError if there are overlapping bookings", async () => {

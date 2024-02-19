@@ -1,19 +1,11 @@
-import { faker } from "@faker-js/faker";
 import { DateTime } from "luxon";
-import type { BookingStatus, BookingType } from "~/domain/cabins.js";
-import prisma from "~/lib/prisma.js";
-import { CabinRepository } from "../../repository.js";
+import { makeDependencies } from "./dependencies.js";
 
 describe("CabinRepository", () => {
-	let cabinRepository: CabinRepository;
-
-	beforeAll(() => {
-		cabinRepository = new CabinRepository(prisma);
-	});
-
 	describe("#getOverlappingBookings", () => {
 		it("should return an overlapping booking for the same cabin", async () => {
-			const { oksen, oksenBooking } = await makeDependencies();
+			const { oksen, oksenBooking, cabinRepository, makeBooking } =
+				await makeDependencies();
 
 			const booking = await makeBooking({
 				cabins: [{ id: oksen.id }],
@@ -39,7 +31,8 @@ describe("CabinRepository", () => {
 		});
 
 		it("should return an overlapping booking where at least one cabin is the same", async () => {
-			const { oksen, bothBooking } = await makeDependencies();
+			const { oksen, bothBooking, makeBooking, cabinRepository } =
+				await makeDependencies();
 
 			const booking = await makeBooking({
 				cabins: [{ id: oksen.id }],
@@ -65,8 +58,14 @@ describe("CabinRepository", () => {
 		});
 
 		it("should return all bookings where at least one cabin overlaps", async () => {
-			const { oksen, oksenBooking, bjørnenBooking, bjørnen } =
-				await makeDependencies();
+			const {
+				oksen,
+				oksenBooking,
+				bjørnenBooking,
+				bjørnen,
+				makeBooking,
+				cabinRepository,
+			} = await makeDependencies();
 
 			const booking = await makeBooking({
 				cabins: [{ id: oksen.id }, { id: bjørnen.id }],
@@ -95,7 +94,8 @@ describe("CabinRepository", () => {
 		});
 
 		it("should return a booking where startDate < existingStartDate and endDate > existingStartDate", async () => {
-			const { oksen, bothBooking, bjørnen } = await makeDependencies();
+			const { oksen, bothBooking, bjørnen, makeBooking, cabinRepository } =
+				await makeDependencies();
 
 			const booking = await makeBooking({
 				cabins: [{ id: oksen.id }, { id: bjørnen.id }],
@@ -121,7 +121,8 @@ describe("CabinRepository", () => {
 		});
 
 		it("should return a booking where existingStartDate < startDate and endDate < existingEndDate", async () => {
-			const { oksen, bothBooking, bjørnen } = await makeDependencies();
+			const { oksen, bothBooking, bjørnen, makeBooking, cabinRepository } =
+				await makeDependencies();
 
 			const booking = await makeBooking({
 				cabins: [{ id: oksen.id }, { id: bjørnen.id }],
@@ -147,7 +148,8 @@ describe("CabinRepository", () => {
 		});
 
 		it("should return a booking where startDate < existingEndDate and endDate > existingEndDate", async () => {
-			const { oksen, bothBooking, bjørnen } = await makeDependencies();
+			const { oksen, bothBooking, bjørnen, makeBooking, cabinRepository } =
+				await makeDependencies();
 
 			const booking = await makeBooking({
 				cabins: [{ id: oksen.id }, { id: bjørnen.id }],
@@ -173,7 +175,8 @@ describe("CabinRepository", () => {
 		});
 
 		it("should return no bookings if there is no overlap", async () => {
-			const { oksen, bothBooking, bjørnen } = await makeDependencies();
+			const { oksen, bothBooking, bjørnen, makeBooking, cabinRepository } =
+				await makeDependencies();
 
 			const booking = await makeBooking({
 				cabins: [{ id: oksen.id }, { id: bjørnen.id }],
@@ -198,70 +201,4 @@ describe("CabinRepository", () => {
 			});
 		});
 	});
-
-	async function makeDependencies() {
-		const oksen = await cabinRepository.createCabin({
-			name: faker.word.adjective(),
-			capacity: faker.number.int({ min: 1, max: 10 }),
-			internalPrice: faker.number.int({ min: 100, max: 1000 }),
-			externalPrice: faker.number.int({ min: 100, max: 1000 }),
-		});
-		if (!oksen.ok) throw oksen.error;
-		const bjørnen = await cabinRepository.createCabin({
-			name: faker.word.adjective(),
-			capacity: faker.number.int({ min: 1, max: 10 }),
-			internalPrice: faker.number.int({ min: 100, max: 1000 }),
-			externalPrice: faker.number.int({ min: 100, max: 1000 }),
-		});
-		if (!bjørnen.ok) throw bjørnen.error;
-
-		const oksenBooking = await makeBooking({
-			cabins: [{ id: oksen.data.cabin.id }],
-			startDate: DateTime.now().plus({ days: 1 }).toJSDate(),
-			endDate: DateTime.now().plus({ days: 4 }).toJSDate(),
-			status: "CONFIRMED",
-		});
-		const bjørnenBooking = await makeBooking({
-			cabins: [{ id: bjørnen.data.cabin.id }],
-			startDate: DateTime.now().plus({ days: 1 }).toJSDate(),
-			endDate: DateTime.now().plus({ days: 4 }).toJSDate(),
-			status: "CONFIRMED",
-		});
-		const bothBooking = await makeBooking({
-			cabins: [{ id: oksen.data.cabin.id }, { id: bjørnen.data.cabin.id }],
-			startDate: DateTime.now().plus({ days: 5 }).toJSDate(),
-			endDate: DateTime.now().plus({ days: 10 }).toJSDate(),
-			status: "CONFIRMED",
-		});
-
-		return {
-			oksen: oksen.data.cabin,
-			bjørnen: bjørnen.data.cabin,
-			oksenBooking,
-			bjørnenBooking,
-			bothBooking,
-		};
-	}
-
-	async function makeBooking(params: {
-		cabins: { id: string }[];
-		startDate: Date;
-		endDate: Date;
-		status: BookingStatus;
-	}): Promise<BookingType> {
-		const { cabins, startDate, endDate, status } = params;
-		const createBookingResult = await cabinRepository.createBooking({
-			cabins,
-			startDate,
-			endDate,
-			email: faker.internet.exampleEmail(),
-			firstName: faker.person.firstName(),
-			lastName: faker.person.lastName(),
-			phoneNumber: faker.phone.number(),
-			id: faker.string.uuid(),
-			status,
-		});
-		if (!createBookingResult.ok) throw createBookingResult.error;
-		return createBookingResult.data.booking;
-	}
 });
