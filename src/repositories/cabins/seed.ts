@@ -114,6 +114,7 @@ const createBookingSemesterInput: Prisma.BookingSemesterCreateInput[] = [
 			day: 31,
 			year: DateTime.now().year,
 		}).toJSDate(),
+		bookingsEnabled: true,
 	},
 	{
 		id: faker.string.uuid(),
@@ -128,6 +129,7 @@ const createBookingSemesterInput: Prisma.BookingSemesterCreateInput[] = [
 			day: 31,
 			year: DateTime.now().year,
 		}).toJSDate(),
+		bookingsEnabled: true,
 	},
 ];
 
@@ -189,7 +191,7 @@ export const load = async (db: PrismaClient) => {
 	console.log("Seeding booking contact...");
 	await db.bookingContact.upsert({
 		where: {
-			id: faker.string.uuid(),
+			id: "booking-contact",
 		},
 		update: {},
 		create: {

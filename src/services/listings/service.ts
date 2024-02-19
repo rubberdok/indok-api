@@ -103,7 +103,7 @@ export class ListingService {
 			return this.listingRepository.create(listing);
 		} catch (err) {
 			if (err instanceof ZodError) {
-				throw new InvalidArgumentError(err.message);
+				throw new InvalidArgumentError(err.message, err);
 			}
 			throw err;
 		}

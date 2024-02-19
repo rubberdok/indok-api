@@ -3,7 +3,11 @@ import type { Transaction } from "@sentry/node";
 import type { FastifyBaseLogger, FastifyInstance } from "fastify";
 import { GraphQLError, type GraphQLFormattedError } from "graphql";
 import { merge } from "lodash-es";
-import { errorCodes, isUserFacingError } from "~/domain/errors.js";
+import {
+	InvalidArgumentError,
+	errorCodes,
+	isUserFacingError,
+} from "~/domain/errors.js";
 import type { User } from "~/domain/users.js";
 import type { Services } from "./server.js";
 
@@ -26,6 +30,16 @@ export function getFormatErrorHandler(log?: Partial<FastifyInstance["log"]>) {
 		 * If the error is a user-facing error, we can return it as-is.
 		 */
 		if (isUserFacingError(originalError)) {
+			if (originalError instanceof InvalidArgumentError) {
+				return merge({}, formattedError, {
+					message: originalError.message,
+					extensions: {
+						code: originalError.code,
+						formErrors: originalError.formErrors,
+					},
+				});
+			}
+
 			return merge({}, formattedError, {
 				message: originalError.message,
 				extensions: {

@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 /**
  * KnownDomainError is the base class for all errors in the application.
  * It is used to provide a consistent way to handle errors in the application.
@@ -22,10 +24,15 @@ export class KnownDomainError<TName extends string = string> extends Error {
 }
 
 export class InvalidArgumentError extends KnownDomainError<"InvalidArgumentError"> {
+	public formErrors?: Record<string, string[] | undefined>;
+
 	constructor(description: string, cause?: unknown) {
 		super("InvalidArgumentError", description, errorCodes.ERR_BAD_USER_INPUT, {
 			cause,
 		});
+		if (cause instanceof z.ZodError) {
+			this.formErrors = cause.flatten().fieldErrors;
+		}
 	}
 }
 
