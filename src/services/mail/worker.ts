@@ -1,7 +1,7 @@
-import type { Booking } from "@prisma/client";
 import type { Job, Processor } from "bullmq";
 import { DateTime } from "luxon";
 import { env } from "~/config.js";
+import type { BookingType } from "~/domain/cabins.js";
 import type { InternalServerError, KnownDomainError } from "~/domain/errors.js";
 import type { EventType } from "~/domain/events/index.js";
 import type { StudyProgram, User } from "~/domain/users.js";
@@ -21,7 +21,7 @@ export type EventService = {
 
 export type CabinService = {
 	getBooking(by: { id: string }): ResultAsync<
-		{ booking: Booking },
+		{ booking: BookingType },
 		KnownDomainError | InternalServerError
 	>;
 };

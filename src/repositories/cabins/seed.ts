@@ -4,17 +4,19 @@ import { DateTime } from "luxon";
 import { BookingStatus } from "~/domain/cabins.js";
 
 faker.seed(312849038190);
+const oksenId = faker.string.uuid();
+const bjornenId = faker.string.uuid();
 
 const cabinCreateInput: Prisma.CabinCreateInput[] = [
 	{
-		id: faker.string.uuid(),
+		id: oksenId,
 		name: "Oksen",
 		capacity: 18,
 		internalPrice: 10,
 		externalPrice: 20,
 	},
 	{
-		id: faker.string.uuid(),
+		id: bjornenId,
 		name: "Bjørnen",
 		capacity: 18,
 		internalPrice: 10,
@@ -32,9 +34,9 @@ const bookingCreateInput: Prisma.BookingCreateInput[] = [
 		phoneNumber: faker.phone.number(),
 		firstName: faker.person.firstName(),
 		lastName: faker.person.lastName(),
-		cabin: {
+		cabins: {
 			connect: {
-				name: "Oksen",
+				id: oksenId,
 			},
 		},
 	},
@@ -47,9 +49,9 @@ const bookingCreateInput: Prisma.BookingCreateInput[] = [
 		phoneNumber: faker.phone.number(),
 		firstName: faker.person.firstName(),
 		lastName: faker.person.lastName(),
-		cabin: {
+		cabins: {
 			connect: {
-				name: "Oksen",
+				id: oksenId,
 			},
 		},
 	},
@@ -62,9 +64,9 @@ const bookingCreateInput: Prisma.BookingCreateInput[] = [
 		phoneNumber: faker.phone.number(),
 		firstName: faker.person.firstName(),
 		lastName: faker.person.lastName(),
-		cabin: {
+		cabins: {
 			connect: {
-				name: "Oksen",
+				id: oksenId,
 			},
 		},
 	},
@@ -77,9 +79,9 @@ const bookingCreateInput: Prisma.BookingCreateInput[] = [
 		phoneNumber: faker.phone.number(),
 		firstName: faker.person.firstName(),
 		lastName: faker.person.lastName(),
-		cabin: {
+		cabins: {
 			connect: {
-				name: "Oksen",
+				id: oksenId,
 			},
 		},
 	},
@@ -92,9 +94,9 @@ const bookingCreateInput: Prisma.BookingCreateInput[] = [
 		phoneNumber: faker.phone.number(),
 		firstName: faker.person.firstName(),
 		lastName: faker.person.lastName(),
-		cabin: {
+		cabins: {
 			connect: {
-				name: "Oksen",
+				id: oksenId,
 			},
 		},
 	},
@@ -164,7 +166,11 @@ export const load = async (db: PrismaClient) => {
 	const bookings = await db.booking.findMany({
 		select: {
 			id: true,
-			cabinId: true,
+			cabins: {
+				select: {
+					id: true,
+				},
+			},
 			status: true,
 			firstName: true,
 			lastName: true,
