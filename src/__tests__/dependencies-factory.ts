@@ -80,6 +80,7 @@ export function makeTestServices(overrides?: Partial<Services>): Services & {
 		vippsFactory: mockDeep<typeof Client>(),
 		paymentProcessingQueue: mockDeep<PaymentProcessingQueueType>(),
 		productRepository,
+		mailService,
 		config: {
 			useTestMode: true,
 			returnUrl: env.SERVER_URL,

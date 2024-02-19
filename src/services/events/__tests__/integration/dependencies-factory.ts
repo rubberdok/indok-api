@@ -56,6 +56,7 @@ export function makeServices() {
 	const vipps = MockVippsClientFactory();
 	const productService = ProductService({
 		productRepository,
+		mailService,
 		paymentProcessingQueue: mockDeep<PaymentProcessingQueueType>(),
 		vippsFactory: vipps.factory,
 		config: {

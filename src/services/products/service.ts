@@ -8,6 +8,7 @@ import type {
 } from "~/domain/products.js";
 import type { Context } from "~/lib/context.js";
 import type { ResultAsync, TResult } from "~/lib/result.js";
+import type { EmailQueueDataType } from "../mail/worker.js";
 import { buildMerchants } from "./merchants.js";
 import { buildOrders } from "./orders.js";
 import { buildPayments } from "./payments.js";
@@ -92,10 +93,15 @@ interface ProductRepository {
 	>;
 }
 
+export interface MailService {
+	sendAsync(jobData: EmailQueueDataType): Promise<void>;
+}
+
 type BuildProductsDependencies = {
 	vippsFactory: typeof Client;
 	paymentProcessingQueue: PaymentProcessingQueueType;
 	productRepository: ProductRepository;
+	mailService: MailService;
 	config: {
 		returnUrl: string;
 		useTestMode?: boolean;
