@@ -2,17 +2,10 @@ import { faker } from "@faker-js/faker";
 import type { PrismaClient } from "@prisma/client";
 import { mockDeep } from "jest-mock-extended";
 import { InternalServerError, NotFoundError } from "~/domain/errors.js";
-import prisma from "~/lib/prisma.js";
 import { CabinRepository } from "../../repository.js";
 import { makeDependencies } from "./dependencies.js";
 
 describe("CabinRepository", () => {
-	let cabinRepository: CabinRepository;
-
-	beforeAll(() => {
-		cabinRepository = new CabinRepository(prisma);
-	});
-
 	describe("#updateBooking", () => {
 		it("should update a booking status", async () => {
 			const { cabinRepository, oksenBooking } = await makeDependencies();
