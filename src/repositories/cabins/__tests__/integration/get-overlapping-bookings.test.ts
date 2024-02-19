@@ -1,109 +1,204 @@
-import { randomUUID } from "crypto";
-import { faker } from "@faker-js/faker";
-import { jest } from "@jest/globals";
-import type { Cabin, PrismaClient } from "@prisma/client";
-import dayjs from "dayjs";
-import { BookingStatus } from "~/domain/cabins.js";
-import prisma from "~/lib/prisma.js";
-import { CabinRepository } from "../../index.js";
+import { DateTime } from "luxon";
+import { makeDependencies } from "./dependencies.js";
 
-const systemTime = dayjs().add(50, "years").toDate();
+describe("CabinRepository", () => {
+	describe("#getOverlappingBookings", () => {
+		it("should return an overlapping booking for the same cabin", async () => {
+			const { oksen, oksenBooking, cabinRepository, makeBooking } =
+				await makeDependencies();
 
-const cabins: Record<string, Cabin> = {};
-const id = randomUUID();
+			const booking = await makeBooking({
+				cabins: [{ id: oksen.id }],
+				startDate: DateTime.fromJSDate(oksenBooking.startDate)
+					.minus({ days: 1 })
+					.toJSDate(),
+				endDate: DateTime.fromJSDate(oksenBooking.endDate)
+					.plus({ days: 1 })
+					.toJSDate(),
+				status: "PENDING",
+			});
 
-let db: PrismaClient;
-let cabinRepository: CabinRepository;
+			const actual = await cabinRepository.getOverlappingBookings(booking, {
+				status: "CONFIRMED",
+			});
 
-beforeAll(() => {
-	db = prisma;
-	cabinRepository = new CabinRepository(db);
-	jest.useFakeTimers().setSystemTime(systemTime);
-});
-
-describe("Overlapping bookings", () => {
-	beforeEach(async () => {
-		await db.booking.deleteMany({
-			where: {
-				OR: [
-					{
-						startDate: {
-							gte: dayjs().toDate(),
-						},
-					},
-					{
-						endDate: {
-							gte: dayjs().toDate(),
-						},
-					},
-				],
-			},
-		});
-
-		const cabin = await db.cabin.upsert({
-			where: {
-				name: "Oksen",
-			},
-			update: {
-				capacity: 18,
-				internalPrice: 10,
-				externalPrice: 20,
-			},
-			create: {
-				name: "Oksen",
-				capacity: 18,
-				internalPrice: 10,
-				externalPrice: 20,
-			},
-		});
-		cabins.Oksen = cabin;
-
-		await db.booking.createMany({
-			data: [
-				{
-					cabinId: cabin.id,
-					email: faker.internet.email(),
-					phoneNumber: faker.phone.number(),
-					firstName: faker.person.firstName(),
-					lastName: faker.person.lastName(),
-					startDate: dayjs().add(1, "day").toDate(),
-					endDate: dayjs().add(2, "day").toDate(),
-					status: BookingStatus.CONFIRMED,
+			expect(actual).toEqual({
+				ok: true,
+				data: {
+					bookings: [expect.objectContaining({ id: oksenBooking.id })],
 				},
-				{
-					cabinId: cabin.id,
-					email: faker.internet.email(),
-					phoneNumber: faker.phone.number(),
-					firstName: faker.person.firstName(),
-					lastName: faker.person.lastName(),
-					startDate: dayjs().add(2, "day").toDate(),
-					endDate: dayjs().add(3, "day").toDate(),
-					status: BookingStatus.CONFIRMED,
-				},
-				{
-					id,
-					cabinId: cabin.id,
-					email: faker.internet.email(),
-					phoneNumber: faker.phone.number(),
-					firstName: faker.person.firstName(),
-					lastName: faker.person.lastName(),
-					startDate: dayjs().add(1, "day").toDate(),
-					endDate: dayjs().add(3, "day").toDate(),
-				},
-			],
-		});
-	});
-
-	it("should find overlapping bookings", async () => {
-		const bookings = await cabinRepository.getOverlappingBookings({
-			bookingId: id,
-			startDate: dayjs().add(1, "day").toDate(),
-			endDate: dayjs().add(3, "day").toDate(),
-			status: BookingStatus.CONFIRMED,
+			});
 		});
 
-		expect(bookings).toHaveLength(2);
-		expect(bookings[0]?.id).not.toBe(id);
-		expect(bookings[1]?.id).not.toBe(id);
+		it("should return an overlapping booking where at least one cabin is the same", async () => {
+			const { oksen, bothBooking, makeBooking, cabinRepository } =
+				await makeDependencies();
+
+			const booking = await makeBooking({
+				cabins: [{ id: oksen.id }],
+				startDate: DateTime.fromJSDate(bothBooking.startDate)
+					.minus({ days: 1 })
+					.toJSDate(),
+				endDate: DateTime.fromJSDate(bothBooking.endDate)
+					.plus({ days: 1 })
+					.toJSDate(),
+				status: "PENDING",
+			});
+
+			const actual = await cabinRepository.getOverlappingBookings(booking, {
+				status: "CONFIRMED",
+			});
+
+			expect(actual).toEqual({
+				ok: true,
+				data: {
+					bookings: [expect.objectContaining({ id: bothBooking.id })],
+				},
+			});
+		});
+
+		it("should return all bookings where at least one cabin overlaps", async () => {
+			const {
+				oksen,
+				oksenBooking,
+				bjørnenBooking,
+				bjørnen,
+				makeBooking,
+				cabinRepository,
+			} = await makeDependencies();
+
+			const booking = await makeBooking({
+				cabins: [{ id: oksen.id }, { id: bjørnen.id }],
+				startDate: DateTime.fromJSDate(oksenBooking.startDate)
+					.minus({ days: 1 })
+					.toJSDate(),
+				endDate: DateTime.fromJSDate(oksenBooking.endDate)
+					.plus({ days: 1 })
+					.toJSDate(),
+				status: "PENDING",
+			});
+
+			const actual = await cabinRepository.getOverlappingBookings(booking, {
+				status: "CONFIRMED",
+			});
+
+			expect(actual).toEqual({
+				ok: true,
+				data: {
+					bookings: expect.arrayContaining([
+						expect.objectContaining({ id: oksenBooking.id }),
+						expect.objectContaining({ id: bjørnenBooking.id }),
+					]),
+				},
+			});
+		});
+
+		it("should return a booking where startDate < existingStartDate and endDate > existingStartDate", async () => {
+			const { oksen, bothBooking, bjørnen, makeBooking, cabinRepository } =
+				await makeDependencies();
+
+			const booking = await makeBooking({
+				cabins: [{ id: oksen.id }, { id: bjørnen.id }],
+				startDate: DateTime.fromJSDate(bothBooking.startDate)
+					.minus({ days: 1 })
+					.toJSDate(),
+				endDate: DateTime.fromJSDate(bothBooking.endDate)
+					.plus({ days: 1 })
+					.toJSDate(),
+				status: "PENDING",
+			});
+
+			const actual = await cabinRepository.getOverlappingBookings(booking, {
+				status: "CONFIRMED",
+			});
+
+			expect(actual).toEqual({
+				ok: true,
+				data: {
+					bookings: [expect.objectContaining({ id: bothBooking.id })],
+				},
+			});
+		});
+
+		it("should return a booking where existingStartDate < startDate and endDate < existingEndDate", async () => {
+			const { oksen, bothBooking, bjørnen, makeBooking, cabinRepository } =
+				await makeDependencies();
+
+			const booking = await makeBooking({
+				cabins: [{ id: oksen.id }, { id: bjørnen.id }],
+				startDate: DateTime.fromJSDate(bothBooking.startDate)
+					.minus({ days: 1 })
+					.toJSDate(),
+				endDate: DateTime.fromJSDate(bothBooking.endDate)
+					.minus({ days: 1 })
+					.toJSDate(),
+				status: "PENDING",
+			});
+
+			const actual = await cabinRepository.getOverlappingBookings(booking, {
+				status: "CONFIRMED",
+			});
+
+			expect(actual).toEqual({
+				ok: true,
+				data: {
+					bookings: [expect.objectContaining({ id: bothBooking.id })],
+				},
+			});
+		});
+
+		it("should return a booking where startDate < existingEndDate and endDate > existingEndDate", async () => {
+			const { oksen, bothBooking, bjørnen, makeBooking, cabinRepository } =
+				await makeDependencies();
+
+			const booking = await makeBooking({
+				cabins: [{ id: oksen.id }, { id: bjørnen.id }],
+				startDate: DateTime.fromJSDate(bothBooking.endDate)
+					.minus({ days: 1 })
+					.toJSDate(),
+				endDate: DateTime.fromJSDate(bothBooking.endDate)
+					.plus({ days: 1 })
+					.toJSDate(),
+				status: "PENDING",
+			});
+
+			const actual = await cabinRepository.getOverlappingBookings(booking, {
+				status: "CONFIRMED",
+			});
+
+			expect(actual).toEqual({
+				ok: true,
+				data: {
+					bookings: [expect.objectContaining({ id: bothBooking.id })],
+				},
+			});
+		});
+
+		it("should return no bookings if there is no overlap", async () => {
+			const { oksen, bothBooking, bjørnen, makeBooking, cabinRepository } =
+				await makeDependencies();
+
+			const booking = await makeBooking({
+				cabins: [{ id: oksen.id }, { id: bjørnen.id }],
+				startDate: DateTime.fromJSDate(bothBooking.endDate)
+					.plus({ years: 1 })
+					.toJSDate(),
+				endDate: DateTime.fromJSDate(bothBooking.endDate)
+					.plus({ years: 1 })
+					.toJSDate(),
+				status: "PENDING",
+			});
+
+			const actual = await cabinRepository.getOverlappingBookings(booking, {
+				status: "CONFIRMED",
+			});
+
+			expect(actual).toEqual({
+				ok: true,
+				data: {
+					bookings: [],
+				},
+			});
+		});
 	});
 });

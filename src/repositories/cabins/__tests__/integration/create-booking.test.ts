@@ -1,5 +1,6 @@
 import { faker } from "@faker-js/faker";
 import { BookingStatus } from "@prisma/client";
+import { NotFoundError } from "~/domain/errors.js";
 import prisma from "~/lib/prisma.js";
 import { CabinRepository } from "../../index.js";
 
@@ -11,7 +12,7 @@ describe("Cabin Repository", () => {
 			cabinRepository = new CabinRepository(prisma);
 		});
 
-		it("should create a booking", async () => {
+		it("should create a booking for a single cabin", async () => {
 			/**
 			 * Arrange
 			 *
@@ -32,8 +33,10 @@ describe("Cabin Repository", () => {
 			 *
 			 * Create a new booking
 			 */
-			const actual = cabinRepository.createBooking({
-				cabinId: cabin.id,
+			const actual = await cabinRepository.createBooking({
+				status: "PENDING",
+				id: faker.string.uuid(),
+				cabins: [{ id: cabin.id }],
 				startDate: faker.date.soon(),
 				endDate: faker.date.soon(),
 				email: faker.internet.exampleEmail(),
@@ -47,18 +50,120 @@ describe("Cabin Repository", () => {
 			 *
 			 * The booking should be created with default status PENDING
 			 */
-			expect(actual).resolves.toEqual({
-				cabinId: cabin.id,
-				status: BookingStatus.PENDING,
-				id: expect.any(String),
-				startDate: expect.any(Date),
-				endDate: expect.any(Date),
-				email: expect.any(String),
-				firstName: expect.any(String),
-				lastName: expect.any(String),
-				phoneNumber: expect.any(String),
-				createdAt: expect.any(Date),
-				updatedAt: expect.any(Date),
+			expect(actual).toEqual({
+				ok: true,
+				data: {
+					booking: expect.objectContaining({
+						cabins: expect.arrayContaining([
+							expect.objectContaining({ id: cabin.id }),
+						]),
+						status: BookingStatus.PENDING,
+					}),
+				},
+			});
+		});
+
+		it("should create a booking multiple cabins", async () => {
+			/**
+			 * Arrange
+			 *
+			 * 1. create two cabins
+			 */
+			// 1.
+			const cabin1 = await prisma.cabin.create({
+				data: {
+					name: faker.string.sample(),
+					capacity: faker.number.int({ max: 10 }),
+					internalPrice: faker.number.int({ max: 2000 }),
+					externalPrice: faker.number.int({ max: 2000 }),
+				},
+			});
+			const cabin2 = await prisma.cabin.create({
+				data: {
+					name: faker.string.sample(),
+					capacity: faker.number.int({ max: 10 }),
+					internalPrice: faker.number.int({ max: 2000 }),
+					externalPrice: faker.number.int({ max: 2000 }),
+				},
+			});
+
+			/**
+			 * Act
+			 *
+			 * Create a new booking
+			 */
+			const actual = await cabinRepository.createBooking({
+				status: "PENDING",
+				id: faker.string.uuid(),
+				cabins: [{ id: cabin1.id }, { id: cabin2.id }],
+				startDate: faker.date.soon(),
+				endDate: faker.date.soon(),
+				email: faker.internet.exampleEmail(),
+				firstName: faker.person.firstName(),
+				lastName: faker.person.lastName(),
+				phoneNumber: faker.phone.number(),
+			});
+
+			/**
+			 * Assert
+			 *
+			 * The booking should be created with default status PENDING
+			 */
+			expect(actual).toEqual({
+				ok: true,
+				data: {
+					booking: expect.objectContaining({
+						cabins: expect.arrayContaining([
+							expect.objectContaining({ id: cabin1.id }),
+							expect.objectContaining({ id: cabin2.id }),
+						]),
+						status: BookingStatus.PENDING,
+					}),
+				},
+			});
+		});
+
+		it("should return NotFoundError if at least one of the cabins don't exist", async () => {
+			/**
+			 * Arrange
+			 *
+			 * 1. create a cabins
+			 */
+			// 1.
+			const cabin = await prisma.cabin.create({
+				data: {
+					name: faker.string.sample(),
+					capacity: faker.number.int({ max: 10 }),
+					internalPrice: faker.number.int({ max: 2000 }),
+					externalPrice: faker.number.int({ max: 2000 }),
+				},
+			});
+
+			/**
+			 * Act
+			 *
+			 * Create a new booking
+			 */
+			const actual = await cabinRepository.createBooking({
+				status: "PENDING",
+				id: faker.string.uuid(),
+				cabins: [{ id: cabin.id }, { id: faker.string.uuid() }],
+				startDate: faker.date.soon(),
+				endDate: faker.date.soon(),
+				email: faker.internet.exampleEmail(),
+				firstName: faker.person.firstName(),
+				lastName: faker.person.lastName(),
+				phoneNumber: faker.phone.number(),
+			});
+
+			/**
+			 * Assert
+			 *
+			 * The booking should not be created and return NotFoundError
+			 */
+			expect(actual).toEqual({
+				ok: false,
+				error: expect.any(NotFoundError),
 			});
 		});
 	});

@@ -1,8 +1,8 @@
-import type { Booking } from "@prisma/client";
-import type { Job, Processor } from "bullmq";
+import { type Job, type Processor, UnrecoverableError } from "bullmq";
 import { DateTime } from "luxon";
 import { env } from "~/config.js";
-import type { InternalServerError, KnownDomainError } from "~/domain/errors.js";
+import type { BookingType } from "~/domain/cabins.js";
+import type { InternalServerError, NotFoundError } from "~/domain/errors.js";
 import type { EventType } from "~/domain/events/index.js";
 import type { StudyProgram, User } from "~/domain/users.js";
 import type { Queue } from "~/lib/bullmq/queue.js";
@@ -21,8 +21,8 @@ export type EventService = {
 
 export type CabinService = {
 	getBooking(by: { id: string }): ResultAsync<
-		{ booking: Booking },
-		KnownDomainError | InternalServerError
+		{ booking: BookingType },
+		NotFoundError | InternalServerError
 	>;
 };
 
@@ -135,9 +135,12 @@ const EmailHandler = ({
 					id: bookingId,
 				});
 				if (!getBookingResult.ok) {
-					return {
-						ok: false,
-					};
+					switch (getBookingResult.error.name) {
+						case "NotFoundError":
+							throw new UnrecoverableError("Booking does not exist");
+						case "InternalServerError":
+							throw getBookingResult.error;
+					}
 				}
 				const { booking } = getBookingResult.data;
 				const user = await userService.get(booking.email);

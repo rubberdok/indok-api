@@ -5,19 +5,19 @@ import { DateTime } from "luxon";
 import { NotFoundError, PermissionDeniedError } from "~/domain/errors.js";
 import { makeMockContext } from "~/lib/context.js";
 import {
-	type CabinRepository,
 	CabinService,
+	type ICabinRepository,
 	type MailService,
 	type PermissionService,
 } from "../../service.js";
 
 describe("CabinService", () => {
-	let cabinRepository: DeepMockProxy<CabinRepository>;
+	let cabinRepository: DeepMockProxy<ICabinRepository>;
 	let cabinService: CabinService;
 	let permissionSerivce: DeepMockProxy<PermissionService>;
 
 	beforeAll(() => {
-		cabinRepository = mockDeep<CabinRepository>();
+		cabinRepository = mockDeep<ICabinRepository>();
 		permissionSerivce = mockDeep<PermissionService>();
 		cabinService = new CabinService(
 			cabinRepository,

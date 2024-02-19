@@ -1,6 +1,11 @@
 import type { BookingResolvers } from "./../../types.generated.js";
 export const Booking: BookingResolvers = {
-	cabin: (parent, _arg, ctx) => {
-		return ctx.cabins.getCabin(parent.cabinId);
+	cabins: async ({ cabins }, _args, ctx) => {
+		const cabinsResult = await Promise.all(
+			cabins.map((cabin) => {
+				return ctx.cabins.getCabin(cabin.id);
+			}),
+		);
+		return cabinsResult;
 	},
 };

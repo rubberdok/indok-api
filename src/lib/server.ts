@@ -1,5 +1,4 @@
 import type {
-	Booking,
 	BookingContact,
 	BookingSemester,
 	Cabin,
@@ -18,7 +17,7 @@ import { Client } from "@vippsmobilepay/sdk";
 import type { Job } from "bullmq";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { type Configuration, env } from "~/config.js";
-import type { BookingStatus } from "~/domain/cabins.js";
+import type { BookingStatus, BookingType } from "~/domain/cabins.js";
 import {
 	type DownstreamServiceError,
 	InternalServerError,
@@ -169,23 +168,36 @@ interface IUserService {
 	}): Promise<StudyProgram>;
 }
 
-interface BookingData {
+type NewBookingParams = {
+	cabins: { id: string }[];
 	email: string;
 	firstName: string;
 	lastName: string;
 	startDate: Date;
 	endDate: Date;
 	phoneNumber: string;
-	cabinId: string;
-}
+};
 
 interface ICabinService {
-	newBooking(data: BookingData): Promise<Booking>;
+	newBooking(
+		ctx: Context,
+		params: NewBookingParams,
+	): ResultAsync<
+		{ booking: BookingType },
+		InvalidArgumentError | InternalServerError
+	>;
 	updateBookingStatus(
 		ctx: Context,
 		id: string,
 		status: BookingStatus,
-	): Promise<Booking>;
+	): ResultAsync<
+		{ booking: BookingType },
+		| NotFoundError
+		| InternalServerError
+		| InvalidArgumentError
+		| UnauthorizedError
+		| PermissionDeniedError
+	>;
 	getCabin(id: string): Promise<Cabin>;
 	getCabinByBookingId(bookingId: string): Promise<Cabin>;
 	findManyCabins(): Promise<Cabin[]>;
@@ -210,6 +222,21 @@ interface ICabinService {
 			email: string | null;
 		}>,
 	): Promise<Pick<BookingContact, "email" | "name" | "phoneNumber" | "id">>;
+	createCabin(
+		ctx: Context,
+		params: {
+			name: string;
+			capacity: number;
+			internalPrice: number;
+			externalPrice: number;
+		},
+	): ResultAsync<
+		{ cabin: Cabin },
+		| InvalidArgumentError
+		| PermissionDeniedError
+		| UnauthorizedError
+		| InternalServerError
+	>;
 }
 
 interface IEventService {
@@ -612,4 +639,4 @@ async function registerServices(
 }
 
 export { registerServices, startServer };
-export type { ServerDependencies, Services };
+export type { ServerDependencies, Services, ICabinService, NewBookingParams };

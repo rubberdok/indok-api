@@ -1,5 +1,5 @@
+import { randomUUID } from "crypto";
 import {
-	type Booking,
 	type BookingContact as PrismaBookingContact,
 	type BookingSemester,
 	type Cabin,
@@ -8,44 +8,40 @@ import {
 } from "@prisma/client";
 import { DateTime } from "luxon";
 import { z } from "zod";
-import { BookingStatus } from "~/domain/cabins.js";
+import { Booking, BookingStatus, type BookingType } from "~/domain/cabins.js";
 import {
 	InternalServerError,
 	InvalidArgumentError,
-	KnownDomainError,
 	NotFoundError,
 	PermissionDeniedError,
+	UnauthorizedError,
 } from "~/domain/errors.js";
 import type { Context } from "~/lib/context.js";
-import type { ResultAsync } from "~/lib/result.js";
+import type { Result, ResultAsync } from "~/lib/result.js";
+import type { ICabinService, NewBookingParams } from "~/lib/server.js";
 import type { EmailQueueDataType } from "../mail/worker.js";
-
-export interface BookingData {
-	email: string;
-	firstName: string;
-	lastName: string;
-	startDate: Date;
-	endDate: Date;
-	phoneNumber: string;
-	cabinId: string;
-}
 
 type BookingContact = Pick<
 	PrismaBookingContact,
 	"email" | "name" | "phoneNumber" | "id"
 >;
 
-export interface CabinRepository {
+export interface ICabinRepository {
 	getCabinById(id: string): Promise<Cabin>;
-	createBooking(data: BookingData): Promise<Booking>;
-	updateBooking(id: string, data: Partial<Booking>): Promise<Booking>;
-	getBookingById(id: string): Promise<Booking>;
-	getOverlappingBookings(data: {
-		bookingId: string;
-		startDate: Date;
-		endDate: Date;
-		status: BookingStatus;
-	}): Promise<Booking[]>;
+	createBooking(
+		params: BookingType,
+	): ResultAsync<{ booking: BookingType }, InternalServerError | NotFoundError>;
+	updateBooking(
+		id: string,
+		data: Pick<BookingType, "status">,
+	): ResultAsync<{ booking: BookingType }, NotFoundError | InternalServerError>;
+	getBookingById(
+		id: string,
+	): ResultAsync<{ booking: BookingType }, NotFoundError | InternalServerError>;
+	getOverlappingBookings(
+		booking: BookingType,
+		params: Pick<BookingType, "status">,
+	): ResultAsync<{ bookings: BookingType[] }, InternalServerError>;
 	getCabinByBookingId(bookingId: string): Promise<Cabin>;
 	findManyCabins(): Promise<Cabin[]>;
 	updateBookingSemester(data: {
@@ -69,6 +65,12 @@ export interface CabinRepository {
 			email?: string | null;
 		}>,
 	): Promise<BookingContact>;
+	createCabin(params: {
+		name: string;
+		capacity: number;
+		internalPrice: number;
+		externalPrice: number;
+	}): ResultAsync<{ cabin: Cabin }, InternalServerError>;
 }
 
 export interface PermissionService {
@@ -84,12 +86,120 @@ export interface MailService {
 	sendAsync(jobData: EmailQueueDataType): Promise<void>;
 }
 
-export class CabinService {
+export class CabinService implements ICabinService {
 	constructor(
-		private cabinRepository: CabinRepository,
+		private cabinRepository: ICabinRepository,
 		private mailService: MailService,
 		private permissionService: PermissionService,
 	) {}
+
+	async createCabin(
+		ctx: Context,
+		params: {
+			name: string;
+			capacity: number;
+			internalPrice: number;
+			externalPrice: number;
+		},
+	): ResultAsync<
+		{
+			cabin: Cabin;
+		},
+		| PermissionDeniedError
+		| UnauthorizedError
+		| InvalidArgumentError
+		| InternalServerError
+	> {
+		if (!ctx.user) {
+			return {
+				ok: false,
+				error: new UnauthorizedError(
+					"You must be logged in to perform this action",
+				),
+			};
+		}
+
+		const hasPermission = await this.permissionService.hasFeaturePermission(
+			ctx,
+			{
+				featurePermission: FeaturePermission.CABIN_ADMIN,
+			},
+		);
+
+		if (hasPermission !== true) {
+			return {
+				ok: false,
+				error: new PermissionDeniedError(
+					"You do not have permission to create a new cabin.",
+				),
+			};
+		}
+
+		const createCabinResult = await this.cabinRepository.createCabin(params);
+
+		if (!createCabinResult.ok) {
+			return {
+				ok: false,
+				error: new InternalServerError(
+					"Unexpected error occurred while creating cabin",
+					createCabinResult.error,
+				),
+			};
+		}
+
+		return createCabinResult;
+	}
+
+	async newBooking(
+		_ctx: Context,
+		params: NewBookingParams,
+	): ResultAsync<
+		{
+			booking: BookingType;
+		},
+		InvalidArgumentError | InternalServerError
+	> {
+		const bookingSemesters = await this.getBookingSemesters();
+		const validateResult = this.validateBooking(params, bookingSemesters);
+		if (!validateResult.ok) {
+			return validateResult;
+		}
+		const { validated: validatedData } = validateResult.data;
+		const newBooking = new Booking(
+			new Booking({ ...validatedData, status: "PENDING", id: randomUUID() }),
+		);
+
+		const createBookingResult =
+			await this.cabinRepository.createBooking(newBooking);
+		if (!createBookingResult.ok) {
+			switch (createBookingResult.error.name) {
+				case "NotFoundError":
+					return {
+						ok: false,
+						error: new InvalidArgumentError(
+							"The cabin you tried to book does not exist",
+							createBookingResult.error,
+						),
+					};
+				case "InternalServerError":
+					return {
+						ok: false,
+						error: new InternalServerError(
+							"An unknown error occurred",
+							createBookingResult.error,
+						),
+					};
+			}
+		}
+		const { booking } = createBookingResult.data;
+		await this.sendBookingConfirmation(booking);
+		return {
+			ok: true,
+			data: {
+				booking,
+			},
+		};
+	}
 
 	getCabinByBookingId(bookingId: string): Promise<Cabin> {
 		return this.cabinRepository.getCabinByBookingId(bookingId);
@@ -179,16 +289,22 @@ export class CabinService {
 	}
 
 	private validateBooking(
-		data: BookingData,
+		data: NewBookingParams,
 		bookingSemesters: {
 			spring: BookingSemester | null;
 			fall: BookingSemester | null;
 		},
-	): BookingData {
+	): Result<
+		{ validated: Omit<BookingType, "id" | "status"> },
+		InvalidArgumentError
+	> {
 		const { fall, spring } = bookingSemesters;
 
 		if (!fall?.bookingsEnabled && !spring?.bookingsEnabled)
-			throw new InvalidArgumentError("Bookings are not enabled.");
+			return {
+				ok: false,
+				error: new InvalidArgumentError("Bookings are not enabled."),
+			};
 
 		const bookingSchema = z
 			.object({
@@ -204,10 +320,15 @@ export class CabinService {
 				phoneNumber: z.string().regex(/^(0047|\+47|47)?\d{8}$/, {
 					message: "invalid phone number",
 				}),
-				cabinId: z.string().uuid({ message: "invalid cabin id" }),
+				cabins: z
+					.array(
+						z.object({ id: z.string().uuid({ message: "invalid cabin id" }) }),
+					)
+					.min(1, "at least one cabin must be booked"),
 			})
 			.refine((obj) => obj.endDate > obj.startDate, {
 				message: "end date must be after start date",
+				path: ["startDate", "endDate"],
 			})
 			.refine(
 				(obj) => {
@@ -235,39 +356,29 @@ export class CabinService {
 					path: ["startDate", "endDate"],
 				},
 			);
-		try {
-			return bookingSchema.parse(data);
-		} catch (err) {
-			if (err instanceof z.ZodError) {
-				throw new InvalidArgumentError(err.message);
-			}
-			throw err;
+		const parseResult = bookingSchema.safeParse(data);
+		if (!parseResult.success) {
+			return {
+				ok: false,
+				error: new InvalidArgumentError(
+					"Invalid booking data",
+					parseResult.error,
+				),
+			};
 		}
+		return {
+			ok: true,
+			data: {
+				validated: parseResult.data,
+			},
+		};
 	}
 
-	private async sendBookingConfirmation(booking: Booking) {
+	private async sendBookingConfirmation(booking: BookingType) {
 		await this.mailService.sendAsync({
 			type: "cabin-booking-receipt",
 			bookingId: booking.id,
 		});
-	}
-
-	/**
-	 * newBooking creates a new booking. Does not require any authentication.
-	 *
-	 * Sends a booking confirmation email to the user.
-	 *
-	 * @throws {InvalidArgumentError} if the booking data is invalid
-	 *
-	 * @param data - The booking data
-	 * @returns The created booking
-	 */
-	async newBooking(data: BookingData): Promise<Booking> {
-		const bookingSemesters = await this.getBookingSemesters();
-		const validatedData = this.validateBooking(data, bookingSemesters);
-		const booking = await this.cabinRepository.createBooking(validatedData);
-		this.sendBookingConfirmation(booking);
-		return booking;
 	}
 
 	/**
@@ -284,7 +395,23 @@ export class CabinService {
 		ctx: Context,
 		id: string,
 		status: BookingStatus,
-	): Promise<Booking> {
+	): ResultAsync<
+		{ booking: BookingType },
+		| InternalServerError
+		| NotFoundError
+		| InvalidArgumentError
+		| PermissionDeniedError
+		| UnauthorizedError
+	> {
+		if (!ctx.user) {
+			return {
+				ok: false,
+				error: new UnauthorizedError(
+					"You must be logged in to perform this action",
+				),
+			};
+		}
+
 		const hasPermission = await this.permissionService.hasFeaturePermission(
 			ctx,
 			{
@@ -293,22 +420,39 @@ export class CabinService {
 		);
 
 		if (!hasPermission)
-			throw new PermissionDeniedError(
-				"You do not have permission to update this booking.",
-			);
+			return {
+				ok: false,
+				error: new PermissionDeniedError(
+					"You do not have permission to update this booking.",
+				),
+			};
 
 		if (status === BookingStatus.CONFIRMED) {
-			const booking = await this.cabinRepository.getBookingById(id);
-			const overlapping = await this.cabinRepository.getOverlappingBookings({
-				bookingId: id,
-				startDate: booking.startDate,
-				endDate: booking.endDate,
-				status,
-			});
-			if (overlapping.length > 0) {
-				throw new InvalidArgumentError(
-					"this booking overlaps with another confirmed booking",
-				);
+			const getBookingResult = await this.cabinRepository.getBookingById(id);
+			if (!getBookingResult.ok) {
+				return getBookingResult;
+			}
+			const { booking } = getBookingResult.data;
+
+			const getOverlappingBookingsResult =
+				await this.cabinRepository.getOverlappingBookings(booking, { status });
+			if (!getOverlappingBookingsResult.ok) {
+				return {
+					ok: false,
+					error: new InternalServerError(
+						"An unknown error occurred",
+						getOverlappingBookingsResult.error,
+					),
+				};
+			}
+			const { bookings } = getOverlappingBookingsResult.data;
+			if (bookings.length > 0) {
+				return {
+					ok: false,
+					error: new InvalidArgumentError(
+						"this booking overlaps with another confirmed booking",
+					),
+				};
 			}
 		}
 		return this.cabinRepository.updateBooking(id, { status });
@@ -528,28 +672,10 @@ export class CabinService {
 	}
 
 	async getBooking(by: { id: string }): ResultAsync<
-		{ booking: Booking },
-		InternalServerError | KnownDomainError
+		{ booking: BookingType },
+		InternalServerError | NotFoundError
 	> {
-		try {
-			const booking = await this.cabinRepository.getBookingById(by.id);
-			return {
-				ok: true,
-				data: {
-					booking,
-				},
-			};
-		} catch (err) {
-			if (err instanceof KnownDomainError) {
-				return {
-					ok: false,
-					error: err,
-				};
-			}
-			return {
-				ok: false,
-				error: new InternalServerError("An unknown error occurred"),
-			};
-		}
+		const getBookingResult = await this.cabinRepository.getBookingById(by.id);
+		return getBookingResult;
 	}
 }

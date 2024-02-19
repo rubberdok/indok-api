@@ -21,7 +21,7 @@ type AddMemberResponse {
 }
 
 type Booking {
-  cabin: Cabin!
+  cabins: [Cabin]!
   email: String!
   endDate: DateTime!
   firstName: String!
@@ -573,8 +573,12 @@ type Mutation {
   updateUser(data: UpdateUserInput!): UpdateUserResponse!
 }
 
+input NewBookingCabinInput {
+  id: ID!
+}
+
 input NewBookingInput {
-  cabinId: ID!
+  cabins: [NewBookingCabinInput!]!
   email: String!
   endDate: DateTime!
   firstName: String!

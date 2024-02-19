@@ -1,27 +1,28 @@
 import { faker } from "@faker-js/faker";
-import { type Booking, type Cabin, FeaturePermission } from "@prisma/client";
+import { type Cabin, FeaturePermission } from "@prisma/client";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
-import { BookingStatus } from "~/domain/cabins.js";
+import { BookingStatus, type BookingType } from "~/domain/cabins.js";
 import {
 	InvalidArgumentError,
 	PermissionDeniedError,
+	UnauthorizedError,
 } from "~/domain/errors.js";
 import { makeMockContext } from "~/lib/context.js";
 import {
-	type CabinRepository,
 	CabinService,
+	type ICabinRepository,
 	type MailService,
 	type PermissionService,
 } from "../../service.js";
 
 describe("CabinService", () => {
-	let cabinRepository: DeepMockProxy<CabinRepository>;
+	let cabinRepository: DeepMockProxy<ICabinRepository>;
 	let mailService: DeepMockProxy<MailService>;
 	let permissionService: DeepMockProxy<PermissionService>;
 	let cabinService: CabinService;
 
 	beforeAll(() => {
-		cabinRepository = mockDeep<CabinRepository>();
+		cabinRepository = mockDeep<ICabinRepository>();
 		mailService = mockDeep<MailService>();
 		permissionService = mockDeep<PermissionService>();
 		cabinService = new CabinService(
@@ -32,7 +33,7 @@ describe("CabinService", () => {
 	});
 
 	describe("updateBookingStatus", () => {
-		it("should throw PermissionDeniedError if user does not have permission to update booking", async () => {
+		it("should return PermissionDeniedError if user does not have permission to update booking", async () => {
 			/**
 			 * Arrange
 			 *
@@ -48,7 +49,7 @@ describe("CabinService", () => {
 			 *
 			 * Call updateBookingStatus
 			 */
-			const updateBookingStatus = cabinService.updateBookingStatus(
+			const updateBookingStatus = await cabinService.updateBookingStatus(
 				makeMockContext({ id: userId }),
 				faker.string.uuid(),
 				BookingStatus.CONFIRMED,
@@ -60,13 +61,40 @@ describe("CabinService", () => {
 			 * Expect updateBookingStatus to throw a PermissionDeniedError
 			 * Expect permissionService.hasFeaturePermission to be called with the correct arguments
 			 */
-			await expect(updateBookingStatus).rejects.toThrow(PermissionDeniedError);
+			expect(updateBookingStatus).toEqual({
+				ok: false,
+				error: expect.any(PermissionDeniedError),
+			});
 			expect(permissionService.hasFeaturePermission).toHaveBeenCalledWith(
 				expect.anything(),
 				{
 					featurePermission: FeaturePermission.CABIN_ADMIN,
 				},
 			);
+		});
+
+		it("should return UnauthorizedError if the user is not logged in", async () => {
+			/**
+			 * Act
+			 *
+			 * Call updateBookingStatus
+			 */
+			const updateBookingStatus = await cabinService.updateBookingStatus(
+				makeMockContext(null),
+				faker.string.uuid(),
+				BookingStatus.CONFIRMED,
+			);
+
+			/**
+			 * Assert
+			 *
+			 * Expect updateBookingStatus to throw a PermissionDeniedError
+			 * Expect permissionService.hasFeaturePermission to be called with the correct arguments
+			 */
+			expect(updateBookingStatus).toEqual({
+				ok: false,
+				error: expect.any(UnauthorizedError),
+			});
 		});
 
 		it("should throw InvalidArgumentError if there are overlapping bookings", async () => {
@@ -81,23 +109,29 @@ describe("CabinService", () => {
 			const userId = faker.string.uuid();
 			cabinRepository.getCabinByBookingId.mockResolvedValueOnce(mock<Cabin>());
 			permissionService.hasFeaturePermission.mockResolvedValueOnce(true);
-			cabinRepository.getBookingById.mockResolvedValueOnce(
-				mock<Booking>({
-					id: faker.string.uuid(),
-					startDate: faker.date.future(),
-					endDate: faker.date.future(),
-				}),
-			);
-			cabinRepository.getOverlappingBookings.mockResolvedValueOnce([
-				mock<Booking>({ id: faker.string.uuid() }),
-			]);
+			cabinRepository.getBookingById.mockResolvedValueOnce({
+				ok: true,
+				data: {
+					booking: mock<BookingType>({
+						id: faker.string.uuid(),
+						startDate: faker.date.future(),
+						endDate: faker.date.future(),
+					}),
+				},
+			});
+			cabinRepository.getOverlappingBookings.mockResolvedValueOnce({
+				ok: true,
+				data: {
+					bookings: [mock<BookingType>({ id: faker.string.uuid() })],
+				},
+			});
 
 			/**
 			 * Act
 			 *
 			 * Call updateBookingStatus
 			 */
-			const updateBookingStatus = cabinService.updateBookingStatus(
+			const updateBookingStatus = await cabinService.updateBookingStatus(
 				makeMockContext({ id: userId }),
 				faker.string.uuid(),
 				BookingStatus.CONFIRMED,
@@ -106,10 +140,12 @@ describe("CabinService", () => {
 			/**
 			 * Assert
 			 *
-			 * Expect updateBookingStatus to throw a PermissionDeniedError
-			 * Expect permissionService.hasFeaturePermission to be called with the correct arguments
+			 * Expect updateBookingStatus to return an InvalidArgumentError
 			 */
-			await expect(updateBookingStatus).rejects.toThrow(InvalidArgumentError);
+			expect(updateBookingStatus).toEqual({
+				ok: false,
+				error: expect.any(InvalidArgumentError),
+			});
 		});
 	});
 });

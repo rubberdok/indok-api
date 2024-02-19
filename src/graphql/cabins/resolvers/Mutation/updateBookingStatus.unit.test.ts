@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker";
-import type { Booking } from "@prisma/client";
 import { mock } from "jest-mock-extended";
+import type { BookingType } from "~/domain/cabins.js";
 import { errorCodes } from "~/domain/errors.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
@@ -42,9 +42,12 @@ describe("Cabin mutations", () => {
 			const id = faker.string.uuid();
 			const userId = faker.string.uuid();
 			const authenticatedContext = createMockContext({ user: { id: userId } });
-			cabinService.updateBookingStatus.mockResolvedValueOnce(
-				mock<Booking>({ id }),
-			);
+			cabinService.updateBookingStatus.mockResolvedValueOnce({
+				ok: true,
+				data: {
+					booking: mock<BookingType>({ id }),
+				},
+			});
 
 			const { errors } = await client.mutate(
 				{

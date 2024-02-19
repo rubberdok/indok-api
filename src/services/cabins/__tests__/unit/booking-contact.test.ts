@@ -7,20 +7,20 @@ import {
 } from "~/domain/errors.js";
 import { makeMockContext } from "~/lib/context.js";
 import {
-	type CabinRepository,
 	CabinService,
+	type ICabinRepository,
 	type MailService,
 	type PermissionService,
 } from "../../service.js";
 
 describe("CabinService", () => {
 	let cabinService: CabinService;
-	let cabinRepository: DeepMockProxy<CabinRepository>;
+	let cabinRepository: DeepMockProxy<ICabinRepository>;
 	let permissionService: DeepMockProxy<PermissionService>;
 	let mailService: DeepMockProxy<MailService>;
 
 	beforeAll(() => {
-		cabinRepository = mockDeep<CabinRepository>();
+		cabinRepository = mockDeep<ICabinRepository>();
 		permissionService = mockDeep<PermissionService>();
 		mailService = mockDeep<MailService>();
 		cabinService = new CabinService(

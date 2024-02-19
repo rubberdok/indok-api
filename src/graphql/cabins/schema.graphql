@@ -14,7 +14,7 @@ type Booking {
   lastName: String!
   email: String!
   phoneNumber: String!
-  cabin: Cabin!
+  cabins: [Cabin]!
   status: Status!
 }
 
@@ -66,8 +66,12 @@ type BookingSemestersResponse {
   fall: BookingSemester
 }
 
+input NewBookingCabinInput {
+  id: ID!
+}
+
 input NewBookingInput {
-  cabinId: ID!
+  cabins: [NewBookingCabinInput!]!
   startDate: DateTime!
   endDate: DateTime!
   firstName: String!
@@ -136,9 +140,13 @@ type Mutation {
   Updates the booking semester for the given semester, requires that the user is in an organization with
   the CABIN_ADMIN permission.
   """
-  updateBookingSemester(data: UpdateBookingSemesterInput!): UpdateBookingSemesterResponse!
+  updateBookingSemester(
+    data: UpdateBookingSemesterInput!
+  ): UpdateBookingSemesterResponse!
   """
   Updates the booking contact, requires that the user is in an organization with the CABIN_ADMIN permission.
   """
-  updateBookingContact(data: UpdateBookingContactInput!): UpdateBookingContactResponse!
+  updateBookingContact(
+    data: UpdateBookingContactInput!
+  ): UpdateBookingContactResponse!
 }
