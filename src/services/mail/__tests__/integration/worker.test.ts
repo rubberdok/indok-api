@@ -4,6 +4,7 @@ import { jest } from "@jest/globals";
 import { QueueEvents, UnrecoverableError } from "bullmq";
 import { Redis } from "ioredis";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
+import { DateTime } from "luxon";
 import { env } from "~/config.js";
 import { type Booking, BookingTerms } from "~/domain/cabins.js";
 import {
@@ -11,6 +12,8 @@ import {
 	InternalServerError,
 	NotFoundError,
 } from "~/domain/errors.js";
+import type { EventType } from "~/domain/events/event.js";
+import type { OrderType, ProductType } from "~/domain/products.js";
 import type { User } from "~/domain/users.js";
 import { Queue } from "~/lib/bullmq/queue.js";
 import { Worker } from "~/lib/bullmq/worker.js";
@@ -22,6 +25,7 @@ import {
 	type EmailWorkerType,
 	type EventService,
 	type FileService,
+	type ProductService,
 	type UserService,
 	getEmailHandler,
 } from "../../worker.js";
@@ -34,6 +38,7 @@ describe("MailService", () => {
 	let mockMailService: DeepMockProxy<MailService>;
 	let mockEventService: DeepMockProxy<EventService>;
 	let mockCabinService: DeepMockProxy<CabinService>;
+	let mockProductService: DeepMockProxy<ProductService>;
 	let mockFileService: DeepMockProxy<FileService>;
 	let eventsRedis: Redis;
 	let queueEvents: QueueEvents;
@@ -44,6 +49,7 @@ describe("MailService", () => {
 		mockMailService = mockDeep<MailService>();
 		mockEventService = mockDeep<EventService>();
 		mockCabinService = mockDeep<CabinService>();
+		mockProductService = mockDeep<ProductService>();
 		mockFileService = mockDeep<FileService>();
 		redis = new Redis(env.REDIS_CONNECTION_STRING, {
 			keepAlive: 1_000 * 60 * 3, // 3 minutes
@@ -60,6 +66,7 @@ describe("MailService", () => {
 			userService: mockUserService,
 			eventService: mockEventService,
 			cabinService: mockCabinService,
+			productService: mockProductService,
 			fileService: mockFileService,
 			logger: mock(),
 		});
@@ -111,6 +118,126 @@ describe("MailService", () => {
 
 				expect(result.ok).toBe(true);
 				expect(mockMailService.send).toHaveBeenCalled();
+			}, 10_000);
+		});
+
+		describe("type: event-wait-list-confrimation", () => {
+			it("should send a notification to the user", async () => {
+				const user = {
+					...mock<User>(),
+					id: faker.string.uuid(),
+					email: faker.internet.email(),
+				};
+				const event = {
+					...mock<EventType>(),
+					id: faker.string.uuid(),
+					name: faker.lorem.words(3),
+					startAt: DateTime.fromObject({
+						year: 2077,
+						day: 1,
+						month: 1,
+						hour: 12,
+						minute: 0,
+						second: 0,
+					}).toJSDate(),
+					location: faker.location.streetAddress(),
+				};
+				mockUserService.get.mockResolvedValue(user);
+				mockMailService.send.mockResolvedValue();
+				mockEventService.get.mockResolvedValue(event);
+
+				const job = await mailQueue.add("send-email", {
+					type: "event-wait-list-confirmation",
+					eventId: faker.string.uuid(),
+					recipientId: faker.string.uuid(),
+				});
+
+				await job.waitUntilFinished(queueEvents, 10_0000);
+
+				expect(mockMailService.send).toHaveBeenCalledWith(
+					expect.objectContaining({
+						to: user.email,
+						templateAlias: "event-wait-list",
+						content: expect.objectContaining({
+							event: {
+								name: event.name,
+								location: event.location,
+								startAt: "fredag 1. januar 2077 kl. 12:00",
+							},
+							actionUrl: `${env.CLIENT_URL}/events/${event.id}`,
+						}),
+					}),
+				);
+			}, 10_000);
+		});
+
+		describe("type: order-receipt", () => {
+			it("should send a receipt to the user", async () => {
+				const order: OrderType = {
+					...mock<OrderType>(),
+					id: faker.string.uuid(),
+					capturedPaymentAttemptReference: faker.string.uuid(),
+					purchasedAt: DateTime.fromObject({
+						year: 2077,
+						day: 1,
+						month: 1,
+						hour: 12,
+						minute: 0,
+						second: 0,
+					}).toJSDate(),
+					productId: faker.string.uuid(),
+					totalPrice: faker.number.int(),
+				};
+				const product: ProductType = {
+					...mock<ProductType>(),
+					id: faker.string.uuid(),
+					name: faker.lorem.words(3),
+				};
+				const user: User = {
+					...mock<User>(),
+					id: faker.string.uuid(),
+					firstName: faker.person.firstName(),
+					email: faker.internet.exampleEmail(),
+				};
+				mockProductService.orders.get.mockResolvedValue({
+					ok: true,
+					data: { order },
+				});
+				mockProductService.products.get.mockResolvedValue({
+					ok: true,
+					data: { product },
+				});
+				mockUserService.get.mockResolvedValue(user);
+				mockMailService.send.mockResolvedValue();
+
+				const job = await mailQueue.add("send-email", {
+					type: "order-receipt",
+					userId: user.id,
+					orderId: order.id,
+				});
+
+				await job.waitUntilFinished(queueEvents, 10_0000);
+
+				expect(mockMailService.send).toHaveBeenCalledWith(
+					expect.objectContaining({
+						to: user.email,
+						templateAlias: "order-receipt",
+						content: expect.objectContaining({
+							order: expect.objectContaining({
+								id: order.id,
+								totalPrice: order.totalPrice,
+								purchasedAt: "fredag 1. januar 2077 kl. 12:00",
+							}),
+							product: expect.objectContaining({
+								name: product.name,
+							}),
+							user: expect.objectContaining({
+								firstName: user.firstName,
+							}),
+							actionUrl: `${env.CLIENT_URL}/profile/orders/${order.id}?reference=${order.capturedPaymentAttemptReference}`,
+						}),
+					}),
+				);
 			}, 10_000);
 		});
 

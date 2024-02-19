@@ -304,6 +304,7 @@ export async function initWorkers(): Promise<{
 				eventService,
 				cabinService,
 				fileService,
+				productService,
 				logger: instance.log,
 			}),
 		);
