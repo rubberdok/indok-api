@@ -1,109 +1,267 @@
-import { randomUUID } from "crypto";
 import { faker } from "@faker-js/faker";
-import { jest } from "@jest/globals";
-import type { Cabin, PrismaClient } from "@prisma/client";
-import dayjs from "dayjs";
-import { BookingStatus } from "~/domain/cabins.js";
+import { DateTime } from "luxon";
+import type { BookingStatus, BookingType } from "~/domain/cabins.js";
 import prisma from "~/lib/prisma.js";
-import { CabinRepository } from "../../index.js";
+import { CabinRepository } from "../../repository.js";
 
-const systemTime = dayjs().add(50, "years").toDate();
+describe("CabinRepository", () => {
+	let cabinRepository: CabinRepository;
 
-const cabins: Record<string, Cabin> = {};
-const id = randomUUID();
+	beforeAll(() => {
+		cabinRepository = new CabinRepository(prisma);
+	});
 
-let db: PrismaClient;
-let cabinRepository: CabinRepository;
+	describe("#getOverlappingBookings", () => {
+		it("should return an overlapping booking for the same cabin", async () => {
+			const { oksen, oksenBooking } = await makeDependencies();
 
-beforeAll(() => {
-	db = prisma;
-	cabinRepository = new CabinRepository(db);
-	jest.useFakeTimers().setSystemTime(systemTime);
-});
+			const booking = await makeBooking({
+				cabins: [{ id: oksen.id }],
+				startDate: DateTime.fromJSDate(oksenBooking.startDate)
+					.minus({ days: 1 })
+					.toJSDate(),
+				endDate: DateTime.fromJSDate(oksenBooking.endDate)
+					.plus({ days: 1 })
+					.toJSDate(),
+				status: "PENDING",
+			});
 
-describe("Overlapping bookings", () => {
-	beforeEach(async () => {
-		await db.booking.deleteMany({
-			where: {
-				OR: [
-					{
-						startDate: {
-							gte: dayjs().toDate(),
-						},
-					},
-					{
-						endDate: {
-							gte: dayjs().toDate(),
-						},
-					},
-				],
-			},
+			const actual = await cabinRepository.getOverlappingBookings(booking, {
+				status: "CONFIRMED",
+			});
+
+			expect(actual).toEqual({
+				ok: true,
+				data: {
+					bookings: [expect.objectContaining({ id: oksenBooking.id })],
+				},
+			});
 		});
 
-		const cabin = await db.cabin.upsert({
-			where: {
-				name: "Oksen",
-			},
-			update: {
-				capacity: 18,
-				internalPrice: 10,
-				externalPrice: 20,
-			},
-			create: {
-				name: "Oksen",
-				capacity: 18,
-				internalPrice: 10,
-				externalPrice: 20,
-			},
-		});
-		cabins.Oksen = cabin;
+		it("should return an overlapping booking where at least one cabin is the same", async () => {
+			const { oksen, bothBooking } = await makeDependencies();
 
-		await db.booking.createMany({
-			data: [
-				{
-					cabinId: cabin.id,
-					email: faker.internet.email(),
-					phoneNumber: faker.phone.number(),
-					firstName: faker.person.firstName(),
-					lastName: faker.person.lastName(),
-					startDate: dayjs().add(1, "day").toDate(),
-					endDate: dayjs().add(2, "day").toDate(),
-					status: BookingStatus.CONFIRMED,
+			const booking = await makeBooking({
+				cabins: [{ id: oksen.id }],
+				startDate: DateTime.fromJSDate(bothBooking.startDate)
+					.minus({ days: 1 })
+					.toJSDate(),
+				endDate: DateTime.fromJSDate(bothBooking.endDate)
+					.plus({ days: 1 })
+					.toJSDate(),
+				status: "PENDING",
+			});
+
+			const actual = await cabinRepository.getOverlappingBookings(booking, {
+				status: "CONFIRMED",
+			});
+
+			expect(actual).toEqual({
+				ok: true,
+				data: {
+					bookings: [expect.objectContaining({ id: bothBooking.id })],
 				},
-				{
-					cabinId: cabin.id,
-					email: faker.internet.email(),
-					phoneNumber: faker.phone.number(),
-					firstName: faker.person.firstName(),
-					lastName: faker.person.lastName(),
-					startDate: dayjs().add(2, "day").toDate(),
-					endDate: dayjs().add(3, "day").toDate(),
-					status: BookingStatus.CONFIRMED,
+			});
+		});
+
+		it("should return all bookings where at least one cabin overlaps", async () => {
+			const { oksen, oksenBooking, bjørnenBooking, bjørnen } =
+				await makeDependencies();
+
+			const booking = await makeBooking({
+				cabins: [{ id: oksen.id }, { id: bjørnen.id }],
+				startDate: DateTime.fromJSDate(oksenBooking.startDate)
+					.minus({ days: 1 })
+					.toJSDate(),
+				endDate: DateTime.fromJSDate(oksenBooking.endDate)
+					.plus({ days: 1 })
+					.toJSDate(),
+				status: "PENDING",
+			});
+
+			const actual = await cabinRepository.getOverlappingBookings(booking, {
+				status: "CONFIRMED",
+			});
+
+			expect(actual).toEqual({
+				ok: true,
+				data: {
+					bookings: expect.arrayContaining([
+						expect.objectContaining({ id: oksenBooking.id }),
+						expect.objectContaining({ id: bjørnenBooking.id }),
+					]),
 				},
-				{
-					id,
-					cabinId: cabin.id,
-					email: faker.internet.email(),
-					phoneNumber: faker.phone.number(),
-					firstName: faker.person.firstName(),
-					lastName: faker.person.lastName(),
-					startDate: dayjs().add(1, "day").toDate(),
-					endDate: dayjs().add(3, "day").toDate(),
+			});
+		});
+
+		it("should return a booking where startDate < existingStartDate and endDate > existingStartDate", async () => {
+			const { oksen, bothBooking, bjørnen } = await makeDependencies();
+
+			const booking = await makeBooking({
+				cabins: [{ id: oksen.id }, { id: bjørnen.id }],
+				startDate: DateTime.fromJSDate(bothBooking.startDate)
+					.minus({ days: 1 })
+					.toJSDate(),
+				endDate: DateTime.fromJSDate(bothBooking.endDate)
+					.plus({ days: 1 })
+					.toJSDate(),
+				status: "PENDING",
+			});
+
+			const actual = await cabinRepository.getOverlappingBookings(booking, {
+				status: "CONFIRMED",
+			});
+
+			expect(actual).toEqual({
+				ok: true,
+				data: {
+					bookings: [expect.objectContaining({ id: bothBooking.id })],
 				},
-			],
+			});
+		});
+
+		it("should return a booking where existingStartDate < startDate and endDate < existingEndDate", async () => {
+			const { oksen, bothBooking, bjørnen } = await makeDependencies();
+
+			const booking = await makeBooking({
+				cabins: [{ id: oksen.id }, { id: bjørnen.id }],
+				startDate: DateTime.fromJSDate(bothBooking.startDate)
+					.minus({ days: 1 })
+					.toJSDate(),
+				endDate: DateTime.fromJSDate(bothBooking.endDate)
+					.minus({ days: 1 })
+					.toJSDate(),
+				status: "PENDING",
+			});
+
+			const actual = await cabinRepository.getOverlappingBookings(booking, {
+				status: "CONFIRMED",
+			});
+
+			expect(actual).toEqual({
+				ok: true,
+				data: {
+					bookings: [expect.objectContaining({ id: bothBooking.id })],
+				},
+			});
+		});
+
+		it("should return a booking where startDate < existingEndDate and endDate > existingEndDate", async () => {
+			const { oksen, bothBooking, bjørnen } = await makeDependencies();
+
+			const booking = await makeBooking({
+				cabins: [{ id: oksen.id }, { id: bjørnen.id }],
+				startDate: DateTime.fromJSDate(bothBooking.endDate)
+					.minus({ days: 1 })
+					.toJSDate(),
+				endDate: DateTime.fromJSDate(bothBooking.endDate)
+					.plus({ days: 1 })
+					.toJSDate(),
+				status: "PENDING",
+			});
+
+			const actual = await cabinRepository.getOverlappingBookings(booking, {
+				status: "CONFIRMED",
+			});
+
+			expect(actual).toEqual({
+				ok: true,
+				data: {
+					bookings: [expect.objectContaining({ id: bothBooking.id })],
+				},
+			});
+		});
+
+		it("should return no bookings if there is no overlap", async () => {
+			const { oksen, bothBooking, bjørnen } = await makeDependencies();
+
+			const booking = await makeBooking({
+				cabins: [{ id: oksen.id }, { id: bjørnen.id }],
+				startDate: DateTime.fromJSDate(bothBooking.endDate)
+					.plus({ years: 1 })
+					.toJSDate(),
+				endDate: DateTime.fromJSDate(bothBooking.endDate)
+					.plus({ years: 1 })
+					.toJSDate(),
+				status: "PENDING",
+			});
+
+			const actual = await cabinRepository.getOverlappingBookings(booking, {
+				status: "CONFIRMED",
+			});
+
+			expect(actual).toEqual({
+				ok: true,
+				data: {
+					bookings: [],
+				},
+			});
 		});
 	});
 
-	it("should find overlapping bookings", async () => {
-		const bookings = await cabinRepository.getOverlappingBookings({
-			bookingId: id,
-			startDate: dayjs().add(1, "day").toDate(),
-			endDate: dayjs().add(3, "day").toDate(),
-			status: BookingStatus.CONFIRMED,
+	async function makeDependencies() {
+		const oksen = await cabinRepository.createCabin({
+			name: faker.word.adjective(),
+			capacity: faker.number.int({ min: 1, max: 10 }),
+			internalPrice: faker.number.int({ min: 100, max: 1000 }),
+			externalPrice: faker.number.int({ min: 100, max: 1000 }),
+		});
+		if (!oksen.ok) throw oksen.error;
+		const bjørnen = await cabinRepository.createCabin({
+			name: faker.word.adjective(),
+			capacity: faker.number.int({ min: 1, max: 10 }),
+			internalPrice: faker.number.int({ min: 100, max: 1000 }),
+			externalPrice: faker.number.int({ min: 100, max: 1000 }),
+		});
+		if (!bjørnen.ok) throw bjørnen.error;
+
+		const oksenBooking = await makeBooking({
+			cabins: [{ id: oksen.data.cabin.id }],
+			startDate: DateTime.now().plus({ days: 1 }).toJSDate(),
+			endDate: DateTime.now().plus({ days: 4 }).toJSDate(),
+			status: "CONFIRMED",
+		});
+		const bjørnenBooking = await makeBooking({
+			cabins: [{ id: bjørnen.data.cabin.id }],
+			startDate: DateTime.now().plus({ days: 1 }).toJSDate(),
+			endDate: DateTime.now().plus({ days: 4 }).toJSDate(),
+			status: "CONFIRMED",
+		});
+		const bothBooking = await makeBooking({
+			cabins: [{ id: oksen.data.cabin.id }, { id: bjørnen.data.cabin.id }],
+			startDate: DateTime.now().plus({ days: 5 }).toJSDate(),
+			endDate: DateTime.now().plus({ days: 10 }).toJSDate(),
+			status: "CONFIRMED",
 		});
 
-		expect(bookings).toHaveLength(2);
-		expect(bookings[0]?.id).not.toBe(id);
-		expect(bookings[1]?.id).not.toBe(id);
-	});
+		return {
+			oksen: oksen.data.cabin,
+			bjørnen: bjørnen.data.cabin,
+			oksenBooking,
+			bjørnenBooking,
+			bothBooking,
+		};
+	}
+
+	async function makeBooking(params: {
+		cabins: { id: string }[];
+		startDate: Date;
+		endDate: Date;
+		status: BookingStatus;
+	}): Promise<BookingType> {
+		const { cabins, startDate, endDate, status } = params;
+		const createBookingResult = await cabinRepository.createBooking({
+			cabins,
+			startDate,
+			endDate,
+			email: faker.internet.exampleEmail(),
+			firstName: faker.person.firstName(),
+			lastName: faker.person.lastName(),
+			phoneNumber: faker.phone.number(),
+			id: faker.string.uuid(),
+			status,
+		});
+		if (!createBookingResult.ok) throw createBookingResult.error;
+		return createBookingResult.data.booking;
+	}
 });

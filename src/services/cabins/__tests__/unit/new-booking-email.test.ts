@@ -5,16 +5,17 @@ import dayjs from "dayjs";
 import { type DeepMockProxy, mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
 import { BookingStatus } from "~/domain/cabins.js";
+import { makeMockContext } from "~/lib/context.js";
+import type { NewBookingParams } from "~/lib/server.js";
 import {
-	type BookingData,
-	type CabinRepository,
 	CabinService,
+	type ICabinRepository,
 	type MailService,
 	type PermissionService,
 } from "../../service.js";
 
-const validBooking: BookingData = {
-	cabinId: faker.string.uuid(),
+const validBooking: NewBookingParams = {
+	cabins: [{ id: faker.string.uuid() }],
 	startDate: dayjs().add(1, "day").toDate(),
 	endDate: dayjs().add(2, "day").toDate(),
 	phoneNumber: "40000000",
@@ -23,13 +24,13 @@ const validBooking: BookingData = {
 	lastName: "test",
 };
 
-let repo: DeepMockProxy<CabinRepository>;
+let repo: DeepMockProxy<ICabinRepository>;
 let mockMailService: DeepMockProxy<MailService>;
 let cabinService: CabinService;
 let permissionService: DeepMockProxy<PermissionService>;
 
 beforeAll(() => {
-	repo = mockDeep<CabinRepository>();
+	repo = mockDeep<ICabinRepository>();
 	mockMailService = mockDeep<MailService>();
 	permissionService = mockDeep<PermissionService>();
 	cabinService = new CabinService(repo, mockMailService, permissionService);
@@ -38,27 +39,17 @@ beforeAll(() => {
 describe("newBooking", () => {
 	interface TestCase {
 		name: string;
-		input: BookingData;
-		expectedConfirmationEmail: {
-			booking: {
-				price: string;
-			};
-		};
+		input: NewBookingParams;
 	}
 
 	const testCase: TestCase[] = [
 		{
 			name: "should send a booking confirmation email",
 			input: validBooking,
-			expectedConfirmationEmail: expect.objectContaining({
-				booking: expect.objectContaining({
-					price: expect.any(String),
-				}),
-			}),
 		},
 	];
 
-	test.each(testCase)("$name", async ({ input, expectedConfirmationEmail }) => {
+	test.each(testCase)("$name", async ({ input }) => {
 		repo.getBookingSemester.mockImplementation((semester: Semester) => {
 			return Promise.resolve({
 				bookingsEnabled: true,
@@ -71,21 +62,28 @@ describe("newBooking", () => {
 			});
 		});
 
-		repo.createBooking.mockReturnValueOnce(
-			Promise.resolve({
-				...input,
-				startDate: new Date(input.startDate),
-				endDate: new Date(input.endDate),
-				id: randomUUID(),
-				createdAt: new Date(),
-				updatedAt: new Date(),
-				status: BookingStatus.PENDING,
-				cabinId: faker.string.uuid(),
-			}),
-		);
+		repo.createBooking.mockResolvedValueOnce({
+			ok: true,
+			data: {
+				booking: {
+					...input,
+					startDate: new Date(input.startDate),
+					endDate: new Date(input.endDate),
+					id: randomUUID(),
+					status: BookingStatus.PENDING,
+					cabins: [{ id: faker.string.uuid() }],
+				},
+			},
+		});
 
-		await cabinService.newBooking(input);
-		expect(repo.createBooking).toHaveBeenCalledWith(input);
+		const newBookingResult = await cabinService.newBooking(
+			makeMockContext({ id: faker.string.uuid() }),
+			input,
+		);
+		if (!newBookingResult.ok) throw newBookingResult.error;
+		expect(repo.createBooking).toHaveBeenCalledWith(
+			expect.objectContaining(input),
+		);
 		expect(mockMailService.sendAsync).toHaveBeenCalledWith({
 			type: "cabin-booking-receipt",
 			bookingId: expect.any(String),

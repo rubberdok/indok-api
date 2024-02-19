@@ -1,69 +1,237 @@
 import type {
-	Booking,
 	BookingContact,
 	BookingSemester,
-	BookingStatus,
 	Cabin,
-	Prisma,
 	PrismaClient,
 	Semester,
 } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
-import { InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
+import { Booking, type BookingType } from "~/domain/cabins.js";
+import {
+	InternalServerError,
+	InvalidArgumentError,
+	NotFoundError,
+} from "~/domain/errors.js";
 import { prismaKnownErrorCodes } from "~/lib/prisma.js";
+import type { ResultAsync } from "~/lib/result.js";
+import type { ICabinRepository } from "~/services/cabins/service.js";
 
-type OverlappingBookingsData = {
-	bookingId: string;
-	startDate: Date;
-	endDate: Date;
-	status?: BookingStatus;
-};
-
-export class CabinRepository {
+export class CabinRepository implements ICabinRepository {
 	constructor(private db: PrismaClient) {}
 
-	getBookingById(id: string): Promise<Booking> {
-		return this.db.booking.findFirstOrThrow({
+	async createCabin(params: {
+		name: string;
+		capacity: number;
+		internalPrice: number;
+		externalPrice: number;
+	}): ResultAsync<
+		{
+			cabin: Cabin;
+		},
+		InternalServerError
+	> {
+		try {
+			const cabin = await this.db.cabin.create({
+				data: {
+					name: params.name,
+					capacity: params.capacity,
+					internalPrice: params.internalPrice,
+					externalPrice: params.externalPrice,
+				},
+			});
+			return {
+				ok: true,
+				data: {
+					cabin,
+				},
+			};
+		} catch (err) {
+			return {
+				ok: false,
+				error: new InternalServerError("Failed to create cabin", err),
+			};
+		}
+	}
+
+	async updateBooking(
+		id: string,
+		data: Pick<BookingType, "status">,
+	): ResultAsync<
+		{ booking: BookingType },
+		InternalServerError | NotFoundError
+	> {
+		try {
+			const booking = await this.db.booking.update({
+				where: {
+					id,
+				},
+				data,
+				include: {
+					cabins: {
+						select: {
+							id: true,
+						},
+					},
+				},
+			});
+			return {
+				ok: true,
+				data: {
+					booking: new Booking(booking),
+				},
+			};
+		} catch (err) {
+			if (err instanceof PrismaClientKnownRequestError) {
+				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) {
+					return {
+						ok: false,
+						error: new NotFoundError("Booking not found", err),
+					};
+				}
+			}
+			return {
+				ok: false,
+				error: new InternalServerError("Failed to update booking", err),
+			};
+		}
+	}
+
+	async createBooking(
+		params: BookingType,
+	): ResultAsync<
+		{ booking: BookingType },
+		InternalServerError | NotFoundError
+	> {
+		const { cabins, ...rest } = params;
+		try {
+			const booking = await this.db.booking.create({
+				include: {
+					cabins: {
+						select: {
+							id: true,
+						},
+					},
+				},
+				data: {
+					...rest,
+					cabins: {
+						connect: cabins,
+					},
+				},
+			});
+			return {
+				ok: true,
+				data: {
+					booking: new Booking(booking),
+				},
+			};
+		} catch (err) {
+			if (err instanceof PrismaClientKnownRequestError) {
+				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) {
+					return {
+						ok: false,
+						error: new NotFoundError("Cabins not found", err),
+					};
+				}
+			}
+			return {
+				ok: false,
+				error: new InternalServerError("Failed to create booking", err),
+			};
+		}
+	}
+
+	async getBookingById(id: string): Promise<BookingType> {
+		const booking = await this.db.booking.findFirstOrThrow({
+			include: {
+				cabins: {
+					select: {
+						id: true,
+					},
+				},
+			},
 			where: {
 				id,
 			},
 		});
+		return new Booking(booking);
 	}
 
-	getOverlappingBookings({
-		bookingId,
-		endDate,
-		startDate,
-		status,
-	}: OverlappingBookingsData): Promise<Booking[]> {
-		return this.db.booking.findMany({
-			where: {
-				AND: [
-					{
-						NOT: {
-							id: bookingId,
+	async getOverlappingBookings(
+		booking: BookingType,
+		params: Pick<BookingType, "status">,
+	): ResultAsync<{ bookings: BookingType[] }, InternalServerError> {
+		const { id, startDate, endDate } = booking;
+		const { status } = params;
+		try {
+			const bookings = await this.db.booking.findMany({
+				include: {
+					cabins: {
+						select: {
+							id: true,
 						},
 					},
-					{
-						status,
-					},
-					{
-						AND: [
-							{
-								startDate: {
-									lt: endDate,
+				},
+				where: {
+					/**
+					 * The conditions for overlapping bookings are:
+					 * 1. The booking has at least one cabin in common with the other booking
+					 * 2. The booking is not the same as the other booking
+					 * 3. The booking starts before the other booking ends
+					 * 4. The booking ends after the other booking starts
+					 */
+					AND: [
+						{
+							// Only consider bookings with the given status
+							status,
+						},
+						{
+							cabins: {
+								some: {
+									id: {
+										in: booking.cabins.map((cabin) => cabin.id),
+									},
 								},
 							},
-							{
-								endDate: {
-									gt: startDate,
-								},
+						},
+						{
+							NOT: {
+								id,
 							},
-						],
-					},
-				],
-			},
-		});
+						},
+
+						{
+							AND: [
+								{
+									startDate: {
+										lt: endDate,
+									},
+								},
+								{
+									endDate: {
+										gt: startDate,
+									},
+								},
+							],
+						},
+					],
+				},
+			});
+			return {
+				ok: true,
+				data: {
+					bookings: bookings.map((booking) => new Booking(booking)),
+				},
+			};
+		} catch (err) {
+			return {
+				ok: false,
+				error: new InternalServerError(
+					"Failed to get overlapping bookings",
+					err,
+				),
+			};
+		}
 	}
 
 	getCabinById(id: string): Promise<Cabin> {
@@ -71,29 +239,6 @@ export class CabinRepository {
 			where: {
 				id,
 			},
-		});
-	}
-
-	createBooking(data: {
-		cabinId: string;
-		firstName: string;
-		lastName: string;
-		email: string;
-		phoneNumber: string;
-		startDate: Date;
-		endDate: Date;
-	}): Promise<Booking> {
-		return this.db.booking.create({
-			data,
-		});
-	}
-
-	updateBooking(id: string, data: Prisma.BookingUpdateInput): Promise<Booking> {
-		return this.db.booking.update({
-			where: {
-				id,
-			},
-			data,
 		});
 	}
 

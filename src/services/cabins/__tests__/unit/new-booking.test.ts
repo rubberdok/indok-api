@@ -1,24 +1,29 @@
 import { faker } from "@faker-js/faker";
-import { type Booking, type BookingSemester, Semester } from "@prisma/client";
+import { type BookingSemester, Semester } from "@prisma/client";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
-import { InvalidArgumentError } from "~/domain/errors.js";
+import type { BookingType } from "~/domain/cabins.js";
+import type {
+	InternalServerError,
+	InvalidArgumentError,
+} from "~/domain/errors.js";
+import { makeMockContext } from "~/lib/context.js";
+import type { NewBookingParams } from "~/lib/server.js";
 import {
-	type BookingData,
-	type CabinRepository,
 	CabinService,
+	type ICabinRepository,
 	type MailService,
 	type PermissionService,
 } from "../../service.js";
 
 describe("CabinService", () => {
 	let cabinService: CabinService;
-	let cabinRepository: DeepMockProxy<CabinRepository>;
+	let cabinRepository: DeepMockProxy<ICabinRepository>;
 	let mailService: DeepMockProxy<MailService>;
 
 	beforeAll(() => {
-		cabinRepository = mockDeep<CabinRepository>();
+		cabinRepository = mockDeep<ICabinRepository>();
 		mailService = mockDeep<MailService>();
 		cabinService = new CabinService(
 			cabinRepository,
@@ -27,8 +32,8 @@ describe("CabinService", () => {
 		);
 	});
 
-	describe("newBooking", () => {
-		describe("should raise InvalidArgumentError if", () => {
+	describe("#newBooking", () => {
+		describe("should return error and ok: false if", () => {
 			interface TestCase {
 				name: string;
 				arrange: {
@@ -38,10 +43,10 @@ describe("CabinService", () => {
 					};
 				};
 				act: {
-					input: BookingData;
+					input: NewBookingParams;
 				};
 				expected: {
-					error: string;
+					error: InternalServerError | InvalidArgumentError;
 				};
 			}
 
@@ -66,15 +71,20 @@ describe("CabinService", () => {
 				 *
 				 * Call newBooking with the input from the test case.
 				 */
-				const newBooking = cabinService.newBooking(act.input);
+				const newBooking = await cabinService.newBooking(
+					makeMockContext({ id: faker.string.uuid() }),
+					act.input,
+				);
 
 				/**
 				 * Assert
 				 *
-				 * Expect newBooking to throw a InvalidArgumentError with the expected error message.
+				 * Expect newBooking return the expected error.
 				 */
-				await expect(newBooking).rejects.toThrow(InvalidArgumentError);
-				await expect(newBooking).rejects.toThrow(expected.error);
+				expect(newBooking).toEqual({
+					ok: false,
+					error: expected.error,
+				});
 				expect(cabinRepository.createBooking).not.toHaveBeenCalled();
 			}
 
@@ -94,7 +104,12 @@ describe("CabinService", () => {
 							}),
 						},
 						expected: {
-							error: "invalid email",
+							error: expect.objectContaining({
+								name: "InvalidArgumentError",
+								formErrors: expect.objectContaining({
+									email: expect.any(Array),
+								}),
+							}),
 						},
 					},
 					{
@@ -111,7 +126,12 @@ describe("CabinService", () => {
 							}),
 						},
 						expected: {
-							error: "invalid phone",
+							error: expect.objectContaining({
+								name: "InvalidArgumentError",
+								formErrors: expect.objectContaining({
+									phoneNumber: expect.any(Array),
+								}),
+							}),
 						},
 					},
 					{
@@ -124,11 +144,16 @@ describe("CabinService", () => {
 						},
 						act: {
 							input: makeCabinInput({
-								cabinId: "fake",
+								cabins: [{ id: "fake" }],
 							}),
 						},
 						expected: {
-							error: "invalid cabin id",
+							error: expect.objectContaining({
+								name: "InvalidArgumentError",
+								formErrors: expect.objectContaining({
+									cabins: expect.any(Array),
+								}),
+							}),
 						},
 					},
 					{
@@ -145,7 +170,12 @@ describe("CabinService", () => {
 							}),
 						},
 						expected: {
-							error: "first name must be at least 1 character",
+							error: expect.objectContaining({
+								name: "InvalidArgumentError",
+								formErrors: expect.objectContaining({
+									firstName: expect.any(Array),
+								}),
+							}),
 						},
 					},
 					{
@@ -162,7 +192,12 @@ describe("CabinService", () => {
 							}),
 						},
 						expected: {
-							error: "last name must be at least 1 character",
+							error: expect.objectContaining({
+								name: "InvalidArgumentError",
+								formErrors: expect.objectContaining({
+									lastName: expect.any(Array),
+								}),
+							}),
 						},
 					},
 				];
@@ -186,7 +221,12 @@ describe("CabinService", () => {
 							}),
 						},
 						expected: {
-							error: "start date must be in the future",
+							error: expect.objectContaining({
+								name: "InvalidArgumentError",
+								formErrors: expect.objectContaining({
+									startDate: expect.any(Array),
+								}),
+							}),
 						},
 					},
 					{
@@ -203,7 +243,12 @@ describe("CabinService", () => {
 							}),
 						},
 						expected: {
-							error: "end date must be in the future",
+							error: expect.objectContaining({
+								name: "InvalidArgumentError",
+								formErrors: expect.objectContaining({
+									endDate: expect.any(Array),
+								}),
+							}),
 						},
 					},
 					{
@@ -221,7 +266,12 @@ describe("CabinService", () => {
 							}),
 						},
 						expected: {
-							error: "end date must be after start date",
+							error: expect.objectContaining({
+								name: "InvalidArgumentError",
+								formErrors: expect.objectContaining({
+									startDate: expect.any(Array),
+								}),
+							}),
 						},
 					},
 					{
@@ -245,7 +295,12 @@ describe("CabinService", () => {
 							}),
 						},
 						expected: {
-							error: "end date must be after start date",
+							error: expect.objectContaining({
+								name: "InvalidArgumentError",
+								formErrors: expect.objectContaining({
+									startDate: expect.any(Array),
+								}),
+							}),
 						},
 					},
 				];
@@ -267,7 +322,10 @@ describe("CabinService", () => {
 							input: makeCabinInput(),
 						},
 						expected: {
-							error: "Bookings are not enabled.",
+							error: expect.objectContaining({
+								name: "InvalidArgumentError",
+								description: expect.stringContaining("not enabled"),
+							}),
 						},
 					},
 					{
@@ -282,7 +340,10 @@ describe("CabinService", () => {
 							input: makeCabinInput(),
 						},
 						expected: {
-							error: "Bookings are not enabled.",
+							error: expect.objectContaining({
+								name: "InvalidArgumentError",
+								description: expect.stringContaining("not enabled"),
+							}),
 						},
 					},
 					{
@@ -301,8 +362,12 @@ describe("CabinService", () => {
 							}),
 						},
 						expected: {
-							error:
-								"booking is not in an active booking semester, and is not a valid cross-semester booking",
+							error: expect.objectContaining({
+								name: "InvalidArgumentError",
+								formErrors: expect.objectContaining({
+									startDate: expect.any(Array),
+								}),
+							}),
 						},
 					},
 					{
@@ -321,8 +386,12 @@ describe("CabinService", () => {
 							}),
 						},
 						expected: {
-							error:
-								"booking is not in an active booking semester, and is not a valid cross-semester booking",
+							error: expect.objectContaining({
+								name: "InvalidArgumentError",
+								formErrors: expect.objectContaining({
+									startDate: expect.any(Array),
+								}),
+							}),
 						},
 					},
 					{
@@ -343,8 +412,12 @@ describe("CabinService", () => {
 							}),
 						},
 						expected: {
-							error:
-								"booking is not in an active booking semester, and is not a valid cross-semester booking",
+							error: expect.objectContaining({
+								name: "InvalidArgumentError",
+								formErrors: expect.objectContaining({
+									startDate: expect.any(Array),
+								}),
+							}),
 						},
 					},
 				];
@@ -379,8 +452,12 @@ describe("CabinService", () => {
 							}),
 						},
 						expected: {
-							error:
-								"booking is not in an active booking semester, and is not a valid cross-semester booking",
+							error: expect.objectContaining({
+								name: "InvalidArgumentError",
+								formErrors: expect.objectContaining({
+									startDate: expect.any(Array),
+								}),
+							}),
 						},
 					},
 					{
@@ -409,8 +486,12 @@ describe("CabinService", () => {
 							}),
 						},
 						expected: {
-							error:
-								"booking is not in an active booking semester, and is not a valid cross-semester booking",
+							error: expect.objectContaining({
+								name: "InvalidArgumentError",
+								formErrors: expect.objectContaining({
+									startDate: expect.any(Array),
+								}),
+							}),
 						},
 					},
 					{
@@ -439,8 +520,12 @@ describe("CabinService", () => {
 							}),
 						},
 						expected: {
-							error:
-								"booking is not in an active booking semester, and is not a valid cross-semester booking",
+							error: expect.objectContaining({
+								name: "InvalidArgumentError",
+								formErrors: expect.objectContaining({
+									startDate: expect.any(Array),
+								}),
+							}),
 						},
 					},
 				];
@@ -475,8 +560,12 @@ describe("CabinService", () => {
 							}),
 						},
 						expected: {
-							error:
-								"booking is not in an active booking semester, and is not a valid cross-semester booking",
+							error: expect.objectContaining({
+								name: "InvalidArgumentError",
+								formErrors: expect.objectContaining({
+									startDate: expect.any(Array),
+								}),
+							}),
 						},
 					},
 					{
@@ -505,8 +594,12 @@ describe("CabinService", () => {
 							}),
 						},
 						expected: {
-							error:
-								"booking is not in an active booking semester, and is not a valid cross-semester booking",
+							error: expect.objectContaining({
+								name: "InvalidArgumentError",
+								formErrors: expect.objectContaining({
+									startDate: expect.any(Array),
+								}),
+							}),
 						},
 					},
 					{
@@ -535,8 +628,12 @@ describe("CabinService", () => {
 							}),
 						},
 						expected: {
-							error:
-								"booking is not in an active booking semester, and is not a valid cross-semester booking",
+							error: expect.objectContaining({
+								name: "InvalidArgumentError",
+								formErrors: expect.objectContaining({
+									startDate: expect.any(Array),
+								}),
+							}),
 						},
 					},
 				];
@@ -555,7 +652,7 @@ describe("CabinService", () => {
 					};
 				};
 				act: {
-					input: BookingData;
+					input: NewBookingParams;
 				};
 			}
 
@@ -576,7 +673,12 @@ describe("CabinService", () => {
 						throw new Error(`Unexpected semester: ${semester}`);
 					},
 				);
-				cabinRepository.createBooking.mockResolvedValueOnce(mock<Booking>());
+				cabinRepository.createBooking.mockResolvedValue({
+					ok: true,
+					data: {
+						booking: { ...mock<BookingType>(), id: faker.string.uuid() },
+					},
+				});
 				mailService.sendAsync.mockResolvedValue();
 
 				/**
@@ -584,7 +686,10 @@ describe("CabinService", () => {
 				 *
 				 * Call newBooking with the input from the test case.
 				 */
-				const newBooking = cabinService.newBooking(act.input);
+				const newBooking = await cabinService.newBooking(
+					makeMockContext({ id: faker.string.uuid() }),
+					act.input,
+				);
 
 				/**
 				 * Assert
@@ -593,7 +698,12 @@ describe("CabinService", () => {
 				 * Expect cabinRepository.createBooking to be called with the correct arguments
 				 * Expect mailService.sendBookingConfirmation to be called with the correct arguments
 				 */
-				await expect(newBooking).resolves.not.toThrow();
+				expect(newBooking).toEqual({
+					ok: true,
+					data: {
+						booking: expect.any(Object),
+					},
+				});
 				expect(cabinRepository.createBooking).toHaveBeenCalled();
 			}
 
@@ -802,12 +912,14 @@ describe("CabinService", () => {
 	});
 });
 
-function makeCabinInput(data: Partial<BookingData> = {}): BookingData {
+function makeCabinInput(
+	data: Partial<NewBookingParams> = {},
+): NewBookingParams {
 	const startDate = faker.date.future();
 	const endDate = faker.date.future({ refDate: startDate });
-	return merge<BookingData, Partial<BookingData>>(
+	return merge<NewBookingParams, Partial<NewBookingParams>>(
 		{
-			cabinId: faker.string.uuid(),
+			cabins: [{ id: faker.string.uuid() }],
 			startDate,
 			endDate,
 			phoneNumber: "40000000",

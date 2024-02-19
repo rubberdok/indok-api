@@ -5,20 +5,17 @@ export const newBooking: NonNullable<MutationResolvers["newBooking"]> = async (
 	ctx,
 ) => {
 	const {
-		cabinId,
-		startDate: rawStartDate,
-		endDate: rawEndDate,
+		cabins,
+		startDate,
+		endDate,
 		email,
 		firstName,
 		lastName,
 		phoneNumber,
 	} = data;
 
-	const startDate = new Date(rawStartDate);
-	const endDate = new Date(rawEndDate);
-
-	const booking = await ctx.cabins.newBooking({
-		cabinId,
+	const newBookingResult = await ctx.cabins.newBooking(ctx, {
+		cabins,
 		startDate,
 		endDate,
 		email,
@@ -26,5 +23,10 @@ export const newBooking: NonNullable<MutationResolvers["newBooking"]> = async (
 		lastName,
 		phoneNumber,
 	});
+
+	if (!newBookingResult.ok) {
+		throw newBookingResult.error;
+	}
+	const { booking } = newBookingResult.data;
 	return { booking };
 };
