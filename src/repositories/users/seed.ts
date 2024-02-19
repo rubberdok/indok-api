@@ -9,6 +9,7 @@ import { DateTime } from "luxon";
 import type { Role } from "~/domain/organizations.js";
 
 faker.seed(3491049213);
+const organizationId = faker.string.uuid();
 
 const userData: Prisma.UserCreateInput[] = [
 	{
@@ -37,6 +38,7 @@ const userData: Prisma.UserCreateInput[] = [
 			graduationYear: DateTime.now().plus({ year: 4 }).year,
 		},
 		"ADMIN",
+		organizationId,
 	),
 	makeUserWithMemberships(
 		{
@@ -48,14 +50,15 @@ const userData: Prisma.UserCreateInput[] = [
 			graduationYear: DateTime.now().plus({ year: 3 }).year,
 		},
 		"MEMBER",
+		organizationId,
 	),
 ];
 
 function makeUserWithMemberships(
 	data: Prisma.UserCreateInput,
 	role: Role,
+	organizationId: string,
 ): Prisma.UserCreateInput {
-	const organizationId = faker.string.uuid();
 	const userId = faker.string.uuid();
 	return {
 		...data,
@@ -88,7 +91,7 @@ function makeUserWithMemberships(
 					organization: {
 						connectOrCreate: {
 							where: {
-								name: "Rubberdøk",
+								id: organizationId,
 							},
 							create: {
 								id: organizationId,

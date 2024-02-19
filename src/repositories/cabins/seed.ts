@@ -100,6 +100,39 @@ const bookingCreateInput: Prisma.BookingCreateInput[] = [
 	},
 ];
 
+const createBookingSemesterInput: Prisma.BookingSemesterCreateInput[] = [
+	{
+		id: faker.string.uuid(),
+		semester: "FALL",
+		startAt: DateTime.fromObject({
+			month: 8,
+			day: 1,
+			year: DateTime.now().year,
+		}).toJSDate(),
+		endAt: DateTime.fromObject({
+			month: 12,
+			day: 31,
+			year: DateTime.now().year,
+		}).toJSDate(),
+		bookingsEnabled: true,
+	},
+	{
+		id: faker.string.uuid(),
+		semester: "SPRING",
+		startAt: DateTime.fromObject({
+			month: 1,
+			day: 1,
+			year: DateTime.now().year,
+		}).toJSDate(),
+		endAt: DateTime.fromObject({
+			month: 7,
+			day: 31,
+			year: DateTime.now().year,
+		}).toJSDate(),
+		bookingsEnabled: true,
+	},
+];
+
 export const load = async (db: PrismaClient) => {
 	console.log("Seeding cabins...");
 	for (const cabin of cabinCreateInput) {
@@ -138,5 +171,35 @@ export const load = async (db: PrismaClient) => {
 		},
 	});
 
-	return { cabins, bookings };
+	console.log("Seeding booking semesters...");
+	for (const semester of createBookingSemesterInput) {
+		await db.bookingSemester.upsert({
+			where: {
+				id: semester.id,
+			},
+			update: semester,
+			create: semester,
+		});
+	}
+	const bookingSemesters = await db.bookingSemester.findMany({
+		select: {
+			id: true,
+			semester: true,
+		},
+	});
+
+	console.log("Seeding booking contact...");
+	await db.bookingContact.upsert({
+		where: {
+			id: "booking-contact",
+		},
+		update: {},
+		create: {
+			email: faker.internet.exampleEmail(),
+			phoneNumber: faker.phone.number(),
+			name: `${faker.person.firstName()}${faker.person.lastName()}`,
+		},
+	});
+
+	return { cabins, bookings, bookingSemesters };
 };
