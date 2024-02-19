@@ -25,8 +25,10 @@ describe("MailService", () => {
 	let mockEventService: DeepMockProxy<EventService>;
 	let mockCabinService: DeepMockProxy<CabinService>;
 	let eventsRedis: Redis;
+	let queueEvents: QueueEvents;
 
 	beforeAll(() => {
+		const queueName = faker.string.uuid();
 		mockUserService = mockDeep<UserService>();
 		mockMailService = mockDeep<MailService>();
 		mockEventService = mockDeep<EventService>();
@@ -47,12 +49,23 @@ describe("MailService", () => {
 			eventService: mockEventService,
 			cabinService: mockCabinService,
 		});
-		mailWorker = new Worker("email", handler, {
+		mailWorker = new Worker(queueName, handler, {
 			connection: redis,
 		});
-		mailQueue = new Queue("email", {
+		mailQueue = new Queue(queueName, {
 			connection: redis,
 		});
+		queueEvents = new QueueEvents(queueName, {
+			connection: eventsRedis,
+		});
+	});
+
+	afterAll(async () => {
+		await mailWorker.close(true);
+		await mailQueue.close();
+		await queueEvents.close();
+		redis.disconnect();
+		eventsRedis.disconnect();
 	});
 
 	describe("worker", () => {
@@ -71,22 +84,10 @@ describe("MailService", () => {
 					recipientId: faker.string.uuid(),
 				});
 
-				await job.waitUntilFinished(
-					new QueueEvents("mail", {
-						connection: eventsRedis,
-					}),
-					10_0000,
-				);
+				await job.waitUntilFinished(queueEvents, 10_0000);
 
 				expect(mockMailService.send).toHaveBeenCalled();
 			}, 10_000);
 		});
-	});
-
-	afterAll(async () => {
-		await mailWorker.close();
-		await mailQueue.close();
-		await redis.quit();
-		await eventsRedis.quit();
 	});
 });

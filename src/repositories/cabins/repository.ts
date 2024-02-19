@@ -141,20 +141,43 @@ export class CabinRepository implements ICabinRepository {
 		}
 	}
 
-	async getBookingById(id: string): Promise<BookingType> {
-		const booking = await this.db.booking.findFirstOrThrow({
-			include: {
-				cabins: {
-					select: {
-						id: true,
+	async getBookingById(
+		id: string,
+	): ResultAsync<
+		{ booking: BookingType },
+		NotFoundError | InternalServerError
+	> {
+		try {
+			const booking = await this.db.booking.findFirst({
+				include: {
+					cabins: {
+						select: {
+							id: true,
+						},
 					},
 				},
-			},
-			where: {
-				id,
-			},
-		});
-		return new Booking(booking);
+				where: {
+					id,
+				},
+			});
+			if (booking === null) {
+				return {
+					ok: false,
+					error: new NotFoundError("Booking not found"),
+				};
+			}
+			return {
+				ok: true,
+				data: {
+					booking: new Booking(booking),
+				},
+			};
+		} catch (err) {
+			return {
+				ok: false,
+				error: new InternalServerError("Failed to get booking", err),
+			};
+		}
 	}
 
 	async getOverlappingBookings(

@@ -109,13 +109,16 @@ describe("CabinService", () => {
 			const userId = faker.string.uuid();
 			cabinRepository.getCabinByBookingId.mockResolvedValueOnce(mock<Cabin>());
 			permissionService.hasFeaturePermission.mockResolvedValueOnce(true);
-			cabinRepository.getBookingById.mockResolvedValueOnce(
-				mock<BookingType>({
-					id: faker.string.uuid(),
-					startDate: faker.date.future(),
-					endDate: faker.date.future(),
-				}),
-			);
+			cabinRepository.getBookingById.mockResolvedValueOnce({
+				ok: true,
+				data: {
+					booking: mock<BookingType>({
+						id: faker.string.uuid(),
+						startDate: faker.date.future(),
+						endDate: faker.date.future(),
+					}),
+				},
+			});
 			cabinRepository.getOverlappingBookings.mockResolvedValueOnce({
 				ok: true,
 				data: {

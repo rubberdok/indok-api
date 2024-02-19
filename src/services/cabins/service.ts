@@ -12,7 +12,6 @@ import { Booking, BookingStatus, type BookingType } from "~/domain/cabins.js";
 import {
 	InternalServerError,
 	InvalidArgumentError,
-	KnownDomainError,
 	NotFoundError,
 	PermissionDeniedError,
 	UnauthorizedError,
@@ -36,7 +35,9 @@ export interface ICabinRepository {
 		id: string,
 		data: Pick<BookingType, "status">,
 	): ResultAsync<{ booking: BookingType }, NotFoundError | InternalServerError>;
-	getBookingById(id: string): Promise<BookingType>;
+	getBookingById(
+		id: string,
+	): ResultAsync<{ booking: BookingType }, NotFoundError | InternalServerError>;
 	getOverlappingBookings(
 		booking: BookingType,
 		params: Pick<BookingType, "status">,
@@ -427,7 +428,12 @@ export class CabinService implements ICabinService {
 			};
 
 		if (status === BookingStatus.CONFIRMED) {
-			const booking = await this.cabinRepository.getBookingById(id);
+			const getBookingResult = await this.cabinRepository.getBookingById(id);
+			if (!getBookingResult.ok) {
+				return getBookingResult;
+			}
+			const { booking } = getBookingResult.data;
+
 			const getOverlappingBookingsResult =
 				await this.cabinRepository.getOverlappingBookings(booking, { status });
 			if (!getOverlappingBookingsResult.ok) {
@@ -667,27 +673,9 @@ export class CabinService implements ICabinService {
 
 	async getBooking(by: { id: string }): ResultAsync<
 		{ booking: BookingType },
-		InternalServerError | KnownDomainError
+		InternalServerError | NotFoundError
 	> {
-		try {
-			const booking = await this.cabinRepository.getBookingById(by.id);
-			return {
-				ok: true,
-				data: {
-					booking,
-				},
-			};
-		} catch (err) {
-			if (err instanceof KnownDomainError) {
-				return {
-					ok: false,
-					error: err,
-				};
-			}
-			return {
-				ok: false,
-				error: new InternalServerError("An unknown error occurred"),
-			};
-		}
+		const getBookingResult = await this.cabinRepository.getBookingById(by.id);
+		return getBookingResult;
 	}
 }
