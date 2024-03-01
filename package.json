@@ -84,7 +84,7 @@
 		"@fastify/redis": "^6.1.1",
 		"@fastify/session": "^10.7.0",
 		"@fastify/under-pressure": "^8.3.0",
-		"@graphql-tools/merge": "^9.0.2",
+		"@graphql-tools/merge": "^9.0.3",
 		"@immobiliarelabs/fastify-sentry": "^8.0.0",
 		"@prisma/client": "^5.9.1",
 		"@sentry/node": "^7.101.1",
