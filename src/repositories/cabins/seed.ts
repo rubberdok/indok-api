@@ -13,7 +13,9 @@ const cabinCreateInput: Prisma.CabinCreateInput[] = [
 		name: "Oksen",
 		capacity: 18,
 		internalPrice: 10,
+		internalPriceWeekend: 15,
 		externalPrice: 20,
+		externalPriceWeekend: 25,
 	},
 	{
 		id: bjornenId,
@@ -21,6 +23,8 @@ const cabinCreateInput: Prisma.CabinCreateInput[] = [
 		capacity: 18,
 		internalPrice: 10,
 		externalPrice: 20,
+		internalPriceWeekend: 15,
+		externalPriceWeekend: 25,
 	},
 ];
 

@@ -238,6 +238,18 @@ interface ICabinService {
 		| UnauthorizedError
 		| InternalServerError
 	>;
+	price(data: {
+		startDate: Date;
+		endDate: Date;
+		participants: {
+			internal: number;
+			external: number;
+		};
+		cabins: { id: string }[];
+	}): ResultAsync<
+		{ price: number },
+		InternalServerError | NotFoundError | InvalidArgumentError
+	>;
 }
 
 interface IEventService {

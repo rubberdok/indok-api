@@ -6,6 +6,7 @@ import {
 	FeaturePermission,
 	Semester,
 } from "@prisma/client";
+import { sumBy } from "lodash-es";
 import { DateTime } from "luxon";
 import { z } from "zod";
 import { Booking, BookingStatus, type BookingType } from "~/domain/cabins.js";
@@ -677,5 +678,70 @@ export class CabinService implements ICabinService {
 	> {
 		const getBookingResult = await this.cabinRepository.getBookingById(by.id);
 		return getBookingResult;
+	}
+
+	/**
+	 * Sunday to Thursday use internalPrice/externalPrice
+	 * Friday and Saturday use internalPriceWeekend/externalPriceWeekend
+	 *
+	 * If there are more internal participants than external, use internal price, else use external price
+	 */
+	async price(data: {
+		startDate: Date;
+		endDate: Date;
+		participants: {
+			internal: number;
+			external: number;
+		};
+		cabins: { id: string }[];
+	}): ResultAsync<
+		{ price: number },
+		InternalServerError | NotFoundError | InvalidArgumentError
+	> {
+		const { startDate, endDate, participants } = data;
+		const cabins = await Promise.all(
+			data.cabins.map((cabin) => this.cabinRepository.getCabinById(cabin.id)),
+		);
+
+		const isInternalPrice = participants.internal >= participants.external;
+		// Number of week nights, i.e. nights from Sunday to Thursday
+		let numberOfWeekdayNights = 0;
+		// Number of weekend nights, i.e. nights from Friday to Saturday
+		let numberOfWeekendNights = 0;
+		const interval = DateTime.fromJSDate(startDate).until(
+			DateTime.fromJSDate(endDate),
+		);
+		if (interval.isValid) {
+			for (const day of interval.splitBy({ days: 1 })) {
+				const weekday = day.start?.weekday;
+				if (weekday === 5 || weekday === 6) {
+					numberOfWeekendNights += 1;
+				} else {
+					numberOfWeekdayNights += 1;
+				}
+			}
+		} else {
+			return {
+				ok: false,
+				error: new InvalidArgumentError("Invalid date interval"),
+			};
+		}
+
+		let weekdayPrice = 0;
+		let weekendPrice = 0;
+
+		if (isInternalPrice) {
+			weekdayPrice = sumBy(cabins, "internalPrice");
+			weekendPrice = sumBy(cabins, "internalPriceWeekend");
+		} else {
+			weekdayPrice = sumBy(cabins, "externalPrice");
+			weekendPrice = sumBy(cabins, "externalPriceWeekend");
+		}
+
+		const price =
+			weekdayPrice * numberOfWeekdayNights +
+			weekendPrice * numberOfWeekendNights;
+
+		return { ok: true, data: { price } };
 	}
 }

@@ -127,10 +127,31 @@ type UpdateBookingContactResponse {
   bookingContact: BookingContact!
 }
 
+input ParticipantsInput {
+  internal: Int!
+  external: Int!
+}
+
+input CabinInput {
+  id: ID!
+}
+
+input PriceInput {
+  startDate: DateTime!
+  endDate: DateTime!
+  participants: ParticipantsInput!
+  cabins: [CabinInput!]!
+}
+
+type PriceResponse {
+  price: Int!
+}
+
 type Query {
   cabins: CabinsResponse!
   bookingSemesters: BookingSemestersResponse!
   bookingContact: BookingContactResponse!
+  price(data: PriceInput!): PriceResponse!
 }
 
 type Mutation {

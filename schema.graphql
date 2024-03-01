@@ -64,6 +64,10 @@ type Cabin {
   name: String!
 }
 
+input CabinInput {
+  id: ID!
+}
+
 type CabinsResponse {
   cabins: [Cabin!]!
 }
@@ -698,6 +702,11 @@ type OrganizationsResponse {
   organizations: [Organization!]!
 }
 
+input ParticipantsInput {
+  external: Int!
+  internal: Int!
+}
+
 enum ParticipationStatus {
   """The user is confirmed to be attending the event"""
   CONFIRMED
@@ -782,6 +791,17 @@ type Price {
   """The value of the price, in the given unit."""
   value: Int!
   valueInNok: Float!
+}
+
+input PriceInput {
+  cabins: [CabinInput!]!
+  endDate: DateTime!
+  participants: ParticipantsInput!
+  startDate: DateTime!
+}
+
+type PriceResponse {
+  price: Int!
 }
 
 """
@@ -892,6 +912,7 @@ type Query {
   payment attempts for the current user will be returned.
   """
   paymentAttempts(data: PaymentAttemptsInput): PaymentAttemptsResponse!
+  price(data: PriceInput!): PriceResponse!
   products: ProductResponse!
   serverTime: ServerTimeResponse!
   user: UserResponse!
