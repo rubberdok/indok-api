@@ -88,4 +88,20 @@ export const Event: EventResolvers = {
 	signUps: (parent) => {
 		return parent;
 	},
+	signUp: async (event, _args, ctx) => {
+		const getSignUpResult = await ctx.events.getSignUp(ctx, {
+			eventId: event.id,
+			userId: ctx.user?.id,
+		});
+		if (!getSignUpResult.ok) {
+			switch (getSignUpResult.error.name) {
+				case "UnauthorizedError":
+				case "NotFoundError":
+					return null;
+				case "InternalServerError":
+					throw getSignUpResult.error;
+			}
+		}
+		return getSignUpResult.data.signUp;
+	},
 };

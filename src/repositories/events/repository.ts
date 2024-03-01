@@ -1312,6 +1312,46 @@ export class EventRepository {
 			};
 		}
 	}
+
+	public async getEarlierSignUpsOnWaitList(data: {
+		eventId: string;
+		createdAt: Date;
+	}): ResultAsync<{ count: number }, NotFoundError | InternalServerError> {
+		const { eventId, createdAt } = data;
+		try {
+			const count = await this.db.eventSignUp.count({
+				where: {
+					eventId,
+					participationStatus: ParticipationStatus.ON_WAITLIST,
+					createdAt: {
+						lt: createdAt,
+					},
+				},
+			});
+			return {
+				ok: true,
+				data: {
+					count,
+				},
+			};
+		} catch (err) {
+			if (err instanceof PrismaClientKnownRequestError) {
+				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) {
+					return {
+						ok: false,
+						error: new NotFoundError("Event not found", err),
+					};
+				}
+			}
+			return {
+				ok: false,
+				error: new InternalServerError(
+					"Failed to get earlier sign ups on wait list",
+					err,
+				),
+			};
+		}
+	}
 }
 
 interface CreateConfirmedSignUpData {

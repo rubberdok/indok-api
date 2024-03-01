@@ -3,6 +3,7 @@ import type { EventSignUp, Organization } from "@prisma/client";
 import { mock } from "jest-mock-extended";
 import {
 	InternalServerError,
+	InvalidArgumentError,
 	NotFoundError,
 	PermissionDeniedError,
 	UnauthorizedError,
@@ -832,6 +833,166 @@ describe("Event queries", () => {
 			`),
 				variables: { data: { id: faker.string.uuid() } },
 			});
+
+			expect(errors).toBeDefined();
+		});
+
+		it("event { user { signUp { approximatePositionOnWaitList } } } should resolve", async () => {
+			const { client, eventService, createMockContext, userService } =
+				createMockApolloServer();
+			eventService.get.mockResolvedValue(
+				mock<EventType>({
+					id: faker.string.uuid(),
+					organizationId: faker.string.uuid(),
+				}),
+			);
+			eventService.getApproximatePositionOnWaitingList.mockResolvedValue({
+				ok: true,
+				data: {
+					position: 1,
+				},
+			});
+			eventService.getSignUp.mockResolvedValue({
+				ok: true,
+				data: {
+					signUp: mock<EventSignUp>({
+						id: faker.string.uuid(),
+						userId: faker.string.uuid(),
+					}),
+				},
+			});
+
+			const { data, errors } = await client.query(
+				{
+					query: graphql(`
+				query eventWithWaitListPosition($data: EventInput!) {
+					event(data: $data) {
+						event {
+							id
+							user {
+								signUp {
+									approximatePositionOnWaitList
+								}
+							}
+						}
+					}
+				}
+			`),
+					variables: { data: { id: faker.string.uuid() } },
+				},
+				{
+					contextValue: createMockContext({
+						user: { id: faker.string.uuid() },
+					}),
+				},
+			);
+
+			expect(errors).toBeUndefined();
+			expect(
+				data?.event.event.user?.signUp?.approximatePositionOnWaitList,
+			).toBe(1);
+		});
+
+		it("event { user { signUp { approximatePositionOnWaitList } } } should return null expect for internal server error", async () => {
+			const { client, eventService, createMockContext } =
+				createMockApolloServer();
+			eventService.get.mockResolvedValue(
+				mock<EventType>({
+					id: faker.string.uuid(),
+					organizationId: faker.string.uuid(),
+				}),
+			);
+			eventService.getApproximatePositionOnWaitingList.mockResolvedValue({
+				ok: false,
+				error: new InvalidArgumentError(""),
+			});
+			eventService.getSignUp.mockResolvedValue({
+				ok: true,
+				data: {
+					signUp: mock<EventSignUp>({
+						id: faker.string.uuid(),
+						userId: faker.string.uuid(),
+					}),
+				},
+			});
+
+			const { data } = await client.query(
+				{
+					query: graphql(`
+				query eventWithWaitListPosition($data: EventInput!) {
+					event(data: $data) {
+						event {
+							id
+							user {
+								signUp {
+									approximatePositionOnWaitList
+								}
+							}
+						}
+					}
+				}
+			`),
+					variables: { data: { id: faker.string.uuid() } },
+				},
+				{
+					contextValue: createMockContext({
+						user: { id: faker.string.uuid() },
+					}),
+				},
+			);
+
+			expect(
+				data?.event.event.user?.signUp?.approximatePositionOnWaitList,
+			).toBe(null);
+		});
+
+		it("event { user { signUp { approximatePositionOnWaitList } } } should return error for internal server error", async () => {
+			const { client, eventService, createMockContext } =
+				createMockApolloServer();
+			eventService.get.mockResolvedValue(
+				mock<EventType>({
+					id: faker.string.uuid(),
+					organizationId: faker.string.uuid(),
+				}),
+			);
+			eventService.getApproximatePositionOnWaitingList.mockResolvedValue({
+				ok: false,
+				error: new InternalServerError(""),
+			});
+			eventService.getSignUp.mockResolvedValue({
+				ok: true,
+				data: {
+					signUp: mock<EventSignUp>({
+						id: faker.string.uuid(),
+						userId: faker.string.uuid(),
+					}),
+				},
+			});
+
+			const { errors } = await client.query(
+				{
+					query: graphql(`
+				query eventWithWaitListPosition($data: EventInput!) {
+					event(data: $data) {
+						event {
+							id
+							user {
+								signUp {
+									approximatePositionOnWaitList
+								}
+							}
+						}
+					}
+				}
+			`),
+					variables: { data: { id: faker.string.uuid() } },
+				},
+				{
+					contextValue: createMockContext({
+						user: { id: faker.string.uuid() },
+					}),
+				},
+			);
 
 			expect(errors).toBeDefined();
 		});

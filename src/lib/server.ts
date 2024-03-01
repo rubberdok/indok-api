@@ -340,6 +340,16 @@ interface IEventService {
 		| NotFoundError
 		| InternalServerError
 	>;
+	getApproximatePositionOnWaitingList(
+		ctx: Context,
+		params: { eventId: string },
+	): ResultAsync<
+		{ position: number },
+		| InternalServerError
+		| NotFoundError
+		| UnauthorizedError
+		| InvalidArgumentError
+	>;
 }
 
 interface IListingService {
