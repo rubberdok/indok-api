@@ -1,8 +1,12 @@
+import { fail } from "assert";
 import { faker } from "@faker-js/faker";
-import { QueueEvents } from "bullmq";
+import { jest } from "@jest/globals";
+import { QueueEvents, UnrecoverableError } from "bullmq";
 import { Redis } from "ioredis";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { env } from "~/config.js";
+import type { Booking } from "~/domain/cabins.js";
+import { InternalServerError, NotFoundError } from "~/domain/errors.js";
 import type { User } from "~/domain/users.js";
 import { Queue } from "~/lib/bullmq/queue.js";
 import { Worker } from "~/lib/bullmq/worker.js";
@@ -27,7 +31,7 @@ describe("MailService", () => {
 	let eventsRedis: Redis;
 	let queueEvents: QueueEvents;
 
-	beforeAll(() => {
+	beforeAll(async () => {
 		const queueName = faker.string.uuid();
 		mockUserService = mockDeep<UserService>();
 		mockMailService = mockDeep<MailService>();
@@ -58,6 +62,10 @@ describe("MailService", () => {
 		queueEvents = new QueueEvents(queueName, {
 			connection: eventsRedis,
 		});
+
+		await mailQueue.waitUntilReady();
+		await mailWorker.waitUntilReady();
+		await queueEvents.waitUntilReady();
 	});
 
 	afterAll(async () => {
@@ -66,6 +74,11 @@ describe("MailService", () => {
 		await queueEvents.close();
 		redis.disconnect();
 		eventsRedis.disconnect();
+	});
+
+	beforeEach(() => {
+		mailWorker.removeAllListeners();
+		jest.clearAllMocks();
 	});
 
 	describe("worker", () => {
@@ -84,10 +97,89 @@ describe("MailService", () => {
 					recipientId: faker.string.uuid(),
 				});
 
-				await job.waitUntilFinished(queueEvents, 10_0000);
+				const result = await job.waitUntilFinished(queueEvents, 7_500);
 
+				expect(result.ok).toBe(true);
 				expect(mockMailService.send).toHaveBeenCalled();
 			}, 10_000);
+		});
+
+		describe("type: cabin-booking-receipt", () => {
+			it("should throw UnrecoverableError if the booking does not exist", async () => {
+				mockCabinService.getBooking.mockResolvedValue({
+					ok: false,
+					error: new NotFoundError("Booking does not exist"),
+				});
+
+				const job = await mailQueue.add("send-email", {
+					type: "cabin-booking-receipt",
+					bookingId: faker.string.uuid(),
+				});
+
+				mailWorker.on("failed", (_job, error) => {
+					expect(error).toBeInstanceOf(UnrecoverableError);
+				});
+
+				try {
+					await job.waitUntilFinished(queueEvents, 7_500);
+					fail("Expected job to fail");
+				} catch {
+					const state = await job.getState();
+					expect(state).toBe("failed");
+				}
+			}, 10_000);
+
+			it("should throw InternalServerError if something goes wrong with fetching the booking", async () => {
+				mockCabinService.getBooking.mockResolvedValue({
+					ok: false,
+					error: new InternalServerError("Internal Server Error"),
+				});
+
+				const job = await mailQueue.add("send-email", {
+					type: "cabin-booking-receipt",
+					bookingId: faker.string.uuid(),
+				});
+
+				mailWorker.on("failed", (_job, error) => {
+					expect(error).toBeInstanceOf(InternalServerError);
+				});
+
+				try {
+					await job.waitUntilFinished(queueEvents, 7_500);
+					fail("Expected job to fail");
+				} catch {
+					const state = await job.getState();
+					expect(state).toBe("failed");
+				}
+			}, 10_000);
+
+			it("should send a cabin booking receipt to the email", async () => {
+				const booking = mock<Booking>({
+					email: "test@example.com",
+					id: faker.string.uuid(),
+				});
+				mockCabinService.getBooking.mockResolvedValueOnce({
+					ok: true,
+					data: {
+						booking,
+					},
+				});
+				mockMailService.send.mockResolvedValue();
+
+				const job = await mailQueue.add("send-email", {
+					type: "cabin-booking-receipt",
+					bookingId: faker.string.uuid(),
+				});
+
+				const result = await job.waitUntilFinished(queueEvents, 7_500);
+
+				expect(result.ok).toBe(true);
+				expect(mockMailService.send).toHaveBeenCalledWith(
+					expect.objectContaining({
+						to: "test@example.com",
+					}),
+				);
+			});
 		});
 	});
 });

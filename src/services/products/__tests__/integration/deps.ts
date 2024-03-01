@@ -60,9 +60,9 @@ export async function makeDependencies(overrides?: {
 	});
 
 	const close = async () => {
-		await queueEvents.close();
 		await paymentProcessingQueue.close();
 		await worker.close(true);
+		await queueEvents.close();
 		queueEventsRedis.disconnect();
 		redis.disconnect();
 	};

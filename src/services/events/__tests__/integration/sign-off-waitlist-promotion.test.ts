@@ -48,7 +48,7 @@ describe("EventService", () => {
 	let emailQueueEvents: QueueEvents;
 	let mailClient: DeepMockProxy<ServerClient>;
 
-	beforeAll(() => {
+	beforeAll(async () => {
 		redis = new Redis(env.REDIS_CONNECTION_STRING, {
 			maxRetriesPerRequest: 0,
 		});
@@ -61,6 +61,7 @@ describe("EventService", () => {
 
 		emailQueue = new Queue(emailQueueName, { connection: redis });
 		signUpQueue = new Queue(signUpQueueName, { connection: redis });
+
 		mailClient = mockDeep<ServerClient>();
 		const mailService = buildMailService(
 			{
@@ -106,9 +107,6 @@ describe("EventService", () => {
 			mailService,
 			cabinService: mockDeep<CabinService>(),
 		});
-		emailWorker = new Worker(emailQueueName, emailWorkerHandler.handler, {
-			connection: redis,
-		});
 
 		const signUpWorkerHandler = getSignUpWorkerHandler({
 			events: eventService,
@@ -116,23 +114,31 @@ describe("EventService", () => {
 			log: mockDeep<Logger>(),
 		});
 
+		emailWorker = new Worker(emailQueueName, emailWorkerHandler.handler, {
+			connection: redis,
+		});
 		signUpWorker = new Worker(signUpQueueName, signUpWorkerHandler.handler, {
 			connection: redis,
 		});
-
 		signUpQueueEvents = new QueueEvents(signUpQueueName, {
 			connection: queueEventsRedis,
 		});
 		emailQueueEvents = new QueueEvents(emailQueueName, {
 			connection: queueEventsRedis,
 		});
+		await emailWorker.waitUntilReady();
+		await signUpWorker.waitUntilReady();
+		await signUpQueue.waitUntilReady();
+		await emailQueue.waitUntilReady();
+		await signUpQueueEvents.waitUntilReady();
+		await emailQueueEvents.waitUntilReady();
 	});
 
 	afterAll(async () => {
 		await emailQueue.close();
 		await signUpQueue.close();
-		await signUpWorker.close();
-		await emailWorker.close();
+		await signUpWorker.close(true);
+		await emailWorker.close(true);
 		await signUpQueueEvents.close();
 		await emailQueueEvents.close();
 		redis.disconnect();

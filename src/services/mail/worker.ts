@@ -143,9 +143,8 @@ const EmailHandler = ({
 					}
 				}
 				const { booking } = getBookingResult.data;
-				const user = await userService.get(booking.email);
 				await mailService.send({
-					to: user.email,
+					to: booking.email,
 					templateAlias: "cabin-booking-receipt",
 					content: {
 						booking: {

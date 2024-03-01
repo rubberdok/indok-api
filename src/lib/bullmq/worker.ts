@@ -134,7 +134,7 @@ const avvioWorker: Plugin<
 	// biome-ignore lint/suspicious/noExplicitAny: the types here can be anything
 	{ name: string; handler: Processor<any, any, any> },
 	WorkerType
-> = (instance, opts) => {
+> = async (instance, opts) => {
 	const { name, handler } = opts;
 
 	if (instance.workers === undefined) {
@@ -159,10 +159,14 @@ const avvioWorker: Plugin<
 	instance.onClose(async () => {
 		await worker.close();
 	});
+	await worker.waitUntilReady();
 	return Promise.resolve();
 };
 
-const avvioQueue: Plugin<{ name: string }, WorkerType> = (instance, opts) => {
+const avvioQueue: Plugin<{ name: string }, WorkerType> = async (
+	instance,
+	opts,
+) => {
 	const { name } = opts;
 	if (instance.queues === undefined) {
 		instance.queues = {};
@@ -178,6 +182,7 @@ const avvioQueue: Plugin<{ name: string }, WorkerType> = (instance, opts) => {
 	);
 
 	instance.queues[name] = queue;
+	await queue.waitUntilReady();
 
 	return Promise.resolve();
 };
