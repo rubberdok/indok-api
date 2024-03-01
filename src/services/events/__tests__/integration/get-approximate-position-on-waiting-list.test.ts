@@ -1,16 +1,16 @@
-import { makeMockContext } from "~/lib/context.js";
-import {
-	makeDependencies,
-	makeUserWithOrganizationMembership,
-} from "./dependencies-factory.js";
+import assert from "assert";
 import { faker } from "@faker-js/faker";
 import { DateTime } from "luxon";
-import assert from "assert";
 import {
 	InvalidArgumentError,
 	NotFoundError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
+import { makeMockContext } from "~/lib/context.js";
+import {
+	makeDependencies,
+	makeUserWithOrganizationMembership,
+} from "./dependencies-factory.js";
 
 describe("EventService", () => {
 	describe("#getApproximatePositionOnWaitingList", () => {
