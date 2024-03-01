@@ -69,6 +69,7 @@ import {
 	type PaymentProcessingResultType,
 } from "~/services/products/worker.js";
 import { UserService } from "~/services/users/index.js";
+import fastifyBullBoardPlugin from "./fastify/bull-board.js";
 import fastifyMessageQueue from "./fastify/message-queue.js";
 import fastifyPrisma from "./fastify/prisma.js";
 import fastifyService from "./fastify/service.js";
@@ -635,6 +636,9 @@ async function registerServices(
 	};
 
 	await serverInstance.register(fastifyService, { services });
+	await serverInstance.register(fastifyBullBoardPlugin, {
+		prefix: "/admin/queues",
+	});
 	return services;
 }
 
