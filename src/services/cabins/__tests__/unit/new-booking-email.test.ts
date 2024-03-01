@@ -22,6 +22,8 @@ const validBooking: NewBookingParams = {
 	email: "exapmle@example.com",
 	firstName: "test",
 	lastName: "test",
+	externalParticipantsCount: 1,
+	internalParticipantsCount: 1,
 };
 
 let repo: DeepMockProxy<ICabinRepository>;
@@ -72,8 +74,21 @@ describe("newBooking", () => {
 					id: randomUUID(),
 					status: BookingStatus.PENDING,
 					cabins: [{ id: faker.string.uuid() }],
+					totalCost: 250,
 				},
 			},
+		});
+
+		repo.getCabinById.mockResolvedValue({
+			id: faker.string.uuid(),
+			name: "test",
+			capacity: 100,
+			internalPrice: 100,
+			externalPrice: 200,
+			internalPriceWeekend: 150,
+			externalPriceWeekend: 250,
+			createdAt: new Date(),
+			updatedAt: new Date(),
 		});
 
 		const newBookingResult = await cabinService.newBooking(
@@ -82,7 +97,7 @@ describe("newBooking", () => {
 		);
 		if (!newBookingResult.ok) throw newBookingResult.error;
 		expect(repo.createBooking).toHaveBeenCalledWith(
-			expect.objectContaining(input),
+			expect.objectContaining({ ...input, totalCost: 250 }),
 		);
 		expect(mockMailService.sendAsync).toHaveBeenCalledWith({
 			type: "cabin-booking-receipt",

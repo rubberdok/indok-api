@@ -24,6 +24,8 @@ export class CabinRepository implements ICabinRepository {
 		capacity: number;
 		internalPrice: number;
 		externalPrice: number;
+		internalPriceWeekend: number;
+		externalPriceWeekend: number;
 	}): ResultAsync<
 		{
 			cabin: Cabin;
@@ -37,6 +39,8 @@ export class CabinRepository implements ICabinRepository {
 					capacity: params.capacity,
 					internalPrice: params.internalPrice,
 					externalPrice: params.externalPrice,
+					internalPriceWeekend: params.internalPriceWeekend,
+					externalPriceWeekend: params.externalPriceWeekend,
 				},
 			});
 			return {

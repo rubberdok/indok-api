@@ -24,6 +24,8 @@ describe("Cabin mutations", () => {
 				firstName: faker.person.firstName(),
 				lastName: faker.person.lastName(),
 				phoneNumber: faker.phone.number(),
+				internalParticipantsCount: 5,
+				externalParticipantsCount: 10,
 			};
 
 			const { errors } = await client.mutate({
@@ -50,6 +52,8 @@ describe("Cabin mutations", () => {
 				firstName: data.firstName,
 				lastName: data.lastName,
 				phoneNumber: data.phoneNumber,
+				internalParticipantsCount: data.internalParticipantsCount,
+				externalParticipantsCount: data.externalParticipantsCount,
 			});
 		});
 	});

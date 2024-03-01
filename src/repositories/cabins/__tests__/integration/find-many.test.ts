@@ -48,6 +48,8 @@ async function makeCabin() {
 			capacity: faker.number.int({ max: 10 }),
 			internalPrice: faker.number.int({ max: 2000 }),
 			externalPrice: faker.number.int({ max: 2000 }),
+			internalPriceWeekend: faker.number.int({ max: 2000 }),
+			externalPriceWeekend: faker.number.int({ max: 2000 }),
 		},
 	});
 }

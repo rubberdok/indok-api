@@ -78,6 +78,8 @@ input NewBookingInput {
   lastName: String!
   email: String!
   phoneNumber: String!
+  internalParticipantsCount: Int!
+  externalParticipantsCount: Int!
 }
 
 type NewBookingResponse {
@@ -136,22 +138,22 @@ input CabinInput {
   id: ID!
 }
 
-input PriceInput {
+input TotalCostInput {
   startDate: DateTime!
   endDate: DateTime!
   participants: ParticipantsInput!
   cabins: [CabinInput!]!
 }
 
-type PriceResponse {
-  price: Int!
+type TotalCostResponse {
+  totalCost: Int!
 }
 
 type Query {
   cabins: CabinsResponse!
   bookingSemesters: BookingSemestersResponse!
   bookingContact: BookingContactResponse!
-  price(data: PriceInput!): PriceResponse!
+  totalCost(data: TotalCostInput!): TotalCostResponse!
 }
 
 type Mutation {

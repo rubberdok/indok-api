@@ -38,6 +38,9 @@ const bookingCreateInput: Prisma.BookingCreateInput[] = [
 		phoneNumber: faker.phone.number(),
 		firstName: faker.person.firstName(),
 		lastName: faker.person.lastName(),
+		internalParticipantsCount: 5,
+		externalParticipantsCount: 10,
+		totalCost: 1 * 250 + 5 * 200 + 1 * 2500 + 5 * 2000,
 		cabins: {
 			connect: {
 				id: oksenId,
@@ -53,6 +56,9 @@ const bookingCreateInput: Prisma.BookingCreateInput[] = [
 		phoneNumber: faker.phone.number(),
 		firstName: faker.person.firstName(),
 		lastName: faker.person.lastName(),
+		internalParticipantsCount: 5,
+		externalParticipantsCount: 10,
+		totalCost: 1 * 250 + 5 * 200 + 1 * 2500 + 5 * 2000,
 		cabins: {
 			connect: {
 				id: oksenId,
@@ -68,6 +74,9 @@ const bookingCreateInput: Prisma.BookingCreateInput[] = [
 		phoneNumber: faker.phone.number(),
 		firstName: faker.person.firstName(),
 		lastName: faker.person.lastName(),
+		internalParticipantsCount: 5,
+		externalParticipantsCount: 10,
+		totalCost: 1 * 250 + 5 * 200 + 1 * 2500 + 5 * 2000,
 		cabins: {
 			connect: {
 				id: oksenId,
@@ -83,6 +92,9 @@ const bookingCreateInput: Prisma.BookingCreateInput[] = [
 		phoneNumber: faker.phone.number(),
 		firstName: faker.person.firstName(),
 		lastName: faker.person.lastName(),
+		internalParticipantsCount: 5,
+		externalParticipantsCount: 10,
+		totalCost: 1 * 250 + 5 * 200 + 1 * 2500 + 5 * 2000,
 		cabins: {
 			connect: {
 				id: oksenId,
@@ -98,6 +110,9 @@ const bookingCreateInput: Prisma.BookingCreateInput[] = [
 		phoneNumber: faker.phone.number(),
 		firstName: faker.person.firstName(),
 		lastName: faker.person.lastName(),
+		internalParticipantsCount: 5,
+		externalParticipantsCount: 10,
+		totalCost: 1 * 250 + 5 * 200 + 1 * 2500 + 5 * 2000,
 		cabins: {
 			connect: {
 				id: oksenId,

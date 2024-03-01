@@ -12,6 +12,8 @@ async function makeDependencies() {
 		capacity: faker.number.int({ min: 1, max: 10 }),
 		internalPrice: faker.number.int({ min: 100, max: 1000 }),
 		externalPrice: faker.number.int({ min: 100, max: 1000 }),
+		internalPriceWeekend: faker.number.int({ min: 100, max: 1000 }),
+		externalPriceWeekend: faker.number.int({ min: 100, max: 1000 }),
 	});
 	if (!oksen.ok) throw oksen.error;
 	const bjørnen = await cabinRepository.createCabin({
@@ -19,6 +21,8 @@ async function makeDependencies() {
 		capacity: faker.number.int({ min: 1, max: 10 }),
 		internalPrice: faker.number.int({ min: 100, max: 1000 }),
 		externalPrice: faker.number.int({ min: 100, max: 1000 }),
+		internalPriceWeekend: faker.number.int({ min: 100, max: 1000 }),
+		externalPriceWeekend: faker.number.int({ min: 100, max: 1000 }),
 	});
 	if (!bjørnen.ok) throw bjørnen.error;
 
@@ -58,6 +62,9 @@ async function makeDependencies() {
 			phoneNumber: faker.phone.number(),
 			id: faker.string.uuid(),
 			status,
+			internalParticipantsCount: faker.number.int({ min: 1, max: 10 }),
+			externalParticipantsCount: faker.number.int({ min: 1, max: 10 }),
+			totalCost: faker.number.int({ min: 100, max: 1000 }),
 		});
 		if (!createBookingResult.ok) throw createBookingResult.error;
 		return createBookingResult.data.booking;

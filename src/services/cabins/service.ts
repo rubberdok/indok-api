@@ -71,6 +71,8 @@ export interface ICabinRepository {
 		capacity: number;
 		internalPrice: number;
 		externalPrice: number;
+		internalPriceWeekend: number;
+		externalPriceWeekend: number;
 	}): ResultAsync<{ cabin: Cabin }, InternalServerError>;
 }
 
@@ -101,6 +103,8 @@ export class CabinService implements ICabinService {
 			capacity: number;
 			internalPrice: number;
 			externalPrice: number;
+			internalPriceWeekend: number;
+			externalPriceWeekend: number;
 		},
 	): ResultAsync<
 		{
@@ -161,13 +165,73 @@ export class CabinService implements ICabinService {
 		InvalidArgumentError | InternalServerError
 	> {
 		const bookingSemesters = await this.getBookingSemesters();
-		const validateResult = this.validateBooking(params, bookingSemesters);
+		const cabins = await Promise.all(
+			params.cabins.map((cabin) => this.cabinRepository.getCabinById(cabin.id)),
+		);
+
+		const validateResult = this.validateBooking(
+			params,
+			bookingSemesters,
+			cabins,
+		);
 		if (!validateResult.ok) {
 			return validateResult;
 		}
 		const { validated: validatedData } = validateResult.data;
+		const {
+			startDate,
+			endDate,
+			internalParticipantsCount,
+			externalParticipantsCount,
+		} = validatedData;
+		const priceResult = await this.totalCost({
+			cabins: params.cabins,
+			startDate,
+			endDate,
+			participants: {
+				internal: internalParticipantsCount,
+				external: externalParticipantsCount,
+			},
+		});
+		if (!priceResult.ok) {
+			switch (priceResult.error.name) {
+				case "NotFoundError": {
+					return {
+						ok: false,
+						error: new InvalidArgumentError(
+							"The cabin you tried to book does not exist",
+							priceResult.error,
+						),
+					};
+				}
+				case "InvalidArgumentError": {
+					return {
+						ok: false,
+						error: new InvalidArgumentError(
+							"Failed to calculate the total cost of the booking",
+							priceResult.error,
+						),
+					};
+				}
+				case "InternalServerError": {
+					return {
+						ok: false,
+						error: new InternalServerError(
+							"An unknown error occurred when calculating the total cost of the booking",
+							priceResult.error,
+						),
+					};
+				}
+			}
+		}
+
 		const newBooking = new Booking(
-			new Booking({ ...validatedData, status: "PENDING", id: randomUUID() }),
+			new Booking({
+				...validatedData,
+				totalCost: priceResult.data.totalCost,
+				status: "PENDING",
+				id: randomUUID(),
+			}),
 		);
 
 		const createBookingResult =
@@ -295,8 +359,9 @@ export class CabinService implements ICabinService {
 			spring: BookingSemester | null;
 			fall: BookingSemester | null;
 		},
+		cabins: Cabin[],
 	): Result<
-		{ validated: Omit<BookingType, "id" | "status"> },
+		{ validated: Omit<BookingType, "id" | "status" | "totalCost"> },
 		InvalidArgumentError
 	> {
 		const { fall, spring } = bookingSemesters;
@@ -326,6 +391,12 @@ export class CabinService implements ICabinService {
 						z.object({ id: z.string().uuid({ message: "invalid cabin id" }) }),
 					)
 					.min(1, "at least one cabin must be booked"),
+				internalParticipantsCount: z
+					.number()
+					.min(0, "internal participants must be at least 0"),
+				externalParticipantsCount: z
+					.number()
+					.min(0, "external participants must be at least 0"),
 			})
 			.refine((obj) => obj.endDate > obj.startDate, {
 				message: "end date must be after start date",
@@ -355,6 +426,18 @@ export class CabinService implements ICabinService {
 					message:
 						"booking is not in an active booking semester, and is not a valid cross-semester booking",
 					path: ["startDate", "endDate"],
+				},
+			)
+			.refine(
+				(obj) => {
+					const maximumParticipants = sumBy(cabins, "capacity");
+					const totalParticipants =
+						obj.internalParticipantsCount + obj.externalParticipantsCount;
+					return totalParticipants <= maximumParticipants;
+				},
+				{
+					message: "too many participants for the selected cabins",
+					path: ["internalParticipantsCount", "externalParticipantsCount"],
 				},
 			);
 		const parseResult = bookingSchema.safeParse(data);
@@ -686,7 +769,7 @@ export class CabinService implements ICabinService {
 	 *
 	 * If there are more internal participants than external, use internal price, else use external price
 	 */
-	async price(data: {
+	async totalCost(data: {
 		startDate: Date;
 		endDate: Date;
 		participants: {
@@ -695,7 +778,7 @@ export class CabinService implements ICabinService {
 		};
 		cabins: { id: string }[];
 	}): ResultAsync<
-		{ price: number },
+		{ totalCost: number },
 		InternalServerError | NotFoundError | InvalidArgumentError
 	> {
 		const { startDate, endDate, participants } = data;
@@ -738,10 +821,10 @@ export class CabinService implements ICabinService {
 			weekendPrice = sumBy(cabins, "externalPriceWeekend");
 		}
 
-		const price =
+		const totalCost =
 			weekdayPrice * numberOfWeekdayNights +
 			weekendPrice * numberOfWeekendNights;
 
-		return { ok: true, data: { price } };
+		return { ok: true, data: { totalCost } };
 	}
 }

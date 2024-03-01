@@ -177,6 +177,8 @@ type NewBookingParams = {
 	startDate: Date;
 	endDate: Date;
 	phoneNumber: string;
+	internalParticipantsCount: number;
+	externalParticipantsCount: number;
 };
 
 interface ICabinService {
@@ -238,7 +240,7 @@ interface ICabinService {
 		| UnauthorizedError
 		| InternalServerError
 	>;
-	price(data: {
+	totalCost(data: {
 		startDate: Date;
 		endDate: Date;
 		participants: {
@@ -247,7 +249,7 @@ interface ICabinService {
 		};
 		cabins: { id: string }[];
 	}): ResultAsync<
-		{ price: number },
+		{ totalCost: number },
 		InternalServerError | NotFoundError | InvalidArgumentError
 	>;
 }

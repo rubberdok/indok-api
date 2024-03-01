@@ -585,7 +585,9 @@ input NewBookingInput {
   cabins: [NewBookingCabinInput!]!
   email: String!
   endDate: DateTime!
+  externalParticipantsCount: Int!
   firstName: String!
+  internalParticipantsCount: Int!
   lastName: String!
   phoneNumber: String!
   startDate: DateTime!
@@ -793,17 +795,6 @@ type Price {
   valueInNok: Float!
 }
 
-input PriceInput {
-  cabins: [CabinInput!]!
-  endDate: DateTime!
-  participants: ParticipantsInput!
-  startDate: DateTime!
-}
-
-type PriceResponse {
-  price: Int!
-}
-
 """
 PrivateUser should only be used when accessed by the authenticated user themselves
 as it contains sensitive information.
@@ -912,9 +903,9 @@ type Query {
   payment attempts for the current user will be returned.
   """
   paymentAttempts(data: PaymentAttemptsInput): PaymentAttemptsResponse!
-  price(data: PriceInput!): PriceResponse!
   products: ProductResponse!
   serverTime: ServerTimeResponse!
+  totalCost(data: TotalCostInput!): TotalCostResponse!
   user: UserResponse!
   users: UsersResponse!
 }
@@ -1080,6 +1071,17 @@ input SuperUpdateUserInput {
 
 type SuperUpdateUserResponse {
   user: PrivateUser!
+}
+
+input TotalCostInput {
+  cabins: [CabinInput!]!
+  endDate: DateTime!
+  participants: ParticipantsInput!
+  startDate: DateTime!
+}
+
+type TotalCostResponse {
+  totalCost: Int!
 }
 
 input UpdateBookingContactInput {
