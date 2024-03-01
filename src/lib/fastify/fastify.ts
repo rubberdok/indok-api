@@ -114,16 +114,16 @@ async function fastifyServer(
 				// fallthrough
 				case "BAD_REQUEST":
 				case "BAD_USER_INPUT":
-					reply.status(400);
+					reply.code(400);
 					break;
 				case "PERMISSION_DENIED":
-					reply.status(403);
+					reply.code(403);
 					break;
 				case "UNAUTHORIZED":
-					reply.status(401);
+					reply.code(401);
 					break;
 				case "NOT_FOUND":
-					reply.status(404);
+					reply.code(404);
 					break;
 			}
 			reply.send({
