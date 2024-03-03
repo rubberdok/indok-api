@@ -1,3 +1,49 @@
+type Mutation {
+  """
+  """
+  updateEvent(id: ID!, data: UpdateEventInput!): UpdateEventResponse!
+  """
+  Retract an active sign up for an event, requires that the user is logged in
+  """
+  retractSignUp(data: RetractSignUpInput!): RetractSignUpResponse!
+  """
+  Remove an active sign up for an event, requires that the user is logged in and a member of the organization that is hosting the event
+  """
+  removeSignUp(data: RemoveSignUpInput!): RemoveSignUpResponse!
+  """
+  Sign up for an event, requires that the user is logged in
+  """
+  signUp(data: SignUpInput!): SignUpResponse!
+  """
+  Create an event, requires that the user is logged in, and is a member of the organization that is hosting the event
+  """
+  createEvent(data: CreateEventInput!): CreateEventResponse!
+  """
+  Create a new event category, requires super user status
+  """
+  createEventCategory(
+    data: CreateEventCategoryInput!
+  ): CreateEventCategoryResponse!
+  """
+  Update an event category, requires super user status
+  """
+  updateEventCategory(
+    data: UpdateEventCategoryInput!
+  ): UpdateEventCategoryResponse!
+  """
+  Delete an event category, requires super user status
+  """
+  deleteEventCategory(
+    data: DeleteEventCategoryInput!
+  ): DeleteEventCategoryResponse!
+}
+
+type Query {
+  event(data: EventInput!): EventResponse!
+  events(data: EventsInput): EventsResponse!
+  categories: EventCategoriesResponse!
+}
+
 type Event {
   id: ID!
   """
@@ -478,44 +524,16 @@ type EventCategoriesResponse {
   categories: [EventCategory!]!
 }
 
-type Mutation {
+input RemoveSignUpInput {
   """
+  The id of the sign up to remove
   """
-  updateEvent(id: ID!, data: UpdateEventInput!): UpdateEventResponse!
-  """
-  Retract an active sign up for an event, requires that the user is logged in
-  """
-  retractSignUp(data: RetractSignUpInput!): RetractSignUpResponse!
-  """
-  Sign up for an event, requires that the user is logged in
-  """
-  signUp(data: SignUpInput!): SignUpResponse!
-  """
-  Create an event, requires that the user is logged in, and is a member of the organization that is hosting the event
-  """
-  createEvent(data: CreateEventInput!): CreateEventResponse!
-  """
-  Create a new event category, requires super user status
-  """
-  createEventCategory(
-    data: CreateEventCategoryInput!
-  ): CreateEventCategoryResponse!
-  """
-  Update an event category, requires super user status
-  """
-  updateEventCategory(
-    data: UpdateEventCategoryInput!
-  ): UpdateEventCategoryResponse!
-  """
-  Delete an event category, requires super user status
-  """
-  deleteEventCategory(
-    data: DeleteEventCategoryInput!
-  ): DeleteEventCategoryResponse!
+  signUpId: ID!
 }
 
-type Query {
-  event(data: EventInput!): EventResponse!
-  events(data: EventsInput): EventsResponse!
-  categories: EventCategoriesResponse!
+type RemoveSignUpResponse {
+  """
+  The sign up that was removed
+  """
+  signUp: SignUp!
 }

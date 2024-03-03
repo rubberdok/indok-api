@@ -139,17 +139,41 @@ describe("EventService", () => {
 		it("returns InvalidArgumentError if retracting a confirmed sign up after sign ups have closed", async () => {
 			const { event, ctx } = await makeDependencies({
 				capacity: 1,
-				retractable: false,
+				retractable: true,
 				signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 			});
 			await makeSignUp(ctx, { eventId: event.id });
 
-			events.update(ctx, {
+			await events.update(ctx, {
 				event: {
 					id: event.id,
 					signUpsEndAt: DateTime.now().minus({ hours: 1 }).toJSDate(),
 				},
 			});
+
+			const actual = await events.retractSignUp(ctx, { eventId: event.id });
+			expect(actual).toEqual({
+				ok: false,
+				error: expect.any(InvalidArgumentError),
+			});
+		});
+
+		it("returns InvalidArgumentError if attempting to retract a sign up on a basic event", async () => {
+			const { eventService, organization, ctx } = await makeDependencies({
+				capacity: 1,
+				retractable: false,
+				signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+			});
+			const createEventResult = await eventService.create(ctx, {
+				event: {
+					name: faker.word.adjective(),
+					organizationId: organization.id,
+					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+				},
+				type: "BASIC",
+			});
+			if (!createEventResult.ok) throw createEventResult.error;
+			const event = createEventResult.data.event;
 
 			const actual = await events.retractSignUp(ctx, { eventId: event.id });
 			expect(actual).toEqual({

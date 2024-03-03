@@ -1,6 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { type EventSignUp, ParticipationStatus } from "@prisma/client";
 import { mock } from "jest-mock-extended";
+import { InvalidArgumentError } from "~/domain/errors.js";
 import type { EventType } from "~/domain/events/event.js";
 import type { User } from "~/domain/users.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
@@ -98,6 +99,74 @@ describe("Event mutations", () => {
 					eventId: expect.any(String),
 				},
 			);
+		});
+
+		it("throws if retract fails", async () => {
+			/**
+			 * Arrange
+			 *
+			 * Create an authenticated context,
+			 * and set up the mock return value for the eventService.retractSignUp method,
+			 * and mock return values for eventSerivce.get and userService.get to test the resolvers.
+			 */
+			const { client, createMockContext, eventService, userService } =
+				createMockApolloServer();
+
+			const contextValue = createMockContext({
+				user: {
+					id: faker.string.uuid(),
+				},
+			});
+
+			eventService.retractSignUp.mockResolvedValue({
+				ok: false,
+				error: new InvalidArgumentError(""),
+			});
+			eventService.get.mockResolvedValue(
+				mock<EventType>({ id: faker.string.uuid() }),
+			);
+			userService.get.mockResolvedValue(
+				mock<User>({ id: faker.string.uuid() }),
+			);
+
+			/**
+			 * Act
+			 *
+			 * Retract the sign up for an event using the authenticated context
+			 */
+			const { errors } = await client.mutate(
+				{
+					mutation: graphql(`
+            mutation retractSignUp($data: RetractSignUpInput!) {
+              retractSignUp(data: $data) {
+                signUp {
+                  id
+                  event {
+                    id
+                  }
+                  user {
+                    id
+                  }
+                  participationStatus
+                }
+              }
+            }
+          `),
+					variables: {
+						data: {
+							eventId: faker.string.uuid(),
+						},
+					},
+				},
+				{
+					contextValue,
+				},
+			);
+
+			/**
+			 * Assert
+			 */
+			expect(errors).toBeDefined();
 		});
 	});
 });
