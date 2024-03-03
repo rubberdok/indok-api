@@ -1,12 +1,23 @@
-import assert, { fail } from "assert";
 import { faker } from "@faker-js/faker";
 import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
 import { makeTestServices } from "~/__tests__/dependencies-factory.js";
-import { InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
-import { type Context, makeMockContext } from "~/lib/context.js";
+import {
+	InvalidArgumentError,
+	NotFoundError,
+	PermissionDeniedError,
+	UnauthorizedError,
+} from "~/domain/errors.js";
+import { makeMockContext } from "~/lib/context.js";
+import prisma from "~/lib/prisma.js";
 import type { Services } from "~/lib/server.js";
-import { makeUserWithOrganizationMembership } from "./dependencies-factory.js";
+import {
+	makeDependencies,
+	makeSignUp,
+	makeUserWithOrganizationMembership,
+	mustGetEvent,
+	mustGetSlot,
+} from "./dependencies-factory.js";
 
 describe("EventService", () => {
 	let events: Services["events"];
@@ -17,50 +28,75 @@ describe("EventService", () => {
 
 	describe("#retractSignUp", () => {
 		it("should retract confirmed sign up and increment the slot and event capacities", async () => {
-			const { user, ctx, event } = await makeDeps({ capacity: 1 });
+			const { ctx, event } = await makeDependencies({ capacity: 1 });
+			await makeSignUp(ctx, { eventId: event.id });
 
-			const actual = await events.retractSignUp(user.id, event.id);
+			const actual = await events.retractSignUp(ctx, { eventId: event.id });
 			const actualEvent = await mustGetEvent(event.id);
 			const actualSlot = await mustGetSlot(ctx, event.id);
 
-			expect(actual).toEqual(
-				expect.objectContaining({
-					participationStatus: ParticipationStatus.RETRACTED,
-					slotId: null,
-					version: 1,
-				}),
-			);
+			expect(actual).toEqual({
+				ok: true,
+				data: {
+					signUp: expect.objectContaining({
+						participationStatus: ParticipationStatus.RETRACTED,
+						slotId: null,
+						version: 1,
+					}),
+				},
+			});
 			expect(actualEvent.remainingCapacity).toBe(1);
 			expect(actualSlot.remainingCapacity).toBe(1);
 		});
 
+		it("returns UnauthorizedError if not logged in", async () => {
+			const { ctx, event } = await makeDependencies({ capacity: 1 });
+			await makeSignUp(ctx, { eventId: event.id });
+
+			const actual = await events.retractSignUp(makeMockContext(null), {
+				eventId: event.id,
+			});
+
+			expect(actual).toEqual({
+				ok: false,
+				error: expect.any(UnauthorizedError),
+			});
+		});
+
 		it("retract wait list sign up and not increment the slot and event capacities", async () => {
-			const { user, ctx, event } = await makeDeps({ capacity: 0 });
-			const actual = await events.retractSignUp(user.id, event.id);
+			const { ctx, event } = await makeDependencies({ capacity: 0 });
+			await makeSignUp(ctx, { eventId: event.id });
+
+			const actual = await events.retractSignUp(ctx, { eventId: event.id });
 			const actualEvent = await mustGetEvent(event.id);
 			const actualSlot = await mustGetSlot(ctx, event.id);
 
-			expect(actual).toEqual(
-				expect.objectContaining({
-					participationStatus: ParticipationStatus.RETRACTED,
-					slotId: null,
-					version: 1,
-				}),
-			);
+			expect(actual).toEqual({
+				ok: true,
+				data: {
+					signUp: expect.objectContaining({
+						participationStatus: ParticipationStatus.RETRACTED,
+						slotId: null,
+						version: 1,
+					}),
+				},
+			});
 			expect(actualEvent.remainingCapacity).toBe(0);
 			expect(actualSlot.remainingCapacity).toBe(0);
 		});
 
-		it("not change an already retracted sign up", async () => {
-			const { user, ctx, event } = await makeDeps({ capacity: 1 });
-			await events.retractSignUp(user.id, event.id);
+		it("returns NotFoundError if the sign up is not active", async () => {
+			const { ctx, event } = await makeDependencies({ capacity: 1 });
+			await makeSignUp(ctx, { eventId: event.id });
 
-			try {
-				await events.retractSignUp(user.id, event.id);
-				fail("Expected an error");
-			} catch (err) {
-				expect(err).toBeInstanceOf(NotFoundError);
-			}
+			const removed = await events.retractSignUp(ctx, { eventId: event.id });
+			if (!removed.ok) throw removed.error;
+			const actual = await events.retractSignUp(ctx, { eventId: event.id });
+			expect(actual).toEqual({
+				ok: false,
+				error: expect.any(NotFoundError),
+			});
+
 			const actualEvent = await mustGetEvent(event.id);
 			const actualSlot = await mustGetSlot(ctx, event.id);
 
@@ -68,34 +104,66 @@ describe("EventService", () => {
 			expect(actualSlot.remainingCapacity).toBe(1);
 		});
 
-		it("should return InvalidArgumentError if trying to retract a confirmed sign up on a non-retractable event", async () => {
-			const { event, user } = await makeDeps({
+		it("returns InvalidArgumentError if trying to retract a confirmed sign up on a non-retractable event", async () => {
+			const { event, ctx } = await makeDependencies({
 				capacity: 1,
 				retractable: false,
 			});
-			try {
-				await events.retractSignUp(user.id, event.id);
-				fail("Expected an error");
-			} catch (err) {
-				expect(err).toBeInstanceOf(InvalidArgumentError);
-			}
+			await makeSignUp(ctx, { eventId: event.id });
+
+			const actual = await events.retractSignUp(ctx, { eventId: event.id });
+			expect(actual).toEqual({
+				ok: false,
+				error: expect.any(InvalidArgumentError),
+			});
 		});
 
 		it("should retract a non-confirmed sign up on a non-retractable event", async () => {
-			const { user, event } = await makeDeps({
+			const { event, ctx } = await makeDependencies({
 				capacity: 0,
 				retractable: false,
 			});
-			const retactSignUpResult = await events.retractSignUp(user.id, event.id);
-			expect(retactSignUpResult.participationStatus).toBe(
-				ParticipationStatus.RETRACTED,
-			);
+			await makeSignUp(ctx, { eventId: event.id });
+
+			const actual = await events.retractSignUp(ctx, { eventId: event.id });
+			expect(actual).toEqual({
+				ok: true,
+				data: {
+					signUp: expect.objectContaining({
+						participationStatus: ParticipationStatus.RETRACTED,
+					}),
+				},
+			});
+		});
+
+		it("returns InvalidArgumentError if retracting a confirmed sign up after sign ups have closed", async () => {
+			const { event, ctx } = await makeDependencies({
+				capacity: 1,
+				retractable: false,
+				signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+			});
+			await makeSignUp(ctx, { eventId: event.id });
+
+			events.update(ctx, {
+				event: {
+					id: event.id,
+					signUpsEndAt: DateTime.now().minus({ hours: 1 }).toJSDate(),
+				},
+			});
+
+			const actual = await events.retractSignUp(ctx, { eventId: event.id });
+			expect(actual).toEqual({
+				ok: false,
+				error: expect.any(InvalidArgumentError),
+			});
 		});
 	});
 
 	describe("#removeSignUp", () => {
 		it("removes a confirmed sign up and increments the slot and event capacities", async () => {
-			const { signUp, ctx, event } = await makeDeps({ capacity: 1 });
+			const { ctx, event } = await makeDependencies({ capacity: 1 });
+
+			const signUp = await makeSignUp(ctx, { eventId: event.id });
 			const actual = await events.removeSignUp(ctx, { signUpId: signUp.id });
 
 			const actualEvent = await mustGetEvent(event.id);
@@ -117,8 +185,9 @@ describe("EventService", () => {
 		});
 
 		it("removes a wait list sign up and does not increment the slot and event capacities", async () => {
-			const { signUp, ctx, event } = await makeDeps({ capacity: 0 });
+			const { ctx, event } = await makeDependencies({ capacity: 0 });
 
+			const signUp = await makeSignUp(ctx, { eventId: event.id });
 			const actual = await events.removeSignUp(ctx, { signUpId: signUp.id });
 
 			const actualEvent = await mustGetEvent(event.id);
@@ -140,8 +209,9 @@ describe("EventService", () => {
 		});
 
 		it("does not change an already removed sign up", async () => {
-			const { signUp, ctx, event } = await makeDeps({ capacity: 1 });
+			const { ctx, event } = await makeDependencies({ capacity: 1 });
 
+			const signUp = await makeSignUp(ctx, { eventId: event.id });
 			const removed = await events.removeSignUp(ctx, { signUpId: signUp.id });
 			if (!removed.ok) throw removed.error;
 			const actual = await events.removeSignUp(ctx, { signUpId: signUp.id });
@@ -160,11 +230,12 @@ describe("EventService", () => {
 		});
 
 		it("removes a confirmed sign up from a non-retractable event", async () => {
-			const { signUp, ctx, event } = await makeDeps({
+			const { ctx, event } = await makeDependencies({
 				capacity: 1,
 				retractable: false,
 			});
 
+			const signUp = await makeSignUp(ctx, { eventId: event.id });
 			const actual = await events.removeSignUp(ctx, { signUpId: signUp.id });
 
 			const actualEvent = await mustGetEvent(event.id);
@@ -186,11 +257,12 @@ describe("EventService", () => {
 		});
 
 		it("removes a wait list sign up on a non-retractable event", async () => {
-			const { signUp, ctx } = await makeDeps({
+			const { ctx, event } = await makeDependencies({
 				capacity: 0,
 				retractable: false,
 			});
 
+			const signUp = await makeSignUp(ctx, { eventId: event.id });
 			const retactSignUpResult = await events.removeSignUp(ctx, {
 				signUpId: signUp.id,
 			});
@@ -206,56 +278,83 @@ describe("EventService", () => {
 				},
 			});
 		});
-	});
 
-	async function makeDeps(params: { capacity: number; retractable?: boolean }) {
-		const { user, organization } = await makeUserWithOrganizationMembership();
-		const ctx = makeMockContext(user);
-		const createEvent = await events.create(ctx, {
-			type: "SIGN_UPS",
-			event: {
-				organizationId: organization.id,
-				name: faker.word.adjective(),
-				startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-				endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
-				signUpsEnabled: true,
-				capacity: params.capacity,
-				signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-				signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-				signUpsRetractable: params.retractable ?? true,
-			},
-			slots: [
+		it("returns UnauthorizedError if not authenticated", async () => {
+			const { ctx, event } = await makeDependencies({
+				capacity: 0,
+				retractable: false,
+			});
+
+			const signUp = await makeSignUp(ctx, { eventId: event.id });
+			const retactSignUpResult = await events.removeSignUp(
+				makeMockContext(null),
 				{
-					capacity: params.capacity,
+					signUpId: signUp.id,
 				},
-			],
+			);
+			expect(retactSignUpResult).toEqual({
+				ok: false,
+				error: expect.any(UnauthorizedError),
+			});
 		});
 
-		if (!createEvent.ok) throw createEvent.error;
-		const { event } = createEvent.data;
+		it("returns PermissionDenied if not a member of the organization", async () => {
+			const { event, ctx } = await makeDependencies({
+				capacity: 0,
+				retractable: false,
+			});
 
-		const signUpResult = await events.signUp(ctx, {
-			userId: user.id,
-			eventId: event.id,
+			const signUp = await makeSignUp(ctx, { eventId: event.id });
+			const { user: userInOtherOrg } =
+				await makeUserWithOrganizationMembership();
+
+			const retactSignUpResult = await events.removeSignUp(
+				makeMockContext(userInOtherOrg),
+				{
+					signUpId: signUp.id,
+				},
+			);
+			expect(retactSignUpResult).toEqual({
+				ok: false,
+				error: expect.any(PermissionDeniedError),
+			});
 		});
-		if (!signUpResult.ok) throw signUpResult.error;
-		const { signUp } = signUpResult.data;
 
-		return { ctx, user, event, signUp };
-	}
+		it("returns NotFound if the sign up does not exist", async () => {
+			const { ctx } = await makeDependencies({
+				capacity: 0,
+				retractable: false,
+			});
 
-	async function mustGetEvent(id: string) {
-		const event = await events.get(id);
-		return event;
-	}
-
-	async function mustGetSlot(ctx: Context, eventId: string) {
-		const slotsResult = await events.getSlots(ctx, {
-			eventId,
+			const retactSignUpResult = await events.removeSignUp(ctx, {
+				signUpId: faker.string.uuid(),
+			});
+			expect(retactSignUpResult).toEqual({
+				ok: false,
+				error: expect.any(NotFoundError),
+			});
 		});
-		if (!slotsResult.ok) throw slotsResult.error;
-		const slot = slotsResult.data.slots[0];
-		assert(slot !== undefined);
-		return slot;
-	}
+
+		it("returns InvalidArgument if the organization who had the event has been deleted", async () => {
+			const { ctx, organization, event } = await makeDependencies({
+				capacity: 0,
+				retractable: false,
+			});
+			const signUp = await makeSignUp(ctx, { eventId: event.id });
+
+			await prisma.organization.delete({
+				where: {
+					id: organization.id,
+				},
+			});
+
+			const retactSignUpResult = await events.removeSignUp(ctx, {
+				signUpId: signUp.id,
+			});
+			expect(retactSignUpResult).toEqual({
+				ok: false,
+				error: expect.any(InvalidArgumentError),
+			});
+		});
+	});
 });

@@ -1,10 +1,12 @@
+import assert from "assert";
 import { faker } from "@faker-js/faker";
 import type { Organization } from "@prisma/client";
 import { mockDeep } from "jest-mock-extended";
+import { DateTime } from "luxon";
 import type { ServerClient } from "postmark";
 import { env } from "~/config.js";
 import type { User } from "~/domain/users.js";
-import { makeMockContext } from "~/lib/context.js";
+import { type Context, makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import { EventRepository } from "~/repositories/events/index.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
@@ -22,7 +24,7 @@ import { UserService } from "~/services/users/service.js";
 import { EventService } from "../../service.js";
 import type { SignUpQueueType } from "../../worker.js";
 
-export function makeDependencies() {
+export function makeServices() {
 	const eventRepository = new EventRepository(prisma);
 	const organizationRepository = new OrganizationRepository(prisma);
 	const memberRepository = new MemberRepository(prisma);
@@ -78,7 +80,7 @@ export function makeDependencies() {
 export async function makeUserWithOrganizationMembership(
 	userData: Partial<User> = {},
 ): Promise<{ user: User; organization: Organization }> {
-	const { userService, organizationService } = makeDependencies();
+	const { userService, organizationService } = makeServices();
 	const user = await userService.create({
 		firstName: faker.person.firstName(),
 		lastName: faker.person.lastName(),
@@ -93,3 +95,80 @@ export async function makeUserWithOrganizationMembership(
 	});
 	return { user, organization };
 }
+
+async function makeDependencies(
+	params: {
+		capacity: number;
+		retractable?: boolean;
+		signUpsEndAt?: Date;
+		signUpsStartAt?: Date;
+		signUpsEnabled?: boolean;
+		slots?: { capacity: number; gradeYears?: number[] | null }[];
+	},
+	userParams?: Partial<User> | null,
+) {
+	const { eventService, ...rest } = makeServices();
+	const { user, organization } = await makeUserWithOrganizationMembership(
+		userParams ?? undefined,
+	);
+	const ctx = makeMockContext(user);
+	const createEvent = await eventService.create(ctx, {
+		type: "SIGN_UPS",
+		event: {
+			organizationId: organization.id,
+			name: faker.word.adjective(),
+			startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+			endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
+			signUpsEnabled: params.signUpsEnabled ?? true,
+			capacity: params.capacity,
+			signUpsEndAt:
+				params.signUpsEndAt ?? DateTime.now().plus({ days: 1 }).toJSDate(),
+			signUpsStartAt:
+				params.signUpsStartAt ?? DateTime.now().minus({ days: 1 }).toJSDate(),
+			signUpsRetractable: params.retractable ?? true,
+		},
+		slots: params.slots ?? [
+			{
+				capacity: params.capacity,
+			},
+		],
+	});
+
+	if (!createEvent.ok) throw createEvent.error;
+	const { event } = createEvent.data;
+
+	return { ctx, user, event, organization, eventService, ...rest };
+}
+
+async function makeSignUp(
+	ctx: Context,
+	params: { userId?: string; eventId: string },
+) {
+	const { eventService } = makeServices();
+	const { userId, eventId } = params;
+	const signUp = await eventService.signUp(ctx, {
+		userId,
+		eventId,
+	});
+	if (!signUp.ok) throw signUp.error;
+	return signUp.data.signUp;
+}
+
+async function mustGetEvent(id: string) {
+	const { eventService } = makeServices();
+	const event = await eventService.get(id);
+	return event;
+}
+
+async function mustGetSlot(ctx: Context, eventId: string) {
+	const { eventService } = makeServices();
+	const slotsResult = await eventService.getSlots(ctx, {
+		eventId,
+	});
+	if (!slotsResult.ok) throw slotsResult.error;
+	const slot = slotsResult.data.slots[0];
+	assert(slot !== undefined);
+	return slot;
+}
+
+export { makeDependencies, mustGetEvent, mustGetSlot, makeSignUp };

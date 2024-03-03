@@ -288,11 +288,23 @@ interface IEventService {
 		{ signUp: EventSignUp },
 		InvalidArgumentError | UnauthorizedError | InternalServerError
 	>;
-	retractSignUp(userId: string, eventId: string): Promise<EventSignUp>;
-	canSignUpForEvent(userId: string, eventId: string): Promise<boolean>;
+	retractSignUp(
+		ctx: Context,
+		params: { eventId: string },
+	): ResultAsync<
+		{ signUp: EventSignUp },
+		| NotFoundError
+		| InternalServerError
+		| UnauthorizedError
+		| InvalidArgumentError
+	>;
+	canSignUpForEvent(
+		ctx: Context,
+		params: { eventId: string },
+	): Promise<boolean>;
 	getSignUpAvailability(
-		userId: string | undefined,
-		eventId: string,
+		ctx: Context,
+		params: { eventId: string },
 	): Promise<SignUpAvailability>;
 	createCategory(
 		ctx: UserContext,
@@ -370,6 +382,7 @@ interface IEventService {
 		| InvalidArgumentError
 		| UnauthorizedError
 		| PermissionDeniedError
+		| NotFoundError
 	>;
 }
 

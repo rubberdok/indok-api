@@ -7,7 +7,7 @@ import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import type { EventService } from "../../service.js";
 import {
-	makeDependencies,
+	makeServices,
 	makeUserWithOrganizationMembership,
 } from "./dependencies-factory.js";
 
@@ -15,7 +15,7 @@ describe("EventService", () => {
 	let eventService: EventService;
 
 	beforeAll(() => {
-		({ eventService } = makeDependencies());
+		({ eventService } = makeServices());
 	});
 
 	describe("promoteFromWaitlist", () => {

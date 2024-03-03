@@ -232,7 +232,9 @@ describe("EventService", () => {
 			 *
 			 * Retract the confirmed user's sign up, and wait for jobs to finish
 			 */
-			await eventService.retractSignUp(confirmedUser.id, event.id);
+			await eventService.retractSignUp(makeMockContext(confirmedUser), {
+				eventId: event.id,
+			});
 			const signUpJobs = await signUpQueue.getJobs();
 			await Promise.all(
 				signUpJobs.map((job) =>
@@ -258,13 +260,15 @@ describe("EventService", () => {
 			 * The promoted user should receive an email.
 			 */
 			const retractedSignUp = await eventService.getSignUpAvailability(
-				confirmedUser.id,
-				event.id,
+				makeMockContext(confirmedUser),
+				{
+					eventId: event.id,
+				},
 			);
 			expect(retractedSignUp).toBe("WAITLIST_AVAILABLE");
 			const promotedSignUp = await eventService.getSignUpAvailability(
-				waitListUser.id,
-				event.id,
+				makeMockContext(waitListUser),
+				{ eventId: event.id },
 			);
 			expect(promotedSignUp).toBe("CONFIRMED");
 			expect(mailClient.sendEmailWithTemplate).toHaveBeenCalledWith(
@@ -416,7 +420,9 @@ describe("EventService", () => {
 			 */
 			await Promise.all(
 				confirmedUsers.map((user) =>
-					eventService.retractSignUp(user.id, event.id),
+					eventService.retractSignUp(makeMockContext(user), {
+						eventId: event.id,
+					}),
 				),
 			);
 			const signUpJobs = await signUpQueue.getJobs();
@@ -445,15 +451,15 @@ describe("EventService", () => {
 			 */
 			for (const user of confirmedUsers) {
 				const retractedSignUp = await eventService.getSignUpAvailability(
-					user.id,
-					event.id,
+					makeMockContext(user),
+					{ eventId: event.id },
 				);
 				expect(retractedSignUp).toBe("WAITLIST_AVAILABLE");
 			}
 			for (const user of waitListUsers) {
 				const promotedSignUp = await eventService.getSignUpAvailability(
-					user.id,
-					event.id,
+					makeMockContext(user),
+					{ eventId: event.id },
 				);
 				expect(promotedSignUp).toBe("CONFIRMED");
 				expect(mailClient.sendEmailWithTemplate).toHaveBeenCalledWith(
@@ -474,8 +480,8 @@ describe("EventService", () => {
 
 			for (const user of shouldRemainOnWaitListUsers) {
 				const signUpAvailability = await eventService.getSignUpAvailability(
-					user.id,
-					event.id,
+					makeMockContext(user),
+					{ eventId: event.id },
 				);
 				expect(signUpAvailability).toBe("ON_WAITLIST");
 			}

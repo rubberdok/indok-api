@@ -13,7 +13,7 @@ import type { Result } from "~/lib/result.js";
 import type { Services } from "~/lib/server.js";
 import type { CreateEventParams } from "../../service.js";
 import {
-	makeDependencies,
+	makeServices,
 	makeUserWithOrganizationMembership,
 } from "./dependencies-factory.js";
 
@@ -196,7 +196,7 @@ describe("EventService", () => {
 					{ isSuperUser: true },
 				);
 				const ctx = makeMockContext(user);
-				const { productService } = makeDependencies();
+				const { productService } = makeServices();
 				const createMerchantResult = await productService.merchants.create(
 					ctx,
 					{
@@ -243,7 +243,7 @@ describe("EventService", () => {
 					{ isSuperUser: true },
 				);
 				const ctx = makeMockContext(user);
-				const { productService } = makeDependencies();
+				const { productService } = makeServices();
 				const createMerchantResult = await productService.merchants.create(
 					ctx,
 					{
@@ -291,7 +291,7 @@ describe("EventService", () => {
 					{ isSuperUser: true },
 				);
 				const ctx = makeMockContext(user);
-				const { productService } = makeDependencies();
+				const { productService } = makeServices();
 				const createMerchantResult = await productService.merchants.create(
 					ctx,
 					{

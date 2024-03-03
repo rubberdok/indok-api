@@ -8,14 +8,14 @@ import {
 } from "~/domain/errors.js";
 import { makeMockContext } from "~/lib/context.js";
 import {
-	makeDependencies,
+	makeServices,
 	makeUserWithOrganizationMembership,
 } from "./dependencies-factory.js";
 
 describe("EventService", () => {
 	describe("#getApproximatePositionOnWaitingList", () => {
 		it("returns the approximate position on the waiting list", async () => {
-			const { eventService } = makeDependencies();
+			const { eventService } = makeServices();
 			const { user, organization } = await makeUserWithOrganizationMembership();
 			const { user: otherUser } = await makeUserWithOrganizationMembership();
 			const ctx = makeMockContext(user);
@@ -64,7 +64,7 @@ describe("EventService", () => {
 		});
 
 		it("returns the approximate position on the waiting list if there are confirmed sign ups", async () => {
-			const { eventService } = makeDependencies();
+			const { eventService } = makeServices();
 			const { user, organization } = await makeUserWithOrganizationMembership();
 			const { user: otherUser } = await makeUserWithOrganizationMembership();
 			const ctx = makeMockContext(user);
@@ -113,7 +113,7 @@ describe("EventService", () => {
 		});
 
 		it("returns UnauthorizedError if the user is not logged in", async () => {
-			const { eventService } = makeDependencies();
+			const { eventService } = makeServices();
 
 			/**
 			 * Get the approximate position on the waiting list for the user.
@@ -132,7 +132,7 @@ describe("EventService", () => {
 		});
 
 		it("returns NotFoundError if the user does not have a sign up on the event", async () => {
-			const { eventService } = makeDependencies();
+			const { eventService } = makeServices();
 			const { user, organization } = await makeUserWithOrganizationMembership();
 			/**
 			 * Create an event
@@ -172,7 +172,7 @@ describe("EventService", () => {
 		});
 
 		it("returns InvalidArgumentError if the user is not on the wait list", async () => {
-			const { eventService } = makeDependencies();
+			const { eventService } = makeServices();
 			const { user, organization } = await makeUserWithOrganizationMembership();
 			/**
 			 * Create an event
@@ -219,7 +219,7 @@ describe("EventService", () => {
 		});
 
 		it("returns InvalidArgumentError if the event does not exist", async () => {
-			const { eventService } = makeDependencies();
+			const { eventService } = makeServices();
 			const { user } = await makeUserWithOrganizationMembership();
 
 			/**

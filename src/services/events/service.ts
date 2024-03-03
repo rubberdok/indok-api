@@ -17,6 +17,8 @@ import type { CategoryType } from "~/domain/events/category.js";
 import type {
 	EventUpdateFields,
 	NewEventReturnType,
+	SignUpEvent,
+	TicketEvent,
 } from "~/domain/events/event.js";
 import {
 	Event,
@@ -93,7 +95,10 @@ interface EventRepository {
 		{ signUps: EventSignUp[]; total: number },
 		NotFoundError | InternalServerError
 	>;
-	getSignUp(userId: string, eventId: string): Promise<EventSignUp>;
+	getActiveSignUp(
+		_ctx: Context,
+		params: { userId: string; eventId: string },
+	): ResultAsync<{ signUp: EventSignUp }, NotFoundError | InternalServerError>;
 	getSignUpById(params: { id: string }): ResultAsync<
 		{ signUp: EventSignUp },
 		NotFoundError | InternalServerError
@@ -856,60 +861,83 @@ class EventService {
 	 * @param data.newParticipationStatus - The new participation status, must be one of the non-attending statuses
 	 * @returns The updated sign up
 	 */
-	private async demoteConfirmedSignUp(data: {
-		userId: string;
-		eventId: string;
-		newParticipationStatus: Extract<
-			ParticipationStatus,
-			"RETRACTED" | "REMOVED"
-		>;
-	}): Promise<EventSignUp> {
-		const { userId, eventId, newParticipationStatus } = data;
+	private async demoteConfirmedSignUp(
+		ctx: Context,
+		data: {
+			user: User;
+			event: TicketEvent | SignUpEvent;
+			signUp: EventSignUp;
+			newParticipationStatus: Extract<
+				ParticipationStatus,
+				"RETRACTED" | "REMOVED"
+			>;
+		},
+	): ResultAsync<
+		{ signUp: EventSignUp },
+		InvalidArgumentError | InternalServerError
+	> {
+		const { user, event, signUp, newParticipationStatus } = data;
 
-		const signUp = await this.eventRepository.getSignUp(userId, eventId);
 		if (signUp.participationStatus !== ParticipationStatus.CONFIRMED) {
-			throw new InvalidArgumentError(
-				`Can only demote sign ups with status confirmed, got, ${signUp.participationStatus}`,
-			);
+			return {
+				ok: false,
+				error: new InvalidArgumentError(
+					"Can only demote sign ups with status CONFIRMED",
+				),
+			};
 		}
 
 		if (signUp.slotId === null) {
-			throw new InternalServerError(
-				"Sign up is missing slot ID, but has ParticipationStatus.CONFIRMED",
-			);
+			return {
+				ok: false,
+				error: new InternalServerError(
+					"Sign up is missing slot ID, but has ParticipationStatus.CONFIRMED",
+				),
+			};
 		}
 
+		ctx.log.info({ signUp }, "Demoting sign up");
 		const { signUp: demotedSignUp } = await this.eventRepository.updateSignUp({
 			newParticipationStatus,
-			eventId: eventId,
-			userId: userId,
+			eventId: event.id,
+			userId: user.id,
 		});
-		await this.eventCapacityChanged(eventId);
-		return demotedSignUp;
+		await this.eventCapacityChanged(event.id);
+		return {
+			ok: true,
+			data: { signUp: demotedSignUp },
+		};
 	}
 
-	private async demoteOnWaitlistSignUp(data: {
-		userId: string;
-		eventId: string;
-		newParticipationStatus: Exclude<
-			ParticipationStatus,
-			"CONFIRMED" | "ON_WAITLIST"
-		>;
-	}) {
-		const { userId, eventId } = data;
-		const signUp = await this.eventRepository.getSignUp(userId, eventId);
+	private async demoteOnWaitlistSignUp(
+		ctx: Context,
+		data: {
+			user: User;
+			event: TicketEvent | SignUpEvent;
+			signUp: EventSignUp;
+			newParticipationStatus: Exclude<
+				ParticipationStatus,
+				"CONFIRMED" | "ON_WAITLIST"
+			>;
+		},
+	): ResultAsync<{ signUp: EventSignUp }, InvalidArgumentError> {
+		const { user, event, signUp } = data;
 		if (signUp.participationStatus !== ParticipationStatus.ON_WAITLIST) {
-			throw new InvalidArgumentError(
-				"Can only demote sign ups with with participation status ON_WAITLIST",
-			);
+			return {
+				ok: false,
+				error: new InvalidArgumentError(
+					"Can only demote sign ups with status ON_WAITLIST",
+				),
+			};
 		}
 
+		ctx.log.info({ signUp }, "Demoting sign up");
 		const { signUp: updatedSignUp } = await this.eventRepository.updateSignUp({
-			userId,
-			eventId,
+			userId: user.id,
+			eventId: event.id,
 			newParticipationStatus: data.newParticipationStatus,
 		});
-		return updatedSignUp;
+		return { ok: true, data: { signUp: updatedSignUp } };
 	}
 
 	/**
@@ -921,36 +949,105 @@ class EventService {
 	 * @param eventId - The ID of the event to retract the sign up for
 	 * @returns The updated sign up
 	 */
-	async retractSignUp(userId: string, eventId: string): Promise<EventSignUp> {
-		const signUp = await this.eventRepository.getSignUp(userId, eventId);
-
+	async retractSignUp(
+		ctx: Context,
+		params: { eventId: string },
+	): ResultAsync<
+		{ signUp: EventSignUp },
+		| NotFoundError
+		| UnauthorizedError
+		| InvalidArgumentError
+		| InternalServerError
+	> {
+		if (!ctx.user) {
+			return {
+				ok: false,
+				error: new UnauthorizedError(
+					"You must be logged in to retract a sign up",
+				),
+			};
+		}
+		const userId = ctx.user.id;
+		const { eventId } = params;
 		const event = await this.eventRepository.get(eventId);
 		if (
-			signUp.participationStatus === "CONFIRMED" &&
-			event.signUpsRetractable === false
+			event.type !== EventTypeEnum.SIGN_UPS &&
+			event.type !== EventTypeEnum.TICKETS
 		) {
-			throw new InvalidArgumentError(
-				"Sign ups are not retractable for this event",
-			);
+			return {
+				ok: false,
+				error: new InvalidArgumentError(
+					"Sign ups are not available for this event",
+				),
+			};
 		}
 
+		const getSignUpResult = await this.eventRepository.getActiveSignUp(ctx, {
+			userId,
+			eventId,
+		});
+		if (!getSignUpResult.ok) {
+			switch (getSignUpResult.error.name) {
+				case "NotFoundError":
+					return {
+						ok: false,
+						error: new NotFoundError(
+							"Sign up with the specified ID does not exist",
+							getSignUpResult.error,
+						),
+					};
+				case "InternalServerError":
+					return {
+						ok: false,
+						error: new InternalServerError(
+							"Failed to get sign up",
+							getSignUpResult.error,
+						),
+					};
+			}
+		}
+		const { signUp } = getSignUpResult.data;
+
 		switch (signUp.participationStatus) {
-			case ParticipationStatus.CONFIRMED:
-				return await this.demoteConfirmedSignUp({
-					userId,
-					eventId,
+			case ParticipationStatus.CONFIRMED: {
+				if (DateTime.fromJSDate(event.signUpsEndAt) < DateTime.now()) {
+					return {
+						ok: false,
+						error: new InvalidArgumentError(
+							"Sign ups are closed for this event",
+						),
+					};
+				}
+				if (!event.signUpsRetractable) {
+					return {
+						ok: false,
+						error: new InvalidArgumentError(
+							"Sign ups are not retractable for this event",
+						),
+					};
+				}
+
+				return await this.demoteConfirmedSignUp(ctx, {
+					user: ctx.user,
+					event,
+					signUp,
 					newParticipationStatus: ParticipationStatus.RETRACTED,
 				});
+			}
 			case ParticipationStatus.ON_WAITLIST:
-				return await this.demoteOnWaitlistSignUp({
-					userId,
-					eventId,
+				return await this.demoteOnWaitlistSignUp(ctx, {
+					user: ctx.user,
+					event,
+					signUp,
 					newParticipationStatus: ParticipationStatus.RETRACTED,
 				});
 			case ParticipationStatus.REMOVED:
 			// fallthrough
 			case ParticipationStatus.RETRACTED:
-				return signUp;
+				return {
+					ok: true,
+					data: { signUp },
+				};
 		}
 	}
 
@@ -971,6 +1068,7 @@ class EventService {
 		| PermissionDeniedError
 		| InternalServerError
 		| InvalidArgumentError
+		| NotFoundError
 	> {
 		if (!ctx.user) {
 			return {
@@ -985,17 +1083,40 @@ class EventService {
 			id: params.signUpId,
 		});
 		if (!getSignUpResult.ok) {
-			return {
-				ok: false,
-				error: new InternalServerError(
-					"Failed to remove the sign up",
-					getSignUpResult.error,
-				),
-			};
+			switch (getSignUpResult.error.name) {
+				case "NotFoundError":
+					return {
+						ok: false,
+						error: new NotFoundError(
+							"Sign up with the specified ID does not exist",
+							getSignUpResult.error,
+						),
+					};
+				case "InternalServerError":
+					return {
+						ok: false,
+						error: new InternalServerError(
+							"Failed to get sign up",
+							getSignUpResult.error,
+						),
+					};
+			}
 		}
 		const { signUp } = getSignUpResult.data;
 
 		const event = await this.eventRepository.get(signUp.eventId);
+		if (
+			event.type !== EventTypeEnum.SIGN_UPS &&
+			event.type !== EventTypeEnum.TICKETS
+		) {
+			return {
+				ok: false,
+				error: new InvalidArgumentError(
+					"Sign ups are not available for this event",
+				),
+			};
+		}
+
 		if (event.organizationId === null) {
 			return {
 				ok: false,
@@ -1020,26 +1141,20 @@ class EventService {
 
 		switch (signUp.participationStatus) {
 			case ParticipationStatus.CONFIRMED: {
-				const removedSignUp = await this.demoteConfirmedSignUp({
-					userId: signUp.userId,
-					eventId: signUp.eventId,
+				return await this.demoteConfirmedSignUp(ctx, {
+					user: ctx.user,
+					event: event,
+					signUp,
 					newParticipationStatus: ParticipationStatus.REMOVED,
 				});
-				return {
-					ok: true,
-					data: { signUp: removedSignUp },
-				};
 			}
 			case ParticipationStatus.ON_WAITLIST: {
-				const removedSignUp = await this.demoteOnWaitlistSignUp({
-					userId: signUp.userId,
-					eventId: signUp.eventId,
+				return await this.demoteOnWaitlistSignUp(ctx, {
+					user: ctx.user,
+					event: event,
+					signUp,
 					newParticipationStatus: ParticipationStatus.REMOVED,
 				});
-				return {
-					ok: true,
-					data: { signUp: removedSignUp },
-				};
 			}
 			case ParticipationStatus.REMOVED:
 			// fallthrough
@@ -1054,32 +1169,50 @@ class EventService {
 	/**
 	 * canSignUpForEvent returns true if the user can sign up for the event, false otherwise.
 	 */
-	async canSignUpForEvent(userId: string, eventId: string): Promise<boolean> {
+	async canSignUpForEvent(
+		ctx: Context,
+		params: { eventId: string },
+	): Promise<boolean> {
+		if (!ctx.user) return false;
+
+		const userId = ctx.user.id;
+		const { eventId } = params;
 		const event = await this.eventRepository.get(eventId);
 
 		if (!Event.areSignUpsAvailable(event)) return false;
 		if (event.remainingCapacity <= 0) return false;
 
-		try {
-			const signUp = await this.eventRepository.getSignUp(userId, eventId);
-			if (signUp.active) return false;
-		} catch (err) {
-			const isNotFoundError = err instanceof NotFoundError;
-			if (!isNotFoundError) throw err;
-		}
-
-		const user = await this.userService.get(userId);
-		const slot = await this.eventRepository.getSlotWithRemainingCapacity(
+		const getSignUpResult = await this.eventRepository.getActiveSignUp(ctx, {
+			userId,
 			eventId,
-			user.gradeYear,
-		);
-		return slot !== null;
+		});
+		if (!getSignUpResult.ok) {
+			switch (getSignUpResult.error.name) {
+				case "InternalServerError": {
+					throw getSignUpResult.error;
+				}
+				case "NotFoundError": {
+					const user = await this.userService.get(userId);
+					const slot = await this.eventRepository.getSlotWithRemainingCapacity(
+						eventId,
+						user.gradeYear,
+					);
+					return slot !== null;
+				}
+			}
+		}
+		const { signUp } = getSignUpResult.data;
+		return !signUp.active;
 	}
 
 	async getSignUpAvailability(
-		userId: string | undefined,
-		eventId: string,
+		ctx: Context,
+		params: {
+			eventId: string;
+		},
 	): Promise<SignUpAvailability> {
+		const { eventId } = params;
+
 		const getEventResult = await this.eventRepository.getWithSlotsAndCategories(
 			{
 				id: eventId,
@@ -1092,59 +1225,71 @@ class EventService {
 		/**
 		 * User is not signed in
 		 */
-		if (!userId) return signUpAvailability.UNAVAILABLE;
-		const user = await this.userService.get(userId);
+		if (!ctx.user) return signUpAvailability.UNAVAILABLE;
+		const { user } = ctx;
 
-		try {
-			const signUp = await this.eventRepository.getSignUp(user.id, eventId);
-			if (signUp.participationStatus === ParticipationStatus.CONFIRMED)
-				return signUpAvailability.CONFIRMED;
-			if (signUp.participationStatus === ParticipationStatus.ON_WAITLIST)
-				return signUpAvailability.ON_WAITLIST;
-		} catch (err) {
-			const isNotFoundError = err instanceof NotFoundError;
-			if (!isNotFoundError) throw err;
-		}
-
-		const slots = await this.eventRepository.findManySlots({
-			gradeYear: user.gradeYear,
+		const getSignUpResult = await this.eventRepository.getActiveSignUp(ctx, {
+			userId: user.id,
 			eventId,
 		});
-		/**
-		 * There are no slots on the event for this user's grade year, so they cannot sign up
-		 */
-		if (slots.length === 0) return signUpAvailability.UNAVAILABLE;
-		/**
-		 * Event sign ups have not opened yet
-		 */
-		if (event.signUpsStartAt > DateTime.now().toJSDate())
-			return signUpAvailability.NOT_OPEN;
-		/**
-		 * Event sign ups have closed
-		 */
-		if (event.signUpsEndAt < DateTime.now().toJSDate())
-			return signUpAvailability.CLOSED;
+		if (!getSignUpResult.ok) {
+			switch (getSignUpResult.error.name) {
+				case "InternalServerError": {
+					throw getSignUpResult.error;
+				}
+				case "NotFoundError": {
+					const slots = await this.eventRepository.findManySlots({
+						gradeYear: user.gradeYear,
+						eventId,
+					});
+					/**
+					 * There are no slots on the event for this user's grade year, so they cannot sign up
+					 */
+					if (slots.length === 0) return signUpAvailability.UNAVAILABLE;
+					/**
+					 * Event sign ups have not opened yet
+					 */
+					if (event.signUpsStartAt > DateTime.now().toJSDate())
+						return signUpAvailability.NOT_OPEN;
+					/**
+					 * Event sign ups have closed
+					 */
+					if (event.signUpsEndAt < DateTime.now().toJSDate())
+						return signUpAvailability.CLOSED;
 
-		/**
-		 * The event is full
-		 */
-		if (!event.remainingCapacity) return signUpAvailability.WAITLIST_AVAILABLE;
+					/**
+					 * The event is full
+					 */
+					if (!event.remainingCapacity)
+						return signUpAvailability.WAITLIST_AVAILABLE;
 
-		const slotWithRemainingCapacity =
-			await this.eventRepository.getSlotWithRemainingCapacity(
-				eventId,
-				user.gradeYear,
-			);
-		/**
-		 * The slots for the user's grade year are full
-		 */
-		if (slotWithRemainingCapacity === null)
-			return signUpAvailability.WAITLIST_AVAILABLE;
+					const slotWithRemainingCapacity =
+						await this.eventRepository.getSlotWithRemainingCapacity(
+							eventId,
+							user.gradeYear,
+						);
+					/**
+					 * The slots for the user's grade year are full
+					 */
+					if (slotWithRemainingCapacity === null)
+						return signUpAvailability.WAITLIST_AVAILABLE;
 
-		/**
-		 * The user can sign up for the event
-		 */
-		return signUpAvailability.AVAILABLE;
+					/**
+					 * The user can sign up for the event
+					 */
+					return signUpAvailability.AVAILABLE;
+				}
+			}
+		}
+
+		const { signUp } = getSignUpResult.data;
+
+		if (signUp.participationStatus === ParticipationStatus.CONFIRMED)
+			return signUpAvailability.CONFIRMED;
+		if (signUp.participationStatus === ParticipationStatus.ON_WAITLIST)
+			return signUpAvailability.ON_WAITLIST;
+
+		throw new InternalServerError("Unexpected participation status on sign up");
 	}
 
 	public createCategory(
@@ -1271,47 +1416,59 @@ class EventService {
 		}
 
 		const { eventId } = params;
-		try {
-			const signUp = await this.eventRepository.getSignUp(userId, eventId);
-			if (signUp.participationStatus !== "CONFIRMED") {
-				return {
-					ok: false,
-					error: new NotFoundError(
-						"Cannot get order for sign up with status other than CONFIRMED",
-					),
-				};
+		const getSignUpResult = await this.eventRepository.getActiveSignUp(ctx, {
+			userId,
+			eventId,
+		});
+		if (!getSignUpResult.ok) {
+			switch (getSignUpResult.error.name) {
+				case "NotFoundError":
+					return {
+						ok: false,
+						error: new NotFoundError(
+							"Sign up not found",
+							getSignUpResult.error,
+						),
+					};
+				case "InternalServerError":
+					return {
+						ok: false,
+						error: new InternalServerError(
+							"Failed to get sign up",
+							getSignUpResult.error,
+						),
+					};
 			}
-			if (signUp.orderId === null) {
-				return {
-					ok: false,
-					error: new NotFoundError("Sign up does not have an order"),
-				};
-			}
-			const getOrderResult = await this.productService.orders.get(ctx, {
-				id: signUp.orderId,
-			});
-			if (!getOrderResult.ok) {
-				return {
-					ok: false,
-					error: getOrderResult.error,
-				};
-			}
-			return {
-				ok: true,
-				data: { order: getOrderResult.data.order },
-			};
-		} catch (err) {
-			if (err instanceof NotFoundError) {
-				return {
-					ok: false,
-					error: new NotFoundError("Sign up not found", err),
-				};
-			}
+		}
+		const { signUp } = getSignUpResult.data;
+
+		if (signUp.participationStatus !== "CONFIRMED") {
 			return {
 				ok: false,
-				error: new InternalServerError("Failed to get sign up", err),
+				error: new NotFoundError(
+					"Cannot get order for sign up with status other than CONFIRMED",
+				),
 			};
 		}
+		if (signUp.orderId === null) {
+			return {
+				ok: false,
+				error: new NotFoundError("Sign up does not have an order"),
+			};
+		}
+		const getOrderResult = await this.productService.orders.get(ctx, {
+			id: signUp.orderId,
+		});
+		if (!getOrderResult.ok) {
+			return {
+				ok: false,
+				error: getOrderResult.error,
+			};
+		}
+		return {
+			ok: true,
+			data: { order: getOrderResult.data.order },
+		};
 	}
 
 	/**
@@ -1338,18 +1495,7 @@ class EventService {
 		}
 
 		const { eventId } = params;
-		try {
-			const signUp = await this.eventRepository.getSignUp(userId, eventId);
-			return { ok: true, data: { signUp } };
-		} catch (err) {
-			if (err instanceof NotFoundError) {
-				return { ok: false, error: err };
-			}
-			return {
-				ok: false,
-				error: new InternalServerError("Failed to get sign up", err),
-			};
-		}
+		return await this.eventRepository.getActiveSignUp(ctx, { userId, eventId });
 	}
 
 	/**
