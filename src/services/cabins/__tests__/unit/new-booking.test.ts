@@ -962,6 +962,61 @@ describe("CabinService", () => {
 				}),
 			});
 		});
+
+		it("should send a booking confirmation email", async () => {
+			/**
+			 * Arrange
+			 *
+			 * Mock the cabinRepository.getBookingSemesters method to return the bookingSemesters from the test case.
+			 * Mock the cabinRepository.createBooking method to return a booking.
+			 * Mock the mailService.sendBookingConfirmation method to return a promise.
+			 */
+			cabinRepository.getBookingSemester.mockResolvedValue(
+				mock<BookingSemester>({
+					bookingsEnabled: true,
+					semester: Semester.FALL,
+					startAt: DateTime.fromObject({ year: 0 }).toJSDate(),
+					endAt: DateTime.fromObject({ year: 3000 }).toJSDate(),
+				}),
+			);
+			const booking = mock<BookingType>({ id: faker.string.uuid() });
+			cabinRepository.createBooking.mockResolvedValue({
+				ok: true,
+				data: {
+					booking,
+				},
+			});
+			mailService.sendAsync.mockResolvedValue();
+
+			/**
+			 * Act
+			 *
+			 * call newBooking
+			 */
+			const newBooking = await cabinService.newBooking(
+				makeMockContext({ id: faker.string.uuid() }),
+				makeCabinInput(),
+			);
+
+			/**
+			 * Assert
+			 *
+			 * Expect newBooking not to throw an error
+			 * Expect cabinRepository.createBooking to be called with the correct arguments
+			 * Expect mailService.sendBookingConfirmation to be called with the correct arguments
+			 */
+			expect(newBooking).toEqual({
+				ok: true,
+				data: {
+					booking,
+				},
+			});
+
+			expect(mailService.sendAsync).toHaveBeenCalledWith({
+				type: "cabin-booking-receipt",
+				bookingId: booking.id,
+			});
+		});
 	});
 });
 
