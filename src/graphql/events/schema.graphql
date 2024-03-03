@@ -356,6 +356,10 @@ type SignUp {
   factors, this is a naive approximation and should not be relied upon for anything other than a rough estimate.
   """
   approximatePositionOnWaitList: Int
+  """
+  The time the user signed up for the event
+  """
+  createdAt: DateTime!
 }
 
 type SignUpResponse {

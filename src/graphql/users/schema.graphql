@@ -43,7 +43,10 @@ type Mutation {
   Update the user with the given ID with super user privileges, requires that
   the caller is an authenticated super user. Otherwise, use updateUser.
   """
-  superUpdateUser(id: ID!, data: SuperUpdateUserInput!): SuperUpdateUserResponse!
+  superUpdateUser(
+    id: ID!
+    data: SuperUpdateUserInput!
+  ): SuperUpdateUserResponse!
   updateUser(data: UpdateUserInput!): UpdateUserResponse!
 }
 
@@ -117,6 +120,20 @@ type PrivateUser {
   The users' study program
   """
   studyProgram: StudyProgram
+  """
+  The users' sign ups
+  """
+  signUps(data: UserSignUpsInput): UserSignUps!
+}
+
+input UserSignUpsInput {
+  orderBy: OrderBy
+  participationStatus: ParticipationStatus
+}
+
+type UserSignUps {
+  signUps: [SignUp!]!
+  total: Int!
 }
 
 type StudyProgram {

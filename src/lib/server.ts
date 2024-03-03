@@ -326,6 +326,17 @@ interface IEventService {
 		| UnauthorizedError
 		| PermissionDeniedError
 	>;
+	findManySignUpsForUser(
+		ctx: Context,
+		params?: {
+			userId: string;
+			orderBy?: "asc" | "desc" | null;
+			participationStatus?: ParticipationStatus | null;
+		} | null,
+	): ResultAsync<
+		{ signUps: EventSignUp[]; total: number },
+		UnauthorizedError | InternalServerError
+	>;
 	findManySignUps(
 		ctx: Context,
 		params: {

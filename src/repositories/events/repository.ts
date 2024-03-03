@@ -499,29 +499,31 @@ export class EventRepository {
 	 *
 	 * @param eventId - The ID of the event to get sign ups for
 	 * @param status - The status of the sign ups to get
+	 * @param userId - The ID of the user to get sign ups for
 	 * @returns A list of event sign ups
 	 */
 	async findManySignUps(data: {
-		eventId: string;
+		eventId?: string;
 		status?: ParticipationStatus;
+		userId?: string;
+		orderBy?: "asc" | "desc";
 	}): ResultAsync<
 		{ signUps: EventSignUp[]; total: number },
 		NotFoundError | InternalServerError
 	> {
-		const { eventId, status } = data;
+		const { eventId, status, userId, orderBy = "asc" } = data;
+		const where: Prisma.EventSignUpWhereInput = {
+			eventId,
+			participationStatus: status,
+			userId,
+		};
 		const totalPromise = this.db.eventSignUp.count({
-			where: {
-				eventId,
-				participationStatus: status,
-			},
+			where,
 		});
 		const findManyPromise = this.db.eventSignUp.findMany({
-			where: {
-				eventId,
-				participationStatus: status,
-			},
+			where,
 			orderBy: {
-				createdAt: "asc",
+				createdAt: orderBy,
 			},
 		});
 		try {

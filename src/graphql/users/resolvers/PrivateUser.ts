@@ -8,4 +8,36 @@ export const PrivateUser: PrivateUserResolvers = {
 		if (!user.studyProgramId) return null;
 		return ctx.users.getStudyProgram({ id: user.studyProgramId });
 	},
+	signUps: async (user, { data }, ctx) => {
+		let orderBy: "asc" | "desc" | undefined = undefined;
+		if (data?.orderBy === "ASC") {
+			orderBy = "asc";
+		} else if (data?.orderBy === "DESC") {
+			orderBy = "desc";
+		}
+		const findManySignUpsResult = await ctx.events.findManySignUpsForUser(ctx, {
+			userId: user.id,
+			orderBy,
+			participationStatus: data?.participationStatus,
+		});
+		if (!findManySignUpsResult.ok) {
+			switch (findManySignUpsResult.error.name) {
+				case "UnauthorizedError": {
+					return {
+						signUps: [],
+						total: 0,
+					};
+				}
+				case "InternalServerError": {
+					throw findManySignUpsResult.error;
+				}
+			}
+		}
+
+		const { signUps, total } = findManySignUpsResult.data;
+		return {
+			signUps,
+			total,
+		};
+	},
 };

@@ -11,3 +11,8 @@ type ServerTimeResponse {
 type Query {
   serverTime: ServerTimeResponse!
 }
+
+enum OrderBy {
+  ASC
+  DESC
+}
