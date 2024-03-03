@@ -838,7 +838,7 @@ describe("Event queries", () => {
 		});
 
 		it("event { user { signUp { approximatePositionOnWaitList } } } should resolve", async () => {
-			const { client, eventService, createMockContext, userService } =
+			const { client, eventService, createMockContext } =
 				createMockApolloServer();
 			eventService.get.mockResolvedValue(
 				mock<EventType>({
