@@ -1357,6 +1357,37 @@ export class EventRepository {
 			};
 		}
 	}
+
+	public async getSignUpById(params: { id: string }): ResultAsync<
+		{ signUp: EventSignUp },
+		NotFoundError | InternalServerError
+	> {
+		const { id } = params;
+		try {
+			const signUp = await this.db.eventSignUp.findUnique({
+				where: {
+					id,
+				},
+			});
+			if (signUp === null) {
+				return {
+					ok: false,
+					error: new NotFoundError(`Sign up with id: ${id} not found`),
+				};
+			}
+			return {
+				ok: true,
+				data: {
+					signUp,
+				},
+			};
+		} catch (err) {
+			return {
+				ok: false,
+				error: new InternalServerError("Failed to get sign up by ID", err),
+			};
+		}
+	}
 }
 
 interface CreateConfirmedSignUpData {

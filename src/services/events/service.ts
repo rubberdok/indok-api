@@ -94,6 +94,10 @@ interface EventRepository {
 		NotFoundError | InternalServerError
 	>;
 	getSignUp(userId: string, eventId: string): Promise<EventSignUp>;
+	getSignUpById(params: { id: string }): ResultAsync<
+		{ signUp: EventSignUp },
+		NotFoundError | InternalServerError
+	>;
 	createSignUp(data: CreateSignUpParams): Promise<{
 		signUp: EventSignUp;
 		slot?: EventSlot;
@@ -947,6 +951,103 @@ class EventService {
 			// fallthrough
 			case ParticipationStatus.RETRACTED:
 				return signUp;
+		}
+	}
+
+	/**
+	 * removeSignUp removes a sign up, incrementing the remaining capacity of the event and slot
+	 * if the sign up was assigned to a slot.
+	 * This should be used when a member of the organization removes a sign up.
+	 *
+	 * @param signUpId - The ID of the sign up to remove.
+	 * @returns The updated sign up
+	 */
+	async removeSignUp(
+		ctx: Context,
+		params: { signUpId: string },
+	): ResultAsync<
+		{ signUp: EventSignUp },
+		| UnauthorizedError
+		| PermissionDeniedError
+		| InternalServerError
+		| InvalidArgumentError
+	> {
+		if (!ctx.user) {
+			return {
+				ok: false,
+				error: new UnauthorizedError(
+					"You must be logged in to remove a sign up",
+				),
+			};
+		}
+
+		const getSignUpResult = await this.eventRepository.getSignUpById({
+			id: params.signUpId,
+		});
+		if (!getSignUpResult.ok) {
+			return {
+				ok: false,
+				error: new InternalServerError(
+					"Failed to remove the sign up",
+					getSignUpResult.error,
+				),
+			};
+		}
+		const { signUp } = getSignUpResult.data;
+
+		const event = await this.eventRepository.get(signUp.eventId);
+		if (event.organizationId === null) {
+			return {
+				ok: false,
+				error: new InvalidArgumentError(
+					"Event does not belong to an organization",
+				),
+			};
+		}
+
+		const hasPermission = await this.permissionService.hasRole(ctx, {
+			organizationId: event.organizationId,
+			role: Role.MEMBER,
+		});
+		if (hasPermission !== true) {
+			return {
+				ok: false,
+				error: new PermissionDeniedError(
+					"You do not have permission to remove this sign up",
+				),
+			};
+		}
+
+		switch (signUp.participationStatus) {
+			case ParticipationStatus.CONFIRMED: {
+				const removedSignUp = await this.demoteConfirmedSignUp({
+					userId: signUp.userId,
+					eventId: signUp.eventId,
+					newParticipationStatus: ParticipationStatus.REMOVED,
+				});
+				return {
+					ok: true,
+					data: { signUp: removedSignUp },
+				};
+			}
+			case ParticipationStatus.ON_WAITLIST: {
+				const removedSignUp = await this.demoteOnWaitlistSignUp({
+					userId: signUp.userId,
+					eventId: signUp.eventId,
+					newParticipationStatus: ParticipationStatus.REMOVED,
+				});
+				return {
+					ok: true,
+					data: { signUp: removedSignUp },
+				};
+			}
+			case ParticipationStatus.REMOVED:
+			// fallthrough
+			case ParticipationStatus.RETRACTED:
+				return {
+					ok: true,
+					data: { signUp },
+				};
 		}
 	}
 

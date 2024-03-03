@@ -361,6 +361,16 @@ interface IEventService {
 		| UnauthorizedError
 		| InvalidArgumentError
 	>;
+	removeSignUp(
+		ctx: Context,
+		params: { signUpId: string },
+	): ResultAsync<
+		{ signUp: EventSignUp },
+		| InternalServerError
+		| InvalidArgumentError
+		| UnauthorizedError
+		| PermissionDeniedError
+	>;
 }
 
 interface IListingService {
