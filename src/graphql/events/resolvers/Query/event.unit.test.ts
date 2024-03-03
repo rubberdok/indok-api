@@ -996,5 +996,171 @@ describe("Event queries", () => {
 
 			expect(errors).toBeDefined();
 		});
+		describe("event { signUp { id } }", () => {
+			it("should resolve the sign up for the logged-in user", async () => {
+				const { client, createMockContext, eventService } =
+					createMockApolloServer();
+				const user = mock<User>({ id: faker.string.uuid() });
+				const event = mock<EventType>({ id: faker.string.uuid() });
+				const signUp = mock<EventSignUp>({
+					id: faker.string.uuid(),
+					userId: user.id,
+				});
+				eventService.get.mockResolvedValue(event);
+				eventService.getSignUp.mockResolvedValue({
+					ok: true,
+					data: { signUp },
+				});
+
+				const { data } = await client.query(
+					{
+						query: graphql(`
+						query eventWithSignUp($data: EventInput!) {
+							event(data: $data) {
+								event {
+									signUp {
+										id
+									}
+								}
+							}
+						}
+					`),
+						variables: {
+							data: {
+								id: event.id,
+							},
+						},
+					},
+					{
+						contextValue: createMockContext({ user }),
+					},
+				);
+
+				expect(data?.event.event.signUp).toEqual({
+					id: signUp.id,
+				});
+				expect(eventService.getSignUp).toHaveBeenCalledWith(
+					expect.objectContaining({
+						user: expect.objectContaining({ id: user.id }),
+					}),
+					expect.anything(),
+				);
+			});
+
+			it("should return null on UnauthorizedError", async () => {
+				const { client, createMockContext, eventService } =
+					createMockApolloServer();
+				const user = mock<User>({ id: faker.string.uuid() });
+				const event = mock<EventType>({ id: faker.string.uuid() });
+				eventService.get.mockResolvedValue(event);
+				eventService.getSignUp.mockResolvedValue({
+					ok: false,
+					error: new UnauthorizedError(""),
+				});
+
+				const { data } = await client.query(
+					{
+						query: graphql(`
+						query eventWithSignUp($data: EventInput!) {
+							event(data: $data) {
+								event {
+									signUp {
+										id
+									}
+								}
+							}
+						}
+					`),
+						variables: {
+							data: {
+								id: event.id,
+							},
+						},
+					},
+					{
+						contextValue: createMockContext({ user }),
+					},
+				);
+
+				expect(data?.event.event.signUp).toEqual(null);
+			});
+
+			it("should return null on NotFoundError", async () => {
+				const { client, createMockContext, eventService } =
+					createMockApolloServer();
+				const user = mock<User>({ id: faker.string.uuid() });
+				const event = mock<EventType>({ id: faker.string.uuid() });
+				eventService.get.mockResolvedValue(event);
+				eventService.getSignUp.mockResolvedValue({
+					ok: false,
+					error: new NotFoundError(""),
+				});
+
+				const { data } = await client.query(
+					{
+						query: graphql(`
+						query eventWithSignUp($data: EventInput!) {
+							event(data: $data) {
+								event {
+									signUp {
+										id
+									}
+								}
+							}
+						}
+					`),
+						variables: {
+							data: {
+								id: event.id,
+							},
+						},
+					},
+					{
+						contextValue: createMockContext({ user }),
+					},
+				);
+
+				expect(data?.event.event.signUp).toEqual(null);
+			});
+
+			it("should return error in InternalServerError", async () => {
+				const { client, createMockContext, eventService } =
+					createMockApolloServer();
+				const user = mock<User>({ id: faker.string.uuid() });
+				const event = mock<EventType>({ id: faker.string.uuid() });
+				eventService.get.mockResolvedValue(event);
+				eventService.getSignUp.mockResolvedValue({
+					ok: false,
+					error: new InternalServerError(""),
+				});
+
+				const { data, errors } = await client.query(
+					{
+						query: graphql(`
+						query eventWithSignUp($data: EventInput!) {
+							event(data: $data) {
+								event {
+									signUp {
+										id
+									}
+								}
+							}
+						}
+					`),
+						variables: {
+							data: {
+								id: event.id,
+							},
+						},
+					},
+					{
+						contextValue: createMockContext({ user }),
+					},
+				);
+
+				expect(data?.event.event.signUp).toEqual(null);
+				expect(errors).toBeDefined();
+			});
+		});
 	});
 });

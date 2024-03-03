@@ -1316,7 +1316,10 @@ export class EventRepository {
 	public async getEarlierSignUpsOnWaitList(data: {
 		eventId: string;
 		createdAt: Date;
-	}): ResultAsync<{ count: number }, NotFoundError | InternalServerError> {
+	}): ResultAsync<
+		{ count: number },
+		InternalServerError | InvalidArgumentError
+	> {
 		const { eventId, createdAt } = data;
 		try {
 			const count = await this.db.eventSignUp.count({
@@ -1336,10 +1339,10 @@ export class EventRepository {
 			};
 		} catch (err) {
 			if (err instanceof PrismaClientKnownRequestError) {
-				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) {
+				if (err.code === prismaKnownErrorCodes.ERR_INCONSISTENT_COLUMN_DATA) {
 					return {
 						ok: false,
-						error: new NotFoundError("Event not found", err),
+						error: new InvalidArgumentError("Invalid input", err),
 					};
 				}
 			}

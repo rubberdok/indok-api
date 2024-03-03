@@ -8,6 +8,8 @@ describe("Worker initialization", () => {
 	let mqRedis: Redis;
 	let eventsRedis: Redis;
 	let worker: Awaited<ReturnType<typeof initWorkers>>["worker"];
+	let queueEvents: QueueEvents;
+	let queue: Queue;
 
 	beforeAll(() => {
 		mqRedis = new Redis(env.REDIS_CONNECTION_STRING, {
@@ -16,9 +18,13 @@ describe("Worker initialization", () => {
 		eventsRedis = new Redis(env.REDIS_CONNECTION_STRING, {
 			maxRetriesPerRequest: 0,
 		});
+		queueEvents = new QueueEvents("health-check", { connection: eventsRedis });
+		queue = new Queue("health-check", { connection: mqRedis });
 	});
 
-	afterAll(() => {
+	afterAll(async () => {
+		await queueEvents.close();
+		await queue.close();
 		mqRedis.disconnect();
 		eventsRedis.disconnect();
 		worker.close(() => {});
@@ -28,14 +34,10 @@ describe("Worker initialization", () => {
 		({ worker } = await initWorkers());
 
 		worker.start();
-		const healthCheckQueue = new Queue("health-check", { connection: mqRedis });
-		const job = await healthCheckQueue.add("health-check", {});
+		const job = await queue.add("health-check", {});
 
-		const result = await job.waitUntilFinished(
-			new QueueEvents("health-check", { connection: eventsRedis }),
-		);
+		const result = await job.waitUntilFinished(queueEvents);
 
 		expect(result).toBe(true);
-		await healthCheckQueue.close();
 	});
 });

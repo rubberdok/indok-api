@@ -116,7 +116,10 @@ interface EventRepository {
 	getEarlierSignUpsOnWaitList(data: {
 		eventId: string;
 		createdAt: Date;
-	}): ResultAsync<{ count: number }, NotFoundError | InternalServerError>;
+	}): ResultAsync<
+		{ count: number },
+		InvalidArgumentError | InternalServerError
+	>;
 }
 
 interface UserService {
