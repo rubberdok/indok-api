@@ -113,6 +113,13 @@ interface EventRepository {
 	createCategory(data: { name: string }): Promise<CategoryType>;
 	updateCategory(data: CategoryType): Promise<CategoryType>;
 	deleteCategory(data: { id: string }): Promise<CategoryType>;
+	getEarlierSignUpsOnWaitList(data: {
+		eventId: string;
+		createdAt: Date;
+	}): ResultAsync<
+		{ count: number },
+		InvalidArgumentError | InternalServerError
+	>;
 }
 
 interface UserService {
@@ -1342,5 +1349,71 @@ class EventService {
 		}
 
 		return findManySignUpsResult;
+	}
+
+	/**
+	 * getApproximatePositionOnWaitingList returns the approximate position of the user on the wait list for the specified event.
+	 * Requires the user to be logged in.
+	 *
+	 * The position is a naive estimate, and may not be accurate as the exact position depends on
+	 * which slots the user could be assigned to.
+	 */
+	async getApproximatePositionOnWaitingList(
+		ctx: Context,
+		params: { eventId: string },
+	): ResultAsync<
+		{ position: number },
+		| NotFoundError
+		| InternalServerError
+		| UnauthorizedError
+		| InvalidArgumentError
+	> {
+		if (!ctx.user) {
+			return {
+				ok: false,
+				error: new UnauthorizedError("You must be logged in to get a position"),
+			};
+		}
+
+		const { eventId } = params;
+		const { user } = ctx;
+
+		const getSignUpResult = await this.getSignUp(ctx, {
+			eventId,
+			userId: user.id,
+		});
+
+		if (!getSignUpResult.ok) {
+			return {
+				ok: false,
+				error: getSignUpResult.error,
+			};
+		}
+
+		const { signUp } = getSignUpResult.data;
+		if (signUp.participationStatus !== ParticipationStatus.ON_WAITLIST) {
+			return {
+				ok: false,
+				error: new InvalidArgumentError(
+					"User is not on the wait list for this event",
+				),
+			};
+		}
+
+		const getEarlierSignUpsResult =
+			await this.eventRepository.getEarlierSignUpsOnWaitList({
+				eventId,
+				createdAt: signUp.createdAt,
+			});
+		if (!getEarlierSignUpsResult.ok) {
+			return {
+				ok: false,
+				error: getEarlierSignUpsResult.error,
+			};
+		}
+
+		const { count } = getEarlierSignUpsResult.data;
+
+		return { ok: true, data: { position: count + 1 } };
 	}
 }

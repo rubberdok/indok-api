@@ -14,4 +14,5 @@ export default prisma;
 export const prismaKnownErrorCodes = {
 	ERR_UNIQUE_CONSTRAINT_VIOLATION: "P2002",
 	ERR_NOT_FOUND: "P2025",
+	ERR_INCONSISTENT_COLUMN_DATA: "P2023",
 } as const;

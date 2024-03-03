@@ -58,6 +58,10 @@ type Event {
   """
   ticketInformation: EventTicketInformation
   signUps: SignUps
+  """
+  The current user's sign up for the event, if the user is signed up for the event.
+  """
+  signUp: SignUp
 }
 
 type SignUpsWithTotalCount {
@@ -346,6 +350,12 @@ type SignUp {
   user: PublicUser!
   order: Order
   userProvidedInformation: String
+  """
+  If the user is on the wait list, this field will be set to the approximate position on the wait list.
+  Since the actual position on the wait list depends on which slots the user can attend, and various other
+  factors, this is a naive approximation and should not be relied upon for anything other than a rough estimate.
+  """
+  approximatePositionOnWaitList: Int
 }
 
 type SignUpResponse {

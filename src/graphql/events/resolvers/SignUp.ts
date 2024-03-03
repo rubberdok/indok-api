@@ -38,4 +38,23 @@ export const SignUp: SignUpResolvers = {
 		}
 		return getOrderResult.data.order;
 	},
+	approximatePositionOnWaitList: async (signUp, _args, ctx) => {
+		const { eventId } = signUp;
+		const getApproximatePositionResult =
+			await ctx.events.getApproximatePositionOnWaitingList(ctx, { eventId });
+
+		if (!getApproximatePositionResult.ok) {
+			switch (getApproximatePositionResult.error.name) {
+				case "UnauthorizedError":
+				case "NotFoundError":
+				case "InvalidArgumentError":
+					return null;
+				case "InternalServerError":
+					throw getApproximatePositionResult.error;
+			}
+		}
+
+		const { position } = getApproximatePositionResult.data;
+		return position;
+	},
 };
