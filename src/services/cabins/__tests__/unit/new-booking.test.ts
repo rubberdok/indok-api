@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { type BookingSemester, Semester } from "@prisma/client";
+import { type BookingSemester, type Cabin, Semester } from "@prisma/client";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
@@ -64,6 +64,16 @@ describe("CabinService", () => {
 							return Promise.resolve(arrange.bookingSemesters.spring);
 						throw new Error(`Unexpected semester: ${semester}`);
 					},
+				);
+				cabinRepository.getCabinById.mockResolvedValue(
+					mock<Cabin>({
+						id: faker.string.uuid(),
+						internalPrice: 100,
+						externalPrice: 200,
+						internalPriceWeekend: 150,
+						externalPriceWeekend: 250,
+						capacity: Number.MAX_SAFE_INTEGER,
+					}),
 				);
 
 				/**
@@ -909,14 +919,57 @@ describe("CabinService", () => {
 				test.each(testCases)("$name", testFn);
 			});
 		});
+
+		it("should return InvalidArgumentError if the participant count exceeds the capacity", () => {
+			const bookingSemester = makeBookingSemester();
+			const cabin1 = mock<Cabin>({
+				id: faker.string.uuid(),
+				internalPrice: 100,
+				externalPrice: 200,
+				internalPriceWeekend: 150,
+				externalPriceWeekend: 250,
+				capacity: 5,
+			});
+			const cabin2 = mock<Cabin>({
+				id: faker.string.uuid(),
+				internalPrice: 100,
+				externalPrice: 200,
+				internalPriceWeekend: 150,
+				externalPriceWeekend: 250,
+				capacity: 5,
+			});
+			const input = makeCabinInput({
+				cabins: [cabin1, cabin2],
+				internalParticipantsCount: 6,
+				externalParticipantsCount: 5,
+			});
+			cabinRepository.getBookingSemester.mockResolvedValue(bookingSemester);
+			cabinRepository.getCabinById.mockResolvedValueOnce(cabin1);
+			cabinRepository.getCabinById.mockResolvedValueOnce(cabin2);
+
+			const newBooking = cabinService.newBooking(
+				makeMockContext({ id: faker.string.uuid() }),
+				input,
+			);
+
+			expect(newBooking).resolves.toEqual({
+				ok: false,
+				error: expect.objectContaining({
+					name: "InvalidArgumentError",
+					formErrors: expect.objectContaining({
+						internalParticipantsCount: expect.any(Array),
+					}),
+				}),
+			});
+		});
 	});
 });
 
 function makeCabinInput(
 	data: Partial<NewBookingParams> = {},
 ): NewBookingParams {
-	const startDate = faker.date.future();
-	const endDate = faker.date.future({ refDate: startDate });
+	const startDate = DateTime.now().plus({ days: 1 }).toJSDate();
+	const endDate = DateTime.fromJSDate(startDate).plus({ days: 1 }).toJSDate();
 	return merge<NewBookingParams, Partial<NewBookingParams>>(
 		{
 			cabins: [{ id: faker.string.uuid() }],
@@ -926,6 +979,8 @@ function makeCabinInput(
 			email: faker.internet.email(),
 			firstName: faker.person.firstName(),
 			lastName: faker.person.lastName(),
+			internalParticipantsCount: 1,
+			externalParticipantsCount: 1,
 		},
 		data,
 	);

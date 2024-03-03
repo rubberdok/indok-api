@@ -13,7 +13,9 @@ const cabinCreateInput: Prisma.CabinCreateInput[] = [
 		name: "Oksen",
 		capacity: 18,
 		internalPrice: 10,
+		internalPriceWeekend: 15,
 		externalPrice: 20,
+		externalPriceWeekend: 25,
 	},
 	{
 		id: bjornenId,
@@ -21,6 +23,8 @@ const cabinCreateInput: Prisma.CabinCreateInput[] = [
 		capacity: 18,
 		internalPrice: 10,
 		externalPrice: 20,
+		internalPriceWeekend: 15,
+		externalPriceWeekend: 25,
 	},
 ];
 
@@ -34,6 +38,9 @@ const bookingCreateInput: Prisma.BookingCreateInput[] = [
 		phoneNumber: faker.phone.number(),
 		firstName: faker.person.firstName(),
 		lastName: faker.person.lastName(),
+		internalParticipantsCount: 5,
+		externalParticipantsCount: 10,
+		totalCost: 1 * 250 + 5 * 200 + 1 * 2500 + 5 * 2000,
 		cabins: {
 			connect: {
 				id: oksenId,
@@ -49,6 +56,9 @@ const bookingCreateInput: Prisma.BookingCreateInput[] = [
 		phoneNumber: faker.phone.number(),
 		firstName: faker.person.firstName(),
 		lastName: faker.person.lastName(),
+		internalParticipantsCount: 5,
+		externalParticipantsCount: 10,
+		totalCost: 1 * 250 + 5 * 200 + 1 * 2500 + 5 * 2000,
 		cabins: {
 			connect: {
 				id: oksenId,
@@ -64,6 +74,9 @@ const bookingCreateInput: Prisma.BookingCreateInput[] = [
 		phoneNumber: faker.phone.number(),
 		firstName: faker.person.firstName(),
 		lastName: faker.person.lastName(),
+		internalParticipantsCount: 5,
+		externalParticipantsCount: 10,
+		totalCost: 1 * 250 + 5 * 200 + 1 * 2500 + 5 * 2000,
 		cabins: {
 			connect: {
 				id: oksenId,
@@ -79,6 +92,9 @@ const bookingCreateInput: Prisma.BookingCreateInput[] = [
 		phoneNumber: faker.phone.number(),
 		firstName: faker.person.firstName(),
 		lastName: faker.person.lastName(),
+		internalParticipantsCount: 5,
+		externalParticipantsCount: 10,
+		totalCost: 1 * 250 + 5 * 200 + 1 * 2500 + 5 * 2000,
 		cabins: {
 			connect: {
 				id: oksenId,
@@ -94,6 +110,9 @@ const bookingCreateInput: Prisma.BookingCreateInput[] = [
 		phoneNumber: faker.phone.number(),
 		firstName: faker.person.firstName(),
 		lastName: faker.person.lastName(),
+		internalParticipantsCount: 5,
+		externalParticipantsCount: 10,
+		totalCost: 1 * 250 + 5 * 200 + 1 * 2500 + 5 * 2000,
 		cabins: {
 			connect: {
 				id: oksenId,

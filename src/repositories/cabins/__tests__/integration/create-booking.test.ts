@@ -25,6 +25,8 @@ describe("Cabin Repository", () => {
 					capacity: faker.number.int({ max: 10 }),
 					internalPrice: faker.number.int({ max: 2000 }),
 					externalPrice: faker.number.int({ max: 2000 }),
+					externalPriceWeekend: faker.number.int({ max: 2000 }),
+					internalPriceWeekend: faker.number.int({ max: 2000 }),
 				},
 			});
 
@@ -43,6 +45,9 @@ describe("Cabin Repository", () => {
 				firstName: faker.person.firstName(),
 				lastName: faker.person.lastName(),
 				phoneNumber: faker.phone.number(),
+				externalParticipantsCount: faker.number.int({ max: 10 }),
+				internalParticipantsCount: faker.number.int({ max: 10 }),
+				totalCost: faker.number.int({ max: 2000 }),
 			});
 
 			/**
@@ -76,6 +81,8 @@ describe("Cabin Repository", () => {
 					capacity: faker.number.int({ max: 10 }),
 					internalPrice: faker.number.int({ max: 2000 }),
 					externalPrice: faker.number.int({ max: 2000 }),
+					externalPriceWeekend: faker.number.int({ max: 2000 }),
+					internalPriceWeekend: faker.number.int({ max: 2000 }),
 				},
 			});
 			const cabin2 = await prisma.cabin.create({
@@ -84,6 +91,8 @@ describe("Cabin Repository", () => {
 					capacity: faker.number.int({ max: 10 }),
 					internalPrice: faker.number.int({ max: 2000 }),
 					externalPrice: faker.number.int({ max: 2000 }),
+					externalPriceWeekend: faker.number.int({ max: 2000 }),
+					internalPriceWeekend: faker.number.int({ max: 2000 }),
 				},
 			});
 
@@ -102,6 +111,9 @@ describe("Cabin Repository", () => {
 				firstName: faker.person.firstName(),
 				lastName: faker.person.lastName(),
 				phoneNumber: faker.phone.number(),
+				externalParticipantsCount: faker.number.int({ max: 10 }),
+				internalParticipantsCount: faker.number.int({ max: 10 }),
+				totalCost: faker.number.int({ max: 2000 }),
 			});
 
 			/**
@@ -136,6 +148,8 @@ describe("Cabin Repository", () => {
 					capacity: faker.number.int({ max: 10 }),
 					internalPrice: faker.number.int({ max: 2000 }),
 					externalPrice: faker.number.int({ max: 2000 }),
+					externalPriceWeekend: faker.number.int({ max: 2000 }),
+					internalPriceWeekend: faker.number.int({ max: 2000 }),
 				},
 			});
 
@@ -154,6 +168,9 @@ describe("Cabin Repository", () => {
 				firstName: faker.person.firstName(),
 				lastName: faker.person.lastName(),
 				phoneNumber: faker.phone.number(),
+				externalParticipantsCount: faker.number.int({ max: 10 }),
+				internalParticipantsCount: faker.number.int({ max: 10 }),
+				totalCost: faker.number.int({ max: 2000 }),
 			});
 
 			/**

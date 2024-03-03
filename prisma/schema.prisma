@@ -167,28 +167,33 @@ enum BookingStatus {
 }
 
 model Cabin {
-  id            String    @id @default(uuid()) @db.Uuid
-  name          String
-  internalPrice Int
-  externalPrice Int
-  capacity      Int
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  bookings      Booking[]
+  id                   String    @id @default(uuid()) @db.Uuid
+  name                 String
+  internalPrice        Int
+  internalPriceWeekend Int
+  externalPrice        Int
+  externalPriceWeekend Int
+  capacity             Int
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  bookings             Booking[]
 }
 
 model Booking {
-  id          String        @id @default(uuid()) @db.Uuid
-  email       String
-  phoneNumber String
-  firstName   String
-  lastName    String
-  startDate   DateTime
-  endDate     DateTime
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  status      BookingStatus @default(PENDING)
-  cabins      Cabin[]
+  id                        String        @id @default(uuid()) @db.Uuid
+  email                     String
+  phoneNumber               String
+  firstName                 String
+  lastName                  String
+  startDate                 DateTime
+  endDate                   DateTime
+  createdAt                 DateTime      @default(now())
+  updatedAt                 DateTime      @updatedAt
+  status                    BookingStatus @default(PENDING)
+  cabins                    Cabin[]
+  totalCost                 Int
+  internalParticipantsCount Int
+  externalParticipantsCount Int
 }
 
 enum Semester {

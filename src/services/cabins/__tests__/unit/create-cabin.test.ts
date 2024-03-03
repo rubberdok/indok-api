@@ -32,7 +32,9 @@ describe("CabinService", () => {
 				name: "test",
 				capacity: 10,
 				internalPrice: 100,
-				externalPrice: 100,
+				externalPrice: 200,
+				internalPriceWeekend: 150,
+				externalPriceWeekend: 250,
 			});
 
 			expect(result).toEqual({
@@ -57,7 +59,9 @@ describe("CabinService", () => {
 					name: "test",
 					capacity: 10,
 					internalPrice: 100,
-					externalPrice: 100,
+					externalPrice: 200,
+					internalPriceWeekend: 150,
+					externalPriceWeekend: 250,
 				},
 			);
 
@@ -84,7 +88,9 @@ describe("CabinService", () => {
 						name: "test",
 						capacity: 10,
 						internalPrice: 100,
-						externalPrice: 100,
+						externalPrice: 200,
+						internalPriceWeekend: 150,
+						externalPriceWeekend: 250,
 					}),
 				},
 			});
@@ -95,7 +101,9 @@ describe("CabinService", () => {
 					name: "test",
 					capacity: 10,
 					internalPrice: 100,
-					externalPrice: 100,
+					externalPrice: 200,
+					internalPriceWeekend: 150,
+					externalPriceWeekend: 250,
 				},
 			);
 

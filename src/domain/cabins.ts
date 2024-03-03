@@ -17,6 +17,9 @@ interface BookingType {
 	phoneNumber: string;
 	cabins: { id: string }[];
 	status: BookingStatus;
+	totalCost: number;
+	internalParticipantsCount: number;
+	externalParticipantsCount: number;
 }
 
 class Booking implements BookingType {
@@ -30,7 +33,13 @@ class Booking implements BookingType {
 		this.phoneNumber = params.phoneNumber;
 		this.cabins = params.cabins;
 		this.status = params.status;
+		this.totalCost = params.totalCost;
+		this.internalParticipantsCount = params.internalParticipantsCount;
+		this.externalParticipantsCount = params.externalParticipantsCount;
 	}
+	internalParticipantsCount: number;
+	externalParticipantsCount: number;
+	totalCost: number;
 	status: BookingStatus;
 	id: string;
 	startDate: Date;
@@ -52,6 +61,9 @@ type NewBookingParams = {
 	phoneNumber: string;
 	cabins: { id: string }[];
 	status: BookingStatus;
+	totalCost: number;
+	internalParticipantsCount: number;
+	externalParticipantsCount: number;
 };
 
 export { Booking };

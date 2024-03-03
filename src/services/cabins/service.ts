@@ -6,6 +6,7 @@ import {
 	FeaturePermission,
 	Semester,
 } from "@prisma/client";
+import { sumBy } from "lodash-es";
 import { DateTime } from "luxon";
 import { z } from "zod";
 import { Booking, BookingStatus, type BookingType } from "~/domain/cabins.js";
@@ -70,6 +71,8 @@ export interface ICabinRepository {
 		capacity: number;
 		internalPrice: number;
 		externalPrice: number;
+		internalPriceWeekend: number;
+		externalPriceWeekend: number;
 	}): ResultAsync<{ cabin: Cabin }, InternalServerError>;
 }
 
@@ -100,6 +103,8 @@ export class CabinService implements ICabinService {
 			capacity: number;
 			internalPrice: number;
 			externalPrice: number;
+			internalPriceWeekend: number;
+			externalPriceWeekend: number;
 		},
 	): ResultAsync<
 		{
@@ -160,13 +165,73 @@ export class CabinService implements ICabinService {
 		InvalidArgumentError | InternalServerError
 	> {
 		const bookingSemesters = await this.getBookingSemesters();
-		const validateResult = this.validateBooking(params, bookingSemesters);
+		const cabins = await Promise.all(
+			params.cabins.map((cabin) => this.cabinRepository.getCabinById(cabin.id)),
+		);
+
+		const validateResult = this.validateBooking(
+			params,
+			bookingSemesters,
+			cabins,
+		);
 		if (!validateResult.ok) {
 			return validateResult;
 		}
 		const { validated: validatedData } = validateResult.data;
+		const {
+			startDate,
+			endDate,
+			internalParticipantsCount,
+			externalParticipantsCount,
+		} = validatedData;
+		const priceResult = await this.totalCost({
+			cabins: params.cabins,
+			startDate,
+			endDate,
+			participants: {
+				internal: internalParticipantsCount,
+				external: externalParticipantsCount,
+			},
+		});
+		if (!priceResult.ok) {
+			switch (priceResult.error.name) {
+				case "NotFoundError": {
+					return {
+						ok: false,
+						error: new InvalidArgumentError(
+							"The cabin you tried to book does not exist",
+							priceResult.error,
+						),
+					};
+				}
+				case "InvalidArgumentError": {
+					return {
+						ok: false,
+						error: new InvalidArgumentError(
+							"Failed to calculate the total cost of the booking",
+							priceResult.error,
+						),
+					};
+				}
+				case "InternalServerError": {
+					return {
+						ok: false,
+						error: new InternalServerError(
+							"An unknown error occurred when calculating the total cost of the booking",
+							priceResult.error,
+						),
+					};
+				}
+			}
+		}
+
 		const newBooking = new Booking(
-			new Booking({ ...validatedData, status: "PENDING", id: randomUUID() }),
+			new Booking({
+				...validatedData,
+				totalCost: priceResult.data.totalCost,
+				status: "PENDING",
+				id: randomUUID(),
+			}),
 		);
 
 		const createBookingResult =
@@ -294,8 +359,9 @@ export class CabinService implements ICabinService {
 			spring: BookingSemester | null;
 			fall: BookingSemester | null;
 		},
+		cabins: Cabin[],
 	): Result<
-		{ validated: Omit<BookingType, "id" | "status"> },
+		{ validated: Omit<BookingType, "id" | "status" | "totalCost"> },
 		InvalidArgumentError
 	> {
 		const { fall, spring } = bookingSemesters;
@@ -325,6 +391,12 @@ export class CabinService implements ICabinService {
 						z.object({ id: z.string().uuid({ message: "invalid cabin id" }) }),
 					)
 					.min(1, "at least one cabin must be booked"),
+				internalParticipantsCount: z
+					.number()
+					.min(0, "internal participants must be at least 0"),
+				externalParticipantsCount: z
+					.number()
+					.min(0, "external participants must be at least 0"),
 			})
 			.refine((obj) => obj.endDate > obj.startDate, {
 				message: "end date must be after start date",
@@ -354,6 +426,18 @@ export class CabinService implements ICabinService {
 					message:
 						"booking is not in an active booking semester, and is not a valid cross-semester booking",
 					path: ["startDate", "endDate"],
+				},
+			)
+			.refine(
+				(obj) => {
+					const maximumParticipants = sumBy(cabins, "capacity");
+					const totalParticipants =
+						obj.internalParticipantsCount + obj.externalParticipantsCount;
+					return totalParticipants <= maximumParticipants;
+				},
+				{
+					message: "too many participants for the selected cabins",
+					path: ["internalParticipantsCount", "externalParticipantsCount"],
 				},
 			);
 		const parseResult = bookingSchema.safeParse(data);
@@ -677,5 +761,70 @@ export class CabinService implements ICabinService {
 	> {
 		const getBookingResult = await this.cabinRepository.getBookingById(by.id);
 		return getBookingResult;
+	}
+
+	/**
+	 * Sunday to Thursday use internalPrice/externalPrice
+	 * Friday and Saturday use internalPriceWeekend/externalPriceWeekend
+	 *
+	 * If there are more internal participants than external, use internal price, else use external price
+	 */
+	async totalCost(data: {
+		startDate: Date;
+		endDate: Date;
+		participants: {
+			internal: number;
+			external: number;
+		};
+		cabins: { id: string }[];
+	}): ResultAsync<
+		{ totalCost: number },
+		InternalServerError | NotFoundError | InvalidArgumentError
+	> {
+		const { startDate, endDate, participants } = data;
+		const cabins = await Promise.all(
+			data.cabins.map((cabin) => this.cabinRepository.getCabinById(cabin.id)),
+		);
+
+		const isInternalPrice = participants.internal >= participants.external;
+		// Number of week nights, i.e. nights from Sunday to Thursday
+		let numberOfWeekdayNights = 0;
+		// Number of weekend nights, i.e. nights from Friday to Saturday
+		let numberOfWeekendNights = 0;
+		const interval = DateTime.fromJSDate(startDate).until(
+			DateTime.fromJSDate(endDate),
+		);
+		if (interval.isValid) {
+			for (const day of interval.splitBy({ days: 1 })) {
+				const weekday = day.start?.weekday;
+				if (weekday === 5 || weekday === 6) {
+					numberOfWeekendNights += 1;
+				} else {
+					numberOfWeekdayNights += 1;
+				}
+			}
+		} else {
+			return {
+				ok: false,
+				error: new InvalidArgumentError("Invalid date interval"),
+			};
+		}
+
+		let weekdayPrice = 0;
+		let weekendPrice = 0;
+
+		if (isInternalPrice) {
+			weekdayPrice = sumBy(cabins, "internalPrice");
+			weekendPrice = sumBy(cabins, "internalPriceWeekend");
+		} else {
+			weekdayPrice = sumBy(cabins, "externalPrice");
+			weekendPrice = sumBy(cabins, "externalPriceWeekend");
+		}
+
+		const totalCost =
+			weekdayPrice * numberOfWeekdayNights +
+			weekendPrice * numberOfWeekendNights;
+
+		return { ok: true, data: { totalCost } };
 	}
 }

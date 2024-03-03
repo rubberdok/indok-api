@@ -64,6 +64,10 @@ type Cabin {
   name: String!
 }
 
+input CabinInput {
+  id: ID!
+}
+
 type CabinsResponse {
   cabins: [Cabin!]!
 }
@@ -581,7 +585,9 @@ input NewBookingInput {
   cabins: [NewBookingCabinInput!]!
   email: String!
   endDate: DateTime!
+  externalParticipantsCount: Int!
   firstName: String!
+  internalParticipantsCount: Int!
   lastName: String!
   phoneNumber: String!
   startDate: DateTime!
@@ -696,6 +702,11 @@ type OrganizationReseponse {
 
 type OrganizationsResponse {
   organizations: [Organization!]!
+}
+
+input ParticipantsInput {
+  external: Int!
+  internal: Int!
 }
 
 enum ParticipationStatus {
@@ -894,6 +905,7 @@ type Query {
   paymentAttempts(data: PaymentAttemptsInput): PaymentAttemptsResponse!
   products: ProductResponse!
   serverTime: ServerTimeResponse!
+  totalCost(data: TotalCostInput!): TotalCostResponse!
   user: UserResponse!
   users: UsersResponse!
 }
@@ -1059,6 +1071,17 @@ input SuperUpdateUserInput {
 
 type SuperUpdateUserResponse {
   user: PrivateUser!
+}
+
+input TotalCostInput {
+  cabins: [CabinInput!]!
+  endDate: DateTime!
+  participants: ParticipantsInput!
+  startDate: DateTime!
+}
+
+type TotalCostResponse {
+  totalCost: Int!
 }
 
 input UpdateBookingContactInput {
