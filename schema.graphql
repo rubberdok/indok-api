@@ -629,6 +629,11 @@ type Order {
   user: PrivateUser
 }
 
+enum OrderBy {
+  ASC
+  DESC
+}
+
 input OrderInput {
   id: ID!
 }
@@ -834,6 +839,9 @@ type PrivateUser {
   organizations: [Organization!]!
   phoneNumber: String
 
+  """The users' sign ups"""
+  signUps(data: UserSignUpsInput): UserSignUps!
+
   """The users' study program"""
   studyProgram: StudyProgram
   username: String!
@@ -962,6 +970,9 @@ type SignUp {
   factors, this is a naive approximation and should not be relied upon for anything other than a rough estimate.
   """
   approximatePositionOnWaitList: Int
+
+  """The time the user signed up for the event"""
+  createdAt: DateTime!
 
   """The event the user signed up for"""
   event: Event!
@@ -1275,6 +1286,16 @@ type UpdateUserResponse {
 
 type UserResponse {
   user: PrivateUser
+}
+
+type UserSignUps {
+  signUps: [SignUp!]!
+  total: Int!
+}
+
+input UserSignUpsInput {
+  orderBy: OrderBy
+  participationStatus: ParticipationStatus
 }
 
 type UsersResponse {

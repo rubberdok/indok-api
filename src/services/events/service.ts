@@ -85,8 +85,10 @@ interface EventRepository {
 		EventType[]
 	>;
 	findManySignUps(data: {
-		eventId: string;
+		eventId?: string;
 		status?: ParticipationStatus;
+		userId?: string;
+		orderBy?: "asc" | "desc";
 	}): ResultAsync<
 		{ signUps: EventSignUp[]; total: number },
 		NotFoundError | InternalServerError
@@ -1415,5 +1417,56 @@ class EventService {
 		const { count } = getEarlierSignUpsResult.data;
 
 		return { ok: true, data: { position: count + 1 } };
+	}
+
+	/**
+	 * findManySignUpsForUser returns all sign ups for the authenticated user.
+	 * @param ctx the context of the request
+	 */
+	async findManySignUpsForUser(
+		ctx: Context,
+		params: {
+			userId: string;
+			orderBy?: "asc" | "desc" | null;
+			participationStatus?: ParticipationStatus | null;
+		},
+	): ResultAsync<
+		{ signUps: EventSignUp[]; total: number },
+		UnauthorizedError | InternalServerError
+	> {
+		if (!ctx.user) {
+			return {
+				ok: false,
+				error: new UnauthorizedError(
+					"You must be logged in to get sign ups for an event",
+				),
+			};
+		}
+		if (ctx.user.id !== params.userId) {
+			return {
+				ok: false,
+				error: new UnauthorizedError("You can only view your own sign ups"),
+			};
+		}
+
+		const orderBy = params?.orderBy ?? "desc";
+		const participationStatus = params?.participationStatus ?? undefined;
+
+		const findManySignUpsResult = await this.eventRepository.findManySignUps({
+			userId: ctx.user.id,
+			orderBy,
+			status: participationStatus,
+		});
+		if (!findManySignUpsResult.ok) {
+			return {
+				ok: false,
+				error: new InternalServerError(
+					"Failed to get sign ups",
+					findManySignUpsResult.error,
+				),
+			};
+		}
+
+		return findManySignUpsResult;
 	}
 }
