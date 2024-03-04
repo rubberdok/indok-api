@@ -28,3 +28,8 @@ variable "account_tier" {
   default     = "Standard"
 }
 
+variable "identity_id" {
+  type        = string
+  description = "The ID of the user-assigned identity to assign to the storage account."
+
+}

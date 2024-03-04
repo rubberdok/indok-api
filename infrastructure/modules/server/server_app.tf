@@ -7,6 +7,13 @@ resource "azurerm_container_app" "server" {
   resource_group_name = module.resource_group.name
   revision_mode       = "Single"
 
+  identity {
+    type = "UserAssigned"
+    identity_ids = [
+      module.managed_identity.id
+    ]
+  }
+
   dynamic "secret" {
     for_each = var.secrets
     content {
@@ -210,6 +217,13 @@ resource "azurerm_container_app" "worker" {
 
   resource_group_name = module.resource_group.name
   revision_mode       = "Single"
+
+  identity {
+    type = "UserAssigned"
+    identity_ids = [
+      module.managed_identity.id
+    ]
+  }
 
   dynamic "secret" {
     for_each = var.secrets
