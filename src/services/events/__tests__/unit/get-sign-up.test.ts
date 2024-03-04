@@ -46,9 +46,10 @@ describe("EventService", () => {
 		});
 
 		it("should return NotFoundError if the sign up is not found", async () => {
-			mockEventRepository.getSignUp.mockRejectedValue(
-				new NotFoundError("Event sign-up not found"),
-			);
+			mockEventRepository.getActiveSignUp.mockResolvedValue({
+				ok: false,
+				error: new NotFoundError("Event sign-up not found"),
+			});
 
 			const user = mock<User>({ id: faker.string.uuid() });
 			const ctx = makeMockContext(user);
@@ -64,9 +65,14 @@ describe("EventService", () => {
 		});
 
 		it("should return the sign up if found", async () => {
-			mockEventRepository.getSignUp.mockResolvedValue({
-				...mockDeep<EventSignUp>(),
-				participationStatus: "CONFIRMED",
+			mockEventRepository.getActiveSignUp.mockResolvedValueOnce({
+				ok: true,
+				data: {
+					signUp: {
+						...mock<EventSignUp>(),
+						participationStatus: "CONFIRMED",
+					},
+				},
 			});
 
 			const user = mock<User>({ id: faker.string.uuid() });
@@ -87,12 +93,15 @@ describe("EventService", () => {
 		});
 
 		it("should use the user ID from context if not a super user", async () => {
-			mockEventRepository.getSignUp.mockResolvedValueOnce(
-				mock<EventSignUp>({
-					participationStatus: "CONFIRMED",
-					orderId: faker.string.uuid(),
-				}),
-			);
+			mockEventRepository.getActiveSignUp.mockResolvedValueOnce({
+				ok: true,
+				data: {
+					signUp: mock<EventSignUp>({
+						participationStatus: "CONFIRMED",
+						orderId: faker.string.uuid(),
+					}),
+				},
+			});
 
 			const user = mock<User>({ id: faker.string.uuid(), isSuperUser: false });
 			const ctx = makeMockContext(user);
@@ -102,19 +111,25 @@ describe("EventService", () => {
 				userId: faker.string.uuid(),
 			});
 
-			expect(mockEventRepository.getSignUp).toHaveBeenCalledWith(
-				user.id,
-				expect.any(String),
+			expect(mockEventRepository.getActiveSignUp).toHaveBeenCalledWith(
+				expect.anything(),
+				{
+					userId: user.id,
+					eventId: expect.any(String),
+				},
 			);
 		});
 
 		it("should use the userId parameter if the user is a super user", async () => {
-			mockEventRepository.getSignUp.mockResolvedValueOnce(
-				mock<EventSignUp>({
-					participationStatus: "CONFIRMED",
-					orderId: faker.string.uuid(),
-				}),
-			);
+			mockEventRepository.getActiveSignUp.mockResolvedValueOnce({
+				ok: true,
+				data: {
+					signUp: mock<EventSignUp>({
+						participationStatus: "CONFIRMED",
+						orderId: faker.string.uuid(),
+					}),
+				},
+			});
 
 			const user = mock<User>({ id: faker.string.uuid(), isSuperUser: true });
 			const ctx = makeMockContext(user);
@@ -125,9 +140,12 @@ describe("EventService", () => {
 				userId: otherUserId,
 			});
 
-			expect(mockEventRepository.getSignUp).toHaveBeenCalledWith(
-				otherUserId,
-				expect.any(String),
+			expect(mockEventRepository.getActiveSignUp).toHaveBeenCalledWith(
+				expect.anything(),
+				{
+					userId: otherUserId,
+					eventId: expect.any(String),
+				},
 			);
 		});
 	});

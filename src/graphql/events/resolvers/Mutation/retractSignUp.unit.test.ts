@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { type EventSignUp, ParticipationStatus } from "@prisma/client";
 import { mock } from "jest-mock-extended";
-import { errorCodes } from "~/domain/errors.js";
+import { InvalidArgumentError } from "~/domain/errors.js";
 import type { EventType } from "~/domain/events/event.js";
 import type { User } from "~/domain/users.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
@@ -26,12 +26,15 @@ describe("Event mutations", () => {
 				},
 			});
 
-			eventService.retractSignUp.mockResolvedValue(
-				mock<EventSignUp>({
-					id: faker.string.uuid(),
-					participationStatus: ParticipationStatus.RETRACTED,
-				}),
-			);
+			eventService.retractSignUp.mockResolvedValue({
+				ok: true,
+				data: {
+					signUp: mock<EventSignUp>({
+						id: faker.string.uuid(),
+						participationStatus: ParticipationStatus.RETRACTED,
+					}),
+				},
+			});
 			eventService.get.mockResolvedValue(
 				mock<EventType>({ id: faker.string.uuid() }),
 			);
@@ -91,28 +94,45 @@ describe("Event mutations", () => {
 				participationStatus: "RETRACTED",
 			});
 			expect(eventService.retractSignUp).toHaveBeenCalledWith(
-				contextValue.user?.id,
-				expect.any(String),
+				expect.anything(),
+				{
+					eventId: expect.any(String),
+				},
 			);
 		});
 
-		it("should err if not logged in", async () => {
+		it("throws if retract fails", async () => {
 			/**
 			 * Arrange
 			 *
-			 * Create an unauthenticated context,
+			 * Create an authenticated context,
+			 * and set up the mock return value for the eventService.retractSignUp method,
+			 * and mock return values for eventSerivce.get and userService.get to test the resolvers.
 			 */
-			const { client, createMockContext, eventService } =
+			const { client, createMockContext, eventService, userService } =
 				createMockApolloServer();
 
 			const contextValue = createMockContext({
-				user: null,
+				user: {
+					id: faker.string.uuid(),
+				},
 			});
+
+			eventService.retractSignUp.mockResolvedValue({
+				ok: false,
+				error: new InvalidArgumentError(""),
+			});
+			eventService.get.mockResolvedValue(
+				mock<EventType>({ id: faker.string.uuid() }),
+			);
+			userService.get.mockResolvedValue(
+				mock<User>({ id: faker.string.uuid() }),
+			);
 
 			/**
 			 * Act
 			 *
-			 * Attempt to retract a sign up for an event
+			 * Retract the sign up for an event using the authenticated context
 			 */
 			const { errors } = await client.mutate(
 				{
@@ -145,17 +165,8 @@ describe("Event mutations", () => {
 
 			/**
 			 * Assert
-			 *
-			 * Ensure that retract sign up was not attempted and that a permission denied error was returned.
 			 */
 			expect(errors).toBeDefined();
-			expect(
-				errors?.every(
-					(error) =>
-						error.extensions?.code === errorCodes.ERR_PERMISSION_DENIED,
-				),
-			).toBe(true);
-			expect(eventService.retractSignUp).not.toHaveBeenCalled();
 		});
 	});
 });

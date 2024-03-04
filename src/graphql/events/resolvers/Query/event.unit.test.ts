@@ -83,35 +83,12 @@ describe("Event queries", () => {
 
 				expect(errors).toBeUndefined();
 				expect(eventService.canSignUpForEvent).toHaveBeenCalledWith(
-					userId,
-					eventId,
+					expect.anything(),
+					{
+						eventId,
+					},
 				);
 				expect(data?.event.event.canSignUp).toBe(true);
-			});
-
-			it("should return false if the user is not authenticated", async () => {
-				const { client, eventService } = createMockApolloServer();
-				eventService.get.mockResolvedValue(
-					mock<EventType>({ id: faker.string.uuid() }),
-				);
-
-				const { errors, data } = await client.query({
-					query: graphql(`
-            query CanSignUpEvent($data: EventInput!) {
-              event(data: $data) {
-                event {
-                  canSignUp
-                }
-              }
-            }
-          `),
-					variables: {
-						data: { id: faker.string.uuid() },
-					},
-				});
-
-				expect(errors).toBeUndefined();
-				expect(data?.event.event.canSignUp).toBe(false);
 			});
 
 			it("should return false if canSignUpForEvent returns false", async () => {

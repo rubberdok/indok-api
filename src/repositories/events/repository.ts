@@ -1159,30 +1159,47 @@ export class EventRepository {
 	}
 
 	/**
-	 * getSignUp returns the sign up for the user on the event.
-	 * @throws {NotFoundError} If a sign up with the given ID does not exist
+	 * getActiveSignUp returns the sign up for the user on the event.
 	 * @param userId - The ID of the user to get the sign up for
 	 * @param eventId - The ID of the event to get the sign up for
 	 * @returns the sign up that matches the given user and event IDs
 	 */
-	async getSignUp(userId: string, eventId: string): Promise<EventSignUp> {
-		const signUp = await this.db.eventSignUp.findUnique({
-			where: {
-				userId_eventId_active: {
-					userId,
-					eventId,
-					active: true,
+	async getActiveSignUp(
+		_ctx: Context,
+		params: { userId: string; eventId: string },
+	): ResultAsync<{ signUp: EventSignUp }, NotFoundError | InternalServerError> {
+		try {
+			const signUp = await this.db.eventSignUp.findUnique({
+				where: {
+					userId_eventId_active: {
+						userId: params.userId,
+						eventId: params.eventId,
+						active: true,
+					},
 				},
-			},
-		});
+			});
 
-		if (signUp === null) {
-			throw new NotFoundError(
-				`Event sign up { userId: ${userId}, eventId: ${eventId} } not found`,
-			);
+			if (signUp === null) {
+				return {
+					ok: false,
+					error: new NotFoundError(
+						`Sign up for user ${params.userId} and event ${params.eventId} not found`,
+					),
+				};
+			}
+
+			return {
+				ok: true,
+				data: {
+					signUp,
+				},
+			};
+		} catch (err) {
+			return {
+				ok: false,
+				error: new InternalServerError("Failed to get sign up", err),
+			};
 		}
-
-		return signUp;
 	}
 
 	findManySlots(data: { gradeYear?: number; eventId: string }): Promise<
@@ -1354,6 +1371,37 @@ export class EventRepository {
 					"Failed to get earlier sign ups on wait list",
 					err,
 				),
+			};
+		}
+	}
+
+	public async getSignUpById(params: { id: string }): ResultAsync<
+		{ signUp: EventSignUp },
+		NotFoundError | InternalServerError
+	> {
+		const { id } = params;
+		try {
+			const signUp = await this.db.eventSignUp.findUnique({
+				where: {
+					id,
+				},
+			});
+			if (signUp === null) {
+				return {
+					ok: false,
+					error: new NotFoundError(`Sign up with id: ${id} not found`),
+				};
+			}
+			return {
+				ok: true,
+				data: {
+					signUp,
+				},
+			};
+		} catch (err) {
+			return {
+				ok: false,
+				error: new InternalServerError("Failed to get sign up by ID", err),
 			};
 		}
 	}

@@ -5,7 +5,7 @@ import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import type { EventService } from "../../service.js";
 import {
-	makeDependencies,
+	makeServices,
 	makeUserWithOrganizationMembership,
 } from "./dependencies-factory.js";
 
@@ -13,7 +13,7 @@ describe("EventService", () => {
 	let eventService: EventService;
 
 	beforeAll(() => {
-		({ eventService } = makeDependencies());
+		({ eventService } = makeServices());
 	});
 
 	describe("canSignUpForEvent", () => {
@@ -295,7 +295,9 @@ describe("EventService", () => {
 						arrange.signUp.participationStatus === "RETRACTED" ||
 						arrange.signUp.participationStatus === "REMOVED"
 					) {
-						await eventService.retractSignUp(user.id, event.data.event.id);
+						await eventService.retractSignUp(ctx, {
+							eventId: event.data.event.id,
+						});
 					}
 				}
 
@@ -305,8 +307,8 @@ describe("EventService", () => {
 				 * Call the canSignUpForEvent function with the user and the event
 				 */
 				const actual = await eventService.canSignUpForEvent(
-					user.id,
-					event.data.event.id,
+					makeMockContext(user),
+					{ eventId: event.data.event.id },
 				);
 
 				/**
@@ -355,7 +357,10 @@ describe("EventService", () => {
 			 *
 			 * Call the canSignUpForEvent function with the user and the event
 			 */
-			const actual = await eventService.canSignUpForEvent(user.id, event.id);
+			const actual = await eventService.canSignUpForEvent(
+				makeMockContext(user),
+				{ eventId: event.id },
+			);
 
 			/**
 			 * Assert

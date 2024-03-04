@@ -7,13 +7,13 @@ import { type User, newUserFromDSO } from "~/domain/users.js";
 import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import type { EventService } from "../../service.js";
-import { makeDependencies } from "./dependencies-factory.js";
+import { makeServices } from "./dependencies-factory.js";
 
 describe("Event Sign Up", () => {
 	let eventService: EventService;
 
 	beforeAll(() => {
-		({ eventService } = makeDependencies());
+		({ eventService } = makeServices());
 	});
 
 	describe("signUp", () => {
@@ -148,7 +148,7 @@ describe("Event Sign Up", () => {
 			 * 3. Create a slot for the event with capacity.
 			 * 4. Create a user to sign up for the event.
 			 */
-			const { productService } = makeDependencies();
+			const { productService } = makeServices();
 			const { organization, user } = await makeUserWithOrganizationMembership({
 				isSuperUser: true,
 			});

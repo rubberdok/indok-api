@@ -1,20 +1,16 @@
-import { faker } from "@faker-js/faker";
 import type { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
 import type { SignUpAvailability } from "~/domain/events/index.js";
 import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import type { EventService } from "../../service.js";
-import {
-	makeDependencies,
-	makeUserWithOrganizationMembership,
-} from "./dependencies-factory.js";
+import { makeDependencies, makeServices } from "./dependencies-factory.js";
 
 describe("EventService", () => {
 	let eventService: EventService;
 
 	beforeAll(() => {
-		({ eventService } = makeDependencies());
+		({ eventService } = makeServices());
 	});
 
 	describe("#getSignUpAvailability", () => {
@@ -23,7 +19,7 @@ describe("EventService", () => {
 			arrange: {
 				user?: {
 					graduationYear?: number;
-				};
+				} | null;
 				signUpsEnabled: boolean;
 				capacity: number;
 				signUpsStartAt: Date;
@@ -41,6 +37,7 @@ describe("EventService", () => {
 			{
 				name: "if the user is `null`, and sign ups are enabled",
 				arrange: {
+					user: null,
 					signUpsEnabled: true,
 					signUpsEndAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 					signUpsStartAt: DateTime.now().minus({ days: 1 }).toJSDate(),
@@ -276,29 +273,21 @@ describe("EventService", () => {
 				 * Create a sign up for the user and the event with the participation status specified in the test case
 				 * if the participation status is CONFIRMED, create a sign up for the user and the slot
 				 */
-				const { user, organization } = await makeUserWithOrganizationMembership(
-					arrange.user ?? {},
-				);
-				const event = await eventService.create(makeMockContext(user), {
-					event: {
-						organizationId: organization.id,
-						name: faker.word.adjective(),
-						startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-						endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
-						signUpsEnabled: arrange.signUpsEnabled,
+				const { event, user } = await makeDependencies(
+					{
 						capacity: arrange.capacity,
+						signUpsEnabled: arrange.signUpsEnabled,
+						slots: arrange.slots,
 						signUpsEndAt: arrange.signUpsEndAt,
 						signUpsStartAt: arrange.signUpsStartAt,
 					},
-					slots: arrange.slots,
-					type: "SIGN_UPS",
-				});
+					arrange.user,
+				);
 
-				if (!event.ok) throw event.error;
 				if (arrange.signUp) {
 					await prisma.eventSignUp.create({
 						data: {
-							event: { connect: { id: event.data.event.id } },
+							event: { connect: { id: event.id } },
 							user: { connect: { id: user.id } },
 							participationStatus: arrange.signUp.participationStatus,
 							active: arrange.signUp.active,
@@ -312,8 +301,8 @@ describe("EventService", () => {
 				 * Call the canSignUpForEvent function with the user and the event
 				 */
 				const actual = await eventService.getSignUpAvailability(
-					arrange.user && user.id,
-					event.data.event.id,
+					makeMockContext(arrange.user !== null ? user : null),
+					{ eventId: event.id },
 				);
 
 				/**
@@ -333,27 +322,15 @@ describe("EventService", () => {
 			 * Create an event with the capacity specified in the test case
 			 * Create a slot with the capacity specified in the test case
 			 */
-			const { user, organization } = await makeUserWithOrganizationMembership();
-			const event = await prisma.event.create({
-				data: {
-					type: "SIGN_UPS",
-					name: faker.word.adjective(),
-					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
-					endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
-					organizationId: organization.id,
-					capacity: 1,
-					remainingCapacity: 1,
-					signUpsEnabled: true,
-					signUpsStartAt: DateTime.now()
-						.minus({ days: 1, hours: 2 })
-						.toJSDate(),
-					signUpsEndAt: DateTime.now().minus({ days: 1 }).toJSDate(),
-					slots: {
-						create: {
-							capacity: 1,
-							remainingCapacity: 1,
-						},
-					},
+			const { event, ctx, eventService } = await makeDependencies({
+				capacity: 1,
+			});
+
+			// Close the event sign ups by changing  signUpsEndAt to be in the past
+			await eventService.update(ctx, {
+				event: {
+					id: event.id,
+					signUpsEndAt: DateTime.now().minus({ hours: 1 }).toJSDate(),
 				},
 			});
 
@@ -362,10 +339,9 @@ describe("EventService", () => {
 			 *
 			 * Call the canSignUpForEvent function with the user and the event
 			 */
-			const actual = await eventService.getSignUpAvailability(
-				user.id,
-				event.id,
-			);
+			const actual = await eventService.getSignUpAvailability(ctx, {
+				eventId: event.id,
+			});
 
 			/**
 			 * Assert

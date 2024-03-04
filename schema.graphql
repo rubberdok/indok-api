@@ -542,6 +542,11 @@ type Mutation {
   removeMember(data: RemoveMemberInput!): RemoveMemberResponse!
 
   """
+  Remove an active sign up for an event, requires that the user is logged in and a member of the organization that is hosting the event
+  """
+  removeSignUp(data: RemoveSignUpInput!): RemoveSignUpResponse!
+
+  """
   Retract an active sign up for an event, requires that the user is logged in
   """
   retractSignUp(data: RetractSignUpInput!): RetractSignUpResponse!
@@ -929,6 +934,16 @@ input RemoveMemberInput {
 
 type RemoveMemberResponse {
   member: Member!
+}
+
+input RemoveSignUpInput {
+  """The id of the sign up to remove"""
+  signUpId: ID!
+}
+
+type RemoveSignUpResponse {
+  """The sign up that was removed"""
+  signUp: SignUp!
 }
 
 input RetractSignUpInput {
