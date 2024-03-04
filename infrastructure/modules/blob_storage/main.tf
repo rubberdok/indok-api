@@ -5,6 +5,15 @@ resource "azurerm_storage_account" "main" {
   location                 = var.resource_group.location
   account_tier             = var.account_tier
   account_replication_type = var.account_replication_type
+  blob_properties {
+    cors_rule {
+      allowed_headers    = ["x-ms-meta-data*", "x-ms-meta-target*", "x-ms-meta-abc"]
+      allowed_methods    = ["GET", "DELETE", "PUT", "HEAD", "MERGE", "POST", "OPTIONS", "PUT", "PATCH"]
+      allowed_origins    = ["http://localhost:3000", "localhost:3000"]
+      exposed_headers    = ["x-ms-meta-*"]
+      max_age_in_seconds = 3600
+    }
+  }
 
   identity {
     type         = "UserAssigned"
