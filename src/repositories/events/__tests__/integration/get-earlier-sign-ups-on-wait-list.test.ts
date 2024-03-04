@@ -100,6 +100,7 @@ describe("Events repository", () => {
 				capacity: 0,
 				contactEmail: "",
 				description: "",
+				shortDescription: "",
 				endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
 				startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 				location: "",

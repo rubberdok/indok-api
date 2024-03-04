@@ -171,6 +171,7 @@ describe("EventRepository", () => {
 					name: faker.string.uuid(),
 					contactEmail: faker.string.uuid(),
 					description: faker.string.uuid(),
+					shortDescription: faker.string.uuid(),
 					endAt: new Date(),
 					location: faker.string.uuid(),
 					signUpsRetractable: true,

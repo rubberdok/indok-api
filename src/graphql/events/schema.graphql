@@ -55,6 +55,10 @@ type Event {
   """
   description: String!
   """
+  A short description of the event, intended to be a short summary/teaser of the event.
+  """
+  shortDescription: String!
+  """
   The start time of the event.
   """
   startAt: DateTime!
@@ -119,6 +123,7 @@ type SignUps {
   confirmed: SignUpsWithTotalCount!
   waitList: SignUpsWithTotalCount!
   retracted: SignUpsWithTotalCount!
+  removed: SignUpsWithTotalCount!
 }
 
 type EventTicketInformation {
@@ -259,6 +264,18 @@ input EventData {
   """
   description: String
   """
+  A short description of the event, intended to be a short summary/teaser of the event.
+  """
+  shortDescription: String
+  """
+  Location of the event
+  """
+  location: String
+  """
+  Contact email for the event organizer
+  """
+  contactEmail: String
+  """
   The start time of the event. Events must have a start time.
   """
   startAt: DateTime!
@@ -348,6 +365,30 @@ input EventsInput {
   i.e. events where endAt is in the future.
   """
   futureEventsOnly: Boolean
+  """
+  Only return events that are hosted by the organizations with the given IDs
+  """
+  organizations: [EventsOrganizationInput!]
+  """
+  Only return events that belong to the given categories
+  """
+  categories: [EventsCategoryInput!]
+  """
+  Only return events that start after the given time
+  """
+  startAfter: DateTime
+  """
+  Only return events that end before the given time
+  """
+  endBefore: Date
+}
+
+input EventsOrganizationInput {
+  id: ID!
+}
+
+input EventsCategoryInput {
+  id: ID!
 }
 
 input SignUpInput {

@@ -176,6 +176,8 @@ input CreateSlotInput {
   gradeYears: [Int!]
 }
 
+scalar Date
+
 scalar DateTime
 
 input DeleteEventCategoryInput {
@@ -230,6 +232,11 @@ type Event {
   organization: Organization
 
   """
+  A short description of the event, intended to be a short summary/teaser of the event.
+  """
+  shortDescription: String!
+
+  """
   The current user's sign up for the event, if the user is signed up for the event.
   """
   signUp: SignUp
@@ -278,6 +285,9 @@ input EventData {
   """categories is a list of cateogry IDs to which the event belongs"""
   categories: [EventCategoryInput!]
 
+  """Contact email for the event organizer"""
+  contactEmail: String
+
   """
   The description of the event, defaults to "". We support markdown on the client, so this can be markdown.
   This will be displayed to users.
@@ -290,6 +300,9 @@ input EventData {
   """
   endAt: DateTime
 
+  """Location of the event"""
+  location: String
+
   """The name of the event, this will be displayed to users"""
   name: String!
 
@@ -298,6 +311,11 @@ input EventData {
   creating the event must be a member of the organization.
   """
   organizationId: ID!
+
+  """
+  A short description of the event, intended to be a short summary/teaser of the event.
+  """
+  shortDescription: String
 
   """If the event is a sign up event, this will be the sign up details."""
   signUpDetails: SignUpData
@@ -386,12 +404,34 @@ type EventUser {
   ticketStatus: EventTicketStatus
 }
 
+input EventsCategoryInput {
+  id: ID!
+}
+
 input EventsInput {
+  """Only return events that belong to the given categories"""
+  categories: [EventsCategoryInput!]
+
+  """Only return events that end before the given time"""
+  endBefore: Date
+
   """
   If true, only return events that are currently happening, or will happen in the future
   i.e. events where endAt is in the future.
   """
   futureEventsOnly: Boolean
+
+  """
+  Only return events that are hosted by the organizations with the given IDs
+  """
+  organizations: [EventsOrganizationInput!]
+
+  """Only return events that start after the given time"""
+  startAfter: DateTime
+}
+
+input EventsOrganizationInput {
+  id: ID!
 }
 
 type EventsResponse {
@@ -1076,6 +1116,7 @@ type SignUpResponse {
 
 type SignUps {
   confirmed: SignUpsWithTotalCount!
+  removed: SignUpsWithTotalCount!
   retracted: SignUpsWithTotalCount!
   waitList: SignUpsWithTotalCount!
 }

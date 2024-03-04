@@ -48,5 +48,49 @@ describe("EventService", () => {
 				endAtGte: new Date(2021, 0, 1),
 			});
 		});
+
+		it("filters on organizations", async () => {
+			/**
+			 * Act
+			 */
+			const organizationId = faker.string.uuid();
+			await eventService.findMany({ organizations: [{ id: organizationId }] });
+			expect(eventRepository.findMany).toHaveBeenCalledWith({
+				organizations: [{ id: organizationId }],
+			});
+		});
+
+		it("filters on categories", async () => {
+			/**
+			 * Act
+			 */
+			const categoryId = faker.string.uuid();
+			await eventService.findMany({ categories: [{ id: categoryId }] });
+			expect(eventRepository.findMany).toHaveBeenCalledWith({
+				categories: [{ id: categoryId }],
+			});
+		});
+
+		it("filters on startAfter", async () => {
+			/**
+			 * Act
+			 */
+			const startAfter = new Date();
+			await eventService.findMany({ startAfter });
+			expect(eventRepository.findMany).toHaveBeenCalledWith({
+				startAfter,
+			});
+		});
+
+		it("filters on endBefore", async () => {
+			/**
+			 * Act
+			 */
+			const endBefore = new Date();
+			await eventService.findMany({ endBefore });
+			expect(eventRepository.findMany).toHaveBeenCalledWith({
+				endBefore,
+			});
+		});
 	});
 });

@@ -99,4 +99,7 @@ export const Event: EventResolvers = {
 		}
 		return getSignUpResult.data.signUp;
 	},
+	shortDescription: ({ shortDescription }) => {
+		return shortDescription;
+	},
 };

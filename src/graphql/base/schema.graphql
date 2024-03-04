@@ -3,6 +3,8 @@ type Mutation
 
 # https://github.com/Urigo/graphql-scalars/blob/master/src/scalars/iso-date/DateTime.ts
 scalar DateTime
+# https://github.com/Urigo/graphql-scalars/blob/master/src/scalars/iso-date/Date.ts
+scalar Date
 
 type ServerTimeResponse {
   serverTime: DateTime!

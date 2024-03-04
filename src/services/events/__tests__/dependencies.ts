@@ -48,6 +48,7 @@ function makeBasicEvent(data?: Partial<BasicEvent>): BasicEvent {
 		id: faker.string.uuid(),
 		name: faker.commerce.productName(),
 		description: faker.lorem.paragraph(),
+		shortDescription: faker.company.catchPhrase(),
 		startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 		endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
 		location: faker.location.streetAddress(),

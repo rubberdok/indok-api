@@ -298,6 +298,10 @@ interface IEventService {
 	findMany(data?: {
 		onlyFutureEvents?: boolean | null;
 		organizationId?: string | null;
+		organizations?: { id: string }[] | null;
+		categories?: { id: string }[] | null;
+		startAfter?: Date | null;
+		endBefore?: Date | null;
 	}): Promise<EventType[]>;
 	signUp(
 		ctx: Context,

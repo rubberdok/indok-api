@@ -40,6 +40,7 @@ type EventFields = {
 	name: string;
 	organizationId: string | null;
 	description: string;
+	shortDescription: string;
 	location: string;
 	contactEmail: string;
 	startAt: Date;
@@ -208,6 +209,7 @@ function newBasicEvent(basicEvent: NewBasicEventData): NewBasicEventReturn {
 			version: z.number().int().min(0).optional(),
 			name: z.string().min(1).max(200),
 			description: z.string().max(10_000).default(""),
+			shortDescription: z.string().max(200).default(""),
 			startAt: z.date().min(new Date()),
 			endAt: z.date().min(new Date()),
 			contactEmail: z
