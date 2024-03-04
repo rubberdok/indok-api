@@ -21,6 +21,12 @@ export const SignUps: SignUpsResolvers = {
 			participationStatus: "ON_WAITLIST",
 		});
 	},
+	removed: ({ id }, _args, ctx) => {
+		return findManySignUpsByStatus(ctx, {
+			eventId: id,
+			participationStatus: "REMOVED",
+		});
+	},
 };
 
 async function findManySignUpsByStatus(

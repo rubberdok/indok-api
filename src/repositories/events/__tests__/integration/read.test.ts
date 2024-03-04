@@ -1,5 +1,6 @@
 import assert from "assert";
 import { faker } from "@faker-js/faker";
+import { DateTime } from "luxon";
 import type { CategoryType } from "~/domain/events/category.js";
 import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
@@ -195,6 +196,158 @@ describe("EventRepository", () => {
 				expect.objectContaining({ id: eventIds[2] }),
 			);
 		});
+
+		it("returns only events for the given organizations", async () => {
+			/**
+			 * Arrange
+			 *
+			 * 1. create several organizations with events
+			 */
+			const organization1 = await makeOrganization();
+			const event1 = await makeEvent({ organizationId: organization1.id });
+			const event2 = await makeEvent({ organizationId: organization1.id });
+
+			const organization2 = await makeOrganization();
+			const event3 = await makeEvent({ organizationId: organization2.id });
+			const event4 = await makeEvent({ organizationId: organization2.id });
+
+			const organization3 = await makeOrganization();
+			const event5 = await makeEvent({ organizationId: organization3.id });
+
+			await makeOrganization();
+
+			/**
+			 * Act
+			 *
+			 * 1. Get the event
+			 */
+			const events = await eventRepository.findMany({
+				organizations: [{ id: organization1.id }, { id: organization2.id }],
+			});
+
+			expect(events).toContainEqual(event1);
+			expect(events).toContainEqual(event2);
+			expect(events).toContainEqual(event3);
+			expect(events).toContainEqual(event4);
+			expect(events).not.toContainEqual(event5);
+		});
+
+		it("returns only events for the given categories", async () => {
+			/**
+			 * Arrange
+			 *
+			 * 1. create several organizations with events
+			 */
+			const organization1 = await makeOrganization();
+			const category1 = await makeCategory();
+			const category2 = await makeCategory();
+			const category3 = await makeCategory();
+			const event1 = await makeEvent({
+				organizationId: organization1.id,
+				categories: [
+					{ id: category1.id },
+					{ id: category2.id },
+					{ id: category3.id },
+				],
+			});
+			const event2 = await makeEvent({
+				organizationId: organization1.id,
+				categories: [{ id: category1.id }, { id: category2.id }],
+			});
+			const event3 = await makeEvent({
+				organizationId: organization1.id,
+				categories: [{ id: category3.id }],
+			});
+
+			/**
+			 * Act
+			 *
+			 * 1. Get the event
+			 */
+			const events = await eventRepository.findMany({
+				categories: [{ id: category1.id }, { id: category2.id }],
+			});
+
+			expect(events).toContainEqual(event1);
+			expect(events).toContainEqual(event2);
+			expect(events).not.toContainEqual(event3);
+		});
+
+		it("returns only events between startAfter/endBefore", async () => {
+			/**
+			 * Arrange
+			 *
+			 * 1. create several organizations with events
+			 */
+			const organization1 = await makeOrganization();
+			const event1 = await makeEvent({
+				organizationId: organization1.id,
+				startAt: DateTime.fromObject({ day: 1, hour: 18 }).toJSDate(),
+				endAt: DateTime.fromObject({ day: 1, hour: 20 }).toJSDate(),
+			});
+			const event2 = await makeEvent({
+				organizationId: organization1.id,
+				startAt: DateTime.fromObject({ day: 1, hour: 10 }).toJSDate(),
+				endAt: DateTime.fromObject({ day: 1, hour: 12 }).toJSDate(),
+			});
+			const event3 = await makeEvent({
+				organizationId: organization1.id,
+				startAt: DateTime.fromObject({ day: 2, hour: 1 }).toJSDate(),
+				endAt: DateTime.fromObject({ day: 2, hour: 3 }).toJSDate(),
+			});
+
+			/**
+			 * Act
+			 *
+			 * 1. Get the event
+			 */
+			const events = await eventRepository.findMany({
+				startAfter: DateTime.fromObject({ day: 1 }).toJSDate(),
+				endBefore: DateTime.fromObject({ day: 1 }).toJSDate(),
+			});
+
+			expect(events).toContainEqual(event1);
+			expect(events).toContainEqual(event2);
+			expect(events).not.toContainEqual(event3);
+		});
+
+		it("returns events matching filters", async () => {
+			/**
+			 * Arrange
+			 *
+			 * 1. create several organizations with events
+			 */
+			const organization1 = await makeOrganization();
+			const category1 = await makeCategory();
+			const category2 = await makeCategory();
+			const event1 = await makeEvent({
+				organizationId: organization1.id,
+				startAt: DateTime.fromObject({ day: 1, hour: 18 }).toJSDate(),
+				endAt: DateTime.fromObject({ day: 1, hour: 20 }).toJSDate(),
+				categories: [{ id: category1.id }],
+			});
+			const event2 = await makeEvent({
+				organizationId: organization1.id,
+				startAt: DateTime.fromObject({ day: 2, hour: 18 }).toJSDate(),
+				endAt: DateTime.fromObject({ day: 2, hour: 20 }).toJSDate(),
+				categories: [{ id: category2.id }],
+			});
+
+			/**
+			 * Act
+			 *
+			 * 1. Get the event
+			 */
+			const events = await eventRepository.findMany({
+				startAfter: DateTime.fromObject({ day: 1, hour: 18 }).toJSDate(),
+				endBefore: DateTime.fromObject({ day: 1, hour: 20 }).toJSDate(),
+				organizations: [{ id: organization1.id }],
+				categories: [{ id: category1.id }],
+			});
+
+			expect(events).toContainEqual(event1);
+			expect(events).not.toContainEqual(event2);
+		});
 	});
 
 	describe("#getWithSlots", () => {
@@ -222,6 +375,7 @@ describe("EventRepository", () => {
 					type: "SIGN_UPS",
 					location: "",
 					description: "",
+					shortDescription: "",
 					capacity: 5,
 					remainingCapacity: 5,
 					signUpsStartAt: new Date(),
@@ -307,4 +461,48 @@ describe("EventRepository", () => {
 			}
 		});
 	});
+
+	async function makeEvent(params: {
+		organizationId: string;
+		startAt?: Date;
+		endAt?: Date;
+		categories?: { id: string }[];
+	}) {
+		const createEventResult = await eventRepository.create(makeMockContext(), {
+			event: {
+				type: "BASIC",
+				contactEmail: faker.internet.email(),
+				description: faker.lorem.paragraph(),
+				id: faker.string.uuid(),
+				location: faker.location.streetAddress(),
+				name: faker.word.adjective(),
+				organizationId: params.organizationId,
+				shortDescription: faker.lorem.sentence(),
+				signUpsEnabled: false,
+				signUpsRequireUserProvidedInformation: false,
+				signUpsRetractable: true,
+				startAt: params.startAt ?? DateTime.now().plus({ days: 1 }).toJSDate(),
+				endAt: params.endAt ?? DateTime.now().plus({ days: 2 }).toJSDate(),
+				version: 0,
+			},
+			categories: params.categories,
+		});
+		if (!createEventResult.ok) throw createEventResult.error;
+		return createEventResult.data.event;
+	}
+
+	async function makeOrganization() {
+		const createOrganizationResult = await prisma.organization.create({
+			data: {
+				name: faker.string.uuid(),
+			},
+		});
+		return createOrganizationResult;
+	}
+
+	async function makeCategory() {
+		return await eventRepository.createCategory({
+			name: faker.string.sample(20),
+		});
+	}
 });

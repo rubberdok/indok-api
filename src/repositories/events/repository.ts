@@ -8,6 +8,7 @@ import {
 } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 import { pick } from "lodash-es";
+import { DateTime } from "luxon";
 import {
 	InternalServerError,
 	InvalidArgumentError,
@@ -64,9 +65,10 @@ export class EventRepository {
 			};
 		}
 
-		const createFields = pick(eventData, [
+		const allowList = pick(eventData, [
 			"name",
 			"description",
+			"shortDescription",
 			"contactEmail",
 			"endAt",
 			"location",
@@ -93,7 +95,7 @@ export class EventRepository {
 					categories: true,
 				},
 				data: {
-					...createFields,
+					...allowList,
 					categories: {
 						connect: categoriesData?.map((category) => ({
 							id: category.id,
@@ -209,10 +211,11 @@ export class EventRepository {
 					};
 				}
 
-				const updateFields = pick(data, [
+				const allowList = pick(data, [
 					"capacity",
 					"name",
 					"description",
+					"shortDescription",
 					"location",
 					"contactEmail",
 					"startAt",
@@ -234,7 +237,7 @@ export class EventRepository {
 						version: event.version,
 					},
 					data: {
-						...updateFields,
+						...allowList,
 						categories: {
 							set: newCategories?.map((category) => ({
 								id: category.id,
@@ -455,17 +458,59 @@ export class EventRepository {
 	 * @param data.endAtGte - Only return events that end after this date
 	 * @returns A list of events
 	 */
-	async findMany(data?: { endAtGte?: Date; organizationId?: string }): Promise<
-		EventType[]
-	> {
+	async findMany(data?: {
+		endAtGte?: Date;
+		organizationId?: string;
+		organizations?: { id: string }[];
+		categories?: { id: string }[];
+		startAfter?: Date;
+		endBefore?: Date;
+	}): Promise<EventType[]> {
 		if (data) {
-			const { endAtGte, organizationId } = data;
+			const {
+				endAtGte,
+				organizationId,
+				organizations,
+				categories,
+				startAfter,
+				endBefore,
+			} = data;
+			let organizationsIdIn: Prisma.OrganizationWhereInput | undefined;
+			if (organizations && organizations.length > 0) {
+				organizationsIdIn = {
+					id: {
+						in: organizations.map((org) => org.id),
+					},
+				};
+			}
+
+			let categoriesIdIn: Prisma.EventCategoryListRelationFilter | undefined;
+			if (categories && categories.length > 0) {
+				categoriesIdIn = {
+					some: {
+						id: {
+							in: categories.map((category) => category.id),
+						},
+					},
+				};
+			}
+
 			const events = await this.db.event.findMany({
 				where: {
 					organizationId,
 					endAt: {
 						gte: endAtGte,
+						lte:
+							endBefore &&
+							DateTime.fromJSDate(endBefore).endOf("day").toJSDate(),
 					},
+					startAt: {
+						gte:
+							startAfter &&
+							DateTime.fromJSDate(startAfter).startOf("day").toJSDate(),
+					},
+					organization: organizationsIdIn,
+					categories: categoriesIdIn,
 				},
 			});
 

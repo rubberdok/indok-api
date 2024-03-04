@@ -83,9 +83,14 @@ interface EventRepository {
 		eventId: string,
 		gradeYear?: number,
 	): Promise<EventSlot | null>;
-	findMany(data?: { endAtGte?: Date | null; organizationId?: string }): Promise<
-		EventType[]
-	>;
+	findMany(data?: {
+		endAtGte?: Date | null;
+		organizationId?: string;
+		organizations?: { id: string }[];
+		categories?: { id: string }[];
+		startAfter?: Date;
+		endBefore?: Date;
+	}): Promise<EventType[]>;
 	findManySignUps(data: {
 		eventId?: string;
 		status?: ParticipationStatus;
@@ -187,6 +192,7 @@ interface ProductService {
 type BaseCreateEventFields = {
 	name: string;
 	description?: string | null;
+	shortDescription?: string | null;
 	startAt: Date;
 	endAt?: Date | null;
 	contactEmail?: string | null;
@@ -772,6 +778,10 @@ class EventService {
 	async findMany(data?: {
 		onlyFutureEvents?: boolean;
 		organizationId?: string | null;
+		organizations?: { id: string }[] | null;
+		categories?: { id: string }[] | null;
+		startAfter?: Date | null;
+		endBefore?: Date | null;
 	}): Promise<EventType[]> {
 		if (!data) {
 			return await this.eventRepository.findMany();
@@ -787,7 +797,16 @@ class EventService {
 			organizationId = data.organizationId;
 		}
 
-		return await this.eventRepository.findMany({ endAtGte, organizationId });
+		const { organizations, categories, startAfter, endBefore } = data;
+
+		return await this.eventRepository.findMany({
+			endAtGte,
+			organizationId,
+			organizations: organizations ?? undefined,
+			categories: categories ?? undefined,
+			startAfter: startAfter ?? undefined,
+			endBefore: endBefore ?? undefined,
+		});
 	}
 
 	/**

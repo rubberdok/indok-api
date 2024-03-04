@@ -27,6 +27,7 @@ describe("EventsRepository", () => {
 					const newEvent = { ...event };
 					newEvent.name = "New Name";
 					newEvent.description = "New Description";
+					newEvent.shortDescription = "New Short Description";
 					return Promise.resolve({
 						ok: true,
 						data: {
@@ -40,6 +41,7 @@ describe("EventsRepository", () => {
 						event: expect.objectContaining({
 							name: "New Name",
 							description: "New Description",
+							shortDescription: "New Short Description",
 						}),
 					}),
 				},
@@ -80,6 +82,7 @@ describe("EventsRepository", () => {
 					type: "BASIC",
 					name: faker.company.name(),
 					description: faker.lorem.paragraph(),
+					shortDescription: faker.lorem.sentence(),
 					startAt,
 					endAt: faker.date.future({ refDate: startAt }),
 					organizationId: organization.id,

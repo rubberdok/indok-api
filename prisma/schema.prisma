@@ -66,20 +66,21 @@ enum EventType {
 
 // Events
 model Event {
-  id             String        @id @default(uuid()) @db.Uuid
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  name           String
-  description    String        @default("")
-  startAt        DateTime
-  endAt          DateTime
-  location       String        @default("")
-  type           EventType     @default(BASIC)
+  id               String        @id @default(uuid()) @db.Uuid
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  name             String
+  description      String        @default("")
+  shortDescription String        @default("")
+  startAt          DateTime
+  endAt            DateTime
+  location         String        @default("")
+  type             EventType     @default(BASIC)
   // If an organization is deleted, we keep the event and set the organizationId to null
   // as it could be related to payments and other stuff.
-  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  organizationId String?       @db.Uuid
-  contactEmail   String        @default("")
+  organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  organizationId   String?       @db.Uuid
+  contactEmail     String        @default("")
 
   signUpsEnabled                        Boolean   @default(false)
   signUpsStartAt                        DateTime?
