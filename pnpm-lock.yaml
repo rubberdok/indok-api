@@ -10,7 +10,7 @@ dependencies:
     version: 4.10.0(graphql@16.8.1)
   '@as-integrations/fastify':
     specifier: ^2.1.1
-    version: 2.1.1(@apollo/server@4.10.0)(fastify@4.26.1)
+    version: 2.1.1(@apollo/server@4.10.0)(fastify@4.26.2)
   '@bull-board/api':
     specifier: ^5.14.2
     version: 5.14.2(@bull-board/ui@5.14.2)
@@ -75,8 +75,8 @@ dependencies:
     specifier: ^16.4.5
     version: 16.4.5
   fastify:
-    specifier: ^4.26.1
-    version: 4.26.1
+    specifier: ^4.26.2
+    version: 4.26.2
   fastify-plugin:
     specifier: ^4.5.1
     version: 4.5.1
@@ -442,7 +442,7 @@ packages:
       - encoding
     dev: true
 
-  /@as-integrations/fastify@2.1.1(@apollo/server@4.10.0)(fastify@4.26.1):
+  /@as-integrations/fastify@2.1.1(@apollo/server@4.10.0)(fastify@4.26.2):
     resolution: {integrity: sha512-iupYSQyRrlBAdsDcCYzuKjJlJAKiQpRDLd33A6yAF3Ip/rGrSDDDrxfJWp6FqyVlivSL+MQkGIphmUI/ckfZkg==}
     engines: {node: '>=16'}
     peerDependencies:
@@ -450,7 +450,7 @@ packages:
       fastify: ^4.4.0
     dependencies:
       '@apollo/server': 4.10.0(graphql@16.8.1)
-      fastify: 4.26.1
+      fastify: 4.26.2
       fastify-plugin: 4.5.1
     dev: false
 
@@ -4706,8 +4706,8 @@ packages:
     resolution: {integrity: sha512-stRHYGeuqpEZTL1Ef0Ovr2ltazUT9g844X5z/zEBFLG8RYlpDiOCIG+ATvYEp+/zmc7sN29mcIMp8gvYplYPIQ==}
     dev: false
 
-  /fastify@4.26.1:
-    resolution: {integrity: sha512-tznA/G55dsxzM5XChBfcvVSloG2ejeeotfPPJSFaWmHyCDVGMpvf3nRNbsCb/JTBF9RmQFBfuujWt3Nphjesng==}
+  /fastify@4.26.2:
+    resolution: {integrity: sha512-90pjTuPGrfVKtdpLeLzND5nyC4woXZN5VadiNQCicj/iJU4viNHKhsAnb7jmv1vu2IzkLXyBiCzdWuzeXgQ5Ug==}
     dependencies:
       '@fastify/ajv-compiler': 3.5.0
       '@fastify/error': 3.4.1
