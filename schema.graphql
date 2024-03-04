@@ -285,6 +285,9 @@ input EventData {
   """categories is a list of cateogry IDs to which the event belongs"""
   categories: [EventCategoryInput!]
 
+  """Contact email for the event organizer"""
+  contactEmail: String
+
   """
   The description of the event, defaults to "". We support markdown on the client, so this can be markdown.
   This will be displayed to users.
@@ -296,6 +299,9 @@ input EventData {
   This will be displayed to users.
   """
   endAt: DateTime
+
+  """Location of the event"""
+  location: String
 
   """The name of the event, this will be displayed to users"""
   name: String!
