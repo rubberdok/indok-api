@@ -69,6 +69,16 @@ resource "azurerm_container_app" "server" {
       }
 
       env {
+        name  = "AZURE_STORAGE_CONTAINER_NAME"
+        value = module.blob_storage.storage_container_name
+      }
+
+      env {
+        name  = "AZURE_STORAGE_ACCOUNT_NAME"
+        value = module.blob_storage.storage_account_name
+      }
+
+      env {
         name        = "REDIS_CONNECTION_STRING"
         secret_name = "redis-connection-string"
       }
@@ -139,6 +149,16 @@ resource "azurerm_container_app" "server" {
           secret_name = try(env.value.secret_name, null)
           value       = try(env.value.value, null)
         }
+      }
+
+      env {
+        name  = "AZURE_STORAGE_CONTAINER_NAME"
+        value = module.blob_storage.storage_container_name
+      }
+
+      env {
+        name  = "AZURE_STORAGE_ACCOUNT_NAME"
+        value = module.blob_storage.storage_account_name
       }
 
       env {
@@ -251,6 +271,17 @@ resource "azurerm_container_app" "worker" {
           secret_name = try(env.value.secret_name, null)
           value       = try(env.value.value, null)
         }
+      }
+
+
+      env {
+        name  = "AZURE_STORAGE_CONTAINER_NAME"
+        value = module.blob_storage.storage_container_name
+      }
+
+      env {
+        name  = "AZURE_STORAGE_ACCOUNT_NAME"
+        value = module.blob_storage.storage_account_name
       }
 
       env {
