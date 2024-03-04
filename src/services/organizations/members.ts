@@ -1,13 +1,13 @@
 import type { Member } from "@prisma/client";
-import type { Dependencies } from "./service.js";
-import type { ResultAsync } from "~/lib/result.js";
 import {
 	InvalidArgumentError,
 	PermissionDeniedError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
-import type { Context } from "~/lib/context.js";
 import { Role } from "~/domain/organizations.js";
+import type { Context } from "~/lib/context.js";
+import type { ResultAsync } from "~/lib/result.js";
+import type { Dependencies } from "./service.js";
 
 interface PermissionService {
 	hasRole(

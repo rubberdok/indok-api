@@ -1,7 +1,7 @@
-import { Role } from "~/domain/organizations.js";
-import type { Dependencies } from "./service.js";
-import type { Context } from "~/lib/context.js";
 import type { FeaturePermission } from "@prisma/client";
+import { Role } from "~/domain/organizations.js";
+import type { Context } from "~/lib/context.js";
+import type { Dependencies } from "./service.js";
 
 function buildPermissions({
 	userService,

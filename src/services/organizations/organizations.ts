@@ -1,13 +1,13 @@
-import { z } from "zod";
-import type { Dependencies } from "./service.js";
 import { FeaturePermission, type Organization } from "@prisma/client";
-import { Role } from "~/domain/organizations.js";
+import { z } from "zod";
 import {
 	InvalidArgumentError,
 	PermissionDeniedError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
+import { Role } from "~/domain/organizations.js";
 import type { Context } from "~/lib/context.js";
+import type { Dependencies } from "./service.js";
 
 interface PermissionService {
 	hasRole(

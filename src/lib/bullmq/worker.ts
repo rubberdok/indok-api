@@ -29,6 +29,7 @@ import {
 	type EmailQueueType,
 	getEmailHandler,
 } from "~/services/mail/worker.js";
+import { OrganizationService } from "~/services/organizations/index.js";
 import {
 	ProductService,
 	getPaymentProcessingHandler,
@@ -42,7 +43,6 @@ import { envToLogger } from "../fastify/logging.js";
 import { postmark } from "../postmark.js";
 import prisma from "../prisma.js";
 import { Queue } from "./queue.js";
-import { OrganizationService } from "~/services/organizations/index.js";
 
 export class Worker<
 	// biome-ignore lint/suspicious/noExplicitAny: DataType can be literally anything

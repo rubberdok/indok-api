@@ -1,14 +1,14 @@
 import { faker } from "@faker-js/faker";
 import { FeaturePermission, type Prisma } from "@prisma/client";
+import { mock } from "jest-mock-extended";
 import { Role } from "~/domain/organizations.js";
 import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
 import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
 import { UserRepository } from "~/repositories/users/index.js";
-import { OrganizationService } from "../../service.js";
 import { UserService } from "~/services/users/service.js";
-import { mock } from "jest-mock-extended";
+import { OrganizationService } from "../../service.js";
 
 describe("OrganizationsService", () => {
 	let organizationService: ReturnType<typeof OrganizationService>;

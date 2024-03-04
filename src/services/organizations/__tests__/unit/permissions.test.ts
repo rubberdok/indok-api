@@ -7,8 +7,8 @@ import { makeMockContext } from "~/lib/context.js";
 import {
 	type MemberRepository,
 	type OrganizationRepository,
-	type UserService,
 	OrganizationService,
+	type UserService,
 } from "../../service.js";
 
 describe("PermissionService", () => {

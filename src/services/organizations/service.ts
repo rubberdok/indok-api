@@ -2,10 +2,10 @@ import type { FeaturePermission, Member, Organization } from "@prisma/client";
 import type { Role } from "~/domain/organizations.js";
 import type { StudyProgram, User } from "~/domain/users.js";
 import type { Context } from "~/lib/context.js";
-import { buildMembers } from "./members.js";
-import { buildPermissions } from "./permissions.js";
-import { buildOrganizations } from "./organizations.js";
 import type { IOrganizationService } from "~/lib/server.js";
+import { buildMembers } from "./members.js";
+import { buildOrganizations } from "./organizations.js";
+import { buildPermissions } from "./permissions.js";
 
 interface OrganizationRepository {
 	create(data: {

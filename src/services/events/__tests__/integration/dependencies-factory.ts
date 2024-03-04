@@ -1,12 +1,12 @@
+import assert from "assert";
 import { faker } from "@faker-js/faker";
 import type { Organization } from "@prisma/client";
-import assert from "assert";
 import { mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
 import type { ServerClient } from "postmark";
 import { env } from "~/config.js";
 import type { User } from "~/domain/users.js";
-import { makeMockContext, type Context } from "~/lib/context.js";
+import { type Context, makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import { EventRepository } from "~/repositories/events/index.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
