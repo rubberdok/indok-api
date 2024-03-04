@@ -8,24 +8,24 @@ import {
 	type MemberRepository,
 	type OrganizationRepository,
 	OrganizationService,
-	type PermissionService,
+	type UserService,
 } from "../../service.js";
 
 describe("OrganizationService", () => {
-	let organizationService: OrganizationService;
-	let permissionService: DeepMockProxy<PermissionService>;
+	let organizationService: ReturnType<typeof OrganizationService>;
+	let userService: DeepMockProxy<UserService>;
 	let organizationRepository: DeepMockProxy<OrganizationRepository>;
 	let memberRepository: DeepMockProxy<MemberRepository>;
 
 	beforeAll(() => {
-		permissionService = mockDeep<PermissionService>();
+		userService = mockDeep<UserService>();
 		organizationRepository = mockDeep<OrganizationRepository>();
 		memberRepository = mockDeep<MemberRepository>();
-		organizationService = new OrganizationService(
+		organizationService = OrganizationService({
 			organizationRepository,
 			memberRepository,
-			permissionService,
-		);
+			userService,
+		});
 	});
 	describe("create", () => {
 		describe("as a super user", () => {
@@ -40,7 +40,7 @@ describe("OrganizationService", () => {
 				/**
 				 * Act
 				 */
-				const actual = organizationService.create(
+				const actual = organizationService.organizations.create(
 					makeMockContext({ isSuperUser: true }),
 					{
 						name: faker.company.name(),
@@ -79,12 +79,12 @@ describe("OrganizationService", () => {
 				/**
 				 * Mock hasRole to return true
 				 */
-				permissionService.hasRole.mockResolvedValueOnce(true);
+				memberRepository.hasRole.mockResolvedValueOnce(true);
 				const callerUserId = faker.string.uuid();
 				/**
 				 * Act
 				 */
-				const actual = organizationService.create(
+				const actual = organizationService.organizations.create(
 					makeMockContext({ id: callerUserId }),
 					{
 						name: faker.company.name(),
@@ -114,7 +114,7 @@ describe("OrganizationService", () => {
 			 * Act
 			 */
 			try {
-				await organizationService.create(makeMockContext(null), {
+				await organizationService.organizations.create(makeMockContext(null), {
 					name: faker.company.name(),
 					description: faker.lorem.paragraph(),
 					featurePermissions: [
@@ -145,7 +145,7 @@ describe("OrganizationService", () => {
 				/**
 				 * Act
 				 */
-				const actual = organizationService.update(
+				const actual = organizationService.organizations.update(
 					makeMockContext({ isSuperUser: true }),
 					faker.string.uuid(),
 					{
@@ -187,12 +187,12 @@ describe("OrganizationService", () => {
 				/**
 				 * Mock hasRole to return true
 				 */
-				permissionService.hasRole.mockResolvedValueOnce(true);
+				memberRepository.hasRole.mockResolvedValueOnce(true);
 
 				/**
 				 * Act
 				 */
-				const actual = organizationService.update(
+				const actual = organizationService.organizations.update(
 					makeMockContext({ id: faker.string.uuid() }),
 					faker.string.uuid(),
 					{
@@ -225,7 +225,7 @@ describe("OrganizationService", () => {
 			 * Act
 			 */
 			try {
-				await organizationService.update(
+				await organizationService.organizations.update(
 					makeMockContext(null),
 					faker.string.uuid(),
 					{

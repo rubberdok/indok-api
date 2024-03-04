@@ -11,12 +11,11 @@ import {
 import { Role } from "~/domain/organizations.js";
 import type { User } from "~/domain/users.js";
 import { makeMockContext } from "~/lib/context.js";
-import type { UserRepository } from "~/repositories/users/index.js";
-import type { PermissionService } from "~/services/permissions/service.js";
 import {
 	type MemberRepository,
 	type OrganizationRepository,
 	OrganizationService,
+	type UserService,
 } from "../../service.js";
 import { getMockHasRoleImplementation } from "./mocks.js";
 
@@ -28,23 +27,21 @@ interface MemberRepositoryMock extends MemberRepository {
 	}): Promise<boolean>;
 }
 
-let organizationService: OrganizationService;
+let organizationService: ReturnType<typeof OrganizationService>;
 let organizationRepository: DeepMockProxy<OrganizationRepository>;
 let memberRepository: DeepMockProxy<MemberRepositoryMock>;
-let userRepository: DeepMockProxy<UserRepository>;
-let permissionService: DeepMockProxy<PermissionService>;
+let userService: DeepMockProxy<UserService>;
 
 describe("OrganizationService", () => {
 	beforeEach(() => {
 		organizationRepository = mockDeep<OrganizationRepository>();
 		memberRepository = mockDeep<MemberRepositoryMock>();
-		userRepository = mockDeep<UserRepository>();
-		permissionService = mockDeep<PermissionService>();
-		organizationService = new OrganizationService(
+		userService = mockDeep<UserService>();
+		organizationService = OrganizationService({
 			organizationRepository,
 			memberRepository,
-			permissionService,
-		);
+			userService,
+		});
 	});
 
 	describe("update", () => {
@@ -108,8 +105,8 @@ describe("OrganizationService", () => {
 					 *
 					 * Set up the mock user and hasRole implementation.
 					 */
-					userRepository.get.mockResolvedValue(state.user);
-					permissionService.hasRole.mockResolvedValue(state.role !== null);
+					userService.get.mockResolvedValue(state.user);
+					memberRepository.hasRole.mockResolvedValue(state.role !== null);
 
 					/**
 					 * Act and assert
@@ -119,7 +116,7 @@ describe("OrganizationService", () => {
 					 */
 					const { organizationId, name, description } = input;
 					try {
-						await organizationService.update(
+						await organizationService.organizations.update(
 							makeMockContext(state.user),
 							organizationId,
 							{
@@ -191,8 +188,8 @@ describe("OrganizationService", () => {
 					 *
 					 * Set up the mock user and hasRole implementation.
 					 */
-					userRepository.get.mockResolvedValue(state.user);
-					permissionService.hasRole.mockResolvedValue(state.role !== null);
+					userService.get.mockResolvedValue(state.user);
+					memberRepository.hasRole.mockResolvedValue(state.role !== null);
 
 					/**
 					 * Act
@@ -201,7 +198,7 @@ describe("OrganizationService", () => {
 					 * new organization name.
 					 */
 					const { organizationId, name, description } = input;
-					const actual = organizationService.update(
+					const actual = organizationService.organizations.update(
 						makeMockContext(state.user),
 						organizationId,
 						{ name, description },
@@ -288,7 +285,7 @@ describe("OrganizationService", () => {
 					 *
 					 * Set up the mock user and hasRole implementation.
 					 */
-					userRepository.get.mockResolvedValueOnce(state.user);
+					userService.get.mockResolvedValueOnce(state.user);
 					const { userId, ...rest } = input;
 
 					/**
@@ -298,7 +295,7 @@ describe("OrganizationService", () => {
 					 * new organization name.
 					 */
 					try {
-						await organizationService.create(
+						await organizationService.organizations.create(
 							makeMockContext({ id: userId }),
 							rest,
 						);
@@ -354,7 +351,7 @@ describe("OrganizationService", () => {
 					 *
 					 * Set up the mock user and hasRole implementation.
 					 */
-					userRepository.get.mockResolvedValueOnce(state.user);
+					userService.get.mockResolvedValueOnce(state.user);
 					const { userId, ...rest } = input;
 
 					/**
@@ -363,7 +360,7 @@ describe("OrganizationService", () => {
 					 * We call the update method with the user ID, organization ID, and the
 					 * new organization name.
 					 */
-					const actual = organizationService.create(
+					const actual = organizationService.organizations.create(
 						makeMockContext({ id: userId }),
 						rest,
 					);
@@ -395,7 +392,7 @@ describe("OrganizationService", () => {
 			 *
 			 * Set up the mock user and hasRole implementation.
 			 */
-			userRepository.get.mockResolvedValueOnce(
+			userService.get.mockResolvedValueOnce(
 				mock<User>({ id: "1", isSuperUser: false }),
 			);
 			memberRepository.hasRole.mockImplementation(
@@ -406,9 +403,9 @@ describe("OrganizationService", () => {
 				}),
 			);
 
-			const actual = organizationService.getMembers(
+			const actual = organizationService.members.findMany(
 				makeMockContext({ id: "1" }),
-				"2",
+				{ organizationId: "2" },
 			);
 
 			// Asser that we don't throw, and that the memberRepository.get method was called with the correct arguments.
@@ -421,14 +418,14 @@ describe("OrganizationService", () => {
 			 *
 			 * Set up the mock user and hasRole implementation.
 			 */
-			userRepository.get.mockResolvedValueOnce(
+			userService.get.mockResolvedValueOnce(
 				mock<User>({ id: "1", isSuperUser: false }),
 			);
-			permissionService.hasRole.mockResolvedValue(false);
+			memberRepository.hasRole.mockResolvedValue(false);
 
-			const res = await organizationService.getMembers(
+			const res = await organizationService.members.findMany(
 				makeMockContext({ id: "1", isSuperUser: false }),
-				"1",
+				{ organizationId: "1" },
 			);
 			expect(res).toEqual({
 				ok: false,
@@ -437,9 +434,9 @@ describe("OrganizationService", () => {
 		});
 
 		it("should return ok: false and unauthorized error if not logged in", async () => {
-			const result = await organizationService.getMembers(
+			const result = await organizationService.members.findMany(
 				makeMockContext(null),
-				faker.string.uuid(),
+				{ organizationId: faker.string.uuid() },
 			);
 			expect(result).toEqual({
 				ok: false,
@@ -454,7 +451,7 @@ describe("OrganizationService", () => {
 				mock<Organization>({ id: "1" }),
 			);
 
-			const actual = organizationService.get("1");
+			const actual = organizationService.organizations.get("1");
 			await expect(actual).resolves.not.toThrow();
 		});
 	});
@@ -465,7 +462,7 @@ describe("OrganizationService", () => {
 				mock<Organization>({ id: "1" }),
 			]);
 
-			const actual = organizationService.findMany();
+			const actual = organizationService.organizations.findMany();
 			await expect(actual).resolves.not.toThrow();
 		});
 
@@ -474,7 +471,7 @@ describe("OrganizationService", () => {
 				mock<Organization>({ id: "1" }),
 			]);
 
-			const actual = organizationService.findMany({
+			const actual = organizationService.organizations.findMany({
 				userId: faker.string.uuid(),
 			});
 			await expect(actual).resolves.not.toThrow();

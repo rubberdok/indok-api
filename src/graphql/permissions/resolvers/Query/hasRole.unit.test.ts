@@ -8,7 +8,7 @@ import { graphql } from "~/graphql/test-clients/unit/gql.js";
 describe("Permission queries", () => {
 	describe("hasRole", () => {
 		it("should check the role of the logged in user", async () => {
-			const { client, permissionService, createMockContext } =
+			const { client, organizationService, createMockContext } =
 				createMockApolloServer();
 
 			/**
@@ -16,7 +16,7 @@ describe("Permission queries", () => {
 			 * Mock the hasRole method of the permission service
 			 * to return true
 			 */
-			permissionService.hasRole.mockResolvedValue(true);
+			organizationService.permissions.hasRole.mockResolvedValue(true);
 			const organizationId = faker.string.uuid();
 			const role = Role.MEMBER;
 			const user = mock<User>({ id: faker.string.uuid() });
@@ -52,7 +52,7 @@ describe("Permission queries", () => {
 			expect(errors).toBeUndefined();
 			expect(data).toBeDefined();
 			expect(data?.hasRole.hasRole).toBe(true);
-			expect(permissionService.hasRole).toHaveBeenCalledWith(
+			expect(organizationService.permissions.hasRole).toHaveBeenCalledWith(
 				expect.anything(),
 				{
 					organizationId,

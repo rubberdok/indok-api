@@ -152,7 +152,6 @@ interface PermissionService {
 			featurePermission: FeaturePermission;
 		},
 	): Promise<boolean>;
-	isSuperUser(user: User | null | undefined): { isSuperUser: boolean };
 }
 
 interface ProductService {

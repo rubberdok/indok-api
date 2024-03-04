@@ -29,7 +29,6 @@ import {
 	type EmailQueueType,
 	getEmailHandler,
 } from "~/services/mail/worker.js";
-import { PermissionService } from "~/services/permissions/service.js";
 import {
 	ProductService,
 	getPaymentProcessingHandler,
@@ -43,6 +42,7 @@ import { envToLogger } from "../fastify/logging.js";
 import { postmark } from "../postmark.js";
 import prisma from "../prisma.js";
 import { Queue } from "./queue.js";
+import { OrganizationService } from "~/services/organizations/index.js";
 
 export class Worker<
 	// biome-ignore lint/suspicious/noExplicitAny: DataType can be literally anything
@@ -220,12 +220,6 @@ export async function initWorkers(): Promise<{
 		);
 		const cabinRepository = new CabinRepository(instance.database);
 
-		const permissionService = new PermissionService(
-			memberRepository,
-			userRepository,
-			organizationRepository,
-		);
-
 		if (!instance.queues?.email) {
 			throw new InternalServerError("Email queue not initialized");
 		}
@@ -248,6 +242,11 @@ export async function initWorkers(): Promise<{
 		);
 
 		const userService = new UserService(userRepository, mailService);
+		const { permissions: permissionService } = OrganizationService({
+			memberRepository,
+			organizationRepository,
+			userService,
+		});
 
 		if (!instance.queues?.[PaymentProcessingQueueName]) {
 			throw new InternalServerError("Payment processing queue not initialized");

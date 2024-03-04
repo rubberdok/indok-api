@@ -1,12 +1,12 @@
-import assert from "assert";
 import { faker } from "@faker-js/faker";
 import type { Organization } from "@prisma/client";
+import assert from "assert";
 import { mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
 import type { ServerClient } from "postmark";
 import { env } from "~/config.js";
 import type { User } from "~/domain/users.js";
-import { type Context, makeMockContext } from "~/lib/context.js";
+import { makeMockContext, type Context } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import { EventRepository } from "~/repositories/events/index.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
@@ -16,7 +16,6 @@ import { UserRepository } from "~/repositories/users/index.js";
 import { buildMailService } from "~/services/mail/index.js";
 import type { EmailQueueType } from "~/services/mail/worker.js";
 import { OrganizationService } from "~/services/organizations/service.js";
-import { PermissionService } from "~/services/permissions/service.js";
 import { MockVippsClientFactory } from "~/services/products/__tests__/mock-vipps-client.js";
 import { ProductService } from "~/services/products/service.js";
 import type { PaymentProcessingQueueType } from "~/services/products/worker.js";
@@ -30,17 +29,7 @@ export function makeServices() {
 	const memberRepository = new MemberRepository(prisma);
 	const userRepository = new UserRepository(prisma);
 	const productRepository = new ProductRepository(prisma);
-	const permissionService = new PermissionService(
-		memberRepository,
-		userRepository,
-		organizationRepository,
-	);
 
-	const organizationService = new OrganizationService(
-		organizationRepository,
-		memberRepository,
-		permissionService,
-	);
 	const mailService = buildMailService(
 		{
 			emailClient: mockDeep<ServerClient>(),
@@ -56,6 +45,13 @@ export function makeServices() {
 		},
 	);
 	const userService = new UserService(userRepository, mailService);
+
+	const organizationService = OrganizationService({
+		organizationRepository,
+		memberRepository,
+		userService,
+	});
+	const permissionService = organizationService.permissions;
 
 	const vipps = MockVippsClientFactory();
 	const productService = ProductService({
@@ -90,9 +86,12 @@ export async function makeUserWithOrganizationMembership(
 		...userData,
 	});
 
-	const organization = await organizationService.create(makeMockContext(user), {
-		name: faker.string.sample(20),
-	});
+	const organization = await organizationService.organizations.create(
+		makeMockContext(user),
+		{
+			name: faker.string.sample(20),
+		},
+	);
 	return { user, organization };
 }
 
@@ -171,4 +170,4 @@ async function mustGetSlot(ctx: Context, eventId: string) {
 	return slot;
 }
 
-export { makeDependencies, mustGetEvent, mustGetSlot, makeSignUp };
+export { makeDependencies, makeSignUp, mustGetEvent, mustGetSlot };

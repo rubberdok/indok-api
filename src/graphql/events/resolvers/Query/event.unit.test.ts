@@ -25,7 +25,7 @@ describe("Event queries", () => {
 					organizationId: faker.string.uuid(),
 				}),
 			);
-			organizationService.get.mockResolvedValue(
+			organizationService.organizations.get.mockResolvedValue(
 				mock<Organization>({ id: faker.string.uuid() }),
 			);
 
@@ -49,7 +49,9 @@ describe("Event queries", () => {
 
 			expect(errors).toBeUndefined();
 			expect(eventService.get).toHaveBeenCalledWith(expect.any(String));
-			expect(organizationService.get).toHaveBeenCalledWith(expect.any(String));
+			expect(organizationService.organizations.get).toHaveBeenCalledWith(
+				expect.any(String),
+			);
 		});
 
 		describe("canSignUp", () => {
@@ -140,7 +142,7 @@ describe("Event queries", () => {
 				version: 1,
 			});
 			eventService.get.mockResolvedValue(event);
-			organizationService.get.mockResolvedValue(
+			organizationService.organizations.get.mockResolvedValue(
 				mock<Organization>({ id: event.organizationId ?? faker.string.uuid() }),
 			);
 			eventService.getCategories.mockResolvedValue([
@@ -182,7 +184,9 @@ describe("Event queries", () => {
 
 			expect(errors).toBeUndefined();
 			expect(eventService.get).toHaveBeenCalledWith(expect.any(String));
-			expect(organizationService.get).toHaveBeenCalledWith(expect.any(String));
+			expect(organizationService.organizations.get).toHaveBeenCalledWith(
+				expect.any(String),
+			);
 			expect(data?.event.event).toEqual(
 				expect.objectContaining({
 					type: "SIGN_UPS",
@@ -217,7 +221,7 @@ describe("Event queries", () => {
 				version: 1,
 			});
 			eventService.get.mockResolvedValue(event);
-			organizationService.get.mockResolvedValue(
+			organizationService.organizations.get.mockResolvedValue(
 				mock<Organization>({ id: event.organizationId ?? faker.string.uuid() }),
 			);
 			eventService.getCategories.mockResolvedValue([
@@ -259,7 +263,9 @@ describe("Event queries", () => {
 
 			expect(errors).toBeUndefined();
 			expect(eventService.get).toHaveBeenCalledWith(expect.any(String));
-			expect(organizationService.get).toHaveBeenCalledWith(expect.any(String));
+			expect(organizationService.organizations.get).toHaveBeenCalledWith(
+				expect.any(String),
+			);
 			expect(data?.event.event).toEqual(
 				expect.objectContaining({
 					type: "BASIC",

@@ -8,18 +8,18 @@ import {
 } from "~/graphql/test-clients/graphql-test-client.js";
 import { graphql } from "~/graphql/test-clients/integration/gql.js";
 import prisma from "~/lib/prisma.js";
-import type { OrganizationService } from "~/services/organizations/service.js";
+import type { IOrganizationService } from "~/lib/server.js";
 
 describe("GraphQL error handling", () => {
 	let client: GraphQLTestClient;
-	let mockOrganizationService: DeepMockProxy<OrganizationService>;
+	let mockOrganizationService: DeepMockProxy<IOrganizationService>;
 
 	afterAll(async () => {
 		await client.close();
 	});
 
 	beforeAll(async () => {
-		mockOrganizationService = mockDeep<OrganizationService>();
+		mockOrganizationService = mockDeep<IOrganizationService>();
 		client = await newGraphQLTestClient({
 			organizations: mockOrganizationService,
 		});
@@ -86,7 +86,7 @@ describe("GraphQL error handling", () => {
 		});
 		const mockSentryErrorHandler = mockFn();
 		client.app.Sentry.captureException = mockSentryErrorHandler;
-		mockOrganizationService.findMany.mockRejectedValue(
+		mockOrganizationService.organizations.findMany.mockRejectedValue(
 			new InternalServerError("Test Internal Server Error"),
 		);
 
@@ -109,7 +109,7 @@ describe("GraphQL error handling", () => {
 			},
 		);
 
-		expect(mockOrganizationService.findMany).toHaveBeenCalled();
+		expect(mockOrganizationService.organizations.findMany).toHaveBeenCalled();
 		expect(errors).toHaveLength(1);
 		expect(
 			errors?.some(

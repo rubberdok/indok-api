@@ -6,7 +6,7 @@ export const addMember: NonNullable<MutationResolvers["addMember"]> = async (
 	ctx,
 ) => {
 	const { userId: memberId, organizationId, role } = data;
-	const addMemberResult = await ctx.organizations.addMember(ctx, {
+	const addMemberResult = await ctx.organizations.members.addMember(ctx, {
 		userId: memberId,
 		organizationId,
 		role: role ?? Role.MEMBER,

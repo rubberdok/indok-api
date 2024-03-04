@@ -60,7 +60,6 @@ import { SignUpQueueName } from "~/services/events/worker.js";
 import { ListingService } from "~/services/listings/index.js";
 import { buildMailService } from "~/services/mail/index.js";
 import { OrganizationService } from "~/services/organizations/index.js";
-import { PermissionService } from "~/services/permissions/index.js";
 import { ProductService } from "~/services/products/index.js";
 import {
 	type PaymentProcessingDataType,
@@ -78,43 +77,66 @@ import prisma from "./prisma.js";
 import type { ResultAsync } from "./result.js";
 
 interface IOrganizationService {
-	create(
-		ctx: Context,
-		data: {
-			name: string;
-			description?: string | null;
-			featurePermissions?: FeaturePermission[] | null;
-		},
-	): Promise<Organization>;
-	update(
-		ctx: Context,
-		organizationId: string,
-		data: {
-			name?: string | null;
-			description?: string | null;
-			featurePermissions?: FeaturePermission[] | null;
-		},
-	): Promise<Organization>;
-	addMember(
-		ctx: Context,
-		data: { userId: string; organizationId: string; role: Role },
-	): ResultAsync<{ member: Member }, PermissionDeniedError | UnauthorizedError>;
-	removeMember(
-		ctx: Context,
-		params: { memberId: string },
-	): ResultAsync<
-		{ member: Member },
-		InvalidArgumentError | PermissionDeniedError | UnauthorizedError
-	>;
-	getMembers(
-		ctx: Context,
-		organizationId: string,
-	): ResultAsync<
-		{ members: Member[] },
-		PermissionDeniedError | UnauthorizedError
-	>;
-	get(id: string): Promise<Organization>;
-	findMany(data?: { userId?: string }): Promise<Organization[]>;
+	organizations: {
+		create(
+			ctx: Context,
+			data: {
+				name: string;
+				description?: string | null;
+				featurePermissions?: FeaturePermission[] | null;
+			},
+		): Promise<Organization>;
+		update(
+			ctx: Context,
+			organizationId: string,
+			data: {
+				name?: string | null;
+				description?: string | null;
+				featurePermissions?: FeaturePermission[] | null;
+			},
+		): Promise<Organization>;
+		get(id: string): Promise<Organization>;
+		findMany(data?: { userId?: string }): Promise<Organization[]>;
+	};
+	members: {
+		addMember(
+			ctx: Context,
+			data: { userId: string; organizationId: string; role: Role },
+		): ResultAsync<
+			{ member: Member },
+			PermissionDeniedError | UnauthorizedError
+		>;
+		removeMember(
+			ctx: Context,
+			params: { memberId: string },
+		): ResultAsync<
+			{ member: Member },
+			InvalidArgumentError | PermissionDeniedError | UnauthorizedError
+		>;
+		findMany(
+			ctx: Context,
+			params: { organizationId: string },
+		): ResultAsync<
+			{ members: Member[] },
+			PermissionDeniedError | UnauthorizedError
+		>;
+	};
+	permissions: {
+		hasFeaturePermission(
+			ctx: Context,
+			data: {
+				featurePermission: FeaturePermission;
+			},
+		): Promise<boolean>;
+		hasRole(
+			ctx: Context,
+			data: {
+				organizationId: string;
+				role: Role;
+				featurePermission?: FeaturePermission;
+			},
+		): Promise<boolean>;
+	};
 }
 
 interface IAuthService {
@@ -412,23 +434,6 @@ interface IListingService {
 	delete(ctx: Context, id: string): Promise<Listing>;
 }
 
-interface IPermissionService {
-	hasFeaturePermission(
-		ctx: Context,
-		data: {
-			featurePermission: FeaturePermission;
-		},
-	): Promise<boolean>;
-	hasRole(
-		ctx: Context,
-		data: {
-			organizationId: string;
-			role: Role;
-			featurePermission?: FeaturePermission;
-		},
-	): Promise<boolean>;
-}
-
 type IProductService = {
 	payments: {
 		initiatePaymentAttempt(
@@ -533,7 +538,6 @@ type Services = {
 	users: IUserService;
 	auth: IAuthService;
 	organizations: IOrganizationService;
-	permissions: IPermissionService;
 	events: IEventService;
 	listings: IListingService;
 	cabins: ICabinService;
@@ -602,21 +606,6 @@ async function registerServices(
 	const listingRepository = new ListingRepository(database);
 	const productRepository = new ProductRepository(database);
 
-	const permissionService = new PermissionService(
-		memberRepository,
-		userRepository,
-		organizationRepository,
-	);
-	const organizationService = new OrganizationService(
-		organizationRepository,
-		memberRepository,
-		permissionService,
-	);
-	const listingService = new ListingService(
-		listingRepository,
-		permissionService,
-	);
-
 	await serverInstance.register(fastifyMessageQueue, {
 		name: "email",
 	});
@@ -642,13 +631,25 @@ async function registerServices(
 		},
 	);
 
+	const userService = new UserService(userRepository, mailService);
+
+	const organizationService = OrganizationService({
+		organizationRepository,
+		memberRepository,
+		userService,
+	});
+
+	const { permissions: permissionService } = organizationService;
+
+	const listingService = new ListingService(
+		listingRepository,
+		permissionService,
+	);
 	const cabinService = new CabinService(
 		cabinRepository,
 		mailService,
 		permissionService,
 	);
-
-	const userService = new UserService(userRepository, mailService);
 
 	await serverInstance.register(fastifyMessageQueue, {
 		name: PaymentProcessingQueueName,
@@ -686,7 +687,6 @@ async function registerServices(
 		users: userService,
 		auth: authService,
 		organizations: organizationService,
-		permissions: permissionService,
 		events: eventService,
 		listings: listingService,
 		cabins: cabinService,
@@ -701,4 +701,10 @@ async function registerServices(
 }
 
 export { registerServices, startServer };
-export type { ServerDependencies, Services, ICabinService, NewBookingParams };
+export type {
+	ServerDependencies,
+	Services,
+	ICabinService,
+	NewBookingParams,
+	IOrganizationService,
+};

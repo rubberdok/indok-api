@@ -40,7 +40,7 @@ describe("Listing queries", () => {
 					organizationId: faker.string.uuid(),
 				}),
 			);
-			organizationService.get.mockResolvedValue(
+			organizationService.organizations.get.mockResolvedValue(
 				mock<Organization>({ id: faker.string.uuid() }),
 			);
 

@@ -7,25 +7,25 @@ import { makeMockContext } from "~/lib/context.js";
 import {
 	type MemberRepository,
 	type OrganizationRepository,
-	PermissionService,
-	type UserRepository,
+	type UserService,
+	OrganizationService,
 } from "../../service.js";
 
 describe("PermissionService", () => {
-	let permissionService: PermissionService;
-	let UserRepository: DeepMockProxy<UserRepository>;
+	let organizationService: ReturnType<typeof OrganizationService>;
+	let userService: DeepMockProxy<UserService>;
 	let memberRepository: DeepMockProxy<MemberRepository>;
 	let organizationRepository: DeepMockProxy<OrganizationRepository>;
 
 	beforeAll(() => {
-		UserRepository = mockDeep<UserRepository>();
+		userService = mockDeep<UserService>();
 		memberRepository = mockDeep<MemberRepository>();
 		organizationRepository = mockDeep<OrganizationRepository>();
-		permissionService = new PermissionService(
+		organizationService = OrganizationService({
 			memberRepository,
-			UserRepository,
 			organizationRepository,
-		);
+			userService,
+		});
 	});
 
 	describe("hasRole should return", () => {
@@ -214,7 +214,7 @@ describe("PermissionService", () => {
 				 * Set up mocks for user service and member repository according to the
 				 * test case.
 				 */
-				UserRepository.get.mockResolvedValueOnce(mock<User>(arrange.user));
+				userService.get.mockResolvedValueOnce(mock<User>(arrange.user));
 				memberRepository.hasRole.mockImplementation((data) => {
 					return Promise.resolve(arrange.organizationRole === data.role);
 				});
@@ -227,7 +227,7 @@ describe("PermissionService", () => {
 				 *
 				 * Call hasRole with the given arguments
 				 */
-				const result = permissionService.hasRole(
+				const result = organizationService.permissions.hasRole(
 					makeMockContext(arrange.user),
 					{
 						organizationId: faker.string.uuid(),

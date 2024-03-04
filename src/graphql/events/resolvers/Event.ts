@@ -18,7 +18,9 @@ export const Event: EventResolvers = {
 
 	organization: async (event, _args, ctx) => {
 		if (!event.organizationId) return null;
-		const organization = await ctx.organizations.get(event.organizationId);
+		const organization = await ctx.organizations.organizations.get(
+			event.organizationId,
+		);
 		return organization;
 	},
 
