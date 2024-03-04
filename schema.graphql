@@ -306,6 +306,11 @@ input EventData {
   """
   organizationId: ID!
 
+  """
+  A short description of the event, intended to be a short summary/teaser of the event.
+  """
+  shortDescription: String
+
   """If the event is a sign up event, this will be the sign up details."""
   signUpDetails: SignUpData
 

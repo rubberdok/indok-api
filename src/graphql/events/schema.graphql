@@ -264,6 +264,10 @@ input EventData {
   """
   description: String
   """
+  A short description of the event, intended to be a short summary/teaser of the event.
+  """
+  shortDescription: String
+  """
   The start time of the event. Events must have a start time.
   """
   startAt: DateTime!
