@@ -479,6 +479,14 @@ input UpdateEventInput {
   """
   description: String
   """
+  A short description of the event, intended to be a short summary/teaser of the event.
+  """
+  shortDescription: String
+  """
+  Contact email for the event organizer
+  """
+  contactEmail: String
+  """
   The start time of the event. Must be before endAt and after the current time.
   """
   startAt: DateTime

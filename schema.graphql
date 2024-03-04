@@ -1237,6 +1237,9 @@ input UpdateEventInput {
   """categories is a list of cateogry IDs to which the event belongs"""
   categories: [UpdateCategoriesInput!]
 
+  """Contact email for the event organizer"""
+  contactEmail: String
+
   """
   The description of the event, defaults to "". We support markdown on the client, so this can be markdown.
   This will be displayed to users.
@@ -1251,6 +1254,11 @@ input UpdateEventInput {
 
   """The name of the event, this will be displayed to users"""
   name: String
+
+  """
+  A short description of the event, intended to be a short summary/teaser of the event.
+  """
+  shortDescription: String
 
   """If true, sign ups require user provided information"""
   signUpsRequireUserProvidedInformation: Boolean

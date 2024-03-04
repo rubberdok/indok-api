@@ -205,16 +205,15 @@ function newSignUpEvent(event: NewSignUpEventData): NewSignUpEventReturn {
 function newBasicEvent(basicEvent: NewBasicEventData): NewBasicEventReturn {
 	const schema = z
 		.object({
-			id: z.string().uuid().optional(),
-			version: z.number().int().min(0).optional(),
+			id: z.string().uuid().nullish(),
+			version: z.number().int().min(0).nullish(),
 			name: z.string().min(1).max(200),
 			description: z.string().max(10_000).default(""),
 			shortDescription: z.string().max(200).default(""),
 			startAt: z.date().min(new Date()),
 			endAt: z.date().min(new Date()),
 			contactEmail: z
-				.string()
-				.email()
+				.union([z.string().email(), z.literal("")])
 				.nullish()
 				.transform((val) => val ?? ""),
 			location: z.string().default(""),
@@ -223,7 +222,7 @@ function newBasicEvent(basicEvent: NewBasicEventData): NewBasicEventReturn {
 				.boolean()
 				.nullish()
 				.transform((val) => val ?? false),
-			categories: z.array(z.object({ id: z.string().uuid() })).optional(),
+			categories: z.array(z.object({ id: z.string().uuid() })).nullish(),
 			signUpsRetractable: z
 				.boolean()
 				.nullish()
@@ -253,7 +252,7 @@ function newBasicEvent(basicEvent: NewBasicEventData): NewBasicEventReturn {
 	if (!result.success) {
 		return {
 			ok: false,
-			error: new InvalidArgumentError(result.error.message),
+			error: new InvalidArgumentError(result.error.message, result.error),
 		};
 	}
 	const { id, version, ...data } = result.data;
@@ -389,15 +388,53 @@ function updateEvent(params: {
 	}
 
 	const schema = z.object({
-		name: z.string().max(200).min(1).optional(),
-		description: z.string().max(10_000).optional(),
-		location: z.string().optional(),
-		signUpsEnabled: z.boolean().optional(),
-		signUpsEndAt: z.date().optional(),
-		signUpsStartAt: z.date().optional(),
-		capacity: z.number().int().min(0).optional(),
-		productId: z.string().uuid().optional(),
-		contactEmail: z.string().email().optional(),
+		name: z
+			.string()
+			.max(200)
+			.min(1)
+			.nullish()
+			.transform((val) => val ?? undefined),
+		description: z
+			.string()
+			.max(10_000)
+			.nullish()
+			.transform((val) => val ?? undefined),
+		shortDescription: z
+			.string()
+			.max(100)
+			.nullish()
+			.transform((val) => val ?? undefined),
+		location: z
+			.string()
+			.nullish()
+			.transform((val) => val ?? undefined),
+		signUpsEnabled: z
+			.boolean()
+			.nullish()
+			.transform((val) => val ?? undefined),
+		signUpsEndAt: z
+			.date()
+			.nullish()
+			.transform((val) => val ?? undefined),
+		signUpsStartAt: z
+			.date()
+			.nullish()
+			.transform((val) => val ?? undefined),
+		capacity: z
+			.number()
+			.int()
+			.min(0)
+			.nullish()
+			.transform((val) => val ?? undefined),
+		productId: z
+			.string()
+			.uuid()
+			.nullish()
+			.transform((val) => val ?? undefined),
+		contactEmail: z
+			.union([z.string().email(), z.literal("")])
+			.nullish()
+			.transform((val) => val ?? undefined),
 	});
 
 	const updatedFields = omitBy(data.event, isNil);
@@ -446,6 +483,7 @@ type EventUpdateFields = Partial<{
 	signUpsStartAt: Date | null;
 	signUpsEndAt: Date | null;
 	contactEmail: string | null;
+	shortDescription: string | null;
 }>;
 
 function updateSignUpEvent(params: {
