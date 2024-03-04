@@ -4,7 +4,7 @@ export const hasRole: NonNullable<QueryResolvers["hasRole"]> = async (
 	{ data: { organizationId, role } },
 	ctx,
 ) => {
-	const hasRole = await ctx.permissions.hasRole(ctx, {
+	const hasRole = await ctx.organizations.permissions.hasRole(ctx, {
 		organizationId,
 		role,
 	});

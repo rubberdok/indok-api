@@ -1,9 +1,12 @@
 import type { MutationResolvers } from "./../../../types.generated.js";
 export const removeMember: NonNullable<MutationResolvers["removeMember"]> =
 	async (_parent, { data }, ctx) => {
-		const removeMemberResult = await ctx.organizations.removeMember(ctx, {
-			memberId: data.id,
-		});
+		const removeMemberResult = await ctx.organizations.members.removeMember(
+			ctx,
+			{
+				memberId: data.id,
+			},
+		);
 		if (!removeMemberResult.ok) {
 			switch (removeMemberResult.error.name) {
 				case "InvalidArgumentError":

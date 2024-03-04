@@ -12,7 +12,7 @@ import { Queue } from "~/lib/bullmq/queue.js";
 import { Worker } from "~/lib/bullmq/worker.js";
 import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
-import type { Services } from "~/lib/server.js";
+import type { IOrganizationService } from "~/lib/server.js";
 import { EventRepository } from "~/repositories/events/index.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
 import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
@@ -25,7 +25,6 @@ import {
 	getEmailHandler,
 } from "~/services/mail/worker.js";
 import { OrganizationService } from "~/services/organizations/service.js";
-import { PermissionService } from "~/services/permissions/service.js";
 import { UserService } from "~/services/users/service.js";
 import { EventService, type ProductService } from "../../service.js";
 import {
@@ -42,7 +41,7 @@ describe("EventService", () => {
 	let userService: UserService;
 	let signUpWorker: SignUpWorkerType;
 	let emailWorker: EmailWorkerType;
-	let organizationService: Services["organizations"];
+	let organizationService: IOrganizationService;
 	let queueEventsRedis: Redis;
 	let signUpQueueEvents: QueueEvents;
 	let emailQueueEvents: QueueEvents;
@@ -80,13 +79,14 @@ describe("EventService", () => {
 		const userRepository = new UserRepository(prisma);
 		const organizationRepository = new OrganizationRepository(prisma);
 		const memberRepository = new MemberRepository(prisma);
-		const permissionService = new PermissionService(
-			memberRepository,
-			userRepository,
-			organizationRepository,
-		);
 		const eventRepository = new EventRepository(prisma);
 		userService = new UserService(userRepository, mailService);
+		organizationService = OrganizationService({
+			memberRepository,
+			organizationRepository,
+			userService,
+		});
+		const permissionService = organizationService.permissions;
 		const productService = mockDeep<ProductService>();
 		eventService = new EventService(
 			eventRepository,
@@ -94,11 +94,6 @@ describe("EventService", () => {
 			userService,
 			productService,
 			signUpQueue,
-		);
-		organizationService = new OrganizationService(
-			organizationRepository,
-			memberRepository,
-			permissionService,
 		);
 
 		const emailWorkerHandler = getEmailHandler({
@@ -175,7 +170,7 @@ describe("EventService", () => {
 				graduationYear: DateTime.now().year + 2,
 			});
 
-			const organization = await organizationService.create(
+			const organization = await organizationService.organizations.create(
 				makeMockContext(eventOwner),
 				{
 					name: faker.string.sample(20),
@@ -340,7 +335,7 @@ describe("EventService", () => {
 				),
 			);
 
-			const organization = await organizationService.create(
+			const organization = await organizationService.organizations.create(
 				makeMockContext(eventOwner),
 				{
 					name: faker.string.sample(20),

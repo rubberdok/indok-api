@@ -14,7 +14,7 @@ describe("OrganizationService", () => {
 			const { adminUser, memberUserMembership, organizationService } =
 				await makeDeps();
 
-			const result = await organizationService.removeMember(
+			const result = await organizationService.members.removeMember(
 				makeMockContext(adminUser),
 				{
 					memberId: memberUserMembership.id,
@@ -31,7 +31,7 @@ describe("OrganizationService", () => {
 		it("should return ok: false and unauthorized error if not logged in", async () => {
 			const { memberUserMembership, organizationService } = await makeDeps();
 
-			const result = await organizationService.removeMember(
+			const result = await organizationService.members.removeMember(
 				makeMockContext(null),
 				{
 					memberId: memberUserMembership.id,
@@ -50,7 +50,7 @@ describe("OrganizationService", () => {
 				organizationService,
 			} = await makeDeps();
 
-			const result = await organizationService.removeMember(
+			const result = await organizationService.members.removeMember(
 				makeMockContext(notInOrganizationUser),
 				{
 					memberId: memberUserMembership.id,
@@ -71,7 +71,7 @@ describe("OrganizationService", () => {
 				organizationService,
 			} = await makeDeps();
 
-			const addMemberResult = await organizationService.addMember(
+			const addMemberResult = await organizationService.members.addMember(
 				makeMockContext(adminUser),
 				{
 					userId: notInOrganizationUser.id,
@@ -81,7 +81,7 @@ describe("OrganizationService", () => {
 			);
 			if (!addMemberResult.ok) throw addMemberResult.error;
 
-			const result = await organizationService.removeMember(
+			const result = await organizationService.members.removeMember(
 				makeMockContext(memberUser),
 				{
 					memberId: addMemberResult.data.member.id,
@@ -97,7 +97,7 @@ describe("OrganizationService", () => {
 			const { memberUser, memberUserMembership, organizationService } =
 				await makeDeps();
 
-			const result = await organizationService.removeMember(
+			const result = await organizationService.members.removeMember(
 				makeMockContext(memberUser),
 				{
 					memberId: memberUserMembership.id,
@@ -116,7 +116,7 @@ describe("OrganizationService", () => {
 			const { adminUser, adminUserMembership, organizationService } =
 				await makeDeps();
 
-			const result = await organizationService.removeMember(
+			const result = await organizationService.members.removeMember(
 				makeMockContext(adminUser),
 				{
 					memberId: adminUserMembership.id,
@@ -136,7 +136,7 @@ describe("OrganizationService", () => {
 				notInOrganizationUser,
 			} = await makeDeps();
 
-			const addMemberResult = await organizationService.addMember(
+			const addMemberResult = await organizationService.members.addMember(
 				makeMockContext(adminUser),
 				{
 					userId: notInOrganizationUser.id,
@@ -146,7 +146,7 @@ describe("OrganizationService", () => {
 			);
 			if (!addMemberResult.ok) throw addMemberResult.error;
 
-			const result = await organizationService.removeMember(
+			const result = await organizationService.members.removeMember(
 				makeMockContext(adminUser),
 				{
 					memberId: adminUserMembership.id,
@@ -180,23 +180,26 @@ async function makeDeps() {
 	const memberUser = await makeUser();
 	const notInOrganizationUser = await makeUser();
 
-	const organization = await organizationService.create(
+	const organization = await organizationService.organizations.create(
 		makeMockContext(adminUser),
 		{
 			name: faker.string.uuid(),
 		},
 	);
 
-	const res = await organizationService.addMember(makeMockContext(adminUser), {
-		userId: memberUser.id,
-		organizationId: organization.id,
-		role: "MEMBER",
-	});
+	const res = await organizationService.members.addMember(
+		makeMockContext(adminUser),
+		{
+			userId: memberUser.id,
+			organizationId: organization.id,
+			role: "MEMBER",
+		},
+	);
 	if (!res.ok) throw res.error;
 
-	const members = await organizationService.getMembers(
+	const members = await organizationService.members.findMany(
 		makeMockContext(adminUser),
-		organization.id,
+		{ organizationId: organization.id },
 	);
 	if (!members.ok) throw members.error;
 

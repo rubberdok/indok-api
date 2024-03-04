@@ -17,7 +17,7 @@ describe("Organization Queries", () => {
 			 * Set up mocks for the organization service
 			 */
 			const organizationId = faker.string.uuid();
-			organizationService.get.mockResolvedValue(
+			organizationService.organizations.get.mockResolvedValue(
 				mock<Organization>({ id: organizationId }),
 			);
 
@@ -62,10 +62,10 @@ describe("Organization Queries", () => {
 			 *
 			 * Set up mocks for the organization service
 			 */
-			organizationService.get.mockResolvedValue(
+			organizationService.organizations.get.mockResolvedValue(
 				mock<Organization>({ id: faker.string.uuid() }),
 			);
-			organizationService.getMembers.mockResolvedValue({
+			organizationService.members.findMany.mockResolvedValue({
 				ok: false,
 				error: new UnauthorizedError(""),
 			});
@@ -107,10 +107,10 @@ describe("Organization Queries", () => {
 			 *
 			 * Set up mocks for the organization service
 			 */
-			organizationService.get.mockResolvedValue(
+			organizationService.organizations.get.mockResolvedValue(
 				mock<Organization>({ id: faker.string.uuid() }),
 			);
-			organizationService.getMembers.mockResolvedValue({
+			organizationService.members.findMany.mockResolvedValue({
 				ok: true,
 				data: {
 					members: [mock<Member>({ id: faker.string.uuid() })],

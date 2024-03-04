@@ -5,14 +5,16 @@ import { graphql } from "~/graphql/test-clients/unit/gql.js";
 describe("Permission queries", () => {
 	describe("#hasFeaturePermission", () => {
 		it("should call hasFeaturePermission with the correct parameters", async () => {
-			const { client, createMockContext, permissionService } =
+			const { client, createMockContext, organizationService } =
 				createMockApolloServer();
 			const authenticatedContext = createMockContext({
 				user: {
 					id: faker.string.uuid(),
 				},
 			});
-			permissionService.hasFeaturePermission.mockResolvedValueOnce(true);
+			organizationService.permissions.hasFeaturePermission.mockResolvedValueOnce(
+				true,
+			);
 
 			const { errors } = await client.query(
 				{
@@ -36,12 +38,11 @@ describe("Permission queries", () => {
 			);
 
 			expect(errors).toBeUndefined();
-			expect(permissionService.hasFeaturePermission).toHaveBeenCalledWith(
-				expect.anything(),
-				{
-					featurePermission: "CABIN_ADMIN",
-				},
-			);
+			expect(
+				organizationService.permissions.hasFeaturePermission,
+			).toHaveBeenCalledWith(expect.anything(), {
+				featurePermission: "CABIN_ADMIN",
+			});
 		});
 	});
 });

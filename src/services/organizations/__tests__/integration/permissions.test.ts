@@ -1,25 +1,27 @@
 import { faker } from "@faker-js/faker";
 import { FeaturePermission, type Prisma } from "@prisma/client";
+import { mock } from "jest-mock-extended";
 import { Role } from "~/domain/organizations.js";
 import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
 import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
 import { UserRepository } from "~/repositories/users/index.js";
-import { PermissionService } from "../../service.js";
-
-let permissionService: PermissionService;
+import { UserService } from "~/services/users/service.js";
+import { OrganizationService } from "../../service.js";
 
 describe("OrganizationsService", () => {
+	let organizationService: ReturnType<typeof OrganizationService>;
 	beforeAll(() => {
 		const userRepository = new UserRepository(prisma);
+		const userService = new UserService(userRepository, mock());
 		const memberRepository = new MemberRepository(prisma);
 		const organizationRepository = new OrganizationRepository(prisma);
-		permissionService = new PermissionService(
+		organizationService = OrganizationService({
 			memberRepository,
-			userRepository,
+			userService,
 			organizationRepository,
-		);
+		});
 	});
 
 	describe("hasRole", () => {
@@ -225,13 +227,16 @@ describe("OrganizationsService", () => {
 				/**
 				 * Act
 				 *
-				 * 1. Call the hasRole method on the permissionService with the userId and organizationId
+				 * 1. Call the hasRole method on the organizationService.permissions with the userId and organizationId
 				 */
-				const result = permissionService.hasRole(makeMockContext(user), {
-					organizationId: organization.id,
-					role: requiredRole,
-					featurePermission: requiredFeaturePermission,
-				});
+				const result = organizationService.permissions.hasRole(
+					makeMockContext(user),
+					{
+						organizationId: organization.id,
+						role: requiredRole,
+						featurePermission: requiredFeaturePermission,
+					},
+				);
 
 				/**
 				 * Assert that the user has the expected role
@@ -241,73 +246,14 @@ describe("OrganizationsService", () => {
 		);
 
 		it("should return `false` if `ctx.user` is null", async () => {
-			const result = await permissionService.hasRole(makeMockContext(null), {
-				organizationId: faker.string.uuid(),
-				role: Role.MEMBER,
-			});
+			const result = await organizationService.permissions.hasRole(
+				makeMockContext(null),
+				{
+					organizationId: faker.string.uuid(),
+					role: Role.MEMBER,
+				},
+			);
 			expect(result).toBe(false);
-		});
-	});
-
-	describe("#isSuperUser", () => {
-		it("should return true if the user is a super user", async () => {
-			/**
-			 * Arrange
-			 *
-			 * 1. Create a user with isSuperUser set to true
-			 */
-			const user = await prisma.user.create({
-				data: makeUser({ isSuperUser: true }),
-			});
-
-			/**
-			 * Act
-			 *
-			 * 1. Call the isSuperUser method on the permissionService with the userId
-			 */
-			const { isSuperUser } = permissionService.isSuperUser(user);
-
-			/**
-			 * Assert that the user is a super user
-			 */
-			expect(isSuperUser).toEqual(true);
-		});
-
-		it("should return false if the user is not a super user", async () => {
-			/**
-			 * Arrange
-			 *
-			 * 1. Create a user with isSuperUser set to true
-			 */
-			const user = await prisma.user.create({
-				data: makeUser({ isSuperUser: false }),
-			});
-
-			/**
-			 * Act
-			 *
-			 * 1. Call the isSuperUser method on the permissionService with the userId
-			 */
-			const { isSuperUser } = permissionService.isSuperUser(user);
-
-			/**
-			 * Assert that the user is a super user
-			 */
-			expect(isSuperUser).toEqual(false);
-		});
-
-		it("should return false if user is undefined", () => {
-			/**
-			 * Act
-			 *
-			 * 1. Call the isSuperUser method on the permissionService with the userId
-			 */
-			const { isSuperUser } = permissionService.isSuperUser();
-
-			/**
-			 * Assert that the user is a super user
-			 */
-			expect(isSuperUser).toEqual(false);
 		});
 	});
 
@@ -324,9 +270,9 @@ describe("OrganizationsService", () => {
 
 			/**
 			 * Act
-			 * 1. Call the hasFeaturePermission method on the permissionService with the userId and a feature permission
+			 * 1. Call the hasFeaturePermission method on the organizationService.permissions with the userId and a feature permission
 			 */
-			const result = permissionService.hasFeaturePermission(
+			const result = organizationService.permissions.hasFeaturePermission(
 				makeMockContext(user),
 				{
 					featurePermission: FeaturePermission.CABIN_ADMIN,
@@ -351,9 +297,9 @@ describe("OrganizationsService", () => {
 
 			/**
 			 * Act
-			 * 1. Call the hasFeaturePermission method on the permissionService with the userId and a feature permission
+			 * 1. Call the hasFeaturePermission method on the organizationService.permissions with the userId and a feature permission
 			 */
-			const result = permissionService.hasFeaturePermission(
+			const result = organizationService.permissions.hasFeaturePermission(
 				makeMockContext(user),
 				{
 					featurePermission: FeaturePermission.CABIN_ADMIN,
@@ -394,9 +340,9 @@ describe("OrganizationsService", () => {
 
 			/**
 			 * Act
-			 * 1. Call the hasFeaturePermission method on the permissionService with the userId and a feature permission
+			 * 1. Call the hasFeaturePermission method on the organizationService.permissions with the userId and a feature permission
 			 */
-			const result = permissionService.hasFeaturePermission(
+			const result = organizationService.permissions.hasFeaturePermission(
 				makeMockContext(user),
 				{
 					featurePermission: FeaturePermission.CABIN_ADMIN,
@@ -433,9 +379,9 @@ describe("OrganizationsService", () => {
 
 			/**
 			 * Act
-			 * 1. Call the hasFeaturePermission method on the permissionService with the userId and a feature permission
+			 * 1. Call the hasFeaturePermission method on the organizationService.permissions with the userId and a feature permission
 			 */
-			const result = permissionService.hasFeaturePermission(
+			const result = organizationService.permissions.hasFeaturePermission(
 				makeMockContext(user),
 				{
 					featurePermission: FeaturePermission.CABIN_ADMIN,
@@ -478,9 +424,9 @@ describe("OrganizationsService", () => {
 
 			/**
 			 * Act
-			 * 1. Call the hasFeaturePermission method on the permissionService with the userId and a feature permission
+			 * 1. Call the hasFeaturePermission method on the organizationService.permissions with the userId and a feature permission
 			 */
-			const result = permissionService.hasFeaturePermission(
+			const result = organizationService.permissions.hasFeaturePermission(
 				makeMockContext(user),
 				{
 					featurePermission: FeaturePermission.CABIN_ADMIN,
@@ -525,9 +471,9 @@ describe("OrganizationsService", () => {
 
 			/**
 			 * Act
-			 * 1. Call the hasFeaturePermission method on the permissionService with the userId and a feature permission
+			 * 1. Call the hasFeaturePermission method on the organizationService.permissions with the userId and a feature permission
 			 */
-			const result = permissionService.hasFeaturePermission(
+			const result = organizationService.permissions.hasFeaturePermission(
 				makeMockContext(user),
 				{
 					featurePermission: FeaturePermission.EVENT_WRITE_SIGN_UPS,

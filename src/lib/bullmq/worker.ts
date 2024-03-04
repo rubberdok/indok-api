@@ -29,7 +29,7 @@ import {
 	type EmailQueueType,
 	getEmailHandler,
 } from "~/services/mail/worker.js";
-import { PermissionService } from "~/services/permissions/service.js";
+import { OrganizationService } from "~/services/organizations/index.js";
 import {
 	ProductService,
 	getPaymentProcessingHandler,
@@ -220,12 +220,6 @@ export async function initWorkers(): Promise<{
 		);
 		const cabinRepository = new CabinRepository(instance.database);
 
-		const permissionService = new PermissionService(
-			memberRepository,
-			userRepository,
-			organizationRepository,
-		);
-
 		if (!instance.queues?.email) {
 			throw new InternalServerError("Email queue not initialized");
 		}
@@ -248,6 +242,11 @@ export async function initWorkers(): Promise<{
 		);
 
 		const userService = new UserService(userRepository, mailService);
+		const { permissions: permissionService } = OrganizationService({
+			memberRepository,
+			organizationRepository,
+			userService,
+		});
 
 		if (!instance.queues?.[PaymentProcessingQueueName]) {
 			throw new InternalServerError("Payment processing queue not initialized");

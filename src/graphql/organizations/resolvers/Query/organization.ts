@@ -4,6 +4,6 @@ export const organization: NonNullable<QueryResolvers["organization"]> = async (
 	{ data },
 	ctx,
 ) => {
-	const organization = await ctx.organizations.get(data.id);
+	const organization = await ctx.organizations.organizations.get(data.id);
 	return { organization };
 };

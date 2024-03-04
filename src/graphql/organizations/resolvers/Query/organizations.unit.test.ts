@@ -6,7 +6,7 @@ describe("Organization queries", () => {
 		it("should not throw PermissionDeniedError for unauthenticated users", async () => {
 			const { client, organizationService } = createMockApolloServer();
 
-			organizationService.findMany.mockResolvedValue([]);
+			organizationService.organizations.findMany.mockResolvedValue([]);
 
 			const { errors } = await client.query({
 				query: graphql(`
@@ -21,7 +21,7 @@ describe("Organization queries", () => {
 			});
 
 			expect(errors).toBeUndefined();
-			expect(organizationService.findMany).toHaveBeenCalled();
+			expect(organizationService.organizations.findMany).toHaveBeenCalled();
 		});
 	});
 });

@@ -9,7 +9,7 @@ describe("OrganizationService", () => {
 			const { user, userNotInOrganization, organization, organizationService } =
 				await makeDeps();
 
-			const result = await organizationService.addMember(
+			const result = await organizationService.members.addMember(
 				makeMockContext(user),
 				{
 					userId: userNotInOrganization.id,
@@ -34,7 +34,7 @@ describe("OrganizationService", () => {
 			const { userNotInOrganization, organization, organizationService } =
 				await makeDeps();
 
-			const result = await organizationService.addMember(
+			const result = await organizationService.members.addMember(
 				makeMockContext(null),
 				{
 					userId: userNotInOrganization.id,
@@ -52,7 +52,7 @@ describe("OrganizationService", () => {
 			const { userNotInOrganization, organization, organizationService } =
 				await makeDeps();
 
-			const result = await organizationService.addMember(
+			const result = await organizationService.members.addMember(
 				makeMockContext(userNotInOrganization),
 				{
 					userId: userNotInOrganization.id,
@@ -75,7 +75,7 @@ describe("OrganizationService", () => {
 				organizationService,
 			} = await makeDeps();
 
-			const addMemberResult = await organizationService.addMember(
+			const addMemberResult = await organizationService.members.addMember(
 				makeMockContext(user),
 				{
 					userId: userNotInOrganization.id,
@@ -85,7 +85,7 @@ describe("OrganizationService", () => {
 			);
 			if (!addMemberResult.ok) throw addMemberResult.error;
 
-			const result = await organizationService.addMember(
+			const result = await organizationService.members.addMember(
 				makeMockContext(userNotInOrganization),
 				{
 					userId: userNotInOrganization2.id,
@@ -119,9 +119,12 @@ async function makeDeps() {
 	const userNotInOrganization = await makeUser();
 	const userNotInOrganization2 = await makeUser();
 
-	const organization = await organizationService.create(makeMockContext(user), {
-		name: faker.string.uuid(),
-	});
+	const organization = await organizationService.organizations.create(
+		makeMockContext(user),
+		{
+			name: faker.string.uuid(),
+		},
+	);
 
 	return {
 		organizationService,

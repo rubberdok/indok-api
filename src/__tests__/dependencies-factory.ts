@@ -19,8 +19,7 @@ import type { SignUpQueueType } from "~/services/events/worker.js";
 import { ListingService } from "~/services/listings/service.js";
 import { buildMailService } from "~/services/mail/index.js";
 import type { EmailQueueType } from "~/services/mail/worker.js";
-import { OrganizationService } from "~/services/organizations/service.js";
-import { PermissionService } from "~/services/permissions/service.js";
+import { OrganizationService } from "~/services/organizations/index.js";
 import { ProductService } from "~/services/products/service.js";
 import type { PaymentProcessingQueueType } from "~/services/products/worker.js";
 import { UserService } from "~/services/users/service.js";
@@ -53,27 +52,22 @@ export function makeTestServices(
 			websiteUrl: env.CLIENT_URL,
 		},
 	);
-	const permissionService = new PermissionService(
+	const userService = new UserService(userRepository, mailService);
+	const organizationService = OrganizationService({
 		memberRepository,
-		userRepository,
 		organizationRepository,
-	);
-	const organizationService = new OrganizationService(
-		organizationRepository,
-		memberRepository,
-		permissionService,
-	);
+		userService,
+	});
 	const listingService = new ListingService(
 		listingRepository,
-		permissionService,
+		organizationService.permissions,
 	);
 	const cabinService = new CabinService(
 		cabinRepository,
 		mailService,
-		permissionService,
+		organizationService.permissions,
 	);
 
-	const userService = new UserService(userRepository, mailService);
 	const products = ProductService({
 		vippsFactory: mockDeep<typeof Client>(),
 		paymentProcessingQueue: mockDeep<PaymentProcessingQueueType>(),
@@ -85,7 +79,7 @@ export function makeTestServices(
 	});
 	const eventService = new EventService(
 		eventRepository,
-		permissionService,
+		organizationService.permissions,
 		userService,
 		products,
 		mockDeep<SignUpQueueType>(),
@@ -96,7 +90,6 @@ export function makeTestServices(
 		users: userService,
 		auth: authService,
 		organizations: organizationService,
-		permissions: permissionService,
 		events: eventService,
 		listings: listingService,
 		cabins: cabinService,

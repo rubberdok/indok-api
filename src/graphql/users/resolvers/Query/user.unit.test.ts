@@ -20,7 +20,7 @@ describe("User queries", () => {
 			const authenticatedContext = createMockContext({ user: { id: userId } });
 			const user = mock<User>({ id: userId });
 			userService.get.mockResolvedValue(user);
-			organizationService.findMany.mockResolvedValue([
+			organizationService.organizations.findMany.mockResolvedValue([
 				mock<Organization>({ id: faker.string.uuid() }),
 			]);
 
