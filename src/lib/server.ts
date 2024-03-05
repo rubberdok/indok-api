@@ -281,6 +281,10 @@ interface ICabinService {
 		{ totalCost: number },
 		InternalServerError | NotFoundError | InvalidArgumentError
 	>;
+	getOccupiedDates(
+		ctx: Context,
+		params: { cabinId: string },
+	): ResultAsync<{ days: Date[] }, NotFoundError | InternalServerError>;
 }
 
 interface IEventService {

@@ -4,6 +4,7 @@ type Cabin {
   internalPrice: Int!
   externalPrice: Int!
   capacity: Int!
+  occupiedDays: [DateTime!]!
 }
 
 type Booking {

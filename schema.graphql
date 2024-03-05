@@ -62,6 +62,7 @@ type Cabin {
   id: ID!
   internalPrice: Int!
   name: String!
+  occupiedDays: [DateTime!]!
 }
 
 input CabinInput {

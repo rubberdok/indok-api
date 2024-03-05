@@ -6,18 +6,70 @@ import type {
 	Semester,
 } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
-import { Booking, type BookingType } from "~/domain/cabins.js";
+import {
+	Booking,
+	type BookingStatus,
+	type BookingType,
+} from "~/domain/cabins.js";
 import {
 	InternalServerError,
 	InvalidArgumentError,
 	NotFoundError,
 } from "~/domain/errors.js";
+import type { Context } from "~/lib/context.js";
 import { prismaKnownErrorCodes } from "~/lib/prisma.js";
 import type { ResultAsync } from "~/lib/result.js";
 import type { ICabinRepository } from "~/services/cabins/service.js";
 
 export class CabinRepository implements ICabinRepository {
 	constructor(private db: PrismaClient) {}
+
+	async findManyBookings(
+		ctx: Context,
+		params: {
+			cabinId: string;
+			endAtGte?: Date | undefined;
+			bookingStatus?: BookingStatus;
+		},
+	): ResultAsync<{ bookings: BookingType[] }, InternalServerError> {
+		ctx.log.info(params, "Finding bookings for cabin");
+		try {
+			const bookings = await this.db.booking.findMany({
+				include: {
+					cabins: {
+						select: {
+							id: true,
+						},
+					},
+				},
+				where: {
+					status: params.bookingStatus,
+					cabins: {
+						some: {
+							id: params.cabinId,
+						},
+					},
+					endDate: {
+						gte: params.endAtGte,
+					},
+				},
+			});
+			return {
+				ok: true,
+				data: {
+					bookings: bookings.map((booking) => new Booking(booking)),
+				},
+			};
+		} catch (err) {
+			return {
+				ok: false,
+				error: new InternalServerError(
+					"Failed to find bookings for cabin",
+					err,
+				),
+			};
+		}
+	}
 
 	async createCabin(params: {
 		name: string;
