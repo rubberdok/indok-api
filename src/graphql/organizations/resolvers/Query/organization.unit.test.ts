@@ -217,8 +217,7 @@ describe("Organization Queries", () => {
 		});
 
 		it("{ organization { logo { url } } } returns null if file id is null", async () => {
-			const { client, organizationService, fileService } =
-				createMockApolloServer();
+			const { client, organizationService } = createMockApolloServer();
 
 			/**
 			 * Arrange
