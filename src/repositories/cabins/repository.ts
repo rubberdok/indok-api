@@ -28,7 +28,7 @@ export class CabinRepository implements ICabinRepository {
 		ctx: Context,
 		params: {
 			cabinId: string;
-			endAtGte?: Date | undefined;
+			endAtGte?: Date;
 			bookingStatus?: BookingStatus;
 		},
 	): ResultAsync<{ bookings: BookingType[] }, InternalServerError> {
