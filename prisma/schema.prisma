@@ -43,6 +43,7 @@ model User {
   orders                  Order[]
   studyProgram            StudyProgram? @relation(fields: [studyProgramId], references: [id], onDelete: SetNull)
   studyProgramId          String?       @db.Uuid
+  files                   File[]
 }
 
 model StudyProgram {
@@ -249,6 +250,8 @@ model Organization {
   members            Member[]
   listings           Listing[]
   featurePermissions FeaturePermission[] @default([])
+  logoFileId         String?             @db.Uuid
+  logoFile           File?               @relation(fields: [logoFileId], references: [id], onDelete: SetNull)
 }
 
 model BookingContact {
@@ -350,4 +353,15 @@ model Listing {
   organizationId String       @db.Uuid
   closesAt       DateTime
   applicationUrl String       @default("")
+}
+
+// File storage
+model File {
+  id            String         @id @default(uuid()) @db.Uuid
+  name          String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  userId        String?        @db.Uuid
+  user          User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  organizations Organization[]
 }

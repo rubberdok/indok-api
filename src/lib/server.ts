@@ -1,3 +1,5 @@
+import { DefaultAzureCredential } from "@azure/identity";
+import { BlobServiceClient } from "@azure/storage-blob";
 import type {
 	BookingContact,
 	BookingSemester,
@@ -16,6 +18,7 @@ import * as Sentry from "@sentry/node";
 import { Client } from "@vippsmobilepay/sdk";
 import type { Job } from "bullmq";
 import type { FastifyInstance, FastifyRequest } from "fastify";
+import { BlobStorageAdapter } from "~/adapters/azure-blob-storage.js";
 import { type Configuration, env } from "~/config.js";
 import type { BookingStatus, BookingType } from "~/domain/cabins.js";
 import {
@@ -32,6 +35,7 @@ import type {
 	SignUpAvailability,
 	SlotType,
 } from "~/domain/events/index.js";
+import type { FileType, RemoteFile } from "~/domain/files.js";
 import type { Role } from "~/domain/organizations.js";
 import type {
 	MerchantType,
@@ -43,6 +47,7 @@ import type { StudyProgram, User } from "~/domain/users.js";
 import type { Context } from "~/lib/context.js";
 import { CabinRepository } from "~/repositories/cabins/repository.js";
 import { EventRepository } from "~/repositories/events/index.js";
+import { FileRepository } from "~/repositories/files/index.js";
 import { ListingRepository } from "~/repositories/listings/repository.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
 import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
@@ -57,6 +62,7 @@ import {
 } from "~/services/events/index.js";
 import type { UpdateEventParams } from "~/services/events/service.js";
 import { SignUpQueueName } from "~/services/events/worker.js";
+import { FileService } from "~/services/files/index.js";
 import { ListingService } from "~/services/listings/index.js";
 import { buildMailService } from "~/services/mail/index.js";
 import { OrganizationService } from "~/services/organizations/index.js";
@@ -89,11 +95,12 @@ interface IOrganizationService {
 		update(
 			ctx: Context,
 			organizationId: string,
-			data: {
-				name?: string | null;
-				description?: string | null;
-				featurePermissions?: FeaturePermission[] | null;
-			},
+			data: Partial<{
+				name: string | null;
+				description: string | null;
+				featurePermissions: FeaturePermission[] | null;
+				logoFileId: string | null;
+			}>,
 		): Promise<Organization>;
 		get(id: string): Promise<Organization>;
 		findMany(data?: { userId?: string }): Promise<Organization[]>;
@@ -534,6 +541,33 @@ type IProductService = {
 	};
 };
 
+interface IFileService {
+	createFileUploadUrl(
+		ctx: Context,
+		params: { extension: string },
+	): ResultAsync<
+		{ file: FileType; url: string },
+		| DownstreamServiceError
+		| InternalServerError
+		| UnauthorizedError
+		| InvalidArgumentError
+	>;
+	createFileDownloadUrl(
+		ctx: Context,
+		params: { id: string },
+	): ResultAsync<
+		{ url: string; file: FileType },
+		| InternalServerError
+		| NotFoundError
+		| DownstreamServiceError
+		| InvalidArgumentError
+	>;
+	getFile(
+		ctx: Context,
+		params: { id: string },
+	): ResultAsync<{ file: RemoteFile }, NotFoundError | InternalServerError>;
+}
+
 type UserContext = {
 	user: User | null;
 };
@@ -546,6 +580,7 @@ type Services = {
 	listings: IListingService;
 	cabins: ICabinService;
 	products: IProductService;
+	files: IFileService;
 };
 
 type ServerDependencies = {
@@ -609,6 +644,7 @@ async function registerServices(
 	const eventRepository = new EventRepository(database);
 	const listingRepository = new ListingRepository(database);
 	const productRepository = new ProductRepository(database);
+	const fileRepository = FileRepository({ db: database });
 
 	await serverInstance.register(fastifyMessageQueue, {
 		name: "email",
@@ -686,6 +722,17 @@ async function registerServices(
 		serverInstance.queues[SignUpQueueName],
 	);
 	const authService = new AuthService(userService, feideClient);
+	const blobServiceClient = new BlobServiceClient(
+		`https://${env.AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net`,
+		new DefaultAzureCredential(),
+	);
+
+	const blobStorageAdapter = BlobStorageAdapter({
+		accountName: env.AZURE_STORAGE_ACCOUNT_NAME,
+		containerName: env.AZURE_STORAGE_CONTAINER_NAME,
+		blobServiceClient,
+	});
+	const fileService = FileService({ fileRepository, blobStorageAdapter });
 
 	const services: Services = {
 		users: userService,
@@ -695,6 +742,7 @@ async function registerServices(
 		listings: listingService,
 		cabins: cabinService,
 		products: productService,
+		files: fileService,
 	};
 
 	await serverInstance.register(fastifyService, { services });
@@ -711,4 +759,5 @@ export type {
 	ICabinService,
 	NewBookingParams,
 	IOrganizationService,
+	IFileService,
 };

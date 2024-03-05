@@ -147,5 +147,117 @@ describe("Organization Queries", () => {
 				expect.objectContaining({ id: expect.any(String) }),
 			]);
 		});
+
+		it("{ organization { logo { url } } } returns logo with url", async () => {
+			const { client, organizationService, fileService } =
+				createMockApolloServer();
+
+			/**
+			 * Arrange
+			 *
+			 * Set up mocks for the organization service
+			 */
+			organizationService.organizations.get.mockResolvedValue(
+				mock<Organization>({
+					id: faker.string.uuid(),
+					logoFileId: faker.string.uuid(),
+				}),
+			);
+			fileService.getFile.mockResolvedValue({
+				ok: true,
+				data: {
+					file: {
+						id: faker.string.uuid(),
+						userId: faker.string.uuid(),
+						name: faker.system.fileName(),
+					},
+				},
+			});
+			fileService.createFileDownloadUrl.mockResolvedValue({
+				ok: true,
+				data: {
+					file: {
+						id: faker.string.uuid(),
+						userId: faker.string.uuid(),
+						name: faker.system.fileName(),
+					},
+					url: faker.internet.url(),
+				},
+			});
+
+			/**
+			 * Act
+			 */
+			const { data, errors } = await client.query({
+				query: graphql(`
+					query OrganizationWithLogo($data: OrganizationInput!) {
+						organization(data: $data) {
+							organization {
+								logo {
+									url
+								}
+							}
+						}
+					}
+				`),
+				variables: {
+					data: {
+						id: faker.string.uuid(),
+					},
+				},
+			});
+
+			/**
+			 * Assert
+			 */
+			expect(errors).toBeUndefined();
+			expect(data?.organization.organization.logo?.url).toEqual(
+				expect.any(String),
+			);
+		});
+
+		it("{ organization { logo { url } } } returns null if file id is null", async () => {
+			const { client, organizationService } = createMockApolloServer();
+
+			/**
+			 * Arrange
+			 *
+			 * Set up mocks for the organization service
+			 */
+			organizationService.organizations.get.mockResolvedValue(
+				mock<Organization>({
+					id: faker.string.uuid(),
+					logoFileId: null,
+				}),
+			);
+
+			/**
+			 * Act
+			 */
+			const { data, errors } = await client.query({
+				query: graphql(`
+					query OrganizationWithLogo($data: OrganizationInput!) {
+						organization(data: $data) {
+							organization {
+								logo {
+									url
+								}
+							}
+						}
+					}
+				`),
+				variables: {
+					data: {
+						id: faker.string.uuid(),
+					},
+				},
+			});
+
+			/**
+			 * Assert
+			 */
+			expect(errors).toBeUndefined();
+			expect(data?.organization.organization.logo).toBeNull();
+		});
 	});
 });

@@ -51,6 +51,7 @@ type Organization {
   featurePermissions: [FeaturePermission!]!
   events: [Event!]!
   listings: [Listing!]!
+  logo: RemoteFile
 }
 
 type Member {
@@ -105,6 +106,7 @@ input UpdateOrganizationInput {
   Requires that the current user is a super user, otherwise, this field is ignored.
   """
   featurePermissions: [FeaturePermission!]
+  logoFileId: ID
 }
 
 type UpdateOrganizationResponse {

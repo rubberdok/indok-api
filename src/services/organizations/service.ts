@@ -16,11 +16,12 @@ interface OrganizationRepository {
 	}): Promise<Organization>;
 	update(
 		id: string,
-		data: {
-			name?: string;
-			description?: string;
-			featurePermissions?: FeaturePermission[];
-		},
+		data: Partial<{
+			name: string;
+			description: string;
+			featurePermissions: FeaturePermission[];
+			logoFileId: string;
+		}>,
 	): Promise<Organization>;
 	get(id: string): Promise<Organization>;
 	findMany(): Promise<Organization[]>;

@@ -7,6 +7,7 @@ import {
 } from "~/domain/errors.js";
 import { Role } from "~/domain/organizations.js";
 import type { Context } from "~/lib/context.js";
+import type { IOrganizationService } from "~/lib/server.js";
 import type { Dependencies } from "./service.js";
 
 interface PermissionService {
@@ -22,7 +23,7 @@ interface PermissionService {
 function buildOrganizations(
 	{ organizationRepository }: Dependencies,
 	{ permissions }: { permissions: PermissionService },
-) {
+): IOrganizationService["organizations"] {
 	return {
 		async findMany(params?: { userId?: string }): Promise<Organization[]> {
 			if (!params) return await organizationRepository.findMany();
@@ -54,11 +55,7 @@ function buildOrganizations(
 		async update(
 			ctx: Context,
 			organizationId: string,
-			data: Partial<{
-				name: string | null;
-				description: string | null;
-				featurePermissions: FeaturePermission[] | null;
-			}>,
+			data,
 		): Promise<Organization> {
 			if (!ctx.user) {
 				throw new UnauthorizedError(
@@ -78,6 +75,11 @@ function buildOrganizations(
 					.max(10000)
 					.nullish()
 					.transform((val) => val ?? undefined),
+				logoFileId: z
+					.string()
+					.uuid()
+					.nullish()
+					.transform((val) => val ?? undefined),
 			});
 
 			const { isSuperUser } = ctx.user;
@@ -91,12 +93,13 @@ function buildOrganizations(
 							.transform((val) => val ?? undefined),
 					});
 
-					const { name, description, featurePermissions } =
+					const { name, description, featurePermissions, logoFileId } =
 						superUserSchema.parse(data);
 					return await organizationRepository.update(organizationId, {
 						name,
 						description,
 						featurePermissions,
+						logoFileId,
 					});
 				}
 				const isMember = await permissions.hasRole(ctx, {
@@ -110,11 +113,12 @@ function buildOrganizations(
 				}
 
 				const schema = baseSchema;
-				const { name, description } = schema.parse(data);
+				const { name, description, logoFileId } = schema.parse(data);
 
 				return await organizationRepository.update(organizationId, {
 					name,
 					description,
+					logoFileId,
 				});
 			} catch (err) {
 				if (err instanceof z.ZodError)
