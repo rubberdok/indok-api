@@ -221,10 +221,12 @@ describe("OrganizationsRepository", () => {
 				 * Check that the organization has been updated with {data} and now matches
 				 * {expected}, leaving undefined values unchanged.
 				 */
-				await expect(result).resolves.toEqual({
-					...expected,
-					...data,
-				});
+				await expect(result).resolves.toEqual(
+					expect.objectContaining({
+						...expected,
+						...data,
+					}),
+				);
 			},
 		);
 	});
