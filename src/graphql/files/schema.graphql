@@ -1,0 +1,19 @@
+type Mutation {
+  uploadFile(data: UploadFileInput!): UploadFileResponse!
+}
+
+input UploadFileInput {
+  extension: String!
+}
+
+type UploadFileResponse {
+  """
+  Shared access signature URL for the file upload. For details,
+  see https://learn.microsoft.com/en-us/azure/storage/common/storage-sas-overview
+  """
+  sasUrl: String!
+  """
+  The ID of the file that was uploaded.
+  """
+  id: ID!
+}

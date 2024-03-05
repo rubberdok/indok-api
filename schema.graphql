@@ -625,6 +625,7 @@ type Mutation {
   """
   updateOrganization(data: UpdateOrganizationInput!): UpdateOrganizationResponse!
   updateUser(data: UpdateUserInput!): UpdateUserResponse!
+  uploadFile(data: UploadFileInput!): UploadFileResponse!
 }
 
 input NewBookingCabinInput {
@@ -1338,6 +1339,21 @@ input UpdateUserInput {
 
 type UpdateUserResponse {
   user: PrivateUser!
+}
+
+input UploadFileInput {
+  extension: String!
+}
+
+type UploadFileResponse {
+  """The ID of the file that was uploaded."""
+  id: ID!
+
+  """
+  Shared access signature URL for the file upload. For details,
+  see https://learn.microsoft.com/en-us/azure/storage/common/storage-sas-overview
+  """
+  sasUrl: String!
 }
 
 type UserResponse {
