@@ -7,7 +7,7 @@ import {
 	Semester,
 } from "@prisma/client";
 import { sumBy } from "lodash-es";
-import { DateTime } from "luxon";
+import { DateTime, Interval } from "luxon";
 import { z } from "zod";
 import { Booking, BookingStatus, type BookingType } from "~/domain/cabins.js";
 import {
@@ -74,6 +74,15 @@ export interface ICabinRepository {
 		internalPriceWeekend: number;
 		externalPriceWeekend: number;
 	}): ResultAsync<{ cabin: Cabin }, InternalServerError>;
+	findManyBookings(
+		ctx: Context,
+		params: { cabinId: string; endAtGte?: Date; bookingStatus?: BookingStatus },
+	): ResultAsync<
+		{
+			bookings: BookingType[];
+		},
+		InternalServerError
+	>;
 }
 
 export interface PermissionService {
@@ -95,6 +104,54 @@ export class CabinService implements ICabinService {
 		private mailService: MailService,
 		private permissionService: PermissionService,
 	) {}
+	async getOccupiedDates(
+		ctx: Context,
+		params: { cabinId: string },
+	): ResultAsync<{ days: Date[] }, NotFoundError | InternalServerError> {
+		const findManyBookingsResult = await this.cabinRepository.findManyBookings(
+			ctx,
+			{
+				cabinId: params.cabinId,
+				endAtGte: new Date(),
+				bookingStatus: "CONFIRMED",
+			},
+		);
+
+		if (!findManyBookingsResult.ok) {
+			return findManyBookingsResult;
+		}
+
+		const { bookings } = findManyBookingsResult.data;
+
+		const intervals = bookings.map((booking) => {
+			const startAt = DateTime.fromJSDate(booking.startDate).startOf("day");
+			const endAt = DateTime.fromJSDate(booking.endDate).startOf("day");
+			const interval = Interval.fromDateTimes(startAt, endAt.plus({ days: 1 }));
+			return interval;
+		});
+
+		const mergedIntervals = Interval.merge(intervals);
+
+		function isNotUndefined(date: Date | undefined): date is Date {
+			return date !== null;
+		}
+		const days = mergedIntervals
+			.flatMap((interval) => {
+				if (interval.isValid) {
+					const split = interval
+						.splitBy({ days: 1 })
+						.map((interval) => interval.start?.toJSDate());
+					return split;
+				}
+				return [];
+			})
+			.filter(isNotUndefined);
+
+		return {
+			ok: true,
+			data: { days },
+		};
+	}
 
 	async createCabin(
 		ctx: Context,

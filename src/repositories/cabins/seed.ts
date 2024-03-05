@@ -119,6 +119,42 @@ const bookingCreateInput: Prisma.BookingCreateInput[] = [
 			},
 		},
 	},
+	{
+		id: faker.string.uuid(),
+		startDate: DateTime.now().plus({ weeks: 1 }).toJSDate(),
+		endDate: DateTime.now().plus({ weeks: 2 }).toJSDate(),
+		status: BookingStatus.CONFIRMED,
+		email: faker.internet.exampleEmail(),
+		phoneNumber: faker.phone.number(),
+		firstName: faker.person.firstName(),
+		lastName: faker.person.lastName(),
+		internalParticipantsCount: 5,
+		externalParticipantsCount: 10,
+		totalCost: 1 * 250 + 5 * 200 + 1 * 2500 + 5 * 2000,
+		cabins: {
+			connect: {
+				id: oksenId,
+			},
+		},
+	},
+	{
+		id: faker.string.uuid(),
+		startDate: DateTime.now().plus({ weeks: 3 }).toJSDate(),
+		endDate: DateTime.now().plus({ weeks: 4 }).toJSDate(),
+		status: BookingStatus.CONFIRMED,
+		email: faker.internet.exampleEmail(),
+		phoneNumber: faker.phone.number(),
+		firstName: faker.person.firstName(),
+		lastName: faker.person.lastName(),
+		internalParticipantsCount: 5,
+		externalParticipantsCount: 10,
+		totalCost: 1 * 250 + 5 * 200 + 1 * 2500 + 5 * 2000,
+		cabins: {
+			connect: {
+				id: bjornenId,
+			},
+		},
+	},
 ];
 
 const createBookingSemesterInput: Prisma.BookingSemesterCreateInput[] = [
