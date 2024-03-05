@@ -1,4 +1,6 @@
+import { faker } from "@faker-js/faker";
 import { InternalServerError } from "~/domain/errors.js";
+import { RemoteFile } from "~/domain/files.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
@@ -16,7 +18,9 @@ describe("File Mutations", () => {
 				mutation: graphql(`
                     mutation CreateFileUploadUrl($data: UploadFileInput!) {
                         uploadFile(data: $data) {
-                            id
+                            file {
+                                id
+                            }
                             sasUrl
                         }
                     }
@@ -37,7 +41,11 @@ describe("File Mutations", () => {
 			fileService.createFileUploadUrl.mockResolvedValue({
 				ok: true,
 				data: {
-					id: "test-id",
+					file: new RemoteFile({
+						id: faker.string.uuid(),
+						userId: faker.string.uuid(),
+						name: faker.system.fileName(),
+					}),
 					url: "https://example.com",
 				},
 			});
@@ -46,7 +54,9 @@ describe("File Mutations", () => {
 				mutation: graphql(`
                     mutation CreateFileUploadUrl($data: UploadFileInput!) {
                         uploadFile(data: $data) {
-                            id
+                            file {
+                                id
+                            }
                             sasUrl
                         }
                     }
@@ -61,7 +71,9 @@ describe("File Mutations", () => {
 			expect(errors).toBeUndefined();
 			expect(data).toEqual({
 				uploadFile: {
-					id: "test-id",
+					file: {
+						id: expect.any(String),
+					},
 					sasUrl: "https://example.com",
 				},
 			});

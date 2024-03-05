@@ -13,7 +13,22 @@ type UploadFileResponse {
   """
   sasUrl: String!
   """
-  The ID of the file that was uploaded.
+  The file that was uploaded.
+  """
+  file: RemoteFile!
+}
+
+type RemoteFile {
+  """
+  The ID of the file
   """
   id: ID!
+  """
+  The URL of the file
+  """
+  url: String
+  """
+  The name of the file
+  """
+  name: String!
 }

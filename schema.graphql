@@ -742,6 +742,7 @@ type Organization {
   featurePermissions: [FeaturePermission!]!
   id: ID!
   listings: [Listing!]!
+  logo: RemoteFile
 
   """The members of the organization"""
   members: [Member!]
@@ -967,6 +968,17 @@ type Query {
   totalCost(data: TotalCostInput!): TotalCostResponse!
   user: UserResponse!
   users: UsersResponse!
+}
+
+type RemoteFile {
+  """The ID of the file"""
+  id: ID!
+
+  """The name of the file"""
+  name: String!
+
+  """The URL of the file"""
+  url: String
 }
 
 input RemoveMemberInput {
@@ -1305,6 +1317,7 @@ input UpdateOrganizationInput {
 
   """The ID of the organization to update"""
   id: ID!
+  logoFileId: ID
 
   """
   The new name of the organization
@@ -1346,8 +1359,8 @@ input UploadFileInput {
 }
 
 type UploadFileResponse {
-  """The ID of the file that was uploaded."""
-  id: ID!
+  """The file that was uploaded."""
+  file: RemoteFile!
 
   """
   Shared access signature URL for the file upload. For details,

@@ -35,7 +35,7 @@ import type {
 	SignUpAvailability,
 	SlotType,
 } from "~/domain/events/index.js";
-import type { FileType } from "~/domain/files.js";
+import type { FileType, RemoteFile } from "~/domain/files.js";
 import type { Role } from "~/domain/organizations.js";
 import type {
 	MerchantType,
@@ -95,11 +95,12 @@ interface IOrganizationService {
 		update(
 			ctx: Context,
 			organizationId: string,
-			data: {
-				name?: string | null;
-				description?: string | null;
-				featurePermissions?: FeaturePermission[] | null;
-			},
+			data: Partial<{
+				name: string | null;
+				description: string | null;
+				featurePermissions: FeaturePermission[] | null;
+				logoFileId: string | null;
+			}>,
 		): Promise<Organization>;
 		get(id: string): Promise<Organization>;
 		findMany(data?: { userId?: string }): Promise<Organization[]>;
@@ -545,7 +546,7 @@ interface IFileService {
 		ctx: Context,
 		params: { extension: string },
 	): ResultAsync<
-		{ id: string; url: string },
+		{ file: FileType; url: string },
 		| DownstreamServiceError
 		| InternalServerError
 		| UnauthorizedError
@@ -561,6 +562,10 @@ interface IFileService {
 		| DownstreamServiceError
 		| InvalidArgumentError
 	>;
+	getFile(
+		ctx: Context,
+		params: { id: string },
+	): ResultAsync<{ file: RemoteFile }, NotFoundError | InternalServerError>;
 }
 
 type UserContext = {

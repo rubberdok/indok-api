@@ -6,7 +6,7 @@ import {
 	InvalidArgumentError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
-import type { FileType } from "~/domain/files.js";
+import { type FileType, RemoteFile } from "~/domain/files.js";
 import { makeMockContext } from "~/lib/context.js";
 import {
 	type BlobStorageAdapter,
@@ -125,7 +125,11 @@ describe("FileService", () => {
 			fileRepository.createFile.mockResolvedValue({
 				ok: true,
 				data: {
-					file: mock<FileType>({ id: faker.string.uuid() }),
+					file: new RemoteFile({
+						id: faker.string.uuid(),
+						userId: faker.string.uuid(),
+						name: faker.system.fileName(),
+					}),
 				},
 			});
 			blobStorageAdapter.createSasBlobUrl.mockResolvedValue({
@@ -143,8 +147,38 @@ describe("FileService", () => {
 				ok: true,
 				data: {
 					url: expect.any(String),
-					id: expect.any(String),
+					file: expect.any(RemoteFile),
 				},
+			});
+		});
+
+		it("returns InvalidArgumentError if the file type is not permitted", async () => {
+			const { files, fileRepository, blobStorageAdapter } = makeDependencies();
+
+			fileRepository.createFile.mockResolvedValue({
+				ok: true,
+				data: {
+					file: new RemoteFile({
+						id: faker.string.uuid(),
+						userId: faker.string.uuid(),
+						name: faker.system.fileName(),
+					}),
+				},
+			});
+			blobStorageAdapter.createSasBlobUrl.mockResolvedValue({
+				ok: true,
+				data: {
+					url: faker.internet.url(),
+				},
+			});
+
+			const result = await files.createFileUploadUrl(makeMockContext({}), {
+				extension: "exe",
+			});
+
+			expect(result).toEqual({
+				ok: false,
+				error: expect.any(InvalidArgumentError),
 			});
 		});
 	});

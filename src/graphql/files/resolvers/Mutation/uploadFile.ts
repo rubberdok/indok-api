@@ -12,9 +12,9 @@ export const uploadFile: NonNullable<MutationResolvers["uploadFile"]> = async (
 		throw createFileUploadUrlResult.error;
 	}
 
-	const { id, url } = createFileUploadUrlResult.data;
+	const { file, url } = createFileUploadUrlResult.data;
 	return {
-		id: id,
+		file: file,
 		sasUrl: url,
 	};
 };

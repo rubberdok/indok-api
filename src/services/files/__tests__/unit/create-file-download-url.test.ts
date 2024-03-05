@@ -7,7 +7,7 @@ import {
 	NotFoundError,
 } from "~/domain/errors.js";
 import type { FileType } from "~/domain/files.js";
-import { File } from "~/domain/files.js";
+import { RemoteFile } from "~/domain/files.js";
 import { makeMockContext } from "~/lib/context.js";
 import {
 	type BlobStorageAdapter,
@@ -132,9 +132,10 @@ describe("FileService", () => {
 			fileRepository.getFile.mockResolvedValue({
 				ok: true,
 				data: {
-					file: new File({
+					file: new RemoteFile({
 						id: faker.string.uuid(),
 						userId: faker.string.uuid(),
+						name: faker.system.fileName(),
 					}),
 				},
 			});
@@ -153,7 +154,7 @@ describe("FileService", () => {
 				ok: true,
 				data: {
 					url: expect.any(String),
-					file: expect.any(File),
+					file: expect.any(RemoteFile),
 				},
 			});
 		});

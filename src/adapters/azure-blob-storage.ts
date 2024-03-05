@@ -58,11 +58,11 @@ function BlobStorageAdapter({
 					break;
 				}
 				case "DELETE": {
-					permissions = BlobSASPermissions.parse("d");
+					permissions = BlobSASPermissions.parse("rd");
 					break;
 				}
 				case "DOWNLOAD": {
-					permissions = BlobSASPermissions.parse("rl");
+					permissions = BlobSASPermissions.parse("r");
 					break;
 				}
 			}
@@ -88,30 +88,60 @@ function BlobStorageAdapter({
 		}
 	}
 
+	function getUserDelegationTimeRange(
+		ctx: Context,
+		params: { action: "UPLOAD" | "DOWNLOAD" | "DELETE" },
+	): { startsOn: Date; expiresOn: Date } {
+		switch (params.action) {
+			case "DELETE":
+			case "UPLOAD": {
+				const TEN_MINUTES_BEFORE_NOW = DateTime.now()
+					.minus({ minutes: 10 })
+					.toJSDate();
+				const TEN_MINUTES_AFTER_NOW = DateTime.now()
+					.plus({ minutes: 10 })
+					.toJSDate();
+				return {
+					startsOn: TEN_MINUTES_BEFORE_NOW,
+					expiresOn: TEN_MINUTES_AFTER_NOW,
+				};
+			}
+			case "DOWNLOAD": {
+				const TEN_MINUTES_BEFORE_NOW = DateTime.now()
+					.minus({ minutes: 10 })
+					.toJSDate();
+				const SIXTY_MINUTES_AFTER_NOW = DateTime.now()
+					.plus({ minutes: 60 })
+					.toJSDate();
+				return {
+					startsOn: TEN_MINUTES_BEFORE_NOW,
+					expiresOn: SIXTY_MINUTES_AFTER_NOW,
+				};
+			}
+		}
+	}
+
 	async function newUserDelegationKey(
 		ctx: Context,
+		params: {
+			action: "UPLOAD" | "DOWNLOAD" | "DELETE";
+		},
 	): ResultAsync<
 		{ userDelegationKey: UserDelegationKey; expiresOn: Date; startsOn: Date },
 		DownstreamServiceError
 	> {
-		const TEN_MINUTES_BEFORE_NOW = DateTime.now()
-			.minus({ minutes: 10 })
-			.toJSDate();
-		const TEN_MINUTES_AFTER_NOW = DateTime.now()
-			.plus({ minutes: 10 })
-			.toJSDate();
-
+		const { startsOn, expiresOn } = getUserDelegationTimeRange(ctx, params);
 		try {
 			const userDelegationKey = await blobServiceClient.getUserDelegationKey(
-				TEN_MINUTES_BEFORE_NOW,
-				TEN_MINUTES_AFTER_NOW,
+				startsOn,
+				expiresOn,
 			);
 			return {
 				ok: true,
 				data: {
 					userDelegationKey,
-					startsOn: TEN_MINUTES_BEFORE_NOW,
-					expiresOn: TEN_MINUTES_AFTER_NOW,
+					startsOn,
+					expiresOn,
 				},
 			};
 		} catch (err) {
@@ -142,7 +172,9 @@ function BlobStorageAdapter({
 				};
 			}
 
-			const getUserDelegationKeyResult = await newUserDelegationKey(ctx);
+			const getUserDelegationKeyResult = await newUserDelegationKey(ctx, {
+				action: params.action,
+			});
 			if (!getUserDelegationKeyResult.ok) {
 				return getUserDelegationKeyResult;
 			}
@@ -150,7 +182,7 @@ function BlobStorageAdapter({
 				getUserDelegationKeyResult.data;
 			const getSasOptionsResult = getSasOptions(ctx, {
 				name: params.name,
-				action: "UPLOAD",
+				action: params.action,
 				startsOn,
 				expiresOn,
 			});

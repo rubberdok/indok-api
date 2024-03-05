@@ -13,6 +13,7 @@ describe("FileRepository", () => {
 			await fileRepository.createFile({
 				id: fileId,
 				userId: user.id,
+				name: "file.txt",
 			});
 
 			const getFileResult = await fileRepository.getFile({ id: fileId });

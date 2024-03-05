@@ -78,15 +78,17 @@ export class OrganizationRepository {
 			name?: string;
 			description?: string;
 			featurePermissions?: FeaturePermission[];
+			logoFileId?: string;
 		},
 	): Promise<Organization> {
-		const { name, description, featurePermissions } = data;
+		const { name, description, featurePermissions, logoFileId } = data;
 		return this.db.organization.update({
 			where: { id },
 			data: {
 				name,
 				description,
 				featurePermissions,
+				logoFileId,
 			},
 		});
 	}

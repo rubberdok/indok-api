@@ -13,6 +13,7 @@ describe("FileRepository", () => {
 			const createFileResult = await fileRepository.createFile({
 				id: fileId,
 				userId: user.id,
+				name: "file.txt",
 			});
 
 			expect(createFileResult).toEqual({
@@ -21,6 +22,7 @@ describe("FileRepository", () => {
 					file: expect.objectContaining({
 						id: fileId,
 						userId: user.id,
+						name: "file.txt",
 					}),
 				},
 			});

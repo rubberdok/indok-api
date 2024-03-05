@@ -12,7 +12,7 @@ import type { ResultAsync } from "~/lib/result.js";
 import type { IFileService } from "~/lib/server.js";
 
 interface FileRepository {
-	createFile(params: { id: string; userId: string }): ResultAsync<
+	createFile(params: { id: string; userId: string; name: string }): ResultAsync<
 		{ file: FileType },
 		InternalServerError
 	>;
@@ -37,6 +37,16 @@ type Dependencies = {
 	blobStorageAdapter: BlobStorageAdapter;
 };
 
+const FILE_TYPE_ALLOWED_EXTENSIONS = [
+	"jpg",
+	"jpeg",
+	"png",
+	"gif",
+	"pdf",
+	"docx",
+	"txt",
+];
+
 function FileService({
 	fileRepository,
 	blobStorageAdapter,
@@ -52,11 +62,23 @@ function FileService({
 				};
 			}
 
+			if (!FILE_TYPE_ALLOWED_EXTENSIONS.includes(extension)) {
+				return {
+					ok: false,
+					error: new InvalidArgumentError(
+						`File type not allowed. Allowed extensions: ${FILE_TYPE_ALLOWED_EXTENSIONS.join(
+							", ",
+						)}`,
+					),
+				};
+			}
+
 			const id = randomUUID();
 			const fileName = `${id}.${extension}`;
 			const createFileResult = await fileRepository.createFile({
 				id,
 				userId: ctx.user.id,
+				name: fileName,
 			});
 			if (!createFileResult.ok) {
 				return createFileResult;
@@ -102,7 +124,7 @@ function FileService({
 				ok: true,
 				data: {
 					url: createBlobUploadUrlResult.data.url,
-					id,
+					file: createFileResult.data.file,
 				},
 			};
 		},
@@ -125,7 +147,7 @@ function FileService({
 
 			const createBlobDownloadUrlResult =
 				await blobStorageAdapter.createSasBlobUrl(ctx, {
-					name: file.id,
+					name: file.name,
 					action: "DOWNLOAD",
 				});
 			if (!createBlobDownloadUrlResult.ok) {
@@ -163,6 +185,19 @@ function FileService({
 				data: {
 					url: createBlobDownloadUrlResult.data.url,
 					file,
+				},
+			};
+		},
+
+		async getFile(_ctx, { id }) {
+			const getFileResult = await fileRepository.getFile({ id });
+			if (!getFileResult.ok) {
+				return getFileResult;
+			}
+			return {
+				ok: true,
+				data: {
+					file: getFileResult.data.file,
 				},
 			};
 		},

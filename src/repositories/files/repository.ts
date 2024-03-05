@@ -1,6 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 import { InternalServerError, NotFoundError } from "~/domain/errors.js";
-import { File } from "~/domain/files.js";
+import { RemoteFile } from "~/domain/files.js";
 import type { FileRepository as FileRepositoryType } from "~/services/files/index.js";
 
 type Dependencies = {
@@ -25,7 +25,7 @@ function FileRepository({ db }: Dependencies): FileRepositoryType {
 				return {
 					ok: true,
 					data: {
-						file: new File(file),
+						file: new RemoteFile(file),
 					},
 				};
 			} catch (err) {
@@ -35,18 +35,19 @@ function FileRepository({ db }: Dependencies): FileRepositoryType {
 				};
 			}
 		},
-		async createFile({ userId, id }) {
+		async createFile({ userId, id, name }) {
 			try {
 				const file = await db.file.create({
 					data: {
 						id,
 						userId,
+						name,
 					},
 				});
 				return {
 					ok: true,
 					data: {
-						file: new File(file),
+						file: new RemoteFile(file),
 					},
 				};
 			} catch (err) {
