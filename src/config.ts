@@ -7,6 +7,7 @@ dotenv.config();
 const envVarsSchema = z.object({
 	AZURE_STORAGE_ACCOUNT_NAME: z.string().optional(),
 	AZURE_STORAGE_CONTAINER_NAME: z.string().optional(),
+	AZURE_MANAGED_IDENTITY_CLIENT_ID: z.string().optional(),
 	CORS_CREDENTIALS: z.string().transform((v) => v === "true"),
 	CORS_ORIGINS: z.string().transform((v) => v.split(",")),
 	DATABASE_CONNECTION_STRING: z.string(),

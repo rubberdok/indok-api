@@ -724,7 +724,9 @@ async function registerServices(
 	const authService = new AuthService(userService, feideClient);
 	const blobServiceClient = new BlobServiceClient(
 		`https://${env.AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net`,
-		new DefaultAzureCredential(),
+		new DefaultAzureCredential({
+			managedIdentityClientId: env.AZURE_MANAGED_IDENTITY_CLIENT_ID,
+		}),
 	);
 
 	const blobStorageAdapter = BlobStorageAdapter({
