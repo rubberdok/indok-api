@@ -1,3 +1,41 @@
+type Query {
+  cabins: CabinsResponse!
+  bookingSemesters: BookingSemestersResponse!
+  bookingContact: BookingContactResponse!
+  totalCost(data: TotalCostInput!): TotalCostResponse!
+  """
+  Find all bookings, requires that the user is in an organization with the CABIN_ADMIN permission.
+  """
+  bookings(data: BookingsInput): BookingsResponse!
+}
+
+type Mutation {
+  newBooking(data: NewBookingInput!): NewBookingResponse!
+  updateBookingStatus(data: UpdateBookingStatusInput!): UpdateBookingResponse!
+  """
+  Updates the booking semester for the given semester, requires that the user is in an organization with
+  the CABIN_ADMIN permission.
+  """
+  updateBookingSemester(
+    data: UpdateBookingSemesterInput!
+  ): UpdateBookingSemesterResponse!
+  """
+  Updates the booking contact, requires that the user is in an organization with the CABIN_ADMIN permission.
+  """
+  updateBookingContact(
+    data: UpdateBookingContactInput!
+  ): UpdateBookingContactResponse!
+}
+
+type BookingsResponse {
+  bookings: [Booking!]!
+  total: Int!
+}
+
+input BookingsInput {
+  status: BookingStatus
+}
+
 type Cabin {
   id: ID!
   name: String!
@@ -15,8 +53,21 @@ type Booking {
   lastName: String!
   email: String!
   phoneNumber: String!
-  cabins: [Cabin]!
-  status: Status!
+  cabins: [Cabin!]!
+  status: BookingStatus!
+  """
+  Total cost of the booking, in NOK
+  """
+  totalCost: Int!
+  createdAt: DateTime!
+  """
+  Questions/comments from the user to the cabin administrators
+  """
+  questions: String!
+  """
+  Feedback from the cabin administrators to the user, e.g. why a booking was rejected
+  """
+  feedback: String!
 }
 
 type BookingContact {
@@ -81,6 +132,10 @@ input NewBookingInput {
   phoneNumber: String!
   internalParticipantsCount: Int!
   externalParticipantsCount: Int!
+  """
+  Questions/comments from the user to the cabin administrators
+  """
+  questions: String
 }
 
 type NewBookingResponse {
@@ -89,14 +144,15 @@ type NewBookingResponse {
 
 input UpdateBookingStatusInput {
   id: ID!
-  status: Status!
+  status: BookingStatus!
+  feedback: String
 }
 
 type UpdateBookingResponse {
   booking: Booking!
 }
 
-enum Status {
+enum BookingStatus {
   PENDING
   CONFIRMED
   CANCELLED
@@ -148,29 +204,4 @@ input TotalCostInput {
 
 type TotalCostResponse {
   totalCost: Int!
-}
-
-type Query {
-  cabins: CabinsResponse!
-  bookingSemesters: BookingSemestersResponse!
-  bookingContact: BookingContactResponse!
-  totalCost(data: TotalCostInput!): TotalCostResponse!
-}
-
-type Mutation {
-  newBooking(data: NewBookingInput!): NewBookingResponse!
-  updateBookingStatus(data: UpdateBookingStatusInput!): UpdateBookingResponse!
-  """
-  Updates the booking semester for the given semester, requires that the user is in an organization with
-  the CABIN_ADMIN permission.
-  """
-  updateBookingSemester(
-    data: UpdateBookingSemesterInput!
-  ): UpdateBookingSemesterResponse!
-  """
-  Updates the booking contact, requires that the user is in an organization with the CABIN_ADMIN permission.
-  """
-  updateBookingContact(
-    data: UpdateBookingContactInput!
-  ): UpdateBookingContactResponse!
 }

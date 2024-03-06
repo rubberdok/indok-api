@@ -65,6 +65,9 @@ async function makeDependencies() {
 			internalParticipantsCount: faker.number.int({ min: 1, max: 10 }),
 			externalParticipantsCount: faker.number.int({ min: 1, max: 10 }),
 			totalCost: faker.number.int({ min: 100, max: 1000 }),
+			createdAt: new Date(),
+			questions: faker.lorem.sentence(),
+			feedback: faker.lorem.sentence(),
 		});
 		if (!createBookingResult.ok) throw createBookingResult.error;
 		return createBookingResult.data.booking;

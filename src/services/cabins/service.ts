@@ -34,7 +34,7 @@ export interface ICabinRepository {
 	): ResultAsync<{ booking: BookingType }, InternalServerError | NotFoundError>;
 	updateBooking(
 		id: string,
-		data: Pick<BookingType, "status">,
+		data: Partial<Pick<BookingType, "status" | "feedback">>,
 	): ResultAsync<{ booking: BookingType }, NotFoundError | InternalServerError>;
 	getBookingById(
 		id: string,
@@ -76,10 +76,15 @@ export interface ICabinRepository {
 	}): ResultAsync<{ cabin: Cabin }, InternalServerError>;
 	findManyBookings(
 		ctx: Context,
-		params: { cabinId: string; endAtGte?: Date; bookingStatus?: BookingStatus },
+		params: {
+			cabinId?: string;
+			endAtGte?: Date;
+			bookingStatus?: BookingStatus;
+		},
 	): ResultAsync<
 		{
 			bookings: BookingType[];
+			total: number;
 		},
 		InternalServerError
 	>;
@@ -104,6 +109,64 @@ export class CabinService implements ICabinService {
 		private mailService: MailService,
 		private permissionService: PermissionService,
 	) {}
+	async findManyBookings(
+		ctx: Context,
+		params?: { bookingStatus?: BookingStatus | null } | null,
+	): ResultAsync<
+		{ bookings: BookingType[]; total: number },
+		PermissionDeniedError | UnauthorizedError | InternalServerError
+	> {
+		ctx.log.info({ params }, "find many bookings");
+		if (!ctx.user) {
+			return {
+				ok: false,
+				error: new UnauthorizedError(
+					"You must be logged in to perform this action",
+				),
+			};
+		}
+
+		const hasPermission = await this.permissionService.hasFeaturePermission(
+			ctx,
+			{
+				featurePermission: FeaturePermission.CABIN_ADMIN,
+			},
+		);
+
+		if (!hasPermission) {
+			ctx.log.warn({ params }, "permission denied");
+			return {
+				ok: false,
+				error: new PermissionDeniedError(
+					"You do not have permission to view the bookings.",
+				),
+			};
+		}
+
+		const findManyBookingsResult = await this.cabinRepository.findManyBookings(
+			ctx,
+			{
+				bookingStatus: params?.bookingStatus ?? undefined,
+			},
+		);
+		if (!findManyBookingsResult.ok) {
+			return {
+				ok: false,
+				error: new InternalServerError(
+					"Failed to find bookings",
+					findManyBookingsResult.error,
+				),
+			};
+		}
+
+		return {
+			ok: true,
+			data: {
+				bookings: findManyBookingsResult.data.bookings,
+				total: findManyBookingsResult.data.total,
+			},
+		};
+	}
 	async getOccupiedDates(
 		ctx: Context,
 		params: { cabinId: string },
@@ -285,9 +348,11 @@ export class CabinService implements ICabinService {
 		const newBooking = new Booking(
 			new Booking({
 				...validatedData,
+				createdAt: new Date(),
 				totalCost: priceResult.data.totalCost,
 				status: "PENDING",
 				id: randomUUID(),
+				feedback: "",
 			}),
 		);
 
@@ -418,7 +483,12 @@ export class CabinService implements ICabinService {
 		},
 		cabins: Cabin[],
 	): Result<
-		{ validated: Omit<BookingType, "id" | "status" | "totalCost"> },
+		{
+			validated: Omit<
+				BookingType,
+				"id" | "status" | "totalCost" | "createdAt" | "feedback"
+			>;
+		},
 		InvalidArgumentError
 	> {
 		const { fall, spring } = bookingSemesters;
@@ -454,6 +524,10 @@ export class CabinService implements ICabinService {
 				externalParticipantsCount: z
 					.number()
 					.min(0, "external participants must be at least 0"),
+				questions: z
+					.string()
+					.nullish()
+					.transform((val) => val ?? ""),
 			})
 			.refine((obj) => obj.endDate > obj.startDate, {
 				message: "end date must be after start date",
@@ -534,8 +608,11 @@ export class CabinService implements ICabinService {
 	 */
 	async updateBookingStatus(
 		ctx: Context,
-		id: string,
-		status: BookingStatus,
+		params: {
+			bookingId: string;
+			status: BookingStatus;
+			feedback?: string | null;
+		},
 	): ResultAsync<
 		{ booking: BookingType },
 		| InternalServerError
@@ -544,6 +621,7 @@ export class CabinService implements ICabinService {
 		| PermissionDeniedError
 		| UnauthorizedError
 	> {
+		const { bookingId: id, status, feedback } = params;
 		if (!ctx.user) {
 			return {
 				ok: false,
@@ -596,7 +674,10 @@ export class CabinService implements ICabinService {
 				};
 			}
 		}
-		return this.cabinRepository.updateBooking(id, { status });
+		return this.cabinRepository.updateBooking(id, {
+			status,
+			feedback: feedback ?? undefined,
+		});
 	}
 
 	/**

@@ -196,6 +196,8 @@ model Booking {
   totalCost                 Int
   internalParticipantsCount Int
   externalParticipantsCount Int
+  questions                 String        @default("")
+  feedback                  String        @default("")
 }
 
 enum Semester {

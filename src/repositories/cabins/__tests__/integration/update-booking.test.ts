@@ -27,6 +27,26 @@ describe("CabinRepository", () => {
 			});
 		});
 
+		it("updates feedback", async () => {
+			const { cabinRepository, oksenBooking } = await makeDependencies();
+
+			const updateBookingResult = await cabinRepository.updateBooking(
+				oksenBooking.id,
+				{
+					feedback: "New feedback",
+				},
+			);
+
+			expect(updateBookingResult).toEqual({
+				ok: true,
+				data: {
+					booking: expect.objectContaining({
+						feedback: "New feedback",
+					}),
+				},
+			});
+		});
+
 		it("should return NotFoundError if the booking does not exist", async () => {
 			const { cabinRepository } = await makeDependencies();
 
