@@ -14,6 +14,7 @@ export const newBooking: NonNullable<MutationResolvers["newBooking"]> = async (
 		phoneNumber,
 		internalParticipantsCount,
 		externalParticipantsCount,
+		questions,
 	} = data;
 
 	const newBookingResult = await ctx.cabins.newBooking(ctx, {
@@ -26,6 +27,7 @@ export const newBooking: NonNullable<MutationResolvers["newBooking"]> = async (
 		phoneNumber,
 		internalParticipantsCount,
 		externalParticipantsCount,
+		questions,
 	});
 
 	if (!newBookingResult.ok) {

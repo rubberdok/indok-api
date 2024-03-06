@@ -33,6 +33,7 @@ describe("CabinService", () => {
 				ok: true,
 				data: {
 					bookings: [booking1, booking2],
+					total: 2,
 				},
 			});
 

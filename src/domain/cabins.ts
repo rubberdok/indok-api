@@ -20,6 +20,9 @@ interface BookingType {
 	totalCost: number;
 	internalParticipantsCount: number;
 	externalParticipantsCount: number;
+	createdAt: Date;
+	questions: string;
+	feedback: string;
 }
 
 class Booking implements BookingType {
@@ -36,7 +39,13 @@ class Booking implements BookingType {
 		this.totalCost = params.totalCost;
 		this.internalParticipantsCount = params.internalParticipantsCount;
 		this.externalParticipantsCount = params.externalParticipantsCount;
+		this.createdAt = params.createdAt;
+		this.questions = params.questions;
+		this.feedback = params.feedback;
 	}
+	feedback: string;
+	questions: string;
+	createdAt: Date;
 	internalParticipantsCount: number;
 	externalParticipantsCount: number;
 	totalCost: number;
@@ -64,6 +73,9 @@ type NewBookingParams = {
 	totalCost: number;
 	internalParticipantsCount: number;
 	externalParticipantsCount: number;
+	createdAt: Date;
+	questions: string;
+	feedback: string;
 };
 
 export { Booking };

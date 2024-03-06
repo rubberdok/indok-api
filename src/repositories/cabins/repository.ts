@@ -2,6 +2,7 @@ import type {
 	BookingContact,
 	BookingSemester,
 	Cabin,
+	Prisma,
 	PrismaClient,
 	Semester,
 } from "@prisma/client";
@@ -26,15 +27,30 @@ export class CabinRepository implements ICabinRepository {
 
 	async findManyBookings(
 		ctx: Context,
-		params: {
-			cabinId: string;
+		params?: {
+			cabinId?: string;
 			endAtGte?: Date;
 			bookingStatus?: BookingStatus;
 		},
-	): ResultAsync<{ bookings: BookingType[] }, InternalServerError> {
+	): ResultAsync<
+		{ bookings: BookingType[]; total: number },
+		InternalServerError
+	> {
 		ctx.log.info(params, "Finding bookings for cabin");
+		const where: Prisma.BookingWhereInput = {
+			status: params?.bookingStatus,
+			cabins: {
+				some: {
+					id: params?.cabinId,
+				},
+			},
+			endDate: {
+				gte: params?.endAtGte,
+			},
+		};
+
 		try {
-			const bookings = await this.db.booking.findMany({
+			const findManyPromise = this.db.booking.findMany({
 				include: {
 					cabins: {
 						select: {
@@ -42,22 +58,21 @@ export class CabinRepository implements ICabinRepository {
 						},
 					},
 				},
-				where: {
-					status: params.bookingStatus,
-					cabins: {
-						some: {
-							id: params.cabinId,
-						},
-					},
-					endDate: {
-						gte: params.endAtGte,
-					},
-				},
+				where,
 			});
+			const countPromise = this.db.booking.count({
+				where,
+			});
+			const [bookings, total] = await this.db.$transaction([
+				findManyPromise,
+				countPromise,
+			]);
+
 			return {
 				ok: true,
 				data: {
 					bookings: bookings.map((booking) => new Booking(booking)),
+					total,
 				},
 			};
 		} catch (err) {
@@ -111,7 +126,7 @@ export class CabinRepository implements ICabinRepository {
 
 	async updateBooking(
 		id: string,
-		data: Pick<BookingType, "status">,
+		data: Partial<Pick<BookingType, "status" | "feedback">>,
 	): ResultAsync<
 		{ booking: BookingType },
 		InternalServerError | NotFoundError

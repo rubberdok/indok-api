@@ -21,15 +21,27 @@ type AddMemberResponse {
 }
 
 type Booking {
-  cabins: [Cabin]!
+  cabins: [Cabin!]!
+  createdAt: DateTime!
   email: String!
   endDate: DateTime!
+
+  """
+  Feedback from the cabin administrators to the user, e.g. why a booking was rejected
+  """
+  feedback: String!
   firstName: String!
   id: ID!
   lastName: String!
   phoneNumber: String!
+
+  """Questions/comments from the user to the cabin administrators"""
+  questions: String!
   startDate: DateTime!
-  status: Status!
+  status: BookingStatus!
+
+  """Total cost of the booking, in NOK"""
+  totalCost: Int!
 }
 
 type BookingContact {
@@ -54,6 +66,22 @@ type BookingSemester {
 type BookingSemestersResponse {
   fall: BookingSemester
   spring: BookingSemester
+}
+
+enum BookingStatus {
+  CANCELLED
+  CONFIRMED
+  PENDING
+  REJECTED
+}
+
+input BookingsInput {
+  status: BookingStatus
+}
+
+type BookingsResponse {
+  bookings: [Booking!]!
+  total: Int!
 }
 
 type Cabin {
@@ -642,6 +670,9 @@ input NewBookingInput {
   internalParticipantsCount: Int!
   lastName: String!
   phoneNumber: String!
+
+  """Questions/comments from the user to the cabin administrators"""
+  questions: String
   startDate: DateTime!
 }
 
@@ -935,6 +966,11 @@ type PublicUser {
 type Query {
   bookingContact: BookingContactResponse!
   bookingSemesters: BookingSemestersResponse!
+
+  """
+  Find all bookings, requires that the user is in an organization with the CABIN_ADMIN permission.
+  """
+  bookings(data: BookingsInput): BookingsResponse!
   cabins: CabinsResponse!
   categories: EventCategoriesResponse!
   event(data: EventInput!): EventResponse!
@@ -1140,13 +1176,6 @@ type SignUpsWithTotalCount {
   total: Int!
 }
 
-enum Status {
-  CANCELLED
-  CONFIRMED
-  PENDING
-  REJECTED
-}
-
 type StudyProgram {
   externalId: String!
   id: ID!
@@ -1223,8 +1252,9 @@ type UpdateBookingSemesterResponse {
 }
 
 input UpdateBookingStatusInput {
+  feedback: String
   id: ID!
-  status: Status!
+  status: BookingStatus!
 }
 
 input UpdateCategoriesInput {

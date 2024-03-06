@@ -48,6 +48,9 @@ describe("Cabin Repository", () => {
 				externalParticipantsCount: faker.number.int({ max: 10 }),
 				internalParticipantsCount: faker.number.int({ max: 10 }),
 				totalCost: faker.number.int({ max: 2000 }),
+				createdAt: new Date(),
+				feedback: faker.lorem.sentence(),
+				questions: faker.lorem.sentence(),
 			});
 
 			/**
@@ -114,6 +117,9 @@ describe("Cabin Repository", () => {
 				externalParticipantsCount: faker.number.int({ max: 10 }),
 				internalParticipantsCount: faker.number.int({ max: 10 }),
 				totalCost: faker.number.int({ max: 2000 }),
+				createdAt: new Date(),
+				feedback: faker.lorem.sentence(),
+				questions: faker.lorem.sentence(),
 			});
 
 			/**
@@ -171,6 +177,9 @@ describe("Cabin Repository", () => {
 				externalParticipantsCount: faker.number.int({ max: 10 }),
 				internalParticipantsCount: faker.number.int({ max: 10 }),
 				totalCost: faker.number.int({ max: 2000 }),
+				createdAt: new Date(),
+				feedback: faker.lorem.sentence(),
+				questions: faker.lorem.sentence(),
 			});
 
 			/**

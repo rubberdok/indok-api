@@ -208,6 +208,7 @@ type NewBookingParams = {
 	phoneNumber: string;
 	internalParticipantsCount: number;
 	externalParticipantsCount: number;
+	questions?: string | null;
 };
 
 interface ICabinService {
@@ -220,8 +221,11 @@ interface ICabinService {
 	>;
 	updateBookingStatus(
 		ctx: Context,
-		id: string,
-		status: BookingStatus,
+		params: {
+			bookingId: string;
+			status: BookingStatus;
+			feedback?: string | null;
+		},
 	): ResultAsync<
 		{ booking: BookingType },
 		| NotFoundError
@@ -285,6 +289,13 @@ interface ICabinService {
 		ctx: Context,
 		params: { cabinId: string },
 	): ResultAsync<{ days: Date[] }, NotFoundError | InternalServerError>;
+	findManyBookings(
+		ctx: Context,
+		params?: { bookingStatus?: BookingStatus | null } | null,
+	): ResultAsync<
+		{ bookings: BookingType[]; total: number },
+		UnauthorizedError | PermissionDeniedError | InternalServerError
+	>;
 }
 
 interface IEventService {

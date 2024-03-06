@@ -5,7 +5,7 @@ import { makeDependencies } from "./dependencies.js";
 
 describe("CabinRepository", () => {
 	describe("#findManyBookings", () => {
-		it("returns all bookings for a cabin", async () => {
+		it("returns all bookings for a cabin and total count", async () => {
 			const {
 				cabinRepository,
 				oksen,
@@ -22,6 +22,7 @@ describe("CabinRepository", () => {
 				ok: true,
 				data: {
 					bookings: expect.arrayContaining([oksenBooking, bothBooking]),
+					total: expect.any(Number),
 				},
 			});
 
@@ -29,6 +30,26 @@ describe("CabinRepository", () => {
 				ok: true,
 				data: {
 					bookings: expect.not.arrayContaining([bjørnenBooking]),
+					total: expect.any(Number),
+				},
+			});
+		});
+
+		it("returns all bookings total count", async () => {
+			const { cabinRepository, oksenBooking, bothBooking, bjørnenBooking } =
+				await makeDependencies();
+
+			const result = await cabinRepository.findManyBookings(makeMockContext());
+
+			expect(result).toEqual({
+				ok: true,
+				data: {
+					bookings: expect.arrayContaining([
+						oksenBooking,
+						bothBooking,
+						bjørnenBooking,
+					]),
+					total: expect.any(Number),
 				},
 			});
 		});
@@ -44,6 +65,7 @@ describe("CabinRepository", () => {
 				ok: true,
 				data: {
 					bookings: [],
+					total: 0,
 				},
 			});
 		});
@@ -74,6 +96,7 @@ describe("CabinRepository", () => {
 				ok: true,
 				data: {
 					bookings: expect.arrayContaining([confirmedBooking]),
+					total: expect.any(Number),
 				},
 			});
 
@@ -81,6 +104,7 @@ describe("CabinRepository", () => {
 				ok: true,
 				data: {
 					bookings: expect.not.arrayContaining([pendingBooking]),
+					total: expect.any(Number),
 				},
 			});
 		});

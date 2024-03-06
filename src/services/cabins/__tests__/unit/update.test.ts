@@ -51,8 +51,10 @@ describe("CabinService", () => {
 			 */
 			const updateBookingStatus = await cabinService.updateBookingStatus(
 				makeMockContext({ id: userId }),
-				faker.string.uuid(),
-				BookingStatus.CONFIRMED,
+				{
+					bookingId: faker.string.uuid(),
+					status: BookingStatus.CONFIRMED,
+				},
 			);
 
 			/**
@@ -81,8 +83,10 @@ describe("CabinService", () => {
 			 */
 			const updateBookingStatus = await cabinService.updateBookingStatus(
 				makeMockContext(null),
-				faker.string.uuid(),
-				BookingStatus.CONFIRMED,
+				{
+					bookingId: faker.string.uuid(),
+					status: BookingStatus.CONFIRMED,
+				},
 			);
 
 			/**
@@ -133,8 +137,10 @@ describe("CabinService", () => {
 			 */
 			const updateBookingStatus = await cabinService.updateBookingStatus(
 				makeMockContext({ id: userId }),
-				faker.string.uuid(),
-				BookingStatus.CONFIRMED,
+				{
+					bookingId: faker.string.uuid(),
+					status: BookingStatus.CONFIRMED,
+				},
 			);
 
 			/**
@@ -145,6 +151,80 @@ describe("CabinService", () => {
 			expect(updateBookingStatus).toEqual({
 				ok: false,
 				error: expect.any(InvalidArgumentError),
+			});
+		});
+
+		it("updates booking status and feedback", async () => {
+			/**
+			 * Arrange
+			 *
+			 * Mock the permissionService.hasFeaturePermission method to return true.
+			 * Mock the cabinRepository.getCabinByBookingId method to return a cabin.
+			 * Mock getBookingById to return a booking.
+			 * Mock getOverlappingBookings to return multiple bookings.
+			 */
+			const userId = faker.string.uuid();
+			cabinRepository.getCabinByBookingId.mockResolvedValueOnce(mock<Cabin>());
+			permissionService.hasFeaturePermission.mockResolvedValueOnce(true);
+			cabinRepository.getBookingById.mockResolvedValueOnce({
+				ok: true,
+				data: {
+					booking: mock<BookingType>({
+						id: faker.string.uuid(),
+						startDate: faker.date.future(),
+						endDate: faker.date.future(),
+					}),
+				},
+			});
+			cabinRepository.getOverlappingBookings.mockResolvedValueOnce({
+				ok: true,
+				data: {
+					bookings: [],
+				},
+			});
+			cabinRepository.updateBooking.mockResolvedValueOnce({
+				ok: true,
+				data: {
+					booking: {
+						...mock<BookingType>(),
+						status: BookingStatus.CONFIRMED,
+					},
+				},
+			});
+
+			/**
+			 * Act
+			 *
+			 * Call updateBookingStatus
+			 */
+			const updateBookingStatus = await cabinService.updateBookingStatus(
+				makeMockContext({ id: userId }),
+				{
+					bookingId: faker.string.uuid(),
+					status: BookingStatus.CONFIRMED,
+					feedback: faker.lorem.sentence(),
+				},
+			);
+
+			/**
+			 * Assert
+			 *
+			 * Expect updateBookingStatus to return an InvalidArgumentError
+			 */
+			expect(cabinRepository.updateBooking).toHaveBeenCalledWith(
+				expect.any(String),
+				expect.objectContaining({
+					status: BookingStatus.CONFIRMED,
+					feedback: expect.any(String),
+				}),
+			);
+			expect(updateBookingStatus).toEqual({
+				ok: true,
+				data: {
+					booking: expect.objectContaining({
+						status: BookingStatus.CONFIRMED,
+					}),
+				},
 			});
 		});
 	});
