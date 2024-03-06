@@ -48,8 +48,8 @@ dependencies:
     specifier: ^9.0.3
     version: 9.0.3(graphql@16.8.1)
   '@immobiliarelabs/fastify-sentry':
-    specifier: ^8.0.0
-    version: 8.0.0
+    specifier: ^8.0.1
+    version: 8.0.1
   '@prisma/client':
     specifier: ^5.10.2
     version: 5.10.2(prisma@5.10.2)
@@ -2249,13 +2249,13 @@ packages:
       '@hapi/hoek': 9.3.0
     dev: true
 
-  /@immobiliarelabs/fastify-sentry@8.0.0:
-    resolution: {integrity: sha512-W2T7dTIxctBo70vFDjknsQeaITKyY7YmL4OJHV79Qotm0CCcQ8DHW+dJvCOYDOnFrNo92mf73pdC/M2NvDzi+Q==}
+  /@immobiliarelabs/fastify-sentry@8.0.1:
+    resolution: {integrity: sha512-gA++aSJWeM7hNSFm4M75Bq3pAWlgPamUnI0kdMrZxt3Ab+SMZIq7GOBbX4tZpvEfSB5F9gDkVb5TIXm+qUN1hg==}
     engines: {node: '>=18'}
     dependencies:
       '@sentry/node': 7.105.0
       '@sentry/tracing': 7.105.0
-      '@sentry/utils': 7.89.0
+      '@sentry/utils': 7.105.0
       cookie: 0.6.0
       fastify-plugin: 4.5.1
     dev: false
@@ -2922,23 +2922,11 @@ packages:
     engines: {node: '>=8'}
     dev: false
 
-  /@sentry/types@7.89.0:
-    resolution: {integrity: sha512-5Rqt6vIP652p01ypUaEIrELjsHF0vUnzj/JFz+i7nXv6w77GPpNzeIlMYdnauBIgJhLUvYCTQaOPV9GhgZhc4g==}
-    engines: {node: '>=8'}
-    dev: false
-
   /@sentry/utils@7.105.0:
     resolution: {integrity: sha512-YVAV0c2KLM8+VZCicQ/E/P2+J9Vs0hGhrXwV7w6ZEAtvxrg4oF270toL1WRhvcaf8JO4J1v4V+LuU6Txs4uEeQ==}
     engines: {node: '>=8'}
     dependencies:
       '@sentry/types': 7.105.0
-    dev: false
-
-  /@sentry/utils@7.89.0:
-    resolution: {integrity: sha512-t6qDQajdAjZ6LPraAWO00ZjvDbNH82DoVGV/2o4C5MBPCutJGTGyWIpI2tliYPZPPx+3C2m5L757zh1dCzrgUg==}
-    engines: {node: '>=8'}
-    dependencies:
-      '@sentry/types': 7.89.0
     dev: false
 
   /@sideway/address@4.1.4:
