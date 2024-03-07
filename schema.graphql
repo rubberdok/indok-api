@@ -90,15 +90,40 @@ type Cabin {
   id: ID!
   internalPrice: Int!
   name: String!
-  occupiedDays: [DateTime!]!
+  price: CabinPriceGroup!
 }
 
 input CabinInput {
   id: ID!
 }
 
+type CabinPrice {
+  weekday: Int!
+  weekend: Int!
+}
+
+type CabinPriceGroup {
+  external: CabinPrice!
+  internal: CabinPrice!
+}
+
 type CabinsResponse {
   cabins: [Cabin!]!
+}
+
+type CalendarDay {
+  available: Boolean!
+  availableForCheckIn: Boolean!
+  availableForCheckOut: Boolean!
+  bookable: Boolean!
+  calendarDate: DateTime!
+  price: Int!
+}
+
+type CalendarMonth {
+  days: [CalendarDay!]!
+  month: Int!
+  year: Int!
 }
 
 input CreateEventCategoryInput {
@@ -487,6 +512,22 @@ enum FeaturePermission {
   EVENT_WRITE_SIGN_UPS
 }
 
+input GetAvailabilityCalendarInput {
+  cabins: [CabinInput!]!
+  count: Int!
+  month: Int!
+  year: Int!
+}
+
+type GetAvailabilityCalendarResponse {
+  calendarMonths: [CalendarMonth!]!
+}
+
+input GuestsInput {
+  external: Int!
+  internal: Int!
+}
+
 input HasFeaturePermissionInput {
   featurePermission: FeaturePermission!
 }
@@ -793,11 +834,6 @@ type OrganizationsResponse {
   organizations: [Organization!]!
 }
 
-input ParticipantsInput {
-  external: Int!
-  internal: Int!
-}
-
 enum ParticipationStatus {
   """The user is confirmed to be attending the event"""
   CONFIRMED
@@ -975,6 +1011,7 @@ type Query {
   categories: EventCategoriesResponse!
   event(data: EventInput!): EventResponse!
   events(data: EventsInput): EventsResponse!
+  getAvailabilityCalendar(data: GetAvailabilityCalendarInput!): GetAvailabilityCalendarResponse!
   hasFeaturePermission(data: HasFeaturePermissionInput!): HasFeaturePermissionResponse!
   hasRole(data: HasRoleInput!): HasRoleResponse!
   listing(data: ListingInput!): ListingResponse!
@@ -1198,7 +1235,7 @@ type SuperUpdateUserResponse {
 input TotalCostInput {
   cabins: [CabinInput!]!
   endDate: DateTime!
-  participants: ParticipantsInput!
+  guests: GuestsInput!
   startDate: DateTime!
 }
 

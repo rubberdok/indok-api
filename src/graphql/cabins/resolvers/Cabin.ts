@@ -1,14 +1,21 @@
 import type { CabinResolvers } from "./../../types.generated.js";
 export const Cabin: CabinResolvers = {
 	/* Implement Cabin resolver logic here */
-	occupiedDays: async ({ id }, _args, ctx) => {
-		const occupiedDates = await ctx.cabins.getOccupiedDates(ctx, {
-			cabinId: id,
-		});
-		if (!occupiedDates.ok) {
-			throw occupiedDates.error;
-		}
-
-		return occupiedDates.data.days;
+	price: ({
+		internalPrice,
+		internalPriceWeekend,
+		externalPrice,
+		externalPriceWeekend,
+	}) => {
+		return {
+			internal: {
+				weekday: internalPrice,
+				weekend: internalPriceWeekend,
+			},
+			external: {
+				weekday: externalPrice,
+				weekend: externalPriceWeekend,
+			},
+		};
 	},
 };

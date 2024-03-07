@@ -7,6 +7,7 @@ import {
 	InvalidArgumentError,
 	type NotFoundError,
 } from "~/domain/errors.js";
+import { makeMockContext } from "~/lib/context.js";
 import type { Result } from "~/lib/result.js";
 import { CabinService, type ICabinRepository } from "../../service.js";
 
@@ -25,7 +26,7 @@ describe("CabinService", () => {
 			act: {
 				startDate: Date;
 				endDate: Date;
-				participants: {
+				guests: {
 					internal: number;
 					external: number;
 				};
@@ -52,7 +53,7 @@ describe("CabinService", () => {
 				act: {
 					startDate: DateTime.fromObject({ weekday: 1 }).toJSDate(),
 					endDate: DateTime.fromObject({ weekday: 2 }).toJSDate(),
-					participants: {
+					guests: {
 						internal: 5,
 						external: 5,
 					},
@@ -79,7 +80,7 @@ describe("CabinService", () => {
 				act: {
 					startDate: DateTime.fromObject({ weekday: 1 }).toJSDate(),
 					endDate: DateTime.fromObject({ weekday: 2 }).toJSDate(),
-					participants: {
+					guests: {
 						internal: 5,
 						external: 6,
 					},
@@ -106,7 +107,7 @@ describe("CabinService", () => {
 				act: {
 					startDate: DateTime.fromObject({ weekday: 6 }).toJSDate(),
 					endDate: DateTime.fromObject({ weekday: 7 }).toJSDate(),
-					participants: {
+					guests: {
 						internal: 5,
 						external: 5,
 					},
@@ -133,7 +134,7 @@ describe("CabinService", () => {
 				act: {
 					startDate: DateTime.fromObject({ weekday: 5 }).toJSDate(),
 					endDate: DateTime.fromObject({ weekday: 6 }).toJSDate(),
-					participants: {
+					guests: {
 						internal: 5,
 						external: 5,
 					},
@@ -162,7 +163,7 @@ describe("CabinService", () => {
 					endDate: DateTime.fromObject({ weekday: 1 })
 						.plus({ weeks: 1 })
 						.toJSDate(),
-					participants: {
+					guests: {
 						internal: 5,
 						external: 5,
 					},
@@ -197,7 +198,7 @@ describe("CabinService", () => {
 					endDate: DateTime.fromObject({ weekday: 1 })
 						.plus({ weeks: 1 })
 						.toJSDate(),
-					participants: {
+					guests: {
 						internal: 5,
 						external: 5,
 					},
@@ -232,7 +233,7 @@ describe("CabinService", () => {
 					endDate: DateTime.fromObject({ weekday: 5 })
 						.plus({ weeks: 1 })
 						.toJSDate(),
-					participants: {
+					guests: {
 						internal: 5,
 						external: 10,
 					},
@@ -265,7 +266,7 @@ describe("CabinService", () => {
 				act: {
 					startDate: DateTime.now().plus({ days: 2 }).toJSDate(),
 					endDate: DateTime.now().plus({ days: 1 }).toJSDate(),
-					participants: {
+					guests: {
 						internal: 5,
 						external: 10,
 					},
@@ -286,7 +287,7 @@ describe("CabinService", () => {
 			}
 
 			// Act
-			const result = await cabinService.totalCost({
+			const result = await cabinService.totalCost(makeMockContext(), {
 				...act,
 				cabins: arrange.cabins.map(() => ({ id: faker.string.uuid() })),
 			});

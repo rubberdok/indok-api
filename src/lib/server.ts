@@ -20,11 +20,16 @@ import type { Job } from "bullmq";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { BlobStorageAdapter } from "~/adapters/azure-blob-storage.js";
 import { type Configuration, env } from "~/config.js";
-import type { BookingStatus, BookingType } from "~/domain/cabins.js";
+import type {
+	BookingStatus,
+	BookingType,
+	CalendarMonth,
+} from "~/domain/cabins.js";
 import {
 	type DownstreamServiceError,
 	InternalServerError,
 	type InvalidArgumentError,
+	type InvalidArugmentErrorType,
 	type NotFoundError,
 	type PermissionDeniedError,
 	type UnauthorizedError,
@@ -217,7 +222,7 @@ interface ICabinService {
 		params: NewBookingParams,
 	): ResultAsync<
 		{ booking: BookingType },
-		InvalidArgumentError | InternalServerError
+		InvalidArugmentErrorType | InternalServerError
 	>;
 	updateBookingStatus(
 		ctx: Context,
@@ -273,28 +278,41 @@ interface ICabinService {
 		| UnauthorizedError
 		| InternalServerError
 	>;
-	totalCost(data: {
-		startDate: Date;
-		endDate: Date;
-		participants: {
-			internal: number;
-			external: number;
-		};
-		cabins: { id: string }[];
-	}): ResultAsync<
+	totalCost(
+		ctx: Context,
+		data: {
+			startDate: Date;
+			endDate: Date;
+			guests: {
+				internal: number;
+				external: number;
+			};
+			cabins: { id: string }[];
+		},
+	): ResultAsync<
 		{ totalCost: number },
 		InternalServerError | NotFoundError | InvalidArgumentError
 	>;
-	getOccupiedDates(
-		ctx: Context,
-		params: { cabinId: string },
-	): ResultAsync<{ days: Date[] }, NotFoundError | InternalServerError>;
 	findManyBookings(
 		ctx: Context,
 		params?: { bookingStatus?: BookingStatus | null } | null,
 	): ResultAsync<
 		{ bookings: BookingType[]; total: number },
 		UnauthorizedError | PermissionDeniedError | InternalServerError
+	>;
+	getAvailabilityCalendar(
+		ctx: Context,
+		params: {
+			month: number;
+			year: number;
+			count: number;
+			cabins: { id: string }[];
+		},
+	): ResultAsync<
+		{
+			calendarMonths: CalendarMonth[];
+		},
+		InternalServerError
 	>;
 }
 

@@ -35,49 +35,5 @@ describe("Cabin queries", () => {
 			expect(errors).toBeUndefined();
 			expect(cabinService.findManyCabins).toHaveBeenCalled();
 		});
-
-		it("resolves occupied days for the cabins", async () => {
-			const { client, cabinService } = createMockApolloServer();
-			const oksen = mock<Cabin>({
-				id: faker.string.uuid(),
-				name: "Oksen",
-			});
-			const bjørnen = mock<Cabin>({
-				id: faker.string.uuid(),
-				name: "Bjørnen",
-			});
-			cabinService.findManyCabins.mockResolvedValue([oksen, bjørnen]);
-			cabinService.getOccupiedDates.mockResolvedValue({
-				ok: true,
-				data: {
-					days: [],
-				},
-			});
-
-			const { errors } = await client.query({
-				query: graphql(`
-          query CabinsOccupiedDays {
-            cabins {
-              cabins {
-                id
-                name
-				occupiedDays
-              }
-            }
-          }
-        `),
-			});
-
-			expect(errors).toBeUndefined();
-			expect(cabinService.findManyCabins).toHaveBeenCalled();
-			expect(cabinService.getOccupiedDates).toHaveBeenCalledWith(
-				expect.anything(),
-				{ cabinId: oksen.id },
-			);
-			expect(cabinService.getOccupiedDates).toHaveBeenCalledWith(
-				expect.anything(),
-				{ cabinId: bjørnen.id },
-			);
-		});
 	});
 });

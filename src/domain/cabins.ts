@@ -1,3 +1,5 @@
+import type { DateTime } from "luxon";
+
 export const BookingStatus = {
 	PENDING: "PENDING",
 	CONFIRMED: "CONFIRMED",
@@ -78,5 +80,20 @@ type NewBookingParams = {
 	feedback: string;
 };
 
+type CalendarMonth = {
+	month: number;
+	year: number;
+	days: CalendarDay[];
+};
+
+type CalendarDay = {
+	calendarDate: DateTime;
+	available: boolean;
+	bookable: boolean;
+	price: number;
+	availableForCheckIn: boolean;
+	availableForCheckOut: boolean;
+};
+
 export { Booking };
-export type { NewBookingParams, BookingType };
+export type { NewBookingParams, BookingType, CalendarDay, CalendarMonth };

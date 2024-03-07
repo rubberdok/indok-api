@@ -1,6 +1,12 @@
 import { faker } from "@faker-js/faker";
-import { type Cabin, FeaturePermission } from "@prisma/client";
+import {
+	type BookingSemester,
+	type Cabin,
+	FeaturePermission,
+} from "@prisma/client";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
+import { DateTime } from "luxon";
+import { pino } from "pino";
 import { BookingStatus, type BookingType } from "~/domain/cabins.js";
 import {
 	InvalidArgumentError,
@@ -8,6 +14,7 @@ import {
 	UnauthorizedError,
 } from "~/domain/errors.js";
 import { makeMockContext } from "~/lib/context.js";
+import { envToLogger } from "~/lib/fastify/logging.js";
 import {
 	CabinService,
 	type ICabinRepository,
@@ -118,15 +125,49 @@ describe("CabinService", () => {
 				data: {
 					booking: mock<BookingType>({
 						id: faker.string.uuid(),
-						startDate: faker.date.future(),
-						endDate: faker.date.future(),
+						startDate: DateTime.fromObject({
+							day: 1,
+							month: 1,
+							year: 3000,
+						}).toJSDate(),
+						endDate: DateTime.fromObject({
+							day: 7,
+							month: 1,
+							year: 3000,
+						}).toJSDate(),
+						cabins: [mock<Cabin>({ id: faker.string.uuid() })],
 					}),
 				},
 			});
-			cabinRepository.getOverlappingBookings.mockResolvedValueOnce({
+			cabinRepository.getBookingSemester.mockResolvedValue({
+				...mock<BookingSemester>(),
+				startAt: DateTime.fromObject({
+					year: 1000,
+				}).toJSDate(),
+				endAt: DateTime.fromObject({
+					year: 4000,
+				}).toJSDate(),
+				bookingsEnabled: true,
+			});
+			cabinRepository.findManyBookings.mockResolvedValue({
 				ok: true,
 				data: {
-					bookings: [mock<BookingType>({ id: faker.string.uuid() })],
+					bookings: [
+						mock<BookingType>({
+							id: faker.string.uuid(),
+							startDate: DateTime.fromObject({
+								day: 1,
+								month: 1,
+								year: 3000,
+							}).toJSDate(),
+							endDate: DateTime.fromObject({
+								day: 7,
+								month: 1,
+								year: 3000,
+							}).toJSDate(),
+						}),
+					],
+					total: 1,
 				},
 			});
 
@@ -161,7 +202,6 @@ describe("CabinService", () => {
 			 * Mock the permissionService.hasFeaturePermission method to return true.
 			 * Mock the cabinRepository.getCabinByBookingId method to return a cabin.
 			 * Mock getBookingById to return a booking.
-			 * Mock getOverlappingBookings to return multiple bookings.
 			 */
 			const userId = faker.string.uuid();
 			cabinRepository.getCabinByBookingId.mockResolvedValueOnce(mock<Cabin>());
@@ -169,17 +209,61 @@ describe("CabinService", () => {
 			cabinRepository.getBookingById.mockResolvedValueOnce({
 				ok: true,
 				data: {
-					booking: mock<BookingType>({
+					booking: {
+						...mock<BookingType>(),
 						id: faker.string.uuid(),
-						startDate: faker.date.future(),
-						endDate: faker.date.future(),
-					}),
+						startDate: DateTime.fromObject({
+							day: 1,
+							month: 1,
+							year: 3000,
+						})
+							.startOf("day")
+							.toJSDate(),
+						endDate: DateTime.fromObject({
+							day: 7,
+							month: 1,
+							year: 3000,
+						})
+							.endOf("day")
+							.toJSDate(),
+						cabins: [mock<Cabin>({ id: faker.string.uuid() })],
+					},
 				},
 			});
-			cabinRepository.getOverlappingBookings.mockResolvedValueOnce({
+			cabinRepository.getBookingSemester.mockResolvedValue({
+				...mock<BookingSemester>(),
+				startAt: DateTime.fromObject({
+					year: 1000,
+				}).toJSDate(),
+				endAt: DateTime.fromObject({
+					year: 4000,
+				}).toJSDate(),
+				bookingsEnabled: true,
+			});
+			cabinRepository.findManyBookings.mockResolvedValue({
 				ok: true,
 				data: {
-					bookings: [],
+					bookings: [
+						{
+							...mock<BookingType>(),
+							id: faker.string.uuid(),
+							startDate: DateTime.fromObject({
+								day: 8,
+								month: 1,
+								year: 3000,
+							})
+								.startOf("day")
+								.toJSDate(),
+							endDate: DateTime.fromObject({
+								day: 14,
+								month: 1,
+								year: 3000,
+							})
+								.endOf("day")
+								.toJSDate(),
+						},
+					],
+					total: 1,
 				},
 			});
 			cabinRepository.updateBooking.mockResolvedValueOnce({
@@ -198,7 +282,10 @@ describe("CabinService", () => {
 			 * Call updateBookingStatus
 			 */
 			const updateBookingStatus = await cabinService.updateBookingStatus(
-				makeMockContext({ id: userId }),
+				makeMockContext(
+					{ id: userId },
+					pino({ ...envToLogger.test, name: "update booking and feedback" }),
+				),
 				{
 					bookingId: faker.string.uuid(),
 					status: BookingStatus.CONFIRMED,
@@ -209,15 +296,8 @@ describe("CabinService", () => {
 			/**
 			 * Assert
 			 *
-			 * Expect updateBookingStatus to return an InvalidArgumentError
+			 * Expect updateBookingStatus to return the updated booking
 			 */
-			expect(cabinRepository.updateBooking).toHaveBeenCalledWith(
-				expect.any(String),
-				expect.objectContaining({
-					status: BookingStatus.CONFIRMED,
-					feedback: expect.any(String),
-				}),
-			);
 			expect(updateBookingStatus).toEqual({
 				ok: true,
 				data: {
@@ -226,6 +306,13 @@ describe("CabinService", () => {
 					}),
 				},
 			});
+			expect(cabinRepository.updateBooking).toHaveBeenCalledWith(
+				expect.any(String),
+				expect.objectContaining({
+					status: BookingStatus.CONFIRMED,
+					feedback: expect.any(String),
+				}),
+			);
 		});
 	});
 });

@@ -1,3 +1,4 @@
+import { merge } from "lodash-es";
 import { z } from "zod";
 
 /**
@@ -23,15 +24,96 @@ export class KnownDomainError<TName extends string = string> extends Error {
 	}
 }
 
+type InvalidArugmentErrorType = DomainError<
+	"InvalidArgumentError",
+	ErrorCode,
+	{ reason?: Record<string, string[] | undefined> }
+>;
+
+type DomainError<
+	TName extends string = string,
+	TCode extends ErrorCode = typeof errorCodes.ERR_INTERNAL_SERVER_ERROR,
+	TFields extends Record<string, unknown> = Record<string, never>,
+> = {
+	[ErrorSymbol]: true;
+	name: TName;
+	message: string;
+	cause?: unknown;
+	getStackTrace?: () => string | undefined;
+	code: TCode;
+} & TFields;
+
+const ErrorSymbol = Symbol("Error");
+
+function newErrorBase<
+	TName extends string,
+	TCode extends ErrorCode,
+	TFields extends Record<string, unknown>,
+>(params: {
+	name: TName;
+	message: string;
+	code: TCode;
+	cause?: unknown;
+	fields?: TFields;
+	options?: {
+		withStackTrace?: boolean;
+	};
+}): DomainError<TName, TCode, TFields> {
+	const { name, message, code, cause, fields, options } = params;
+
+	return merge(
+		{
+			[ErrorSymbol]: true as const,
+			name,
+			message,
+			cause,
+			code,
+			getStackTrace: options?.withStackTrace ? getStackTrace : undefined,
+		},
+		fields,
+	);
+}
+
+type NewErrorParams<TFields extends Record<string, unknown> | undefined> = {
+	message: string;
+	cause?: unknown;
+	options?: {
+		withStackTrace?: boolean;
+	};
+} & TFields;
+
+function newInvalidArgumentError(
+	params: NewErrorParams<{ reason?: Record<string, string[] | undefined> }>,
+): InvalidArugmentErrorType {
+	const { message, cause, reason, options } = params;
+	return newErrorBase({
+		name: "InvalidArgumentError",
+		message,
+		code: errorCodes.ERR_BAD_USER_INPUT,
+		fields: { reason },
+		cause,
+		options,
+	});
+}
+
+function getStackTrace() {
+	const errorObj = new Error();
+	const propertyIsSupported = typeof errorObj?.stack === "string";
+	if (propertyIsSupported) {
+		return errorObj.stack;
+	}
+	return undefined;
+}
+
 export class InvalidArgumentError extends KnownDomainError<"InvalidArgumentError"> {
-	public formErrors?: Record<string, string[] | undefined>;
+	public reason?: Record<string, string[] | undefined>;
 
 	constructor(description: string, cause?: unknown) {
 		super("InvalidArgumentError", description, errorCodes.ERR_BAD_USER_INPUT, {
 			cause,
 		});
 		if (cause instanceof z.ZodError) {
-			this.formErrors = cause.flatten().fieldErrors;
+			this.reason = cause.flatten().fieldErrors;
 		}
 	}
 }
@@ -185,3 +267,13 @@ export function isUserFacingError(
 	}
 	return false;
 }
+
+function isNewError(error?: unknown): error is DomainError {
+	if (!error) return false;
+	if (typeof error !== "object") return false;
+	if (ErrorSymbol in error) return true;
+	return false;
+}
+
+export { newInvalidArgumentError, isNewError };
+export type { InvalidArugmentErrorType };
