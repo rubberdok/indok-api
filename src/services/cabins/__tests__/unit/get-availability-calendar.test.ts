@@ -60,6 +60,50 @@ describe("Cabin Service", () => {
 			expect(calendarMonths[11]?.year).toBe(2024);
 		});
 
+		it("returns bookable: false for all past dates", async () => {
+			mockCabinRepository.getCabinById.mockResolvedValue(makeCabin());
+			mockCabinRepository.getBookingSemester.mockResolvedValue(
+				makeBookingSemester({
+					startAt: DateTime.fromObject({
+						year: 2023,
+						month: 1,
+						day: 1,
+					}).toJSDate(),
+					endAt: DateTime.fromObject({
+						year: 2024,
+						month: 12,
+						day: 31,
+					}).toJSDate(),
+				}),
+			);
+			mockCabinRepository.findManyBookings.mockResolvedValue({
+				ok: true,
+				data: {
+					bookings: [],
+					total: 0,
+				},
+			});
+
+			const result = await cabinService.getAvailabilityCalendar(
+				makeMockContext(),
+				{
+					cabins: [{ id: faker.string.uuid() }],
+					count: 2,
+					guests: {
+						external: 10,
+						internal: 10,
+					},
+					month: 12,
+					year: 2023,
+				},
+			);
+
+			if (!result.ok) throw result.error;
+			const { calendarMonths } = result.data;
+			expect(calendarMonths[0]?.days[0]?.bookable).toBe(false);
+			expect(calendarMonths[1]?.days[0]?.bookable).toBe(true);
+		});
+
 		it("returns all days of all the months", async () => {
 			mockCabinRepository.getCabinById.mockResolvedValue(makeCabin());
 			mockCabinRepository.getBookingSemester.mockResolvedValue(null);

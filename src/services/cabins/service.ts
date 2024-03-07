@@ -26,7 +26,7 @@ import {
 	newInvalidArgumentError,
 } from "~/domain/errors.js";
 import type { Context } from "~/lib/context.js";
-import type { Result, ResultAsync } from "~/lib/result.js";
+import { Result, type ResultAsync, type TResult } from "~/lib/result.js";
 import type { ICabinService, NewBookingParams } from "~/lib/server.js";
 import type { EmailQueueDataType } from "../mail/worker.js";
 
@@ -143,12 +143,11 @@ export class CabinService implements ICabinService {
 
 		if (!hasPermission) {
 			ctx.log.warn({ params }, "permission denied");
-			return {
-				ok: false,
-				error: new PermissionDeniedError(
+			return Result.error(
+				new PermissionDeniedError(
 					"You do not have permission to view the bookings.",
 				),
-			};
+			);
 		}
 
 		const findManyBookingsResult = await this.cabinRepository.findManyBookings(
@@ -158,13 +157,12 @@ export class CabinService implements ICabinService {
 			},
 		);
 		if (!findManyBookingsResult.ok) {
-			return {
-				ok: false,
-				error: new InternalServerError(
+			return Result.error(
+				new InternalServerError(
 					"Failed to find bookings",
 					findManyBookingsResult.error,
 				),
-			};
+			);
 		}
 
 		return {
@@ -294,34 +292,31 @@ export class CabinService implements ICabinService {
 		if (!totalCostResult.ok) {
 			switch (totalCostResult.error.name) {
 				case "NotFoundError": {
-					return {
-						ok: false,
-						error: newInvalidArgumentError({
+					return Result.error(
+						newInvalidArgumentError({
 							message: "The cabin you tried to book does not exist",
 							reason: {
 								cabins: ["The cabin you tried to book does not exist"],
 							},
 							cause: totalCostResult.error,
 						}),
-					};
+					);
 				}
 				case "InvalidArgumentError": {
-					return {
-						ok: false,
-						error: newInvalidArgumentError({
+					return Result.error(
+						newInvalidArgumentError({
 							message: "Failed to calculate the total cost of the booking",
 							cause: totalCostResult.error,
 						}),
-					};
+					);
 				}
 				case "InternalServerError": {
-					return {
-						ok: false,
-						error: new InternalServerError(
+					return Result.error(
+						new InternalServerError(
 							"An unknown error occurred when calculating the total cost of the booking",
 							totalCostResult.error,
 						),
-					};
+					);
 				}
 			}
 		}
@@ -342,31 +337,24 @@ export class CabinService implements ICabinService {
 		if (!createBookingResult.ok) {
 			switch (createBookingResult.error.name) {
 				case "NotFoundError":
-					return {
-						ok: false,
-						error: newInvalidArgumentError({
+					return Result.error(
+						newInvalidArgumentError({
 							message: "The cabin you tried to book does not exist",
 							cause: createBookingResult.error,
 						}),
-					};
+					);
 				case "InternalServerError":
-					return {
-						ok: false,
-						error: new InternalServerError(
+					return Result.error(
+						new InternalServerError(
 							"An unknown error occurred",
 							createBookingResult.error,
 						),
-					};
+					);
 			}
 		}
 		const { booking } = createBookingResult.data;
 		await this.sendBookingConfirmation(booking);
-		return {
-			ok: true,
-			data: {
-				booking,
-			},
-		};
+		return Result.success({ booking });
 	}
 
 	getCabinByBookingId(bookingId: string): Promise<Cabin> {
@@ -385,7 +373,7 @@ export class CabinService implements ICabinService {
 			occupiedDateIntervals: Interval[];
 			cabins: Cabin[];
 		},
-	): Result<
+	): TResult<
 		{
 			validated: Omit<
 				BookingType,
@@ -499,21 +487,15 @@ export class CabinService implements ICabinService {
 			);
 		const parseResult = bookingSchema.safeParse(params.data);
 		if (!parseResult.success) {
-			return {
-				ok: false,
-				error: newInvalidArgumentError({
+			return Result.error(
+				newInvalidArgumentError({
 					message: "invalid booking data",
 					reason: parseResult.error.flatten().fieldErrors,
 					cause: parseResult.error,
 				}),
-			};
+			);
 		}
-		return {
-			ok: true,
-			data: {
-				validated: parseResult.data,
-			},
-		};
+		return Result.success({ validated: parseResult.data });
 	}
 
 	private async sendBookingConfirmation(booking: BookingType) {
@@ -978,10 +960,7 @@ export class CabinService implements ICabinService {
 				return getAvailabilityForMonthResult;
 			}
 		}
-		return {
-			ok: true,
-			data: { calendarMonths },
-		};
+		return Result.success({ calendarMonths });
 	}
 
 	private isInternalPrice(
@@ -1091,7 +1070,7 @@ export class CabinService implements ICabinService {
 			};
 			cabins: Cabin[];
 		},
-	): Result<{ calendarMonth: CalendarMonth }, InternalServerError> {
+	): TResult<{ calendarMonth: CalendarMonth }, InternalServerError> {
 		const {
 			calendarMonth,
 			occupiedDateIntervals,
@@ -1142,7 +1121,7 @@ export class CabinService implements ICabinService {
 	private getCalendarMonths(
 		_ctx: Context,
 		params: { month: number; year: number; count: number },
-	): Result<{ months: CalendarMonth[] }, InternalServerError> {
+	): TResult<{ months: CalendarMonth[] }, InternalServerError> {
 		const { month, year, count } = params;
 		const calendarMonths: CalendarMonth[] = [];
 		for (const offset of range(0, count)) {
@@ -1188,7 +1167,7 @@ export class CabinService implements ICabinService {
 		params: {
 			bookingSemesters: BookingSemester[];
 		},
-	): Result<{ intervals: Interval[] }, InternalServerError> {
+	): TResult<{ intervals: Interval[] }, InternalServerError> {
 		const { bookingSemesters } = params;
 		const intervals: Interval[] = [];
 
@@ -1255,7 +1234,7 @@ export class CabinService implements ICabinService {
 			guests: { internal: number; external: number };
 			date: DateTime;
 		},
-	): Result<{ price: number }, InternalServerError> {
+	): TResult<{ price: number }, InternalServerError> {
 		const { guests, cabins } = params;
 
 		if (cabins.length === 0) {

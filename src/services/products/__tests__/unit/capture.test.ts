@@ -12,7 +12,7 @@ import type {
 	PaymentAttemptType,
 } from "~/domain/products.js";
 import { makeMockContext } from "~/lib/context.js";
-import type { Result } from "~/lib/result.js";
+import type { TResult } from "~/lib/result.js";
 import { makeDependencies } from "./dependencies.js";
 
 describe("ProductService", () => {
@@ -21,7 +21,7 @@ describe("ProductService", () => {
 			name: string;
 			order: OrderType | null;
 			paymentAttempt: PaymentAttemptType | null;
-			expected: Result<
+			expected: TResult<
 				{ paymentAttempt: PaymentAttemptType; order: OrderType },
 				| InvalidArgumentError
 				| InternalServerError

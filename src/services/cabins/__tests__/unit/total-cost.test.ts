@@ -8,7 +8,7 @@ import {
 	type NotFoundError,
 } from "~/domain/errors.js";
 import { makeMockContext } from "~/lib/context.js";
-import type { Result } from "~/lib/result.js";
+import type { TResult } from "~/lib/result.js";
 import { CabinService, type ICabinRepository } from "../../service.js";
 
 describe("CabinService", () => {
@@ -31,7 +31,7 @@ describe("CabinService", () => {
 					external: number;
 				};
 			};
-			expected: Result<
+			expected: TResult<
 				{ totalCost: number },
 				InvalidArgumentError | NotFoundError | InternalServerError
 			>;

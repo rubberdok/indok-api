@@ -12,7 +12,7 @@ import {
 	InvalidArgumentError,
 } from "~/domain/errors.js";
 import type { Context } from "~/lib/context.js";
-import type { Result, ResultAsync } from "~/lib/result.js";
+import type { ResultAsync, TResult } from "~/lib/result.js";
 import type { BlobStorageAdapter as BlobStorageAdapterType } from "~/services/files/index.js";
 
 type Dependencies = {
@@ -34,7 +34,7 @@ function BlobStorageAdapter({
 			startsOn: Date;
 			expiresOn: Date;
 		},
-	): Result<
+	): TResult<
 		{
 			options: BlobSASSignatureValues;
 		},
