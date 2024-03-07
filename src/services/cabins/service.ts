@@ -902,6 +902,11 @@ export class CabinService implements ICabinService {
 		return { ok: true, data: { totalCost } };
 	}
 
+	/**
+	 * getAvailabilityCalendar returns `count` months from `month` and `year` for the given cabins and guests,
+	 * with the availability and pricing of each day in each month. The result of this method is intended to be
+	 * used to display a calendar of availability and pricing for the given cabins and guests.
+	 */
 	async getAvailabilityCalendar(
 		ctx: Context,
 		params: {
@@ -994,6 +999,12 @@ export class CabinService implements ICabinService {
 		return isAvailableForCheckIn;
 	}
 
+	/**
+	 * isAvailableForCheckOut returns true if the given date is available for check-out, otherwise false.
+	 *
+	 * Being available for check out means that the date is preceded by at least one day where bookings are enabled,
+	 * and the date is not occupied by any other booking.
+	 */
 	private isAvailableForCheckOut(
 		_ctx: Context,
 		params: {
@@ -1017,6 +1028,9 @@ export class CabinService implements ICabinService {
 		return isAvailableForCheckOut;
 	}
 
+	/**
+	 * isDateBookable is true if the date is today or in the future, and is within a bookable date interval.
+	 */
 	private isDateBookable(
 		_ctx: Context,
 		params: { date: DateTime; bookableDateIntervals: Interval[] },
@@ -1029,6 +1043,9 @@ export class CabinService implements ICabinService {
 		);
 	}
 
+	/**
+	 * isDateAvailable returns true if the date is not occupied by any other booking, otherwise false.
+	 */
 	private isDateAvailable(
 		_ctx: Context,
 		params: { date: DateTime; occupiedDateIntervals: Interval[] },
@@ -1049,9 +1066,11 @@ export class CabinService implements ICabinService {
 		const { checkIn, checkOut, occupiedDateIntervals, bookableDateIntervals } =
 			params;
 		const bookingInterval = Interval.fromDateTimes(checkIn, checkOut);
+		// the interval has to be available for the entire duration, there can be no overlap with occupied intervals
 		const isOccupied = occupiedDateIntervals.some((interval) =>
 			interval.overlaps(bookingInterval),
 		);
+		// the interval has to be engulfed by bookable intervals
 		const isBookable = bookableDateIntervals.some((interval) =>
 			interval.engulfs(bookingInterval),
 		);
@@ -1118,6 +1137,9 @@ export class CabinService implements ICabinService {
 		};
 	}
 
+	/**
+	 * utility for generating a range of months with their days.
+	 */
 	private getCalendarMonths(
 		_ctx: Context,
 		params: { month: number; year: number; count: number },
