@@ -108,7 +108,7 @@
 		"ioredis": "^5.3.2",
 		"lodash-es": "^4.17.21",
 		"luxon": "^3.4.4",
-		"openid-client": "^5.6.4",
+		"openid-client": "^5.6.5",
 		"pino": "^8.19.0",
 		"postmark": "^4.0.2",
 		"prisma": "^5.10.2",
