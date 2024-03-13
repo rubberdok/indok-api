@@ -242,31 +242,24 @@ export class CabinService implements ICabinService {
 		},
 		InvalidArugmentErrorType | InternalServerError
 	> {
-		const bookingSemesters = await this.getBookingSemesters();
-		if (!bookingSemesters.ok) {
-			return bookingSemesters;
-		}
 		const cabins = await Promise.all(
 			params.cabins.map((cabin) => this.cabinRepository.getCabinById(cabin.id)),
 		);
 
-		const occupiedDateIntervalsResult = await this.getOccupiedDateIntervals(
+		const getValidBookingIntervalsResult = await this.getValidBookingIntervals(
 			ctx,
-			{ cabins },
+			{
+				cabins,
+				minimumBookingDurationDays: 2,
+			},
 		);
-		const bookableDateIntervalsResult = this.getBookableDateIntervals(ctx, {
-			bookingSemesters: bookingSemesters.data.semesters,
-		});
-		if (!occupiedDateIntervalsResult.ok) {
-			return occupiedDateIntervalsResult;
+		if (!getValidBookingIntervalsResult.ok) {
+			return getValidBookingIntervalsResult;
 		}
-		if (!bookableDateIntervalsResult.ok) {
-			return bookableDateIntervalsResult;
-		}
+		const { validBookingIntervals } = getValidBookingIntervalsResult.data;
 
 		const validateResult = this.validateBooking(ctx, {
-			bookableDateIntervals: bookableDateIntervalsResult.data.intervals,
-			occupiedDateIntervals: occupiedDateIntervalsResult.data.intervals,
+			validBookingIntervals,
 			cabins,
 			data: params,
 		});
@@ -369,8 +362,7 @@ export class CabinService implements ICabinService {
 		ctx: Context,
 		params: {
 			data: NewBookingParams;
-			bookableDateIntervals: Interval[];
-			occupiedDateIntervals: Interval[];
+			validBookingIntervals: Interval[];
 			cabins: Cabin[];
 		},
 	): TResult<
@@ -382,7 +374,7 @@ export class CabinService implements ICabinService {
 		},
 		InvalidArugmentErrorType
 	> {
-		const { bookableDateIntervals, occupiedDateIntervals } = params;
+		const { validBookingIntervals } = params;
 
 		const bookingSchema = z
 			.object({
@@ -390,10 +382,16 @@ export class CabinService implements ICabinService {
 				lastName: z.string().min(1, "last name must be at least 1 character"),
 				startDate: z
 					.date()
-					.min(new Date(), { message: "start date must be in the future" }),
+					.min(new Date(), { message: "start date must be in the future" })
+					.transform((date) =>
+						DateTime.fromJSDate(date).startOf("day").toJSDate(),
+					),
 				endDate: z
 					.date()
-					.min(new Date(), { message: "end date must be in the future" }),
+					.min(new Date(), { message: "end date must be in the future" })
+					.transform((date) =>
+						DateTime.fromJSDate(date).endOf("day").toJSDate(),
+					),
 				email: z.string().email({ message: "invalid email" }),
 				phoneNumber: z.string().regex(/^(0047|\+47|47)?\d{8}$/, {
 					message: "invalid phone number",
@@ -418,7 +416,11 @@ export class CabinService implements ICabinService {
 				(obj) => {
 					const checkIn = DateTime.fromJSDate(obj.startDate);
 					const checkOut = DateTime.fromJSDate(obj.endDate);
-					return this.isBookingMinimumLength(ctx, { checkIn, checkOut });
+					const interval = Interval.fromDateTimes(checkIn, checkOut);
+					return this.isIntervalGteMinimumDays(ctx, {
+						interval,
+						minimumBookingDurationDays: 2,
+					});
 				},
 				{
 					message: "the booking must be at least 1 day long",
@@ -427,10 +429,9 @@ export class CabinService implements ICabinService {
 			)
 			.refine(
 				(booking) => {
-					const isAvailableForCheckIn = this.isAvailableForCheckIn(ctx, {
-						bookableDateIntervals,
-						occupiedDateIntervals,
+					const isAvailableForCheckIn = this.isDateBookable(ctx, {
 						date: DateTime.fromJSDate(booking.startDate),
+						validBookingIntervals,
 					});
 					return isAvailableForCheckIn;
 				},
@@ -441,9 +442,8 @@ export class CabinService implements ICabinService {
 			)
 			.refine(
 				(booking) => {
-					const isAvailableForCheckOut = this.isAvailableForCheckOut(ctx, {
-						bookableDateIntervals,
-						occupiedDateIntervals,
+					const isAvailableForCheckOut = this.isDateBookable(ctx, {
+						validBookingIntervals,
 						date: DateTime.fromJSDate(booking.endDate),
 					});
 					return isAvailableForCheckOut;
@@ -460,8 +460,7 @@ export class CabinService implements ICabinService {
 					const isBookingIntervalAvailable = this.isBookingIntervalAvailable(
 						ctx,
 						{
-							bookableDateIntervals,
-							occupiedDateIntervals,
+							validBookingIntervals,
 							checkIn,
 							checkOut,
 						},
@@ -562,28 +561,18 @@ export class CabinService implements ICabinService {
 			}
 			const { booking } = getBookingResult.data;
 
-			const getOccupiedDateIntervalsResult =
-				await this.getOccupiedDateIntervals(ctx, { cabins: booking.cabins });
-			if (!getOccupiedDateIntervalsResult.ok) {
-				return getOccupiedDateIntervalsResult;
+			const getValidBookingIntervalsResult =
+				await this.getValidBookingIntervals(ctx, {
+					cabins: booking.cabins,
+					minimumBookingDurationDays: 2,
+				});
+			if (!getValidBookingIntervalsResult.ok) {
+				return getValidBookingIntervalsResult;
 			}
-			const getBookingSemestersResult = await this.getBookingSemesters();
-			if (!getBookingSemestersResult.ok) {
-				return getBookingSemestersResult;
-			}
-			const getBookableDateIntervalsResult = this.getBookableDateIntervals(
-				ctx,
-				{
-					bookingSemesters: getBookingSemestersResult.data.semesters,
-				},
-			);
-			if (!getBookableDateIntervalsResult.ok) {
-				return getBookableDateIntervalsResult;
-			}
+			const { validBookingIntervals } = getValidBookingIntervalsResult.data;
 
 			const isAvailableForBooking = this.isBookingIntervalAvailable(ctx, {
-				bookableDateIntervals: getBookableDateIntervalsResult.data.intervals,
-				occupiedDateIntervals: getOccupiedDateIntervalsResult.data.intervals,
+				validBookingIntervals,
 				checkIn: DateTime.fromJSDate(booking.startDate),
 				checkOut: DateTime.fromJSDate(booking.endDate),
 			});
@@ -647,11 +636,23 @@ export class CabinService implements ICabinService {
 			startAt: z
 				.date()
 				.nullish()
-				.transform((val) => val ?? undefined),
+				.transform((val) => val ?? undefined)
+				.transform((val) => {
+					if (val) {
+						return DateTime.fromJSDate(val).startOf("day").toJSDate();
+					}
+					return val;
+				}),
 			endAt: z
 				.date()
 				.nullish()
-				.transform((val) => val ?? undefined),
+				.transform((val) => val ?? undefined)
+				.transform((val) => {
+					if (val) {
+						return DateTime.fromJSDate(val).endOf("day").toJSDate();
+					}
+					return val;
+				}),
 			bookingsEnabled: z
 				.boolean()
 				.nullish()
@@ -693,18 +694,28 @@ export class CabinService implements ICabinService {
 		try {
 			const schema = z.object({
 				semester: z.nativeEnum(Semester),
-				startAt: z.date().default(
-					DateTime.fromObject({
-						month: data.semester === "SPRING" ? 1 : 8,
-						day: 1,
-					}).toJSDate(),
-				),
-				endAt: z.date().default(
-					DateTime.fromObject({
-						month: data.semester === "SPRING" ? 7 : 12,
-						day: 31,
-					}).toJSDate(),
-				),
+				startAt: z
+					.date()
+					.default(
+						DateTime.fromObject({
+							month: data.semester === "SPRING" ? 1 : 8,
+							day: 1,
+						}).toJSDate(),
+					)
+					.transform((date) =>
+						DateTime.fromJSDate(date).startOf("day").toJSDate(),
+					),
+				endAt: z
+					.date()
+					.default(
+						DateTime.fromObject({
+							month: data.semester === "SPRING" ? 7 : 12,
+							day: 31,
+						}).toJSDate(),
+					)
+					.transform((date) =>
+						DateTime.fromJSDate(date).endOf("day").toJSDate(),
+					),
 				bookingsEnabled: z.boolean().default(false),
 			});
 
@@ -750,16 +761,15 @@ export class CabinService implements ICabinService {
 		}
 	}
 
-	private isBookingMinimumLength(
+	private isIntervalGteMinimumDays(
 		_ctx: Context,
 		params: {
-			checkIn: DateTime;
-			checkOut: DateTime;
-			minimumDays?: number;
+			interval: Interval;
+			minimumBookingDurationDays: number;
 		},
 	): boolean {
-		const { checkIn, checkOut, minimumDays = 1 } = params;
-		return minimumDays <= checkOut.diff(checkIn, "days").as("days");
+		const { interval, minimumBookingDurationDays } = params;
+		return interval.count("days") >= minimumBookingDurationDays;
 	}
 
 	/**
@@ -928,24 +938,19 @@ export class CabinService implements ICabinService {
 		const cabins = await Promise.all(
 			params.cabins.map((cabin) => this.cabinRepository.getCabinById(cabin.id)),
 		);
-		const getOccupiedDateIntervalsResult = await this.getOccupiedDateIntervals(
-			ctx,
-			{ cabins },
-		);
-		if (!getOccupiedDateIntervalsResult.ok) {
-			return getOccupiedDateIntervalsResult;
-		}
-		const getBookingSemestersResult = await this.getBookingSemesters();
-		if (!getBookingSemestersResult.ok) {
-			return getBookingSemestersResult;
-		}
 
-		const getBookableDateIntervalsResult = this.getBookableDateIntervals(ctx, {
-			bookingSemesters: getBookingSemestersResult.data.semesters,
-		});
-		if (!getBookableDateIntervalsResult.ok) {
-			return getBookableDateIntervalsResult;
+		const getValidBookingIntervalsResult = await this.getValidBookingIntervals(
+			ctx,
+			{
+				cabins,
+				minimumBookingDurationDays: 2,
+			},
+		);
+		if (!getValidBookingIntervalsResult.ok) {
+			return getValidBookingIntervalsResult;
 		}
+		const { validBookingIntervals, occupiedDateIntervals } =
+			getValidBookingIntervalsResult.data;
 
 		const getCalendarMonthsResult = this.getCalendarMonths(ctx, params);
 		if (!getCalendarMonthsResult.ok) {
@@ -956,8 +961,8 @@ export class CabinService implements ICabinService {
 		for (const calendarMonth of calendarMonths) {
 			const getAvailabilityForMonthResult = this.getAvailabilityForMonth(ctx, {
 				calendarMonth,
-				bookableDateIntervals: getBookableDateIntervalsResult.data.intervals,
-				occupiedDateIntervals: getOccupiedDateIntervalsResult.data.intervals,
+				validBookingIntervals,
+				occupiedDateIntervals,
 				cabins,
 				guests: params.guests,
 			});
@@ -975,56 +980,47 @@ export class CabinService implements ICabinService {
 		return params.guests.internal >= params.guests.external;
 	}
 
-	private isAvailableForCheckIn(
+	private isOnlyAvailableForCheckIn(
 		_ctx: Context,
 		params: {
 			date: DateTime;
-			occupiedDateIntervals: Interval[];
-			bookableDateIntervals: Interval[];
+			validBookingIntervals: Interval[];
 		},
 	): boolean {
-		const { date, occupiedDateIntervals, bookableDateIntervals } = params;
-		const minimumCheckInInterval = Interval.fromDateTimes(
-			date.startOf("day"),
-			date.plus({ days: 1 }).endOf("day"),
-		);
+		const { date, validBookingIntervals } = params;
 
-		const isAvailableForCheckIn =
-			occupiedDateIntervals.every(
-				(interval) => !interval.overlaps(minimumCheckInInterval),
-			) &&
-			bookableDateIntervals.some((interval) =>
-				interval.engulfs(minimumCheckInInterval),
-			);
+		const isAvailableForCheckIn = validBookingIntervals.some((interval) => {
+			const { start } = interval;
+			if (!start) return false;
+			// Luxon intervals are half-open, so the result of running difference on intervals is that the
+			// end date of the interval is exactly the start time of the unavailable day.
+			return +start === +date;
+		});
 		return isAvailableForCheckIn;
 	}
 
 	/**
-	 * isAvailableForCheckOut returns true if the given date is available for check-out, otherwise false.
+	 * isOnlyAvailableForCheckOut returns true if the given date is available for check-out, otherwise false.
 	 *
 	 * Being available for check out means that the date is preceded by at least one day where bookings are enabled,
 	 * and the date is not occupied by any other booking.
 	 */
-	private isAvailableForCheckOut(
+	private isOnlyAvailableForCheckOut(
 		_ctx: Context,
 		params: {
 			date: DateTime;
-			occupiedDateIntervals: Interval[];
-			bookableDateIntervals: Interval[];
+			validBookingIntervals: Interval[];
 		},
 	): boolean {
-		const { date } = params;
-		const minimumCheckOutInterval = Interval.fromDateTimes(
-			date.minus({ days: 1 }).startOf("day"),
-			date.endOf("day"),
-		);
-		const isAvailableForCheckOut =
-			params.occupiedDateIntervals.every(
-				(interval) => !interval.overlaps(minimumCheckOutInterval),
-			) &&
-			params.bookableDateIntervals.some((interval) =>
-				interval.engulfs(minimumCheckOutInterval),
-			);
+		const { date, validBookingIntervals } = params;
+		const nextDay = date.plus({ days: 1 }).startOf("day");
+		const isAvailableForCheckOut = validBookingIntervals.some((interval) => {
+			const { end } = interval;
+			if (!end) return false;
+			// Luxon intervals are half-open, so the result of running difference on intervals is that the
+			// end date of the interval is exactly the start time of the unavailable day.
+			return +end === +nextDay;
+		});
 		return isAvailableForCheckOut;
 	}
 
@@ -1033,14 +1029,11 @@ export class CabinService implements ICabinService {
 	 */
 	private isDateBookable(
 		_ctx: Context,
-		params: { date: DateTime; bookableDateIntervals: Interval[] },
+		params: { date: DateTime; validBookingIntervals: Interval[] },
 	): boolean {
-		const { date, bookableDateIntervals } = params;
-		const isFutureDate = date >= DateTime.now().startOf("day");
-		return (
-			isFutureDate &&
-			bookableDateIntervals.some((interval) => interval.contains(date))
-		);
+		const { date, validBookingIntervals } = params;
+		if (date < DateTime.now().startOf("day")) return false;
+		return validBookingIntervals.some((interval) => interval.contains(date));
 	}
 
 	/**
@@ -1059,30 +1052,23 @@ export class CabinService implements ICabinService {
 		params: {
 			checkIn: DateTime;
 			checkOut: DateTime;
-			occupiedDateIntervals: Interval[];
-			bookableDateIntervals: Interval[];
+			validBookingIntervals: Interval[];
 		},
 	): boolean {
-		const { checkIn, checkOut, occupiedDateIntervals, bookableDateIntervals } =
-			params;
+		const { checkIn, checkOut, validBookingIntervals } = params;
 		const bookingInterval = Interval.fromDateTimes(checkIn, checkOut);
 		// the interval has to be available for the entire duration, there can be no overlap with occupied intervals
-		const isOccupied = occupiedDateIntervals.some((interval) =>
-			interval.overlaps(bookingInterval),
-		);
-		// the interval has to be engulfed by bookable intervals
-		const isBookable = bookableDateIntervals.some((interval) =>
+		return validBookingIntervals.some((interval) =>
 			interval.engulfs(bookingInterval),
 		);
-		return isBookable && !isOccupied;
 	}
 
 	private getAvailabilityForMonth(
 		ctx: Context,
 		params: {
 			calendarMonth: CalendarMonth;
+			validBookingIntervals: Interval[];
 			occupiedDateIntervals: Interval[];
-			bookableDateIntervals: Interval[];
 			guests: {
 				internal: number;
 				external: number;
@@ -1092,29 +1078,24 @@ export class CabinService implements ICabinService {
 	): TResult<{ calendarMonth: CalendarMonth }, InternalServerError> {
 		const {
 			calendarMonth,
+			validBookingIntervals,
 			occupiedDateIntervals,
-			bookableDateIntervals,
 			guests,
 		} = params;
 		for (const calendarDay of calendarMonth.days) {
 			const isBookable = this.isDateBookable(ctx, {
 				date: calendarDay.calendarDate,
-				bookableDateIntervals,
-			});
-			const isAvailable = this.isDateAvailable(ctx, {
-				date: calendarDay.calendarDate,
-				occupiedDateIntervals,
+				validBookingIntervals: validBookingIntervals,
 			});
 
-			const availableForCheckIn = this.isAvailableForCheckIn(ctx, {
+			const availableForCheckIn = this.isOnlyAvailableForCheckIn(ctx, {
 				date: calendarDay.calendarDate,
-				occupiedDateIntervals,
-				bookableDateIntervals,
+				validBookingIntervals,
 			});
-			const availableForCheckOut = this.isAvailableForCheckOut(ctx, {
+
+			const availableForCheckOut = this.isOnlyAvailableForCheckOut(ctx, {
 				date: calendarDay.calendarDate,
-				occupiedDateIntervals,
-				bookableDateIntervals,
+				validBookingIntervals,
 			});
 			const price = this.getPrice(ctx, {
 				date: calendarDay.calendarDate,
@@ -1126,7 +1107,10 @@ export class CabinService implements ICabinService {
 			}
 
 			calendarDay.price = price.data.price;
-			calendarDay.available = isAvailable;
+			calendarDay.available = this.isDateAvailable(ctx, {
+				date: calendarDay.calendarDate,
+				occupiedDateIntervals,
+			});
 			calendarDay.bookable = isBookable;
 			calendarDay.availableForCheckIn = availableForCheckIn;
 			calendarDay.availableForCheckOut = availableForCheckOut;
@@ -1135,6 +1119,94 @@ export class CabinService implements ICabinService {
 			ok: true,
 			data: { calendarMonth: calendarMonth },
 		};
+	}
+
+	/**
+	 * getValidBookingIntervals returns a list of intervals where bookings are allowed, i.e.
+	 * intervals where there are bookable dates and no occupied dates. The intervals are half-open,
+	 * meaning that the end date of the interval is the start date of the next interval. Thus,
+	 * the interval [start, end) is the same as the interval [start, end-1]. As a result,
+	 * the intervals that are derived from bookings, booking semesters, etc. are all adjusted
+	 * to have their end date be the start date of the next day. This is to make it easier to
+	 * find the valid intervals.
+	 */
+	private async getValidBookingIntervals(
+		ctx: Context,
+		params: {
+			cabins: { id: string }[];
+			minimumBookingDurationDays: number;
+		},
+	): ResultAsync<
+		{ validBookingIntervals: Interval[]; occupiedDateIntervals: Interval[] },
+		InternalServerError
+	> {
+		const { cabins, minimumBookingDurationDays } = params;
+		const occupiedDateIntervalsResult = await this.getOccupiedDateIntervals(
+			ctx,
+			{ cabins },
+		);
+		const bookingSemesters = await this.getBookingSemesters();
+		if (!bookingSemesters.ok) {
+			return bookingSemesters;
+		}
+		const bookableDateIntervalsResult = this.getBookableDateIntervals(ctx, {
+			bookingSemesters: bookingSemesters.data.semesters,
+		});
+		if (!occupiedDateIntervalsResult.ok) {
+			return occupiedDateIntervalsResult;
+		}
+		if (!bookableDateIntervalsResult.ok) {
+			return bookableDateIntervalsResult;
+		}
+		const { validBookingIntervals } = this.createValidBookingIntervals(ctx, {
+			occupiedDateIntervals: occupiedDateIntervalsResult.data.intervals,
+			bookableDateIntervals: bookableDateIntervalsResult.data.intervals,
+			minimumBookingDurationDays,
+		});
+		return {
+			ok: true,
+			data: {
+				validBookingIntervals,
+				occupiedDateIntervals: occupiedDateIntervalsResult.data.intervals,
+			},
+		};
+	}
+
+	/**
+	 * A valid booking interval is any interval which is at least minimumBookingDuration long, is engulfed by a bookable date interval, and does not overlap with any occupied date intervals.
+	 */
+	private createValidBookingIntervals(
+		ctx: Context,
+		params: {
+			occupiedDateIntervals: Interval[];
+			bookableDateIntervals: Interval[];
+			minimumBookingDurationDays: number;
+		},
+	): { validBookingIntervals: Interval[] } {
+		const {
+			occupiedDateIntervals,
+			bookableDateIntervals,
+			minimumBookingDurationDays,
+		} = params;
+		const validBookingIntervals: Interval[] = [];
+		for (const bookableDateInterval of bookableDateIntervals) {
+			const potentiallyValidBookingIntervals = bookableDateInterval.difference(
+				...occupiedDateIntervals,
+			);
+			for (const potentiallyValidBookingInterval of potentiallyValidBookingIntervals) {
+				if (
+					potentiallyValidBookingInterval.isValid &&
+					this.isIntervalGteMinimumDays(ctx, {
+						interval: potentiallyValidBookingInterval,
+						minimumBookingDurationDays,
+					})
+				) {
+					validBookingIntervals.push(potentiallyValidBookingInterval);
+				}
+			}
+		}
+
+		return { validBookingIntervals };
 	}
 
 	/**
@@ -1195,27 +1267,40 @@ export class CabinService implements ICabinService {
 
 		for (const bookingSemester of bookingSemesters) {
 			if (bookingSemester.bookingsEnabled) {
-				const startAt = DateTime.fromJSDate(bookingSemester.startAt).startOf(
-					"day",
+				const now = DateTime.now().startOf("day");
+				/**
+				 * Take the maximum of the start date of the booking semester and now, to ensure that we don't
+				 * include dates in the past.
+				 */
+				const startAt = DateTime.max(
+					DateTime.fromJSDate(bookingSemester.startAt).startOf("day"),
+					now,
 				);
 				const endAt = DateTime.fromJSDate(bookingSemester.endAt).endOf("day");
 				const interval = Interval.fromDateTimes(startAt, endAt);
-				if (!interval.isValid) {
-					return {
-						ok: false,
-						error: new InternalServerError(
-							`Invalid booking semester interval: ${interval.invalidReason}`,
-						),
-					};
+				// Invalid intervals can occur if endAt < now
+				if (interval.isValid) {
+					intervals.push(interval);
 				}
-				intervals.push(interval);
 			}
 		}
 
 		const mergedIntervals = Interval.merge(intervals);
+		/**
+		 * Offset endAt by 1 day (startOf) to account for the fact that intervals are half-open,
+		 * and we want to include the end date in the interval.
+		 * We offset after merging to avoid merging intervals that are not actually overlapping.
+		 */
+		const intervalsOffsetByOneDay = mergedIntervals.map((interval) => {
+			const previousEnd = interval.end;
+			return interval.set({
+				end: previousEnd?.plus({ days: 1 }).startOf("day"),
+			});
+		});
+
 		return {
 			ok: true,
-			data: { intervals: mergedIntervals },
+			data: { intervals: intervalsOffsetByOneDay },
 		};
 	}
 
@@ -1239,7 +1324,13 @@ export class CabinService implements ICabinService {
 			}
 			for (const booking of bookings.data.bookings) {
 				const startAt = DateTime.fromJSDate(booking.startDate).startOf("day");
-				const endAt = DateTime.fromJSDate(booking.endDate).endOf("day");
+				/**
+				 * Offset endAt by 1 day (startOf) to account for the fact that intervals are half-open,
+				 * and we want to include the end date in the interval.
+				 */
+				const endAt = DateTime.fromJSDate(booking.endDate)
+					.plus({ days: 1 })
+					.startOf("day");
 				intervals.push(Interval.fromDateTimes(startAt, endAt));
 			}
 		}

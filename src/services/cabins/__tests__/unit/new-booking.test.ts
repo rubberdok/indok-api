@@ -118,7 +118,7 @@ describe("CabinService", () => {
 							},
 						},
 						act: {
-							input: makeCabinInput({
+							input: makeBookingInput({
 								email: "fake",
 							}),
 						},
@@ -140,7 +140,7 @@ describe("CabinService", () => {
 							},
 						},
 						act: {
-							input: makeCabinInput({
+							input: makeBookingInput({
 								phoneNumber: "fake",
 							}),
 						},
@@ -162,7 +162,7 @@ describe("CabinService", () => {
 							},
 						},
 						act: {
-							input: makeCabinInput({
+							input: makeBookingInput({
 								cabins: [{ id: "fake" }],
 							}),
 						},
@@ -184,7 +184,7 @@ describe("CabinService", () => {
 							},
 						},
 						act: {
-							input: makeCabinInput({
+							input: makeBookingInput({
 								firstName: "",
 							}),
 						},
@@ -206,7 +206,7 @@ describe("CabinService", () => {
 							},
 						},
 						act: {
-							input: makeCabinInput({
+							input: makeBookingInput({
 								lastName: "",
 							}),
 						},
@@ -235,7 +235,7 @@ describe("CabinService", () => {
 							},
 						},
 						act: {
-							input: makeCabinInput({
+							input: makeBookingInput({
 								startDate: faker.date.past(),
 							}),
 						},
@@ -257,7 +257,7 @@ describe("CabinService", () => {
 							},
 						},
 						act: {
-							input: makeCabinInput({
+							input: makeBookingInput({
 								endDate: faker.date.past(),
 							}),
 						},
@@ -279,7 +279,7 @@ describe("CabinService", () => {
 							},
 						},
 						act: {
-							input: makeCabinInput({
+							input: makeBookingInput({
 								startDate: DateTime.now().plus({ days: 3 }).toJSDate(),
 								endDate: DateTime.now().plus({ days: 2 }).toJSDate(),
 							}),
@@ -302,7 +302,7 @@ describe("CabinService", () => {
 							},
 						},
 						act: {
-							input: makeCabinInput({
+							input: makeBookingInput({
 								startDate: DateTime.fromObject({
 									year: 2500,
 									day: 1,
@@ -340,7 +340,7 @@ describe("CabinService", () => {
 							},
 						},
 						act: {
-							input: makeCabinInput(),
+							input: makeBookingInput(),
 						},
 						expected: {
 							error: expect.objectContaining({
@@ -364,7 +364,7 @@ describe("CabinService", () => {
 							},
 						},
 						act: {
-							input: makeCabinInput(),
+							input: makeBookingInput(),
 						},
 						expected: {
 							error: expect.objectContaining({
@@ -390,7 +390,7 @@ describe("CabinService", () => {
 							},
 						},
 						act: {
-							input: makeCabinInput({
+							input: makeBookingInput({
 								startDate: DateTime.now().plus({ days: 1 }).toJSDate(),
 							}),
 						},
@@ -414,7 +414,7 @@ describe("CabinService", () => {
 							},
 						},
 						act: {
-							input: makeCabinInput({
+							input: makeBookingInput({
 								endDate: DateTime.now().plus({ days: 3 }).toJSDate(),
 							}),
 						},
@@ -440,7 +440,7 @@ describe("CabinService", () => {
 							},
 						},
 						act: {
-							input: makeCabinInput({
+							input: makeBookingInput({
 								endDate: DateTime.now().plus({ days: 3 }).toJSDate(),
 							}),
 						},
@@ -465,21 +465,15 @@ describe("CabinService", () => {
 						arrange: {
 							bookingSemesters: {
 								fall: makeBookingSemester({
-									endAt: DateTime.now()
-										.plus({ days: 1 })
-										.endOf("day")
-										.toJSDate(),
+									endAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 								}),
 								spring: makeBookingSemester({
-									startAt: DateTime.now()
-										.plus({ days: 3 })
-										.startOf("day")
-										.toJSDate(),
+									startAt: DateTime.now().plus({ days: 3 }).toJSDate(),
 								}),
 							},
 						},
 						act: {
-							input: makeCabinInput({
+							input: makeBookingInput({
 								startDate: DateTime.now().plus({ hour: 1 }).toJSDate(),
 								endDate: DateTime.now().plus({ days: 4 }).toJSDate(),
 							}),
@@ -498,22 +492,16 @@ describe("CabinService", () => {
 						arrange: {
 							bookingSemesters: {
 								fall: makeBookingSemester({
-									endAt: DateTime.now()
-										.plus({ days: 1 })
-										.endOf("day")
-										.toJSDate(),
+									endAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 								}),
 								spring: makeBookingSemester({
-									startAt: DateTime.now()
-										.plus({ days: 2 })
-										.startOf("day")
-										.toJSDate(),
+									startAt: DateTime.now().plus({ days: 2 }).toJSDate(),
 									bookingsEnabled: false,
 								}),
 							},
 						},
 						act: {
-							input: makeCabinInput({
+							input: makeBookingInput({
 								startDate: DateTime.now().plus({ hour: 1 }).toJSDate(),
 								endDate: DateTime.now().plus({ days: 4 }).toJSDate(),
 							}),
@@ -532,22 +520,16 @@ describe("CabinService", () => {
 						arrange: {
 							bookingSemesters: {
 								fall: makeBookingSemester({
-									endAt: DateTime.now()
-										.plus({ days: 1 })
-										.endOf("day")
-										.toJSDate(),
+									endAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 									bookingsEnabled: false,
 								}),
 								spring: makeBookingSemester({
-									startAt: DateTime.now()
-										.plus({ days: 2 })
-										.startOf("day")
-										.toJSDate(),
+									startAt: DateTime.now().plus({ days: 2 }).toJSDate(),
 								}),
 							},
 						},
 						act: {
-							input: makeCabinInput({
+							input: makeBookingInput({
 								startDate: DateTime.now().plus({ hour: 1 }).toJSDate(),
 								endDate: DateTime.now().plus({ days: 4 }).toJSDate(),
 							}),
@@ -573,21 +555,15 @@ describe("CabinService", () => {
 						arrange: {
 							bookingSemesters: {
 								fall: makeBookingSemester({
-									startAt: DateTime.now()
-										.plus({ days: 3 })
-										.startOf("day")
-										.toJSDate(),
+									startAt: DateTime.now().plus({ days: 3 }).toJSDate(),
 								}),
 								spring: makeBookingSemester({
-									endAt: DateTime.now()
-										.plus({ days: 1 })
-										.endOf("day")
-										.toJSDate(),
+									endAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 								}),
 							},
 						},
 						act: {
-							input: makeCabinInput({
+							input: makeBookingInput({
 								startDate: DateTime.now().plus({ hour: 1 }).toJSDate(),
 								endDate: DateTime.now().plus({ days: 4 }).toJSDate(),
 							}),
@@ -620,7 +596,7 @@ describe("CabinService", () => {
 							},
 						},
 						act: {
-							input: makeCabinInput({
+							input: makeBookingInput({
 								startDate: DateTime.fromObject({
 									year: 2499,
 									month: 12,
@@ -661,7 +637,7 @@ describe("CabinService", () => {
 							},
 						},
 						act: {
-							input: makeCabinInput({
+							input: makeBookingInput({
 								startDate: DateTime.fromObject({
 									year: 2499,
 									month: 12,
@@ -781,7 +757,7 @@ describe("CabinService", () => {
 							},
 						},
 						act: {
-							input: makeCabinInput({
+							input: makeBookingInput({
 								startDate: DateTime.fromObject({
 									year: 2500,
 									day: 1,
@@ -809,15 +785,9 @@ describe("CabinService", () => {
 							},
 						},
 						act: {
-							input: makeCabinInput({
-								startDate: DateTime.now()
-									.plus({ days: 1 })
-									.startOf("day")
-									.toJSDate(),
-								endDate: DateTime.now()
-									.plus({ days: 2 })
-									.startOf("day")
-									.toJSDate(),
+							input: makeBookingInput({
+								startDate: DateTime.now().plus({ days: 1 }).toJSDate(),
+								endDate: DateTime.now().plus({ days: 2 }).toJSDate(),
 							}),
 						},
 					},
@@ -830,15 +800,9 @@ describe("CabinService", () => {
 							},
 						},
 						act: {
-							input: makeCabinInput({
-								startDate: DateTime.now()
-									.plus({ days: 1 })
-									.startOf("day")
-									.toJSDate(),
-								endDate: DateTime.now()
-									.plus({ days: 2 })
-									.startOf("day")
-									.toJSDate(),
+							input: makeBookingInput({
+								startDate: DateTime.now().plus({ days: 1 }).toJSDate(),
+								endDate: DateTime.now().plus({ days: 2 }).toJSDate(),
 							}),
 						},
 					},
@@ -870,7 +834,7 @@ describe("CabinService", () => {
 							},
 						},
 						act: {
-							input: makeCabinInput({
+							input: makeBookingInput({
 								startDate: DateTime.fromObject({
 									year: 2499,
 									day: 31,
@@ -912,7 +876,7 @@ describe("CabinService", () => {
 							},
 						},
 						act: {
-							input: makeCabinInput({
+							input: makeBookingInput({
 								startDate: DateTime.fromObject({
 									year: 2499,
 									day: 31,
@@ -950,7 +914,7 @@ describe("CabinService", () => {
 				externalPriceWeekend: 250,
 				capacity: 5,
 			});
-			const input = makeCabinInput({
+			const input = makeBookingInput({
 				cabins: [cabin1, cabin2],
 				internalParticipantsCount: 6,
 				externalParticipantsCount: 5,
@@ -1012,7 +976,7 @@ describe("CabinService", () => {
 					},
 					pino(envToLogger.test),
 				),
-				makeCabinInput(),
+				makeBookingInput(),
 			);
 
 			/**
@@ -1045,7 +1009,7 @@ describe("CabinService", () => {
 				externalPriceWeekend: 250,
 				capacity: 5,
 			});
-			const input = makeCabinInput();
+			const input = makeBookingInput();
 			cabinRepository.getBookingSemester.mockResolvedValue(bookingSemester);
 			cabinRepository.getCabinById.mockResolvedValue(cabin);
 			cabinRepository.findManyBookings.mockResolvedValue({
@@ -1084,16 +1048,21 @@ describe("CabinService", () => {
 	});
 });
 
-function makeCabinInput(
+function makeBookingInput(
 	data: Partial<NewBookingParams> = {},
 ): NewBookingParams {
-	const startDate = DateTime.now().plus({ days: 1 }).toJSDate();
-	const endDate = DateTime.fromJSDate(startDate).plus({ days: 1 }).toJSDate();
+	const { startDate, endDate } = data;
+	const startAtDateTime = startDate
+		? DateTime.fromJSDate(startDate).startOf("day")
+		: DateTime.now().plus({ days: 1 }).startOf("day");
+	const endAtDateTime = endDate
+		? DateTime.fromJSDate(endDate).endOf("day")
+		: startAtDateTime.plus({ days: 1 });
 	return merge<NewBookingParams, Partial<NewBookingParams>>(
 		{
 			cabins: [{ id: faker.string.uuid() }],
-			startDate,
-			endDate,
+			startDate: startAtDateTime.toJSDate(),
+			endDate: endAtDateTime.toJSDate(),
 			phoneNumber: "40000000",
 			email: faker.internet.email(),
 			firstName: faker.person.firstName(),
@@ -1108,16 +1077,23 @@ function makeCabinInput(
 function makeBookingSemester(
 	data: Partial<BookingSemester> = {},
 ): BookingSemester {
+	const { startAt, endAt, ...rest } = data ?? {};
+	const start = startAt
+		? DateTime.fromJSDate(startAt).startOf("day").toJSDate()
+		: DateTime.fromObject({ year: 1000 }).toJSDate();
+	const end = endAt
+		? DateTime.fromJSDate(endAt).endOf("day").toJSDate()
+		: DateTime.fromObject({ year: 3000 }).toJSDate();
 	return merge<BookingSemester, Partial<BookingSemester>>(
 		{
 			id: faker.string.uuid(),
 			createdAt: faker.date.past(),
 			updatedAt: faker.date.past(),
 			semester: Semester.FALL,
-			startAt: DateTime.fromObject({ year: 1000 }).toJSDate(),
-			endAt: DateTime.fromObject({ year: 3000 }).toJSDate(),
+			startAt: start,
+			endAt: end,
 			bookingsEnabled: true,
 		},
-		data,
+		rest,
 	);
 }
