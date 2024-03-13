@@ -61,7 +61,7 @@ describe("EventsRepository", () => {
 			},
 		];
 
-		test.concurrent.each(testCases)("$name", async ({ updateFn, expected }) => {
+		test.each(testCases)("$name", async ({ updateFn, expected }) => {
 			/**
 			 * Arrange
 			 *

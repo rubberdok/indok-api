@@ -43,7 +43,8 @@ export class ProductRepository {
 					err.code === prismaKnownErrorCodes.ERR_UNIQUE_CONSTRAINT_VIOLATION
 				) {
 					throw new InvalidArgumentError(
-						"A merchant with this clientId already exists",
+						"A merchant with this clientId or name already exists",
+						err,
 					);
 				}
 			}

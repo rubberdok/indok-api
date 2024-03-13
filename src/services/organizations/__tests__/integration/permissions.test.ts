@@ -189,7 +189,7 @@ describe("OrganizationsService", () => {
 			},
 		];
 
-		test.concurrent.each(testCases)(
+		test.each(testCases)(
 			"should return $expected for requiredRole: $requiredRole, requiredFeaturePermission $requiredFeaturePermission with: [isSuperUser: $arrange.user.isSuperUser], [role: $arrange.member.role], [featurePermissions: $arrange.organization.featurePermissions]",
 			async ({
 				arrange,
