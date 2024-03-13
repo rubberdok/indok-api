@@ -1282,10 +1282,18 @@ export class CabinService implements ICabinService {
 		for (const bookingSemester of bookingSemesters) {
 			if (bookingSemester.bookingsEnabled) {
 				const now = DateTime.now().startOf("day");
+				/**
+				 * Take the maximum of the start date of the booking semester and now, to ensure that we don't
+				 * include dates in the past.
+				 */
 				const startAt = DateTime.max(
 					DateTime.fromJSDate(bookingSemester.startAt).startOf("day"),
 					now,
 				);
+				/**
+				 * Offset endAt by 1 day (startOf) to account for the fact that intervals are half-open,
+				 * and we want to include the end date in the interval.
+				 */
 				const endAt = DateTime.fromJSDate(bookingSemester.endAt)
 					.plus({ days: 1 })
 					.startOf("day");
@@ -1324,6 +1332,10 @@ export class CabinService implements ICabinService {
 			}
 			for (const booking of bookings.data.bookings) {
 				const startAt = DateTime.fromJSDate(booking.startDate).startOf("day");
+				/**
+				 * Offset endAt by 1 day (startOf) to account for the fact that intervals are half-open,
+				 * and we want to include the end date in the interval.
+				 */
 				const endAt = DateTime.fromJSDate(booking.endDate)
 					.plus({ days: 1 })
 					.startOf("day");
