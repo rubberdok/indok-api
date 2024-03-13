@@ -18,7 +18,6 @@ import type {
 	CreateBasicEventParams,
 	CreateEventParams,
 	CreateSignUpEventParams,
-	CreateTicketEventParams,
 	UpdateEventParams,
 } from "../../service.js";
 import { makeBasicEvent, makeSignUpEvent } from "../dependencies.js";
@@ -73,28 +72,6 @@ function makeSignUpEventParams(
 			Partial<CreateSignUpEventParams["event"]> | undefined
 		>(signUpEvent, event),
 		slots: slotData,
-	};
-}
-
-function makeTicketEventParams(
-	data?: Partial<CreateTicketEventParams["event"]>,
-	slots?: CreateTicketEventParams["slots"],
-	tickets?: Partial<CreateTicketEventParams["tickets"]>,
-): CreateTicketEventParams {
-	const { event: signUpEvent, slots: signUpSlots } = makeSignUpEventParams(
-		data,
-		slots,
-	);
-	const ticketData = {
-		merchantId: faker.string.uuid(),
-		price: 100,
-		...tickets,
-	};
-	return {
-		type: "TICKETS",
-		event: signUpEvent,
-		slots: signUpSlots,
-		tickets: ticketData,
 	};
 }
 

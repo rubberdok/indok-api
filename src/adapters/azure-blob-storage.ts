@@ -27,7 +27,7 @@ function BlobStorageAdapter({
 	containerName,
 }: Dependencies): BlobStorageAdapterType {
 	function getSasOptions(
-		ctx: Context,
+		_ctx: Context,
 		params: {
 			name: string;
 			action: "UPLOAD" | "DOWNLOAD" | "DELETE";
@@ -89,7 +89,7 @@ function BlobStorageAdapter({
 	}
 
 	function getUserDelegationTimeRange(
-		ctx: Context,
+		_ctx: Context,
 		params: { action: "UPLOAD" | "DOWNLOAD" | "DELETE" },
 	): { startsOn: Date; expiresOn: Date } {
 		switch (params.action) {

@@ -45,7 +45,6 @@ const fastifyApolloServerPlugin: FastifyPluginAsync<{
 	// Custom context function to inject dependencies into the Apollo Context
 	const contextFunction: ApolloFastifyContextFunction<ApolloContext> = async (
 		req,
-		res,
 	) => {
 		const { services } = fastify;
 		const name = `${req.method} ${req.url}`;

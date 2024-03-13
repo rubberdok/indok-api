@@ -58,7 +58,7 @@ function buildProducts({ productRepository }: BuildProductsDependencies) {
 			} catch (err) {
 				return {
 					ok: false,
-					error: new InternalServerError("Failed to get products"),
+					error: new InternalServerError("Failed to get products", err),
 				};
 			}
 		},

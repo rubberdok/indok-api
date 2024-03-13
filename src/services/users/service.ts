@@ -241,7 +241,7 @@ export class UserService {
 		try {
 			const user = await this.usersRepository.getByFeideId(feideId);
 			return user;
-		} catch (err) {
+		} catch (_err) {
 			return null;
 		}
 	}
