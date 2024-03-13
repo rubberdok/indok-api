@@ -29,6 +29,9 @@ updates:
         patterns:
           - "@prisma/client*"
           - "prisma*"
+      bull-board:
+        patterns:
+          - "@bull-board/*"
 
   - package-ecosystem: github-actions
     directory: "/.github/workflows"
