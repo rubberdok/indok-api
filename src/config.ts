@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import { z } from "zod";
-import { InvalidArgumentError } from "~/domain/errors";
+import { InvalidArgumentError } from "~/domain/errors.js";
 
 const mode = process.env.MODE || "development";
 /**
