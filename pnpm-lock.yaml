@@ -160,6 +160,9 @@ devDependencies:
   '@parcel/watcher':
     specifier: ^2.4.1
     version: 2.4.1
+  '@swc-node/register':
+    specifier: ^1.9.0
+    version: 1.9.0(@swc/core@1.4.7)(@swc/types@0.1.5)(typescript@5.4.2)
   '@swc/cli':
     specifier: ^0.3.10
     version: 0.3.10(@swc/core@1.4.7)
@@ -2974,6 +2977,43 @@ packages:
     resolution: {integrity: sha512-V4BG07kuYSUkTCSBHG8G8TNhM+F19jXFWnQtzj+we8DrkpSBCee9Z3Ms8yiGer/dlmhe35/Xdgyo3/0rQKg7YA==}
     dependencies:
       '@sinonjs/commons': 3.0.0
+    dev: true
+
+  /@swc-node/core@1.13.0(@swc/core@1.4.7)(@swc/types@0.1.5):
+    resolution: {integrity: sha512-lFPD4nmy4ifAOVMChFjwlpXN5KQXvegqeyuzz1KQz42q1lf+cL3Qux1/GteGuZjh8HC+Rj1RdNrHpE/MCfJSTw==}
+    engines: {node: '>= 10'}
+    peerDependencies:
+      '@swc/core': '>= 1.3'
+      '@swc/types': '>= 0.1'
+    dependencies:
+      '@swc/core': 1.4.7(@swc/helpers@0.5.6)
+      '@swc/types': 0.1.5
+    dev: true
+
+  /@swc-node/register@1.9.0(@swc/core@1.4.7)(@swc/types@0.1.5)(typescript@5.4.2):
+    resolution: {integrity: sha512-i0iYInD4q5v3xQC6bKvs0QtfUxu197CU5qKALmpxEqTYs7sIhQ7KFLe3kP+eAR4gRkJTvAgjQgrokXLN2jZrOw==}
+    peerDependencies:
+      '@swc/core': '>= 1.3'
+      typescript: '>= 4.3'
+    dependencies:
+      '@swc-node/core': 1.13.0(@swc/core@1.4.7)(@swc/types@0.1.5)
+      '@swc-node/sourcemap-support': 0.5.0
+      '@swc/core': 1.4.7(@swc/helpers@0.5.6)
+      colorette: 2.0.20
+      debug: 4.3.4(supports-color@5.5.0)
+      pirates: 4.0.6
+      tslib: 2.6.2
+      typescript: 5.4.2
+    transitivePeerDependencies:
+      - '@swc/types'
+      - supports-color
+    dev: true
+
+  /@swc-node/sourcemap-support@0.5.0:
+    resolution: {integrity: sha512-fbhjL5G0YvFoWwNhWleuBUfotiX+USiA9oJqu9STFw+Hb0Cgnddn+HVS/K5fI45mn92e8V+cHD2jgFjk4w2T9Q==}
+    dependencies:
+      source-map-support: 0.5.21
+      tslib: 2.6.2
     dev: true
 
   /@swc/cli@0.3.10(@swc/core@1.4.7):
@@ -7969,6 +8009,13 @@ packages:
 
   /source-map-support@0.5.13:
     resolution: {integrity: sha512-SHSKFHadjVA5oR4PPqhtAVdcBWwRYVd6g6cAXnIbRiIwc2EhPrTuKUBdSLvlEKyIP3GCf89fltvcZiP9MMFA1w==}
+    dependencies:
+      buffer-from: 1.1.2
+      source-map: 0.6.1
+    dev: true
+
+  /source-map-support@0.5.21:
+    resolution: {integrity: sha512-uBHU3L3czsIyYXKX88fdrGovxdSCoTGDRZ6SYXtSRxLZUzHg5P/66Ht6uoUlHu9EZod+inXhKo3qQgwXUT/y1w==}
     dependencies:
       buffer-from: 1.1.2
       source-map: 0.6.1
