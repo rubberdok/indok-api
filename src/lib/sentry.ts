@@ -42,7 +42,7 @@ export const fastifyApolloSentryPlugin = (
 				contextValue.transaction?.setName(request.operationName);
 			}
 			return {
-				// biome-ignore lint/nursery/useAwait: We need to use async/await API here.
+				// biome-ignore lint/suspicious/useAwait: We need to use async/await API here.
 				async willSendResponse({ contextValue }) {
 					contextValue.transaction?.finish();
 				},

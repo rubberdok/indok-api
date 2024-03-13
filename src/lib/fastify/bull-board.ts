@@ -4,7 +4,7 @@ import { FastifyAdapter } from "@bull-board/fastify";
 import type { FastifyPluginAsync } from "fastify";
 import { compact } from "lodash-es";
 
-const fastifyBullBoardPlugin: FastifyPluginAsync = async (fastify, options) => {
+const fastifyBullBoardPlugin: FastifyPluginAsync = async (fastify) => {
 	fastify.after(() => {
 		const serverAdapter = new FastifyAdapter();
 		const queues = compact(Object.values(fastify.queues));
@@ -33,7 +33,7 @@ const fastifyBullBoardPlugin: FastifyPluginAsync = async (fastify, options) => {
 						.code(401)
 						.send({ error: "You must an admin to access this page." });
 				}
-			} catch (error) {
+			} catch (_error) {
 				return reply
 					.code(401)
 					.send({ error: "You must an admin to access this page." });

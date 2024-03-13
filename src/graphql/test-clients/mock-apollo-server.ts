@@ -1,4 +1,4 @@
-import assert from "assert";
+import assert from "node:assert";
 import { ApolloServer } from "@apollo/server";
 import type {
 	ResultOf,

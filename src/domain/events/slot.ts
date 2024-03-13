@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import type { EventSlot as PrismaSlot } from "@prisma/client";
 import { isNil, omitBy } from "lodash-es";
 import { z } from "zod";

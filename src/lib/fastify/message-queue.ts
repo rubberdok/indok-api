@@ -30,7 +30,7 @@ declare module "fastify" {
 
 const fastifyMessageQueue: FastifyPluginAsync<
 	FastifyMessageQueuePluginOptions
-	// biome-ignore lint/nursery/useAwait: We need to use async/await API here
+	// biome-ignore lint/suspicious/useAwait: We need to use async/await API here
 > = async (fastify, opts) => {
 	const { connection = fastify.redis["message-queue"], name } = opts;
 	if (!connection) {

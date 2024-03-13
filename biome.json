@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/1.4.1/schema.json",
+	"$schema": "https://biomejs.dev/schemas/1.6.1/schema.json",
 	"vcs": {
 		"enabled": true,
 		"useIgnoreFile": true,
@@ -12,9 +12,16 @@
 		"enabled": true,
 		"rules": {
 			"recommended": true,
+			"suspicious": {
+				"useAwait": "warn"
+			},
+			"correctness": {
+				"noUnusedImports": "error",
+				"noUnusedVariables": "error",
+				"noUnusedPrivateClassMembers": "error"
+			},
 			"nursery": {
-				"recommended": true,
-				"noUnusedImports": "error"
+				"recommended": true
 			}
 		}
 	},
@@ -25,7 +32,8 @@
 			"pnpm-lock.yaml",
 			"src/graphql/test-clients/integration/**/*.ts",
 			"src/graphql/test-clients/unit/**/*.ts",
-			"*.generated.ts"
+			"*.generated.ts",
+			"package.json"
 		]
 	}
 }

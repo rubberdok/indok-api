@@ -18,7 +18,7 @@ describe("EventService", () => {
 
 	beforeAll(() => {
 		({ eventsRepository, service, permissionService } = makeDependencies());
-		eventsRepository.update.mockImplementation(async (_ctx, id, updateFn) => {
+		eventsRepository.update.mockImplementation(async (_ctx, _id, updateFn) => {
 			const res = await updateFn({
 				event: makeSignUpEvent(),
 				slots: [

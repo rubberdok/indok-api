@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import type { Event as DataStorageEvent } from "@prisma/client";
 import { isNil, merge, omitBy } from "lodash-es";
 import { DateTime } from "luxon";

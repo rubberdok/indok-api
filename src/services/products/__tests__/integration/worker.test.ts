@@ -1,6 +1,5 @@
 import { faker } from "@faker-js/faker";
 import { jest } from "@jest/globals";
-import type { QueueEvents } from "bullmq";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { DownstreamServiceError } from "~/domain/errors.js";
 import type { PaymentAttemptType } from "~/domain/products.js";
@@ -16,23 +15,18 @@ describe("ProductService Worker", () => {
 	let paymentProcessingQueue: PaymentProcessingQueueType;
 	let worker: PaymentProcessingWorkerType;
 	let productService: DeepMockProxy<ProductServiceType>;
-	let queueEvents: QueueEvents;
 
 	beforeEach(async () => {
 		productService = mockDeep<ProductServiceType>({});
-		({ close, paymentProcessingQueue, worker, queueEvents } =
-			await makeDependencies({
-				productService,
-			}));
+		({ close, paymentProcessingQueue, worker } = await makeDependencies({
+			productService,
+		}));
+		worker.removeAllListeners();
 	});
 
 	afterEach(async () => {
 		await close();
 		jest.clearAllMocks();
-	});
-
-	beforeEach(() => {
-		worker.removeAllListeners();
 	});
 
 	describe("capture-payment", () => {

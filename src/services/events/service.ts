@@ -1388,7 +1388,7 @@ class EventService {
 	}
 
 	public async getSlots(
-		ctx: Context,
+		_ctx: Context,
 		params: { eventId: string },
 	): ResultAsync<{ slots: SlotType[] }, never> {
 		const { eventId } = params;

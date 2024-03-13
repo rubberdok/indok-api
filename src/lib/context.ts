@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import type { FastifyBaseLogger } from "fastify";
 import { isNil, merge } from "lodash-es";
 import type { User } from "~/domain/users.js";

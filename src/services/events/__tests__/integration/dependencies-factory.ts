@@ -1,4 +1,4 @@
-import assert from "assert";
+import assert from "node:assert";
 import { faker } from "@faker-js/faker";
 import type { Organization } from "@prisma/client";
 import { mockDeep } from "jest-mock-extended";

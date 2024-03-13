@@ -1,9 +1,9 @@
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import {
-	type BookingContact as PrismaBookingContact,
 	type BookingSemester,
 	type Cabin,
 	FeaturePermission,
+	type BookingContact as PrismaBookingContact,
 	Semester,
 } from "@prisma/client";
 import { sumBy } from "lodash-es";

@@ -1,10 +1,10 @@
 import {
-	type Event as PrismaEvent,
 	type EventSignUp,
 	type EventSlot,
 	ParticipationStatus,
 	type Prisma,
 	type PrismaClient,
+	type Event as PrismaEvent,
 } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 import { pick } from "lodash-es";

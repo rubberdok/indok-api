@@ -48,7 +48,7 @@ describe("EventsRepository", () => {
 			},
 			{
 				name: "should not update undefined fields",
-				updateFn: ({ event }) => {
+				updateFn: () => {
 					return Promise.resolve({
 						ok: false,
 						error: new InternalServerError("Something went wrong"),
