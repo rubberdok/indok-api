@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import { faker } from "@faker-js/faker";
 import prisma from "~/lib/prisma.js";
 import { UserRepository } from "~/repositories/users/index.js";

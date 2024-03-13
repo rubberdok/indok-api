@@ -751,7 +751,7 @@ export class CabinService implements ICabinService {
 	}
 
 	private isBookingMinimumLength(
-		ctx: Context,
+		_ctx: Context,
 		params: {
 			checkIn: DateTime;
 			checkOut: DateTime;

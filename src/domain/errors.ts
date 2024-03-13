@@ -30,6 +30,8 @@ type InvalidArugmentErrorType = DomainError<
 	{ reason?: Record<string, string[] | undefined> }
 >;
 
+const ErrorSymbol = Symbol("Error");
+
 type DomainError<
 	TName extends string = string,
 	TCode extends ErrorCode = typeof errorCodes.ERR_INTERNAL_SERVER_ERROR,
@@ -42,8 +44,6 @@ type DomainError<
 	getStackTrace?: () => string | undefined;
 	code: TCode;
 } & TFields;
-
-const ErrorSymbol = Symbol("Error");
 
 function newErrorBase<
 	TName extends string,
