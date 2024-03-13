@@ -14,15 +14,12 @@ describe("AuthService", () => {
 
 	beforeAll(() => {
 		jest.useFakeTimers();
-	});
-	afterAll(() => {
-		jest.useRealTimers();
-	});
-
-	beforeAll(() => {
 		const services = makeTestServices();
 		userService = services.users;
 		authService = services.auth;
+	});
+	afterAll(() => {
+		jest.useRealTimers();
 	});
 
 	describe("login", () => {

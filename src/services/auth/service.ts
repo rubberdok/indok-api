@@ -1,4 +1,4 @@
-import type { IncomingMessage } from "http";
+import type { IncomingMessage } from "node:http";
 import type { FastifyRequest } from "fastify";
 import type { TokenSet, UserinfoResponse } from "openid-client";
 import { generators } from "openid-client";

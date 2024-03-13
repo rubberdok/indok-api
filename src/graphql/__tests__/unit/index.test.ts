@@ -1,4 +1,4 @@
-import assert from "assert";
+import assert from "node:assert";
 import { faker } from "@faker-js/faker";
 import type { ResultOf } from "@graphql-typed-document-node/core";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";

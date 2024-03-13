@@ -1,4 +1,4 @@
-import { fail } from "assert";
+import { fail } from "node:assert";
 import { faker } from "@faker-js/faker";
 import { jest } from "@jest/globals";
 import { QueueEvents, UnrecoverableError } from "bullmq";

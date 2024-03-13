@@ -1,4 +1,4 @@
-import assert, { fail } from "assert";
+import assert, { fail } from "node:assert";
 import { faker } from "@faker-js/faker";
 import type { EventSlot } from "@prisma/client";
 import { mock } from "jest-mock-extended";

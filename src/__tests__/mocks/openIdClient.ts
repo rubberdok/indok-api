@@ -1,4 +1,4 @@
-import type { IncomingMessage } from "http";
+import type { IncomingMessage } from "node:http";
 import { faker } from "@faker-js/faker";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { merge } from "lodash-es";

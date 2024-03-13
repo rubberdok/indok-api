@@ -10,7 +10,7 @@ declare module "fastify" {
 
 const fastifyServicePlugin: FastifyPluginAsync<{
 	services: Services;
-	// biome-ignore lint/nursery/useAwait: We need to use async/await API here
+	// biome-ignore lint/suspicious/useAwait: We need to use async/await API here
 }> = async (fastify, opts) => {
 	fastify.decorate("services", opts.services);
 };

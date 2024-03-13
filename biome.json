@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/1.4.1/schema.json",
+	"$schema": "https://biomejs.dev/schemas/1.6.1/schema.json",
 	"vcs": {
 		"enabled": true,
 		"useIgnoreFile": true,
@@ -12,9 +12,14 @@
 		"enabled": true,
 		"rules": {
 			"recommended": true,
-			"nursery": {
-				"recommended": true,
+			"suspicious": {
+				"useAwait": "warn"
+			},
+			"correctness": {
 				"noUnusedImports": "error"
+			},
+			"nursery": {
+				"recommended": true
 			}
 		}
 	},

@@ -1,5 +1,5 @@
-import assert from "assert";
-import type { IncomingMessage } from "http";
+import assert from "node:assert";
+import type { IncomingMessage } from "node:http";
 import { faker } from "@faker-js/faker";
 import type { FastifyInstance, InjectOptions } from "fastify";
 import { mock } from "jest-mock-extended";

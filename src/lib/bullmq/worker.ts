@@ -2,9 +2,9 @@ import type { PrismaClient } from "@prisma/client";
 import { Client } from "@vippsmobilepay/sdk";
 import server, { type Avvio, type Plugin } from "avvio";
 import {
+	Worker as BullMqWorker,
 	type Processor,
 	type RedisConnection,
-	Worker as BullMqWorker,
 	type WorkerOptions,
 } from "bullmq";
 import { Redis } from "ioredis";

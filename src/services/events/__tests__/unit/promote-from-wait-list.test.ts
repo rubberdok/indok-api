@@ -1,4 +1,4 @@
-import { fail } from "assert";
+import { fail } from "node:assert";
 import { faker } from "@faker-js/faker";
 import { type DeepMockProxy, mock } from "jest-mock-extended";
 import { InvalidArgumentError } from "~/domain/errors.js";

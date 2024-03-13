@@ -1,4 +1,4 @@
-import assert from "assert";
+import assert from "node:assert";
 import { faker } from "@faker-js/faker";
 import { QueueEvents } from "bullmq";
 import { Redis } from "ioredis";

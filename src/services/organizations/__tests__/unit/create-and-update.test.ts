@@ -1,4 +1,4 @@
-import { fail } from "assert";
+import { fail } from "node:assert";
 import { faker } from "@faker-js/faker";
 import { FeaturePermission, type Organization } from "@prisma/client";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";

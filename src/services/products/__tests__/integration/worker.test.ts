@@ -24,15 +24,12 @@ describe("ProductService Worker", () => {
 			await makeDependencies({
 				productService,
 			}));
+		worker.removeAllListeners();
 	});
 
 	afterEach(async () => {
 		await close();
 		jest.clearAllMocks();
-	});
-
-	beforeEach(() => {
-		worker.removeAllListeners();
 	});
 
 	describe("capture-payment", () => {
