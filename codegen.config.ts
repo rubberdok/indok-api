@@ -1,5 +1,5 @@
-// @ts-check
-const { defineConfig } = require("@eddeee888/gcg-typescript-resolver-files");
+import { defineConfig } from "@eddeee888/gcg-typescript-resolver-files";
+import type { CodegenConfig } from "@graphql-codegen/cli";
 
 const generatedPrefix = `
 // biome-ignore
@@ -19,8 +19,7 @@ To regenerate this file, run \`npm run generate:gql\`
 """
 `;
 
-/** @type {import("@graphql-codegen/cli").CodegenConfig} */
-const config = {
+const config: CodegenConfig = {
 	schema: "src/graphql/**/schema.graphql",
 	emitLegacyCommonJSImports: false,
 	hooks: {
