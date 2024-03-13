@@ -15,14 +15,12 @@
 		"skipLibCheck": true,
 		"lib": ["ES2022"],
 		"strict": true,
-		"rootDir": "./",
 		"types": ["node"],
 		"outDir": "dist",
 		"noEmit": true,
 		"paths": {
-			"~/*": ["src/*"]
-		},
-		"baseUrl": "./"
+			"~/*": ["./src/*"]
+		}
 	},
 	"include": ["src/**/*.ts"],
 	"exclude": ["node_modules"]
