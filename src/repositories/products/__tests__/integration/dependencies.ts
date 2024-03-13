@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { faker } from "@faker-js/faker";
 import prisma from "~/lib/prisma.js";
 import { UserRepository } from "~/repositories/users/index.js";
@@ -15,7 +16,7 @@ async function makeDependencies() {
 	});
 
 	const { merchant } = await productRepository.createMerchant({
-		clientId: faker.string.uuid(),
+		clientId: randomUUID(),
 		clientSecret: faker.string.uuid(),
 		name: faker.company.name(),
 		serialNumber: faker.string.uuid(),
