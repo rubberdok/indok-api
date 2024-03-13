@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { EventSlot as PrismaSlot } from "@prisma/client";
 import { isNil, omitBy } from "lodash-es";
 import { z } from "zod";
-import type { Result } from "~/lib/result.js";
+import type { TResult } from "~/lib/result.js";
 import { type InternalServerError, InvalidArgumentError } from "../errors.js";
 
 type SlotType = {
@@ -28,7 +28,7 @@ export type UpdateSlotFields = {
 function updateSlot(params: {
 	previous: SlotType;
 	data: UpdateSlotFields;
-}): Result<{ slot: SlotType }, InvalidArgumentError> {
+}): TResult<{ slot: SlotType }, InvalidArgumentError> {
 	const { previous, data } = params;
 	const updated = previous;
 
@@ -71,7 +71,9 @@ function updateSlot(params: {
 }
 
 const Slot = {
-	new(parmas: NewSlotParams): Result<{ slot: SlotType }, InvalidArgumentError> {
+	new(
+		parmas: NewSlotParams,
+	): TResult<{ slot: SlotType }, InvalidArgumentError> {
 		const schema = z.object({
 			capacity: z.number().int().min(0),
 			gradeYears: z.array(z.number().int().positive()).nullish(),
@@ -105,7 +107,7 @@ const Slot = {
 	update: updateSlot,
 	fromDataStorage(
 		data: PrismaSlot,
-	): Result<{ slot: SlotType }, InternalServerError> {
+	): TResult<{ slot: SlotType }, InternalServerError> {
 		return {
 			ok: true,
 			data: {

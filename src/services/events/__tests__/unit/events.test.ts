@@ -13,7 +13,7 @@ import type { EventType } from "~/domain/events/index.js";
 import { Role } from "~/domain/organizations.js";
 import type { User } from "~/domain/users.js";
 import { makeMockContext } from "~/lib/context.js";
-import type { Result } from "~/lib/result.js";
+import type { TResult } from "~/lib/result.js";
 import type {
 	CreateBasicEventParams,
 	CreateEventParams,
@@ -77,7 +77,7 @@ function makeSignUpEventParams(
 
 function makeReturnType<T extends Record<string, unknown>>(
 	result: { data: T } | { error: InvalidArgumentError | InternalServerError },
-): Result<T, InvalidArgumentError | InternalServerError> {
+): TResult<T, InvalidArgumentError | InternalServerError> {
 	if ("data" in result) {
 		return {
 			ok: true,
@@ -103,13 +103,13 @@ describe("EventsService", () => {
 					createEventParams: CreateEventParams;
 					user: User | null;
 					role?: Role | null;
-					repository?: Result<
+					repository?: TResult<
 						{ event: EventType },
 						InvalidArgumentError | InternalServerError
 					>;
 				};
 				assertion: {
-					return: Result<
+					return: TResult<
 						{ event: EventType },
 						InternalServerError | InvalidArgumentError | PermissionDeniedError
 					>;
@@ -392,7 +392,7 @@ describe("EventsService", () => {
 				updateEventParams: UpdateEventParams;
 			};
 			assertion: {
-				result: Result<
+				result: TResult<
 					{ event: EventType },
 					InvalidArgumentError | InternalServerError
 				>;

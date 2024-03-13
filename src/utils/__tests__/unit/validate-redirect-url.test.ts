@@ -1,6 +1,6 @@
 import { env } from "~/config.js";
 import { InvalidArgumentError } from "~/domain/errors.js";
-import type { Result } from "~/lib/result.js";
+import type { TResult } from "~/lib/result.js";
 import {
 	assertValidRedirectUrl,
 	isValidRedirectUrl,
@@ -11,7 +11,10 @@ describe("Validate redirect URL", () => {
 		interface TestCase {
 			input: string;
 			origins: string[];
-			expected: Result<{ urlAsString: string; url: URL }, InvalidArgumentError>;
+			expected: TResult<
+				{ urlAsString: string; url: URL },
+				InvalidArgumentError
+			>;
 		}
 
 		const testCases: TestCase[] = [

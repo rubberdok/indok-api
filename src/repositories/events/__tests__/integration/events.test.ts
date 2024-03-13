@@ -3,7 +3,7 @@ import { InternalServerError } from "~/domain/errors.js";
 import type { EventType, EventUpdateFn } from "~/domain/events/event.js";
 import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
-import type { Result } from "~/lib/result.js";
+import type { TResult } from "~/lib/result.js";
 import { EventRepository } from "../../repository.js";
 
 let eventsRepository: EventRepository;
@@ -17,7 +17,7 @@ describe("EventsRepository", () => {
 		interface TestCase {
 			name: string;
 			updateFn: EventUpdateFn<InternalServerError>;
-			expected: Result<{ event: EventType }, InternalServerError>;
+			expected: TResult<{ event: EventType }, InternalServerError>;
 		}
 
 		const testCases: TestCase[] = [

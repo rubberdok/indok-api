@@ -1,3 +1,5 @@
+import type { DateTime } from "luxon";
+
 export const BookingStatus = {
 	PENDING: "PENDING",
 	CONFIRMED: "CONFIRMED",
@@ -78,5 +80,35 @@ type NewBookingParams = {
 	feedback: string;
 };
 
+type CalendarMonth = {
+	// The month of the year (1 - 12)
+	month: number;
+	// The year of the month
+	year: number;
+	// All the days in the month
+	days: CalendarDay[];
+};
+
+type CalendarDay = {
+	// The date of the day
+	calendarDate: DateTime;
+	// Available means that the date is not previously occupied, or otherwise made unavailable
+	available: boolean;
+	// Bookable means that bookings have been enabled for the date
+	bookable: boolean;
+	// Price is the price of the date
+	price: number;
+	/**
+	 * Available for check-in means that the date is available for check-in
+	 * e.g. it is not a single date squeezed between two occupied dates
+	 */
+	availableForCheckIn: boolean;
+	/**
+	 * Available for check-out means that the date is available for check-out
+	 * e.g. it is not directly preceded by an occupied date
+	 */
+	availableForCheckOut: boolean;
+};
+
 export { Booking };
-export type { NewBookingParams, BookingType };
+export type { NewBookingParams, BookingType, CalendarDay, CalendarMonth };

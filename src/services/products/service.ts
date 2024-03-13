@@ -6,7 +6,7 @@ import type {
 	PaymentAttemptType,
 	ProductType,
 } from "~/domain/products.js";
-import type { Result, ResultAsync } from "~/lib/result.js";
+import type { ResultAsync, TResult } from "~/lib/result.js";
 import { buildMerchants } from "./merchants.js";
 import { buildOrders } from "./orders.js";
 import { buildPayments } from "./payments.js";
@@ -22,7 +22,7 @@ interface ProductRepository {
 		params: {
 			id: string;
 		},
-		updateOrderFn: (order: OrderType) => Result<{ order: OrderType }, never>,
+		updateOrderFn: (order: OrderType) => TResult<{ order: OrderType }, never>,
 	): ResultAsync<{ order: OrderType }, NotFoundError | InternalServerError>;
 	findManyOrders(params?: { userId?: string; productId?: string }): ResultAsync<
 		{ orders: OrderType[]; total: number },

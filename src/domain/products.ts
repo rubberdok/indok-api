@@ -3,7 +3,7 @@ import type {
 	PaymentAttempt as PrismaPaymentAttempt,
 } from "@prisma/client";
 import { z } from "zod";
-import type { Result } from "~/lib/result.js";
+import type { TResult } from "~/lib/result.js";
 import { InvalidArgumentError } from "./errors.js";
 
 /**
@@ -168,7 +168,7 @@ type NewProductParams = {
 	price: number;
 };
 
-type NewProductReturn = Result<
+type NewProductReturn = TResult<
 	{
 		product: Omit<ProductType, "version" | "id" | "merchant"> & {
 			merchantId: string;

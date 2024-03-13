@@ -24,7 +24,7 @@ describe("Cabin Queries", () => {
 					data: {
 						cabins: [{ id: faker.string.uuid() }],
 						endDate: faker.date.recent().toISOString(),
-						participants: {
+						guests: {
 							internal: 5,
 							external: 10,
 						},
@@ -34,10 +34,10 @@ describe("Cabin Queries", () => {
 			});
 
 			expect(errors).toBeUndefined();
-			expect(cabinService.totalCost).toHaveBeenCalledWith({
+			expect(cabinService.totalCost).toHaveBeenCalledWith(expect.anything(), {
 				cabins: [{ id: expect.any(String) }],
 				endDate: expect.any(Date),
-				participants: {
+				guests: {
 					internal: 5,
 					external: 10,
 				},
@@ -64,7 +64,7 @@ describe("Cabin Queries", () => {
 					data: {
 						cabins: [{ id: faker.string.uuid() }],
 						endDate: faker.date.recent().toISOString(),
-						participants: {
+						guests: {
 							internal: 5,
 							external: 10,
 						},

@@ -1,16 +1,38 @@
-type Result<TData extends Record<string, unknown>, TError extends Error> =
-	| {
-			ok: true;
-			data: TData;
-	  }
-	| {
-			ok: false;
-			error: TError;
-	  };
+type TResult<TData extends Record<string, unknown>, TError extends Error> =
+	| SuccessResult<TData>
+	| ErrorResult<TError>;
+
+type SuccessResult<TData extends Record<string, unknown>> = {
+	ok: true;
+	data: TData;
+};
+
+type ErrorResult<TError> = {
+	ok: false;
+	error: TError;
+};
 
 type ResultAsync<
 	TData extends Record<string, unknown>,
 	TError extends Error,
-> = Promise<Result<TData, TError>>;
+> = Promise<TResult<TData, TError>>;
 
-export type { Result, ResultAsync };
+export type { TResult, ResultAsync };
+export { Result };
+
+const Result = {
+	error<TError>(error: TError): ErrorResult<TError> {
+		return {
+			ok: false,
+			error,
+		};
+	},
+	success<TData extends Record<string, unknown>>(
+		data: TData,
+	): SuccessResult<TData> {
+		return {
+			ok: true,
+			data,
+		};
+	},
+};

@@ -6,12 +6,12 @@ import type { EventType } from "~/domain/events/index.js";
 import { Event } from "~/domain/events/index.js";
 import type { Queue } from "~/lib/bullmq/queue.js";
 import type { Worker } from "~/lib/bullmq/worker.js";
-import type { Result } from "~/lib/result.js";
+import type { TResult } from "~/lib/result.js";
 import type { Context } from "../../lib/context.js";
 import type { EmailQueueDataType } from "../mail/worker.js";
 
 type SignUpQueueDataType = { eventId: string };
-type SignUpQueueReturnType = Result<
+type SignUpQueueReturnType = TResult<
 	Record<string, never>,
 	InvalidArgumentError
 >;

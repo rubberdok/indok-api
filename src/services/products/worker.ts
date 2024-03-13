@@ -10,11 +10,11 @@ import type {
 import type { OrderType, PaymentAttemptType } from "~/domain/products.js";
 import type { Queue } from "~/lib/bullmq/queue.js";
 import type { Worker } from "~/lib/bullmq/worker.js";
-import type { Result, ResultAsync } from "~/lib/result.js";
+import type { ResultAsync, TResult } from "~/lib/result.js";
 import type { Context } from "../../lib/context.js";
 
 type PaymentProcessingDataType = { reference: string };
-type PaymentProcessingResultType = Result<
+type PaymentProcessingResultType = TResult<
 	Record<string, never>,
 	InternalServerError | NotFoundError
 >;

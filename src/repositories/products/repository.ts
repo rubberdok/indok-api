@@ -15,7 +15,7 @@ import {
 	type ProductType,
 } from "~/domain/products.js";
 import { prismaKnownErrorCodes } from "~/lib/prisma.js";
-import type { Result, ResultAsync } from "~/lib/result.js";
+import type { ResultAsync, TResult } from "~/lib/result.js";
 
 export class ProductRepository {
 	constructor(private db: PrismaClient) {}
@@ -466,7 +466,7 @@ export class ProductRepository {
 		params: {
 			id: string;
 		},
-		updateFn: (order: OrderType) => Result<{ order: OrderType }, never>,
+		updateFn: (order: OrderType) => TResult<{ order: OrderType }, never>,
 	): ResultAsync<{ order: OrderType }, NotFoundError | InternalServerError> {
 		const getOrder = await this.getOrder(params.id);
 		if (!getOrder.ok) {

@@ -4,7 +4,7 @@ export const totalCost: NonNullable<QueryResolvers["totalCost"]> = async (
 	{ data },
 	ctx,
 ) => {
-	const totalCostResult = await ctx.cabins.totalCost(data);
+	const totalCostResult = await ctx.cabins.totalCost(ctx, data);
 	if (!totalCostResult.ok) {
 		throw totalCostResult.error;
 	}

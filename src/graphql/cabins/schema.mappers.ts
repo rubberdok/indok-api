@@ -8,4 +8,8 @@ type BookingSemestersResponseMapper = {};
 
 export type { BookingType as BookingMapper } from "~/domain/cabins.js";
 
+export type {
+	CalendarMonth as CalendarMonthMapper,
+	CalendarDay as CalendarDayMapper,
+} from "~/domain/cabins.js";
 export type { BookingSemestersResponseMapper };

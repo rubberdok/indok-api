@@ -9,7 +9,7 @@ import type {
 	SlotType,
 } from "~/domain/events/index.js";
 import { makeMockContext } from "~/lib/context.js";
-import type { Result } from "~/lib/result.js";
+import type { TResult } from "~/lib/result.js";
 import type { Services } from "~/lib/server.js";
 import type { CreateEventParams } from "../../service.js";
 import {
@@ -30,7 +30,7 @@ describe("EventService", () => {
 			act: {
 				createEventParams: CreateEventParams;
 			};
-			expected: Result<
+			expected: TResult<
 				{
 					event: EventType;
 					slots?: SlotType[];

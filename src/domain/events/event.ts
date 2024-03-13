@@ -3,7 +3,7 @@ import type { Event as DataStorageEvent } from "@prisma/client";
 import { isNil, merge, omitBy } from "lodash-es";
 import { DateTime } from "luxon";
 import { z } from "zod";
-import type { Result, ResultAsync } from "~/lib/result.js";
+import type { ResultAsync, TResult } from "~/lib/result.js";
 import {
 	type InternalServerError,
 	InvalidArgumentError,
@@ -321,15 +321,15 @@ type NewBasicEventParams = {
 	type: typeof EventTypeEnum.BASIC;
 	event: NewBasicEventData;
 };
-type NewSignUpEventReturn = Result<
+type NewSignUpEventReturn = TResult<
 	{ event: SignUpEvent },
 	InvalidArgumentError
 >;
-type NewTicketEventReturn = Result<
+type NewTicketEventReturn = TResult<
 	{ event: TicketEvent },
 	InvalidArgumentError
 >;
-type NewBasicEventReturn = Result<{ event: BasicEvent }, InvalidArgumentError>;
+type NewBasicEventReturn = TResult<{ event: BasicEvent }, InvalidArgumentError>;
 type NewEventReturnType =
 	| NewBasicEventReturn
 	| NewTicketEventReturn
@@ -358,7 +358,7 @@ function updateEvent(params: {
 	data: {
 		event: EventUpdateFields;
 	};
-}): Result<
+}): TResult<
 	UpdateEvenFnReturnType,
 	InvalidArgumentError | InvalidCapacityError
 > {
@@ -451,7 +451,7 @@ type EventUpdateFields = Partial<{
 function updateSignUpEvent(params: {
 	previous: { event: SignUpEvent | TicketEvent };
 	data: { event: EventUpdateFields };
-}): Result<
+}): TResult<
 	UpdateEvenFnReturnType,
 	InvalidCapacityError | InvalidArgumentError
 > {
@@ -558,7 +558,7 @@ const Event = {
 	isSignUpEvent,
 	fromDataStorage(
 		event: DataStorageEvent,
-	): Result<{ event: EventType }, InternalServerError> {
+	): TResult<{ event: EventType }, InternalServerError> {
 		if (event.type === EventTypeEnum.BASIC) {
 			return {
 				ok: true,

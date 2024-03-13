@@ -3,12 +3,14 @@ import { type BookingSemester, type Cabin, Semester } from "@prisma/client";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
+import { pino } from "pino";
 import type { BookingType } from "~/domain/cabins.js";
 import type {
 	InternalServerError,
 	InvalidArgumentError,
 } from "~/domain/errors.js";
 import { makeMockContext } from "~/lib/context.js";
+import { envToLogger } from "~/lib/fastify/logging.js";
 import type { NewBookingParams } from "~/lib/server.js";
 import {
 	CabinService,
@@ -65,6 +67,13 @@ describe("CabinService", () => {
 						throw new Error(`Unexpected semester: ${semester}`);
 					},
 				);
+				cabinRepository.findManyBookings.mockResolvedValue({
+					ok: true,
+					data: {
+						bookings: [],
+						total: 0,
+					},
+				});
 				cabinRepository.getCabinById.mockResolvedValue(
 					mock<Cabin>({
 						id: faker.string.uuid(),
@@ -116,7 +125,7 @@ describe("CabinService", () => {
 						expected: {
 							error: expect.objectContaining({
 								name: "InvalidArgumentError",
-								formErrors: expect.objectContaining({
+								reason: expect.objectContaining({
 									email: expect.any(Array),
 								}),
 							}),
@@ -138,7 +147,7 @@ describe("CabinService", () => {
 						expected: {
 							error: expect.objectContaining({
 								name: "InvalidArgumentError",
-								formErrors: expect.objectContaining({
+								reason: expect.objectContaining({
 									phoneNumber: expect.any(Array),
 								}),
 							}),
@@ -160,7 +169,7 @@ describe("CabinService", () => {
 						expected: {
 							error: expect.objectContaining({
 								name: "InvalidArgumentError",
-								formErrors: expect.objectContaining({
+								reason: expect.objectContaining({
 									cabins: expect.any(Array),
 								}),
 							}),
@@ -182,7 +191,7 @@ describe("CabinService", () => {
 						expected: {
 							error: expect.objectContaining({
 								name: "InvalidArgumentError",
-								formErrors: expect.objectContaining({
+								reason: expect.objectContaining({
 									firstName: expect.any(Array),
 								}),
 							}),
@@ -204,7 +213,7 @@ describe("CabinService", () => {
 						expected: {
 							error: expect.objectContaining({
 								name: "InvalidArgumentError",
-								formErrors: expect.objectContaining({
+								reason: expect.objectContaining({
 									lastName: expect.any(Array),
 								}),
 							}),
@@ -233,7 +242,7 @@ describe("CabinService", () => {
 						expected: {
 							error: expect.objectContaining({
 								name: "InvalidArgumentError",
-								formErrors: expect.objectContaining({
+								reason: expect.objectContaining({
 									startDate: expect.any(Array),
 								}),
 							}),
@@ -255,7 +264,7 @@ describe("CabinService", () => {
 						expected: {
 							error: expect.objectContaining({
 								name: "InvalidArgumentError",
-								formErrors: expect.objectContaining({
+								reason: expect.objectContaining({
 									endDate: expect.any(Array),
 								}),
 							}),
@@ -278,7 +287,7 @@ describe("CabinService", () => {
 						expected: {
 							error: expect.objectContaining({
 								name: "InvalidArgumentError",
-								formErrors: expect.objectContaining({
+								reason: expect.objectContaining({
 									startDate: expect.any(Array),
 								}),
 							}),
@@ -294,20 +303,22 @@ describe("CabinService", () => {
 						},
 						act: {
 							input: makeCabinInput({
-								startDate: DateTime.now()
-									.plus({ days: 2 })
-									.startOf("day")
-									.toJSDate(),
-								endDate: DateTime.now()
-									.plus({ days: 2 })
-									.startOf("day")
-									.toJSDate(),
+								startDate: DateTime.fromObject({
+									year: 2500,
+									day: 1,
+									month: 1,
+								}).toJSDate(),
+								endDate: DateTime.fromObject({
+									year: 2500,
+									day: 1,
+									month: 1,
+								}).toJSDate(),
 							}),
 						},
 						expected: {
 							error: expect.objectContaining({
 								name: "InvalidArgumentError",
-								formErrors: expect.objectContaining({
+								reason: expect.objectContaining({
 									startDate: expect.any(Array),
 								}),
 							}),
@@ -334,7 +345,13 @@ describe("CabinService", () => {
 						expected: {
 							error: expect.objectContaining({
 								name: "InvalidArgumentError",
-								description: expect.stringContaining("not enabled"),
+								reason: expect.objectContaining({
+									startDate: expect.arrayContaining([
+										expect.stringContaining(
+											"not available for the selected dates",
+										),
+									]),
+								}),
 							}),
 						},
 					},
@@ -352,7 +369,13 @@ describe("CabinService", () => {
 						expected: {
 							error: expect.objectContaining({
 								name: "InvalidArgumentError",
-								description: expect.stringContaining("not enabled"),
+								reason: expect.objectContaining({
+									startDate: expect.arrayContaining([
+										expect.stringContaining(
+											"not available for the selected dates",
+										),
+									]),
+								}),
 							}),
 						},
 					},
@@ -374,7 +397,7 @@ describe("CabinService", () => {
 						expected: {
 							error: expect.objectContaining({
 								name: "InvalidArgumentError",
-								formErrors: expect.objectContaining({
+								reason: expect.objectContaining({
 									startDate: expect.any(Array),
 								}),
 							}),
@@ -398,7 +421,7 @@ describe("CabinService", () => {
 						expected: {
 							error: expect.objectContaining({
 								name: "InvalidArgumentError",
-								formErrors: expect.objectContaining({
+								reason: expect.objectContaining({
 									startDate: expect.any(Array),
 								}),
 							}),
@@ -424,7 +447,7 @@ describe("CabinService", () => {
 						expected: {
 							error: expect.objectContaining({
 								name: "InvalidArgumentError",
-								formErrors: expect.objectContaining({
+								reason: expect.objectContaining({
 									startDate: expect.any(Array),
 								}),
 							}),
@@ -464,7 +487,7 @@ describe("CabinService", () => {
 						expected: {
 							error: expect.objectContaining({
 								name: "InvalidArgumentError",
-								formErrors: expect.objectContaining({
+								reason: expect.objectContaining({
 									startDate: expect.any(Array),
 								}),
 							}),
@@ -498,7 +521,7 @@ describe("CabinService", () => {
 						expected: {
 							error: expect.objectContaining({
 								name: "InvalidArgumentError",
-								formErrors: expect.objectContaining({
+								reason: expect.objectContaining({
 									startDate: expect.any(Array),
 								}),
 							}),
@@ -532,7 +555,7 @@ describe("CabinService", () => {
 						expected: {
 							error: expect.objectContaining({
 								name: "InvalidArgumentError",
-								formErrors: expect.objectContaining({
+								reason: expect.objectContaining({
 									startDate: expect.any(Array),
 								}),
 							}),
@@ -572,7 +595,7 @@ describe("CabinService", () => {
 						expected: {
 							error: expect.objectContaining({
 								name: "InvalidArgumentError",
-								formErrors: expect.objectContaining({
+								reason: expect.objectContaining({
 									startDate: expect.any(Array),
 								}),
 							}),
@@ -583,30 +606,37 @@ describe("CabinService", () => {
 						arrange: {
 							bookingSemesters: {
 								fall: makeBookingSemester({
-									startAt: DateTime.now()
-										.plus({ days: 2 })
-										.startOf("day")
-										.toJSDate(),
+									startAt: DateTime.fromObject({
+										year: 0,
+									}).toJSDate(),
+									endAt: DateTime.fromObject({
+										year: 5000,
+									}).toJSDate(),
 									bookingsEnabled: false,
 								}),
 								spring: makeBookingSemester({
-									endAt: DateTime.now()
-										.plus({ days: 1 })
-										.endOf("day")
-										.toJSDate(),
+									endAt: DateTime.fromObject({ year: 2500 }).toJSDate(),
 								}),
 							},
 						},
 						act: {
 							input: makeCabinInput({
-								startDate: DateTime.now().plus({ hour: 1 }).toJSDate(),
-								endDate: DateTime.now().plus({ days: 4 }).toJSDate(),
+								startDate: DateTime.fromObject({
+									year: 2499,
+									month: 12,
+									day: 31,
+								}).toJSDate(),
+								endDate: DateTime.fromObject({
+									year: 2500,
+									month: 1,
+									day: 2,
+								}).toJSDate(),
 							}),
 						},
 						expected: {
 							error: expect.objectContaining({
 								name: "InvalidArgumentError",
-								formErrors: expect.objectContaining({
+								reason: expect.objectContaining({
 									startDate: expect.any(Array),
 								}),
 							}),
@@ -616,32 +646,39 @@ describe("CabinService", () => {
 						name: "the spring semester is not active",
 						arrange: {
 							bookingSemesters: {
-								fall: makeBookingSemester({
-									startAt: DateTime.now()
-										.plus({ days: 2 })
-										.startOf("day")
-										.toJSDate(),
-								}),
 								spring: makeBookingSemester({
-									endAt: DateTime.now()
-										.plus({ days: 1 })
-										.endOf("day")
-										.toJSDate(),
+									startAt: DateTime.fromObject({
+										year: 0,
+									}).toJSDate(),
+									endAt: DateTime.fromObject({
+										year: 5000,
+									}).toJSDate(),
 									bookingsEnabled: false,
+								}),
+								fall: makeBookingSemester({
+									endAt: DateTime.fromObject({ year: 2500 }).toJSDate(),
 								}),
 							},
 						},
 						act: {
 							input: makeCabinInput({
-								startDate: DateTime.now().plus({ hour: 1 }).toJSDate(),
-								endDate: DateTime.now().plus({ days: 4 }).toJSDate(),
+								startDate: DateTime.fromObject({
+									year: 2499,
+									month: 12,
+									day: 31,
+								}).toJSDate(),
+								endDate: DateTime.fromObject({
+									year: 2500,
+									month: 1,
+									day: 2,
+								}).toJSDate(),
 							}),
 						},
 						expected: {
 							error: expect.objectContaining({
 								name: "InvalidArgumentError",
-								formErrors: expect.objectContaining({
-									startDate: expect.any(Array),
+								reason: expect.objectContaining({
+									startDate: expect.anything(),
 								}),
 							}),
 						},
@@ -666,7 +703,7 @@ describe("CabinService", () => {
 				};
 			}
 
-			async function testFn({ arrange, act }: TestCase) {
+			async function testFn({ arrange, act, name }: TestCase) {
 				/**
 				 * Arrange
 				 *
@@ -683,6 +720,13 @@ describe("CabinService", () => {
 						throw new Error(`Unexpected semester: ${semester}`);
 					},
 				);
+				cabinRepository.findManyBookings.mockResolvedValue({
+					ok: true,
+					data: {
+						bookings: [],
+						total: 0,
+					},
+				});
 				cabinRepository.createBooking.mockResolvedValue({
 					ok: true,
 					data: {
@@ -697,7 +741,10 @@ describe("CabinService", () => {
 				 * Call newBooking with the input from the test case.
 				 */
 				const newBooking = await cabinService.newBooking(
-					makeMockContext({ id: faker.string.uuid() }),
+					makeMockContext(
+						{ id: faker.string.uuid() },
+						pino({ ...envToLogger.test, name }),
+					),
 					act.input,
 				);
 
@@ -724,20 +771,27 @@ describe("CabinService", () => {
 						arrange: {
 							bookingSemesters: {
 								fall: makeBookingSemester({
-									startAt: DateTime.now()
-										.plus({ days: 2 })
-										.startOf("day")
-										.toJSDate(),
+									startAt: DateTime.fromObject({
+										year: 2500,
+										day: 1,
+										month: 1,
+									}).toJSDate(),
 								}),
 								spring: null,
 							},
 						},
 						act: {
 							input: makeCabinInput({
-								startDate: DateTime.now()
-									.plus({ days: 2 })
-									.startOf("day")
-									.toJSDate(),
+								startDate: DateTime.fromObject({
+									year: 2500,
+									day: 1,
+									month: 1,
+								}).toJSDate(),
+								endDate: DateTime.fromObject({
+									year: 2500,
+									day: 2,
+									month: 1,
+								}).toJSDate(),
 							}),
 						},
 					},
@@ -796,58 +850,37 @@ describe("CabinService", () => {
 			describe("cross-semester booking (Fall to Spring) and", () => {
 				const testCases: TestCase[] = [
 					{
-						name: "the booking semesters are adjacent",
-						arrange: {
-							bookingSemesters: {
-								fall: makeBookingSemester({
-									endAt: DateTime.now()
-										.plus({ days: 2 })
-										.startOf("day")
-										.toJSDate(),
-								}),
-								spring: makeBookingSemester({
-									startAt: DateTime.now()
-										.plus({ days: 3 })
-										.endOf("day")
-										.toJSDate(),
-								}),
-							},
-						},
-						act: {
-							input: makeCabinInput({
-								startDate: DateTime.now()
-									.plus({ days: 1 })
-									.startOf("day")
-									.toJSDate(),
-								endDate: DateTime.now()
-									.plus({ days: 4 })
-									.startOf("day")
-									.toJSDate(),
-							}),
-						},
-					},
-					{
 						name: "the booking semesters overlap",
 						arrange: {
 							bookingSemesters: {
 								fall: makeBookingSemester({
-									endAt: DateTime.now()
-										.plus({ days: 10 })
-										.startOf("day")
-										.toJSDate(),
+									endAt: DateTime.fromObject({
+										year: 2500,
+										day: 1,
+										month: 1,
+									}).toJSDate(),
 								}),
 								spring: makeBookingSemester({
-									startAt: DateTime.now()
-										.plus({ days: 0 })
-										.startOf("day")
-										.toJSDate(),
+									startAt: DateTime.fromObject({
+										year: 2500,
+										day: 1,
+										month: 1,
+									}).toJSDate(),
 								}),
 							},
 						},
 						act: {
 							input: makeCabinInput({
-								startDate: DateTime.now().plus({ hour: 1 }).toJSDate(),
-								endDate: DateTime.now().plus({ days: 3 }).toJSDate(),
+								startDate: DateTime.fromObject({
+									year: 2499,
+									day: 31,
+									month: 12,
+								}).toJSDate(),
+								endDate: DateTime.fromObject({
+									year: 2500,
+									day: 2,
+									month: 1,
+								}).toJSDate(),
 							}),
 						},
 					},
@@ -859,58 +892,37 @@ describe("CabinService", () => {
 			describe("cross-semester booking (Spring to Fall) and", () => {
 				const testCases: TestCase[] = [
 					{
-						name: "the booking semesters are adjacent",
-						arrange: {
-							bookingSemesters: {
-								fall: makeBookingSemester({
-									startAt: DateTime.now()
-										.plus({ days: 3 })
-										.endOf("day")
-										.toJSDate(),
-								}),
-								spring: makeBookingSemester({
-									endAt: DateTime.now()
-										.plus({ days: 2 })
-										.startOf("day")
-										.toJSDate(),
-								}),
-							},
-						},
-						act: {
-							input: makeCabinInput({
-								startDate: DateTime.now()
-									.plus({ days: 1 })
-									.startOf("day")
-									.toJSDate(),
-								endDate: DateTime.now()
-									.plus({ days: 4 })
-									.startOf("day")
-									.toJSDate(),
-							}),
-						},
-					},
-					{
 						name: "the booking semesters overlap",
 						arrange: {
 							bookingSemesters: {
-								fall: makeBookingSemester({
-									startAt: DateTime.now()
-										.plus({ days: 0 })
-										.startOf("day")
-										.toJSDate(),
-								}),
 								spring: makeBookingSemester({
-									endAt: DateTime.now()
-										.plus({ days: 10 })
-										.startOf("day")
-										.toJSDate(),
+									endAt: DateTime.fromObject({
+										year: 2500,
+										day: 1,
+										month: 1,
+									}).toJSDate(),
+								}),
+								fall: makeBookingSemester({
+									startAt: DateTime.fromObject({
+										year: 2500,
+										day: 1,
+										month: 1,
+									}).toJSDate(),
 								}),
 							},
 						},
 						act: {
 							input: makeCabinInput({
-								startDate: DateTime.now().plus({ hour: 1 }).toJSDate(),
-								endDate: DateTime.now().plus({ days: 3 }).toJSDate(),
+								startDate: DateTime.fromObject({
+									year: 2499,
+									day: 31,
+									month: 12,
+								}).toJSDate(),
+								endDate: DateTime.fromObject({
+									year: 2500,
+									day: 2,
+									month: 1,
+								}).toJSDate(),
 							}),
 						},
 					},
@@ -956,7 +968,7 @@ describe("CabinService", () => {
 				ok: false,
 				error: expect.objectContaining({
 					name: "InvalidArgumentError",
-					formErrors: expect.objectContaining({
+					reason: expect.objectContaining({
 						internalParticipantsCount: expect.any(Array),
 					}),
 				}),
@@ -972,7 +984,7 @@ describe("CabinService", () => {
 			 * Mock the mailService.sendBookingConfirmation method to return a promise.
 			 */
 			cabinRepository.getBookingSemester.mockResolvedValue(
-				mock<BookingSemester>({
+				makeBookingSemester({
 					bookingsEnabled: true,
 					semester: Semester.FALL,
 					startAt: DateTime.fromObject({ year: 0 }).toJSDate(),
@@ -994,7 +1006,12 @@ describe("CabinService", () => {
 			 * call newBooking
 			 */
 			const newBooking = await cabinService.newBooking(
-				makeMockContext({ id: faker.string.uuid() }),
+				makeMockContext(
+					{
+						id: faker.string.uuid(),
+					},
+					pino(envToLogger.test),
+				),
 				makeCabinInput(),
 			);
 
@@ -1015,6 +1032,53 @@ describe("CabinService", () => {
 			expect(mailService.sendAsync).toHaveBeenCalledWith({
 				type: "cabin-booking-receipt",
 				bookingId: booking.id,
+			});
+		});
+
+		it("returns InvalidArgument if the booking overlaps with an existing booking", async () => {
+			const bookingSemester = makeBookingSemester();
+			const cabin = mock<Cabin>({
+				id: faker.string.uuid(),
+				internalPrice: 100,
+				externalPrice: 200,
+				internalPriceWeekend: 150,
+				externalPriceWeekend: 250,
+				capacity: 5,
+			});
+			const input = makeCabinInput();
+			cabinRepository.getBookingSemester.mockResolvedValue(bookingSemester);
+			cabinRepository.getCabinById.mockResolvedValue(cabin);
+			cabinRepository.findManyBookings.mockResolvedValue({
+				ok: true,
+				data: {
+					bookings: [
+						{
+							...mock<BookingType>(),
+							id: faker.string.uuid(),
+							cabins: [{ id: cabin.id }],
+							startDate: input.startDate,
+							endDate: input.endDate,
+						},
+					],
+					total: 1,
+				},
+			});
+
+			const newBooking = await cabinService.newBooking(
+				makeMockContext({ id: faker.string.uuid() }),
+				input,
+			);
+
+			expect(newBooking).toEqual({
+				ok: false,
+				error: expect.objectContaining({
+					name: "InvalidArgumentError",
+					reason: expect.objectContaining({
+						startDate: expect.arrayContaining([
+							expect.stringContaining("not available"),
+						]),
+					}),
+				}),
 			});
 		});
 	});
@@ -1050,7 +1114,7 @@ function makeBookingSemester(
 			createdAt: faker.date.past(),
 			updatedAt: faker.date.past(),
 			semester: Semester.FALL,
-			startAt: DateTime.fromObject({ year: 0 }).toJSDate(),
+			startAt: DateTime.fromObject({ year: 1000 }).toJSDate(),
 			endAt: DateTime.fromObject({ year: 3000 }).toJSDate(),
 			bookingsEnabled: true,
 		},

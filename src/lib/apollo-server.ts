@@ -35,7 +35,7 @@ export function getFormatErrorHandler(log?: Partial<FastifyInstance["log"]>) {
 					message: originalError.message,
 					extensions: {
 						code: originalError.code,
-						formErrors: originalError.formErrors,
+						reason: originalError.reason,
 					},
 				});
 			}

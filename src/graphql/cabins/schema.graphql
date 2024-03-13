@@ -7,6 +7,9 @@ type Query {
   Find all bookings, requires that the user is in an organization with the CABIN_ADMIN permission.
   """
   bookings(data: BookingsInput): BookingsResponse!
+  getAvailabilityCalendar(
+    data: GetAvailabilityCalendarInput!
+  ): GetAvailabilityCalendarResponse!
 }
 
 type Mutation {
@@ -27,6 +30,38 @@ type Mutation {
   ): UpdateBookingContactResponse!
 }
 
+input GetAvailabilityCalendarInput {
+  month: Int!
+  year: Int!
+  cabins: [CabinInput!]!
+  count: Int!
+  guests: GuestsInput!
+}
+
+input GuestsInput {
+  internal: Int!
+  external: Int!
+}
+
+type GetAvailabilityCalendarResponse {
+  calendarMonths: [CalendarMonth!]!
+}
+
+type CalendarMonth {
+  month: Int!
+  year: Int!
+  days: [CalendarDay!]!
+}
+
+type CalendarDay {
+  calendarDate: DateTime!
+  available: Boolean!
+  bookable: Boolean!
+  price: Int!
+  availableForCheckIn: Boolean!
+  availableForCheckOut: Boolean!
+}
+
 type BookingsResponse {
   bookings: [Booking!]!
   total: Int!
@@ -42,7 +77,7 @@ type Cabin {
   internalPrice: Int!
   externalPrice: Int!
   capacity: Int!
-  occupiedDays: [DateTime!]!
+  price: CabinPriceGroup!
 }
 
 type Booking {
@@ -186,7 +221,7 @@ type UpdateBookingContactResponse {
   bookingContact: BookingContact!
 }
 
-input ParticipantsInput {
+input GuestsInput {
   internal: Int!
   external: Int!
 }
@@ -198,10 +233,20 @@ input CabinInput {
 input TotalCostInput {
   startDate: DateTime!
   endDate: DateTime!
-  participants: ParticipantsInput!
+  guests: GuestsInput!
   cabins: [CabinInput!]!
 }
 
 type TotalCostResponse {
   totalCost: Int!
+}
+
+type CabinPrice {
+  weekend: Int!
+  weekday: Int!
+}
+
+type CabinPriceGroup {
+  internal: CabinPrice!
+  external: CabinPrice!
 }

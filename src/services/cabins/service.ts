@@ -6,19 +6,27 @@ import {
 	type BookingContact as PrismaBookingContact,
 	Semester,
 } from "@prisma/client";
-import { sumBy } from "lodash-es";
+import { compact, range, sumBy } from "lodash-es";
 import { DateTime, Interval } from "luxon";
 import { z } from "zod";
-import { Booking, BookingStatus, type BookingType } from "~/domain/cabins.js";
+import {
+	Booking,
+	BookingStatus,
+	type BookingType,
+	type CalendarDay,
+	type CalendarMonth,
+} from "~/domain/cabins.js";
 import {
 	InternalServerError,
 	InvalidArgumentError,
+	type InvalidArugmentErrorType,
 	NotFoundError,
 	PermissionDeniedError,
 	UnauthorizedError,
+	newInvalidArgumentError,
 } from "~/domain/errors.js";
 import type { Context } from "~/lib/context.js";
-import type { Result, ResultAsync } from "~/lib/result.js";
+import { Result, type ResultAsync, type TResult } from "~/lib/result.js";
 import type { ICabinService, NewBookingParams } from "~/lib/server.js";
 import type { EmailQueueDataType } from "../mail/worker.js";
 
@@ -135,12 +143,11 @@ export class CabinService implements ICabinService {
 
 		if (!hasPermission) {
 			ctx.log.warn({ params }, "permission denied");
-			return {
-				ok: false,
-				error: new PermissionDeniedError(
+			return Result.error(
+				new PermissionDeniedError(
 					"You do not have permission to view the bookings.",
 				),
-			};
+			);
 		}
 
 		const findManyBookingsResult = await this.cabinRepository.findManyBookings(
@@ -150,13 +157,12 @@ export class CabinService implements ICabinService {
 			},
 		);
 		if (!findManyBookingsResult.ok) {
-			return {
-				ok: false,
-				error: new InternalServerError(
+			return Result.error(
+				new InternalServerError(
 					"Failed to find bookings",
 					findManyBookingsResult.error,
 				),
-			};
+			);
 		}
 
 		return {
@@ -165,54 +171,6 @@ export class CabinService implements ICabinService {
 				bookings: findManyBookingsResult.data.bookings,
 				total: findManyBookingsResult.data.total,
 			},
-		};
-	}
-	async getOccupiedDates(
-		ctx: Context,
-		params: { cabinId: string },
-	): ResultAsync<{ days: Date[] }, NotFoundError | InternalServerError> {
-		const findManyBookingsResult = await this.cabinRepository.findManyBookings(
-			ctx,
-			{
-				cabinId: params.cabinId,
-				endAtGte: new Date(),
-				bookingStatus: "CONFIRMED",
-			},
-		);
-
-		if (!findManyBookingsResult.ok) {
-			return findManyBookingsResult;
-		}
-
-		const { bookings } = findManyBookingsResult.data;
-
-		const intervals = bookings.map((booking) => {
-			const startAt = DateTime.fromJSDate(booking.startDate).startOf("day");
-			const endAt = DateTime.fromJSDate(booking.endDate).startOf("day");
-			const interval = Interval.fromDateTimes(startAt, endAt.plus({ days: 1 }));
-			return interval;
-		});
-
-		const mergedIntervals = Interval.merge(intervals);
-
-		function isNotUndefined(date: Date | undefined): date is Date {
-			return date !== null;
-		}
-		const days = mergedIntervals
-			.flatMap((interval) => {
-				if (interval.isValid) {
-					const split = interval
-						.splitBy({ days: 1 })
-						.map((interval) => interval.start?.toJSDate());
-					return split;
-				}
-				return [];
-			})
-			.filter(isNotUndefined);
-
-		return {
-			ok: true,
-			data: { days },
 		};
 	}
 
@@ -276,24 +234,42 @@ export class CabinService implements ICabinService {
 	}
 
 	async newBooking(
-		_ctx: Context,
+		ctx: Context,
 		params: NewBookingParams,
 	): ResultAsync<
 		{
 			booking: BookingType;
 		},
-		InvalidArgumentError | InternalServerError
+		InvalidArugmentErrorType | InternalServerError
 	> {
 		const bookingSemesters = await this.getBookingSemesters();
+		if (!bookingSemesters.ok) {
+			return bookingSemesters;
+		}
 		const cabins = await Promise.all(
 			params.cabins.map((cabin) => this.cabinRepository.getCabinById(cabin.id)),
 		);
 
-		const validateResult = this.validateBooking(
-			params,
-			bookingSemesters,
-			cabins,
+		const occupiedDateIntervalsResult = await this.getOccupiedDateIntervals(
+			ctx,
+			{ cabins },
 		);
+		const bookableDateIntervalsResult = this.getBookableDateIntervals(ctx, {
+			bookingSemesters: bookingSemesters.data.semesters,
+		});
+		if (!occupiedDateIntervalsResult.ok) {
+			return occupiedDateIntervalsResult;
+		}
+		if (!bookableDateIntervalsResult.ok) {
+			return bookableDateIntervalsResult;
+		}
+
+		const validateResult = this.validateBooking(ctx, {
+			bookableDateIntervals: bookableDateIntervalsResult.data.intervals,
+			occupiedDateIntervals: occupiedDateIntervalsResult.data.intervals,
+			cabins,
+			data: params,
+		});
 		if (!validateResult.ok) {
 			return validateResult;
 		}
@@ -304,43 +280,43 @@ export class CabinService implements ICabinService {
 			internalParticipantsCount,
 			externalParticipantsCount,
 		} = validatedData;
-		const priceResult = await this.totalCost({
+		const totalCostResult = await this.totalCost(ctx, {
 			cabins: params.cabins,
 			startDate,
 			endDate,
-			participants: {
+			guests: {
 				internal: internalParticipantsCount,
 				external: externalParticipantsCount,
 			},
 		});
-		if (!priceResult.ok) {
-			switch (priceResult.error.name) {
+		if (!totalCostResult.ok) {
+			switch (totalCostResult.error.name) {
 				case "NotFoundError": {
-					return {
-						ok: false,
-						error: new InvalidArgumentError(
-							"The cabin you tried to book does not exist",
-							priceResult.error,
-						),
-					};
+					return Result.error(
+						newInvalidArgumentError({
+							message: "The cabin you tried to book does not exist",
+							reason: {
+								cabins: ["The cabin you tried to book does not exist"],
+							},
+							cause: totalCostResult.error,
+						}),
+					);
 				}
 				case "InvalidArgumentError": {
-					return {
-						ok: false,
-						error: new InvalidArgumentError(
-							"Failed to calculate the total cost of the booking",
-							priceResult.error,
-						),
-					};
+					return Result.error(
+						newInvalidArgumentError({
+							message: "Failed to calculate the total cost of the booking",
+							cause: totalCostResult.error,
+						}),
+					);
 				}
 				case "InternalServerError": {
-					return {
-						ok: false,
-						error: new InternalServerError(
+					return Result.error(
+						new InternalServerError(
 							"An unknown error occurred when calculating the total cost of the booking",
-							priceResult.error,
+							totalCostResult.error,
 						),
-					};
+					);
 				}
 			}
 		}
@@ -349,7 +325,7 @@ export class CabinService implements ICabinService {
 			new Booking({
 				...validatedData,
 				createdAt: new Date(),
-				totalCost: priceResult.data.totalCost,
+				totalCost: totalCostResult.data.totalCost,
 				status: "PENDING",
 				id: randomUUID(),
 				feedback: "",
@@ -361,31 +337,24 @@ export class CabinService implements ICabinService {
 		if (!createBookingResult.ok) {
 			switch (createBookingResult.error.name) {
 				case "NotFoundError":
-					return {
-						ok: false,
-						error: new InvalidArgumentError(
-							"The cabin you tried to book does not exist",
-							createBookingResult.error,
-						),
-					};
+					return Result.error(
+						newInvalidArgumentError({
+							message: "The cabin you tried to book does not exist",
+							cause: createBookingResult.error,
+						}),
+					);
 				case "InternalServerError":
-					return {
-						ok: false,
-						error: new InternalServerError(
+					return Result.error(
+						new InternalServerError(
 							"An unknown error occurred",
 							createBookingResult.error,
 						),
-					};
+					);
 			}
 		}
 		const { booking } = createBookingResult.data;
 		await this.sendBookingConfirmation(booking);
-		return {
-			ok: true,
-			data: {
-				booking,
-			},
-		};
+		return Result.success({ booking });
 	}
 
 	getCabinByBookingId(bookingId: string): Promise<Cabin> {
@@ -396,108 +365,24 @@ export class CabinService implements ICabinService {
 		return this.cabinRepository.getCabinById(id);
 	}
 
-	/**
-	 * isInActiveBookingSemester returns true if the booking is in the given booking semester, and bookings are enabled.
-	 * @param data.startDate - The start date of the booking
-	 * @param data.endDate - The end date of the booking
-	 * @param bookingSemester - The booking semester to check against
-	 * @returns true if the booking is in the given booking semester, and bookings are enabled, false otherwise
-	 */
-	private isInActiveBookingSemester(
-		data: { startDate: Date; endDate: Date },
-		bookingSemester: BookingSemester | null,
-	) {
-		if (bookingSemester === null) return false;
-		if (!bookingSemester.bookingsEnabled) return false;
-		return (
-			data.startDate >= bookingSemester.startAt &&
-			data.endDate <= bookingSemester.endAt
-		);
-	}
-
-	/**
-	 * isCrossSemesterBooking returns true if the booking is a valid cross-semester booking, i.e.
-	 * the booking starts in one semester, and ends in the other. Requires that both semeters have bookings enabled,
-	 * and that the end of one semester overlaps with the start of the other. That is, if the start of the next semester
-	 * is not before, or the day after the end of the previous semester, there can be no valid cross-semester bookings.
-	 * @param data.startDate - The start date of the booking
-	 * @param data.endDate - The end date of the booking
-	 * @param bookingSemesters.fall - The fall booking semester
-	 * @param bookingSemesters.spring - The spring booking semester
-	 * @returns true if the booking is a valid cross-semester booking, false otherwise
-	 */
-	private isCrossSemesterBooking(
-		data: { startDate: Date; endDate: Date },
-		bookingSemesters: {
-			fall: BookingSemester | null;
-			spring: BookingSemester | null;
-		},
-	) {
-		const { fall, spring } = bookingSemesters;
-		// If one of the booking semeters are disabled, there can be no valid cross-semester bookings.
-		if (!fall?.bookingsEnabled || !spring?.bookingsEnabled) return false;
-
-		const endOfAutumnOverlapsWithStartOfSpring =
-			DateTime.fromJSDate(fall.endAt).plus({ days: 1 }).startOf("day") >=
-			DateTime.fromJSDate(spring.startAt).startOf("day");
-
-		const endOfSpringOverlapsWithStartOfAutumn =
-			DateTime.fromJSDate(spring.endAt).plus({ days: 1 }).startOf("day") >=
-			DateTime.fromJSDate(fall.startAt).startOf("day");
-
-		// If none of the booking semesters overlap, there can be no valid cross-semester bookings.
-		if (
-			!endOfAutumnOverlapsWithStartOfSpring &&
-			!endOfSpringOverlapsWithStartOfAutumn
-		)
-			return false;
-
-		const { startDate, endDate } = data;
-
-		/**
-		 * If the booking starts in fall and ends in spring, and the end of fall overlaps with the start of spring,
-		 * the booking is valid.
-		 */
-		const startsInAutumn = startDate >= fall.startAt && startDate <= fall.endAt;
-		const endsInSpring = endDate >= spring.startAt && endDate <= spring.endAt;
-		if (startsInAutumn && endsInSpring && endOfAutumnOverlapsWithStartOfSpring)
-			return true;
-
-		/**
-		 * If the booking starts in spring and ends in fall, and the end of spring overlaps with the start of fall,
-		 * the booking is valid.
-		 */
-		const startsInSpring =
-			startDate >= spring.startAt && startDate <= spring.endAt;
-		const endsInAutumn = endDate >= fall.startAt && endDate <= fall.endAt;
-		return (
-			startsInSpring && endsInAutumn && endOfSpringOverlapsWithStartOfAutumn
-		);
-	}
-
 	private validateBooking(
-		data: NewBookingParams,
-		bookingSemesters: {
-			spring: BookingSemester | null;
-			fall: BookingSemester | null;
+		ctx: Context,
+		params: {
+			data: NewBookingParams;
+			bookableDateIntervals: Interval[];
+			occupiedDateIntervals: Interval[];
+			cabins: Cabin[];
 		},
-		cabins: Cabin[],
-	): Result<
+	): TResult<
 		{
 			validated: Omit<
 				BookingType,
 				"id" | "status" | "totalCost" | "createdAt" | "feedback"
 			>;
 		},
-		InvalidArgumentError
+		InvalidArugmentErrorType
 	> {
-		const { fall, spring } = bookingSemesters;
-
-		if (!fall?.bookingsEnabled && !spring?.bookingsEnabled)
-			return {
-				ok: false,
-				error: new InvalidArgumentError("Bookings are not enabled."),
-			};
+		const { bookableDateIntervals, occupiedDateIntervals } = params;
 
 		const bookingSchema = z
 			.object({
@@ -529,39 +414,68 @@ export class CabinService implements ICabinService {
 					.nullish()
 					.transform((val) => val ?? ""),
 			})
-			.refine((obj) => obj.endDate > obj.startDate, {
-				message: "end date must be after start date",
-				path: ["startDate", "endDate"],
-			})
 			.refine(
 				(obj) => {
-					const isValidAutumnBooking = this.isInActiveBookingSemester(
-						obj,
-						fall,
-					);
-					if (isValidAutumnBooking) return true;
-
-					const isValidSpringBooking = this.isInActiveBookingSemester(
-						obj,
-						spring,
-					);
-					if (isValidSpringBooking) return true;
-
-					const isValidCrossSemesterBooking = this.isCrossSemesterBooking(obj, {
-						spring,
-						fall,
-					});
-					return isValidCrossSemesterBooking;
+					const checkIn = DateTime.fromJSDate(obj.startDate);
+					const checkOut = DateTime.fromJSDate(obj.endDate);
+					return this.isBookingMinimumLength(ctx, { checkIn, checkOut });
 				},
 				{
-					message:
-						"booking is not in an active booking semester, and is not a valid cross-semester booking",
+					message: "the booking must be at least 1 day long",
 					path: ["startDate", "endDate"],
 				},
 			)
 			.refine(
+				(booking) => {
+					const isAvailableForCheckIn = this.isAvailableForCheckIn(ctx, {
+						bookableDateIntervals,
+						occupiedDateIntervals,
+						date: DateTime.fromJSDate(booking.startDate),
+					});
+					return isAvailableForCheckIn;
+				},
+				{
+					message: "cabin is not available for check-in at the selected date",
+					path: ["startDate"],
+				},
+			)
+			.refine(
+				(booking) => {
+					const isAvailableForCheckOut = this.isAvailableForCheckOut(ctx, {
+						bookableDateIntervals,
+						occupiedDateIntervals,
+						date: DateTime.fromJSDate(booking.endDate),
+					});
+					return isAvailableForCheckOut;
+				},
+				{
+					message: "cabin is not available for check-out at the selected date",
+					path: ["endDate"],
+				},
+			)
+			.refine(
+				(booking) => {
+					const checkIn = DateTime.fromJSDate(booking.startDate);
+					const checkOut = DateTime.fromJSDate(booking.endDate);
+					const isBookingIntervalAvailable = this.isBookingIntervalAvailable(
+						ctx,
+						{
+							bookableDateIntervals,
+							occupiedDateIntervals,
+							checkIn,
+							checkOut,
+						},
+					);
+					return isBookingIntervalAvailable;
+				},
+				{
+					message: "selected cabins are not available for the selected dates",
+					path: ["startDate"],
+				},
+			)
+			.refine(
 				(obj) => {
-					const maximumParticipants = sumBy(cabins, "capacity");
+					const maximumParticipants = sumBy(params.cabins, "capacity");
 					const totalParticipants =
 						obj.internalParticipantsCount + obj.externalParticipantsCount;
 					return totalParticipants <= maximumParticipants;
@@ -571,22 +485,17 @@ export class CabinService implements ICabinService {
 					path: ["internalParticipantsCount", "externalParticipantsCount"],
 				},
 			);
-		const parseResult = bookingSchema.safeParse(data);
+		const parseResult = bookingSchema.safeParse(params.data);
 		if (!parseResult.success) {
-			return {
-				ok: false,
-				error: new InvalidArgumentError(
-					"Invalid booking data",
-					parseResult.error,
-				),
-			};
+			return Result.error(
+				newInvalidArgumentError({
+					message: "invalid booking data",
+					reason: parseResult.error.flatten().fieldErrors,
+					cause: parseResult.error,
+				}),
+			);
 		}
-		return {
-			ok: true,
-			data: {
-				validated: parseResult.data,
-			},
-		};
+		return Result.success({ validated: parseResult.data });
 	}
 
 	private async sendBookingConfirmation(booking: BookingType) {
@@ -653,19 +562,33 @@ export class CabinService implements ICabinService {
 			}
 			const { booking } = getBookingResult.data;
 
-			const getOverlappingBookingsResult =
-				await this.cabinRepository.getOverlappingBookings(booking, { status });
-			if (!getOverlappingBookingsResult.ok) {
-				return {
-					ok: false,
-					error: new InternalServerError(
-						"An unknown error occurred",
-						getOverlappingBookingsResult.error,
-					),
-				};
+			const getOccupiedDateIntervalsResult =
+				await this.getOccupiedDateIntervals(ctx, { cabins: booking.cabins });
+			if (!getOccupiedDateIntervalsResult.ok) {
+				return getOccupiedDateIntervalsResult;
 			}
-			const { bookings } = getOverlappingBookingsResult.data;
-			if (bookings.length > 0) {
+			const getBookingSemestersResult = await this.getBookingSemesters();
+			if (!getBookingSemestersResult.ok) {
+				return getBookingSemestersResult;
+			}
+			const getBookableDateIntervalsResult = this.getBookableDateIntervals(
+				ctx,
+				{
+					bookingSemesters: getBookingSemestersResult.data.semesters,
+				},
+			);
+			if (!getBookableDateIntervalsResult.ok) {
+				return getBookableDateIntervalsResult;
+			}
+
+			const isAvailableForBooking = this.isBookingIntervalAvailable(ctx, {
+				bookableDateIntervals: getBookableDateIntervalsResult.data.intervals,
+				occupiedDateIntervals: getOccupiedDateIntervalsResult.data.intervals,
+				checkIn: DateTime.fromJSDate(booking.startDate),
+				checkOut: DateTime.fromJSDate(booking.endDate),
+			});
+
+			if (!isAvailableForBooking) {
 				return {
 					ok: false,
 					error: new InvalidArgumentError(
@@ -801,18 +724,42 @@ export class CabinService implements ICabinService {
 		}
 	}
 
-	private async getBookingSemesters(): Promise<{
-		spring: BookingSemester | null;
-		fall: BookingSemester | null;
-	}> {
-		const [spring, fall] = await Promise.all([
-			this.getBookingSemester("SPRING"),
-			this.getBookingSemester("FALL"),
-		]);
-		return {
-			spring,
-			fall,
-		};
+	private async getBookingSemesters(): ResultAsync<
+		{ semesters: BookingSemester[] },
+		InternalServerError
+	> {
+		try {
+			const semesters = await Promise.all([
+				this.getBookingSemester("SPRING"),
+				this.getBookingSemester("FALL"),
+			]);
+			return {
+				ok: true,
+				data: {
+					semesters: compact(semesters),
+				},
+			};
+		} catch (err) {
+			return {
+				ok: false,
+				error: new InternalServerError(
+					"An unknown error occurred when fetching booking semesters",
+					err,
+				),
+			};
+		}
+	}
+
+	private isBookingMinimumLength(
+		_ctx: Context,
+		params: {
+			checkIn: DateTime;
+			checkOut: DateTime;
+			minimumDays?: number;
+		},
+	): boolean {
+		const { checkIn, checkOut, minimumDays = 1 } = params;
+		return minimumDays <= checkOut.diff(checkIn, "days").as("days");
 	}
 
 	/**
@@ -907,38 +854,43 @@ export class CabinService implements ICabinService {
 	 *
 	 * If there are more internal participants than external, use internal price, else use external price
 	 */
-	async totalCost(data: {
-		startDate: Date;
-		endDate: Date;
-		participants: {
-			internal: number;
-			external: number;
-		};
-		cabins: { id: string }[];
-	}): ResultAsync<
+	async totalCost(
+		ctx: Context,
+		data: {
+			startDate: Date;
+			endDate: Date;
+			guests: {
+				internal: number;
+				external: number;
+			};
+			cabins: { id: string }[];
+		},
+	): ResultAsync<
 		{ totalCost: number },
 		InternalServerError | NotFoundError | InvalidArgumentError
 	> {
-		const { startDate, endDate, participants } = data;
+		const { startDate, endDate, guests } = data;
 		const cabins = await Promise.all(
 			data.cabins.map((cabin) => this.cabinRepository.getCabinById(cabin.id)),
 		);
 
-		const isInternalPrice = participants.internal >= participants.external;
-		// Number of week nights, i.e. nights from Sunday to Thursday
-		let numberOfWeekdayNights = 0;
-		// Number of weekend nights, i.e. nights from Friday to Saturday
-		let numberOfWeekendNights = 0;
 		const interval = DateTime.fromJSDate(startDate).until(
 			DateTime.fromJSDate(endDate),
 		);
+		let totalCost = 0;
 		if (interval.isValid) {
 			for (const day of interval.splitBy({ days: 1 })) {
-				const weekday = day.start?.weekday;
-				if (weekday === 5 || weekday === 6) {
-					numberOfWeekendNights += 1;
-				} else {
-					numberOfWeekdayNights += 1;
+				const date = day.start;
+				if (date) {
+					const getPriceResult = this.getPrice(ctx, {
+						cabins,
+						date,
+						guests,
+					});
+					if (!getPriceResult.ok) {
+						return getPriceResult;
+					}
+					totalCost += getPriceResult.data.price;
 				}
 			}
 		} else {
@@ -947,22 +899,403 @@ export class CabinService implements ICabinService {
 				error: new InvalidArgumentError("Invalid date interval"),
 			};
 		}
-
-		let weekdayPrice = 0;
-		let weekendPrice = 0;
-
-		if (isInternalPrice) {
-			weekdayPrice = sumBy(cabins, "internalPrice");
-			weekendPrice = sumBy(cabins, "internalPriceWeekend");
-		} else {
-			weekdayPrice = sumBy(cabins, "externalPrice");
-			weekendPrice = sumBy(cabins, "externalPriceWeekend");
-		}
-
-		const totalCost =
-			weekdayPrice * numberOfWeekdayNights +
-			weekendPrice * numberOfWeekendNights;
-
 		return { ok: true, data: { totalCost } };
 	}
+
+	/**
+	 * getAvailabilityCalendar returns `count` months from `month` and `year` for the given cabins and guests,
+	 * with the availability and pricing of each day in each month. The result of this method is intended to be
+	 * used to display a calendar of availability and pricing for the given cabins and guests.
+	 */
+	async getAvailabilityCalendar(
+		ctx: Context,
+		params: {
+			month: number;
+			year: number;
+			count: number;
+			cabins: { id: string }[];
+			guests: {
+				internal: number;
+				external: number;
+			};
+		},
+	): ResultAsync<
+		{
+			calendarMonths: CalendarMonth[];
+		},
+		InternalServerError
+	> {
+		const cabins = await Promise.all(
+			params.cabins.map((cabin) => this.cabinRepository.getCabinById(cabin.id)),
+		);
+		const getOccupiedDateIntervalsResult = await this.getOccupiedDateIntervals(
+			ctx,
+			{ cabins },
+		);
+		if (!getOccupiedDateIntervalsResult.ok) {
+			return getOccupiedDateIntervalsResult;
+		}
+		const getBookingSemestersResult = await this.getBookingSemesters();
+		if (!getBookingSemestersResult.ok) {
+			return getBookingSemestersResult;
+		}
+
+		const getBookableDateIntervalsResult = this.getBookableDateIntervals(ctx, {
+			bookingSemesters: getBookingSemestersResult.data.semesters,
+		});
+		if (!getBookableDateIntervalsResult.ok) {
+			return getBookableDateIntervalsResult;
+		}
+
+		const getCalendarMonthsResult = this.getCalendarMonths(ctx, params);
+		if (!getCalendarMonthsResult.ok) {
+			return getCalendarMonthsResult;
+		}
+		const { months: calendarMonths } = getCalendarMonthsResult.data;
+
+		for (const calendarMonth of calendarMonths) {
+			const getAvailabilityForMonthResult = this.getAvailabilityForMonth(ctx, {
+				calendarMonth,
+				bookableDateIntervals: getBookableDateIntervalsResult.data.intervals,
+				occupiedDateIntervals: getOccupiedDateIntervalsResult.data.intervals,
+				cabins,
+				guests: params.guests,
+			});
+			if (!getAvailabilityForMonthResult.ok) {
+				return getAvailabilityForMonthResult;
+			}
+		}
+		return Result.success({ calendarMonths });
+	}
+
+	private isInternalPrice(
+		_ctx: Context,
+		params: { guests: { internal: number; external: number } },
+	): boolean {
+		return params.guests.internal >= params.guests.external;
+	}
+
+	private isAvailableForCheckIn(
+		_ctx: Context,
+		params: {
+			date: DateTime;
+			occupiedDateIntervals: Interval[];
+			bookableDateIntervals: Interval[];
+		},
+	): boolean {
+		const { date, occupiedDateIntervals, bookableDateIntervals } = params;
+		const minimumCheckInInterval = Interval.fromDateTimes(
+			date.startOf("day"),
+			date.plus({ days: 1 }).endOf("day"),
+		);
+
+		const isAvailableForCheckIn =
+			occupiedDateIntervals.every(
+				(interval) => !interval.overlaps(minimumCheckInInterval),
+			) &&
+			bookableDateIntervals.some((interval) =>
+				interval.engulfs(minimumCheckInInterval),
+			);
+		return isAvailableForCheckIn;
+	}
+
+	/**
+	 * isAvailableForCheckOut returns true if the given date is available for check-out, otherwise false.
+	 *
+	 * Being available for check out means that the date is preceded by at least one day where bookings are enabled,
+	 * and the date is not occupied by any other booking.
+	 */
+	private isAvailableForCheckOut(
+		_ctx: Context,
+		params: {
+			date: DateTime;
+			occupiedDateIntervals: Interval[];
+			bookableDateIntervals: Interval[];
+		},
+	): boolean {
+		const { date } = params;
+		const minimumCheckOutInterval = Interval.fromDateTimes(
+			date.minus({ days: 1 }).startOf("day"),
+			date.endOf("day"),
+		);
+		const isAvailableForCheckOut =
+			params.occupiedDateIntervals.every(
+				(interval) => !interval.overlaps(minimumCheckOutInterval),
+			) &&
+			params.bookableDateIntervals.some((interval) =>
+				interval.engulfs(minimumCheckOutInterval),
+			);
+		return isAvailableForCheckOut;
+	}
+
+	/**
+	 * isDateBookable is true if the date is today or in the future, and is within a bookable date interval.
+	 */
+	private isDateBookable(
+		_ctx: Context,
+		params: { date: DateTime; bookableDateIntervals: Interval[] },
+	): boolean {
+		const { date, bookableDateIntervals } = params;
+		const isFutureDate = date >= DateTime.now().startOf("day");
+		return (
+			isFutureDate &&
+			bookableDateIntervals.some((interval) => interval.contains(date))
+		);
+	}
+
+	/**
+	 * isDateAvailable returns true if the date is not occupied by any other booking, otherwise false.
+	 */
+	private isDateAvailable(
+		_ctx: Context,
+		params: { date: DateTime; occupiedDateIntervals: Interval[] },
+	): boolean {
+		const { date, occupiedDateIntervals } = params;
+		return occupiedDateIntervals.every((interval) => !interval.contains(date));
+	}
+
+	private isBookingIntervalAvailable(
+		_ctx: Context,
+		params: {
+			checkIn: DateTime;
+			checkOut: DateTime;
+			occupiedDateIntervals: Interval[];
+			bookableDateIntervals: Interval[];
+		},
+	): boolean {
+		const { checkIn, checkOut, occupiedDateIntervals, bookableDateIntervals } =
+			params;
+		const bookingInterval = Interval.fromDateTimes(checkIn, checkOut);
+		// the interval has to be available for the entire duration, there can be no overlap with occupied intervals
+		const isOccupied = occupiedDateIntervals.some((interval) =>
+			interval.overlaps(bookingInterval),
+		);
+		// the interval has to be engulfed by bookable intervals
+		const isBookable = bookableDateIntervals.some((interval) =>
+			interval.engulfs(bookingInterval),
+		);
+		return isBookable && !isOccupied;
+	}
+
+	private getAvailabilityForMonth(
+		ctx: Context,
+		params: {
+			calendarMonth: CalendarMonth;
+			occupiedDateIntervals: Interval[];
+			bookableDateIntervals: Interval[];
+			guests: {
+				internal: number;
+				external: number;
+			};
+			cabins: Cabin[];
+		},
+	): TResult<{ calendarMonth: CalendarMonth }, InternalServerError> {
+		const {
+			calendarMonth,
+			occupiedDateIntervals,
+			bookableDateIntervals,
+			guests,
+		} = params;
+		for (const calendarDay of calendarMonth.days) {
+			const isBookable = this.isDateBookable(ctx, {
+				date: calendarDay.calendarDate,
+				bookableDateIntervals,
+			});
+			const isAvailable = this.isDateAvailable(ctx, {
+				date: calendarDay.calendarDate,
+				occupiedDateIntervals,
+			});
+
+			const availableForCheckIn = this.isAvailableForCheckIn(ctx, {
+				date: calendarDay.calendarDate,
+				occupiedDateIntervals,
+				bookableDateIntervals,
+			});
+			const availableForCheckOut = this.isAvailableForCheckOut(ctx, {
+				date: calendarDay.calendarDate,
+				occupiedDateIntervals,
+				bookableDateIntervals,
+			});
+			const price = this.getPrice(ctx, {
+				date: calendarDay.calendarDate,
+				guests,
+				cabins: params.cabins,
+			});
+			if (!price.ok) {
+				return price;
+			}
+
+			calendarDay.price = price.data.price;
+			calendarDay.available = isAvailable;
+			calendarDay.bookable = isBookable;
+			calendarDay.availableForCheckIn = availableForCheckIn;
+			calendarDay.availableForCheckOut = availableForCheckOut;
+		}
+		return {
+			ok: true,
+			data: { calendarMonth: calendarMonth },
+		};
+	}
+
+	/**
+	 * utility for generating a range of months with their days.
+	 */
+	private getCalendarMonths(
+		_ctx: Context,
+		params: { month: number; year: number; count: number },
+	): TResult<{ months: CalendarMonth[] }, InternalServerError> {
+		const { month, year, count } = params;
+		const calendarMonths: CalendarMonth[] = [];
+		for (const offset of range(0, count)) {
+			const start = DateTime.fromObject({ month, year })
+				.startOf("month")
+				.plus({ months: offset });
+			const end = start.endOf("month");
+			const interval = Interval.fromDateTimes(start, end).splitBy({ days: 1 });
+			const daysInMonth = interval.map((interval) => interval.start);
+			if (!areDaysValid(daysInMonth)) {
+				return {
+					ok: false,
+					error: new InternalServerError("Failed to generate calendar"),
+				};
+			}
+			const calendarDays: CalendarDay[] = [];
+			for (const day of daysInMonth) {
+				calendarDays.push({
+					calendarDate: day,
+					available: false,
+					bookable: false,
+					price: 0,
+					availableForCheckIn: false,
+					availableForCheckOut: false,
+				});
+			}
+			const calendarMonth: CalendarMonth = {
+				month: start.get("month"),
+				year: start.get("year"),
+				days: calendarDays,
+			};
+			calendarMonths.push(calendarMonth);
+		}
+
+		return {
+			ok: true,
+			data: { months: calendarMonths },
+		};
+	}
+
+	private getBookableDateIntervals(
+		_ctx: Context,
+		params: {
+			bookingSemesters: BookingSemester[];
+		},
+	): TResult<{ intervals: Interval[] }, InternalServerError> {
+		const { bookingSemesters } = params;
+		const intervals: Interval[] = [];
+
+		for (const bookingSemester of bookingSemesters) {
+			if (bookingSemester.bookingsEnabled) {
+				const startAt = DateTime.fromJSDate(bookingSemester.startAt).startOf(
+					"day",
+				);
+				const endAt = DateTime.fromJSDate(bookingSemester.endAt).endOf("day");
+				const interval = Interval.fromDateTimes(startAt, endAt);
+				if (!interval.isValid) {
+					return {
+						ok: false,
+						error: new InternalServerError(
+							`Invalid booking semester interval: ${interval.invalidReason}`,
+						),
+					};
+				}
+				intervals.push(interval);
+			}
+		}
+
+		const mergedIntervals = Interval.merge(intervals);
+		return {
+			ok: true,
+			data: { intervals: mergedIntervals },
+		};
+	}
+
+	private async getOccupiedDateIntervals(
+		ctx: Context,
+		params: { cabins: { id: string }[] },
+	): ResultAsync<{ intervals: Interval[] }, InternalServerError> {
+		const { cabins } = params;
+		const intervals: Interval[] = [];
+
+		for (const cabin of cabins) {
+			const bookings = await this.cabinRepository.findManyBookings(ctx, {
+				cabinId: cabin.id,
+				bookingStatus: "CONFIRMED",
+			});
+			if (!bookings.ok) {
+				return {
+					ok: false,
+					error: new InternalServerError("Failed to get occupied dates"),
+				};
+			}
+			for (const booking of bookings.data.bookings) {
+				const startAt = DateTime.fromJSDate(booking.startDate).startOf("day");
+				const endAt = DateTime.fromJSDate(booking.endDate).endOf("day");
+				intervals.push(Interval.fromDateTimes(startAt, endAt));
+			}
+		}
+		return {
+			ok: true,
+			data: { intervals },
+		};
+	}
+
+	private getPrice(
+		ctx: Context,
+		params: {
+			cabins: Cabin[];
+			guests: { internal: number; external: number };
+			date: DateTime;
+		},
+	): TResult<{ price: number }, InternalServerError> {
+		const { guests, cabins } = params;
+
+		if (cabins.length === 0) {
+			return {
+				ok: true,
+				data: {
+					price: 0,
+				},
+			};
+		}
+
+		const internalPriceWeekday = sumBy(cabins, "internalPrice");
+		const internalPriceWeekend = sumBy(cabins, "internalPriceWeekend");
+		const externalPriceWeekday = sumBy(cabins, "externalPrice");
+		const externalPriceWeekend = sumBy(cabins, "externalPriceWeekend");
+
+		const isWeekendNight =
+			params.date.weekday === 5 || params.date.weekday === 6;
+
+		const isInternalPrice = this.isInternalPrice(ctx, { guests });
+		let price: number | undefined = undefined;
+		if (isInternalPrice && isWeekendNight) {
+			price = internalPriceWeekend;
+		} else if (isInternalPrice && !isWeekendNight) {
+			price = internalPriceWeekday;
+		} else if (isWeekendNight) {
+			price = externalPriceWeekend;
+		} else {
+			price = externalPriceWeekday;
+		}
+		return {
+			ok: true,
+			data: {
+				price,
+			},
+		};
+	}
+}
+
+function areDaysValid(days: (DateTime | null)[]): days is DateTime[] {
+	return days.every((day) => day !== null);
 }

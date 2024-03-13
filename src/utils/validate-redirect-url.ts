@@ -1,6 +1,6 @@
 import { env } from "~/config.js";
 import { InvalidArgumentError } from "~/domain/errors.js";
-import type { Result } from "~/lib/result.js";
+import type { TResult } from "~/lib/result.js";
 
 function assertValidRedirectUrl(url: string): void {
 	const result = isValidRedirectUrl(url);
@@ -11,7 +11,7 @@ function assertValidRedirectUrl(url: string): void {
 
 function isValidRedirectUrl(
 	url: string,
-): Result<{ urlAsString: string; url: URL }, InvalidArgumentError> {
+): TResult<{ urlAsString: string; url: URL }, InvalidArgumentError> {
 	try {
 		const parsedUrl = new URL(url);
 		if (!env.REDIRECT_ORIGINS.some((origin) => origin === parsedUrl.origin)) {
