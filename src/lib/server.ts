@@ -307,6 +307,10 @@ interface ICabinService {
 			year: number;
 			count: number;
 			cabins: { id: string }[];
+			guests: {
+				internal: number;
+				external: number;
+			};
 		},
 	): ResultAsync<
 		{

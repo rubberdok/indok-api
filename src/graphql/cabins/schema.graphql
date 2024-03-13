@@ -35,6 +35,12 @@ input GetAvailabilityCalendarInput {
   year: Int!
   cabins: [CabinInput!]!
   count: Int!
+  guests: GuestsInput!
+}
+
+input GuestsInput {
+  internal: Int!
+  external: Int!
 }
 
 type GetAvailabilityCalendarResponse {
