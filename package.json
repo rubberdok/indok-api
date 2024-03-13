@@ -23,7 +23,6 @@
 		"watch-worker": "MODE=worker.development node --import @swc-node/register/esm-register --watch ./src/worker.ts",
 		"watch-gql": "pnpm generate:gql --watch",
 		"watch-prisma": "pnpm generate:prisma --watch",
-		"exp": "dotenv -e .env.development -- node --import @swc-node/register/esm-register --watch ./src/server.ts",
 		"docker:up": "docker compose up postgres redis -d && wait-on tcp:5433 -t 20000",
 		"generate:gql": "NODE_OPTIONS='--loader ts-node/esm --no-warnings' graphql-codegen-esm -c codegen.config.cjs",
 		"generate:prisma": "prisma generate",
