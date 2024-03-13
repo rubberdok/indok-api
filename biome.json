@@ -32,8 +32,7 @@
 			"pnpm-lock.yaml",
 			"src/graphql/test-clients/integration/**/*.ts",
 			"src/graphql/test-clients/unit/**/*.ts",
-			"*.generated.ts",
-			"package.json"
+			"*.generated.ts"
 		]
 	}
 }
