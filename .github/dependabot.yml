@@ -7,7 +7,7 @@ updates:
       interval: daily
 
     commit-message:
-      prefix: chore
+      prefix: ":arrow_up: chore"
       include: scope
 
     versioning-strategy: increase
@@ -40,7 +40,7 @@ updates:
       interval: daily
 
     commit-message:
-      prefix: chore
+      prefix: ":arrow_up: chore"
       include: scope
 
     labels:
@@ -53,7 +53,7 @@ updates:
       interval: daily
 
     commit-message:
-      prefix: chore
+      prefix: ":arrow_up: chore"
       include: scope
 
     labels:
