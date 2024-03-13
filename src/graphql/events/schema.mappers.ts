@@ -1,6 +1,6 @@
-import {
+import type {
 	EventType as EventMapper,
-	type EventType,
+	EventType,
 } from "~/domain/events/event.js";
 
 interface EventsResponseMapper {
@@ -16,11 +16,11 @@ interface EventUserMapper {
 
 type EventTicketInformationMapper = EventType;
 
-export {
+export type {
 	EventMapper,
-	type EventsResponseMapper,
-	type EventUserMapper,
-	type EventTicketInformationMapper,
-	type SignUpsMapper,
+	EventsResponseMapper,
+	EventUserMapper,
+	EventTicketInformationMapper,
+	SignUpsMapper,
 };
-export { EventSignUp as SignUpMapper } from "@prisma/client";
+export type { EventSignUp as SignUpMapper } from "@prisma/client";

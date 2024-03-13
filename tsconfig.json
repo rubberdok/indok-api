@@ -4,8 +4,13 @@
 		"module": "Node16",
 		"moduleResolution": "Node16",
 		"sourceMap": true,
+		// https://swc.rs/docs/migrating-from-tsc#esmoduleinterop-true
 		"esModuleInterop": true,
 		"noUncheckedIndexedAccess": true,
+		// https://swc.rs/docs/migrating-from-tsc#isolatedmodules-true
+		"isolatedModules": true,
+		// https://swc.rs/docs/migrating-from-tsc#verbatimmodulesyntax-true
+		"verbatimModuleSyntax": true,
 		"skipLibCheck": true,
 		"lib": ["ES2022"],
 		"strict": true,

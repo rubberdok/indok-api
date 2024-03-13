@@ -49,6 +49,7 @@ const config: CodegenConfig = {
 				 */
 				documentMode: "string",
 				enumsAsTypes: true,
+				useTypeImports: true,
 			},
 			presetConfig: {
 				useTypeImports: true,
@@ -76,6 +77,7 @@ const config: CodegenConfig = {
 			preset: "client-preset",
 			config: {
 				enumsAsTypes: true,
+				useTypeImports: true,
 			},
 			presetConfig: {
 				/* Fragment masking is only useful for actual clients, and it's not relevant for testing */
@@ -114,6 +116,7 @@ const config: CodegenConfig = {
 				},
 				typesPluginsConfig: {
 					contextType: "~/lib/apollo-server.js#ApolloContext",
+					useTypeImports: true,
 				},
 				scalarsOverrides: {
 					DateTime: {

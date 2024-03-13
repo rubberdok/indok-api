@@ -1,1 +1,1 @@
-export { Listing as ListingMapper } from "@prisma/client";
+export type { Listing as ListingMapper } from "@prisma/client";
