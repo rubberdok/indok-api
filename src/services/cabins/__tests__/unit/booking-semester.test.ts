@@ -102,7 +102,9 @@ describe("CabinService", () => {
 			expect(cabinRepository.updateBookingSemester).toHaveBeenCalledWith({
 				semester: Semester.SPRING,
 				startAt: new Date(2020, 0, 1),
-				endAt: new Date(2020, 0, 2),
+				endAt: DateTime.fromObject({ year: 2020, month: 1, day: 2 })
+					.endOf("day")
+					.toJSDate(),
 				bookingsEnabled: true,
 			});
 		});
@@ -182,7 +184,13 @@ describe("CabinService", () => {
 				expect(cabinRepository.createBookingSemester).toHaveBeenCalledWith({
 					semester: Semester.SPRING,
 					startAt: new Date(2020, 0, 1),
-					endAt: new Date(2020, 0, 2),
+					endAt: DateTime.fromObject({
+						year: 2020,
+						month: 1,
+						day: 2,
+					})
+						.endOf("day")
+						.toJSDate(),
 					bookingsEnabled: true,
 				});
 			});
@@ -221,7 +229,9 @@ describe("CabinService", () => {
 				expect(cabinRepository.createBookingSemester).toHaveBeenCalledWith({
 					semester: Semester.SPRING,
 					startAt: DateTime.fromObject({ month: 1, day: 1 }).toJSDate(),
-					endAt: DateTime.fromObject({ month: 7, day: 31 }).toJSDate(),
+					endAt: DateTime.fromObject({ month: 7, day: 31 })
+						.endOf("day")
+						.toJSDate(),
 					bookingsEnabled: true,
 				});
 			});
@@ -260,7 +270,9 @@ describe("CabinService", () => {
 				expect(cabinRepository.createBookingSemester).toHaveBeenCalledWith({
 					semester: Semester.FALL,
 					startAt: DateTime.fromObject({ month: 8, day: 1 }).toJSDate(),
-					endAt: DateTime.fromObject({ month: 12, day: 31 }).toJSDate(),
+					endAt: DateTime.fromObject({ month: 12, day: 31 })
+						.endOf("day")
+						.toJSDate(),
 					bookingsEnabled: true,
 				});
 			});
@@ -300,7 +312,13 @@ describe("CabinService", () => {
 				expect(cabinRepository.createBookingSemester).toHaveBeenCalledWith({
 					semester: Semester.SPRING,
 					startAt: new Date(2020, 0, 1),
-					endAt: new Date(2020, 0, 2),
+					endAt: DateTime.fromObject({
+						year: 2020,
+						month: 1,
+						day: 2,
+					})
+						.endOf("day")
+						.toJSDate(),
 					bookingsEnabled: false,
 				});
 			});

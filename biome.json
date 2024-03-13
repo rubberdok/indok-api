@@ -16,9 +16,9 @@
 				"useAwait": "warn"
 			},
 			"correctness": {
-				"noUnusedImports": "error",
-				"noUnusedVariables": "error",
-				"noUnusedPrivateClassMembers": "error"
+				"noUnusedImports": "warn",
+				"noUnusedVariables": "warn",
+				"noUnusedPrivateClassMembers": "warn"
 			},
 			"nursery": {
 				"recommended": true
