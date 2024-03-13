@@ -4,37 +4,37 @@ import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-serve
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
 describe("query { getAvailabilityCalendar }", () => {
-  it("returns the availability calendar", async () => {
-    const { client, cabinService } = createMockApolloServer();
+	it("returns the availability calendar", async () => {
+		const { client, cabinService } = createMockApolloServer();
 
-    cabinService.getAvailabilityCalendar.mockResolvedValueOnce({
-      ok: true,
-      data: {
-        calendarMonths: [
-          {
-            days: [
-              {
-                available: true,
-                bookable: true,
-                calendarDate: DateTime.fromObject({
-                  year: 2024,
-                  month: 1,
-                  day: 1,
-                }),
-                price: 100,
-                availableForCheckIn: true,
-                availableForCheckOut: true,
-              },
-            ],
-            month: 1,
-            year: 2024,
-          },
-        ],
-      },
-    });
+		cabinService.getAvailabilityCalendar.mockResolvedValueOnce({
+			ok: true,
+			data: {
+				calendarMonths: [
+					{
+						days: [
+							{
+								available: true,
+								bookable: true,
+								calendarDate: DateTime.fromObject({
+									year: 2024,
+									month: 1,
+									day: 1,
+								}),
+								price: 100,
+								availableForCheckIn: true,
+								availableForCheckOut: true,
+							},
+						],
+						month: 1,
+						year: 2024,
+					},
+				],
+			},
+		});
 
-    const { data, errors } = await client.query({
-      query: graphql(`
+		const { data, errors } = await client.query({
+			query: graphql(`
         query GetAvailabilityCalendar($data: GetAvailabilityCalendarInput!) {
           getAvailabilityCalendar(data: $data) {
             calendarMonths {
@@ -52,44 +52,44 @@ describe("query { getAvailabilityCalendar }", () => {
           }
         }
       `),
-      variables: {
-        data: {
-          cabins: [{ id: faker.string.uuid() }],
-          count: 1,
-          month: 1,
-          year: 2024,
-          guests: {
-            external: 1,
-            internal: 1,
-          },
-        },
-      },
-    });
+			variables: {
+				data: {
+					cabins: [{ id: faker.string.uuid() }],
+					count: 1,
+					month: 1,
+					year: 2024,
+					guests: {
+						external: 1,
+						internal: 1,
+					},
+				},
+			},
+		});
 
-    expect(errors).toBeUndefined();
-    expect(data).toEqual({
-      getAvailabilityCalendar: {
-        calendarMonths: [
-          {
-            days: [
-              {
-                available: true,
-                bookable: true,
-                calendarDate: DateTime.fromObject({
-                  year: 2024,
-                  month: 1,
-                  day: 1,
-                }).toJSDate(),
-                price: 100,
-                availableForCheckIn: true,
-                availableForCheckOut: true,
-              },
-            ],
-            month: 1,
-            year: 2024,
-          },
-        ],
-      },
-    });
-  });
+		expect(errors).toBeUndefined();
+		expect(data).toEqual({
+			getAvailabilityCalendar: {
+				calendarMonths: [
+					{
+						days: [
+							{
+								available: true,
+								bookable: true,
+								calendarDate: DateTime.fromObject({
+									year: 2024,
+									month: 1,
+									day: 1,
+								}).toJSDate(),
+								price: 100,
+								availableForCheckIn: true,
+								availableForCheckOut: true,
+							},
+						],
+						month: 1,
+						year: 2024,
+					},
+				],
+			},
+		});
+	});
 });
