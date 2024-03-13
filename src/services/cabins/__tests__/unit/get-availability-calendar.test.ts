@@ -656,6 +656,70 @@ describe("Cabin Service", () => {
 			expect(calendarMonths[0]?.days[0]?.bookable).toBe(false);
 		});
 
+		it("returns availableForCheckOut: true for the last day of a booking semester if the next booking semester is adjacent, and not overlapping", async () => {
+			mockCabinRepository.getCabinById.mockResolvedValue(makeCabin());
+			mockCabinRepository.getBookingSemester.mockResolvedValueOnce(
+				makeBookingSemester({
+					bookingsEnabled: true,
+					startAt: DateTime.fromObject({
+						year: 2024,
+						month: 1,
+						day: 1,
+					}).toJSDate(),
+					endAt: DateTime.fromObject({
+						year: 2024,
+						month: 1,
+						day: 15,
+					})
+						.endOf("day")
+						.toJSDate(),
+				}),
+			);
+			mockCabinRepository.getBookingSemester.mockResolvedValueOnce(
+				makeBookingSemester({
+					bookingsEnabled: true,
+					startAt: DateTime.fromObject({
+						year: 2024,
+						month: 1,
+						day: 16,
+					}).toJSDate(),
+					endAt: DateTime.fromObject({
+						year: 2024,
+						month: 1,
+						day: 31,
+					})
+						.endOf("day")
+						.toJSDate(),
+				}),
+			);
+			mockCabinRepository.findManyBookings.mockResolvedValue({
+				ok: true,
+				data: {
+					bookings: [],
+					total: 0,
+				},
+			});
+
+			const result = await cabinService.getAvailabilityCalendar(
+				makeMockContext(),
+				{
+					cabins: [{ id: faker.string.uuid() }],
+					count: 12,
+					guests: {
+						external: 10,
+						internal: 10,
+					},
+					month: 1,
+					year: 2024,
+				},
+			);
+			if (!result.ok) throw result.error;
+
+			const { calendarMonths } = result.data;
+			// the third day is squeezed between two unbookable days, and should not be available
+			expect(calendarMonths[0]?.days[14]?.availableForCheckOut).toBe(true);
+		});
+
 		describe("price", () => {
 			interface TestCase {
 				name: string;

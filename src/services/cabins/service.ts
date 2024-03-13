@@ -996,20 +996,6 @@ export class CabinService implements ICabinService {
 			// end date of the interval is exactly the start time of the unavailable day.
 			return +start === +date;
 		});
-		if (date.day === 1 && date.month === 1) {
-			_ctx.log.info({
-				date,
-				isAvailableForCheckIn,
-				validBookingIntervals,
-			});
-		}
-		if (date.day === 7 && date.month === 1) {
-			_ctx.log.info({
-				date,
-				isAvailableForCheckIn,
-				validBookingIntervals,
-			});
-		}
 		return isAvailableForCheckIn;
 	}
 
@@ -1290,13 +1276,7 @@ export class CabinService implements ICabinService {
 					DateTime.fromJSDate(bookingSemester.startAt).startOf("day"),
 					now,
 				);
-				/**
-				 * Offset endAt by 1 day (startOf) to account for the fact that intervals are half-open,
-				 * and we want to include the end date in the interval.
-				 */
-				const endAt = DateTime.fromJSDate(bookingSemester.endAt)
-					.plus({ days: 1 })
-					.startOf("day");
+				const endAt = DateTime.fromJSDate(bookingSemester.endAt).endOf("day");
 				const interval = Interval.fromDateTimes(startAt, endAt);
 				// Invalid intervals can occur if endAt < now
 				if (interval.isValid) {
@@ -1306,9 +1286,21 @@ export class CabinService implements ICabinService {
 		}
 
 		const mergedIntervals = Interval.merge(intervals);
+		/**
+		 * Offset endAt by 1 day (startOf) to account for the fact that intervals are half-open,
+		 * and we want to include the end date in the interval.
+		 * We offset after merging to avoid merging intervals that are not actually overlapping.
+		 */
+		const intervalsOffsetByOneDay = mergedIntervals.map((interval) => {
+			const previousEnd = interval.end;
+			return interval.set({
+				end: previousEnd?.plus({ days: 1 }).startOf("day"),
+			});
+		});
+
 		return {
 			ok: true,
-			data: { intervals: mergedIntervals },
+			data: { intervals: intervalsOffsetByOneDay },
 		};
 	}
 
