@@ -1,8 +1,24 @@
 import dotenv from "dotenv";
 import { z } from "zod";
+import { InvalidArgumentError } from "~/domain/errors.js";
 
-dotenv.config({ path: ".env" });
-dotenv.config();
+const mode = process.env.MODE || "development";
+/**
+ * Precedence:
+ * 1. process.env
+ * 2. .env.$(MODE).local
+ * 3. .env.local
+ * 4. .env.$(MODE)
+ * 5. .env
+ */
+const paths: string[] = [
+	`.env.${mode}.local`,
+	".env.local",
+	`.env.${mode}`,
+	".env",
+];
+
+dotenv.config({ path: paths, override: false });
 
 const envVarsSchema = z.object({
 	AZURE_STORAGE_ACCOUNT_NAME: z.string().optional(),
@@ -60,6 +76,15 @@ const envVarsSchema = z.object({
 	CONTACT_EMAIL: z.string().email(),
 });
 
-export const env = envVarsSchema.parse(process.env);
+const parseEnvResult = envVarsSchema.safeParse(process.env);
+if (!parseEnvResult.success) {
+	throw new InvalidArgumentError(
+		"Invalid enviroment variables",
+		parseEnvResult.error,
+	);
+}
+const env = parseEnvResult.data;
 type Configuration = z.infer<typeof envVarsSchema>;
+
+export { env };
 export type { Configuration };

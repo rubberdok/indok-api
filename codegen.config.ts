@@ -1,5 +1,5 @@
-// @ts-check
-const { defineConfig } = require("@eddeee888/gcg-typescript-resolver-files");
+import { defineConfig } from "@eddeee888/gcg-typescript-resolver-files";
+import type { CodegenConfig } from "@graphql-codegen/cli";
 
 const generatedPrefix = `
 // biome-ignore
@@ -19,8 +19,7 @@ To regenerate this file, run \`npm run generate:gql\`
 """
 `;
 
-/** @type {import("@graphql-codegen/cli").CodegenConfig} */
-const config = {
+const config: CodegenConfig = {
 	schema: "src/graphql/**/schema.graphql",
 	emitLegacyCommonJSImports: false,
 	hooks: {
@@ -50,6 +49,7 @@ const config = {
 				 */
 				documentMode: "string",
 				enumsAsTypes: true,
+				useTypeImports: true,
 			},
 			presetConfig: {
 				useTypeImports: true,
@@ -77,6 +77,7 @@ const config = {
 			preset: "client-preset",
 			config: {
 				enumsAsTypes: true,
+				useTypeImports: true,
 			},
 			presetConfig: {
 				/* Fragment masking is only useful for actual clients, and it's not relevant for testing */
@@ -115,6 +116,7 @@ const config = {
 				},
 				typesPluginsConfig: {
 					contextType: "~/lib/apollo-server.js#ApolloContext",
+					useTypeImports: true,
 				},
 				scalarsOverrides: {
 					DateTime: {
