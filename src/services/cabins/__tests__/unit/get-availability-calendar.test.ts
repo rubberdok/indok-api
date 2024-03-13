@@ -465,6 +465,196 @@ describe("Cabin Service", () => {
 			expect(calendarMonths[0]?.days[7]?.availableForCheckOut).toBe(true);
 		});
 
+		it("returns available: false for days that are squeezed between bookings, and there is no minimum interval available", async () => {
+			mockCabinRepository.getCabinById.mockResolvedValue(makeCabin());
+			mockCabinRepository.getBookingSemester.mockResolvedValueOnce(
+				makeBookingSemester({
+					bookingsEnabled: true,
+					startAt: DateTime.fromObject({
+						year: 2024,
+						month: 1,
+						day: 1,
+					}).toJSDate(),
+					endAt: DateTime.fromObject({
+						year: 2024,
+						month: 1,
+						day: 31,
+					}).toJSDate(),
+				}),
+			);
+			mockCabinRepository.findManyBookings.mockResolvedValue({
+				ok: true,
+				data: {
+					bookings: [
+						makeBooking({
+							startDate: DateTime.fromObject({
+								year: 2024,
+								month: 1,
+								day: 1,
+							}).toJSDate(),
+							endDate: DateTime.fromObject({
+								year: 2024,
+								month: 1,
+								day: 2,
+							}).toJSDate(),
+							status: "CONFIRMED",
+						}),
+						makeBooking({
+							startDate: DateTime.fromObject({
+								year: 2024,
+								month: 1,
+								day: 4,
+							}).toJSDate(),
+							endDate: DateTime.fromObject({
+								year: 2024,
+								month: 1,
+								day: 5,
+							}).toJSDate(),
+							status: "CONFIRMED",
+						}),
+					],
+					total: 2,
+				},
+			});
+
+			const result = await cabinService.getAvailabilityCalendar(
+				makeMockContext(),
+				{
+					cabins: [{ id: faker.string.uuid() }],
+					count: 12,
+					guests: {
+						external: 10,
+						internal: 10,
+					},
+					month: 1,
+					year: 2024,
+				},
+			);
+			if (!result.ok) throw result.error;
+
+			const { calendarMonths } = result.data;
+			// the third day is squeezed between two unbookable days, and should not be available
+			expect(calendarMonths[0]?.days[2]?.available).toBe(false);
+		});
+
+		it("returns available: false for days that are squeezed between bookings and a bookable date, and there is no minimum interval available", async () => {
+			mockCabinRepository.getCabinById.mockResolvedValue(makeCabin());
+			mockCabinRepository.getBookingSemester.mockResolvedValueOnce(
+				makeBookingSemester({
+					bookingsEnabled: true,
+					startAt: DateTime.fromObject({
+						year: 2024,
+						month: 1,
+						day: 1,
+					}).toJSDate(),
+					endAt: DateTime.fromObject({
+						year: 2024,
+						month: 1,
+						day: 31,
+					}).toJSDate(),
+				}),
+			);
+			mockCabinRepository.findManyBookings.mockResolvedValue({
+				ok: true,
+				data: {
+					bookings: [
+						makeBooking({
+							startDate: DateTime.fromObject({
+								year: 2024,
+								month: 1,
+								day: 1,
+							}).toJSDate(),
+							endDate: DateTime.fromObject({
+								year: 2024,
+								month: 1,
+								day: 30,
+							}).toJSDate(),
+							status: "CONFIRMED",
+						}),
+					],
+					total: 1,
+				},
+			});
+
+			const result = await cabinService.getAvailabilityCalendar(
+				makeMockContext(),
+				{
+					cabins: [{ id: faker.string.uuid() }],
+					count: 12,
+					guests: {
+						external: 10,
+						internal: 10,
+					},
+					month: 1,
+					year: 2024,
+				},
+			);
+			if (!result.ok) throw result.error;
+
+			const { calendarMonths } = result.data;
+			// the third day is squeezed between two unbookable days, and should not be available
+			expect(calendarMonths[0]?.days[30]?.bookable).toBe(false);
+		});
+
+		it("returns available: false for days that are squeezed between bookings and the past, and there is no minimum interval available", async () => {
+			mockCabinRepository.getCabinById.mockResolvedValue(makeCabin());
+			mockCabinRepository.getBookingSemester.mockResolvedValueOnce(
+				makeBookingSemester({
+					bookingsEnabled: true,
+					startAt: DateTime.fromObject({
+						year: 2023,
+						month: 1,
+						day: 1,
+					}).toJSDate(),
+					endAt: DateTime.fromObject({
+						year: 2024,
+						month: 1,
+						day: 31,
+					}).toJSDate(),
+				}),
+			);
+			mockCabinRepository.findManyBookings.mockResolvedValue({
+				ok: true,
+				data: {
+					bookings: [
+						makeBooking({
+							startDate: DateTime.fromObject({
+								year: 2024,
+								month: 1,
+								day: 2,
+							}).toJSDate(),
+							endDate: DateTime.fromObject({
+								year: 2024,
+								month: 1,
+								day: 30,
+							}).toJSDate(),
+							status: "CONFIRMED",
+						}),
+					],
+					total: 1,
+				},
+			});
+
+			const result = await cabinService.getAvailabilityCalendar(
+				makeMockContext(),
+				{
+					cabins: [{ id: faker.string.uuid() }],
+					count: 12,
+					guests: {
+						external: 10,
+						internal: 10,
+					},
+					month: 1,
+					year: 2024,
+				},
+			);
+			if (!result.ok) throw result.error;
+
+			const { calendarMonths } = result.data;
+			// the third day is squeezed between two unbookable days, and should not be available
+			expect(calendarMonths[0]?.days[0]?.bookable).toBe(false);
+		});
+
 		describe("price", () => {
 			interface TestCase {
 				name: string;
