@@ -12,15 +12,6 @@ datasource db {
   url      = env("DATABASE_CONNECTION_STRING")
 }
 
-// Archive
-model GoogleDocument {
-  id        String   @id @default(uuid()) @db.Uuid
-  identifer String   @unique
-  favorite  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 // Documents
 model Document {
   id        String   @id @default(uuid()) @db.Uuid
