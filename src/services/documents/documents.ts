@@ -1,4 +1,4 @@
-import type { FeaturePermission } from "@prisma/client";
+import type { DocumentCategory, FeaturePermission } from "@prisma/client";
 import { z } from "zod";
 import type { Document, DocumentService } from "~/domain/documents.js";
 import {
@@ -17,7 +17,11 @@ type DocumentRepositoryType = {
 	documents: {
 		create(
 			ctx: Context,
-			data: Pick<Document, "fileId" | "name">,
+			data: Pick<Document, "fileId" | "name"> &
+				Partial<Pick<Document, "description">> &
+				Partial<{
+					categories: Pick<DocumentCategory, "name">[];
+				}>,
 		): ResultAsync<{ document: Document }, InternalServerError>;
 		update(
 			ctx: Context,

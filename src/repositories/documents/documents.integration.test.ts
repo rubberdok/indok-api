@@ -10,9 +10,38 @@ describe("Documents repository", () => {
 	describe("#create", () => {
 		it("creates a document", async () => {
 			const { user, file } = await makeDependencies();
+			const fields = {
+				name: faker.word.adjective(),
+				fileId: file.id,
+				description: faker.lorem.sentence(),
+			};
+			const result = await documents.create(makeMockContext(user), fields);
+
+			expect(result).toEqual(
+				Result.success({
+					document: expect.objectContaining({
+						id: expect.any(String),
+						...fields,
+					}),
+				}),
+			);
+		});
+
+		it("creates a document with categories", async () => {
+			const { user, file } = await makeDependencies();
+			const categoryName1 = faker.string.uuid();
+			const categoryName2 = faker.string.uuid();
 			const result = await documents.create(makeMockContext(user), {
 				name: faker.word.adjective(),
 				fileId: file.id,
+				categories: [
+					{
+						name: categoryName1,
+					},
+					{
+						name: categoryName2,
+					},
+				],
 			});
 
 			expect(result).toEqual(
@@ -20,6 +49,16 @@ describe("Documents repository", () => {
 					document: expect.objectContaining({
 						id: expect.any(String),
 						fileId: file.id,
+						categories: expect.arrayContaining([
+							expect.objectContaining({
+								name: categoryName1,
+								id: expect.any(String),
+							}),
+							expect.objectContaining({
+								name: categoryName2,
+								id: expect.any(String),
+							}),
+						]),
 					}),
 				}),
 			);
@@ -52,6 +91,11 @@ describe("Documents repository", () => {
 		const result = await documents.create(makeMockContext(user), {
 			name: faker.word.adjective(),
 			fileId: file.id,
+			categories: [
+				{
+					name: faker.string.uuid(),
+				},
+			],
 		});
 		if (!result.ok) throw result.error;
 		return result.data.document;

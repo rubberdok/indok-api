@@ -1,5 +1,6 @@
 import { faker } from "@faker-js/faker";
 import { mockDeep } from "jest-mock-extended";
+import { Document } from "~/domain/documents.js";
 import {
 	DownstreamServiceError,
 	InternalServerError,
@@ -182,13 +183,7 @@ describe("Documents service", () => {
 			repository.documents.create.mockResolvedValueOnce({
 				ok: true,
 				data: {
-					document: {
-						createdAt: new Date(),
-						fileId: faker.string.uuid(),
-						id: faker.string.uuid(),
-						name: faker.word.adjective(),
-						updatedAt: new Date(),
-					},
+					document: makeDocument(),
 				},
 			});
 
@@ -323,15 +318,7 @@ describe("Documents service", () => {
 			permissions.hasFeaturePermission.mockResolvedValueOnce(true);
 			repository.documents.findMany.mockResolvedValueOnce(
 				Result.success({
-					documents: [
-						{
-							createdAt: new Date(),
-							fileId: faker.string.uuid(),
-							id: faker.string.uuid(),
-							name: faker.word.adjective(),
-							updatedAt: new Date(),
-						},
-					],
+					documents: [makeDocument()],
 					total: 1,
 				}),
 			);
@@ -353,6 +340,16 @@ describe("Documents service", () => {
 		});
 	});
 });
+
+function makeDocument(): Document {
+	return new Document({
+		id: faker.string.uuid(),
+		name: faker.word.adjective(),
+		fileId: faker.string.uuid(),
+		createdAt: new Date(),
+		updatedAt: new Date(),
+	});
+}
 
 function makeDependencies() {
 	const repository = mockDeep<DocumentRepositoryType>();

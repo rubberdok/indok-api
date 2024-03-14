@@ -142,6 +142,8 @@ type CreateCabinResponse {
 }
 
 input CreateDocumentInput {
+  categories: [DocumentCategoryInput!]
+  description: String
   fileExtension: String!
   name: String!
 }
@@ -290,8 +292,14 @@ input DeleteSlotInput {
 }
 
 type Document {
+  """The categories the document is in"""
+  categories: [DocumentCategory!]!
+
   """When the document was created"""
   createdAt: DateTime!
+
+  """The description of the document"""
+  description: String!
 
   """The remote file of the document"""
   file: RemoteFile!
@@ -302,6 +310,18 @@ type Document {
 
   """When the document was last updated"""
   updatedAt: DateTime!
+}
+
+type DocumentCategory {
+  """The ID of the category"""
+  id: ID!
+
+  """The name of the category"""
+  name: String!
+}
+
+input DocumentCategoryInput {
+  name: String!
 }
 
 type DocumentsResponse {
@@ -1383,6 +1403,8 @@ input UpdateCategoriesInput {
 }
 
 input UpdateDocumentInput {
+  categories: [DocumentCategoryInput!]
+  description: String
   id: ID!
   name: String
 }

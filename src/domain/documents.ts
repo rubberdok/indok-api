@@ -8,12 +8,25 @@ import type {
 	UnauthorizedError,
 } from "./errors.js";
 
+class DocumentCategory {
+	id: string;
+	name: string;
+
+	constructor(params: { id: string; name: string }) {
+		const { id, name } = params;
+		this.id = id;
+		this.name = name;
+	}
+}
+
 class Document {
 	name: string;
 	fileId: string;
 	createdAt: Date;
 	updatedAt: Date;
 	id: string;
+	description: string;
+	categories: DocumentCategory[];
 
 	constructor(params: {
 		name: string;
@@ -21,13 +34,18 @@ class Document {
 		createdAt: Date;
 		updatedAt: Date;
 		id: string;
+		description?: string;
+		categories?: DocumentCategory[];
 	}) {
-		const { name, fileId, createdAt, updatedAt, id } = params;
+		const { name, fileId, createdAt, updatedAt, id, description, categories } =
+			params;
 		this.name = name;
 		this.fileId = fileId;
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;
 		this.id = id;
+		this.description = description ?? "";
+		this.categories = categories ?? [];
 	}
 }
 
@@ -74,4 +92,4 @@ type DocumentService = {
 };
 
 export type { DocumentService };
-export { Document };
+export { Document, DocumentCategory };

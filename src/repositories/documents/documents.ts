@@ -16,12 +16,22 @@ function buildDocuments({
 			ctx.log.info({ data }, "creating document");
 			try {
 				const document = await db.document.create({
+					include: {
+						categories: true,
+					},
 					data: {
 						name: data.name,
-						file: {
-							connect: {
-								id: data.fileId,
-							},
+						fileId: data.fileId,
+						description: data.description,
+						categories: {
+							connectOrCreate: data.categories?.map((category) => ({
+								create: {
+									name: category.name,
+								},
+								where: {
+									name: category.name,
+								},
+							})),
 						},
 					},
 				});
@@ -42,7 +52,11 @@ function buildDocuments({
 		async findMany(ctx) {
 			try {
 				ctx.log.info("finding documents");
-				const findManyPromise = db.document.findMany();
+				const findManyPromise = db.document.findMany({
+					include: {
+						categories: true,
+					},
+				});
 				const countPromise = db.document.count();
 				const [documents, total] = await Promise.all([
 					findManyPromise,

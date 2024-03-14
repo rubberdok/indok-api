@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import * as Cabins from "./cabins/seed.js";
+import * as Documents from "./documents/seed.js";
 import * as Events from "./events/seed.js";
 import * as Listings from "./listings/seed.js";
 import * as Organizations from "./organizations/seed.js";
@@ -29,6 +30,9 @@ const main = async () => {
 	const { merchant, products } = await Products.load(db);
 	console.table(merchant);
 	console.table(products);
+
+	const { documents } = await Documents.load(db);
+	console.table(documents);
 };
 
 try {
