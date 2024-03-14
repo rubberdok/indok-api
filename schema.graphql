@@ -49,6 +49,7 @@ type BookingContact {
   id: ID!
   name: String!
   phoneNumber: String!
+  updatedAt: DateTime!
 }
 
 type BookingContactResponse {
@@ -61,6 +62,7 @@ type BookingSemester {
   id: ID!
   semester: Semester!
   startAt: DateTime!
+  updatedAt: DateTime!
 }
 
 type BookingSemestersResponse {

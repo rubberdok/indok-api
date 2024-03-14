@@ -492,13 +492,16 @@ export class CabinRepository implements ICabinRepository {
 	 */
 	async updateBookingContact(
 		data: Partial<{ name: string; email: string; phoneNumber: string }>,
-	): Promise<Pick<BookingContact, "email" | "name" | "id" | "phoneNumber">> {
+	): Promise<
+		Pick<BookingContact, "email" | "name" | "id" | "phoneNumber" | "updatedAt">
+	> {
 		return await this.db.bookingContact.upsert({
 			select: {
 				id: true,
 				name: true,
 				email: true,
 				phoneNumber: true,
+				updatedAt: true,
 			},
 			where: {
 				id: "booking-contact",
@@ -517,7 +520,7 @@ export class CabinRepository implements ICabinRepository {
 	 * getBookingContact returns the booking contact information. If it does not exist, blank strings will be returned.
 	 */
 	async getBookingContact(): Promise<
-		Pick<BookingContact, "email" | "id" | "name" | "phoneNumber">
+		Pick<BookingContact, "email" | "id" | "name" | "phoneNumber" | "updatedAt">
 	> {
 		const bookingContact = await this.db.bookingContact.findUnique({
 			select: {
@@ -525,6 +528,7 @@ export class CabinRepository implements ICabinRepository {
 				name: true,
 				email: true,
 				phoneNumber: true,
+				updatedAt: true,
 			},
 			where: {
 				id: "booking-contact",
@@ -537,6 +541,7 @@ export class CabinRepository implements ICabinRepository {
 				name: "",
 				email: "",
 				phoneNumber: "",
+				updatedAt: new Date(),
 			};
 		}
 

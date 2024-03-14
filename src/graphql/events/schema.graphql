@@ -205,9 +205,6 @@ enum SignUpAvailability {
   ON_WAITLIST
 }
 
-type EventsResponse {
-  events: [Event!]!
-}
 
 type CreateEventResponse {
   event: Event!

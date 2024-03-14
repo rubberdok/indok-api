@@ -253,7 +253,7 @@ interface ICabinService {
 	): Promise<BookingSemester>;
 	getBookingSemester(semester: Semester): Promise<BookingSemester | null>;
 	getBookingContact(): Promise<
-		Pick<BookingContact, "email" | "name" | "phoneNumber" | "id">
+		Pick<BookingContact, "email" | "name" | "phoneNumber" | "id" | "updatedAt">
 	>;
 	updateBookingContact(
 		ctx: Context,

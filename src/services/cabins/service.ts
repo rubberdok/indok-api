@@ -31,7 +31,7 @@ import type { EmailQueueDataType } from "../mail/worker.js";
 
 type BookingContact = Pick<
 	PrismaBookingContact,
-	"email" | "name" | "phoneNumber" | "id"
+	"email" | "name" | "phoneNumber" | "id" | "updatedAt"
 >;
 
 export interface ICabinRepository {
