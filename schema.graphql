@@ -324,6 +324,14 @@ input DocumentCategoryInput {
   name: String!
 }
 
+input DocumentsCategoryInput {
+  id: ID!
+}
+
+input DocumentsInput {
+  categories: [DocumentsCategoryInput!]
+}
+
 type DocumentsResponse {
   documents: [Document!]!
   total: Int!
@@ -1098,7 +1106,7 @@ type Query {
   bookings(data: BookingsInput): BookingsResponse!
   cabins: CabinsResponse!
   categories: EventCategoriesResponse!
-  documents: DocumentsResponse!
+  documents(data: DocumentsInput): DocumentsResponse!
   event(data: EventInput!): EventResponse!
   events(data: EventsInput): EventsResponse!
   getAvailabilityCalendar(data: GetAvailabilityCalendarInput!): GetAvailabilityCalendarResponse!

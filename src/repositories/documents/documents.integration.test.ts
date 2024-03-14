@@ -1,3 +1,4 @@
+import assert from "node:assert";
 import { faker } from "@faker-js/faker";
 import { makeTestServices } from "~/__tests__/dependencies-factory.js";
 import { makeMockContext } from "~/lib/context.js";
@@ -84,14 +85,37 @@ describe("Documents repository", () => {
 				expect.arrayContaining([document1, document2, document3]),
 			);
 		});
+
+		it("returns all documents with a matching category and the total count", async () => {
+			/**
+			 * Create three documents
+			 */
+			const categories = [{ name: faker.string.uuid() }];
+			const document1 = await makeDocument({ categories });
+			const document2 = await makeDocument({ categories });
+			const document3 = await makeDocument();
+			const category = document1.categories[0];
+			assert(category, "Expected document to have a category");
+
+			const result = await documents.findMany(makeMockContext(), {
+				categories: [category],
+			});
+
+			if (!result.ok) throw result.error;
+
+			const { documents: actual, total } = result.data;
+			expect(total).toBe(2);
+			expect(actual).toEqual(expect.arrayContaining([document1, document2]));
+			expect(actual).not.toEqual(expect.arrayContaining([document3]));
+		});
 	});
 
-	async function makeDocument() {
+	async function makeDocument(params?: { categories?: { name: string }[] }) {
 		const { user, file } = await makeDependencies();
 		const result = await documents.create(makeMockContext(user), {
 			name: faker.word.adjective(),
 			fileId: file.id,
-			categories: [
+			categories: params?.categories ?? [
 				{
 					name: faker.string.uuid(),
 				},

@@ -84,6 +84,7 @@ type DocumentService = {
 		>;
 		findMany(
 			ctx: Context,
+			by?: { categories?: { id: string }[] | null } | null,
 		): ResultAsync<
 			{ documents: Document[]; total: number },
 			InternalServerError | PermissionDeniedError | UnauthorizedError

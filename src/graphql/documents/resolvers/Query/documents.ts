@@ -1,10 +1,13 @@
 import type { QueryResolvers } from "./../../../types.generated.js";
 export const documents: NonNullable<QueryResolvers["documents"]> = async (
 	_parent,
-	_arg,
+	{ data },
 	ctx,
 ) => {
-	const findManyDocumentsResult = await ctx.documents.documents.findMany(ctx);
+	const findManyDocumentsResult = await ctx.documents.documents.findMany(
+		ctx,
+		data,
+	);
 	if (!findManyDocumentsResult.ok) {
 		switch (findManyDocumentsResult.error.name) {
 			case "PermissionDeniedError":

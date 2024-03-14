@@ -39,6 +39,7 @@ type DocumentRepositoryType = {
 		>;
 		findMany(
 			ctx: Context,
+			by?: { categories?: { id: string }[] },
 		): ResultAsync<
 			{ documents: Document[]; total: number },
 			InternalServerError
@@ -198,7 +199,7 @@ function buildDocuments({
 				);
 			return Result.error(new InternalServerError("Not yet implemented"));
 		},
-		async findMany(ctx) {
+		async findMany(ctx, by) {
 			if (!ctx.user)
 				return Result.error(
 					new UnauthorizedError(
@@ -214,7 +215,9 @@ function buildDocuments({
 						"You do not have the permission required to perform this action.",
 					),
 				);
-			return await repository.documents.findMany(ctx);
+			return await repository.documents.findMany(ctx, {
+				categories: by?.categories ?? undefined,
+			});
 		},
 	};
 }

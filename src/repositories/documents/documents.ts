@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 import { Document } from "~/domain/documents.js";
 import { InternalServerError } from "~/domain/errors.js";
 import { Result } from "~/lib/result.js";
@@ -49,15 +49,30 @@ function buildDocuments({
 			return Result.error(new InternalServerError("not implemented yet"));
 		},
 
-		async findMany(ctx) {
+		async findMany(ctx, by) {
+			let where: Prisma.DocumentWhereInput = {};
+			if (by?.categories) {
+				where = {
+					categories: {
+						some: {
+							id: {
+								in: by.categories.map((category) => category.id),
+							},
+						},
+					},
+				};
+			}
 			try {
 				ctx.log.info("finding documents");
 				const findManyPromise = db.document.findMany({
 					include: {
 						categories: true,
 					},
+					where,
 				});
-				const countPromise = db.document.count();
+				const countPromise = db.document.count({
+					where,
+				});
 				const [documents, total] = await Promise.all([
 					findManyPromise,
 					countPromise,
