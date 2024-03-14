@@ -23,12 +23,14 @@ describe("CabinRepository", () => {
 				phoneNumber,
 			});
 
-			expect(bookingContact).toEqual({
-				id: "booking-contact",
-				name,
-				email,
-				phoneNumber,
-			});
+			expect(bookingContact).toEqual(
+				expect.objectContaining({
+					id: "booking-contact",
+					name,
+					email,
+					phoneNumber,
+				}),
+			);
 		});
 
 		it("should update the booking contact if it already exists", async () => {
@@ -64,12 +66,14 @@ describe("CabinRepository", () => {
 			 *
 			 * The booking contact should be updated
 			 */
-			expect(actual).toEqual({
-				id: "booking-contact",
-				name,
-				email,
-				phoneNumber,
-			});
+			expect(actual).toEqual(
+				expect.objectContaining({
+					id: "booking-contact",
+					name,
+					email,
+					phoneNumber,
+				}),
+			);
 		});
 	});
 
@@ -102,12 +106,14 @@ describe("CabinRepository", () => {
 			 *
 			 * The booking contact should be returned
 			 */
-			expect(actual).toEqual({
-				id: "booking-contact",
-				name,
-				email,
-				phoneNumber,
-			});
+			expect(actual).toEqual(
+				expect.objectContaining({
+					id: "booking-contact",
+					name,
+					email,
+					phoneNumber,
+				}),
+			);
 		});
 
 		it("should return a blank booking contact if it does not exist", async () => {
@@ -130,12 +136,14 @@ describe("CabinRepository", () => {
 			 *
 			 * A blank booking contact should be returned
 			 */
-			expect(actual).toEqual({
-				id: "booking-contact",
-				name: "",
-				email: "",
-				phoneNumber: "",
-			});
+			expect(actual).toEqual(
+				expect.objectContaining({
+					id: "booking-contact",
+					name: "",
+					email: "",
+					phoneNumber: "",
+				}),
+			);
 		});
 	});
 });

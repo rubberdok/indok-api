@@ -145,6 +145,7 @@ type BookingContact {
   name: String!
   email: String!
   phoneNumber: String!
+  updatedAt: DateTime!
 }
 
 enum Semester {
@@ -158,6 +159,7 @@ type BookingSemester {
   endAt: DateTime!
   bookingsEnabled: Boolean!
   semester: Semester!
+  updatedAt: DateTime!
 }
 
 input UpdateBookingSemesterInput {

@@ -54,6 +54,7 @@ describe("Cabin mutations", () => {
 				name,
 				email,
 				phoneNumber,
+				updatedAt: new Date(),
 			});
 
 			const { errors } = await client.mutate(
