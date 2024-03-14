@@ -128,8 +128,8 @@ devDependencies:
     specifier: 1.6.1
     version: 1.6.1
   '@eddeee888/gcg-typescript-resolver-files':
-    specifier: ^0.7.2
-    version: 0.7.2(graphql@16.8.1)
+    specifier: ^0.7.3
+    version: 0.7.3(graphql@16.8.1)
   '@faker-js/faker':
     specifier: ^8.4.1
     version: 8.4.1
@@ -1427,14 +1427,14 @@ packages:
       - supports-color
     dev: true
 
-  /@eddeee888/gcg-typescript-resolver-files@0.7.2(graphql@16.8.1):
-    resolution: {integrity: sha512-9LBkn6pGtXSQmH9rLoF/CkUUlsNwX4A539pRolr/yS++arGN871IptmZ89ezM4iGbbW/OPwp+Zp7AmNTgBExmA==}
+  /@eddeee888/gcg-typescript-resolver-files@0.7.3(graphql@16.8.1):
+    resolution: {integrity: sha512-EeOn9Qyj1JV0cXXny7bgmcyqBCRIv3bwdX7P1xIQxuE798u5bfNRbQbHbDIPep01vo+p85MeeY6pyn9TipgKnQ==}
     peerDependencies:
       graphql: ^15.0.0 || ^16.0.0
     dependencies:
       '@eddeee888/gcg-server-config': 0.1.0(graphql@16.8.1)
       '@graphql-codegen/add': 5.0.2(graphql@16.8.1)
-      '@graphql-codegen/plugin-helpers': 5.0.1(graphql@16.8.1)
+      '@graphql-codegen/plugin-helpers': 5.0.3(graphql@16.8.1)
       '@graphql-codegen/typescript': 4.0.6(graphql@16.8.1)
       '@graphql-codegen/typescript-resolvers': 4.0.6(graphql@16.8.1)
       graphql: 16.8.1
@@ -1675,20 +1675,6 @@ packages:
     transitivePeerDependencies:
       - encoding
       - supports-color
-    dev: true
-
-  /@graphql-codegen/plugin-helpers@5.0.1(graphql@16.8.1):
-    resolution: {integrity: sha512-6L5sb9D8wptZhnhLLBcheSPU7Tg//DGWgc5tQBWX46KYTOTQHGqDpv50FxAJJOyFVJrveN9otWk9UT9/yfY4ww==}
-    peerDependencies:
-      graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
-    dependencies:
-      '@graphql-tools/utils': 10.0.11(graphql@16.8.1)
-      change-case-all: 1.0.15
-      common-tags: 1.8.2
-      graphql: 16.8.1
-      import-from: 4.0.0
-      lodash: 4.17.21
-      tslib: 2.5.3
     dev: true
 
   /@graphql-codegen/plugin-helpers@5.0.3(graphql@16.8.1):
@@ -8285,10 +8271,6 @@ packages:
       json5: 2.2.3
       minimist: 1.2.8
       strip-bom: 3.0.0
-    dev: true
-
-  /tslib@2.5.3:
-    resolution: {integrity: sha512-mSxlJJwl3BMEQCUNnxXBU9jP4JBktcEGhURcPR6VQVlnP0FdDEsIaz0C35dXNGLyRfrATNofF0F5p2KPxQgB+w==}
     dev: true
 
   /tslib@2.6.2:
