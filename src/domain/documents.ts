@@ -9,13 +9,26 @@ import type {
 } from "./errors.js";
 
 class Document {
-	constructor(
-		public name: string,
-		public fileId: string,
-		public createdAt: Date,
-		public updatedAt: Date,
-		public id: string,
-	) {}
+	name: string;
+	fileId: string;
+	createdAt: Date;
+	updatedAt: Date;
+	id: string;
+
+	constructor(params: {
+		name: string;
+		fileId: string;
+		createdAt: Date;
+		updatedAt: Date;
+		id: string;
+	}) {
+		const { name, fileId, createdAt, updatedAt, id } = params;
+		this.name = name;
+		this.fileId = fileId;
+		this.createdAt = createdAt;
+		this.updatedAt = updatedAt;
+		this.id = id;
+	}
 }
 
 type DocumentService = {

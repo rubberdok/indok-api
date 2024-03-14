@@ -317,6 +317,40 @@ describe("Documents service", () => {
 				featurePermission: "ARCHIVE_VIEW_DOCUMENTS",
 			});
 		});
+
+		it("returns documents and the total count", async () => {
+			const { service, permissions, repository } = makeDependencies();
+			permissions.hasFeaturePermission.mockResolvedValueOnce(true);
+			repository.documents.findMany.mockResolvedValueOnce(
+				Result.success({
+					documents: [
+						{
+							createdAt: new Date(),
+							fileId: faker.string.uuid(),
+							id: faker.string.uuid(),
+							name: faker.word.adjective(),
+							updatedAt: new Date(),
+						},
+					],
+					total: 1,
+				}),
+			);
+
+			const result = await service.findMany(
+				makeMockContext({ id: faker.string.uuid() }),
+			);
+
+			expect(result).toEqual(
+				Result.success({
+					documents: expect.arrayContaining([
+						expect.objectContaining({
+							id: expect.any(String),
+						}),
+					]),
+					total: expect.any(Number),
+				}),
+			);
+		});
 	});
 });
 

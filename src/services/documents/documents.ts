@@ -158,7 +158,7 @@ function buildDocuments({
 				uploadUrl: url,
 			});
 		},
-		async update(ctx, data) {
+		async update(ctx, _data) {
 			if (!ctx.user)
 				return Result.error(
 					new UnauthorizedError(
@@ -176,7 +176,7 @@ function buildDocuments({
 				);
 			return Result.error(new InternalServerError("Not yet implemented"));
 		},
-		async delete(ctx, data) {
+		async delete(ctx, _data) {
 			if (!ctx.user)
 				return Result.error(
 					new UnauthorizedError(
@@ -210,7 +210,7 @@ function buildDocuments({
 						"You do not have the permission required to perform this action.",
 					),
 				);
-			return Result.error(new InternalServerError("Not yet implemented"));
+			return await repository.documents.findMany(ctx);
 		},
 	};
 }
