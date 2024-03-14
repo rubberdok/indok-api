@@ -51,8 +51,8 @@ import type {
 } from "~/domain/products.js";
 import type { StudyProgram, User } from "~/domain/users.js";
 import type { Context } from "~/lib/context.js";
-import { CabinRepository } from "~/repositories/cabins/repository.js";
-import { DocumentRepository } from "~/repositories/documents/repository.js";
+import { CabinRepository } from "~/repositories/cabins/index.js";
+import { DocumentRepository } from "~/repositories/documents/index.js";
 import { EventRepository } from "~/repositories/events/index.js";
 import { FileRepository } from "~/repositories/files/index.js";
 import { ListingRepository } from "~/repositories/listings/repository.js";
@@ -63,7 +63,7 @@ import { UserRepository } from "~/repositories/users/index.js";
 import { feideClient } from "~/services/auth/clients.js";
 import { AuthService } from "~/services/auth/index.js";
 import { CabinService } from "~/services/cabins/index.js";
-import { DocumentService } from "~/services/documents/service.js";
+import { DocumentService } from "~/services/documents/index.js";
 import {
 	type CreateEventParams,
 	EventService,
