@@ -1,6 +1,8 @@
-import { InternalServerError } from "~/domain/errors.js";
 import type { MutationResolvers } from "./../../../types.generated.js";
 export const deleteDocument: NonNullable<MutationResolvers["deleteDocument"]> =
-	async (_parent, _arg, _ctx) => {
-		throw new InternalServerError("Not implemented");
+	async (_parent, { data }, ctx) => {
+		const deleteResult = await ctx.documents.documents.delete(ctx, data);
+
+		if (!deleteResult.ok) throw deleteResult.error;
+		return { document: deleteResult.data.document };
 	};
