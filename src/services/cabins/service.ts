@@ -19,11 +19,10 @@ import {
 import {
 	InternalServerError,
 	InvalidArgumentError,
-	type InvalidArgumentErrorType,
+	InvalidArgumentErrorV2,
 	NotFoundError,
 	PermissionDeniedError,
 	UnauthorizedError,
-	newInvalidArgumentError,
 } from "~/domain/errors.js";
 import type { Context } from "~/lib/context.js";
 import { Result, type ResultAsync, type TResult } from "~/lib/result.js";
@@ -201,7 +200,7 @@ export class CabinService implements ICabinService {
 		},
 		| PermissionDeniedError
 		| UnauthorizedError
-		| InvalidArgumentError
+		| InvalidArgumentErrorV2
 		| InternalServerError
 	> {
 		if (!ctx.user) {
@@ -229,16 +228,33 @@ export class CabinService implements ICabinService {
 			};
 		}
 
+		const schema = z.object({
+			name: z.string().min(1),
+			capacity: z.number().min(0),
+			internalPrice: z.number().min(0),
+			externalPrice: z.number().min(0),
+			internalPriceWeekend: z.number().min(0),
+			externalPriceWeekend: z.number().min(0),
+		});
+		const parseResult = schema.safeParse(params);
+		if (!parseResult.success) {
+			return Result.error(
+				new InvalidArgumentErrorV2("Invalid cabin data", {
+					reason: parseResult.error.flatten().fieldErrors,
+					cause: parseResult.error,
+				}),
+			);
+		}
+
 		const createCabinResult = await this.cabinRepository.createCabin(params);
 
 		if (!createCabinResult.ok) {
-			return {
-				ok: false,
-				error: new InternalServerError(
+			return Result.error(
+				new InternalServerError(
 					"Unexpected error occurred while creating cabin",
 					createCabinResult.error,
 				),
-			};
+			);
 		}
 
 		return createCabinResult;
@@ -257,7 +273,7 @@ export class CabinService implements ICabinService {
 	): ResultAsync<
 		{ cabin: Cabin },
 		| InternalServerError
-		| InvalidArgumentErrorType
+		| InvalidArgumentErrorV2
 		| UnauthorizedError
 		| PermissionDeniedError
 		| NotFoundError
@@ -318,8 +334,7 @@ export class CabinService implements ICabinService {
 		const parseResult = schema.safeParse(params);
 		if (!parseResult.success) {
 			return Result.error(
-				newInvalidArgumentError({
-					message: "Invalid cabin update data",
+				new InvalidArgumentErrorV2("Invalid cabin update data", {
 					reason: parseResult.error.flatten().fieldErrors,
 					cause: parseResult.error,
 				}),
@@ -365,7 +380,7 @@ export class CabinService implements ICabinService {
 		{
 			booking: BookingType;
 		},
-		InvalidArgumentErrorType | InternalServerError
+		InvalidArgumentErrorV2 | InternalServerError
 	> {
 		const cabins = await Promise.all(
 			params.cabins.map((cabin) => this.cabinRepository.getCabinById(cabin.id)),
@@ -411,21 +426,25 @@ export class CabinService implements ICabinService {
 			switch (totalCostResult.error.name) {
 				case "NotFoundError": {
 					return Result.error(
-						newInvalidArgumentError({
-							message: "The cabin you tried to book does not exist",
-							reason: {
-								cabins: ["The cabin you tried to book does not exist"],
+						new InvalidArgumentErrorV2(
+							"The cabin you tried to book does not exist",
+							{
+								reason: {
+									cabins: ["The cabin you tried to book does not exist"],
+								},
+								cause: totalCostResult.error,
 							},
-							cause: totalCostResult.error,
-						}),
+						),
 					);
 				}
 				case "InvalidArgumentError": {
 					return Result.error(
-						newInvalidArgumentError({
-							message: "Failed to calculate the total cost of the booking",
-							cause: totalCostResult.error,
-						}),
+						new InvalidArgumentErrorV2(
+							"Failed to calculate the total cost of the booking",
+							{
+								cause: totalCostResult.error,
+							},
+						),
 					);
 				}
 				case "InternalServerError": {
@@ -456,10 +475,12 @@ export class CabinService implements ICabinService {
 			switch (createBookingResult.error.name) {
 				case "NotFoundError":
 					return Result.error(
-						newInvalidArgumentError({
-							message: "The cabin you tried to book does not exist",
-							cause: createBookingResult.error,
-						}),
+						new InvalidArgumentErrorV2(
+							"The cabin you tried to book does not exist",
+							{
+								cause: createBookingResult.error,
+							},
+						),
 					);
 				case "InternalServerError":
 					return Result.error(
@@ -497,7 +518,7 @@ export class CabinService implements ICabinService {
 				"id" | "status" | "totalCost" | "createdAt" | "feedback"
 			>;
 		},
-		InvalidArgumentErrorType
+		InvalidArgumentErrorV2
 	> {
 		const { validBookingIntervals } = params;
 
@@ -612,8 +633,7 @@ export class CabinService implements ICabinService {
 		const parseResult = bookingSchema.safeParse(params.data);
 		if (!parseResult.success) {
 			return Result.error(
-				newInvalidArgumentError({
-					message: "invalid booking data",
+				new InvalidArgumentErrorV2("invalid booking data", {
 					reason: parseResult.error.flatten().fieldErrors,
 					cause: parseResult.error,
 				}),

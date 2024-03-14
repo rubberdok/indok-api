@@ -3,7 +3,7 @@ import type { Cabin } from "@prisma/client";
 import { mock } from "jest-mock-extended";
 import {
 	InternalServerError,
-	type InvalidArgumentErrorType,
+	type InvalidArgumentErrorV2,
 	NotFoundError,
 	PermissionDeniedError,
 	UnauthorizedError,
@@ -64,7 +64,7 @@ describe("Cabin Service", () => {
 				hasFeaturePermission: true,
 				expected: {
 					ok: false,
-					error: expect.objectContaining<Partial<InvalidArgumentErrorType>>({
+					error: expect.objectContaining<Partial<InvalidArgumentErrorV2>>({
 						code: errorCodes.ERR_BAD_USER_INPUT,
 						reason: expect.objectContaining({
 							capacity: expect.any(Array),
@@ -85,7 +85,7 @@ describe("Cabin Service", () => {
 				hasFeaturePermission: true,
 				expected: {
 					ok: false,
-					error: expect.objectContaining<Partial<InvalidArgumentErrorType>>({
+					error: expect.objectContaining<Partial<InvalidArgumentErrorV2>>({
 						code: errorCodes.ERR_BAD_USER_INPUT,
 						reason: expect.objectContaining({
 							internalPrice: expect.any(Array),
@@ -106,7 +106,7 @@ describe("Cabin Service", () => {
 				hasFeaturePermission: true,
 				expected: {
 					ok: false,
-					error: expect.objectContaining<Partial<InvalidArgumentErrorType>>({
+					error: expect.objectContaining<Partial<InvalidArgumentErrorV2>>({
 						code: errorCodes.ERR_BAD_USER_INPUT,
 						reason: expect.objectContaining({
 							name: expect.any(Array),

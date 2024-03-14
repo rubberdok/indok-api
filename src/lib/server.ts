@@ -29,7 +29,7 @@ import {
 	type DownstreamServiceError,
 	InternalServerError,
 	type InvalidArgumentError,
-	type InvalidArgumentErrorType,
+	type InvalidArgumentErrorV2,
 	type NotFoundError,
 	type PermissionDeniedError,
 	type UnauthorizedError,
@@ -222,7 +222,7 @@ interface ICabinService {
 		params: NewBookingParams,
 	): ResultAsync<
 		{ booking: BookingType },
-		InvalidArgumentErrorType | InternalServerError
+		InvalidArgumentErrorV2 | InternalServerError
 	>;
 	updateBookingStatus(
 		ctx: Context,
@@ -273,7 +273,7 @@ interface ICabinService {
 		},
 	): ResultAsync<
 		{ cabin: Cabin },
-		| InvalidArgumentError
+		| InvalidArgumentErrorV2
 		| PermissionDeniedError
 		| UnauthorizedError
 		| InternalServerError
@@ -331,7 +331,7 @@ interface ICabinService {
 	): ResultAsync<
 		{ cabin: Cabin },
 		| InternalServerError
-		| InvalidArgumentErrorType
+		| InvalidArgumentErrorV2
 		| UnauthorizedError
 		| PermissionDeniedError
 		| NotFoundError
@@ -811,10 +811,10 @@ async function registerServices(
 
 export { registerServices, startServer };
 export type {
+	ICabinService,
+	IFileService,
+	IOrganizationService,
+	NewBookingParams,
 	ServerDependencies,
 	Services,
-	ICabinService,
-	NewBookingParams,
-	IOrganizationService,
-	IFileService,
 };

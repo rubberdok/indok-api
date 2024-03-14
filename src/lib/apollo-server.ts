@@ -5,6 +5,7 @@ import { GraphQLError, type GraphQLFormattedError } from "graphql";
 import { merge } from "lodash-es";
 import {
 	InvalidArgumentError,
+	InvalidArgumentErrorV2,
 	errorCodes,
 	isUserFacingError,
 } from "~/domain/errors.js";
@@ -38,6 +39,19 @@ export function getFormatErrorHandler(log?: Partial<FastifyInstance["log"]>) {
 						reason: originalError.reason,
 					},
 				});
+			}
+			if (originalError instanceof InvalidArgumentErrorV2) {
+				return merge<GraphQLFormattedError, Partial<GraphQLFormattedError>>(
+					formattedError,
+					{
+						message: originalError.message,
+						extensions: {
+							code: originalError.code,
+							reason: originalError.reason,
+							stackTrace: originalError.getStackTrace(),
+						},
+					},
+				);
 			}
 
 			return merge({}, formattedError, {
@@ -74,6 +88,7 @@ interface ApolloContext extends Services {
 declare module "graphql" {
 	interface GraphQLErrorExtensions {
 		code: string;
+		reason?: Record<string, string[] | string | undefined>;
 	}
 }
 

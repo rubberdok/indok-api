@@ -57,7 +57,7 @@ describe("OrganizationService", () => {
 					name?: string;
 					description?: string;
 				};
-				expectedError: string;
+				expectedError: unknown;
 			}[] = [
 				{
 					name: "if the user is not a member of the organization",
@@ -69,7 +69,7 @@ describe("OrganizationService", () => {
 						organizationId: "o1",
 						name: faker.company.name(),
 					},
-					expectedError: PermissionDeniedError.name,
+					expectedError: expect.any(PermissionDeniedError),
 				},
 				{
 					name: "if the description is too long",
@@ -81,7 +81,7 @@ describe("OrganizationService", () => {
 						organizationId: "o1",
 						description: faker.string.sample(10001),
 					},
-					expectedError: InvalidArgumentError.name,
+					expectedError: expect.any(InvalidArgumentError),
 				},
 				{
 					name: "if the name is too long",
@@ -93,7 +93,7 @@ describe("OrganizationService", () => {
 						organizationId: "o1",
 						name: faker.string.sample(101),
 					},
-					expectedError: InvalidArgumentError.name,
+					expectedError: expect.any(InvalidArgumentError),
 				},
 			];
 
@@ -126,8 +126,7 @@ describe("OrganizationService", () => {
 						);
 						fail("Expected to throw");
 					} catch (err) {
-						assert(err instanceof Error);
-						expect(err.name).toBe(expectedError);
+						expect(err).toEqual(expectedError);
 					}
 				},
 			);

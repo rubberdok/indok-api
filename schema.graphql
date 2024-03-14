@@ -126,6 +126,19 @@ type CalendarMonth {
   year: Int!
 }
 
+input CreateCabinInput {
+  capacity: Int!
+  externalPrice: Int!
+  externalPriceWeekend: Int!
+  internalPrice: Int!
+  internalPriceWeekend: Int!
+  name: String!
+}
+
+type CreateCabinResponse {
+  cabin: Cabin!
+}
+
 input CreateEventCategoryInput {
   name: String!
 }
@@ -617,6 +630,11 @@ type Merchant {
 type Mutation {
   """Add a member to the organization"""
   addMember(data: AddMemberInput!): AddMemberResponse!
+
+  """
+  Create cabin, requires that the user is in an organization with the CABIN_ADMIN permission.
+  """
+  createCabin(data: CreateCabinInput!): CreateCabinResponse!
 
   """
   Create an event, requires that the user is logged in, and is a member of the organization that is hosting the event
