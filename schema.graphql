@@ -141,6 +141,20 @@ type CreateCabinResponse {
   cabin: Cabin!
 }
 
+input CreateDocumentInput {
+  categories: [DocumentCategoryInput!]
+  description: String
+  fileExtension: String!
+  name: String!
+}
+
+type CreateDocumentResponse {
+  document: Document!
+
+  """The URL to upload the file to, valid for 10 minutes"""
+  uploadUrl: String!
+}
+
 input CreateEventCategoryInput {
   name: String!
 }
@@ -249,6 +263,14 @@ scalar Date
 
 scalar DateTime
 
+input DeleteDocumentInput {
+  id: ID!
+}
+
+type DeleteDocumentResponse {
+  document: Document!
+}
+
 input DeleteEventCategoryInput {
   id: ID!
 }
@@ -267,6 +289,52 @@ type DeleteListingResponse {
 
 input DeleteSlotInput {
   id: ID!
+}
+
+type Document {
+  """The categories the document is in"""
+  categories: [DocumentCategory!]!
+
+  """When the document was created"""
+  createdAt: DateTime!
+
+  """The description of the document"""
+  description: String!
+
+  """The remote file of the document"""
+  file: RemoteFile!
+  id: ID!
+
+  """The display name of the document"""
+  name: String!
+
+  """When the document was last updated"""
+  updatedAt: DateTime!
+}
+
+type DocumentCategory {
+  """The ID of the category"""
+  id: ID!
+
+  """The name of the category"""
+  name: String!
+}
+
+input DocumentCategoryInput {
+  name: String!
+}
+
+input DocumentsCategoryInput {
+  id: ID!
+}
+
+input DocumentsInput {
+  categories: [DocumentsCategoryInput!]
+}
+
+type DocumentsResponse {
+  documents: [Document!]!
+  total: Int!
 }
 
 type Event {
@@ -637,6 +705,7 @@ type Mutation {
   Create cabin, requires that the user is in an organization with the CABIN_ADMIN permission.
   """
   createCabin(data: CreateCabinInput!): CreateCabinResponse!
+  createDocument(data: CreateDocumentInput!): CreateDocumentResponse!
 
   """
   Create an event, requires that the user is logged in, and is a member of the organization that is hosting the event
@@ -660,6 +729,7 @@ type Mutation {
   Create a new organization, and add the current user as an admin of the organization.
   """
   createOrganization(data: CreateOrganizationInput!): CreateOrganizationResponse!
+  deleteDocument(data: DeleteDocumentInput!): DeleteDocumentResponse!
 
   """Delete an event category, requires super user status"""
   deleteEventCategory(data: DeleteEventCategoryInput!): DeleteEventCategoryResponse!
@@ -707,6 +777,7 @@ type Mutation {
   Updates the cabin with the given ID, requires that the user is in an organization with the CABIN_ADMIN permission.
   """
   updateCabin(data: UpdateCabinInput!): UpdateCabinResponse!
+  updateDocument(data: UpdateDocumentInput!): UpdateDocumentResponse!
 
   """"""
   updateEvent(data: UpdateEventInput!, id: ID!): UpdateEventResponse!
@@ -1035,6 +1106,7 @@ type Query {
   bookings(data: BookingsInput): BookingsResponse!
   cabins: CabinsResponse!
   categories: EventCategoriesResponse!
+  documents(data: DocumentsInput): DocumentsResponse!
   event(data: EventInput!): EventResponse!
   events(data: EventsInput): EventsResponse!
   getAvailabilityCalendar(data: GetAvailabilityCalendarInput!): GetAvailabilityCalendarResponse!
@@ -1336,6 +1408,17 @@ type UpdateCabinResponse {
 
 input UpdateCategoriesInput {
   id: ID!
+}
+
+input UpdateDocumentInput {
+  categories: [DocumentCategoryInput!]
+  description: String
+  id: ID!
+  name: String
+}
+
+type UpdateDocumentResponse {
+  document: Document!
 }
 
 input UpdateEventCategoryInput {

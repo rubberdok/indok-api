@@ -86,6 +86,7 @@ export const createMockApolloServer = (logger?: Partial<FastifyBaseLogger>) => {
 	const auth = mockDeep<ApolloContext["auth"]>();
 	const products = mockDeep<ApolloContext["products"]>();
 	const files = mockDeep<ApolloContext["files"]>();
+	const documents = mockDeep<ApolloContext["documents"]>();
 
 	function createMockContext(data: CreateMockContextData = {}): ApolloContext {
 		let user: User | null = null;
@@ -103,6 +104,7 @@ export const createMockApolloServer = (logger?: Partial<FastifyBaseLogger>) => {
 			auth,
 			products,
 			files,
+			documents,
 			log: mockDeep<FastifyBaseLogger>(logger),
 		};
 
@@ -120,6 +122,7 @@ export const createMockApolloServer = (logger?: Partial<FastifyBaseLogger>) => {
 		createMockContext,
 		productService: products,
 		fileService: files,
+		documents,
 		server,
 		client,
 	};

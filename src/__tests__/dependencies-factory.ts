@@ -1,7 +1,7 @@
 import type { BlobServiceClient } from "@azure/storage-blob";
 import { faker } from "@faker-js/faker";
 import type { Client } from "@vippsmobilepay/sdk";
-import { type DeepMockProxy, mockDeep } from "jest-mock-extended";
+import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { merge, pick } from "lodash-es";
 import { DateTime } from "luxon";
 import type { ServerClient } from "postmark";
@@ -12,6 +12,7 @@ import type { User } from "~/domain/users.js";
 import prisma from "~/lib/prisma.js";
 import type { Services } from "~/lib/server.js";
 import { CabinRepository } from "~/repositories/cabins/repository.js";
+import { DocumentRepository } from "~/repositories/documents/repository.js";
 import { EventRepository } from "~/repositories/events/index.js";
 import { FileRepository } from "~/repositories/files/repository.js";
 import { ListingRepository } from "~/repositories/listings/repository.js";
@@ -21,6 +22,7 @@ import { ProductRepository } from "~/repositories/products/repository.js";
 import { UserRepository } from "~/repositories/users/index.js";
 import { AuthService } from "~/services/auth/index.js";
 import { CabinService } from "~/services/cabins/index.js";
+import { DocumentService } from "~/services/documents/service.js";
 import { EventService } from "~/services/events/service.js";
 import type { SignUpQueueType } from "~/services/events/worker.js";
 import { FileService } from "~/services/files/service.js";
@@ -47,6 +49,7 @@ export function makeTestServices(overrides?: Partial<Services>): Services & {
 	const listingRepository = new ListingRepository(database);
 	const productRepository = new ProductRepository(database);
 	const fileRepository = FileRepository({ db: database });
+	const documentRepository = DocumentRepository({ db: database });
 
 	const mailService = buildMailService(
 		{
@@ -96,12 +99,28 @@ export function makeTestServices(overrides?: Partial<Services>): Services & {
 	);
 	const authService = new AuthService(userService, openIdClient);
 	const mockBlobServiceClient = mockDeep<BlobServiceClient>();
+
+	mockBlobServiceClient.getUserDelegationKey.mockResolvedValue({
+		value: faker.string.uuid(),
+		signedExpiresOn: new Date(),
+		signedObjectId: faker.string.uuid(),
+		signedStartsOn: new Date(),
+		signedService: faker.internet.url(),
+		signedTenantId: faker.string.uuid(),
+		signedVersion: faker.string.uuid(),
+		_response: mock(),
+	});
 	const blobStorageAdapter = BlobStorageAdapter({
 		accountName: "testaccount",
 		containerName: "testcontainer",
 		blobServiceClient: mockBlobServiceClient,
 	});
 	const fileService = FileService({ fileRepository, blobStorageAdapter });
+	const documents = DocumentService({
+		files: fileService,
+		repository: documentRepository,
+		permissions: organizationService.permissions,
+	});
 
 	const services: Services = {
 		users: userService,
@@ -112,6 +131,7 @@ export function makeTestServices(overrides?: Partial<Services>): Services & {
 		cabins: cabinService,
 		products,
 		files: fileService,
+		documents: documents,
 	};
 
 	return {
