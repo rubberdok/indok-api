@@ -683,6 +683,11 @@ type Mutation {
   updateBookingSemester(data: UpdateBookingSemesterInput!): UpdateBookingSemesterResponse!
   updateBookingStatus(data: UpdateBookingStatusInput!): UpdateBookingResponse!
 
+  """
+  Updates the cabin with the given ID, requires that the user is in an organization with the CABIN_ADMIN permission.
+  """
+  updateCabin(data: UpdateCabinInput!): UpdateCabinResponse!
+
   """"""
   updateEvent(data: UpdateEventInput!, id: ID!): UpdateEventResponse!
 
@@ -1293,6 +1298,20 @@ input UpdateBookingStatusInput {
   feedback: String
   id: ID!
   status: BookingStatus!
+}
+
+input UpdateCabinInput {
+  capacity: Int
+  externalPrice: Int
+  externalPriceWeekend: Int
+  id: ID!
+  internalPrice: Int
+  internalPriceWeekend: Int
+  name: String
+}
+
+type UpdateCabinResponse {
+  cabin: Cabin!
 }
 
 input UpdateCategoriesInput {

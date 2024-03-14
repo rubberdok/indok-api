@@ -29,7 +29,7 @@ import {
 	type DownstreamServiceError,
 	InternalServerError,
 	type InvalidArgumentError,
-	type InvalidArugmentErrorType,
+	type InvalidArgumentErrorType,
 	type NotFoundError,
 	type PermissionDeniedError,
 	type UnauthorizedError,
@@ -222,7 +222,7 @@ interface ICabinService {
 		params: NewBookingParams,
 	): ResultAsync<
 		{ booking: BookingType },
-		InvalidArugmentErrorType | InternalServerError
+		InvalidArgumentErrorType | InternalServerError
 	>;
 	updateBookingStatus(
 		ctx: Context,
@@ -317,6 +317,24 @@ interface ICabinService {
 			calendarMonths: CalendarMonth[];
 		},
 		InternalServerError
+	>;
+	updateCabin(
+		ctx: Context,
+		params: { id: string } & Partial<{
+			capacity: number | null;
+			internalPrice: number | null;
+			externalPrice: number | null;
+			internalPriceWeekend: number | null;
+			externalPriceWeekend: number | null;
+			name: string | null;
+		}>,
+	): ResultAsync<
+		{ cabin: Cabin },
+		| InternalServerError
+		| InvalidArgumentErrorType
+		| UnauthorizedError
+		| PermissionDeniedError
+		| NotFoundError
 	>;
 }
 

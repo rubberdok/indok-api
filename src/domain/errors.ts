@@ -24,7 +24,7 @@ export class KnownDomainError<TName extends string = string> extends Error {
 	}
 }
 
-type InvalidArugmentErrorType = DomainError<
+type InvalidArgumentErrorType = DomainError<
 	"InvalidArgumentError",
 	ErrorCode,
 	{ reason?: Record<string, string[] | undefined> }
@@ -84,7 +84,7 @@ type NewErrorParams<TFields extends Record<string, unknown> | undefined> = {
 
 function newInvalidArgumentError(
 	params: NewErrorParams<{ reason?: Record<string, string[] | undefined> }>,
-): InvalidArugmentErrorType {
+): InvalidArgumentErrorType {
 	const { message, cause, reason, options } = params;
 	return newErrorBase({
 		name: "InvalidArgumentError",
@@ -276,4 +276,4 @@ function isNewError(error?: unknown): error is DomainError {
 }
 
 export { newInvalidArgumentError, isNewError };
-export type { InvalidArugmentErrorType };
+export type { InvalidArgumentErrorType };
