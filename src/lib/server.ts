@@ -262,7 +262,9 @@ interface ICabinService {
 			phoneNumber: string | null;
 			email: string | null;
 		}>,
-	): Promise<Pick<BookingContact, "email" | "name" | "phoneNumber" | "id">>;
+	): Promise<
+		Pick<BookingContact, "email" | "name" | "phoneNumber" | "id" | "updatedAt">
+	>;
 	createCabin(
 		ctx: Context,
 		params: {
