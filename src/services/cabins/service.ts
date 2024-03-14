@@ -6,8 +6,7 @@ import {
 	type BookingContact as PrismaBookingContact,
 	Semester,
 } from "@prisma/client";
-import { compact, range } from "lodash-es";
-import { sumBy } from "lodash-es";
+import { compact, range, sumBy } from "lodash-es";
 import { DateTime, Interval } from "luxon";
 import { z } from "zod";
 import {
