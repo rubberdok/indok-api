@@ -2,10 +2,12 @@ import { faker } from "@faker-js/faker";
 import { mockDeep } from "jest-mock-extended";
 import { Document } from "~/domain/documents.js";
 import {
+	DomainErrorType,
 	DownstreamServiceError,
 	InternalServerError,
 	InvalidArgumentError,
 	InvalidArgumentErrorV2,
+	NotFoundError,
 	PermissionDeniedError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
@@ -244,6 +246,118 @@ describe("Documents service", () => {
 				featurePermission: "ARCHIVE_WRITE_DOCUMENTS",
 			});
 		});
+
+		it("returns InvalidArugmentError for invalid arguments", async () => {
+			const { service, permissions } = makeDependencies();
+			permissions.hasFeaturePermission.mockResolvedValueOnce(true);
+			const result = await service.update(
+				makeMockContext({ id: faker.string.uuid() }),
+				{
+					id: "not-a-uuid",
+					name: "",
+					description: 2 as unknown as string,
+					categories: [{ name: "" }],
+				},
+			);
+			expect(result).toEqual(
+				Result.error(
+					expect.objectContaining({
+						type: DomainErrorType.InvalidArgumentError,
+						reason: expect.objectContaining({
+							id: expect.any(Array),
+							name: expect.any(Array),
+							description: expect.any(Array),
+							categories: expect.any(Array),
+						}),
+					}),
+				),
+			);
+		});
+
+		it("updates the document", async () => {
+			const { service, permissions, repository } = makeDependencies();
+			permissions.hasFeaturePermission.mockResolvedValueOnce(true);
+			repository.documents.update.mockResolvedValueOnce(
+				Result.success({ document: makeDocument() }),
+			);
+
+			const result = await service.update(
+				makeMockContext({ id: faker.string.uuid() }),
+				{
+					id: faker.string.uuid(),
+					name: faker.word.adjective(),
+				},
+			);
+
+			expect(result).toEqual(
+				Result.success({
+					document: expect.objectContaining({
+						id: expect.any(String),
+					}),
+				}),
+			);
+		});
+
+		it("returns internal server error if repo fails unexpectedly", async () => {
+			const { service, permissions, repository } = makeDependencies();
+			permissions.hasFeaturePermission.mockResolvedValueOnce(true);
+			repository.documents.update.mockResolvedValueOnce(
+				Result.error(new InternalServerError("")),
+			);
+
+			const result = await service.update(
+				makeMockContext({ id: faker.string.uuid() }),
+				{ id: faker.string.uuid() },
+			);
+
+			expect(result).toEqual(Result.error(expect.any(InternalServerError)));
+		});
+
+		it("returns not found error if repo returns not found", async () => {
+			const { service, permissions, repository } = makeDependencies();
+			permissions.hasFeaturePermission.mockResolvedValueOnce(true);
+			repository.documents.update.mockResolvedValueOnce(
+				Result.error(new NotFoundError("")),
+			);
+
+			const result = await service.update(
+				makeMockContext({ id: faker.string.uuid() }),
+				{ id: faker.string.uuid() },
+			);
+
+			expect(result).toEqual(Result.error(expect.any(NotFoundError)));
+		});
+
+		it("ignores nullish fields", async () => {
+			const { service, permissions, repository } = makeDependencies();
+			permissions.hasFeaturePermission.mockResolvedValueOnce(true);
+			repository.documents.update.mockResolvedValueOnce(
+				Result.success({ document: makeDocument() }),
+			);
+
+			const result = await service.update(
+				makeMockContext({ id: faker.string.uuid() }),
+				{
+					id: faker.string.uuid(),
+					description: null,
+					name: undefined,
+					categories: null,
+				},
+			);
+
+			expect(result).toEqual(
+				Result.success({ document: expect.any(Document) }),
+			);
+			expect(repository.documents.update).toHaveBeenCalledWith(
+				expect.anything(),
+				expect.objectContaining({
+					id: expect.any(String),
+					description: undefined,
+					name: undefined,
+					categories: undefined,
+				}),
+			);
+		});
 	});
 
 	describe("#delete", () => {
@@ -276,6 +390,57 @@ describe("Documents service", () => {
 			expect(permissions.hasFeaturePermission).toHaveBeenCalledWith(ctx, {
 				featurePermission: "ARCHIVE_WRITE_DOCUMENTS",
 			});
+		});
+
+		it("deletes the document", async () => {
+			const { service, permissions, repository } = makeDependencies();
+			permissions.hasFeaturePermission.mockResolvedValueOnce(true);
+			repository.documents.delete.mockResolvedValueOnce(
+				Result.success({ document: makeDocument() }),
+			);
+
+			const result = await service.delete(
+				makeMockContext({ id: faker.string.uuid() }),
+				{ id: faker.string.uuid() },
+			);
+
+			expect(result).toEqual(
+				Result.success({
+					document: expect.objectContaining({
+						id: expect.any(String),
+					}),
+				}),
+			);
+		});
+
+		it("returns internal server error if repo fails unexpectedly", async () => {
+			const { service, permissions, repository } = makeDependencies();
+			permissions.hasFeaturePermission.mockResolvedValueOnce(true);
+			repository.documents.delete.mockResolvedValueOnce(
+				Result.error(new InternalServerError("")),
+			);
+
+			const result = await service.delete(
+				makeMockContext({ id: faker.string.uuid() }),
+				{ id: faker.string.uuid() },
+			);
+
+			expect(result).toEqual(Result.error(expect.any(InternalServerError)));
+		});
+
+		it("returns not found error if repo returns not found", async () => {
+			const { service, permissions, repository } = makeDependencies();
+			permissions.hasFeaturePermission.mockResolvedValueOnce(true);
+			repository.documents.delete.mockResolvedValueOnce(
+				Result.error(new NotFoundError("")),
+			);
+
+			const result = await service.delete(
+				makeMockContext({ id: faker.string.uuid() }),
+				{ id: faker.string.uuid() },
+			);
+
+			expect(result).toEqual(Result.error(expect.any(NotFoundError)));
 		});
 	});
 

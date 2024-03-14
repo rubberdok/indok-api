@@ -162,7 +162,7 @@ function buildDocuments({
 				uploadUrl: url,
 			});
 		},
-		async update(ctx, _data) {
+		async update(ctx, data) {
 			if (!ctx.user)
 				return Result.error(
 					new UnauthorizedError(
@@ -178,9 +178,57 @@ function buildDocuments({
 						"You do not have the permission required to perform this action.",
 					),
 				);
-			return Result.error(new InternalServerError("Not yet implemented"));
+
+			const schema = z.object({
+				id: z.string().uuid(),
+				name: z
+					.string()
+					.min(1)
+					.nullish()
+					.transform((val) => val ?? undefined),
+				description: z
+					.string()
+					.nullish()
+					.transform((val) => val ?? undefined),
+				categories: z
+					.array(z.object({ name: z.string().min(1) }))
+					.nullish()
+					.transform((val) => val ?? undefined),
+			});
+			const validationResult = schema.safeParse(data);
+			if (!validationResult.success) {
+				return Result.error(
+					new InvalidArgumentErrorV2("Invalid argument error", {
+						reason: validationResult.error.flatten().fieldErrors,
+						cause: validationResult.error,
+					}),
+				);
+			}
+			const updateDocumentResult = await repository.documents.update(
+				ctx,
+				validationResult.data,
+			);
+
+			if (!updateDocumentResult.ok) {
+				switch (updateDocumentResult.error.name) {
+					case "NotFoundError":
+						return Result.error(updateDocumentResult.error);
+					case "InternalServerError":
+						return Result.error(
+							new InternalServerError(
+								"Unexpected error when updating document",
+								updateDocumentResult.error,
+							),
+						);
+				}
+			}
+
+			return Result.success({
+				document: updateDocumentResult.data.document,
+			});
 		},
-		async delete(ctx, _data) {
+
+		async delete(ctx, data) {
 			if (!ctx.user)
 				return Result.error(
 					new UnauthorizedError(
@@ -196,8 +244,24 @@ function buildDocuments({
 						"You do not have the permission required to perform this action.",
 					),
 				);
-			return Result.error(new InternalServerError("Not yet implemented"));
+
+			const deleteResult = await repository.documents.delete(ctx, data);
+			if (!deleteResult.ok) {
+				switch (deleteResult.error.name) {
+					case "NotFoundError":
+						return Result.error(deleteResult.error);
+					case "InternalServerError":
+						return Result.error(
+							new InternalServerError(
+								"Unexpected error when deleting document",
+								deleteResult.error,
+							),
+						);
+				}
+			}
+			return Result.success({ document: deleteResult.data.document });
 		},
+
 		async findMany(ctx, by) {
 			if (!ctx.user)
 				return Result.error(

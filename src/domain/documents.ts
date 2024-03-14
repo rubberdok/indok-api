@@ -4,6 +4,7 @@ import type {
 	DownstreamServiceError,
 	InternalServerError,
 	InvalidArgumentErrorV2,
+	NotFoundError,
 	PermissionDeniedError,
 	UnauthorizedError,
 } from "./errors.js";
@@ -64,20 +65,26 @@ type DocumentService = {
 		>;
 		update(
 			ctx: Context,
-			data: Pick<Document, "id"> & Partial<Pick<Document, "name">>,
+			data: Pick<Document, "id"> &
+				Partial<{
+					name: string | null;
+					description: string | null;
+					categories: { name: string }[] | null;
+				}>,
 		): ResultAsync<
 			{ document: Document },
 			| InvalidArgumentErrorV2
 			| InternalServerError
 			| PermissionDeniedError
 			| UnauthorizedError
+			| NotFoundError
 		>;
 		delete(
 			ctx: Context,
 			data: Pick<Document, "id">,
 		): ResultAsync<
 			{ document: Document },
-			| InvalidArgumentErrorV2
+			| NotFoundError
 			| InternalServerError
 			| PermissionDeniedError
 			| UnauthorizedError
