@@ -1,6 +1,8 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
-import { Document } from "~/domain/documents.js";
-import { InternalServerError } from "~/domain/errors.js";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { Document, type DocumentCategory } from "~/domain/documents.js";
+import { InternalServerError, NotFoundError } from "~/domain/errors.js";
+import { prismaKnownErrorCodes } from "~/lib/prisma.js";
 import { Result } from "~/lib/result.js";
 import type { DocumentRepositoryType } from "~/services/documents/documents.js";
 
@@ -42,11 +44,95 @@ function buildDocuments({
 				);
 			}
 		},
-		async delete(_ctx, _data) {
-			return Result.error(new InternalServerError("not implemented yet"));
+		async delete(ctx, { id }) {
+			ctx.log.info({ documentId: id }, "deleting document");
+			try {
+				const document = await db.document.delete({
+					include: {
+						categories: true,
+					},
+					where: {
+						id,
+					},
+				});
+				return Result.success({ document: new Document(document) });
+			} catch (err) {
+				if (err instanceof PrismaClientKnownRequestError) {
+					if (
+						err.code === prismaKnownErrorCodes.ERR_NOT_FOUND ||
+						err.code === prismaKnownErrorCodes.ERR_INCONSISTENT_COLUMN_DATA
+					) {
+						return Result.error(new NotFoundError("Document does not exist"));
+					}
+				}
+				return Result.error(
+					new InternalServerError("Failed to delete document", err),
+				);
+			}
 		},
-		async update(_ctx, _data) {
-			return Result.error(new InternalServerError("not implemented yet"));
+		async update(ctx, data) {
+			ctx.log.info({ documentId: data.id }, "updating document");
+			const { id, name, description, categories } = data;
+			try {
+				let categoriesToDisconnect: DocumentCategory[] = [];
+				if (categories) {
+					const previousDocument = await db.document.findUnique({
+						include: {
+							categories: true,
+						},
+						where: {
+							id,
+						},
+					});
+					if (previousDocument === null)
+						return Result.error(new NotFoundError("Document does not exist"));
+					categoriesToDisconnect = previousDocument.categories.filter(
+						(category) =>
+							!categories?.some(
+								(newCategory) => newCategory.name === category.name,
+							),
+					);
+				}
+
+				const document = await db.document.update({
+					include: {
+						categories: true,
+					},
+					where: {
+						id,
+					},
+					data: {
+						name,
+						description,
+						categories: {
+							connectOrCreate: categories?.map((category) => ({
+								create: {
+									name: category.name,
+								},
+								where: {
+									name: category.name,
+								},
+							})),
+							disconnect: categoriesToDisconnect.map((category) => ({
+								id: category.id,
+							})),
+						},
+					},
+				});
+				return Result.success({ document: new Document(document) });
+			} catch (err) {
+				if (err instanceof PrismaClientKnownRequestError) {
+					if (
+						err.code === prismaKnownErrorCodes.ERR_NOT_FOUND ||
+						err.code === prismaKnownErrorCodes.ERR_INCONSISTENT_COLUMN_DATA
+					) {
+						return Result.error(new NotFoundError("Document does not exist"));
+					}
+				}
+				return Result.error(
+					new InternalServerError("failed to update document", err),
+				);
+			}
 		},
 
 		async findMany(ctx, by) {

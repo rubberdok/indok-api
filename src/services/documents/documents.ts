@@ -6,6 +6,7 @@ import {
 	InternalServerError,
 	type InvalidArgumentError,
 	InvalidArgumentErrorV2,
+	type NotFoundError,
 	PermissionDeniedError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
@@ -25,18 +26,16 @@ type DocumentRepositoryType = {
 		): ResultAsync<{ document: Document }, InternalServerError>;
 		update(
 			ctx: Context,
-			data: Document,
-		): ResultAsync<
-			{ document: Document },
-			InvalidArgumentErrorV2 | InternalServerError
-		>;
+			data: Pick<Document, "id"> &
+				Partial<Pick<Document, "description" | "name">> &
+				Partial<{
+					categories: Pick<DocumentCategory, "name">[];
+				}>,
+		): ResultAsync<{ document: Document }, NotFoundError | InternalServerError>;
 		delete(
 			ctx: Context,
 			data: Pick<Document, "id">,
-		): ResultAsync<
-			{ document: Document },
-			InvalidArgumentErrorV2 | InternalServerError
-		>;
+		): ResultAsync<{ document: Document }, NotFoundError | InternalServerError>;
 		findMany(
 			ctx: Context,
 			by?: { categories?: { id: string }[] },
