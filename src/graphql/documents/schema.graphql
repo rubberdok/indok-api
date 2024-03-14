@@ -1,0 +1,66 @@
+type Query {
+    documents: DocumentsResponse!
+}
+
+type Mutation {
+    createDocument(data: CreateDocumentInput!): CreateDocumentResponse!
+    updateDocument(data: UpdateDocumentInput!): UpdateDocumentResponse!
+    deleteDocument(data: DeleteDocumentInput!): DeleteDocumentResponse!
+}
+
+input CreateDocumentInput {
+    name: String!
+    fileExtension: String!
+}
+
+input UpdateDocumentInput {
+    id: ID!
+    name: String
+}
+
+input DeleteDocumentInput {
+    id: ID!
+}
+
+type CreateDocumentResponse {
+    document: Document!
+    """
+    The URL to upload the file to, valid for 10 minutes
+    """
+    uploadUrl: String!
+}
+
+type UpdateDocumentResponse {
+    document: Document!
+}
+
+type DeleteDocumentResponse {
+    document: Document!
+}
+
+type DocumentsResponse {
+    documents: [Document!]!
+    total: Int!
+}
+
+
+
+type Document {
+    id: ID!
+    """
+    The display name of the document
+    """
+    name: String!
+    """
+    The remote file of the document
+    """
+    file: RemoteFile!
+    """
+    When the document was created
+    """
+    createdAt: DateTime!
+    """
+    When the document was last updated
+    """
+    updatedAt: DateTime!
+}

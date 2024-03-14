@@ -25,6 +25,7 @@ import type {
 	BookingType,
 	CalendarMonth,
 } from "~/domain/cabins.js";
+import type { DocumentService as DocumentServiceType } from "~/domain/documents.js";
 import {
 	type DownstreamServiceError,
 	InternalServerError,
@@ -51,6 +52,7 @@ import type {
 import type { StudyProgram, User } from "~/domain/users.js";
 import type { Context } from "~/lib/context.js";
 import { CabinRepository } from "~/repositories/cabins/repository.js";
+import { DocumentRepository } from "~/repositories/documents/repository.js";
 import { EventRepository } from "~/repositories/events/index.js";
 import { FileRepository } from "~/repositories/files/index.js";
 import { ListingRepository } from "~/repositories/listings/repository.js";
@@ -61,6 +63,7 @@ import { UserRepository } from "~/repositories/users/index.js";
 import { feideClient } from "~/services/auth/clients.js";
 import { AuthService } from "~/services/auth/index.js";
 import { CabinService } from "~/services/cabins/index.js";
+import { DocumentService } from "~/services/documents/service.js";
 import {
 	type CreateEventParams,
 	EventService,
@@ -638,6 +641,7 @@ type Services = {
 	cabins: ICabinService;
 	products: IProductService;
 	files: IFileService;
+	documents: DocumentServiceType;
 };
 
 type ServerDependencies = {
@@ -702,6 +706,7 @@ async function registerServices(
 	const listingRepository = new ListingRepository(database);
 	const productRepository = new ProductRepository(database);
 	const fileRepository = FileRepository({ db: database });
+	const documentRepository = DocumentRepository({ db: database });
 
 	await serverInstance.register(fastifyMessageQueue, {
 		name: "email",
@@ -792,6 +797,11 @@ async function registerServices(
 		blobServiceClient,
 	});
 	const fileService = FileService({ fileRepository, blobStorageAdapter });
+	const documentService = DocumentService({
+		files: fileService,
+		permissions: permissionService,
+		repository: documentRepository,
+	});
 
 	const services: Services = {
 		users: userService,
@@ -802,6 +812,7 @@ async function registerServices(
 		cabins: cabinService,
 		products: productService,
 		files: fileService,
+		documents: documentService,
 	};
 
 	await serverInstance.register(fastifyService, { services });
