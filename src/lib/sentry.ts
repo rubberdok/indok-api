@@ -30,7 +30,6 @@ export const fastifyApolloSentryPlugin = (
 			contextValue.log.info(
 				{
 					graphql: {
-						query: request.query,
 						variables: request.variables,
 						method: request.http?.method,
 						operationName: request.operationName,
@@ -39,12 +38,12 @@ export const fastifyApolloSentryPlugin = (
 				"incoming graphql request",
 			);
 			if (request.operationName) {
-				contextValue.transaction?.setName(request.operationName);
+				contextValue.span?.updateName(request.operationName);
 			}
 			return {
 				// biome-ignore lint/suspicious/useAwait: We need to use async/await API here.
 				async willSendResponse({ contextValue }) {
-					contextValue.transaction?.finish();
+					contextValue.span?.end();
 				},
 				async didEncounterErrors(ctx) {
 					// If we couldn't parse the operation, don't
@@ -82,6 +81,7 @@ export const fastifyApolloSentryPlugin = (
 							// (make sure to strip out sensitive data!)
 							scope.setExtra("query", ctx.request.query);
 							scope.setExtra("variables", ctx.request.variables);
+							scope.setExtra("operationName", ctx.request.operationName);
 							if (err.path) {
 								// We can also add the path as breadcrumb
 								scope.addBreadcrumb({

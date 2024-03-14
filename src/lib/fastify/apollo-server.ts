@@ -48,7 +48,7 @@ const fastifyApolloServerPlugin: FastifyPluginAsync<{
 	) => {
 		const { services } = fastify;
 		const name = `${req.method} ${req.url}`;
-		const transaction = fastify.Sentry.startTransaction({
+		const span = fastify.Sentry.startInactiveSpan({
 			op: "apollo.graphql",
 			name,
 		});
@@ -76,7 +76,7 @@ const fastifyApolloServerPlugin: FastifyPluginAsync<{
 		return {
 			...services,
 			user,
-			transaction,
+			span,
 			log: req.log.child({ userId: user?.id, service: "apollo-server" }),
 		};
 	};

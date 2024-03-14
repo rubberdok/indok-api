@@ -1,5 +1,5 @@
 import { unwrapResolverError } from "@apollo/server/errors";
-import type { Transaction } from "@sentry/node";
+import type { Span } from "@sentry/node";
 import type { FastifyBaseLogger, FastifyInstance } from "fastify";
 import { GraphQLError, type GraphQLFormattedError } from "graphql";
 import { merge } from "lodash-es";
@@ -82,7 +82,7 @@ export function getFormatErrorHandler(log?: Partial<FastifyInstance["log"]>) {
 interface ApolloContext extends Services {
 	user: User | null;
 	log: FastifyBaseLogger;
-	transaction?: Transaction;
+	span?: Span;
 }
 
 declare module "graphql" {
