@@ -1,4 +1,3 @@
-import { merge } from "lodash-es";
 import { z } from "zod";
 
 /**
@@ -24,87 +23,9 @@ export class KnownDomainError<TName extends string = string> extends Error {
 	}
 }
 
-type InvalidArgumentErrorType = DomainError<
-	"InvalidArgumentError",
-	ErrorCode,
-	{ reason?: Record<string, string[] | undefined> }
->;
-
-const ErrorSymbol = Symbol("Error");
-
-type DomainError<
-	TName extends string = string,
-	TCode extends ErrorCode = typeof errorCodes.ERR_INTERNAL_SERVER_ERROR,
-	TFields extends Record<string, unknown> = Record<string, never>,
-> = {
-	[ErrorSymbol]: true;
-	name: TName;
-	message: string;
-	cause?: unknown;
-	getStackTrace?: () => string | undefined;
-	code: TCode;
-} & TFields;
-
-function newErrorBase<
-	TName extends string,
-	TCode extends ErrorCode,
-	TFields extends Record<string, unknown>,
->(params: {
-	name: TName;
-	message: string;
-	code: TCode;
-	cause?: unknown;
-	fields?: TFields;
-	options?: {
-		withStackTrace?: boolean;
-	};
-}): DomainError<TName, TCode, TFields> {
-	const { name, message, code, cause, fields, options } = params;
-
-	return merge(
-		{
-			[ErrorSymbol]: true as const,
-			name,
-			message,
-			cause,
-			code,
-			getStackTrace: options?.withStackTrace ? getStackTrace : undefined,
-		},
-		fields,
-	);
-}
-
-type NewErrorParams<TFields extends Record<string, unknown> | undefined> = {
-	message: string;
-	cause?: unknown;
-	options?: {
-		withStackTrace?: boolean;
-	};
-} & TFields;
-
-function newInvalidArgumentError(
-	params: NewErrorParams<{ reason?: Record<string, string[] | undefined> }>,
-): InvalidArgumentErrorType {
-	const { message, cause, reason, options } = params;
-	return newErrorBase({
-		name: "InvalidArgumentError",
-		message,
-		code: errorCodes.ERR_BAD_USER_INPUT,
-		fields: { reason },
-		cause,
-		options,
-	});
-}
-
-function getStackTrace() {
-	const errorObj = new Error();
-	const propertyIsSupported = typeof errorObj?.stack === "string";
-	if (propertyIsSupported) {
-		return errorObj.stack;
-	}
-	return undefined;
-}
-
+/**
+ * @deprecated use `InvalidArgumentErrorV2` instead
+ */
 export class InvalidArgumentError extends KnownDomainError<"InvalidArgumentError"> {
 	public reason?: Record<string, string[] | undefined>;
 
@@ -268,12 +189,59 @@ export function isUserFacingError(
 	return false;
 }
 
-function isNewError(error?: unknown): error is DomainError {
-	if (!error) return false;
-	if (typeof error !== "object") return false;
-	if (ErrorSymbol in error) return true;
-	return false;
+const InvalidArgumentErrorSymbol = Symbol("InvalidArgumentError");
+const InternalServerErrorSymbol = Symbol("InternalServerError");
+const DomainErrorType = {
+	InvalidArgumentError: InvalidArgumentErrorSymbol,
+	InternalServerError: InternalServerErrorSymbol,
+} as const;
+
+type ErrorType = (typeof DomainErrorType)[keyof typeof DomainErrorType];
+
+class DomainError<TErrorType extends ErrorType> extends Error {
+	public code: ErrorCode;
+	public type: TErrorType;
+
+	constructor(
+		message: string,
+		options: { code: ErrorCode; type: TErrorType; cause?: unknown },
+	) {
+		super(message, { cause: options.cause });
+		this.code = options.code;
+		this.type = options.type;
+		Error.captureStackTrace(this);
+	}
+
+	getStackTrace() {
+		const errorObj = new Error();
+		const propertyIsSupported = typeof errorObj?.stack === "string";
+		if (propertyIsSupported) {
+			return errorObj.stack;
+		}
+		return undefined;
+	}
 }
 
-export { newInvalidArgumentError, isNewError };
-export type { InvalidArgumentErrorType };
+class InvalidArgumentErrorV2 extends DomainError<
+	typeof DomainErrorType.InvalidArgumentError
+> {
+	public reason: Record<string, string[] | undefined> | undefined;
+
+	constructor(
+		message: string,
+		options?: {
+			reason?: Record<string, string[] | undefined>;
+			cause?: unknown;
+		},
+	) {
+		const { reason, ...rest } = options ?? {};
+		super(message, {
+			code: errorCodes.ERR_BAD_USER_INPUT,
+			type: DomainErrorType.InvalidArgumentError,
+			...rest,
+		});
+		this.reason = reason;
+	}
+}
+
+export { DomainErrorType, InvalidArgumentErrorV2 };

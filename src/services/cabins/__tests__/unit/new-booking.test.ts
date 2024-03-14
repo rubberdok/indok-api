@@ -5,9 +5,10 @@ import { merge } from "lodash-es";
 import { DateTime } from "luxon";
 import { pino } from "pino";
 import type { BookingType } from "~/domain/cabins.js";
-import type {
-	InternalServerError,
-	InvalidArgumentError,
+import {
+	DomainErrorType,
+	type InternalServerError,
+	type InvalidArgumentError,
 } from "~/domain/errors.js";
 import { makeMockContext } from "~/lib/context.js";
 import { envToLogger } from "~/lib/fastify/logging.js";
@@ -124,7 +125,7 @@ describe("CabinService", () => {
 						},
 						expected: {
 							error: expect.objectContaining({
-								name: "InvalidArgumentError",
+								type: DomainErrorType.InvalidArgumentError,
 								reason: expect.objectContaining({
 									email: expect.any(Array),
 								}),
@@ -146,7 +147,7 @@ describe("CabinService", () => {
 						},
 						expected: {
 							error: expect.objectContaining({
-								name: "InvalidArgumentError",
+								type: DomainErrorType.InvalidArgumentError,
 								reason: expect.objectContaining({
 									phoneNumber: expect.any(Array),
 								}),
@@ -168,7 +169,7 @@ describe("CabinService", () => {
 						},
 						expected: {
 							error: expect.objectContaining({
-								name: "InvalidArgumentError",
+								type: DomainErrorType.InvalidArgumentError,
 								reason: expect.objectContaining({
 									cabins: expect.any(Array),
 								}),
@@ -190,7 +191,7 @@ describe("CabinService", () => {
 						},
 						expected: {
 							error: expect.objectContaining({
-								name: "InvalidArgumentError",
+								type: DomainErrorType.InvalidArgumentError,
 								reason: expect.objectContaining({
 									firstName: expect.any(Array),
 								}),
@@ -212,7 +213,7 @@ describe("CabinService", () => {
 						},
 						expected: {
 							error: expect.objectContaining({
-								name: "InvalidArgumentError",
+								type: DomainErrorType.InvalidArgumentError,
 								reason: expect.objectContaining({
 									lastName: expect.any(Array),
 								}),
@@ -241,7 +242,7 @@ describe("CabinService", () => {
 						},
 						expected: {
 							error: expect.objectContaining({
-								name: "InvalidArgumentError",
+								type: DomainErrorType.InvalidArgumentError,
 								reason: expect.objectContaining({
 									startDate: expect.any(Array),
 								}),
@@ -263,7 +264,7 @@ describe("CabinService", () => {
 						},
 						expected: {
 							error: expect.objectContaining({
-								name: "InvalidArgumentError",
+								type: DomainErrorType.InvalidArgumentError,
 								reason: expect.objectContaining({
 									endDate: expect.any(Array),
 								}),
@@ -286,7 +287,7 @@ describe("CabinService", () => {
 						},
 						expected: {
 							error: expect.objectContaining({
-								name: "InvalidArgumentError",
+								type: DomainErrorType.InvalidArgumentError,
 								reason: expect.objectContaining({
 									startDate: expect.any(Array),
 								}),
@@ -317,7 +318,7 @@ describe("CabinService", () => {
 						},
 						expected: {
 							error: expect.objectContaining({
-								name: "InvalidArgumentError",
+								type: DomainErrorType.InvalidArgumentError,
 								reason: expect.objectContaining({
 									startDate: expect.any(Array),
 								}),
@@ -344,7 +345,7 @@ describe("CabinService", () => {
 						},
 						expected: {
 							error: expect.objectContaining({
-								name: "InvalidArgumentError",
+								type: DomainErrorType.InvalidArgumentError,
 								reason: expect.objectContaining({
 									startDate: expect.arrayContaining([
 										expect.stringContaining(
@@ -368,7 +369,7 @@ describe("CabinService", () => {
 						},
 						expected: {
 							error: expect.objectContaining({
-								name: "InvalidArgumentError",
+								type: DomainErrorType.InvalidArgumentError,
 								reason: expect.objectContaining({
 									startDate: expect.arrayContaining([
 										expect.stringContaining(
@@ -396,7 +397,7 @@ describe("CabinService", () => {
 						},
 						expected: {
 							error: expect.objectContaining({
-								name: "InvalidArgumentError",
+								type: DomainErrorType.InvalidArgumentError,
 								reason: expect.objectContaining({
 									startDate: expect.any(Array),
 								}),
@@ -420,7 +421,7 @@ describe("CabinService", () => {
 						},
 						expected: {
 							error: expect.objectContaining({
-								name: "InvalidArgumentError",
+								type: DomainErrorType.InvalidArgumentError,
 								reason: expect.objectContaining({
 									startDate: expect.any(Array),
 								}),
@@ -446,7 +447,7 @@ describe("CabinService", () => {
 						},
 						expected: {
 							error: expect.objectContaining({
-								name: "InvalidArgumentError",
+								type: DomainErrorType.InvalidArgumentError,
 								reason: expect.objectContaining({
 									startDate: expect.any(Array),
 								}),
@@ -480,7 +481,7 @@ describe("CabinService", () => {
 						},
 						expected: {
 							error: expect.objectContaining({
-								name: "InvalidArgumentError",
+								type: DomainErrorType.InvalidArgumentError,
 								reason: expect.objectContaining({
 									startDate: expect.any(Array),
 								}),
@@ -508,7 +509,7 @@ describe("CabinService", () => {
 						},
 						expected: {
 							error: expect.objectContaining({
-								name: "InvalidArgumentError",
+								type: DomainErrorType.InvalidArgumentError,
 								reason: expect.objectContaining({
 									startDate: expect.any(Array),
 								}),
@@ -536,7 +537,7 @@ describe("CabinService", () => {
 						},
 						expected: {
 							error: expect.objectContaining({
-								name: "InvalidArgumentError",
+								type: DomainErrorType.InvalidArgumentError,
 								reason: expect.objectContaining({
 									startDate: expect.any(Array),
 								}),
@@ -570,7 +571,7 @@ describe("CabinService", () => {
 						},
 						expected: {
 							error: expect.objectContaining({
-								name: "InvalidArgumentError",
+								type: DomainErrorType.InvalidArgumentError,
 								reason: expect.objectContaining({
 									startDate: expect.any(Array),
 								}),
@@ -611,7 +612,7 @@ describe("CabinService", () => {
 						},
 						expected: {
 							error: expect.objectContaining({
-								name: "InvalidArgumentError",
+								type: DomainErrorType.InvalidArgumentError,
 								reason: expect.objectContaining({
 									startDate: expect.any(Array),
 								}),
@@ -652,7 +653,7 @@ describe("CabinService", () => {
 						},
 						expected: {
 							error: expect.objectContaining({
-								name: "InvalidArgumentError",
+								type: DomainErrorType.InvalidArgumentError,
 								reason: expect.objectContaining({
 									startDate: expect.anything(),
 								}),
@@ -931,7 +932,7 @@ describe("CabinService", () => {
 			expect(newBooking).resolves.toEqual({
 				ok: false,
 				error: expect.objectContaining({
-					name: "InvalidArgumentError",
+					type: DomainErrorType.InvalidArgumentError,
 					reason: expect.objectContaining({
 						internalParticipantsCount: expect.any(Array),
 					}),
@@ -1036,7 +1037,7 @@ describe("CabinService", () => {
 			expect(newBooking).toEqual({
 				ok: false,
 				error: expect.objectContaining({
-					name: "InvalidArgumentError",
+					type: DomainErrorType.InvalidArgumentError,
 					reason: expect.objectContaining({
 						startDate: expect.arrayContaining([
 							expect.stringContaining("not available"),

@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker";
 import type { Cabin } from "@prisma/client";
-import { newInvalidArgumentError } from "~/domain/errors.js";
+import { InvalidArgumentErrorV2 } from "~/domain/errors.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
@@ -50,7 +50,7 @@ describe("Cabin Mutations", () => {
 
 			cabinService.updateCabin.mockResolvedValue({
 				ok: false,
-				error: newInvalidArgumentError({ message: "" }),
+				error: new InvalidArgumentErrorV2(""),
 			});
 
 			const { errors } = await client.mutate({

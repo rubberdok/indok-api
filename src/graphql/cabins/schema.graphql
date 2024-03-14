@@ -32,6 +32,23 @@ type Mutation {
   Updates the cabin with the given ID, requires that the user is in an organization with the CABIN_ADMIN permission.
   """
   updateCabin(data: UpdateCabinInput!): UpdateCabinResponse!
+  """
+  Create cabin, requires that the user is in an organization with the CABIN_ADMIN permission.
+  """
+  createCabin(data: CreateCabinInput!): CreateCabinResponse!
+}
+
+input CreateCabinInput {
+  name: String!
+  internalPrice: Int!
+  externalPrice: Int!
+  internalPriceWeekend: Int!
+  externalPriceWeekend: Int!
+  capacity: Int!
+}
+
+type CreateCabinResponse {
+  cabin: Cabin!
 }
 
 input UpdateCabinInput {
