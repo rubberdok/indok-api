@@ -81,6 +81,7 @@ export const fastifyApolloSentryPlugin = (
 							// (make sure to strip out sensitive data!)
 							scope.setExtra("query", ctx.request.query);
 							scope.setExtra("variables", ctx.request.variables);
+							scope.setExtra("operationName", ctx.request.operationName);
 							if (err.path) {
 								// We can also add the path as breadcrumb
 								scope.addBreadcrumb({
