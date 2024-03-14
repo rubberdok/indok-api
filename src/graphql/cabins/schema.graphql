@@ -28,6 +28,24 @@ type Mutation {
   updateBookingContact(
     data: UpdateBookingContactInput!
   ): UpdateBookingContactResponse!
+  """
+  Updates the cabin with the given ID, requires that the user is in an organization with the CABIN_ADMIN permission.
+  """
+  updateCabin(data: UpdateCabinInput!): UpdateCabinResponse!
+}
+
+input UpdateCabinInput {
+  id: ID!
+  name: String
+  internalPrice: Int
+  externalPrice: Int
+  internalPriceWeekend: Int
+  externalPriceWeekend: Int
+  capacity: Int
+}
+
+type UpdateCabinResponse {
+  cabin: Cabin!
 }
 
 input GetAvailabilityCalendarInput {

@@ -7,6 +7,7 @@ import type {
 	Semester,
 } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
+import { pick } from "lodash-es";
 import {
 	Booking,
 	type BookingStatus,
@@ -19,11 +20,57 @@ import {
 } from "~/domain/errors.js";
 import type { Context } from "~/lib/context.js";
 import { prismaKnownErrorCodes } from "~/lib/prisma.js";
-import type { ResultAsync } from "~/lib/result.js";
+import { Result, type ResultAsync } from "~/lib/result.js";
 import type { ICabinRepository } from "~/services/cabins/service.js";
 
 export class CabinRepository implements ICabinRepository {
 	constructor(private db: PrismaClient) {}
+
+	async updateCabin(
+		_ctx: Context,
+		params: { id: string } & Partial<{
+			name: string;
+			internalPrice: number;
+			externalPrice: number;
+			internalPriceWeekend: number;
+			externalPriceWeekend: number;
+			capacity: number;
+		}>,
+	): ResultAsync<{ cabin: Cabin }, NotFoundError | InternalServerError> {
+		const permittedFields = pick(params, [
+			"capacity",
+			"externalPrice",
+			"externalPriceWeekend",
+			"internalPrice",
+			"internalPriceWeekend",
+			"name",
+		]);
+
+		try {
+			const updated = await this.db.cabin.update({
+				where: {
+					id: params.id,
+				},
+				data: permittedFields,
+			});
+
+			return Result.success({
+				cabin: updated,
+			});
+		} catch (err) {
+			if (err instanceof PrismaClientKnownRequestError) {
+				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) {
+					return Result.error(new NotFoundError("Cabin not found", err));
+				}
+				if (err.code === prismaKnownErrorCodes.ERR_INCONSISTENT_COLUMN_DATA) {
+					return Result.error(new NotFoundError("Cabin not found", err));
+				}
+			}
+			return Result.error(
+				new InternalServerError("Failed to update cabin", err),
+			);
+		}
+	}
 
 	async findManyBookings(
 		ctx: Context,

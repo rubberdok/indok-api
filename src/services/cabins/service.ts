@@ -19,7 +19,7 @@ import {
 import {
 	InternalServerError,
 	InvalidArgumentError,
-	type InvalidArugmentErrorType,
+	type InvalidArgumentErrorType,
 	NotFoundError,
 	PermissionDeniedError,
 	UnauthorizedError,
@@ -96,6 +96,17 @@ export interface ICabinRepository {
 		},
 		InternalServerError
 	>;
+	updateCabin(
+		ctx: Context,
+		params: { id: string } & Partial<{
+			name: string;
+			capacity: number;
+			internalPrice: number;
+			externalPrice: number;
+			internalPriceWeekend: number;
+			externalPriceWeekend: number;
+		}>,
+	): ResultAsync<{ cabin: Cabin }, InternalServerError | NotFoundError>;
 }
 
 export interface PermissionService {
@@ -233,6 +244,120 @@ export class CabinService implements ICabinService {
 		return createCabinResult;
 	}
 
+	async updateCabin(
+		ctx: Context,
+		params: { id: string } & Partial<{
+			name: string | null;
+			capacity: number | null;
+			internalPrice: number | null;
+			externalPrice: number | null;
+			internalPriceWeekend: number | null;
+			externalPriceWeekend: number | null;
+		}>,
+	): ResultAsync<
+		{ cabin: Cabin },
+		| InternalServerError
+		| InvalidArgumentErrorType
+		| UnauthorizedError
+		| PermissionDeniedError
+		| NotFoundError
+	> {
+		if (!ctx.user) {
+			return Result.error(
+				new UnauthorizedError("You must be logged in to perform this action"),
+			);
+		}
+		const hasPermission = await this.permissionService.hasFeaturePermission(
+			ctx,
+			{
+				featurePermission: FeaturePermission.CABIN_ADMIN,
+			},
+		);
+		if (!hasPermission) {
+			return Result.error(
+				new PermissionDeniedError(
+					"You do not have permission to update this cabin.",
+				),
+			);
+		}
+
+		ctx.log.info({ cabinId: params.id }, "updating cabin");
+		const schema = z.object({
+			id: z.string().uuid(),
+			name: z
+				.string()
+				.min(1)
+				.nullish()
+				.transform((val) => val ?? undefined),
+			capacity: z
+				.number()
+				.min(0)
+				.nullish()
+				.transform((val) => val ?? undefined),
+			internalPrice: z
+				.number()
+				.min(0)
+				.nullish()
+				.transform((val) => val ?? undefined),
+			externalPrice: z
+				.number()
+				.min(0)
+				.nullish()
+				.transform((val) => val ?? undefined),
+			internalPriceWeekend: z
+				.number()
+				.min(0)
+				.nullish()
+				.transform((val) => val ?? undefined),
+			externalPriceWeekend: z
+				.number()
+				.min(0)
+				.nullish()
+				.transform((val) => val ?? undefined),
+		});
+		const parseResult = schema.safeParse(params);
+		if (!parseResult.success) {
+			return Result.error(
+				newInvalidArgumentError({
+					message: "Invalid cabin update data",
+					reason: parseResult.error.flatten().fieldErrors,
+					cause: parseResult.error,
+				}),
+			);
+		}
+
+		const fieldsToUpdate = parseResult.data;
+		const updateCabinResult = await this.cabinRepository.updateCabin(
+			ctx,
+			fieldsToUpdate,
+		);
+
+		if (!updateCabinResult.ok) {
+			switch (updateCabinResult.error.name) {
+				case "InternalServerError": {
+					return Result.error(
+						new InternalServerError(
+							"An unknown error occurred",
+							updateCabinResult.error,
+						),
+					);
+				}
+				case "NotFoundError": {
+					ctx.log.info({ cabinId: params.id }, "cabin not found");
+					return Result.error(
+						new NotFoundError(
+							"The cabin you tried to update does not exist",
+							updateCabinResult.error,
+						),
+					);
+				}
+			}
+		}
+
+		ctx.log.info({ cabinId: params.id }, "cabin updated");
+		return updateCabinResult;
+	}
+
 	async newBooking(
 		ctx: Context,
 		params: NewBookingParams,
@@ -240,7 +365,7 @@ export class CabinService implements ICabinService {
 		{
 			booking: BookingType;
 		},
-		InvalidArugmentErrorType | InternalServerError
+		InvalidArgumentErrorType | InternalServerError
 	> {
 		const cabins = await Promise.all(
 			params.cabins.map((cabin) => this.cabinRepository.getCabinById(cabin.id)),
@@ -372,7 +497,7 @@ export class CabinService implements ICabinService {
 				"id" | "status" | "totalCost" | "createdAt" | "feedback"
 			>;
 		},
-		InvalidArugmentErrorType
+		InvalidArgumentErrorType
 	> {
 		const { validBookingIntervals } = params;
 
