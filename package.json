@@ -16,7 +16,7 @@
 		"db:migrate:status": "prisma migrate status",
 		"db:migrate": "prisma migrate deploy",
 		"db:push": "dotenv -e .env.development -- prisma db push",
-		"db:seed": "dotenv -e .env.development -- node dist/repositories/seed.js",
+		"db:seed": "dotenv -e .env.development -- node --import @swc-node/register/esm-register  src/repositories/seed.ts",
 		"dev": "run-s docker:up 'start-dev {@}' --",
 		"start-dev": "concurrently --restart-tries 3 -kill-signal -c cyan.bold,cyan.dim,magenta.dim,black.dim pnpm:watch-*",
 		"watch-server": "MODE=development node --import @swc-node/register/esm-register --watch ./src/server.ts",

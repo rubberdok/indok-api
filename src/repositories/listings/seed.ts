@@ -56,6 +56,45 @@ export async function load(db: PrismaClient) {
 		});
 	}
 
+	const rubberdokListingId = faker.string.uuid();
+	await db.listing.upsert({
+		where: {
+			id: rubberdokListingId,
+		},
+		update: {
+			name: "Utvikler!",
+			description: faker.lorem.paragraph(),
+			closesAt: faker.date.future(),
+			applicationUrl: faker.internet.url(),
+			organization: {
+				connectOrCreate: {
+					where: {
+						name: "Rubberdøk",
+					},
+					create: {
+						name: "Rubberdøk",
+					},
+				},
+			},
+		},
+		create: {
+			name: "Utvikler!",
+			description: faker.lorem.paragraph(),
+			closesAt: faker.date.future(),
+			applicationUrl: faker.internet.url(),
+			organization: {
+				connectOrCreate: {
+					where: {
+						name: "Rubberdøk",
+					},
+					create: {
+						name: "Rubberdøk",
+					},
+				},
+			},
+		},
+	});
+
 	const listings = await db.listing.findMany({
 		select: {
 			id: true,
