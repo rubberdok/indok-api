@@ -47,7 +47,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.6.1",
-		"@eddeee888/gcg-typescript-resolver-files": "^0.7.2",
+		"@eddeee888/gcg-typescript-resolver-files": "^0.7.3",
 		"@faker-js/faker": "^8.4.1",
 		"@graphql-codegen/add": "^5.0.2",
 		"@graphql-codegen/cli": "^5.0.2",
