@@ -1,6 +1,5 @@
 import assert, { fail } from "node:assert";
 import { faker } from "@faker-js/faker";
-import type { EventSlot } from "@prisma/client";
 import { mock } from "jest-mock-extended";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
@@ -9,8 +8,11 @@ import {
 	InvalidArgumentError,
 	PermissionDeniedError,
 } from "~/domain/errors.js";
-import type { EventType } from "~/domain/events/index.js";
-import { Role } from "~/domain/organizations.js";
+import type { EventType, SlotType } from "~/domain/events/index.js";
+import {
+	OrganizationRole,
+	type OrganizationRoleType,
+} from "~/domain/organizations.js";
 import type { User } from "~/domain/users.js";
 import { makeMockContext } from "~/lib/context.js";
 import type { TResult } from "~/lib/result.js";
@@ -102,7 +104,7 @@ describe("EventsService", () => {
 				act: {
 					createEventParams: CreateEventParams;
 					user: User | null;
-					role?: Role | null;
+					role?: OrganizationRoleType | null;
 					repository?: TResult<
 						{ event: EventType },
 						InvalidArgumentError | InternalServerError
@@ -121,7 +123,7 @@ describe("EventsService", () => {
 					name: "if name is empty",
 					act: {
 						user: makeUser(),
-						role: Role.MEMBER,
+						role: OrganizationRole.MEMBER,
 						createEventParams: makeBasicEventParams({ name: "" }),
 					},
 					assertion: {
@@ -136,7 +138,7 @@ describe("EventsService", () => {
 					name: "if startAt is in the past",
 					act: {
 						user: makeUser(),
-						role: Role.MEMBER,
+						role: OrganizationRole.MEMBER,
 						createEventParams: makeBasicEventParams({
 							startAt: DateTime.now().minus({ days: 1 }).toJSDate(),
 						}),
@@ -153,7 +155,7 @@ describe("EventsService", () => {
 					name: "if endAt is in the past and earlier than startAt",
 					act: {
 						user: makeUser(),
-						role: Role.MEMBER,
+						role: OrganizationRole.MEMBER,
 						createEventParams: makeBasicEventParams({
 							startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
 							endAt: DateTime.now().minus({ days: 2 }).toJSDate(),
@@ -171,7 +173,7 @@ describe("EventsService", () => {
 					name: "if endAt is in the future and earlier than startAt",
 					act: {
 						user: makeUser(),
-						role: Role.MEMBER,
+						role: OrganizationRole.MEMBER,
 						createEventParams: makeBasicEventParams({
 							startAt: DateTime.now().plus({ days: 2 }).toJSDate(),
 							endAt: DateTime.now().plus({ days: 1 }).toJSDate(),
@@ -189,7 +191,7 @@ describe("EventsService", () => {
 					name: "if the description is too long",
 					act: {
 						user: makeUser(),
-						role: Role.MEMBER,
+						role: OrganizationRole.MEMBER,
 						createEventParams: makeBasicEventParams({
 							description: faker.string.sample(10_001),
 						}),
@@ -206,7 +208,7 @@ describe("EventsService", () => {
 					name: "if the name is too long",
 					act: {
 						user: makeUser(),
-						role: Role.MEMBER,
+						role: OrganizationRole.MEMBER,
 						createEventParams: makeBasicEventParams({
 							name: faker.string.sample(201),
 						}),
@@ -223,7 +225,7 @@ describe("EventsService", () => {
 					name: "if signUpDetails have negative capacity",
 					act: {
 						user: makeUser(),
-						role: Role.MEMBER,
+						role: OrganizationRole.MEMBER,
 						createEventParams: makeSignUpEventParams(
 							{
 								signUpsEnabled: true,
@@ -248,7 +250,7 @@ describe("EventsService", () => {
 					name: "if signUpDetails have a slot with negative capacity",
 					act: {
 						user: makeUser(),
-						role: Role.MEMBER,
+						role: OrganizationRole.MEMBER,
 						createEventParams: makeSignUpEventParams(
 							{
 								signUpsEnabled: true,
@@ -273,7 +275,7 @@ describe("EventsService", () => {
 					name: "if signUpsEndAt is earlier than signUpsStartAt",
 					act: {
 						user: makeUser(),
-						role: Role.MEMBER,
+						role: OrganizationRole.MEMBER,
 						createEventParams: makeSignUpEventParams(
 							{
 								signUpsEnabled: true,
@@ -329,7 +331,7 @@ describe("EventsService", () => {
 					name: "and an event is created",
 					act: {
 						user: makeUser(),
-						role: Role.MEMBER,
+						role: OrganizationRole.MEMBER,
 						createEventParams: makeBasicEventParams(),
 						repository: makeReturnType({
 							data: { event: makeBasicEvent() },
@@ -386,7 +388,7 @@ describe("EventsService", () => {
 			arrange: {
 				hasRole: boolean;
 				event: EventType;
-				slots?: EventSlot[];
+				slots?: SlotType[];
 			};
 			act: {
 				updateEventParams: UpdateEventParams;

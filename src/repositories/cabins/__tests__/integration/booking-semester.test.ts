@@ -25,7 +25,6 @@ describe("CabinRepository", () => {
 				startAt: new Date(2020, 0, 1),
 				endAt: new Date(2020, 0, 2),
 				bookingsEnabled: true,
-				createdAt: expect.any(Date),
 				updatedAt: expect.any(Date),
 				id: expect.any(String),
 			});
@@ -67,7 +66,6 @@ describe("CabinRepository", () => {
 				startAt: new Date(2020, 0, 1),
 				endAt: new Date(2020, 0, 2),
 				bookingsEnabled: true,
-				createdAt: expect.any(Date),
 				updatedAt: expect.any(Date),
 				id: expect.any(String),
 			});
@@ -145,7 +143,6 @@ describe("CabinRepository", () => {
 				startAt: new Date(2021, 0, 1),
 				endAt: new Date(2021, 0, 2),
 				bookingsEnabled: true,
-				createdAt: expect.any(Date),
 				updatedAt: expect.any(Date),
 				id: expect.any(String),
 			});

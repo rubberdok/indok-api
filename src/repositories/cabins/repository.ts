@@ -1,17 +1,14 @@
-import type {
-	BookingContact,
-	BookingSemester,
-	Cabin,
-	Prisma,
-	PrismaClient,
-	Semester,
-} from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 import { pick } from "lodash-es";
 import {
 	Booking,
-	type BookingStatus,
+	BookingContact,
+	BookingSemester,
+	type BookingSemesterEnumType,
+	type BookingStatusType,
 	type BookingType,
+	Cabin,
 } from "~/domain/cabins.js";
 import {
 	InternalServerError,
@@ -55,7 +52,7 @@ export class CabinRepository implements ICabinRepository {
 			});
 
 			return Result.success({
-				cabin: updated,
+				cabin: new Cabin(updated),
 			});
 		} catch (err) {
 			if (err instanceof PrismaClientKnownRequestError) {
@@ -77,7 +74,7 @@ export class CabinRepository implements ICabinRepository {
 		params?: {
 			cabinId?: string;
 			endAtGte?: Date;
-			bookingStatus?: BookingStatus;
+			bookingStatus?: BookingStatusType;
 		},
 	): ResultAsync<
 		{ bookings: BookingType[]; total: number },
@@ -160,7 +157,7 @@ export class CabinRepository implements ICabinRepository {
 			return {
 				ok: true,
 				data: {
-					cabin,
+					cabin: new Cabin(cabin),
 				},
 			};
 		} catch (err) {
@@ -375,19 +372,20 @@ export class CabinRepository implements ICabinRepository {
 		}
 	}
 
-	getCabinById(id: string): Promise<Cabin> {
-		return this.db.cabin.findFirstOrThrow({
+	async getCabinById(id: string): Promise<Cabin> {
+		const cabin = await this.db.cabin.findFirstOrThrow({
 			where: {
 				id,
 			},
 		});
+		return new Cabin(cabin);
 	}
 
 	/**
 	 * getCabinBookingById returns the cabin that has a booking with the given ID.
 	 */
 	async getCabinByBookingId(bookingId: string): Promise<Cabin> {
-		const booking = await this.db.cabin.findFirst({
+		const cabin = await this.db.cabin.findFirst({
 			where: {
 				bookings: {
 					some: {
@@ -397,22 +395,23 @@ export class CabinRepository implements ICabinRepository {
 			},
 		});
 
-		if (!booking) throw new NotFoundError("No matching booking found");
-		return booking;
+		if (!cabin) throw new NotFoundError("No matching booking found");
+		return new Cabin(cabin);
 	}
 
 	/**
 	 * findManyCabins returns all cabins.
 	 */
-	findManyCabins(): Promise<Cabin[]> {
-		return this.db.cabin.findMany();
+	async findManyCabins(): Promise<Cabin[]> {
+		const cabins = await this.db.cabin.findMany();
+		return cabins.map((cabin) => new Cabin(cabin));
 	}
 
 	/**
 	 * updateBookingSemester updates the semester of the booking with the given ID.
 	 */
 	async updateBookingSemester(data: {
-		semester: Semester;
+		semester: BookingSemesterEnumType;
 		startAt?: Date;
 		endAt?: Date;
 		bookingsEnabled?: boolean;
@@ -429,7 +428,7 @@ export class CabinRepository implements ICabinRepository {
 				},
 			});
 
-			return bookingSemester;
+			return new BookingSemester(bookingSemester);
 		} catch (err) {
 			if (err instanceof PrismaClientKnownRequestError) {
 				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND)
@@ -445,7 +444,7 @@ export class CabinRepository implements ICabinRepository {
 	 * createBookingSemester creates a new booking semester.
 	 */
 	async createBookingSemester(data: {
-		semester: Semester;
+		semester: BookingSemesterEnumType;
 		startAt: Date;
 		endAt: Date;
 		bookingsEnabled?: boolean;
@@ -459,7 +458,7 @@ export class CabinRepository implements ICabinRepository {
 					bookingsEnabled: data.bookingsEnabled,
 				},
 			});
-			return bookingSemester;
+			return new BookingSemester(bookingSemester);
 		} catch (err) {
 			if (err instanceof PrismaClientKnownRequestError) {
 				if (err.code === prismaKnownErrorCodes.ERR_UNIQUE_CONSTRAINT_VIOLATION)
@@ -475,15 +474,16 @@ export class CabinRepository implements ICabinRepository {
 	 * getBookingSemester returns the booking semester for the given semester, or null if it does not exist.
 	 */
 	async getBookingSemester(
-		semester: Semester,
+		semester: BookingSemesterEnumType,
 	): Promise<BookingSemester | null> {
 		const bookingSemester = await this.db.bookingSemester.findUnique({
 			where: {
 				semester,
 			},
 		});
+		if (bookingSemester === null) return null;
 
-		return bookingSemester;
+		return new BookingSemester(bookingSemester);
 	}
 
 	/**
@@ -495,25 +495,27 @@ export class CabinRepository implements ICabinRepository {
 	): Promise<
 		Pick<BookingContact, "email" | "name" | "id" | "phoneNumber" | "updatedAt">
 	> {
-		return await this.db.bookingContact.upsert({
-			select: {
-				id: true,
-				name: true,
-				email: true,
-				phoneNumber: true,
-				updatedAt: true,
-			},
-			where: {
-				id: "booking-contact",
-			},
-			create: {
-				id: "booking-contact",
-				name: data.name,
-				email: data.email,
-				phoneNumber: data.phoneNumber,
-			},
-			update: data,
-		});
+		return new BookingContact(
+			await this.db.bookingContact.upsert({
+				select: {
+					id: true,
+					name: true,
+					email: true,
+					phoneNumber: true,
+					updatedAt: true,
+				},
+				where: {
+					id: "booking-contact",
+				},
+				create: {
+					id: "booking-contact",
+					name: data.name,
+					email: data.email,
+					phoneNumber: data.phoneNumber,
+				},
+				update: data,
+			}),
+		);
 	}
 
 	/**
@@ -536,15 +538,15 @@ export class CabinRepository implements ICabinRepository {
 		});
 
 		if (bookingContact === null) {
-			return {
+			return new BookingContact({
 				id: "booking-contact",
 				name: "",
 				email: "",
 				phoneNumber: "",
 				updatedAt: new Date(),
-			};
+			});
 		}
 
-		return bookingContact;
+		return new BookingContact(bookingContact);
 	}
 }

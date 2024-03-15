@@ -1,8 +1,11 @@
 import assert from "node:assert";
 import { faker } from "@faker-js/faker";
-import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
 import { InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
+import {
+	EventParticipationStatus,
+	type EventParticipationStatusType,
+} from "~/domain/events/sign-ups.js";
 import prisma from "~/lib/prisma.js";
 import { EventRepository } from "../../repository.js";
 
@@ -30,7 +33,7 @@ describe("EventRepository", () => {
 				const signUp = await makeSignUp({
 					userId: user.id,
 					eventId: event.id,
-					participationStatus: ParticipationStatus.ON_WAITLIST,
+					participationStatus: EventParticipationStatus.ON_WAITLIST,
 				});
 
 				/**
@@ -42,7 +45,7 @@ describe("EventRepository", () => {
 					eventId: event.id,
 					userId: user.id,
 					slotId: slot.id,
-					newParticipationStatus: ParticipationStatus.CONFIRMED,
+					newParticipationStatus: EventParticipationStatus.CONFIRMED,
 				});
 
 				/**
@@ -56,7 +59,7 @@ describe("EventRepository", () => {
 				 */
 				assert(actual.event.type === "SIGN_UPS");
 				expect(actual.signUp.participationStatus).toBe(
-					ParticipationStatus.CONFIRMED,
+					EventParticipationStatus.CONFIRMED,
 				);
 				expect(actual.signUp.version).toBe(signUp.version + 1);
 				expect(actual.event.remainingCapacity).toBe(0);
@@ -79,7 +82,7 @@ describe("EventRepository", () => {
 					userId: user.id,
 					eventId: event.id,
 					slotId: slot.id,
-					participationStatus: ParticipationStatus.CONFIRMED,
+					participationStatus: EventParticipationStatus.CONFIRMED,
 				});
 
 				/**
@@ -91,7 +94,7 @@ describe("EventRepository", () => {
 					eventId: event.id,
 					userId: user.id,
 					slotId: slot.id,
-					newParticipationStatus: ParticipationStatus.CONFIRMED,
+					newParticipationStatus: EventParticipationStatus.CONFIRMED,
 				});
 
 				/**
@@ -122,7 +125,7 @@ describe("EventRepository", () => {
 				await makeSignUp({
 					userId: user.id,
 					eventId: event.id,
-					participationStatus: ParticipationStatus.REMOVED,
+					participationStatus: EventParticipationStatus.REMOVED,
 					active: false,
 				});
 
@@ -135,7 +138,7 @@ describe("EventRepository", () => {
 					eventId: event.id,
 					userId: user.id,
 					slotId: slot.id,
-					newParticipationStatus: ParticipationStatus.CONFIRMED,
+					newParticipationStatus: EventParticipationStatus.CONFIRMED,
 				});
 
 				/**
@@ -161,7 +164,7 @@ describe("EventRepository", () => {
 				await makeSignUp({
 					userId: user.id,
 					eventId: event.id,
-					participationStatus: ParticipationStatus.ON_WAITLIST,
+					participationStatus: EventParticipationStatus.ON_WAITLIST,
 				});
 
 				/**
@@ -173,7 +176,7 @@ describe("EventRepository", () => {
 					eventId: event.id,
 					userId: user.id,
 					slotId: slot.id,
-					newParticipationStatus: ParticipationStatus.CONFIRMED,
+					newParticipationStatus: EventParticipationStatus.CONFIRMED,
 				});
 
 				/**
@@ -199,7 +202,7 @@ describe("EventRepository", () => {
 				await makeSignUp({
 					userId: user.id,
 					eventId: event.id,
-					participationStatus: ParticipationStatus.ON_WAITLIST,
+					participationStatus: EventParticipationStatus.ON_WAITLIST,
 				});
 
 				/**
@@ -211,7 +214,7 @@ describe("EventRepository", () => {
 					eventId: event.id,
 					userId: user.id,
 					slotId: slot.id,
-					newParticipationStatus: ParticipationStatus.CONFIRMED,
+					newParticipationStatus: EventParticipationStatus.CONFIRMED,
 				});
 
 				/**
@@ -240,7 +243,7 @@ describe("EventRepository", () => {
 					userId: user.id,
 					eventId: event.id,
 					slotId: slot.id,
-					participationStatus: ParticipationStatus.CONFIRMED,
+					participationStatus: EventParticipationStatus.CONFIRMED,
 				});
 
 				/**
@@ -251,7 +254,7 @@ describe("EventRepository", () => {
 				const actual = await eventRepository.updateSignUp({
 					eventId: event.id,
 					userId: user.id,
-					newParticipationStatus: ParticipationStatus.REMOVED,
+					newParticipationStatus: EventParticipationStatus.REMOVED,
 				});
 
 				/**
@@ -263,7 +266,7 @@ describe("EventRepository", () => {
 				 * The EventSlot remainingCapacity should be incremented
 				 */
 				expect(actual.signUp.participationStatus).toBe(
-					ParticipationStatus.REMOVED,
+					EventParticipationStatus.REMOVED,
 				);
 				expect(actual.signUp.version).toBe(signUp.version + 1);
 				assert(actual.event.type === "SIGN_UPS");
@@ -291,7 +294,7 @@ describe("EventRepository", () => {
 				const signUp = await makeSignUp({
 					userId: user.id,
 					eventId: event.id,
-					participationStatus: ParticipationStatus.ON_WAITLIST,
+					participationStatus: EventParticipationStatus.ON_WAITLIST,
 				});
 
 				/**
@@ -302,7 +305,7 @@ describe("EventRepository", () => {
 				const actual = await eventRepository.updateSignUp({
 					eventId: event.id,
 					userId: user.id,
-					newParticipationStatus: ParticipationStatus.REMOVED,
+					newParticipationStatus: EventParticipationStatus.REMOVED,
 				});
 
 				/**
@@ -315,7 +318,7 @@ describe("EventRepository", () => {
 				 * The EventSlot remainingCapacity should not be incremented
 				 */
 				expect(actual.signUp.participationStatus).toBe(
-					ParticipationStatus.REMOVED,
+					EventParticipationStatus.REMOVED,
 				);
 				expect(actual.signUp.active).toBe(false);
 				expect(actual.signUp.version).toBe(signUp.version + 1);
@@ -342,13 +345,13 @@ describe("EventRepository", () => {
 				const existingInactiveSignUp = await makeSignUp({
 					userId: user.id,
 					eventId: event.id,
-					participationStatus: ParticipationStatus.REMOVED,
+					participationStatus: EventParticipationStatus.REMOVED,
 					active: false,
 				});
 				const signUp = await makeSignUp({
 					userId: user.id,
 					eventId: event.id,
-					participationStatus: ParticipationStatus.ON_WAITLIST,
+					participationStatus: EventParticipationStatus.ON_WAITLIST,
 				});
 
 				/**
@@ -359,7 +362,7 @@ describe("EventRepository", () => {
 				const actual = await eventRepository.updateSignUp({
 					eventId: event.id,
 					userId: user.id,
-					newParticipationStatus: ParticipationStatus.REMOVED,
+					newParticipationStatus: EventParticipationStatus.REMOVED,
 				});
 
 				/**
@@ -371,7 +374,7 @@ describe("EventRepository", () => {
 				 * The previous inactive sign up should be deleted
 				 */
 				expect(actual.signUp.participationStatus).toBe(
-					ParticipationStatus.REMOVED,
+					EventParticipationStatus.REMOVED,
 				);
 				expect(actual.signUp.active).toBe(false);
 				expect(actual.signUp.version).toBe(signUp.version + 1);
@@ -396,7 +399,7 @@ describe("EventRepository", () => {
 				await makeSignUp({
 					userId: user.id,
 					eventId: event.id,
-					participationStatus: ParticipationStatus.REMOVED,
+					participationStatus: EventParticipationStatus.REMOVED,
 					active: false,
 				});
 
@@ -408,7 +411,7 @@ describe("EventRepository", () => {
 				const actual = eventRepository.updateSignUp({
 					eventId: event.id,
 					userId: user.id,
-					newParticipationStatus: ParticipationStatus.REMOVED,
+					newParticipationStatus: EventParticipationStatus.REMOVED,
 				});
 
 				/**
@@ -452,7 +455,7 @@ function makeSignUp(data: {
 	eventId: string;
 	userId: string;
 	slotId?: string;
-	participationStatus: ParticipationStatus;
+	participationStatus: EventParticipationStatusType;
 	active?: boolean;
 }) {
 	const { eventId, slotId, userId, participationStatus, active } = data;

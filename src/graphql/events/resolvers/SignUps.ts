@@ -1,4 +1,4 @@
-import type { ParticipationStatus } from "@prisma/client";
+import type { EventParticipationStatusType } from "~/domain/events/sign-ups.js";
 import type { ApolloContext } from "~/lib/apollo-server.js";
 import type { SignUpsResolvers } from "./../../types.generated.js";
 export const SignUps: SignUpsResolvers = {
@@ -31,7 +31,10 @@ export const SignUps: SignUpsResolvers = {
 
 async function findManySignUpsByStatus(
 	ctx: ApolloContext,
-	params: { eventId: string; participationStatus: ParticipationStatus },
+	params: {
+		eventId: string;
+		participationStatus: EventParticipationStatusType;
+	},
 ) {
 	const { eventId, participationStatus } = params;
 	const result = await ctx.events.findManySignUps(ctx, {

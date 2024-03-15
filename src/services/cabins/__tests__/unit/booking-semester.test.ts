@@ -1,8 +1,9 @@
 import { faker } from "@faker-js/faker";
-import { FeaturePermission, Semester } from "@prisma/client";
 import { type DeepMockProxy, mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
+import { BookingSemesterEnum } from "~/domain/cabins.js";
 import { NotFoundError, PermissionDeniedError } from "~/domain/errors.js";
+import { FeaturePermission } from "~/domain/organizations.js";
 import { makeMockContext } from "~/lib/context.js";
 import {
 	CabinService,
@@ -45,7 +46,7 @@ describe("CabinService", () => {
 			const updateBookingSemester = cabinService.updateBookingSemester(
 				makeMockContext({ id: userId }),
 				{
-					semester: Semester.SPRING,
+					semester: BookingSemesterEnum.SPRING,
 					startAt: new Date(2020, 0, 1),
 					endAt: new Date(2020, 0, 2),
 					bookingsEnabled: true,
@@ -87,7 +88,7 @@ describe("CabinService", () => {
 			await cabinService.updateBookingSemester(
 				makeMockContext({ id: userId }),
 				{
-					semester: Semester.SPRING,
+					semester: BookingSemesterEnum.SPRING,
 					startAt: new Date(2020, 0, 1),
 					endAt: new Date(2020, 0, 2),
 					bookingsEnabled: true,
@@ -100,7 +101,7 @@ describe("CabinService", () => {
 			 * Expect cabinRepository.updateBookingSemester to be called with the correct arguments
 			 */
 			expect(cabinRepository.updateBookingSemester).toHaveBeenCalledWith({
-				semester: Semester.SPRING,
+				semester: BookingSemesterEnum.SPRING,
 				startAt: new Date(2020, 0, 1),
 				endAt: DateTime.fromObject({ year: 2020, month: 1, day: 2 })
 					.endOf("day")
@@ -127,7 +128,7 @@ describe("CabinService", () => {
 			await cabinService.updateBookingSemester(
 				makeMockContext({ id: userId }),
 				{
-					semester: Semester.SPRING,
+					semester: BookingSemesterEnum.SPRING,
 					startAt: null,
 					endAt: null,
 					bookingsEnabled: null,
@@ -140,7 +141,7 @@ describe("CabinService", () => {
 			 * Expect cabinRepository.updateBookingSemester to be called with the correct arguments
 			 */
 			expect(cabinRepository.updateBookingSemester).toHaveBeenCalledWith({
-				semester: Semester.SPRING,
+				semester: BookingSemesterEnum.SPRING,
 				startAt: undefined,
 				endAt: undefined,
 				bookingsEnabled: undefined,
@@ -169,7 +170,7 @@ describe("CabinService", () => {
 				await cabinService.updateBookingSemester(
 					makeMockContext({ id: userId }),
 					{
-						semester: Semester.SPRING,
+						semester: BookingSemesterEnum.SPRING,
 						startAt: new Date(2020, 0, 1),
 						endAt: new Date(2020, 0, 2),
 						bookingsEnabled: true,
@@ -182,7 +183,7 @@ describe("CabinService", () => {
 				 * Expect cabinRepository.updateBookingSemester to be called with the correct arguments
 				 */
 				expect(cabinRepository.createBookingSemester).toHaveBeenCalledWith({
-					semester: Semester.SPRING,
+					semester: BookingSemesterEnum.SPRING,
 					startAt: new Date(2020, 0, 1),
 					endAt: DateTime.fromObject({
 						year: 2020,
@@ -216,7 +217,7 @@ describe("CabinService", () => {
 				await cabinService.updateBookingSemester(
 					makeMockContext({ id: userId }),
 					{
-						semester: Semester.SPRING,
+						semester: BookingSemesterEnum.SPRING,
 						bookingsEnabled: true,
 					},
 				);
@@ -227,7 +228,7 @@ describe("CabinService", () => {
 				 * Expect cabinRepository.updateBookingSemester to be called with the correct arguments
 				 */
 				expect(cabinRepository.createBookingSemester).toHaveBeenCalledWith({
-					semester: Semester.SPRING,
+					semester: BookingSemesterEnum.SPRING,
 					startAt: DateTime.fromObject({ month: 1, day: 1 }).toJSDate(),
 					endAt: DateTime.fromObject({ month: 7, day: 31 })
 						.endOf("day")
@@ -257,7 +258,7 @@ describe("CabinService", () => {
 				await cabinService.updateBookingSemester(
 					makeMockContext({ id: userId }),
 					{
-						semester: Semester.FALL,
+						semester: BookingSemesterEnum.FALL,
 						bookingsEnabled: true,
 					},
 				);
@@ -268,7 +269,7 @@ describe("CabinService", () => {
 				 * Expect cabinRepository.updateBookingSemester to be called with the correct arguments
 				 */
 				expect(cabinRepository.createBookingSemester).toHaveBeenCalledWith({
-					semester: Semester.FALL,
+					semester: BookingSemesterEnum.FALL,
 					startAt: DateTime.fromObject({ month: 8, day: 1 }).toJSDate(),
 					endAt: DateTime.fromObject({ month: 12, day: 31 })
 						.endOf("day")
@@ -298,7 +299,7 @@ describe("CabinService", () => {
 				await cabinService.updateBookingSemester(
 					makeMockContext({ id: userId }),
 					{
-						semester: Semester.SPRING,
+						semester: BookingSemesterEnum.SPRING,
 						startAt: new Date(2020, 0, 1),
 						endAt: new Date(2020, 0, 2),
 					},
@@ -310,7 +311,7 @@ describe("CabinService", () => {
 				 * Expect cabinRepository.updateBookingSemester to be called with the correct arguments
 				 */
 				expect(cabinRepository.createBookingSemester).toHaveBeenCalledWith({
-					semester: Semester.SPRING,
+					semester: BookingSemesterEnum.SPRING,
 					startAt: new Date(2020, 0, 1),
 					endAt: DateTime.fromObject({
 						year: 2020,

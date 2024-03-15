@@ -1,5 +1,4 @@
-import type { Member, Organization } from "@prisma/client";
-
-export type MemberMapper = Member;
-
-export type OrganizationMapper = Organization;
+export type {
+	Organization as OrganizationMapper,
+	OrganizationMember as MemberMapper,
+} from "~/domain/organizations.js";

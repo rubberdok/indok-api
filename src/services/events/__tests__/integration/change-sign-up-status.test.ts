@@ -1,5 +1,4 @@
 import { faker } from "@faker-js/faker";
-import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
 import { makeTestServices } from "~/__tests__/dependencies-factory.js";
 import {
@@ -8,6 +7,7 @@ import {
 	PermissionDeniedError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
+import { EventParticipationStatus } from "~/domain/events/sign-ups.js";
 import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import type { Services } from "~/lib/server.js";
@@ -39,7 +39,7 @@ describe("EventService", () => {
 				ok: true,
 				data: {
 					signUp: expect.objectContaining({
-						participationStatus: ParticipationStatus.RETRACTED,
+						participationStatus: EventParticipationStatus.RETRACTED,
 						slotId: null,
 						version: 1,
 					}),
@@ -75,7 +75,7 @@ describe("EventService", () => {
 				ok: true,
 				data: {
 					signUp: expect.objectContaining({
-						participationStatus: ParticipationStatus.RETRACTED,
+						participationStatus: EventParticipationStatus.RETRACTED,
 						slotId: null,
 						version: 1,
 					}),
@@ -130,7 +130,7 @@ describe("EventService", () => {
 				ok: true,
 				data: {
 					signUp: expect.objectContaining({
-						participationStatus: ParticipationStatus.RETRACTED,
+						participationStatus: EventParticipationStatus.RETRACTED,
 					}),
 				},
 			});
@@ -197,7 +197,7 @@ describe("EventService", () => {
 				ok: true,
 				data: {
 					signUp: expect.objectContaining({
-						participationStatus: ParticipationStatus.REMOVED,
+						participationStatus: EventParticipationStatus.REMOVED,
 						slotId: null,
 						version: 1,
 						id: signUp.id,
@@ -221,7 +221,7 @@ describe("EventService", () => {
 				ok: true,
 				data: {
 					signUp: expect.objectContaining({
-						participationStatus: ParticipationStatus.REMOVED,
+						participationStatus: EventParticipationStatus.REMOVED,
 						slotId: null,
 						version: 1,
 						id: signUp.id,
@@ -269,7 +269,7 @@ describe("EventService", () => {
 				ok: true,
 				data: {
 					signUp: expect.objectContaining({
-						participationStatus: ParticipationStatus.REMOVED,
+						participationStatus: EventParticipationStatus.REMOVED,
 						slotId: null,
 						version: 1,
 						id: signUp.id,
@@ -294,7 +294,7 @@ describe("EventService", () => {
 				ok: true,
 				data: {
 					signUp: expect.objectContaining({
-						participationStatus: ParticipationStatus.REMOVED,
+						participationStatus: EventParticipationStatus.REMOVED,
 						slotId: null,
 						version: 1,
 						id: signUp.id,

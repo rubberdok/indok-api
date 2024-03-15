@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
-import type { Cabin } from "@prisma/client";
 import { mock } from "jest-mock-extended";
 import { DateTime } from "luxon";
+import type { Cabin } from "~/domain/cabins.js";
 import {
 	type InternalServerError,
 	InvalidArgumentError,

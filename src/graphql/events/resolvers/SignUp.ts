@@ -1,4 +1,4 @@
-import { ParticipationStatus } from "@prisma/client";
+import { EventParticipationStatus } from "~/domain/events/sign-ups.js";
 import type { SignUpResolvers } from "./../../types.generated.js";
 export const SignUp: SignUpResolvers = {
 	/* Implement SignUp resolver logic here */
@@ -7,13 +7,13 @@ export const SignUp: SignUpResolvers = {
 	},
 	participationStatus: (signUp) => {
 		switch (signUp.participationStatus) {
-			case ParticipationStatus.CONFIRMED:
+			case EventParticipationStatus.CONFIRMED:
 				return "CONFIRMED";
-			case ParticipationStatus.ON_WAITLIST:
+			case EventParticipationStatus.ON_WAITLIST:
 				return "ON_WAITLIST";
-			case ParticipationStatus.RETRACTED:
+			case EventParticipationStatus.RETRACTED:
 				return "RETRACTED";
-			case ParticipationStatus.REMOVED:
+			case EventParticipationStatus.REMOVED:
 				return "REMOVED";
 		}
 	},

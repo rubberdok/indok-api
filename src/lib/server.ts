@@ -1,19 +1,5 @@
 import { DefaultAzureCredential } from "@azure/identity";
 import { BlobServiceClient } from "@azure/storage-blob";
-import type {
-	BookingContact,
-	BookingSemester,
-	Cabin,
-	EventSignUp,
-	FeaturePermission,
-	Listing,
-	Member,
-	Organization,
-	ParticipationStatus,
-	Prisma,
-	PrismaClient,
-	Semester,
-} from "@prisma/client";
 import * as Sentry from "@sentry/node";
 import { Client } from "@vippsmobilepay/sdk";
 import type { Job } from "bullmq";
@@ -21,8 +7,12 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { BlobStorageAdapter } from "~/adapters/azure-blob-storage.js";
 import { type Configuration, env } from "~/config.js";
 import type {
-	BookingStatus,
+	BookingContact,
+	BookingSemester,
+	BookingSemesterEnumType,
+	BookingStatusType,
 	BookingType,
+	Cabin,
 	CalendarMonth,
 } from "~/domain/cabins.js";
 import type { DocumentService as DocumentServiceType } from "~/domain/documents.js";
@@ -37,12 +27,20 @@ import {
 } from "~/domain/errors.js";
 import type {
 	CategoryType,
+	EventParticipationStatusType,
+	EventSignUp,
 	EventType,
 	SignUpAvailability,
 	SlotType,
 } from "~/domain/events/index.js";
 import type { FileType, RemoteFile } from "~/domain/files.js";
-import type { Role } from "~/domain/organizations.js";
+import type { Listing } from "~/domain/listings.js";
+import type {
+	FeaturePermissionType,
+	Organization,
+	OrganizationMember,
+	OrganizationRoleType,
+} from "~/domain/organizations.js";
 import type {
 	MerchantType,
 	OrderType,
@@ -97,7 +95,7 @@ interface IOrganizationService {
 			data: {
 				name: string;
 				description?: string | null;
-				featurePermissions?: FeaturePermission[] | null;
+				featurePermissions?: FeaturePermissionType[] | null;
 			},
 		): Promise<Organization>;
 		update(
@@ -106,7 +104,7 @@ interface IOrganizationService {
 			data: Partial<{
 				name: string | null;
 				description: string | null;
-				featurePermissions: FeaturePermission[] | null;
+				featurePermissions: FeaturePermissionType[] | null;
 				logoFileId: string | null;
 			}>,
 		): Promise<Organization>;
@@ -116,23 +114,27 @@ interface IOrganizationService {
 	members: {
 		addMember(
 			ctx: Context,
-			data: { userId: string; organizationId: string; role: Role },
+			data: {
+				userId: string;
+				organizationId: string;
+				role: OrganizationRoleType;
+			},
 		): ResultAsync<
-			{ member: Member },
+			{ member: OrganizationMember },
 			PermissionDeniedError | UnauthorizedError
 		>;
 		removeMember(
 			ctx: Context,
 			params: { memberId: string },
 		): ResultAsync<
-			{ member: Member },
+			{ member: OrganizationMember },
 			InvalidArgumentError | PermissionDeniedError | UnauthorizedError
 		>;
 		findMany(
 			ctx: Context,
 			params: { organizationId: string },
 		): ResultAsync<
-			{ members: Member[] },
+			{ members: OrganizationMember[] },
 			PermissionDeniedError | UnauthorizedError
 		>;
 	};
@@ -140,15 +142,15 @@ interface IOrganizationService {
 		hasFeaturePermission(
 			ctx: Context,
 			data: {
-				featurePermission: FeaturePermission;
+				featurePermission: FeaturePermissionType;
 			},
 		): Promise<boolean>;
 		hasRole(
 			ctx: Context,
 			data: {
 				organizationId: string;
-				role: Role;
-				featurePermission?: FeaturePermission;
+				role: OrganizationRoleType;
+				featurePermission?: FeaturePermissionType;
 			},
 		): Promise<boolean>;
 	};
@@ -196,7 +198,22 @@ interface IUserService {
 		},
 	): Promise<User>;
 	login(id: string): Promise<User>;
-	create(data: Prisma.UserCreateInput): Promise<User>;
+	create(
+		data: Pick<
+			User,
+			"firstName" | "lastName" | "email" | "username" | "feideId"
+		> &
+			Partial<
+				Pick<
+					User,
+					| "allergies"
+					| "graduationYear"
+					| "isSuperUser"
+					| "studyProgramId"
+					| "phoneNumber"
+				>
+			>,
+	): Promise<User>;
 	getStudyProgram(
 		by: { id: string } | { externalId: string },
 	): Promise<StudyProgram | null>;
@@ -231,7 +248,7 @@ interface ICabinService {
 		ctx: Context,
 		params: {
 			bookingId: string;
-			status: BookingStatus;
+			status: BookingStatusType;
 			feedback?: string | null;
 		},
 	): ResultAsync<
@@ -248,13 +265,15 @@ interface ICabinService {
 	updateBookingSemester(
 		ctx: Context,
 		data: {
-			semester: Semester;
+			semester: BookingSemesterEnumType;
 			startAt?: Date | null;
 			endAt?: Date | null;
 			bookingsEnabled?: boolean | null;
 		},
 	): Promise<BookingSemester>;
-	getBookingSemester(semester: Semester): Promise<BookingSemester | null>;
+	getBookingSemester(
+		semester: BookingSemesterEnumType,
+	): Promise<BookingSemester | null>;
 	getBookingContact(): Promise<
 		Pick<BookingContact, "email" | "name" | "phoneNumber" | "id" | "updatedAt">
 	>;
@@ -300,7 +319,7 @@ interface ICabinService {
 	>;
 	findManyBookings(
 		ctx: Context,
-		params?: { bookingStatus?: BookingStatus | null } | null,
+		params?: { bookingStatus?: BookingStatusType | null } | null,
 	): ResultAsync<
 		{ bookings: BookingType[]; total: number },
 		UnauthorizedError | PermissionDeniedError | InternalServerError
@@ -436,7 +455,7 @@ interface IEventService {
 		params?: {
 			userId: string;
 			orderBy?: "asc" | "desc" | null;
-			participationStatus?: ParticipationStatus | null;
+			participationStatus?: EventParticipationStatusType | null;
 		} | null,
 	): ResultAsync<
 		{ signUps: EventSignUp[]; total: number },
@@ -446,7 +465,7 @@ interface IEventService {
 		ctx: Context,
 		params: {
 			eventId: string;
-			participationStatus?: ParticipationStatus | null;
+			participationStatus?: EventParticipationStatusType | null;
 		},
 	): ResultAsync<
 		{ signUps: EventSignUp[]; total: number },
@@ -644,10 +663,6 @@ type Services = {
 	documents: DocumentServiceType;
 };
 
-type ServerDependencies = {
-	databaseClient: PrismaClient;
-};
-
 /**
  * startServer starts listening to HTTP requests on the specified port.
  */
@@ -828,6 +843,6 @@ export type {
 	IFileService,
 	IOrganizationService,
 	NewBookingParams,
-	ServerDependencies,
 	Services,
+	IUserService,
 };

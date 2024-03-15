@@ -1,13 +1,20 @@
 import type { DateTime } from "luxon";
 
-export const BookingStatus = {
+const BookingStatus = {
 	PENDING: "PENDING",
 	CONFIRMED: "CONFIRMED",
 	CANCELLED: "CANCELLED",
 	REJECTED: "REJECTED",
 } as const;
 
-export type BookingStatus = (typeof BookingStatus)[keyof typeof BookingStatus];
+type BookingStatusType = (typeof BookingStatus)[keyof typeof BookingStatus];
+
+const BookingSemesterEnum = {
+	SPRING: "SPRING",
+	FALL: "FALL",
+} as const;
+type BookingSemesterEnumType =
+	(typeof BookingSemesterEnum)[keyof typeof BookingSemesterEnum];
 
 interface BookingType {
 	id: string;
@@ -18,7 +25,7 @@ interface BookingType {
 	lastName: string;
 	phoneNumber: string;
 	cabins: { id: string }[];
-	status: BookingStatus;
+	status: BookingStatusType;
 	totalCost: number;
 	internalParticipantsCount: number;
 	externalParticipantsCount: number;
@@ -51,7 +58,7 @@ class Booking implements BookingType {
 	internalParticipantsCount: number;
 	externalParticipantsCount: number;
 	totalCost: number;
-	status: BookingStatus;
+	status: BookingStatusType;
 	id: string;
 	startDate: Date;
 	endDate: Date;
@@ -71,7 +78,7 @@ type NewBookingParams = {
 	lastName: string;
 	phoneNumber: string;
 	cabins: { id: string }[];
-	status: BookingStatus;
+	status: BookingStatusType;
 	totalCost: number;
 	internalParticipantsCount: number;
 	externalParticipantsCount: number;
@@ -110,5 +117,97 @@ type CalendarDay = {
 	availableForCheckOut: boolean;
 };
 
-export { Booking };
-export type { NewBookingParams, BookingType, CalendarDay, CalendarMonth };
+class Cabin {
+	id: string;
+	name: string;
+	capacity: number;
+	internalPrice: number;
+	internalPriceWeekend: number;
+	externalPrice: number;
+	externalPriceWeekend: number;
+	createdAt: Date;
+
+	constructor(params: {
+		id: string;
+		name: string;
+		capacity: number;
+		internalPrice: number;
+		internalPriceWeekend: number;
+		externalPrice: number;
+		externalPriceWeekend: number;
+		createdAt: Date;
+	}) {
+		this.id = params.id;
+		this.name = params.name;
+		this.capacity = params.capacity;
+		this.internalPrice = params.internalPrice;
+		this.internalPriceWeekend = params.internalPriceWeekend;
+		this.externalPrice = params.externalPrice;
+		this.externalPriceWeekend = params.externalPriceWeekend;
+		this.createdAt = params.createdAt;
+	}
+}
+
+class BookingSemester {
+	semester: BookingSemesterEnumType;
+	startAt: Date;
+	endAt: Date;
+	updatedAt: Date;
+	id: string;
+	bookingsEnabled: boolean;
+
+	constructor(params: {
+		semester: BookingSemesterEnumType;
+		startAt: Date;
+		endAt: Date;
+		updatedAt: Date;
+		id: string;
+		bookingsEnabled: boolean;
+	}) {
+		this.semester = params.semester;
+		this.startAt = params.startAt;
+		this.endAt = params.endAt;
+		this.updatedAt = params.updatedAt;
+		this.id = params.id;
+		this.bookingsEnabled = params.bookingsEnabled;
+	}
+}
+
+class BookingContact {
+	id: string;
+	name: string;
+	email: string;
+	phoneNumber: string;
+	updatedAt: Date;
+
+	constructor(params: {
+		id: string;
+		name: string;
+		email: string;
+		phoneNumber: string;
+		updatedAt: Date;
+	}) {
+		this.id = params.id;
+		this.name = params.name;
+		this.email = params.email;
+		this.phoneNumber = params.phoneNumber;
+		this.updatedAt = params.updatedAt;
+	}
+}
+
+export {
+	Booking,
+	Cabin,
+	BookingSemester,
+	BookingContact,
+	BookingStatus,
+	BookingSemesterEnum,
+};
+export type {
+	NewBookingParams,
+	BookingType,
+	CalendarDay,
+	CalendarMonth,
+	BookingStatusType,
+	BookingSemesterEnumType,
+};

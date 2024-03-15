@@ -1,10 +1,13 @@
-import type { Listing } from "@prisma/client";
 import { ZodError, z } from "zod";
 import {
 	InvalidArgumentError,
 	PermissionDeniedError,
 } from "~/domain/errors.js";
-import { Role } from "~/domain/organizations.js";
+import type { Listing } from "~/domain/listings.js";
+import {
+	OrganizationRole,
+	type OrganizationRoleType,
+} from "~/domain/organizations.js";
 import type { Context } from "~/lib/context.js";
 
 export interface ListingRepository {
@@ -34,7 +37,7 @@ export interface PermissionService {
 		ctx: Context,
 		data: {
 			organizationId: string;
-			role: Role;
+			role: OrganizationRoleType;
 		},
 	): Promise<boolean>;
 }
@@ -181,7 +184,7 @@ export class ListingService {
 	): Promise<void> {
 		const isMember = await this.permissionService.hasRole(ctx, {
 			organizationId,
-			role: Role.MEMBER,
+			role: OrganizationRole.MEMBER,
 		});
 
 		if (isMember === false) {

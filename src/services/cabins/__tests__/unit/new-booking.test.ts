@@ -1,10 +1,15 @@
 import { faker } from "@faker-js/faker";
-import { type BookingSemester, type Cabin, Semester } from "@prisma/client";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
 import { pino } from "pino";
-import type { BookingType } from "~/domain/cabins.js";
+import {
+	type BookingSemester,
+	BookingSemesterEnum,
+	type BookingSemesterEnumType,
+	type BookingType,
+	type Cabin,
+} from "~/domain/cabins.js";
 import {
 	DomainErrorType,
 	type InternalServerError,
@@ -60,10 +65,10 @@ describe("CabinService", () => {
 				 * Mock the cabinRepository.getBookingSemesters method to return the bookingSemesters from the test case.
 				 */
 				cabinRepository.getBookingSemester.mockImplementation(
-					(semester: Semester) => {
-						if (semester === Semester.FALL)
+					(semester: BookingSemesterEnumType) => {
+						if (semester === BookingSemesterEnum.FALL)
 							return Promise.resolve(arrange.bookingSemesters.fall);
-						if (semester === Semester.SPRING)
+						if (semester === BookingSemesterEnum.SPRING)
 							return Promise.resolve(arrange.bookingSemesters.spring);
 						throw new Error(`Unexpected semester: ${semester}`);
 					},
@@ -689,10 +694,10 @@ describe("CabinService", () => {
 				 * Mock the mailService.sendBookingConfirmation method to return a promise.
 				 */
 				cabinRepository.getBookingSemester.mockImplementation(
-					(semester: Semester) => {
-						if (semester === Semester.FALL)
+					(semester: BookingSemesterEnumType) => {
+						if (semester === BookingSemesterEnum.FALL)
 							return Promise.resolve(arrange.bookingSemesters.fall);
-						if (semester === Semester.SPRING)
+						if (semester === BookingSemesterEnum.SPRING)
 							return Promise.resolve(arrange.bookingSemesters.spring);
 						throw new Error(`Unexpected semester: ${semester}`);
 					},
@@ -951,7 +956,7 @@ describe("CabinService", () => {
 			cabinRepository.getBookingSemester.mockResolvedValue(
 				makeBookingSemester({
 					bookingsEnabled: true,
-					semester: Semester.FALL,
+					semester: BookingSemesterEnum.FALL,
 					startAt: DateTime.fromObject({ year: 0 }).toJSDate(),
 					endAt: DateTime.fromObject({ year: 3000 }).toJSDate(),
 				}),
@@ -1088,9 +1093,8 @@ function makeBookingSemester(
 	return merge<BookingSemester, Partial<BookingSemester>>(
 		{
 			id: faker.string.uuid(),
-			createdAt: faker.date.past(),
 			updatedAt: faker.date.past(),
-			semester: Semester.FALL,
+			semester: BookingSemesterEnum.FALL,
 			startAt: start,
 			endAt: end,
 			bookingsEnabled: true,

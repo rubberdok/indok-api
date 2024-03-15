@@ -1,6 +1,9 @@
-import type { DocumentCategory, FeaturePermission } from "@prisma/client";
 import { z } from "zod";
-import type { Document, DocumentService } from "~/domain/documents.js";
+import type {
+	Document,
+	DocumentCategory,
+	DocumentService,
+} from "~/domain/documents.js";
 import {
 	DownstreamServiceError,
 	InternalServerError,
@@ -11,6 +14,7 @@ import {
 	UnauthorizedError,
 } from "~/domain/errors.js";
 import type { FileType } from "~/domain/files.js";
+import type { FeaturePermissionType } from "~/domain/organizations.js";
 import type { Context } from "~/lib/context.js";
 import { Result, type ResultAsync } from "~/lib/result.js";
 
@@ -49,7 +53,7 @@ type DocumentRepositoryType = {
 type PermissionService = {
 	hasFeaturePermission(
 		ctx: Context,
-		data: { featurePermission: FeaturePermission },
+		data: { featurePermission: FeaturePermissionType },
 	): Promise<boolean>;
 };
 

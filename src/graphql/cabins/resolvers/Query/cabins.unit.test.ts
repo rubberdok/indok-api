@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker";
-import type { Cabin } from "@prisma/client";
 import { mock } from "jest-mock-extended";
+import { Cabin } from "~/domain/cabins.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
@@ -38,17 +38,16 @@ describe("query { cabins } ", () => {
 	it("{ price } resolves price ", async () => {
 		const { client, cabinService } = createMockApolloServer();
 		cabinService.findManyCabins.mockResolvedValue([
-			{
+			new Cabin({
 				id: faker.string.uuid(),
 				name: "Oksen",
 				capacity: 10,
-				createdAt: new Date(),
-				updatedAt: new Date(),
 				externalPrice: 1000,
 				externalPriceWeekend: 2000,
 				internalPrice: 500,
 				internalPriceWeekend: 750,
-			},
+				createdAt: new Date(),
+			}),
 		]);
 
 		const { errors } = await client.query({

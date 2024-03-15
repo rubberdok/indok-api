@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import type { Cabin } from "@prisma/client";
+import type { Cabin } from "~/domain/cabins.js";
 import { NotFoundError } from "~/domain/errors.js";
 import { makeMockContext } from "~/lib/context.js";
 import { Result } from "~/lib/result.js";

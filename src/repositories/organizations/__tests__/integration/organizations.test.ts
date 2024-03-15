@@ -1,7 +1,11 @@
 import { faker } from "@faker-js/faker";
-import { FeaturePermission, type Organization } from "@prisma/client";
 import { InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
-import { Role } from "~/domain/organizations.js";
+import {
+	FeaturePermission,
+	type FeaturePermissionType,
+	type Organization,
+	OrganizationRole,
+} from "~/domain/organizations.js";
 import prisma from "~/lib/prisma.js";
 import { OrganizationRepository } from "../../organizations.js";
 
@@ -51,7 +55,7 @@ describe("OrganizationsRepository", () => {
 					},
 				},
 			});
-			expect(member.role).toBe(Role.ADMIN);
+			expect(member.role).toBe(OrganizationRole.ADMIN);
 			expect(member.userId).toBe(user.id);
 			expect(member.organizationId).toBe(organization.id);
 		});
@@ -134,7 +138,7 @@ describe("OrganizationsRepository", () => {
 			data: {
 				name?: string;
 				description?: string;
-				featurePermissions?: FeaturePermission[];
+				featurePermissions?: FeaturePermissionType[];
 			};
 			expected: Partial<Organization>;
 		}
@@ -148,8 +152,6 @@ describe("OrganizationsRepository", () => {
 				expected: {
 					id: expect.any(String),
 					description: expect.any(String),
-					updatedAt: expect.any(Date),
-					createdAt: expect.any(Date),
 					featurePermissions: [],
 				},
 			},
@@ -162,8 +164,6 @@ describe("OrganizationsRepository", () => {
 				expected: {
 					id: expect.any(String),
 					description: expect.any(String),
-					updatedAt: expect.any(Date),
-					createdAt: expect.any(Date),
 					featurePermissions: [FeaturePermission.ARCHIVE_WRITE_DOCUMENTS],
 				},
 			},
@@ -175,8 +175,6 @@ describe("OrganizationsRepository", () => {
 				expected: {
 					id: expect.any(String),
 					name: expect.any(String),
-					updatedAt: expect.any(Date),
-					createdAt: expect.any(Date),
 					featurePermissions: [],
 				},
 			},
@@ -187,8 +185,6 @@ describe("OrganizationsRepository", () => {
 					id: expect.any(String),
 					name: expect.any(String),
 					description: expect.any(String),
-					updatedAt: expect.any(Date),
-					createdAt: expect.any(Date),
 					featurePermissions: [],
 				},
 			},

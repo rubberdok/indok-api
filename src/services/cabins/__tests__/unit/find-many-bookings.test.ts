@@ -1,4 +1,3 @@
-import { FeaturePermission } from "@prisma/client";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import type { BookingType } from "~/domain/cabins.js";
 import {
@@ -6,6 +5,7 @@ import {
 	PermissionDeniedError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
+import { FeaturePermission } from "~/domain/organizations.js";
 import { makeMockContext } from "~/lib/context.js";
 import {
 	CabinService,

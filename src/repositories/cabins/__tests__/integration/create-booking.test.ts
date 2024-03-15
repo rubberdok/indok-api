@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { BookingStatus } from "@prisma/client";
+import { BookingStatus } from "~/domain/cabins.js";
 import { NotFoundError } from "~/domain/errors.js";
 import prisma from "~/lib/prisma.js";
 import { CabinRepository } from "../../index.js";

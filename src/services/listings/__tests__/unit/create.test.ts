@@ -4,7 +4,7 @@ import {
 	InvalidArgumentError,
 	PermissionDeniedError,
 } from "~/domain/errors.js";
-import { Role } from "~/domain/organizations.js";
+import { OrganizationRole } from "~/domain/organizations.js";
 import { makeMockContext } from "~/lib/context.js";
 import {
 	type ListingRepository,
@@ -221,7 +221,7 @@ describe("ListingService", () => {
 					expect.anything(),
 					{
 						organizationId,
-						role: Role.MEMBER,
+						role: OrganizationRole.MEMBER,
 					},
 				);
 			});

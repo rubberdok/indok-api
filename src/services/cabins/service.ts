@@ -1,18 +1,17 @@
 import { randomUUID } from "node:crypto";
-import {
-	type BookingSemester,
-	type Cabin,
-	FeaturePermission,
-	type BookingContact as PrismaBookingContact,
-	Semester,
-} from "@prisma/client";
 import { compact, range, sumBy } from "lodash-es";
 import { DateTime, Interval } from "luxon";
 import { z } from "zod";
 import {
 	Booking,
+	type BookingContact,
+	type BookingSemester,
+	BookingSemesterEnum,
+	type BookingSemesterEnumType,
 	BookingStatus,
+	type BookingStatusType,
 	type BookingType,
+	type Cabin,
 	type CalendarDay,
 	type CalendarMonth,
 } from "~/domain/cabins.js";
@@ -24,15 +23,14 @@ import {
 	PermissionDeniedError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
+import {
+	FeaturePermission,
+	type FeaturePermissionType,
+} from "~/domain/organizations.js";
 import type { Context } from "~/lib/context.js";
 import { Result, type ResultAsync, type TResult } from "~/lib/result.js";
 import type { ICabinService, NewBookingParams } from "~/lib/server.js";
 import type { EmailQueueDataType } from "../mail/worker.js";
-
-type BookingContact = Pick<
-	PrismaBookingContact,
-	"email" | "name" | "phoneNumber" | "id" | "updatedAt"
->;
 
 export interface ICabinRepository {
 	getCabinById(id: string): Promise<Cabin>;
@@ -53,18 +51,20 @@ export interface ICabinRepository {
 	getCabinByBookingId(bookingId: string): Promise<Cabin>;
 	findManyCabins(): Promise<Cabin[]>;
 	updateBookingSemester(data: {
-		semester: Semester;
+		semester: BookingSemesterEnumType;
 		startAt?: Date;
 		endAt?: Date;
 		bookingsEnabled?: boolean;
 	}): Promise<BookingSemester>;
 	createBookingSemester(data: {
-		semester: Semester;
+		semester: BookingSemesterEnumType;
 		startAt: Date;
 		endAt: Date;
 		bookingsEnabled?: boolean;
 	}): Promise<BookingSemester>;
-	getBookingSemester(semester: Semester): Promise<BookingSemester | null>;
+	getBookingSemester(
+		semester: BookingSemesterEnumType,
+	): Promise<BookingSemester | null>;
 	getBookingContact(): Promise<BookingContact>;
 	updateBookingContact(
 		data: Partial<{
@@ -86,7 +86,7 @@ export interface ICabinRepository {
 		params: {
 			cabinId?: string;
 			endAtGte?: Date;
-			bookingStatus?: BookingStatus;
+			bookingStatus?: BookingStatusType;
 		},
 	): ResultAsync<
 		{
@@ -112,7 +112,7 @@ export interface PermissionService {
 	hasFeaturePermission(
 		ctx: Context,
 		data: {
-			featurePermission: FeaturePermission;
+			featurePermission: FeaturePermissionType;
 		},
 	): Promise<boolean>;
 }
@@ -129,7 +129,7 @@ export class CabinService implements ICabinService {
 	) {}
 	async findManyBookings(
 		ctx: Context,
-		params?: { bookingStatus?: BookingStatus | null } | null,
+		params?: { bookingStatus?: BookingStatusType | null } | null,
 	): ResultAsync<
 		{ bookings: BookingType[]; total: number },
 		PermissionDeniedError | UnauthorizedError | InternalServerError
@@ -663,7 +663,7 @@ export class CabinService implements ICabinService {
 		ctx: Context,
 		params: {
 			bookingId: string;
-			status: BookingStatus;
+			status: BookingStatusType;
 			feedback?: string | null;
 		},
 	): ResultAsync<
@@ -758,12 +758,12 @@ export class CabinService implements ICabinService {
 	async updateBookingSemester(
 		ctx: Context,
 		data: {
-			semester: Semester;
+			semester: BookingSemesterEnumType;
 			startAt?: Date | null;
 			endAt?: Date | null;
 			bookingsEnabled?: boolean | null;
 		},
-	) {
+	): Promise<BookingSemester> {
 		const hasPermission = await this.permissionService.hasFeaturePermission(
 			ctx,
 			{
@@ -777,7 +777,7 @@ export class CabinService implements ICabinService {
 			);
 
 		const schema = z.object({
-			semester: z.nativeEnum(Semester),
+			semester: z.nativeEnum(BookingSemesterEnum),
 			startAt: z
 				.date()
 				.nullish()
@@ -831,14 +831,14 @@ export class CabinService implements ICabinService {
 	 * the first and last day of the semester respectively. If `bookingEnabled` is not provided, it will default to `false`.
 	 */
 	private async createBookingSemester(data: {
-		semester: Semester;
+		semester: BookingSemesterEnumType;
 		startAt?: Date | null;
 		endAt?: Date | null;
 		bookingsEnabled?: boolean | null;
-	}) {
+	}): Promise<BookingSemester> {
 		try {
 			const schema = z.object({
-				semester: z.nativeEnum(Semester),
+				semester: z.nativeEnum(BookingSemesterEnum),
 				startAt: z
 					.date()
 					.default(
@@ -920,7 +920,9 @@ export class CabinService implements ICabinService {
 	/**
 	 * getBookingSemester returns the booking semester for the given semester, or null if it does not exist.
 	 */
-	getBookingSemester(semester: Semester): Promise<BookingSemester | null> {
+	getBookingSemester(
+		semester: BookingSemesterEnumType,
+	): Promise<BookingSemester | null> {
 		return this.cabinRepository.getBookingSemester(semester);
 	}
 

@@ -1,6 +1,7 @@
 import { faker } from "@faker-js/faker";
-import type { Organization } from "@prisma/client";
 import { NotFoundError } from "~/domain/errors.js";
+import { Listing } from "~/domain/listings.js";
+import type { Organization } from "~/domain/organizations.js";
 import prisma from "~/lib/prisma.js";
 import { ListingRepository } from "../../repository.js";
 
@@ -177,14 +178,16 @@ describe("ListingRepository", () => {
 	});
 });
 
-function makeListing(data: { organizationId: string }) {
+async function makeListing(data: { organizationId: string }) {
 	const { organizationId } = data;
-	return prisma.listing.create({
-		data: {
-			name: faker.word.adjective(),
-			closesAt: faker.date.future(),
-			organizationId: organizationId,
-			description: faker.word.adverb(),
-		},
-	});
+	return new Listing(
+		await prisma.listing.create({
+			data: {
+				name: faker.word.adjective(),
+				closesAt: faker.date.future(),
+				organizationId: organizationId,
+				description: faker.word.adverb(),
+			},
+		}),
+	);
 }

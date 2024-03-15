@@ -6,11 +6,8 @@ import {
 	PermissionDeniedError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
-import {
-	type StudyProgram,
-	type User,
-	newStudyProgram,
-} from "~/domain/users.js";
+import type { StudyProgram, User } from "~/domain/users.js";
+import type { IUserService } from "~/lib/server.js";
 import type { Context } from "../../lib/context.js";
 import type { EmailQueueDataType } from "../mail/worker.js";
 import { createUserSchema } from "./validation.js";
@@ -34,7 +31,7 @@ export type MailService = {
 	sendAsync(jobData: EmailQueueDataType): Promise<void>;
 };
 
-export class UserService {
+export class UserService implements IUserService {
 	constructor(
 		private usersRepository: UserRepository,
 		private mailService: MailService,
@@ -267,8 +264,18 @@ export class UserService {
 		name: string;
 		externalId: string;
 	}): Promise<StudyProgram> {
-		const studyProgram = newStudyProgram(data);
-		return await this.usersRepository.createStudyProgram(studyProgram);
+		const schema = z.object({
+			name: z.string().min(2),
+			externalId: z.string(),
+		});
+		const parseResult = schema.safeParse(data);
+		if (!parseResult.success) {
+			throw new InvalidArgumentError(
+				"Invalid study program data",
+				parseResult.error,
+			);
+		}
+		return await this.usersRepository.createStudyProgram(parseResult.data);
 	}
 
 	/**

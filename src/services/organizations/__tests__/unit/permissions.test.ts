@@ -1,7 +1,12 @@
 import { faker } from "@faker-js/faker";
-import { FeaturePermission, type Organization } from "@prisma/client";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
-import { Role } from "~/domain/organizations.js";
+import {
+	FeaturePermission,
+	type FeaturePermissionType,
+	type Organization,
+	OrganizationRole,
+	type OrganizationRoleType,
+} from "~/domain/organizations.js";
 import type { User } from "~/domain/users.js";
 import { makeMockContext } from "~/lib/context.js";
 import {
@@ -36,14 +41,14 @@ describe("PermissionService", () => {
 					id: string;
 					isSuperUser: boolean;
 				};
-				organizationRole?: Role;
+				organizationRole?: OrganizationRoleType;
 				organization?: {
-					featurePermissions: FeaturePermission[];
+					featurePermissions: FeaturePermissionType[];
 				};
 			};
 			act: {
-				requiredFeaturePermission?: FeaturePermission;
-				requiredRole: Role;
+				requiredFeaturePermission?: FeaturePermissionType;
+				requiredRole: OrganizationRoleType;
 			};
 			expected: boolean;
 		}
@@ -58,7 +63,7 @@ describe("PermissionService", () => {
 					},
 				},
 				act: {
-					requiredRole: Role.ADMIN,
+					requiredRole: OrganizationRole.ADMIN,
 				},
 				expected: true,
 			},
@@ -69,10 +74,10 @@ describe("PermissionService", () => {
 						id: faker.string.uuid(),
 						isSuperUser: false,
 					},
-					organizationRole: Role.ADMIN,
+					organizationRole: OrganizationRole.ADMIN,
 				},
 				act: {
-					requiredRole: Role.ADMIN,
+					requiredRole: OrganizationRole.ADMIN,
 				},
 				expected: true,
 			},
@@ -83,10 +88,10 @@ describe("PermissionService", () => {
 						id: faker.string.uuid(),
 						isSuperUser: false,
 					},
-					organizationRole: Role.MEMBER,
+					organizationRole: OrganizationRole.MEMBER,
 				},
 				act: {
-					requiredRole: Role.MEMBER,
+					requiredRole: OrganizationRole.MEMBER,
 				},
 				expected: true,
 			},
@@ -97,10 +102,10 @@ describe("PermissionService", () => {
 						id: faker.string.uuid(),
 						isSuperUser: false,
 					},
-					organizationRole: Role.MEMBER,
+					organizationRole: OrganizationRole.MEMBER,
 				},
 				act: {
-					requiredRole: Role.ADMIN,
+					requiredRole: OrganizationRole.ADMIN,
 				},
 				expected: false,
 			},
@@ -113,7 +118,7 @@ describe("PermissionService", () => {
 					},
 				},
 				act: {
-					requiredRole: Role.MEMBER,
+					requiredRole: OrganizationRole.MEMBER,
 				},
 				expected: false,
 			},
@@ -127,7 +132,7 @@ describe("PermissionService", () => {
 				},
 				act: {
 					requiredFeaturePermission: FeaturePermission.CABIN_ADMIN,
-					requiredRole: Role.MEMBER,
+					requiredRole: OrganizationRole.MEMBER,
 				},
 				expected: true,
 			},
@@ -141,11 +146,11 @@ describe("PermissionService", () => {
 					organization: {
 						featurePermissions: [FeaturePermission.CABIN_ADMIN],
 					},
-					organizationRole: Role.ADMIN,
+					organizationRole: OrganizationRole.ADMIN,
 				},
 				act: {
 					requiredFeaturePermission: FeaturePermission.CABIN_ADMIN,
-					requiredRole: Role.MEMBER,
+					requiredRole: OrganizationRole.MEMBER,
 				},
 				expected: true,
 			},
@@ -159,11 +164,11 @@ describe("PermissionService", () => {
 					organization: {
 						featurePermissions: [FeaturePermission.CABIN_ADMIN],
 					},
-					organizationRole: Role.MEMBER,
+					organizationRole: OrganizationRole.MEMBER,
 				},
 				act: {
 					requiredFeaturePermission: FeaturePermission.CABIN_ADMIN,
-					requiredRole: Role.MEMBER,
+					requiredRole: OrganizationRole.MEMBER,
 				},
 				expected: true,
 			},
@@ -177,11 +182,11 @@ describe("PermissionService", () => {
 					organization: {
 						featurePermissions: [FeaturePermission.ARCHIVE_WRITE_DOCUMENTS],
 					},
-					organizationRole: Role.MEMBER,
+					organizationRole: OrganizationRole.MEMBER,
 				},
 				act: {
 					requiredFeaturePermission: FeaturePermission.CABIN_ADMIN,
-					requiredRole: Role.MEMBER,
+					requiredRole: OrganizationRole.MEMBER,
 				},
 				expected: false,
 			},
@@ -195,11 +200,11 @@ describe("PermissionService", () => {
 					organization: {
 						featurePermissions: [],
 					},
-					organizationRole: Role.MEMBER,
+					organizationRole: OrganizationRole.MEMBER,
 				},
 				act: {
 					requiredFeaturePermission: FeaturePermission.CABIN_ADMIN,
-					requiredRole: Role.MEMBER,
+					requiredRole: OrganizationRole.MEMBER,
 				},
 				expected: false,
 			},

@@ -1,9 +1,12 @@
 import assert from "node:assert";
 import { faker } from "@faker-js/faker";
-import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
 import { type ErrorCode, errorCodes } from "~/domain/errors.js";
 import { AlreadySignedUpError } from "~/domain/events/event.js";
+import {
+	EventParticipationStatus,
+	type EventParticipationStatusType,
+} from "~/domain/events/sign-ups.js";
 import prisma from "~/lib/prisma.js";
 import { EventRepository } from "../../repository.js";
 
@@ -30,7 +33,7 @@ describe("EventRepository", () => {
 				userId: user.id,
 				eventId: event.id,
 				slotId: slot.id,
-				participationStatus: ParticipationStatus.CONFIRMED,
+				participationStatus: EventParticipationStatus.CONFIRMED,
 				active: true,
 			});
 
@@ -42,7 +45,7 @@ describe("EventRepository", () => {
 			const actual = eventRepository.createSignUp({
 				userId: user.id,
 				eventId: event.id,
-				participationStatus: ParticipationStatus.CONFIRMED,
+				participationStatus: EventParticipationStatus.CONFIRMED,
 				slotId: slot.id,
 			});
 
@@ -82,7 +85,7 @@ describe("EventRepository", () => {
 			const actual = await eventRepository.createSignUp({
 				userId: user.id,
 				eventId: event.id,
-				participationStatus: ParticipationStatus.CONFIRMED,
+				participationStatus: EventParticipationStatus.CONFIRMED,
 				slotId: slot.id,
 			});
 
@@ -121,7 +124,7 @@ describe("EventRepository", () => {
 			const actual = await eventRepository.createSignUp({
 				userId: user.id,
 				eventId: event.id,
-				participationStatus: ParticipationStatus.ON_WAITLIST,
+				participationStatus: EventParticipationStatus.ON_WAITLIST,
 			});
 
 			/**
@@ -150,7 +153,7 @@ describe("EventRepository", () => {
 				eventId: event.id,
 				userId: user.id,
 				active: false,
-				participationStatus: ParticipationStatus.REMOVED,
+				participationStatus: EventParticipationStatus.REMOVED,
 			});
 
 			/**
@@ -162,7 +165,7 @@ describe("EventRepository", () => {
 				userId: user.id,
 				eventId: event.id,
 				slotId: slot.id,
-				participationStatus: ParticipationStatus.CONFIRMED,
+				participationStatus: EventParticipationStatus.CONFIRMED,
 			});
 
 			/**
@@ -199,7 +202,7 @@ describe("EventRepository", () => {
 			const actual = await eventRepository.createSignUp({
 				userId: user.id,
 				eventId: event.id,
-				participationStatus: ParticipationStatus.ON_WAITLIST,
+				participationStatus: EventParticipationStatus.ON_WAITLIST,
 			});
 
 			/**
@@ -270,7 +273,7 @@ describe("EventRepository", () => {
 					 */
 					const actual = eventRepository.createSignUp({
 						userId: user.id,
-						participationStatus: ParticipationStatus.CONFIRMED,
+						participationStatus: EventParticipationStatus.CONFIRMED,
 						slotId: slot.id,
 						eventId: event.id,
 					});
@@ -332,7 +335,7 @@ function makeSignUp(data: {
 	eventId: string;
 	userId: string;
 	slotId?: string;
-	participationStatus: ParticipationStatus;
+	participationStatus: EventParticipationStatusType;
 	active?: boolean;
 }) {
 	const { eventId, slotId, userId, participationStatus, active } = data;

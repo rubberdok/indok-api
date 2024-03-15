@@ -1,7 +1,11 @@
-import type { StudyProgram, User } from "~/domain/users.js";
+import type { User } from "~/domain/users.js";
 
-export type PrivateUserMapper = User;
-export type PublicUserMapper = User;
+type UsersResponseMapper = { users: User[] };
 
-export type UsersResponseMapper = { users: User[] };
-export type StudyProgramMapper = StudyProgram;
+export type { StudyProgram as StudyProgramMapper } from "~/domain/users.js";
+
+export type {
+	UsersResponseMapper,
+	User as PrivateUserMapper,
+	User as PublicUserMapper,
+};

@@ -1,4 +1,4 @@
-import type { Role } from "@prisma/client";
+import type { OrganizationRoleType } from "~/domain/organizations.js";
 import { type Context, makeMockContext } from "~/lib/context.js";
 
 /**
@@ -12,17 +12,17 @@ import { type Context, makeMockContext } from "~/lib/context.js";
 export function getMockHasRoleImplementation(state: {
 	organizationId: string;
 	userId: string;
-	role: Role | null;
+	role: OrganizationRoleType | null;
 }): (data: {
 	organizationId: string;
 	userId: string;
-	role: Role;
+	role: OrganizationRoleType;
 }) => Promise<boolean> {
 	function hasRole(
 		ctx: Context,
 		data: {
 			organizationId: string;
-			role: Role;
+			role: OrganizationRoleType;
 		},
 	): Promise<boolean> {
 		if (!ctx.user) return Promise.resolve(false);
@@ -33,6 +33,9 @@ export function getMockHasRoleImplementation(state: {
 		return Promise.resolve(true);
 	}
 
-	return (data: { organizationId: string; userId: string; role: Role }) =>
-		hasRole(makeMockContext({ id: data.userId }), data);
+	return (data: {
+		organizationId: string;
+		userId: string;
+		role: OrganizationRoleType;
+	}) => hasRole(makeMockContext({ id: data.userId }), data);
 }

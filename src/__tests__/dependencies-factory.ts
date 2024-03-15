@@ -8,7 +8,7 @@ import type { ServerClient } from "postmark";
 import { newMockOpenIdClient } from "~/__tests__/mocks/openIdClient.js";
 import { BlobStorageAdapter } from "~/adapters/azure-blob-storage.js";
 import { env } from "~/config.js";
-import type { User } from "~/domain/users.js";
+import { User } from "~/domain/users.js";
 import prisma from "~/lib/prisma.js";
 import type { Services } from "~/lib/server.js";
 import { CabinRepository } from "~/repositories/cabins/repository.js";
@@ -161,27 +161,29 @@ function makeUser(userData: Partial<User> = {}): Promise<User> {
 	);
 	const userService = new UserService(userRepository, mailService);
 
-	const user = merge<User, Partial<User>>(
-		{
-			allergies: faker.word.adjective(),
-			canUpdateYear: true,
-			createdAt: new Date(),
-			email: faker.internet.email({ firstName: faker.string.uuid() }),
-			feideId: faker.string.uuid(),
-			firstLogin: false,
-			firstName: faker.person.firstName(),
-			lastName: faker.person.lastName(),
-			graduationYear: DateTime.now().plus({ years: 1 }).year,
-			graduationYearUpdatedAt: null,
-			id: faker.string.uuid(),
-			isSuperUser: false,
-			lastLogin: new Date(),
-			phoneNumber: faker.phone.number(),
-			studyProgramId: null,
-			updatedAt: new Date(),
-			username: faker.string.uuid(),
-		},
-		userData,
+	const user = new User(
+		merge(
+			{
+				allergies: faker.word.adjective(),
+				canUpdateYear: true,
+				createdAt: new Date(),
+				email: faker.internet.email({ firstName: faker.string.uuid() }),
+				feideId: faker.string.uuid(),
+				firstLogin: false,
+				firstName: faker.person.firstName(),
+				lastName: faker.person.lastName(),
+				graduationYear: DateTime.now().plus({ years: 1 }).year,
+				graduationYearUpdatedAt: null,
+				id: faker.string.uuid(),
+				isSuperUser: false,
+				lastLogin: new Date(),
+				phoneNumber: faker.phone.number(),
+				studyProgramId: null,
+				updatedAt: new Date(),
+				username: faker.string.uuid(),
+			},
+			userData,
+		),
 	);
 	const userCreateInput = pick(user, [
 		"allergies",

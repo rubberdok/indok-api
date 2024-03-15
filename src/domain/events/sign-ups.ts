@@ -39,4 +39,53 @@ const signUpAvailability = {
 type SignUpAvailability =
 	(typeof signUpAvailability)[keyof typeof signUpAvailability];
 
-export { type SignUpAvailability, signUpAvailability };
+const EventParticipationStatus = {
+	// CONFIRMED means that the user is signed up for the event.
+	CONFIRMED: "CONFIRMED",
+	// ON_WAITLIST means that the user is on the waitlist for the event.
+	ON_WAITLIST: "ON_WAITLIST",
+	// REMOVED means that the user has been removed from the event, typically by the event organizer.
+	REMOVED: "REMOVED",
+	// RETRACTED means that the user has retracted their sign up.
+	RETRACTED: "RETRACTED",
+} as const;
+
+type EventParticipationStatusType =
+	(typeof EventParticipationStatus)[keyof typeof EventParticipationStatus];
+
+class EventSignUp {
+	id: string;
+	version: number;
+
+	active: boolean;
+	participationStatus: EventParticipationStatusType;
+	userProvidedInformation: string;
+
+	createdAt: Date;
+	updatedAt: Date;
+
+	userId: string;
+	eventId: string;
+	slotId: string | null;
+	orderId: string | null;
+
+	constructor(
+		params: Omit<EventSignUp, "userProvidedInformation"> &
+			Partial<Pick<EventSignUp, "userProvidedInformation">>,
+	) {
+		this.id = params.id;
+		this.version = params.version;
+		this.active = params.active;
+		this.participationStatus = params.participationStatus;
+		this.userProvidedInformation = params.userProvidedInformation ?? "";
+		this.createdAt = params.createdAt;
+		this.updatedAt = params.updatedAt;
+		this.userId = params.userId;
+		this.eventId = params.eventId;
+		this.slotId = params.slotId;
+		this.orderId = params.orderId;
+	}
+}
+
+export type { SignUpAvailability, EventParticipationStatusType };
+export { signUpAvailability, EventParticipationStatus, EventSignUp };

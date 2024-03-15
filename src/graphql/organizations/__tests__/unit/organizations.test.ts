@@ -1,9 +1,12 @@
 import { faker } from "@faker-js/faker";
 import type { ResultOf } from "@graphql-typed-document-node/core";
-import type { Organization } from "@prisma/client";
 import { mock } from "jest-mock-extended";
 import { PermissionDeniedError } from "~/domain/errors.js";
-import { Role } from "~/domain/organizations.js";
+import {
+	Organization,
+	OrganizationMember,
+	OrganizationRole,
+} from "~/domain/organizations.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
 import type {
@@ -27,12 +30,11 @@ describe("OrganizationResolvers", () => {
 					user: { id: faker.string.uuid() },
 				});
 				organizationService.organizations.create.mockResolvedValueOnce(
-					mock<Organization>({
+					new Organization({
 						id: faker.string.uuid(),
 						name: "test",
-						createdAt: new Date(),
-						updatedAt: new Date(),
 						description: "",
+						featurePermissions: [],
 					}),
 				);
 
@@ -88,8 +90,6 @@ describe("OrganizationResolvers", () => {
 					mock<Organization>({
 						id: faker.string.uuid(),
 						name: "test",
-						createdAt: new Date(),
-						updatedAt: new Date(),
 						description: "",
 					}),
 				);
@@ -145,21 +145,17 @@ describe("OrganizationResolvers", () => {
 				organizationService.members.addMember.mockResolvedValueOnce({
 					ok: true,
 					data: {
-						member: {
+						member: new OrganizationMember({
 							id: faker.string.uuid(),
-							createdAt: new Date(),
-							updatedAt: new Date(),
 							userId: faker.string.uuid(),
 							organizationId: faker.string.uuid(),
-							role: Role.MEMBER,
-						},
+							role: OrganizationRole.MEMBER,
+						}),
 					},
 				});
 				organizationService.organizations.get.mockResolvedValueOnce(
 					mock<Organization>({
 						id: faker.string.uuid(),
-						createdAt: new Date(),
-						updatedAt: new Date(),
 						name: "test",
 						description: "",
 					}),
@@ -168,14 +164,12 @@ describe("OrganizationResolvers", () => {
 					ok: true,
 					data: {
 						members: [
-							{
+							new OrganizationMember({
 								id: faker.string.uuid(),
-								createdAt: new Date(),
-								updatedAt: new Date(),
-								role: Role.MEMBER,
+								role: OrganizationRole.MEMBER,
 								userId: faker.string.uuid(),
 								organizationId: faker.string.uuid(),
-							},
+							}),
 						],
 					},
 				});
@@ -289,21 +283,17 @@ describe("OrganizationResolvers", () => {
 				organizationService.members.removeMember.mockResolvedValueOnce({
 					ok: true,
 					data: {
-						member: {
+						member: new OrganizationMember({
 							id: faker.string.uuid(),
-							createdAt: new Date(),
-							updatedAt: new Date(),
 							userId: faker.string.uuid(),
 							organizationId: faker.string.uuid(),
-							role: Role.MEMBER,
-						},
+							role: OrganizationRole.MEMBER,
+						}),
 					},
 				});
 				organizationService.organizations.get.mockResolvedValueOnce(
 					mock<Organization>({
 						id: faker.string.uuid(),
-						createdAt: new Date(),
-						updatedAt: new Date(),
 						name: "test",
 						description: "",
 					}),
@@ -312,14 +302,12 @@ describe("OrganizationResolvers", () => {
 					ok: true,
 					data: {
 						members: [
-							{
+							new OrganizationMember({
 								id: faker.string.uuid(),
-								createdAt: new Date(),
-								updatedAt: new Date(),
-								role: Role.MEMBER,
+								role: OrganizationRole.MEMBER,
 								userId: faker.string.uuid(),
 								organizationId: faker.string.uuid(),
-							},
+							}),
 						],
 					},
 				});

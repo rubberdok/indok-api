@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker";
 import { NotFoundError } from "~/domain/errors.js";
-import { Role } from "~/domain/organizations.js";
+import { OrganizationRole } from "~/domain/organizations.js";
 import prisma from "~/lib/prisma.js";
 import { MemberRepository } from "../../members.js";
 
@@ -45,7 +45,7 @@ describe("MembersRepository", () => {
 				id: expect.any(String),
 				userId: user.id,
 				organizationId: org.id,
-				role: Role.MEMBER,
+				role: OrganizationRole.MEMBER,
 				updatedAt: expect.any(Date),
 				createdAt: expect.any(Date),
 			};
@@ -80,7 +80,7 @@ describe("MembersRepository", () => {
 				id: expect.any(String),
 				userId: user.id,
 				organizationId: org.id,
-				role: Role.ADMIN,
+				role: OrganizationRole.ADMIN,
 				updatedAt: expect.any(Date),
 				createdAt: expect.any(Date),
 			};
@@ -93,7 +93,7 @@ describe("MembersRepository", () => {
 			const actual = repo.create({
 				userId: user.id,
 				organizationId: org.id,
-				role: Role.ADMIN,
+				role: OrganizationRole.ADMIN,
 			});
 			expect(actual).resolves.toEqual(expected);
 		});
@@ -127,7 +127,7 @@ describe("MembersRepository", () => {
 				data: {
 					userId: user.id,
 					organizationId: org.id,
-					role: Role.MEMBER,
+					role: OrganizationRole.MEMBER,
 				},
 			});
 
@@ -139,7 +139,7 @@ describe("MembersRepository", () => {
 			const actual = repo.create({
 				userId: user.id,
 				organizationId: org.id,
-				role: Role.ADMIN,
+				role: OrganizationRole.ADMIN,
 			});
 			expect(actual).rejects.toThrow();
 		});
@@ -183,7 +183,7 @@ describe("MembersRepository", () => {
 				data: {
 					userId: user.id,
 					organizationId: org1.id,
-					role: Role.MEMBER,
+					role: OrganizationRole.MEMBER,
 				},
 			});
 			// 5.
@@ -191,7 +191,7 @@ describe("MembersRepository", () => {
 				data: {
 					userId: user.id,
 					organizationId: org2.id,
-					role: Role.MEMBER,
+					role: OrganizationRole.MEMBER,
 				},
 			});
 
@@ -252,7 +252,7 @@ describe("MembersRepository", () => {
 				data: {
 					userId: user1.id,
 					organizationId: org1.id,
-					role: Role.MEMBER,
+					role: OrganizationRole.MEMBER,
 				},
 			});
 			// 5.
@@ -260,7 +260,7 @@ describe("MembersRepository", () => {
 				data: {
 					userId: user2.id,
 					organizationId: org1.id,
-					role: Role.MEMBER,
+					role: OrganizationRole.MEMBER,
 				},
 			});
 
@@ -309,7 +309,7 @@ describe("MembersRepository", () => {
 				data: {
 					userId: user.id,
 					organizationId: org.id,
-					role: Role.MEMBER,
+					role: OrganizationRole.MEMBER,
 				},
 			});
 
@@ -357,7 +357,7 @@ describe("MembersRepository", () => {
 				data: {
 					userId: user.id,
 					organizationId: org1.id,
-					role: Role.MEMBER,
+					role: OrganizationRole.MEMBER,
 				},
 			});
 
@@ -409,7 +409,7 @@ describe("MembersRepository", () => {
 				data: {
 					userId: user.id,
 					organizationId: organization.id,
-					role: Role.MEMBER,
+					role: OrganizationRole.MEMBER,
 				},
 			});
 
@@ -446,7 +446,7 @@ describe("MembersRepository", () => {
 				data: {
 					userId: user.id,
 					organizationId: organization.id,
-					role: Role.MEMBER,
+					role: OrganizationRole.MEMBER,
 				},
 			});
 
