@@ -156,15 +156,17 @@ export class MemberRepository implements IMemberRepository {
 	 * @param data.organizationId - The ID of the organization to remove the user from
 	 * @returns The removed membership
 	 */
-	remove(
+	async remove(
 		data: { id: string } | { userId: string; organizationId: string },
 	): Promise<OrganizationMember> {
 		if ("id" in data) {
-			return this.db.member.delete({ where: { id: data.id } });
+			const member = await this.db.member.delete({ where: { id: data.id } });
+			return new OrganizationMember(member);
 		}
 		const { userId, organizationId } = data;
-		return this.db.member.delete({
+		const member = await this.db.member.delete({
 			where: { userId_organizationId: { userId, organizationId } },
 		});
+		return new OrganizationMember(member);
 	}
 }

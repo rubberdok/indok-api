@@ -6,6 +6,7 @@ import {
 	PermissionDeniedError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
+import { OrganizationMember } from "~/domain/organizations.js";
 import { makeMockContext } from "~/lib/context.js";
 
 describe("OrganizationService", () => {
@@ -211,11 +212,11 @@ async function makeDeps() {
 	return {
 		organizationService,
 		adminUser,
-		adminUserMembership,
+		adminUserMembership: new OrganizationMember(adminUserMembership),
 		userService,
 		organization,
 		memberUser,
-		memberUserMembership: res.data.member,
+		memberUserMembership: new OrganizationMember(res.data.member),
 		notInOrganizationUser,
 	};
 }
