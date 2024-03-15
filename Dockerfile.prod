@@ -39,11 +39,11 @@ FROM base AS runner
 ENV NODE_ENV production
 
 COPY --chown=node:node --from=build /usr/src/app/certs /etc/ssl/certs
-COPY --chown=node:node --from=build /usr/src/app/package.json ./package.json
-COPY --chown=node:node --from=build /usr/src/app/dist ./dist
 COPY --chown=node:node --from=build /usr/src/app/scripts ./scripts
-COPY --chown=node:node --from=prod-deps /usr/src/app/prisma ./prisma
 COPY --chown=node:node --from=prod-deps /usr/src/app/node_modules ./node_modules
+COPY --chown=node:node --from=build /usr/src/app/package.json ./package.json
+COPY --chown=node:node --from=prod-deps /usr/src/app/prisma ./prisma
+COPY --chown=node:node --from=build /usr/src/app/dist ./dist
 
 USER node
 
