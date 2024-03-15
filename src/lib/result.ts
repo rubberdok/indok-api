@@ -17,7 +17,7 @@ type ResultAsync<
 	TError extends Error,
 > = Promise<TResult<TData, TError>>;
 
-export type { TResult, ResultAsync };
+export type { TResult, ResultAsync, ErrorResult, SuccessResult };
 export { Result };
 
 const Result = {

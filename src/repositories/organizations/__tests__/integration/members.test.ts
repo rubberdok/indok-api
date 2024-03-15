@@ -1,7 +1,11 @@
 import { faker } from "@faker-js/faker";
-import { NotFoundError } from "~/domain/errors.js";
-import { OrganizationRole } from "~/domain/organizations.js";
+import { InvalidArgumentErrorV2, NotFoundError } from "~/domain/errors.js";
+import {
+	type OrganizationMember,
+	OrganizationRole,
+} from "~/domain/organizations.js";
 import prisma from "~/lib/prisma.js";
+import { Result } from "~/lib/result.js";
 import { MemberRepository } from "../../members.js";
 
 let repo: MemberRepository;
@@ -41,16 +45,17 @@ describe("MembersRepository", () => {
 			 *
 			 * The membership should be created
 			 */
-			const expected = {
+			const expected: OrganizationMember = {
 				id: expect.any(String),
 				userId: user.id,
 				organizationId: org.id,
 				role: OrganizationRole.MEMBER,
-				updatedAt: expect.any(Date),
-				createdAt: expect.any(Date),
 			};
-			const actual = repo.create({ userId: user.id, organizationId: org.id });
-			expect(actual).resolves.toEqual(expected);
+			const actual = await repo.create({
+				userId: user.id,
+				organizationId: org.id,
+			});
+			expect(actual).toEqual(Result.success({ member: expected }));
 		});
 
 		it("should create a new member with role 'Admin'", async () => {
@@ -76,13 +81,11 @@ describe("MembersRepository", () => {
 					name: faker.string.sample(),
 				},
 			});
-			const expected = {
+			const expected: OrganizationMember = {
 				id: expect.any(String),
 				userId: user.id,
 				organizationId: org.id,
 				role: OrganizationRole.ADMIN,
-				updatedAt: expect.any(Date),
-				createdAt: expect.any(Date),
 			};
 
 			/**
@@ -90,12 +93,16 @@ describe("MembersRepository", () => {
 			 *
 			 * The membership should be created
 			 */
-			const actual = repo.create({
+			const actual = await repo.create({
 				userId: user.id,
 				organizationId: org.id,
 				role: OrganizationRole.ADMIN,
 			});
-			expect(actual).resolves.toEqual(expected);
+			expect(actual).toEqual(
+				Result.success({
+					member: expected,
+				}),
+			);
 		});
 
 		it("should disallow multiple memberships in the same organization", async () => {
@@ -136,12 +143,12 @@ describe("MembersRepository", () => {
 			 *
 			 * The membership should not be created
 			 */
-			const actual = repo.create({
+			const actual = await repo.create({
 				userId: user.id,
 				organizationId: org.id,
 				role: OrganizationRole.ADMIN,
 			});
-			expect(actual).rejects.toThrow();
+			expect(actual).toEqual(Result.error(expect.any(InvalidArgumentErrorV2)));
 		});
 	});
 

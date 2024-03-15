@@ -1,4 +1,9 @@
 import type {
+	InternalServerError,
+	InvalidArgumentErrorV2,
+	NotFoundError,
+} from "~/domain/errors.js";
+import type {
 	FeaturePermissionType,
 	Organization,
 	OrganizationMember,
@@ -6,6 +11,7 @@ import type {
 } from "~/domain/organizations.js";
 import type { StudyProgram, User } from "~/domain/users.js";
 import type { Context } from "~/lib/context.js";
+import type { ResultAsync } from "~/lib/result.js";
 import type { IOrganizationService } from "~/lib/server.js";
 import { buildMembers } from "./members.js";
 import { buildOrganizations } from "./organizations.js";
@@ -33,11 +39,22 @@ interface OrganizationRepository {
 }
 
 interface MemberRepository {
-	create(data: {
-		userId: string;
-		organizationId: string;
-		role?: string;
-	}): Promise<OrganizationMember>;
+	create(
+		data:
+			| {
+					userId: string;
+					organizationId: string;
+					role?: string;
+			  }
+			| {
+					email: string;
+					organizationId: string;
+					role?: string;
+			  },
+	): ResultAsync<
+		{ member: OrganizationMember },
+		NotFoundError | InvalidArgumentErrorV2 | InternalServerError
+	>;
 	remove(
 		data: { id: string } | { userId: string; organizationId: string },
 	): Promise<OrganizationMember>;

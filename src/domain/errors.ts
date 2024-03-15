@@ -198,17 +198,27 @@ const DomainErrorType = {
 
 type ErrorType = (typeof DomainErrorType)[keyof typeof DomainErrorType];
 
-class DomainError<TErrorType extends ErrorType> extends Error {
+class DomainError<
+	TErrorType extends ErrorType,
+	TName extends string,
+> extends Error {
 	public code: ErrorCode;
 	public type: TErrorType;
+	public name: TName;
 
 	constructor(
 		message: string,
-		options: { code: ErrorCode; type: TErrorType; cause?: unknown },
+		options: {
+			code: ErrorCode;
+			type: TErrorType;
+			cause?: unknown;
+			name: TName;
+		},
 	) {
 		super(message, { cause: options.cause });
 		this.code = options.code;
 		this.type = options.type;
+		this.name = options.name;
 		Error.captureStackTrace(this);
 	}
 
@@ -223,7 +233,8 @@ class DomainError<TErrorType extends ErrorType> extends Error {
 }
 
 class InvalidArgumentErrorV2 extends DomainError<
-	typeof DomainErrorType.InvalidArgumentError
+	typeof DomainErrorType.InvalidArgumentError,
+	"InvalidArgumentError"
 > {
 	public reason: Record<string, string[] | undefined> | undefined;
 
@@ -238,6 +249,7 @@ class InvalidArgumentErrorV2 extends DomainError<
 		super(message, {
 			code: errorCodes.ERR_BAD_USER_INPUT,
 			type: DomainErrorType.InvalidArgumentError,
+			name: "InvalidArgumentError",
 			...rest,
 		});
 		this.reason = reason;

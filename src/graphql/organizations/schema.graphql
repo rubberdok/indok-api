@@ -137,7 +137,11 @@ input AddMemberInput {
   """
   The ID of the user to add to the organization
   """
-  userId: ID!
+  userId: ID
+  """
+  The email of the user ot add to the organization
+  """
+  email: String
   """
   The ID of the organization to add the user to
   """
@@ -148,9 +152,21 @@ input AddMemberInput {
   role: Role
 }
 
-type AddMemberResponse {
+enum AddMemberErrorCode {
+  ALREADY_MEMBER
+  USER_NOT_FOUND
+}
+
+type AddMemberErrorResponse {
+  code: AddMemberErrorCode!
+  message: String!
+}
+
+type AddMemberSuccessResponse {
   member: Member!
 }
+
+union AddMemberResponse = AddMemberErrorResponse | AddMemberSuccessResponse
 
 input RemoveMemberInput {
   id: ID!

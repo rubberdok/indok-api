@@ -7,7 +7,7 @@ resource "azurerm_storage_account" "main" {
   account_replication_type = var.account_replication_type
   blob_properties {
     cors_rule {
-      allowed_headers    = ["x-ms-blob-content-type","x-ms-blob-type","x-ms-client-request-id","x-ms-version"]
+      allowed_headers    = ["*"]
       allowed_methods    = ["GET", "DELETE", "PUT", "HEAD", "MERGE", "POST", "OPTIONS", "PUT", "PATCH"]
       allowed_origins    = ["http://localhost:3000", "localhost:3000"]
       exposed_headers    = ["x-ms-meta-*"]

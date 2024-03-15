@@ -1,11 +1,16 @@
 import { faker } from "@faker-js/faker";
 import { makeTestServices } from "~/__tests__/dependencies-factory.js";
-import { PermissionDeniedError, UnauthorizedError } from "~/domain/errors.js";
+import {
+	InvalidArgumentErrorV2,
+	NotFoundError,
+	PermissionDeniedError,
+	UnauthorizedError,
+} from "~/domain/errors.js";
 import { makeMockContext } from "~/lib/context.js";
 
 describe("OrganizationService", () => {
 	describe("#addMember", () => {
-		it("should remove a member from an organization", async () => {
+		it("should add a member to an organization", async () => {
 			const { user, userNotInOrganization, organization, organizationService } =
 				await makeDeps();
 
@@ -27,6 +32,65 @@ describe("OrganizationService", () => {
 						role: "MEMBER",
 					}),
 				},
+			});
+		});
+
+		it("adds a member to an organization by their email", async () => {
+			const { user, userNotInOrganization, organization, organizationService } =
+				await makeDeps();
+
+			const result = await organizationService.members.addMember(
+				makeMockContext(user),
+				{
+					email: userNotInOrganization.email,
+					organizationId: organization.id,
+					role: "MEMBER",
+				},
+			);
+			expect(result).toEqual({
+				ok: true,
+				data: {
+					member: expect.objectContaining({
+						userId: userNotInOrganization.id,
+						organizationId: organization.id,
+						id: expect.any(String),
+						role: "MEMBER",
+					}),
+				},
+			});
+		});
+
+		it("returns NotFoundError if a user with that email does not exist", async () => {
+			const { user, organization, organizationService } = await makeDeps();
+
+			const result = await organizationService.members.addMember(
+				makeMockContext(user),
+				{
+					email: faker.internet.email(),
+					organizationId: organization.id,
+					role: "MEMBER",
+				},
+			);
+			expect(result).toEqual({
+				ok: false,
+				error: expect.any(NotFoundError),
+			});
+		});
+
+		it("returns InvalidArgumentError if a user is already a member of the organization", async () => {
+			const { user, organization, organizationService } = await makeDeps();
+
+			const result = await organizationService.members.addMember(
+				makeMockContext(user),
+				{
+					userId: user.id,
+					organizationId: organization.id,
+					role: "MEMBER",
+				},
+			);
+			expect(result).toEqual({
+				ok: false,
+				error: expect.any(InvalidArgumentErrorV2),
 			});
 		});
 

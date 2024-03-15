@@ -184,15 +184,17 @@ describe("OrganizationResolvers", () => {
 						mutation: graphql(`
               mutation addMember2 {
                 addMember(data: { userId: "user", organizationId: "org" }) {
-                  member {
-                    id
-                    organization {
-                      id
-                      members {
-                        id
-                      }
-                    }
-                  }
+					... on AddMemberSuccessResponse {
+						member {
+							id
+							organization {
+								id
+								members {
+									id
+								}
+							}
+						}
+					}
                 }
               }
             `),
@@ -245,18 +247,20 @@ describe("OrganizationResolvers", () => {
 					{
 						mutation: graphql(`
 			  mutation addMember2 {
-				addMember(data: { userId: "user", organizationId: "org" }) {
-				  member {
-					id
-					organization {
-					  id
-					  members {
-						id
-					  }
+                addMember(data: { userId: "user", organizationId: "org" }) {
+					... on AddMemberSuccessResponse {
+						member {
+							id
+							organization {
+								id
+								members {
+									id
+								}
+							}
+						}
 					}
-				  }
-				}
-			  }
+                }
+              }
 			`),
 					},
 					{

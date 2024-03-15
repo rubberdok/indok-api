@@ -1,3 +1,5 @@
+import { ApolloServerErrorCode } from "@apollo/server/errors";
+import { GraphQLError } from "graphql";
 import { OrganizationRole } from "~/domain/organizations.js";
 import type { MutationResolvers } from "./../../../types.generated.js";
 export const addMember: NonNullable<MutationResolvers["addMember"]> = async (
@@ -5,19 +7,47 @@ export const addMember: NonNullable<MutationResolvers["addMember"]> = async (
 	{ data },
 	ctx,
 ) => {
-	const { userId: memberId, organizationId, role } = data;
-	const addMemberResult = await ctx.organizations.members.addMember(ctx, {
-		userId: memberId,
-		organizationId,
-		role: role ?? OrganizationRole.MEMBER,
-	});
-	if (!addMemberResult.ok) {
-		switch (addMemberResult.error.name) {
-			case "PermissionDeniedError":
-			case "UnauthorizedError":
-				throw addMemberResult.error;
+	const { userId, email, organizationId, role } = data;
+	let addMemberResult: Awaited<
+		ReturnType<typeof ctx.organizations.members.addMember>
+	>;
+	if (userId) {
+		addMemberResult = await ctx.organizations.members.addMember(ctx, {
+			userId,
+			organizationId,
+			role: role ?? OrganizationRole.MEMBER,
+		});
+	} else if (email) {
+		addMemberResult = await ctx.organizations.members.addMember(ctx, {
+			email,
+			organizationId,
+			role: role ?? OrganizationRole.MEMBER,
+		});
+	} else {
+		throw new GraphQLError("You must provide either a userId or an email.", {
+			extensions: {
+				code: ApolloServerErrorCode.BAD_USER_INPUT,
+			},
+		});
+	}
+
+	if (addMemberResult.ok) {
+		return {
+			__typename: "AddMemberSuccessResponse",
+			member: addMemberResult.data.member,
+		};
+	}
+
+	switch (addMemberResult.error.name) {
+		case "InvalidArgumentError":
+		case "NotFoundError": {
+			return {
+				__typename: "AddMemberErrorResponse",
+				error: addMemberResult.error,
+			};
+		}
+		default: {
+			throw addMemberResult.error;
 		}
 	}
-	const { member } = addMemberResult.data;
-	return { member };
 };
