@@ -114,14 +114,24 @@ interface IOrganizationService {
 	members: {
 		addMember(
 			ctx: Context,
-			data: {
-				userId: string;
-				organizationId: string;
-				role: OrganizationRoleType;
-			},
+			data:
+				| {
+						userId: string;
+						organizationId: string;
+						role: OrganizationRoleType;
+				  }
+				| {
+						email: string;
+						organizationId: string;
+						role: OrganizationRoleType;
+				  },
 		): ResultAsync<
 			{ member: OrganizationMember },
-			PermissionDeniedError | UnauthorizedError
+			| PermissionDeniedError
+			| UnauthorizedError
+			| InvalidArgumentErrorV2
+			| NotFoundError
+			| InternalServerError
 		>;
 		removeMember(
 			ctx: Context,

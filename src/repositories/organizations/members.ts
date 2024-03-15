@@ -1,13 +1,19 @@
-import type { PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
-import { InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
-import type {
+import {
+	InternalServerError,
+	InvalidArgumentErrorV2,
+	NotFoundError,
+} from "~/domain/errors.js";
+import {
 	OrganizationMember,
-	OrganizationRoleType,
+	type OrganizationRoleType,
 } from "~/domain/organizations.js";
 import { prismaKnownErrorCodes } from "~/lib/prisma.js";
+import { Result, type ResultAsync } from "~/lib/result.js";
+import type { MemberRepository as IMemberRepository } from "~/services/organizations/service.js";
 
-export class MemberRepository {
+export class MemberRepository implements IMemberRepository {
 	constructor(private db: PrismaClient) {}
 
 	findMany(where?: { organizationId?: string; userId?: string }): Promise<
@@ -78,21 +84,65 @@ export class MemberRepository {
 	 * @param {string} data.organizationId - The ID of the organization to add the user to
 	 * @param {OrganizationRoleType} data.role - The role of the user in the organization, defaults to OrganizationRoleType.MEMBER
 	 */
-	async create(data: {
-		userId: string;
-		organizationId: string;
-		role?: OrganizationRoleType;
-	}): Promise<OrganizationMember> {
-		return this.db.member.create({ data }).catch((err) => {
+	async create(
+		data:
+			| {
+					userId: string;
+					organizationId: string;
+					role?: OrganizationRoleType;
+			  }
+			| {
+					email: string;
+					organizationId: string;
+					role?: OrganizationRoleType;
+			  },
+	): ResultAsync<
+		{ member: OrganizationMember },
+		InternalServerError | InvalidArgumentErrorV2 | NotFoundError
+	> {
+		try {
+			let userWhereInput: Prisma.UserWhereUniqueInput;
+			if ("userId" in data) {
+				userWhereInput = { id: data.userId };
+			} else {
+				userWhereInput = { email: data.email };
+			}
+
+			const member = await this.db.member.create({
+				data: {
+					organization: {
+						connect: { id: data.organizationId },
+					},
+					role: data.role,
+					user: {
+						connect: userWhereInput,
+					},
+				},
+			});
+
+			return Result.success({ member: new OrganizationMember(member) });
+		} catch (err) {
 			if (err instanceof PrismaClientKnownRequestError) {
-				if (err.code === "P2002") {
-					throw new InvalidArgumentError(
-						"The user is already a member of the organization.",
+				if (
+					err.code === prismaKnownErrorCodes.ERR_UNIQUE_CONSTRAINT_VIOLATION
+				) {
+					return Result.error(
+						new InvalidArgumentErrorV2(
+							"The user is already a member of the organization.",
+							{ cause: err },
+						),
+					);
+				}
+				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) {
+					return Result.error(
+						new NotFoundError("The user does not exist.", err),
 					);
 				}
 			}
-			throw err;
-		});
+			return Result.error(
+				new InternalServerError("Failed to add member.", err),
+			);
+		}
 	}
 
 	/**

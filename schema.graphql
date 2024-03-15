@@ -6,6 +6,9 @@ To regenerate this file, run `npm run generate:gql`
 """
 
 input AddMemberInput {
+  """The email of the user ot add to the organization"""
+  email: String
+
   """The ID of the organization to add the user to"""
   organizationId: ID!
 
@@ -13,7 +16,7 @@ input AddMemberInput {
   role: Role
 
   """The ID of the user to add to the organization"""
-  userId: ID!
+  userId: ID
 }
 
 type AddMemberResponse {

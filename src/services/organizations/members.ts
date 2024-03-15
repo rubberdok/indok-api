@@ -1,15 +1,18 @@
 import {
+	InternalServerError,
 	InvalidArgumentError,
+	InvalidArgumentErrorV2,
+	NotFoundError,
 	PermissionDeniedError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
 import {
-	type OrganizationMember,
 	OrganizationRole,
 	type OrganizationRoleType,
 } from "~/domain/organizations.js";
 import type { Context } from "~/lib/context.js";
-import type { ResultAsync } from "~/lib/result.js";
+import { Result } from "~/lib/result.js";
+import type { IOrganizationService } from "~/lib/server.js";
 import type { Dependencies } from "./service.js";
 
 interface PermissionService {
@@ -25,15 +28,9 @@ interface PermissionService {
 function buildMembers(
 	{ memberRepository }: Dependencies,
 	{ permissions }: { permissions: PermissionService },
-) {
+): IOrganizationService["members"] {
 	return {
-		async findMany(
-			ctx: Context,
-			params: { organizationId: string },
-		): ResultAsync<
-			{ members: OrganizationMember[] },
-			PermissionDeniedError | UnauthorizedError
-		> {
+		async findMany(ctx, params) {
 			const { organizationId } = params;
 			if (!ctx.user) {
 				return {
@@ -82,13 +79,7 @@ function buildMembers(
 		 * @param data.organizationId - The ID of the organization to remove the user from
 		 * @returns
 		 */
-		async removeMember(
-			ctx: Context,
-			params: { memberId: string },
-		): ResultAsync<
-			{ member: OrganizationMember },
-			UnauthorizedError | PermissionDeniedError | InvalidArgumentError
-		> {
+		async removeMember(ctx, params) {
 			ctx.log.info({ params }, "removing member from organization");
 
 			if (!ctx.user) {
@@ -180,28 +171,16 @@ function buildMembers(
 		 * @requires The user must be an admin of the organization
 		 * @param userId - The ID of the user performing the action
 		 * @param data.userId - The ID of the user to add to the organization
+		 * @param data.email - The email of the user to add to the organization
 		 * @param data.organizationId - The ID of the organization to add the user to
 		 * @param data.role - The role of the user in the organization
 		 * @returns The created membership
 		 */
-		async addMember(
-			ctx: Context,
-			data: {
-				userId: string;
-				organizationId: string;
-				role: OrganizationRoleType;
-			},
-		): ResultAsync<
-			{ member: OrganizationMember },
-			PermissionDeniedError | UnauthorizedError
-		> {
+		async addMember(ctx, data) {
 			if (!ctx.user) {
-				return {
-					ok: false,
-					error: new UnauthorizedError(
-						"You must be logged in to add a member.",
-					),
-				};
+				return Result.error(
+					new UnauthorizedError("You must be logged in to add a member."),
+				);
 			}
 
 			const isAdmin = await permissions.hasRole(ctx, {
@@ -213,14 +192,33 @@ function buildMembers(
 			 * where permissions.hasRole() returns a truthy value that is not a boolean.
 			 */
 			if (isAdmin !== true) {
-				return {
-					ok: false,
-					error: new PermissionDeniedError(
+				return Result.error(
+					new PermissionDeniedError(
 						"You must be an admin of the organization to add a member.",
 					),
-				};
+				);
 			}
-			const addedMember = await memberRepository.create(data);
+			const addMemberResult = await memberRepository.create(data);
+			if (!addMemberResult.ok) {
+				const { error } = addMemberResult;
+				if (error instanceof InvalidArgumentErrorV2) {
+					return Result.error(
+						new InvalidArgumentErrorV2(
+							"The user is already a member of the organization.",
+							{ cause: error },
+						),
+					);
+				}
+				if (error instanceof NotFoundError) {
+					return Result.error(
+						new NotFoundError("The user does not exist.", error),
+					);
+				}
+				return Result.error(
+					new InternalServerError("Failed to add member.", error),
+				);
+			}
+			const { member: addedMember } = addMemberResult.data;
 			return { ok: true, data: { member: addedMember } };
 		},
 	};
