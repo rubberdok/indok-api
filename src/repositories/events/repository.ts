@@ -18,7 +18,7 @@ import {
 	Event,
 	EventParticipationStatus,
 	type EventParticipationStatusType,
-	type EventSignUp,
+	EventSignUp,
 	type EventType,
 	type EventUpdateFn,
 	Slot,
@@ -580,7 +580,7 @@ export class EventRepository {
 			return {
 				ok: true,
 				data: {
-					signUps,
+					signUps: signUps.map((signUp) => new EventSignUp(signUp)),
 					total,
 				},
 			};
@@ -650,7 +650,7 @@ export class EventRepository {
 				return { event, signUp, slot };
 			}
 			const { event, signUp } = await this.createOnWaitlistSignUp(data);
-			return { event, signUp };
+			return { event, signUp: new EventSignUp(signUp) };
 		} catch (err) {
 			if (err instanceof PrismaClientKnownRequestError) {
 				if (err.code === "P2002") throw new AlreadySignedUpError(err.message);
@@ -887,7 +887,7 @@ export class EventRepository {
 					"Failed to convert event from data storage",
 				);
 			}
-			return { event: res.data.event, slot, signUp };
+			return { event: res.data.event, slot, signUp: new EventSignUp(signUp) };
 		}
 
 		if (newParticipationStatus === EventParticipationStatus.CONFIRMED) {
@@ -1237,7 +1237,7 @@ export class EventRepository {
 			return {
 				ok: true,
 				data: {
-					signUp,
+					signUp: new EventSignUp(signUp),
 				},
 			};
 		} catch (err) {
@@ -1359,7 +1359,7 @@ export class EventRepository {
 			return {
 				ok: true,
 				data: {
-					signUp,
+					signUp: new EventSignUp(signUp),
 				},
 			};
 		} catch (err) {
@@ -1441,7 +1441,7 @@ export class EventRepository {
 			return {
 				ok: true,
 				data: {
-					signUp,
+					signUp: new EventSignUp(signUp),
 				},
 			};
 		} catch (err) {

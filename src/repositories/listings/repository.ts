@@ -1,7 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 import { NotFoundError } from "~/domain/errors.js";
-import type { Listing } from "~/domain/listings.js";
+import { Listing } from "~/domain/listings.js";
 
 export class ListingRepository {
 	constructor(private db: PrismaClient) {}
@@ -39,12 +39,14 @@ export class ListingRepository {
 		}>,
 	): Promise<Listing> {
 		try {
-			return await this.db.listing.update({
-				where: {
-					id,
-				},
-				data,
-			});
+			return new Listing(
+				await this.db.listing.update({
+					where: {
+						id,
+					},
+					data,
+				}),
+			);
 		} catch (err) {
 			if (err instanceof PrismaClientKnownRequestError) {
 				if (err.code === "P2025") {
@@ -63,11 +65,13 @@ export class ListingRepository {
 	 */
 	async delete(id: string): Promise<Listing> {
 		try {
-			return await this.db.listing.delete({
-				where: {
-					id,
-				},
-			});
+			return new Listing(
+				await this.db.listing.delete({
+					where: {
+						id,
+					},
+				}),
+			);
 		} catch (err) {
 			if (err instanceof PrismaClientKnownRequestError) {
 				if (err.code === "P2025") {
@@ -92,21 +96,23 @@ export class ListingRepository {
 		});
 		if (listing === null)
 			throw new NotFoundError(`Listing with id ${id} not found`);
-		return listing;
+		return new Listing(listing);
 	}
 
 	/**
 	 * findMany returns all listings
 	 * @returns all listings
 	 */
-	findMany(params?: { organizationId?: string }): Promise<Listing[]> {
+	async findMany(params?: { organizationId?: string }): Promise<Listing[]> {
 		if (params?.organizationId) {
-			return this.db.listing.findMany({
+			const listings = await this.db.listing.findMany({
 				where: {
 					organizationId: params.organizationId,
 				},
 			});
+			return listings.map((listing) => new Listing(listing));
 		}
-		return this.db.listing.findMany();
+		const listings = await this.db.listing.findMany();
+		return listings.map((listing) => new Listing(listing));
 	}
 }
