@@ -1,8 +1,11 @@
 import { fail } from "node:assert";
 import { faker } from "@faker-js/faker";
-import { FeaturePermission, type Organization } from "@prisma/client";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { UnauthorizedError } from "~/domain/errors.js";
+import {
+	FeaturePermission,
+	type Organization,
+} from "~/domain/organizations.js";
 import { makeMockContext } from "~/lib/context.js";
 import {
 	type MemberRepository,

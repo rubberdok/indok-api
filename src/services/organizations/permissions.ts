@@ -1,5 +1,8 @@
-import type { FeaturePermission } from "@prisma/client";
-import { Role } from "~/domain/organizations.js";
+import {
+	type FeaturePermissionType,
+	OrganizationRole,
+	type OrganizationRoleType,
+} from "~/domain/organizations.js";
 import type { Context } from "~/lib/context.js";
 import type { Dependencies } from "./service.js";
 
@@ -26,7 +29,7 @@ function buildPermissions({
 		ctx: Context,
 		data: {
 			organizationId: string;
-			role: Role;
+			role: OrganizationRoleType;
 		},
 	): Promise<boolean> {
 		const { organizationId, role } = data;
@@ -39,7 +42,7 @@ function buildPermissions({
 		const isAdmin = await memberRepository.hasRole({
 			userId: ctx.user.id,
 			organizationId,
-			role: Role.ADMIN,
+			role: OrganizationRole.ADMIN,
 		});
 		if (isAdmin === true) return true;
 
@@ -83,8 +86,8 @@ function buildPermissions({
 			ctx: Context,
 			data: {
 				organizationId: string;
-				role: Role;
-				featurePermission?: FeaturePermission;
+				role: OrganizationRoleType;
+				featurePermission?: FeaturePermissionType;
 			},
 		): Promise<boolean> {
 			const { organizationId, role, featurePermission } = data;
@@ -124,7 +127,7 @@ function buildPermissions({
 		async hasFeaturePermission(
 			ctx: Context,
 			data: {
-				featurePermission: FeaturePermission;
+				featurePermission: FeaturePermissionType;
 			},
 		): Promise<boolean> {
 			if (!ctx.user) return false;

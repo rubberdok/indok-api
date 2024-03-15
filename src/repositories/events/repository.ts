@@ -1,10 +1,7 @@
-import {
-	type EventSignUp,
-	type EventSlot,
-	ParticipationStatus,
-	type Prisma,
-	type PrismaClient,
-	type Event as PrismaEvent,
+import type {
+	Prisma,
+	PrismaClient,
+	Event as PrismaEvent,
 } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 import { pick } from "lodash-es";
@@ -16,8 +13,12 @@ import {
 	NotFoundError,
 } from "~/domain/errors.js";
 import type { CategoryType } from "~/domain/events/category.js";
-import { AlreadySignedUpError, Event } from "~/domain/events/event.js";
 import {
+	AlreadySignedUpError,
+	Event,
+	EventParticipationStatus,
+	type EventParticipationStatusType,
+	type EventSignUp,
 	type EventType,
 	type EventUpdateFn,
 	Slot,
@@ -325,7 +326,7 @@ export class EventRepository {
 	async getSlotWithRemainingCapacity(
 		eventId: string,
 		gradeYear?: number,
-	): Promise<EventSlot | null> {
+	): Promise<SlotType | null> {
 		if (gradeYear !== undefined) {
 			const slot = await this.db.eventSlot.findFirst({
 				where: {
@@ -549,7 +550,7 @@ export class EventRepository {
 	 */
 	async findManySignUps(data: {
 		eventId?: string;
-		status?: ParticipationStatus;
+		status?: EventParticipationStatusType;
 		userId?: string;
 		orderBy?: "asc" | "desc";
 	}): ResultAsync<
@@ -609,7 +610,7 @@ export class EventRepository {
 	 */
 	public async createSignUp(
 		data: CreateConfirmedSignUpData,
-	): Promise<{ event: EventType; signUp: EventSignUp; slot: EventSlot }>;
+	): Promise<{ event: EventType; signUp: EventSignUp; slot: SlotType }>;
 	/**
 	 * Create a new sign up for the event the given participation status. All newly created events are set as active,
 	 * which is either `ON_WAITLIST` or `CONFIRMED`. Leaves the remaining capacity of the event and slot unchanged.
@@ -641,7 +642,7 @@ export class EventRepository {
 	public async createSignUp(data: CreateSignUpParams): Promise<{
 		event: EventType;
 		signUp: EventSignUp;
-		slot?: EventSlot;
+		slot?: SlotType;
 	}> {
 		try {
 			if ("slotId" in data) {
@@ -810,7 +811,7 @@ export class EventRepository {
 	 */
 	public async updateSignUp(
 		data: UpdateToConfirmedSignUpData,
-	): Promise<{ event: EventType; signUp: EventSignUp; slot: EventSlot }>;
+	): Promise<{ event: EventType; signUp: EventSignUp; slot: SlotType }>;
 	/**
 	 * updateSignUp - updates the participation status for the active sign up for the given user and event to
 	 * one of the inactive statuses. If the current participation status CONFIRMED, the sign up is removed from the slot
@@ -852,7 +853,7 @@ export class EventRepository {
 	public async updateSignUp(data: UpdateSignUpParams): Promise<{
 		event: EventType;
 		signUp: EventSignUp;
-		slot?: EventSlot | null;
+		slot?: SlotType | null;
 	}> {
 		const currentSignUp = await this.db.eventSignUp.findUnique({
 			include: {
@@ -889,7 +890,7 @@ export class EventRepository {
 			return { event: res.data.event, slot, signUp };
 		}
 
-		if (newParticipationStatus === ParticipationStatus.CONFIRMED) {
+		if (newParticipationStatus === EventParticipationStatus.CONFIRMED) {
 			const { event, slot, signUp } =
 				await this.newParticipationStatusConfirmedHandler({
 					currentSignUp,
@@ -926,12 +927,12 @@ export class EventRepository {
 		currentSignUp: {
 			id: string;
 			version: number;
-			participationStatus: ParticipationStatus;
+			participationStatus: EventParticipationStatusType;
 		};
 	}) {
 		const { currentSignUp, eventId, slotId } = data;
 		switch (currentSignUp.participationStatus) {
-			case ParticipationStatus.ON_WAITLIST: {
+			case EventParticipationStatus.ON_WAITLIST: {
 				try {
 					// Promote from wait list to confirmed
 					return await this.makeOnWaitlistSignUpConfirmed({
@@ -952,11 +953,11 @@ export class EventRepository {
 					throw err;
 				}
 			}
-			case ParticipationStatus.REMOVED:
+			case EventParticipationStatus.REMOVED:
 			// fallthrough
-			case ParticipationStatus.RETRACTED:
+			case EventParticipationStatus.RETRACTED:
 			// fallthrough
-			case ParticipationStatus.CONFIRMED: {
+			case EventParticipationStatus.CONFIRMED: {
 				throw new InvalidArgumentError(
 					"Only sign ups on the wait list can be changed to confirmed",
 				);
@@ -966,7 +967,7 @@ export class EventRepository {
 
 	private async newParticipationStatusInactiveHandler(data: {
 		newParticipationStatus: Extract<
-			ParticipationStatus,
+			EventParticipationStatusType,
 			"REMOVED" | "RETRACTED"
 		>;
 		userId: string;
@@ -974,14 +975,14 @@ export class EventRepository {
 		currentSignUp: {
 			id: string;
 			version: number;
-			participationStatus: ParticipationStatus;
+			participationStatus: EventParticipationStatusType;
 		};
 	}) {
 		const { currentSignUp, userId, eventId, newParticipationStatus } = data;
 		switch (currentSignUp.participationStatus) {
-			case ParticipationStatus.CONFIRMED:
+			case EventParticipationStatus.CONFIRMED:
 			// fallthrough
-			case ParticipationStatus.ON_WAITLIST: {
+			case EventParticipationStatus.ON_WAITLIST: {
 				try {
 					// Demote from wait list or confirmed to removed or retracted
 					// Don't need to check active here, as we already did that above
@@ -1005,9 +1006,9 @@ export class EventRepository {
 					throw err;
 				}
 			}
-			case ParticipationStatus.REMOVED:
+			case EventParticipationStatus.REMOVED:
 			// fallthrough
-			case ParticipationStatus.RETRACTED: {
+			case EventParticipationStatus.RETRACTED: {
 				throw new InvalidArgumentError(
 					"Only sign ups on the wait list or confirmed can be changed to removed or retracted",
 				);
@@ -1025,7 +1026,7 @@ export class EventRepository {
 		signUp: {
 			id: string;
 			version: number;
-			participationSatus: Extract<ParticipationStatus, "ON_WAITLIST">;
+			participationSatus: Extract<EventParticipationStatusType, "ON_WAITLIST">;
 		};
 		eventId: string;
 		slotId: string;
@@ -1042,7 +1043,7 @@ export class EventRepository {
 				version: signUp.version,
 			},
 			data: {
-				participationStatus: ParticipationStatus.CONFIRMED,
+				participationStatus: EventParticipationStatus.CONFIRMED,
 				version: {
 					increment: 1,
 				},
@@ -1095,14 +1096,14 @@ export class EventRepository {
 			id: string;
 			version: number;
 			participationStatus: Extract<
-				ParticipationStatus,
+				EventParticipationStatusType,
 				"ON_WAITLIST" | "CONFIRMED"
 			>;
 		};
 		userId: string;
 		eventId: string;
 		newParticipationStatus: Extract<
-			ParticipationStatus,
+			EventParticipationStatusType,
 			"REMOVED" | "RETRACTED"
 		>;
 	}) {
@@ -1113,7 +1114,7 @@ export class EventRepository {
 		} & EventSignUp;
 
 		switch (currentSignUp.participationStatus) {
-			case ParticipationStatus.ON_WAITLIST: {
+			case EventParticipationStatus.ON_WAITLIST: {
 				[, result] = await this.db.$transaction([
 					this.db.eventSignUp.deleteMany({
 						where: {
@@ -1141,7 +1142,7 @@ export class EventRepository {
 				]);
 				break;
 			}
-			case ParticipationStatus.CONFIRMED: {
+			case EventParticipationStatus.CONFIRMED: {
 				[, result] = await this.db.$transaction([
 					this.db.eventSignUp.deleteMany({
 						where: {
@@ -1248,7 +1249,7 @@ export class EventRepository {
 	}
 
 	findManySlots(data: { gradeYear?: number; eventId: string }): Promise<
-		EventSlot[]
+		SlotType[]
 	> {
 		const { gradeYear, eventId } = data;
 		if (gradeYear !== undefined) {
@@ -1389,7 +1390,7 @@ export class EventRepository {
 			const count = await this.db.eventSignUp.count({
 				where: {
 					eventId,
-					participationStatus: ParticipationStatus.ON_WAITLIST,
+					participationStatus: EventParticipationStatus.ON_WAITLIST,
 					createdAt: {
 						lt: createdAt,
 					},
@@ -1456,14 +1457,14 @@ interface CreateConfirmedSignUpData {
 	eventId: string;
 	userId: string;
 	slotId: string;
-	participationStatus: Extract<ParticipationStatus, "CONFIRMED">;
+	participationStatus: Extract<EventParticipationStatusType, "CONFIRMED">;
 	userProvidedInformation?: string;
 }
 
 interface CreateOnWaitlistSignUpData {
 	eventId: string;
 	userId: string;
-	participationStatus: Extract<ParticipationStatus, "ON_WAITLIST">;
+	participationStatus: Extract<EventParticipationStatusType, "ON_WAITLIST">;
 	userProvidedInformation?: string;
 }
 
@@ -1475,13 +1476,16 @@ interface UpdateToConfirmedSignUpData {
 	userId: string;
 	eventId: string;
 	slotId: string;
-	newParticipationStatus: Extract<ParticipationStatus, "CONFIRMED">;
+	newParticipationStatus: Extract<EventParticipationStatusType, "CONFIRMED">;
 }
 
 interface UpdateToInactiveSignUpData {
 	userId: string;
 	eventId: string;
-	newParticipationStatus: Extract<ParticipationStatus, "REMOVED" | "RETRACTED">;
+	newParticipationStatus: Extract<
+		EventParticipationStatusType,
+		"REMOVED" | "RETRACTED"
+	>;
 }
 type UpdateSignUpParams =
 	| UpdateToConfirmedSignUpData
@@ -1496,4 +1500,4 @@ type UpdateEvent<TError extends Error> = (
 	InternalServerError | TError
 >;
 
-export type { CreateSignUpParams, UpdateSignUpParams, UpdateEvent };
+export type { CreateSignUpParams, UpdateEvent, UpdateSignUpParams };

@@ -1,8 +1,11 @@
 import assert from "node:assert";
 import { faker } from "@faker-js/faker";
-import { ParticipationStatus } from "@prisma/client";
 import { merge } from "lodash-es";
 import { DateTime } from "luxon";
+import {
+	EventParticipationStatus,
+	type EventParticipationStatusType,
+} from "~/domain/events/sign-ups.js";
 import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import type { EventService } from "../../service.js";
@@ -63,7 +66,7 @@ describe("EventService", () => {
 			await makeSignUp({
 				userId: user1.id,
 				eventId: event.id,
-				participationStatus: ParticipationStatus.CONFIRMED,
+				participationStatus: EventParticipationStatus.CONFIRMED,
 				slotId: slot.id,
 			});
 			const signUp2 = await makeSignUp({
@@ -98,7 +101,7 @@ describe("EventService", () => {
 			expect(actual).toEqual(
 				merge(signUp2, {
 					slotId: slot.id,
-					participationStatus: ParticipationStatus.CONFIRMED,
+					participationStatus: EventParticipationStatus.CONFIRMED,
 					version: 1,
 					updatedAt: expect.any(Date),
 				}),
@@ -135,12 +138,12 @@ function makeSignUp({
 	userId,
 	eventId,
 	slotId,
-	participationStatus = ParticipationStatus.ON_WAITLIST,
+	participationStatus = EventParticipationStatus.ON_WAITLIST,
 }: {
 	userId: string;
 	eventId: string;
 	slotId?: string;
-	participationStatus?: ParticipationStatus;
+	participationStatus?: EventParticipationStatusType;
 }) {
 	return prisma.eventSignUp.create({
 		data: {

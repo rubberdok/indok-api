@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import type { Cabin } from "@prisma/client";
+import type { Cabin } from "~/domain/cabins.js";
 import { InvalidArgumentErrorV2 } from "~/domain/errors.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "~/graphql/test-clients/unit/gql.js";

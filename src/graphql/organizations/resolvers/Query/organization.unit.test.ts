@@ -1,7 +1,10 @@
 import { faker } from "@faker-js/faker";
-import type { Member, Organization } from "@prisma/client";
 import { mock } from "jest-mock-extended";
 import { UnauthorizedError } from "~/domain/errors.js";
+import type {
+	Organization,
+	OrganizationMember,
+} from "~/domain/organizations.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
@@ -113,7 +116,7 @@ describe("Organization Queries", () => {
 			organizationService.members.findMany.mockResolvedValue({
 				ok: true,
 				data: {
-					members: [mock<Member>({ id: faker.string.uuid() })],
+					members: [mock<OrganizationMember>({ id: faker.string.uuid() })],
 				},
 			});
 

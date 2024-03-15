@@ -9,7 +9,7 @@ import {
 	InvalidArgumentError,
 	NotFoundError,
 } from "~/domain/errors.js";
-import { Role } from "~/domain/organizations.js";
+import { OrganizationRole } from "~/domain/organizations.js";
 import { prismaKnownErrorCodes } from "~/lib/prisma.js";
 
 export class OrganizationRepository {
@@ -43,7 +43,7 @@ export class OrganizationRepository {
 					members: {
 						create: {
 							userId,
-							role: Role.ADMIN,
+							role: OrganizationRole.ADMIN,
 						},
 					},
 					...rest,

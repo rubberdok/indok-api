@@ -1,10 +1,13 @@
-import type { Member } from "@prisma/client";
 import {
 	InvalidArgumentError,
 	PermissionDeniedError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
-import { Role } from "~/domain/organizations.js";
+import {
+	type OrganizationMember,
+	OrganizationRole,
+	type OrganizationRoleType,
+} from "~/domain/organizations.js";
 import type { Context } from "~/lib/context.js";
 import type { ResultAsync } from "~/lib/result.js";
 import type { Dependencies } from "./service.js";
@@ -14,7 +17,7 @@ interface PermissionService {
 		ctx: Context,
 		data: {
 			organizationId: string;
-			role: Role;
+			role: OrganizationRoleType;
 		},
 	): Promise<boolean>;
 }
@@ -28,7 +31,7 @@ function buildMembers(
 			ctx: Context,
 			params: { organizationId: string },
 		): ResultAsync<
-			{ members: Member[] },
+			{ members: OrganizationMember[] },
 			PermissionDeniedError | UnauthorizedError
 		> {
 			const { organizationId } = params;
@@ -43,7 +46,7 @@ function buildMembers(
 
 			const isMember = await permissions.hasRole(ctx, {
 				organizationId,
-				role: Role.MEMBER,
+				role: OrganizationRole.MEMBER,
 			});
 			if (!isMember) {
 				return {
@@ -65,11 +68,11 @@ function buildMembers(
 		 *
 		 * Cases to consider:
 		 * 1. The user being removed (data.userId) is the only member of the organization -> abort ❌
-		 *    - Members: `[{ userId: "1", role: Role.ADMIN }]`
+		 *    - Members: `[{ userId: "1", role: OrganizationRole.ADMIN }]`
 		 * 2. The user being removed (data.userId) is the only _admin_ of the organization -> abort ❌
-		 *    - Members: `[{ userId: "1", role: Role.ADMIN }, { userId: "2", role: Role.MEMBER }]`
+		 *    - Members: `[{ userId: "1", role: OrganizationRole.ADMIN }, { userId: "2", role: OrganizationRole.MEMBER }]`
 		 * 3. The user being removed (data.userId) is _not_ the only admin of the organization -> remove ✅
-		 *    - Members: `[{ userId: "1", role: Role.ADMIN }, { userId: "2", role: Role.ADMIN }]`
+		 *    - Members: `[{ userId: "1", role: OrganizationRole.ADMIN }, { userId: "2", role: OrganizationRole.ADMIN }]`
 		 *
 		 * @requires The user must be an admin of the organization
 		 * @throws {InvalidArgumentError} - If the user is the only member of the organization
@@ -83,7 +86,7 @@ function buildMembers(
 			ctx: Context,
 			params: { memberId: string },
 		): ResultAsync<
-			{ member: Member },
+			{ member: OrganizationMember },
 			UnauthorizedError | PermissionDeniedError | InvalidArgumentError
 		> {
 			ctx.log.info({ params }, "removing member from organization");
@@ -101,10 +104,10 @@ function buildMembers(
 			const memberToRemove = await memberRepository.get({ id: memberId });
 			const { organizationId } = memberToRemove;
 
-			let requiredRole: Role = Role.ADMIN;
+			let requiredRole: OrganizationRoleType = OrganizationRole.ADMIN;
 			/* Removing yourself from an organization, i.e. leaving, does not require you to be an admin. */
 			if (ctx.user.id === memberToRemove.userId) {
-				requiredRole = Role.MEMBER;
+				requiredRole = OrganizationRole.MEMBER;
 			}
 
 			const hasRequiredRole = await permissions.hasRole(ctx, {
@@ -128,7 +131,7 @@ function buildMembers(
 			 * We have to take extra care when removing admins, as we
 			 * cannot remove the last admin of an organization.
 			 */
-			const removingAnAdmin = memberToRemove.role === Role.ADMIN;
+			const removingAnAdmin = memberToRemove.role === OrganizationRole.ADMIN;
 			if (!removingAnAdmin) {
 				/**
 				 * If we're not removing an admin, we're safe to go ahead, as
@@ -143,7 +146,7 @@ function buildMembers(
 			// Find all admins in the organization
 			const adminsInTheOrganization = await memberRepository.findMany({
 				organizationId: organizationId,
-				role: Role.ADMIN,
+				role: OrganizationRole.ADMIN,
 			});
 
 			/**
@@ -183,9 +186,13 @@ function buildMembers(
 		 */
 		async addMember(
 			ctx: Context,
-			data: { userId: string; organizationId: string; role: Role },
+			data: {
+				userId: string;
+				organizationId: string;
+				role: OrganizationRoleType;
+			},
 		): ResultAsync<
-			{ member: Member },
+			{ member: OrganizationMember },
 			PermissionDeniedError | UnauthorizedError
 		> {
 			if (!ctx.user) {
@@ -199,7 +206,7 @@ function buildMembers(
 
 			const isAdmin = await permissions.hasRole(ctx, {
 				organizationId: data.organizationId,
-				role: Role.ADMIN,
+				role: OrganizationRole.ADMIN,
 			});
 			/**
 			 * We explicitly check that the value is `true` to avoid any potential situations

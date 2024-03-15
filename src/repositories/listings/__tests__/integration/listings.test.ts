@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker";
-import type { Organization } from "@prisma/client";
 import { NotFoundError } from "~/domain/errors.js";
+import type { Organization } from "~/domain/organizations.js";
 import prisma from "~/lib/prisma.js";
 import { ListingRepository } from "../../repository.js";
 

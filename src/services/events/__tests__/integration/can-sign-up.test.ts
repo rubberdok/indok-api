@@ -1,6 +1,9 @@
 import { faker } from "@faker-js/faker";
-import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
+import {
+	EventParticipationStatus,
+	type EventParticipationStatusType,
+} from "~/domain/events/sign-ups.js";
 import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import type { EventService } from "../../service.js";
@@ -31,7 +34,7 @@ describe("EventService", () => {
 					capacity: number;
 					gradeYears?: number[];
 				}[];
-				signUp?: { participationStatus: ParticipationStatus };
+				signUp?: { participationStatus: EventParticipationStatusType };
 			};
 			expected: boolean;
 		}
@@ -65,7 +68,7 @@ describe("EventService", () => {
 						},
 					],
 					signUp: {
-						participationStatus: ParticipationStatus.REMOVED,
+						participationStatus: EventParticipationStatus.REMOVED,
 					},
 				},
 				expected: true,
@@ -83,7 +86,7 @@ describe("EventService", () => {
 						},
 					],
 					signUp: {
-						participationStatus: ParticipationStatus.CONFIRMED,
+						participationStatus: EventParticipationStatus.CONFIRMED,
 					},
 				},
 				expected: false,

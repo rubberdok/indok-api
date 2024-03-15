@@ -1,6 +1,5 @@
 import assert, { fail } from "node:assert";
 import { faker } from "@faker-js/faker";
-import type { Organization } from "@prisma/client";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import {
 	InvalidArgumentError,
@@ -8,7 +7,11 @@ import {
 	PermissionDeniedError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
-import { Role } from "~/domain/organizations.js";
+import {
+	type Organization,
+	OrganizationRole,
+	type OrganizationRoleType,
+} from "~/domain/organizations.js";
 import type { User } from "~/domain/users.js";
 import { makeMockContext } from "~/lib/context.js";
 import {
@@ -23,7 +26,7 @@ interface MemberRepositoryMock extends MemberRepository {
 	hasRole(data: {
 		userId: string;
 		organizationId: string;
-		role: Role;
+		role: OrganizationRoleType;
 	}): Promise<boolean>;
 }
 
@@ -50,7 +53,7 @@ describe("OrganizationService", () => {
 				name: string;
 				state: {
 					user: User;
-					role: Role | null;
+					role: OrganizationRoleType | null;
 				};
 				input: {
 					organizationId: string;
@@ -75,7 +78,7 @@ describe("OrganizationService", () => {
 					name: "if the description is too long",
 					state: {
 						user: mock<User>({ id: "1", isSuperUser: false }),
-						role: Role.MEMBER,
+						role: OrganizationRole.MEMBER,
 					},
 					input: {
 						organizationId: "o1",
@@ -87,7 +90,7 @@ describe("OrganizationService", () => {
 					name: "if the name is too long",
 					state: {
 						user: mock<User>({ id: "1", isSuperUser: false }),
-						role: Role.MEMBER,
+						role: OrganizationRole.MEMBER,
 					},
 					input: {
 						organizationId: "o1",
@@ -136,7 +139,7 @@ describe("OrganizationService", () => {
 			const testCases: {
 				state: {
 					user: User;
-					role: Role | null;
+					role: OrganizationRoleType | null;
 				};
 				input: {
 					organizationId: string;
@@ -147,7 +150,7 @@ describe("OrganizationService", () => {
 				{
 					state: {
 						user: mock<User>({ id: "1", isSuperUser: false }),
-						role: Role.ADMIN,
+						role: OrganizationRole.ADMIN,
 					},
 					input: {
 						organizationId: "o1",
@@ -158,7 +161,7 @@ describe("OrganizationService", () => {
 				{
 					state: {
 						user: mock<User>({ id: "1", isSuperUser: false }),
-						role: Role.MEMBER,
+						role: OrganizationRole.MEMBER,
 					},
 					input: {
 						organizationId: "o1",
@@ -398,7 +401,7 @@ describe("OrganizationService", () => {
 				getMockHasRoleImplementation({
 					userId: "1",
 					organizationId: "2",
-					role: Role.MEMBER,
+					role: OrganizationRole.MEMBER,
 				}),
 			);
 

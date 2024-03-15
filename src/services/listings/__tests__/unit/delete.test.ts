@@ -1,8 +1,8 @@
 import { faker } from "@faker-js/faker";
-import type { Listing } from "@prisma/client";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { PermissionDeniedError } from "~/domain/errors.js";
-import { Role } from "~/domain/organizations.js";
+import type { Listing } from "~/domain/listings.js";
+import { OrganizationRole } from "~/domain/organizations.js";
 import { makeMockContext } from "~/lib/context.js";
 import {
 	type ListingRepository,
@@ -84,7 +84,7 @@ describe("ListingService", () => {
 					expect.anything(),
 					{
 						organizationId,
-						role: Role.MEMBER,
+						role: OrganizationRole.MEMBER,
 					},
 				);
 			});

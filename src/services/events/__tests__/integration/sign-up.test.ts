@@ -1,9 +1,10 @@
 import assert from "node:assert";
 import { faker } from "@faker-js/faker";
-import { type Organization, ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
 import { InvalidArgumentError } from "~/domain/errors.js";
-import { type User, newUserFromDSO } from "~/domain/users.js";
+import { EventParticipationStatus } from "~/domain/events/sign-ups.js";
+import type { Organization } from "~/domain/organizations.js";
+import { User } from "~/domain/users.js";
 import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import type { EventService } from "../../service.js";
@@ -66,7 +67,7 @@ describe("Event Sign Up", () => {
 			 * 1. User should be signed up for the event with status CONFIRMED
 			 */
 			expect(actual.data.signUp.participationStatus).toEqual(
-				ParticipationStatus.CONFIRMED,
+				EventParticipationStatus.CONFIRMED,
 			);
 			expect(actual.data.signUp.userId).toEqual(user.id);
 			expect(actual.data.signUp.eventId).toEqual(
@@ -127,7 +128,7 @@ describe("Event Sign Up", () => {
 			 * 1. User should be signed up for the event with status CONFIRMED
 			 */
 			expect(actual.data.signUp.participationStatus).toEqual(
-				ParticipationStatus.CONFIRMED,
+				EventParticipationStatus.CONFIRMED,
 			);
 			expect(actual.data.signUp.userId).toEqual(user.id);
 			expect(actual.data.signUp.eventId).toEqual(
@@ -204,7 +205,7 @@ describe("Event Sign Up", () => {
 			 * 2. There should be an order created for the user
 			 */
 			expect(actual.data.signUp.participationStatus).toEqual(
-				ParticipationStatus.CONFIRMED,
+				EventParticipationStatus.CONFIRMED,
 			);
 			assert(
 				actual.data.signUp.orderId !== undefined &&
@@ -273,7 +274,7 @@ describe("Event Sign Up", () => {
 			 * 1. User should be signed up for the event with status CONFIRMED
 			 */
 			expect(actual.data.signUp.participationStatus).toEqual(
-				ParticipationStatus.CONFIRMED,
+				EventParticipationStatus.CONFIRMED,
 			);
 			expect(actual.data.signUp.userId).toEqual(user.id);
 			expect(actual.data.signUp.eventId).toEqual(
@@ -335,7 +336,7 @@ describe("Event Sign Up", () => {
 			 * 1. User should be signed up for the event with status CONFIRMED
 			 */
 			expect(actual.data.signUp.participationStatus).toEqual(
-				ParticipationStatus.ON_WAITLIST,
+				EventParticipationStatus.ON_WAITLIST,
 			);
 			expect(actual.data.signUp.userId).toEqual(user.id);
 			expect(actual.data.signUp.eventId).toEqual(event.data.event.id);
@@ -416,7 +417,7 @@ describe("Event Sign Up", () => {
 					 * 1. User should be signed up for the event with status CONFIRMED
 					 */
 					expect(actual.data.signUp.participationStatus).toEqual(
-						ParticipationStatus.ON_WAITLIST,
+						EventParticipationStatus.ON_WAITLIST,
 					);
 					expect(actual.data.signUp.userId).toEqual(user.id);
 					expect(actual.data.signUp.eventId).toEqual(event.data.event.id);
@@ -496,7 +497,7 @@ describe("Event Sign Up", () => {
 					if (!result.ok) throw result.error;
 					return (
 						result.data.signUp.participationStatus ===
-						ParticipationStatus.CONFIRMED
+						EventParticipationStatus.CONFIRMED
 					);
 				}),
 			).toBe(true);
@@ -581,7 +582,7 @@ describe("Event Sign Up", () => {
 					if (!result.ok) throw result.error;
 					return (
 						result.data.signUp.participationStatus ===
-						ParticipationStatus.CONFIRMED
+						EventParticipationStatus.CONFIRMED
 					);
 				}).length,
 			).toEqual(capacity);
@@ -590,7 +591,7 @@ describe("Event Sign Up", () => {
 					if (!result.ok) throw result.error;
 					return (
 						result.data.signUp.participationStatus ===
-						ParticipationStatus.ON_WAITLIST
+						EventParticipationStatus.ON_WAITLIST
 					);
 				}).length,
 			).toEqual(concurrentUsers - capacity);
@@ -772,7 +773,7 @@ function getCreateUserData() {
 async function makeUserWithOrganizationMembership(
 	userData: Partial<User> = {},
 ): Promise<{ user: User; organization: Organization }> {
-	const user = newUserFromDSO(
+	const user = new User(
 		await prisma.user.create({
 			data: {
 				firstName: faker.person.firstName(),

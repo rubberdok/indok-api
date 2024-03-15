@@ -3,7 +3,7 @@ import { faker } from "@faker-js/faker";
 import type { EPaymentGetPaymentOKResponse } from "@vippsmobilepay/sdk";
 import type { QueueEvents } from "bullmq";
 import { mock, mockDeep } from "jest-mock-extended";
-import { newUserFromDSO } from "~/domain/users.js";
+import { User } from "~/domain/users.js";
 import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import type { ProductServiceType } from "../../service.js";
@@ -49,7 +49,7 @@ describe("ProductService", () => {
 					isSuperUser: true,
 				},
 			});
-			const ctx = makeMockContext(newUserFromDSO(user));
+			const ctx = makeMockContext(new User(user));
 			const merchantResult = await productService.merchants.create(ctx, {
 				name: faker.company.name(),
 				serialNumber: faker.string.sample(6),

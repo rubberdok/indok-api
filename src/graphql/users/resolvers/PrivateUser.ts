@@ -40,4 +40,10 @@ export const PrivateUser: PrivateUserResolvers = {
 			total,
 		};
 	},
+	canUpdateYear: (parent) => {
+		return parent.canUpdateYear;
+	},
+	gradeYear: (parent) => {
+		return parent.gradeYear;
+	},
 };

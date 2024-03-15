@@ -1,4 +1,4 @@
-import { Role } from "~/domain/organizations.js";
+import { OrganizationRole } from "~/domain/organizations.js";
 import type { MutationResolvers } from "./../../../types.generated.js";
 export const addMember: NonNullable<MutationResolvers["addMember"]> = async (
 	_parent,
@@ -9,7 +9,7 @@ export const addMember: NonNullable<MutationResolvers["addMember"]> = async (
 	const addMemberResult = await ctx.organizations.members.addMember(ctx, {
 		userId: memberId,
 		organizationId,
-		role: role ?? Role.MEMBER,
+		role: role ?? OrganizationRole.MEMBER,
 	});
 	if (!addMemberResult.ok) {
 		switch (addMemberResult.error.name) {

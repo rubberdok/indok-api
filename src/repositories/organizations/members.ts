@@ -1,13 +1,17 @@
-import type { Member, PrismaClient, Role } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 import { InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
+import type {
+	OrganizationMember,
+	OrganizationRoleType,
+} from "~/domain/organizations.js";
 import { prismaKnownErrorCodes } from "~/lib/prisma.js";
 
 export class MemberRepository {
 	constructor(private db: PrismaClient) {}
 
 	findMany(where?: { organizationId?: string; userId?: string }): Promise<
-		Member[]
+		OrganizationMember[]
 	> {
 		return this.db.member.findMany({
 			where,
@@ -17,7 +21,7 @@ export class MemberRepository {
 	async hasRole(data: {
 		userId: string;
 		organizationId: string;
-		role: Role;
+		role: OrganizationRoleType;
 	}): Promise<boolean> {
 		const { userId, organizationId, role } = data;
 		const result = await this.db.member.findFirst({
@@ -41,9 +45,9 @@ export class MemberRepository {
 	 */
 	async get(
 		data: { id: string } | { userId: string; organizationId: string },
-	): Promise<Member> {
+	): Promise<OrganizationMember> {
 		try {
-			let promise: Promise<Member>;
+			let promise: Promise<OrganizationMember>;
 			if ("id" in data) {
 				promise = this.db.member.findUniqueOrThrow({ where: { id: data.id } });
 			} else {
@@ -72,13 +76,13 @@ export class MemberRepository {
 	 * @throws InvalidArgumentError - If the data.userId is already a member of the organization
 	 * @param {string} data.userId - The ID of the user to add to the organization
 	 * @param {string} data.organizationId - The ID of the organization to add the user to
-	 * @param {Role} data.role - The role of the user in the organization, defaults to Role.MEMBER
+	 * @param {OrganizationRoleType} data.role - The role of the user in the organization, defaults to OrganizationRoleType.MEMBER
 	 */
 	async create(data: {
 		userId: string;
 		organizationId: string;
-		role?: Role;
-	}): Promise<Member> {
+		role?: OrganizationRoleType;
+	}): Promise<OrganizationMember> {
 		return this.db.member.create({ data }).catch((err) => {
 			if (err instanceof PrismaClientKnownRequestError) {
 				if (err.code === "P2002") {
@@ -104,7 +108,7 @@ export class MemberRepository {
 	 */
 	remove(
 		data: { id: string } | { userId: string; organizationId: string },
-	): Promise<Member> {
+	): Promise<OrganizationMember> {
 		if ("id" in data) {
 			return this.db.member.delete({ where: { id: data.id } });
 		}

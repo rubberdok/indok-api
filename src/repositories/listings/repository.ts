@@ -1,6 +1,7 @@
-import type { Listing, PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 import { NotFoundError } from "~/domain/errors.js";
+import type { Listing } from "~/domain/listings.js";
 
 export class ListingRepository {
 	constructor(private db: PrismaClient) {}

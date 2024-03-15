@@ -6,7 +6,7 @@ import {
 } from "@prisma/client";
 import dayjs from "dayjs";
 import { DateTime } from "luxon";
-import type { Role } from "~/domain/organizations.js";
+import type { OrganizationRoleType } from "~/domain/organizations.js";
 
 faker.seed(3491049213);
 const organizationId = faker.string.uuid();
@@ -56,7 +56,7 @@ const userData: Prisma.UserCreateInput[] = [
 
 function makeUserWithMemberships(
 	data: Prisma.UserCreateInput,
-	role: Role,
+	role: OrganizationRoleType,
 	organizationId: string,
 ): Prisma.UserCreateInput {
 	const userId = faker.string.uuid();

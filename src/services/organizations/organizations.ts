@@ -1,11 +1,16 @@
-import { FeaturePermission, type Organization } from "@prisma/client";
 import { z } from "zod";
 import {
 	InvalidArgumentError,
 	PermissionDeniedError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
-import { Role } from "~/domain/organizations.js";
+import {
+	FeaturePermission,
+	type FeaturePermissionType,
+	type Organization,
+	OrganizationRole,
+	type OrganizationRoleType,
+} from "~/domain/organizations.js";
 import type { Context } from "~/lib/context.js";
 import type { IOrganizationService } from "~/lib/server.js";
 import type { Dependencies } from "./service.js";
@@ -15,7 +20,7 @@ interface PermissionService {
 		ctx: Context,
 		data: {
 			organizationId: string;
-			role: Role;
+			role: OrganizationRoleType;
 		},
 	): Promise<boolean>;
 }
@@ -104,7 +109,7 @@ function buildOrganizations(
 				}
 				const isMember = await permissions.hasRole(ctx, {
 					organizationId,
-					role: Role.MEMBER,
+					role: OrganizationRole.MEMBER,
 				});
 				if (isMember !== true) {
 					throw new PermissionDeniedError(
@@ -144,7 +149,7 @@ function buildOrganizations(
 			data: {
 				name: string;
 				description?: string | null;
-				featurePermissions?: FeaturePermission[] | null;
+				featurePermissions?: FeaturePermissionType[] | null;
 			},
 		): Promise<Organization> {
 			if (!ctx.user) {

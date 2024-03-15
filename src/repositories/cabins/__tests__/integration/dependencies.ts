@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker";
 import { DateTime } from "luxon";
-import type { BookingStatus, BookingType } from "~/domain/cabins.js";
+import type { BookingStatusType, BookingType } from "~/domain/cabins.js";
 import prisma from "~/lib/prisma.js";
 import { CabinRepository } from "../../repository.js";
 
@@ -49,7 +49,7 @@ async function makeDependencies() {
 		cabins: { id: string }[];
 		startDate: Date;
 		endDate: Date;
-		status: BookingStatus;
+		status: BookingStatusType;
 	}): Promise<BookingType> {
 		const { cabins, startDate, endDate, status } = params;
 		const createBookingResult = await cabinRepository.createBooking({

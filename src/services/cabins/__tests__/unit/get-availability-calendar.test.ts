@@ -1,9 +1,8 @@
 import { faker } from "@faker-js/faker";
-import type { BookingSemester, Cabin } from "@prisma/client";
 import { type DeepMockProxy, mock } from "jest-mock-extended";
 import { merge } from "lodash-es";
 import { DateTime, Settings } from "luxon";
-import type { BookingType } from "~/domain/cabins.js";
+import type { BookingSemester, BookingType, Cabin } from "~/domain/cabins.js";
 import { makeMockContext } from "~/lib/context.js";
 import { CabinService, type ICabinRepository } from "../../service.js";
 
@@ -851,7 +850,6 @@ function makeBookingSemester(data?: Partial<BookingSemester>): BookingSemester {
 		{
 			id: faker.string.uuid(),
 			bookingsEnabled: true,
-			createdAt: faker.date.recent(),
 			endAt: endAtDateTime,
 			startAt: startAtDateTime,
 			semester: "FALL",

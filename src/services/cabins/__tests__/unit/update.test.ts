@@ -1,18 +1,19 @@
 import { faker } from "@faker-js/faker";
-import {
-	type BookingSemester,
-	type Cabin,
-	FeaturePermission,
-} from "@prisma/client";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { DateTime } from "luxon";
 import { pino } from "pino";
-import { BookingStatus, type BookingType } from "~/domain/cabins.js";
+import {
+	type BookingSemester,
+	BookingStatus,
+	type BookingType,
+	type Cabin,
+} from "~/domain/cabins.js";
 import {
 	InvalidArgumentError,
 	PermissionDeniedError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
+import { FeaturePermission } from "~/domain/organizations.js";
 import { makeMockContext } from "~/lib/context.js";
 import { envToLogger } from "~/lib/fastify/logging.js";
 import {

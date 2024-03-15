@@ -1,8 +1,7 @@
-import type { EventSignUp } from "@prisma/client";
 import type { Processor } from "bullmq";
 import type { Logger } from "pino";
 import { InvalidArgumentError } from "~/domain/errors.js";
-import type { EventType } from "~/domain/events/index.js";
+import type { EventSignUp, EventType } from "~/domain/events/index.js";
 import { Event } from "~/domain/events/index.js";
 import type { Queue } from "~/lib/bullmq/queue.js";
 import type { Worker } from "~/lib/bullmq/worker.js";

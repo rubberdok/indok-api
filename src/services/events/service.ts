@@ -1,9 +1,3 @@
-import {
-	type EventSignUp,
-	type EventSlot,
-	type FeaturePermission,
-	ParticipationStatus,
-} from "@prisma/client";
 import { DateTime } from "luxon";
 import { z } from "zod";
 import {
@@ -22,6 +16,9 @@ import type {
 } from "~/domain/events/event.js";
 import {
 	Event,
+	EventParticipationStatus,
+	type EventParticipationStatusType,
+	type EventSignUp,
 	type EventType,
 	EventTypeEnum,
 	type SignUpAvailability,
@@ -30,7 +27,11 @@ import {
 	signUpAvailability,
 } from "~/domain/events/index.js";
 import type { NewSlotParams, UpdateSlotFields } from "~/domain/events/slot.js";
-import { Role } from "~/domain/organizations.js";
+import {
+	type FeaturePermissionType,
+	OrganizationRole,
+	type OrganizationRoleType,
+} from "~/domain/organizations.js";
 import type { OrderType, ProductType } from "~/domain/products.js";
 import type { User } from "~/domain/users.js";
 import type { ResultAsync } from "~/lib/result.js";
@@ -82,7 +83,7 @@ interface EventRepository {
 	getSlotWithRemainingCapacity(
 		eventId: string,
 		gradeYear?: number,
-	): Promise<EventSlot | null>;
+	): Promise<SlotType | null>;
 	findMany(data?: {
 		endAtGte?: Date | null;
 		organizationId?: string;
@@ -93,7 +94,7 @@ interface EventRepository {
 	}): Promise<EventType[]>;
 	findManySignUps(data: {
 		eventId?: string;
-		status?: ParticipationStatus;
+		status?: EventParticipationStatusType;
 		userId?: string;
 		orderBy?: "asc" | "desc";
 	}): ResultAsync<
@@ -110,12 +111,12 @@ interface EventRepository {
 	>;
 	createSignUp(data: CreateSignUpParams): Promise<{
 		signUp: EventSignUp;
-		slot?: EventSlot;
+		slot?: SlotType;
 		event: EventType;
 	}>;
 	updateSignUp(data: UpdateSignUpParams): Promise<{
 		signUp: EventSignUp;
-		slot?: EventSlot;
+		slot?: SlotType;
 		event: EventType;
 	}>;
 	addOrderToSignUp(params: {
@@ -123,7 +124,7 @@ interface EventRepository {
 		signUpId: string;
 	}): ResultAsync<{ signUp: EventSignUp }, NotFoundError | InternalServerError>;
 	findManySlots(data: { gradeYear?: number; eventId: string }): Promise<
-		EventSlot[]
+		SlotType[]
 	>;
 	getCategories(by?: { eventId?: string }): Promise<CategoryType[]>;
 	createCategory(data: { name: string }): Promise<CategoryType>;
@@ -147,14 +148,14 @@ interface PermissionService {
 		ctx: Context,
 		data: {
 			organizationId: string;
-			role: Role;
+			role: OrganizationRoleType;
 		},
 	): Promise<boolean>;
 	hasFeaturePermission(
 		ctx: Context,
 		data: {
 			userId: string;
-			featurePermission: FeaturePermission;
+			featurePermission: FeaturePermissionType;
 		},
 	): Promise<boolean>;
 }
@@ -270,7 +271,7 @@ class EventService {
 
 		const isMember = await this.permissionService.hasRole(ctx, {
 			organizationId: eventData.organizationId,
-			role: Role.MEMBER,
+			role: OrganizationRole.MEMBER,
 		});
 
 		if (isMember !== true) {
@@ -434,7 +435,7 @@ class EventService {
 				// Updating an event requires that the user is a member of the organization
 				const isMember = await this.permissionService.hasRole(ctx, {
 					organizationId: event.organizationId,
-					role: Role.MEMBER,
+					role: OrganizationRole.MEMBER,
 				});
 
 				if (isMember !== true) {
@@ -616,7 +617,7 @@ class EventService {
 
 		const isMember = await this.permissionService.hasRole(ctx, {
 			organizationId: event.organizationId,
-			role: Role.MEMBER,
+			role: OrganizationRole.MEMBER,
 		});
 		if (isMember === true && params.userId) {
 			userId = params.userId;
@@ -651,7 +652,7 @@ class EventService {
 				ctx.log.info({ event }, "Event is full, adding user to wait list.");
 				const { signUp } = await this.eventRepository.createSignUp({
 					userId,
-					participationStatus: ParticipationStatus.ON_WAITLIST,
+					participationStatus: EventParticipationStatus.ON_WAITLIST,
 					eventId,
 					userProvidedInformation: userProvidedInformation ?? "",
 				});
@@ -669,7 +670,7 @@ class EventService {
 					ctx.log.info({ event }, "Event is full, adding user to wait list.");
 					const { signUp } = await this.eventRepository.createSignUp({
 						userId,
-						participationStatus: ParticipationStatus.ON_WAITLIST,
+						participationStatus: EventParticipationStatus.ON_WAITLIST,
 						eventId,
 						userProvidedInformation: userProvidedInformation ?? "",
 					});
@@ -681,7 +682,7 @@ class EventService {
 
 				let { signUp } = await this.eventRepository.createSignUp({
 					userId,
-					participationStatus: ParticipationStatus.CONFIRMED,
+					participationStatus: EventParticipationStatus.CONFIRMED,
 					eventId,
 					slotId: slotToSignUp.id,
 					userProvidedInformation: userProvidedInformation ?? "",
@@ -832,7 +833,7 @@ class EventService {
 
 		const findManySignUpsResult = await this.eventRepository.findManySignUps({
 			eventId,
-			status: ParticipationStatus.ON_WAITLIST,
+			status: EventParticipationStatus.ON_WAITLIST,
 		});
 		if (!findManySignUpsResult.ok) throw findManySignUpsResult.error;
 		const { signUps: signUpsOnWaitlist } = findManySignUpsResult.data;
@@ -847,7 +848,7 @@ class EventService {
 							userId: waitlistSignUp.userId,
 							eventId,
 							slotId: slot.id,
-							newParticipationStatus: ParticipationStatus.CONFIRMED,
+							newParticipationStatus: EventParticipationStatus.CONFIRMED,
 						});
 
 					ctx.log.info(
@@ -886,7 +887,7 @@ class EventService {
 			event: TicketEvent | SignUpEvent;
 			signUp: EventSignUp;
 			newParticipationStatus: Extract<
-				ParticipationStatus,
+				EventParticipationStatusType,
 				"RETRACTED" | "REMOVED"
 			>;
 		},
@@ -896,7 +897,7 @@ class EventService {
 	> {
 		const { user, event, signUp, newParticipationStatus } = data;
 
-		if (signUp.participationStatus !== ParticipationStatus.CONFIRMED) {
+		if (signUp.participationStatus !== EventParticipationStatus.CONFIRMED) {
 			return {
 				ok: false,
 				error: new InvalidArgumentError(
@@ -909,7 +910,7 @@ class EventService {
 			return {
 				ok: false,
 				error: new InternalServerError(
-					"Sign up is missing slot ID, but has ParticipationStatus.CONFIRMED",
+					"Sign up is missing slot ID, but has EventParticipationStatus.CONFIRMED",
 				),
 			};
 		}
@@ -934,13 +935,13 @@ class EventService {
 			event: TicketEvent | SignUpEvent;
 			signUp: EventSignUp;
 			newParticipationStatus: Exclude<
-				ParticipationStatus,
+				EventParticipationStatusType,
 				"CONFIRMED" | "ON_WAITLIST"
 			>;
 		},
 	): ResultAsync<{ signUp: EventSignUp }, InvalidArgumentError> {
 		const { user, event, signUp } = data;
-		if (signUp.participationStatus !== ParticipationStatus.ON_WAITLIST) {
+		if (signUp.participationStatus !== EventParticipationStatus.ON_WAITLIST) {
 			return {
 				ok: false,
 				error: new InvalidArgumentError(
@@ -1027,7 +1028,7 @@ class EventService {
 		const { signUp } = getSignUpResult.data;
 
 		switch (signUp.participationStatus) {
-			case ParticipationStatus.CONFIRMED: {
+			case EventParticipationStatus.CONFIRMED: {
 				if (DateTime.fromJSDate(event.signUpsEndAt) < DateTime.now()) {
 					return {
 						ok: false,
@@ -1049,19 +1050,19 @@ class EventService {
 					user: ctx.user,
 					event,
 					signUp,
-					newParticipationStatus: ParticipationStatus.RETRACTED,
+					newParticipationStatus: EventParticipationStatus.RETRACTED,
 				});
 			}
-			case ParticipationStatus.ON_WAITLIST:
+			case EventParticipationStatus.ON_WAITLIST:
 				return await this.demoteOnWaitlistSignUp(ctx, {
 					user: ctx.user,
 					event,
 					signUp,
-					newParticipationStatus: ParticipationStatus.RETRACTED,
+					newParticipationStatus: EventParticipationStatus.RETRACTED,
 				});
-			case ParticipationStatus.REMOVED:
+			case EventParticipationStatus.REMOVED:
 			// fallthrough
-			case ParticipationStatus.RETRACTED:
+			case EventParticipationStatus.RETRACTED:
 				return {
 					ok: true,
 					data: { signUp },
@@ -1146,7 +1147,7 @@ class EventService {
 
 		const hasPermission = await this.permissionService.hasRole(ctx, {
 			organizationId: event.organizationId,
-			role: Role.MEMBER,
+			role: OrganizationRole.MEMBER,
 		});
 		if (hasPermission !== true) {
 			return {
@@ -1158,25 +1159,25 @@ class EventService {
 		}
 
 		switch (signUp.participationStatus) {
-			case ParticipationStatus.CONFIRMED: {
+			case EventParticipationStatus.CONFIRMED: {
 				return await this.demoteConfirmedSignUp(ctx, {
 					user: ctx.user,
 					event: event,
 					signUp,
-					newParticipationStatus: ParticipationStatus.REMOVED,
+					newParticipationStatus: EventParticipationStatus.REMOVED,
 				});
 			}
-			case ParticipationStatus.ON_WAITLIST: {
+			case EventParticipationStatus.ON_WAITLIST: {
 				return await this.demoteOnWaitlistSignUp(ctx, {
 					user: ctx.user,
 					event: event,
 					signUp,
-					newParticipationStatus: ParticipationStatus.REMOVED,
+					newParticipationStatus: EventParticipationStatus.REMOVED,
 				});
 			}
-			case ParticipationStatus.REMOVED:
+			case EventParticipationStatus.REMOVED:
 			// fallthrough
-			case ParticipationStatus.RETRACTED:
+			case EventParticipationStatus.RETRACTED:
 				return {
 					ok: true,
 					data: { signUp },
@@ -1302,9 +1303,9 @@ class EventService {
 
 		const { signUp } = getSignUpResult.data;
 
-		if (signUp.participationStatus === ParticipationStatus.CONFIRMED)
+		if (signUp.participationStatus === EventParticipationStatus.CONFIRMED)
 			return signUpAvailability.CONFIRMED;
-		if (signUp.participationStatus === ParticipationStatus.ON_WAITLIST)
+		if (signUp.participationStatus === EventParticipationStatus.ON_WAITLIST)
 			return signUpAvailability.ON_WAITLIST;
 
 		throw new InternalServerError("Unexpected participation status on sign up");
@@ -1532,7 +1533,7 @@ class EventService {
 		ctx: Context,
 		params: {
 			eventId: string;
-			participationStatus?: ParticipationStatus | null;
+			participationStatus?: EventParticipationStatusType | null;
 		},
 	): ResultAsync<
 		{ signUps: EventSignUp[]; total: number },
@@ -1578,7 +1579,7 @@ class EventService {
 
 		const isMember = await this.permissionService.hasRole(ctx, {
 			organizationId: event.organizationId,
-			role: Role.MEMBER,
+			role: OrganizationRole.MEMBER,
 		});
 
 		if (isMember !== true) {
@@ -1658,7 +1659,7 @@ class EventService {
 		}
 
 		const { signUp } = getSignUpResult.data;
-		if (signUp.participationStatus !== ParticipationStatus.ON_WAITLIST) {
+		if (signUp.participationStatus !== EventParticipationStatus.ON_WAITLIST) {
 			return {
 				ok: false,
 				error: new InvalidArgumentError(
@@ -1693,7 +1694,7 @@ class EventService {
 		params: {
 			userId: string;
 			orderBy?: "asc" | "desc" | null;
-			participationStatus?: ParticipationStatus | null;
+			participationStatus?: EventParticipationStatusType | null;
 		},
 	): ResultAsync<
 		{ signUps: EventSignUp[]; total: number },

@@ -1,6 +1,9 @@
 import { faker } from "@faker-js/faker";
-import { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
+import {
+	EventParticipationStatus,
+	type EventParticipationStatusType,
+} from "~/domain/events/sign-ups.js";
 import prisma from "~/lib/prisma.js";
 import { EventRepository } from "../../repository.js";
 
@@ -39,7 +42,7 @@ describe("EventRepository", () => {
 			await makeSignUp({
 				userId: user2.id,
 				eventId: event.id,
-				status: ParticipationStatus.CONFIRMED,
+				status: EventParticipationStatus.CONFIRMED,
 			});
 			const signUp3 = await makeSignUp({
 				userId: user3.id,
@@ -53,7 +56,7 @@ describe("EventRepository", () => {
 			 */
 			const actual = await eventRepository.findManySignUps({
 				eventId: event.id,
-				status: ParticipationStatus.ON_WAITLIST,
+				status: EventParticipationStatus.ON_WAITLIST,
 			});
 			if (!actual.ok) throw actual.error;
 
@@ -95,7 +98,7 @@ describe("EventRepository", () => {
 			await makeSignUp({
 				userId: user2.id,
 				eventId: event.id,
-				status: ParticipationStatus.CONFIRMED,
+				status: EventParticipationStatus.CONFIRMED,
 			});
 			const signUp3 = await makeSignUp({
 				userId: user3.id,
@@ -109,7 +112,7 @@ describe("EventRepository", () => {
 			 */
 			const actual = await eventRepository.findManySignUps({
 				eventId: event.id,
-				status: ParticipationStatus.ON_WAITLIST,
+				status: EventParticipationStatus.ON_WAITLIST,
 				orderBy: "desc",
 			});
 			if (!actual.ok) throw actual.error;
@@ -152,7 +155,7 @@ describe("EventRepository", () => {
 			await makeSignUp({
 				userId: user2.id,
 				eventId: event.id,
-				status: ParticipationStatus.CONFIRMED,
+				status: EventParticipationStatus.CONFIRMED,
 			});
 			await makeSignUp({
 				userId: user3.id,
@@ -187,7 +190,7 @@ describe("EventRepository", () => {
 			 */
 			const actual = await eventRepository.findManySignUps({
 				eventId: faker.string.uuid(),
-				status: ParticipationStatus.ON_WAITLIST,
+				status: EventParticipationStatus.ON_WAITLIST,
 			});
 			expect(actual).toEqual({
 				ok: true,
@@ -207,13 +210,13 @@ function makeSignUp({
 }: {
 	userId: string;
 	eventId: string;
-	status?: ParticipationStatus;
+	status?: EventParticipationStatusType;
 }) {
 	return prisma.eventSignUp.create({
 		data: {
 			userId,
 			eventId,
-			participationStatus: status ?? ParticipationStatus.ON_WAITLIST,
+			participationStatus: status ?? EventParticipationStatus.ON_WAITLIST,
 		},
 	});
 }

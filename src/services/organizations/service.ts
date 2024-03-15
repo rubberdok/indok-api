@@ -1,5 +1,9 @@
-import type { FeaturePermission, Member, Organization } from "@prisma/client";
-import type { Role } from "~/domain/organizations.js";
+import type {
+	FeaturePermissionType,
+	Organization,
+	OrganizationMember,
+	OrganizationRoleType,
+} from "~/domain/organizations.js";
 import type { StudyProgram, User } from "~/domain/users.js";
 import type { Context } from "~/lib/context.js";
 import type { IOrganizationService } from "~/lib/server.js";
@@ -12,14 +16,14 @@ interface OrganizationRepository {
 		name: string;
 		description?: string;
 		userId: string;
-		featurePermissions?: FeaturePermission[];
+		featurePermissions?: FeaturePermissionType[];
 	}): Promise<Organization>;
 	update(
 		id: string,
 		data: Partial<{
 			name: string;
 			description: string;
-			featurePermissions: FeaturePermission[];
+			featurePermissions: FeaturePermissionType[];
 			logoFileId: string;
 		}>,
 	): Promise<Organization>;
@@ -33,18 +37,21 @@ interface MemberRepository {
 		userId: string;
 		organizationId: string;
 		role?: string;
-	}): Promise<Member>;
+	}): Promise<OrganizationMember>;
 	remove(
 		data: { id: string } | { userId: string; organizationId: string },
-	): Promise<Member>;
-	findMany(data: { organizationId: string; role?: Role }): Promise<Member[]>;
+	): Promise<OrganizationMember>;
+	findMany(data: {
+		organizationId: string;
+		role?: OrganizationRoleType;
+	}): Promise<OrganizationMember[]>;
 	get(
 		data: { userId: string; organizationId: string } | { id: string },
-	): Promise<Member>;
+	): Promise<OrganizationMember>;
 	hasRole(data: {
 		userId: string;
 		organizationId: string;
-		role: Role;
+		role: OrganizationRoleType;
 	}): Promise<boolean>;
 }
 
@@ -53,7 +60,7 @@ interface PermissionService {
 		ctx: Context,
 		data: {
 			organizationId: string;
-			role: Role;
+			role: OrganizationRoleType;
 		},
 	): Promise<boolean>;
 }

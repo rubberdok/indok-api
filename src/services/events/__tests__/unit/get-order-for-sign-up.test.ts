@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
-import type { EventSignUp } from "@prisma/client";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { NotFoundError, UnauthorizedError } from "~/domain/errors.js";
+import type { EventSignUp } from "~/domain/events/index.js";
 import { Order } from "~/domain/products.js";
 import type { User } from "~/domain/users.js";
 import { makeMockContext } from "~/lib/context.js";

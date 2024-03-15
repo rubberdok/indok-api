@@ -1,7 +1,8 @@
 import { faker } from "@faker-js/faker";
-import type { EventSignUp, Organization } from "@prisma/client";
 import { mock } from "jest-mock-extended";
 import { InternalServerError, UnauthorizedError } from "~/domain/errors.js";
+import type { EventSignUp } from "~/domain/events/index.js";
+import type { Organization } from "~/domain/organizations.js";
 import type { User } from "~/domain/users.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "~/graphql/test-clients/unit/gql.js";

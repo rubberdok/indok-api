@@ -1,7 +1,12 @@
 import { faker } from "@faker-js/faker";
-import { FeaturePermission, type Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { mock } from "jest-mock-extended";
-import { Role } from "~/domain/organizations.js";
+import {
+	FeaturePermission,
+	type FeaturePermissionType,
+	OrganizationRole,
+	type OrganizationRoleType,
+} from "~/domain/organizations.js";
 import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
@@ -29,10 +34,10 @@ describe("OrganizationsService", () => {
 			arrange: {
 				user: Prisma.UserCreateInput;
 				organization: Prisma.OrganizationCreateInput;
-				member: { role: Role | null };
+				member: { role: OrganizationRoleType | null };
 			};
-			requiredFeaturePermission?: FeaturePermission;
-			requiredRole: Role;
+			requiredFeaturePermission?: FeaturePermissionType;
+			requiredRole: OrganizationRoleType;
 			expected: boolean;
 		}
 
@@ -45,7 +50,7 @@ describe("OrganizationsService", () => {
 					},
 					member: { role: null },
 				},
-				requiredRole: Role.ADMIN,
+				requiredRole: OrganizationRole.ADMIN,
 				expected: true,
 			},
 			{
@@ -56,7 +61,7 @@ describe("OrganizationsService", () => {
 					},
 					member: { role: null },
 				},
-				requiredRole: Role.MEMBER,
+				requiredRole: OrganizationRole.MEMBER,
 				expected: false,
 			},
 			{
@@ -66,10 +71,10 @@ describe("OrganizationsService", () => {
 						name: faker.string.sample(20),
 					},
 					member: {
-						role: Role.MEMBER,
+						role: OrganizationRole.MEMBER,
 					},
 				},
-				requiredRole: Role.MEMBER,
+				requiredRole: OrganizationRole.MEMBER,
 				expected: true,
 			},
 			{
@@ -79,10 +84,10 @@ describe("OrganizationsService", () => {
 						name: faker.string.sample(20),
 					},
 					member: {
-						role: Role.ADMIN,
+						role: OrganizationRole.ADMIN,
 					},
 				},
-				requiredRole: Role.ADMIN,
+				requiredRole: OrganizationRole.ADMIN,
 				expected: true,
 			},
 			{
@@ -92,10 +97,10 @@ describe("OrganizationsService", () => {
 						name: faker.string.sample(20),
 					},
 					member: {
-						role: Role.MEMBER,
+						role: OrganizationRole.MEMBER,
 					},
 				},
-				requiredRole: Role.ADMIN,
+				requiredRole: OrganizationRole.ADMIN,
 				expected: false,
 			},
 			{
@@ -105,10 +110,10 @@ describe("OrganizationsService", () => {
 						name: faker.string.sample(20),
 					},
 					member: {
-						role: Role.MEMBER,
+						role: OrganizationRole.MEMBER,
 					},
 				},
-				requiredRole: Role.ADMIN,
+				requiredRole: OrganizationRole.ADMIN,
 				expected: false,
 			},
 			{
@@ -118,11 +123,11 @@ describe("OrganizationsService", () => {
 						name: faker.string.sample(20),
 					},
 					member: {
-						role: Role.ADMIN,
+						role: OrganizationRole.ADMIN,
 					},
 				},
 				requiredFeaturePermission: FeaturePermission.CABIN_ADMIN,
-				requiredRole: Role.MEMBER,
+				requiredRole: OrganizationRole.MEMBER,
 				expected: false,
 			},
 			{
@@ -136,7 +141,7 @@ describe("OrganizationsService", () => {
 					},
 				},
 				requiredFeaturePermission: FeaturePermission.CABIN_ADMIN,
-				requiredRole: Role.ADMIN,
+				requiredRole: OrganizationRole.ADMIN,
 				expected: true,
 			},
 			{
@@ -147,11 +152,11 @@ describe("OrganizationsService", () => {
 						featurePermissions: [FeaturePermission.CABIN_ADMIN],
 					},
 					member: {
-						role: Role.ADMIN,
+						role: OrganizationRole.ADMIN,
 					},
 				},
 				requiredFeaturePermission: FeaturePermission.CABIN_ADMIN,
-				requiredRole: Role.MEMBER,
+				requiredRole: OrganizationRole.MEMBER,
 				expected: true,
 			},
 			{
@@ -165,11 +170,11 @@ describe("OrganizationsService", () => {
 						],
 					},
 					member: {
-						role: Role.ADMIN,
+						role: OrganizationRole.ADMIN,
 					},
 				},
 				requiredFeaturePermission: FeaturePermission.ARCHIVE_WRITE_DOCUMENTS,
-				requiredRole: Role.MEMBER,
+				requiredRole: OrganizationRole.MEMBER,
 				expected: true,
 			},
 			{
@@ -180,11 +185,11 @@ describe("OrganizationsService", () => {
 						featurePermissions: [],
 					},
 					member: {
-						role: Role.ADMIN,
+						role: OrganizationRole.ADMIN,
 					},
 				},
 				requiredFeaturePermission: FeaturePermission.ARCHIVE_WRITE_DOCUMENTS,
-				requiredRole: Role.MEMBER,
+				requiredRole: OrganizationRole.MEMBER,
 				expected: false,
 			},
 		];
@@ -250,7 +255,7 @@ describe("OrganizationsService", () => {
 				makeMockContext(null),
 				{
 					organizationId: faker.string.uuid(),
-					role: Role.MEMBER,
+					role: OrganizationRole.MEMBER,
 				},
 			);
 			expect(result).toBe(false);
@@ -499,7 +504,9 @@ function makeUser(data: { isSuperUser: boolean }) {
 	};
 }
 
-function makeOrganization(data: { featurePermissions?: FeaturePermission[] }) {
+function makeOrganization(data: {
+	featurePermissions?: FeaturePermissionType[];
+}) {
 	return prisma.organization.create({
 		data: {
 			name: faker.string.sample(20),
@@ -511,13 +518,13 @@ function makeOrganization(data: { featurePermissions?: FeaturePermission[] }) {
 function makeMember(data: {
 	userId: string;
 	organizationId: string;
-	role?: Role;
+	role?: OrganizationRoleType;
 }) {
 	return prisma.member.create({
 		data: {
 			userId: data.userId,
 			organizationId: data.organizationId,
-			role: data.role ?? Role.MEMBER,
+			role: data.role ?? OrganizationRole.MEMBER,
 		},
 	});
 }

@@ -1,5 +1,9 @@
-import { type BookingSemester, Semester } from "@prisma/client";
 import { mock } from "jest-mock-extended";
+import {
+	type BookingSemester,
+	BookingSemesterEnum,
+	type BookingSemesterEnumType,
+} from "~/domain/cabins.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
 
@@ -14,7 +18,7 @@ describe("Cabin queries", () => {
 			const { client, cabinService } = createMockApolloServer();
 
 			cabinService.getBookingSemester.mockImplementation(
-				(semester: Semester) => {
+				(semester: BookingSemesterEnumType) => {
 					return Promise.resolve(mock<BookingSemester>({ semester }));
 				},
 			);
@@ -37,10 +41,10 @@ describe("Cabin queries", () => {
 			expect(errors).toBeUndefined();
 			expect(data?.bookingSemesters).toEqual({
 				fall: {
-					semester: Semester.FALL,
+					semester: BookingSemesterEnum.FALL,
 				},
 				spring: {
-					semester: Semester.SPRING,
+					semester: BookingSemesterEnum.SPRING,
 				},
 			});
 		});

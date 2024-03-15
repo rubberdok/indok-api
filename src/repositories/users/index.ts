@@ -1,14 +1,11 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
 import { InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
-import {
-	type StudyProgram,
-	type User,
-	newUserFromDSO,
-} from "~/domain/users.js";
+import { StudyProgram, User } from "~/domain/users.js";
 import { prismaKnownErrorCodes } from "~/lib/prisma.js";
+import type { UserRepository as IUserRepository } from "~/services/users/index.js";
 
-export class UserRepository {
+export class UserRepository implements IUserRepository {
 	constructor(private db: PrismaClient) {}
 
 	async update(id: string, data: Partial<User>): Promise<User> {
@@ -18,19 +15,19 @@ export class UserRepository {
 			},
 			data,
 		});
-		return newUserFromDSO(user);
+		return new User(user);
 	}
 
 	async create(data: Prisma.UserCreateInput): Promise<User> {
 		const user = await this.db.user.create({
 			data,
 		});
-		return newUserFromDSO(user);
+		return new User(user);
 	}
 
 	async getAll(): Promise<User[]> {
 		const users = await this.db.user.findMany();
-		return users.map(newUserFromDSO);
+		return users.map((user) => new User(user));
 	}
 
 	async get(id: string): Promise<User> {
@@ -40,7 +37,7 @@ export class UserRepository {
 					id,
 				},
 			});
-			return newUserFromDSO(user);
+			return new User(user);
 		} catch (err) {
 			if (err instanceof PrismaClientKnownRequestError) {
 				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) {
@@ -59,7 +56,7 @@ export class UserRepository {
 				feideId,
 			},
 		});
-		return newUserFromDSO(user);
+		return new User(user);
 	}
 
 	/**
@@ -75,7 +72,7 @@ export class UserRepository {
 			const createdStudyProgram = await this.db.studyProgram.create({
 				data: studyProgram,
 			});
-			return createdStudyProgram;
+			return new StudyProgram(createdStudyProgram);
 		} catch (err) {
 			if (err instanceof PrismaClientKnownRequestError) {
 				if (
@@ -98,11 +95,15 @@ export class UserRepository {
 	 * @param by.externalId - The external id of the study program
 	 * @returns The study program or null if it does not exist
 	 */
-	getStudyProgram(
+	async getStudyProgram(
 		by: { id: string } | { externalId: string },
 	): Promise<StudyProgram | null> {
-		return this.db.studyProgram.findUnique({
+		const studyProgram = await this.db.studyProgram.findUnique({
 			where: by,
 		});
+		if (!studyProgram) {
+			return null;
+		}
+		return new StudyProgram(studyProgram);
 	}
 }

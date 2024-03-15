@@ -1,5 +1,4 @@
 import { faker } from "@faker-js/faker";
-import type { EventSignUp, EventSlot } from "@prisma/client";
 import { type DeepMockProxy, mock } from "jest-mock-extended";
 import {
 	InternalServerError,
@@ -7,6 +6,7 @@ import {
 	NotFoundError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
+import type { EventSignUp, SlotType } from "~/domain/events/index.js";
 import type { OrderType } from "~/domain/products.js";
 import type { User } from "~/domain/users.js";
 import { makeMockContext } from "~/lib/context.js";
@@ -76,10 +76,10 @@ describe("EventService", () => {
 			eventsRepository.createSignUp.mockResolvedValue({
 				signUp: mock<EventSignUp>({ id: faker.string.uuid() }),
 				event: makeSignUpEvent(),
-				slot: mock<EventSlot>(),
+				slot: mock<SlotType>(),
 			});
 			eventsRepository.getSlotWithRemainingCapacity.mockResolvedValue(
-				mock<EventSlot>({
+				mock<SlotType>({
 					id: faker.string.uuid(),
 					capacity: 10,
 				}),
@@ -122,10 +122,10 @@ describe("EventService", () => {
 			eventsRepository.createSignUp.mockResolvedValue({
 				signUp: mock<EventSignUp>({ id: faker.string.uuid() }),
 				event: makeSignUpEvent(),
-				slot: mock<EventSlot>(),
+				slot: mock<SlotType>(),
 			});
 			eventsRepository.getSlotWithRemainingCapacity.mockResolvedValue(
-				mock<EventSlot>({
+				mock<SlotType>({
 					id: faker.string.uuid(),
 					capacity: 10,
 				}),
@@ -192,7 +192,7 @@ describe("EventService", () => {
 				}),
 			);
 			eventsRepository.getSlotWithRemainingCapacity.mockResolvedValue(
-				mock<EventSlot>({
+				mock<SlotType>({
 					id: faker.string.uuid(),
 					capacity: 10,
 				}),

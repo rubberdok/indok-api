@@ -1,6 +1,8 @@
-import type { ParticipationStatus } from "@prisma/client";
 import { DateTime } from "luxon";
-import type { SignUpAvailability } from "~/domain/events/index.js";
+import type {
+	EventParticipationStatusType,
+	SignUpAvailability,
+} from "~/domain/events/index.js";
 import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import type { EventService } from "../../service.js";
@@ -24,7 +26,10 @@ describe("EventService", () => {
 				capacity: number;
 				signUpsStartAt: Date;
 				signUpsEndAt: Date;
-				signUp?: { participationStatus: ParticipationStatus; active: boolean };
+				signUp?: {
+					participationStatus: EventParticipationStatusType;
+					active: boolean;
+				};
 				slots: {
 					capacity: number;
 					gradeYears?: number[];

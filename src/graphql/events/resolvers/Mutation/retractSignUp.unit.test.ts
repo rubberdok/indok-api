@@ -1,8 +1,11 @@
 import { faker } from "@faker-js/faker";
-import { type EventSignUp, ParticipationStatus } from "@prisma/client";
 import { mock } from "jest-mock-extended";
 import { InvalidArgumentError } from "~/domain/errors.js";
 import type { EventType } from "~/domain/events/event.js";
+import {
+	EventParticipationStatus,
+	type EventSignUp,
+} from "~/domain/events/index.js";
 import type { User } from "~/domain/users.js";
 import { createMockApolloServer } from "~/graphql/test-clients/mock-apollo-server.js";
 import { graphql } from "~/graphql/test-clients/unit/gql.js";
@@ -31,7 +34,7 @@ describe("Event mutations", () => {
 				data: {
 					signUp: mock<EventSignUp>({
 						id: faker.string.uuid(),
-						participationStatus: ParticipationStatus.RETRACTED,
+						participationStatus: EventParticipationStatus.RETRACTED,
 					}),
 				},
 			});
