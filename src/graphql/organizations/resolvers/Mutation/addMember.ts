@@ -31,7 +31,23 @@ export const addMember: NonNullable<MutationResolvers["addMember"]> = async (
 		});
 	}
 
-	if (!addMemberResult.ok) throw addMemberResult.error;
-	const { member } = addMemberResult.data;
-	return { member };
+	if (addMemberResult.ok) {
+		return {
+			__typename: "AddMemberSuccessResponse",
+			member: addMemberResult.data.member,
+		};
+	}
+
+	switch (addMemberResult.error.name) {
+		case "InvalidArgumentError":
+		case "NotFoundError": {
+			return {
+				__typename: "AddMemberErrorResponse",
+				error: addMemberResult.error,
+			};
+		}
+		default: {
+			throw addMemberResult.error;
+		}
+	}
 };

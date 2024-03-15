@@ -50,6 +50,8 @@ const config: CodegenConfig = {
 				documentMode: "string",
 				enumsAsTypes: true,
 				useTypeImports: true,
+				// We must explicitly call include this as we don't do so automatically
+				skipTypename: true,
 			},
 			presetConfig: {
 				useTypeImports: true,
@@ -78,6 +80,8 @@ const config: CodegenConfig = {
 			config: {
 				enumsAsTypes: true,
 				useTypeImports: true,
+				// We must explicitly call include this as we don't do so automatically
+				skipTypename: true,
 			},
 			presetConfig: {
 				/* Fragment masking is only useful for actual clients, and it's not relevant for testing */

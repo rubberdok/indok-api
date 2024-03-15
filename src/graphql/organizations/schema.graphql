@@ -152,9 +152,21 @@ input AddMemberInput {
   role: Role
 }
 
-type AddMemberResponse {
+enum AddMemberErrorCode {
+  ALREADY_MEMBER
+  USER_NOT_FOUND
+}
+
+type AddMemberErrorResponse {
+  code: AddMemberErrorCode!
+  message: String!
+}
+
+type AddMemberSuccessResponse {
   member: Member!
 }
+
+union AddMemberResponse = AddMemberErrorResponse | AddMemberSuccessResponse
 
 input RemoveMemberInput {
   id: ID!
