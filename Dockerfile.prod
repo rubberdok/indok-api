@@ -28,7 +28,7 @@ FROM base AS build
 COPY package.json pnpm-lock.yaml ./
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
-COPY .swcrc codegen.config.ts biome.json ./
+COPY .swcrc codegen.config.ts biome.json tsconfig.json ./
 COPY certs/ ./certs
 COPY scripts/ ./scripts
 COPY src/ ./src
