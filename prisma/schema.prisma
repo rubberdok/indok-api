@@ -214,6 +214,14 @@ model Booking {
   feedback                  String        @default("")
 }
 
+model BookingTerms {
+  id        String   @id @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  file      File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  fileId    String   @db.Uuid
+}
+
 enum Semester {
   SPRING
   FALL
@@ -380,5 +388,6 @@ model File {
   userId        String?        @db.Uuid
   user          User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
   organizations Organization[]
-  Document      Document[]
+  documents     Document[]
+  bookingTerms  BookingTerms[]
 }

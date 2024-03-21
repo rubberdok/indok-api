@@ -1,30 +1,24 @@
 import { faker } from "@faker-js/faker";
-import { type DeepMockProxy, mockDeep } from "jest-mock-extended";
+import type { DeepMockProxy } from "jest-mock-extended";
 import { DateTime } from "luxon";
 import { BookingSemesterEnum } from "~/domain/cabins.js";
 import { NotFoundError, PermissionDeniedError } from "~/domain/errors.js";
 import { FeaturePermission } from "~/domain/organizations.js";
 import { makeMockContext } from "~/lib/context.js";
-import {
+import type {
 	CabinService,
-	type ICabinRepository,
-	type MailService,
-	type PermissionService,
+	ICabinRepository,
+	PermissionService,
 } from "../../service.js";
+import { makeDependencies } from "./dependencies.js";
 
 describe("CabinService", () => {
 	let cabinRepository: DeepMockProxy<ICabinRepository>;
 	let cabinService: CabinService;
-	let permissionSerivce: DeepMockProxy<PermissionService>;
+	let permissionService: DeepMockProxy<PermissionService>;
 
 	beforeAll(() => {
-		cabinRepository = mockDeep<ICabinRepository>();
-		permissionSerivce = mockDeep<PermissionService>();
-		cabinService = new CabinService(
-			cabinRepository,
-			mockDeep<MailService>(),
-			permissionSerivce,
-		);
+		({ cabinRepository, cabinService, permissionService } = makeDependencies());
 	});
 
 	describe("updateBookingSemester", () => {
@@ -36,7 +30,7 @@ describe("CabinService", () => {
 			 * Mock the cabinRepository.getCabinByBookingId method to return a cabin.
 			 */
 			const userId = faker.string.uuid();
-			permissionSerivce.hasFeaturePermission.mockResolvedValueOnce(false);
+			permissionService.hasFeaturePermission.mockResolvedValueOnce(false);
 
 			/**
 			 * Act
@@ -62,7 +56,7 @@ describe("CabinService", () => {
 			await expect(updateBookingSemester).rejects.toThrow(
 				PermissionDeniedError,
 			);
-			expect(permissionSerivce.hasFeaturePermission).toHaveBeenCalledWith(
+			expect(permissionService.hasFeaturePermission).toHaveBeenCalledWith(
 				expect.anything(),
 				{
 					featurePermission: FeaturePermission.CABIN_ADMIN,
@@ -78,7 +72,7 @@ describe("CabinService", () => {
 			 * Mock the cabinRepository.getCabinByBookingId method to return a cabin.
 			 */
 			const userId = faker.string.uuid();
-			permissionSerivce.hasFeaturePermission.mockResolvedValueOnce(true);
+			permissionService.hasFeaturePermission.mockResolvedValueOnce(true);
 
 			/**
 			 * Act
@@ -118,7 +112,7 @@ describe("CabinService", () => {
 			 * Mock the cabinRepository.getCabinByBookingId method to return a cabin.
 			 */
 			const userId = faker.string.uuid();
-			permissionSerivce.hasFeaturePermission.mockResolvedValueOnce(true);
+			permissionService.hasFeaturePermission.mockResolvedValueOnce(true);
 
 			/**
 			 * Act
@@ -157,7 +151,7 @@ describe("CabinService", () => {
 				 * Mock the cabinRepository.getCabinByBookingId method to return a cabin.
 				 */
 				const userId = faker.string.uuid();
-				permissionSerivce.hasFeaturePermission.mockResolvedValueOnce(true);
+				permissionService.hasFeaturePermission.mockResolvedValueOnce(true);
 				cabinRepository.updateBookingSemester.mockRejectedValue(
 					new NotFoundError("No matching booking semester found"),
 				);
@@ -204,7 +198,7 @@ describe("CabinService", () => {
 				 * Mock the cabinRepository.getCabinByBookingId method to return a cabin.
 				 */
 				const userId = faker.string.uuid();
-				permissionSerivce.hasFeaturePermission.mockResolvedValueOnce(true);
+				permissionService.hasFeaturePermission.mockResolvedValueOnce(true);
 				cabinRepository.updateBookingSemester.mockRejectedValue(
 					new NotFoundError("No matching booking semester found"),
 				);
@@ -245,7 +239,7 @@ describe("CabinService", () => {
 				 * Mock the cabinRepository.getCabinByBookingId method to return a cabin.
 				 */
 				const userId = faker.string.uuid();
-				permissionSerivce.hasFeaturePermission.mockResolvedValueOnce(true);
+				permissionService.hasFeaturePermission.mockResolvedValueOnce(true);
 				cabinRepository.updateBookingSemester.mockRejectedValue(
 					new NotFoundError("No matching booking semester found"),
 				);
@@ -286,7 +280,7 @@ describe("CabinService", () => {
 				 * Mock the cabinRepository.getCabinByBookingId method to return a cabin.
 				 */
 				const userId = faker.string.uuid();
-				permissionSerivce.hasFeaturePermission.mockResolvedValueOnce(true);
+				permissionService.hasFeaturePermission.mockResolvedValueOnce(true);
 				cabinRepository.updateBookingSemester.mockRejectedValue(
 					new NotFoundError("No matching booking semester found"),
 				);

@@ -195,7 +195,20 @@ class BookingContact {
 	}
 }
 
+class BookingTerms {
+	id: string;
+	fileId: string;
+	createdAt: Date;
+
+	constructor(params: { id: string; fileId: string; createdAt: Date }) {
+		this.id = params.id;
+		this.fileId = params.fileId;
+		this.createdAt = params.createdAt;
+	}
+}
+
 export {
+	BookingTerms,
 	Booking,
 	Cabin,
 	BookingSemester,

@@ -59,6 +59,7 @@ const envVarsSchema = z.object({
 	SESSION_COOKIE_HTTP_ONLY: z.string().transform((val) => val === "true"),
 	SESSION_COOKIE_NAME: z.string(),
 	SESSION_COOKIE_SECURE: z.string().transform((val) => val === "true"),
+	SESSION_COOKIE_SAME_SITE: z.enum(["strict", "lax", "none"]),
 	SESSION_SECRET: z.string(),
 	VIPPS_TEST_MODE: z.string().transform((val) => val === "true"),
 	VIPPS_DEFAULT_CLIENT_ID: z.string().optional(),

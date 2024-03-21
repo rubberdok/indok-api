@@ -95,7 +95,7 @@ async function fastifyServer(
 			httpOnly: opts.SESSION_COOKIE_HTTP_ONLY,
 			secure: opts.SESSION_COOKIE_SECURE,
 			domain: opts.SESSION_COOKIE_DOMAIN,
-			sameSite: "none",
+			sameSite: opts.SESSION_COOKIE_SAME_SITE,
 			maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
 		},
 	});

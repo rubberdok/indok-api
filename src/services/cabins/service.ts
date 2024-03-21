@@ -10,12 +10,14 @@ import {
 	type BookingSemesterEnumType,
 	BookingStatus,
 	type BookingStatusType,
+	type BookingTerms,
 	type BookingType,
 	type Cabin,
 	type CalendarDay,
 	type CalendarMonth,
 } from "~/domain/cabins.js";
 import {
+	type DownstreamServiceError,
 	InternalServerError,
 	InvalidArgumentError,
 	InvalidArgumentErrorV2,
@@ -23,6 +25,7 @@ import {
 	PermissionDeniedError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
+import type { RemoteFile } from "~/domain/files.js";
 import {
 	FeaturePermission,
 	type FeaturePermissionType,
@@ -106,6 +109,17 @@ export interface ICabinRepository {
 			externalPriceWeekend: number;
 		}>,
 	): ResultAsync<{ cabin: Cabin }, InternalServerError | NotFoundError>;
+	createBookingTerms(
+		ctx: Context,
+		data: { fileId: string },
+	): ResultAsync<{ bookingTerms: BookingTerms }, InternalServerError>;
+	getBookingTerms(
+		ctx: Context,
+		params: { id?: string },
+	): ResultAsync<
+		{ bookingTerms: BookingTerms },
+		NotFoundError | InternalServerError
+	>;
 }
 
 export interface PermissionService {
@@ -121,12 +135,107 @@ export interface MailService {
 	sendAsync(jobData: EmailQueueDataType): Promise<void>;
 }
 
+export interface FileService {
+	createFileUploadUrl(
+		ctx: Context,
+		params: { extension: string },
+	): ResultAsync<
+		{ url: string; file: RemoteFile },
+		| DownstreamServiceError
+		| InternalServerError
+		| UnauthorizedError
+		| InvalidArgumentError
+	>;
+}
+
 export class CabinService implements ICabinService {
 	constructor(
 		private cabinRepository: ICabinRepository,
 		private mailService: MailService,
 		private permissionService: PermissionService,
+		private fileService: FileService,
 	) {}
+	async updateBookingTerms(
+		ctx: Context,
+	): ResultAsync<
+		{ bookingTerms: BookingTerms; uploadUrl: string },
+		| DownstreamServiceError
+		| InternalServerError
+		| UnauthorizedError
+		| PermissionDeniedError
+		| InvalidArgumentErrorV2
+	> {
+		if (!ctx.user) {
+			return Result.error(
+				new UnauthorizedError("You must be logged in to perform this action"),
+			);
+		}
+
+		const hasPermission = await this.permissionService.hasFeaturePermission(
+			ctx,
+			{
+				featurePermission: FeaturePermission.CABIN_ADMIN,
+			},
+		);
+
+		if (!hasPermission) {
+			return Result.error(
+				new PermissionDeniedError(
+					"You do not have permission to update the booking terms.",
+				),
+			);
+		}
+
+		const createFileUploadUrlResult =
+			await this.fileService.createFileUploadUrl(ctx, { extension: "pdf" });
+		if (!createFileUploadUrlResult.ok) {
+			switch (createFileUploadUrlResult.error.name) {
+				case "DownstreamServiceError":
+				case "InternalServerError":
+				case "UnauthorizedError":
+					return Result.error(createFileUploadUrlResult.error);
+				case "InvalidArgumentError":
+					return Result.error(
+						new InvalidArgumentErrorV2(
+							"Failed to create a file upload url",
+							createFileUploadUrlResult.error,
+						),
+					);
+			}
+		}
+
+		const createBookingTermsResult =
+			await this.cabinRepository.createBookingTerms(ctx, {
+				fileId: createFileUploadUrlResult.data.file.id,
+			});
+		if (!createBookingTermsResult.ok) {
+			return createBookingTermsResult;
+		}
+
+		const { bookingTerms } = createBookingTermsResult.data;
+
+		return {
+			ok: true,
+			data: { bookingTerms, uploadUrl: createFileUploadUrlResult.data.url },
+		};
+	}
+
+	async getBookingTerms(
+		ctx: Context,
+		params?: { id?: string | null } | null,
+	): ResultAsync<
+		{ bookingTerms: BookingTerms },
+		NotFoundError | InternalServerError
+	> {
+		const getBookingTermsResult = await this.cabinRepository.getBookingTerms(
+			ctx,
+			{
+				id: params?.id ?? undefined,
+			},
+		);
+		return getBookingTermsResult;
+	}
+
 	async findManyBookings(
 		ctx: Context,
 		params?: { bookingStatus?: BookingStatusType | null } | null,

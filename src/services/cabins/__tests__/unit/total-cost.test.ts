@@ -9,7 +9,7 @@ import {
 } from "~/domain/errors.js";
 import { makeMockContext } from "~/lib/context.js";
 import type { TResult } from "~/lib/result.js";
-import { CabinService, type ICabinRepository } from "../../service.js";
+import { makeDependencies } from "./dependencies.js";
 
 describe("CabinService", () => {
 	describe("#totalCost", () => {
@@ -280,8 +280,7 @@ describe("CabinService", () => {
 
 		test.each(testCases)("$name", async ({ arrange, act, expected }) => {
 			// Arrange
-			const cabinRepository = mock<ICabinRepository>();
-			const cabinService = new CabinService(cabinRepository, mock(), mock());
+			const { cabinRepository, cabinService } = makeDependencies();
 			for (const cabin of arrange.cabins) {
 				cabinRepository.getCabinById.mockResolvedValueOnce(mock<Cabin>(cabin));
 			}

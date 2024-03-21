@@ -1,3 +1,5 @@
+import { DefaultAzureCredential } from "@azure/identity";
+import { BlobServiceClient } from "@azure/storage-blob";
 import type { PrismaClient } from "@prisma/client";
 import { Client } from "@vippsmobilepay/sdk";
 import server, { type Avvio, type Plugin } from "avvio";
@@ -9,10 +11,12 @@ import {
 } from "bullmq";
 import { Redis } from "ioredis";
 import { type Logger, pino } from "pino";
+import { BlobStorageAdapter } from "~/adapters/azure-blob-storage.js";
 import { env } from "~/config.js";
 import { InternalServerError } from "~/domain/errors.js";
 import { CabinRepository } from "~/repositories/cabins/repository.js";
 import { EventRepository } from "~/repositories/events/index.js";
+import { FileRepository } from "~/repositories/files/repository.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
 import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
 import { ProductRepository } from "~/repositories/products/repository.js";
@@ -24,6 +28,7 @@ import {
 	type SignUpQueueType,
 	getSignUpWorkerHandler,
 } from "~/services/events/worker.js";
+import { FileService } from "~/services/files/service.js";
 import { buildMailService } from "~/services/mail/index.js";
 import {
 	type EmailQueueType,
@@ -272,10 +277,23 @@ export async function initWorkers(): Promise<{
 			instance.queues?.[SignUpQueueName],
 		);
 
+		const blobServiceClient = new BlobServiceClient(
+			`https://${env.AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net`,
+			new DefaultAzureCredential(),
+		);
+		const blobStorageAdapter = BlobStorageAdapter({
+			accountName: env.AZURE_STORAGE_ACCOUNT_NAME,
+			containerName: env.AZURE_STORAGE_CONTAINER_NAME,
+			blobServiceClient,
+		});
+		const fileRepository = FileRepository({ db: instance.database });
+		const fileService = FileService({ fileRepository, blobStorageAdapter });
+
 		const cabinService = new CabinService(
 			cabinRepository,
 			mailService,
 			permissionService,
+			fileService,
 		);
 
 		instance.use(

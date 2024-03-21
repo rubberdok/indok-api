@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
+import { type DeepMockProxy, mock } from "jest-mock-extended";
 import { DateTime } from "luxon";
 import { pino } from "pino";
 import {
@@ -16,28 +16,20 @@ import {
 import { FeaturePermission } from "~/domain/organizations.js";
 import { makeMockContext } from "~/lib/context.js";
 import { envToLogger } from "~/lib/fastify/logging.js";
-import {
+import type {
 	CabinService,
-	type ICabinRepository,
-	type MailService,
-	type PermissionService,
+	ICabinRepository,
+	PermissionService,
 } from "../../service.js";
+import { makeDependencies } from "./dependencies.js";
 
 describe("CabinService", () => {
 	let cabinRepository: DeepMockProxy<ICabinRepository>;
-	let mailService: DeepMockProxy<MailService>;
 	let permissionService: DeepMockProxy<PermissionService>;
 	let cabinService: CabinService;
 
 	beforeAll(() => {
-		cabinRepository = mockDeep<ICabinRepository>();
-		mailService = mockDeep<MailService>();
-		permissionService = mockDeep<PermissionService>();
-		cabinService = new CabinService(
-			cabinRepository,
-			mailService,
-			permissionService,
-		);
+		({ cabinRepository, permissionService, cabinService } = makeDependencies());
 	});
 
 	describe("updateBookingStatus", () => {

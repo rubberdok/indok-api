@@ -7,6 +7,7 @@ import {
 	BookingSemester,
 	type BookingSemesterEnumType,
 	type BookingStatusType,
+	BookingTerms,
 	type BookingType,
 	Cabin,
 } from "~/domain/cabins.js";
@@ -22,6 +23,58 @@ import type { ICabinRepository } from "~/services/cabins/service.js";
 
 export class CabinRepository implements ICabinRepository {
 	constructor(private db: PrismaClient) {}
+
+	async getBookingTerms(
+		ctx: Context,
+		params: { id?: string },
+	): ResultAsync<
+		{ bookingTerms: BookingTerms },
+		InternalServerError | NotFoundError
+	> {
+		if (params.id) {
+			ctx.log.info({ id: params.id }, "Getting booking bookingTerms");
+			const bookingTerms = await this.db.bookingTerms.findUnique({
+				where: {
+					id: params.id,
+				},
+			});
+			if (bookingTerms === null) {
+				return Result.error(new NotFoundError("Booking terms not found"));
+			}
+			return Result.success({
+				bookingTerms: new BookingTerms(bookingTerms),
+			});
+		}
+
+		ctx.log.info("Getting latest booking bookingTerms");
+		const bookingTerms = await this.db.bookingTerms.findFirst({
+			orderBy: {
+				createdAt: "desc",
+			},
+		});
+		if (bookingTerms === null) {
+			return Result.error(new NotFoundError("Booking terms not found"));
+		}
+		return Result.success({
+			bookingTerms: new BookingTerms(bookingTerms),
+		});
+	}
+
+	async createBookingTerms(
+		ctx: Context,
+		data: { fileId: string },
+	): ResultAsync<{ bookingTerms: BookingTerms }, InternalServerError> {
+		ctx.log.info({ fileId: data.fileId }, "Creating bookingTerms");
+		const bookingTerms = await this.db.bookingTerms.create({
+			data: {
+				fileId: data.fileId,
+			},
+		});
+
+		return Result.success({
+			bookingTerms: new BookingTerms(bookingTerms),
+		});
+	}
 
 	async updateCabin(
 		_ctx: Context,

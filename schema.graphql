@@ -92,6 +92,16 @@ enum BookingStatus {
   REJECTED
 }
 
+type BookingTerms {
+  createdAt: DateTime!
+  file: RemoteFile!
+  id: ID!
+}
+
+type BookingTermsResponse {
+  bookingTerms: BookingTerms
+}
+
 input BookingsInput {
   status: BookingStatus
 }
@@ -789,6 +799,11 @@ type Mutation {
   updateBookingStatus(data: UpdateBookingStatusInput!): UpdateBookingResponse!
 
   """
+  Update the bookingTerms for cabins, requires that the user is in an organization with the CABIN_ADMIN permission.
+  """
+  updateBookingTerms: UpdateBookingTermsResponse!
+
+  """
   Updates the cabin with the given ID, requires that the user is in an organization with the CABIN_ADMIN permission.
   """
   updateCabin(data: UpdateCabinInput!): UpdateCabinResponse!
@@ -1114,6 +1129,7 @@ type PublicUser {
 type Query {
   bookingContact: BookingContactResponse!
   bookingSemesters: BookingSemestersResponse!
+  bookingTerms: BookingTermsResponse!
 
   """
   Find all bookings, requires that the user is in an organization with the CABIN_ADMIN permission.
@@ -1405,6 +1421,11 @@ input UpdateBookingStatusInput {
   feedback: String
   id: ID!
   status: BookingStatus!
+}
+
+type UpdateBookingTermsResponse {
+  bookingTerms: BookingTerms!
+  uploadUrl: String!
 }
 
 input UpdateCabinInput {

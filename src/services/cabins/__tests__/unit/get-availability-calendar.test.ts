@@ -1,18 +1,19 @@
 import { faker } from "@faker-js/faker";
-import { type DeepMockProxy, mock } from "jest-mock-extended";
+import type { DeepMockProxy } from "jest-mock-extended";
 import { merge } from "lodash-es";
 import { DateTime, Settings } from "luxon";
 import type { BookingSemester, BookingType, Cabin } from "~/domain/cabins.js";
 import { makeMockContext } from "~/lib/context.js";
-import { CabinService, type ICabinRepository } from "../../service.js";
+import type { CabinService, ICabinRepository } from "../../service.js";
+import { makeDependencies } from "./dependencies.js";
 
 describe("Cabin Service", () => {
 	let cabinService: CabinService;
 	let mockCabinRepository: DeepMockProxy<ICabinRepository>;
 
 	beforeAll(() => {
-		mockCabinRepository = mock<ICabinRepository>();
-		cabinService = new CabinService(mockCabinRepository, mock(), mock());
+		({ cabinService, cabinRepository: mockCabinRepository } =
+			makeDependencies());
 		// Today is the first of january, for ever.
 		const januaryFirst2024 = DateTime.fromObject({
 			year: 2024,
