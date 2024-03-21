@@ -3,6 +3,7 @@ import type { IncomingMessage } from "node:http";
 import { faker } from "@faker-js/faker";
 import type { FastifyInstance, InjectOptions } from "fastify";
 import { mock } from "jest-mock-extended";
+import { capitalize } from "lodash-es";
 import type { UserinfoResponse } from "openid-client";
 import { makeTestServices } from "~/__tests__/dependencies-factory.js";
 import type { MockOpenIdClient } from "~/__tests__/mocks/openIdClient.js";
@@ -47,7 +48,7 @@ describe("AuthPlugin", () => {
 				value: expect.any(String),
 				path: "/",
 				httpOnly: env.SESSION_COOKIE_HTTP_ONLY,
-				sameSite: env.SESSION_COOKIE_SAME_SITE,
+				sameSite: capitalize(env.SESSION_COOKIE_SAME_SITE),
 				expires: expect.any(Date),
 			});
 		});
