@@ -63,6 +63,7 @@ jobs:
       
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
         with:
           name: unit-${{ matrix.shard }}
           path: unit-${{ matrix.shard }}.xml
@@ -268,6 +269,7 @@ jobs:
     
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
         with:
           name: integration-${{ matrix.shard }}
           path: integration-${{ matrix.shard }}.xml
