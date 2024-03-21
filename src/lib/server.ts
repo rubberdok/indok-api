@@ -7,6 +7,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { BlobStorageAdapter } from "~/adapters/azure-blob-storage.js";
 import { type Configuration, env } from "~/config.js";
 import type {
+	Booking,
 	BookingContact,
 	BookingSemester,
 	BookingSemesterEnumType,
@@ -388,6 +389,10 @@ interface ICabinService {
 		{ bookingTerms: BookingTerms },
 		NotFoundError | InternalServerError
 	>;
+	getBookingByIdAndEmail(
+		ctx: Context,
+		params: { id: string; email: string },
+	): ResultAsync<{ booking: Booking }, NotFoundError | InternalServerError>;
 }
 
 interface IEventService {
