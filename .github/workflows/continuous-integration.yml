@@ -59,7 +59,7 @@ jobs:
         with:
           name: unit-${{ matrix.shard }}
           path: unit-${{ matrix.shard }}.xml
-      
+
   unit-test:
     # Summary of all test shards
     # Inspired by https://github.com/orgs/community/discussions/26822#discussioncomment-5122101
@@ -74,7 +74,7 @@ jobs:
           pattern: unit-*
           path: test/
           merge-multiple: true
-      
+
       - name: Action Summary
         uses: test-summary/action@v2
         with:
@@ -172,7 +172,7 @@ jobs:
 
       - name: Build
         run: pnpm build:production
-      
+
       - name: Sentry Release
         if: github.ref == 'refs/heads/main'
         uses: getsentry/action-release@v1
@@ -181,13 +181,13 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_PROJECT: node
         with:
-            version: ${{ github.sha }}
-            sourcemaps: './dist'
-            finalize: false
-            environment: production
-            url_prefix: "/usr/src/app/dist/"
-            ignore_empty: true
-            ignore_missing: true
+          version: ${{ github.sha }}
+          sourcemaps: "./dist"
+          finalize: false
+          environment: production
+          url_prefix: "/usr/src/app/dist/"
+          ignore_empty: true
+          ignore_missing: true
 
   integration-test-matrix:
     name: Integration Test
@@ -257,7 +257,7 @@ jobs:
         with:
           name: integration-${{ matrix.shard }}
           path: integration-${{ matrix.shard }}.xml
-        
+
   integration-test:
     # Summary of all test shards
     # Inspired by https://github.com/orgs/community/discussions/26822#discussioncomment-5122101
@@ -272,7 +272,7 @@ jobs:
           merge-multiple: true
           pattern: integration-*
           path: test/
-      
+
       - name: Action Summary
         uses: test-summary/action@v2
         with:
