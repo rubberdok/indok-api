@@ -6,7 +6,7 @@ import {
 	type NotFoundError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
-import type { FileType } from "~/domain/files.js";
+import type { FileType, RemoteFile } from "~/domain/files.js";
 import type { Context } from "~/lib/context.js";
 import type { ResultAsync } from "~/lib/result.js";
 import type { IFileService } from "~/lib/server.js";
@@ -62,6 +62,7 @@ function FileService({
 				};
 			}
 
+			ctx.log.info({ extension }, "validating file extension");
 			if (!FILE_TYPE_ALLOWED_EXTENSIONS.includes(extension)) {
 				return {
 					ok: false,
@@ -75,6 +76,7 @@ function FileService({
 
 			const id = randomUUID();
 			const fileName = `${id}.${extension}`;
+			ctx.log.info({ fileName }, "creating file");
 			const createFileResult = await fileRepository.createFile({
 				id,
 				userId: ctx.user.id,
@@ -84,6 +86,7 @@ function FileService({
 				return createFileResult;
 			}
 
+			ctx.log.info({ fileName }, "creating blob upload url");
 			const createBlobUploadUrlResult =
 				await blobStorageAdapter.createSasBlobUrl(ctx, {
 					name: fileName,
@@ -133,7 +136,7 @@ function FileService({
 			ctx: Context,
 			params: { id: string },
 		): ResultAsync<
-			{ url: string; file: FileType },
+			{ url: string; file: RemoteFile },
 			| InternalServerError
 			| NotFoundError
 			| DownstreamServiceError

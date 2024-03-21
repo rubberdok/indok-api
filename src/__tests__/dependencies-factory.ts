@@ -75,11 +75,6 @@ export function makeTestServices(overrides?: Partial<Services>): Services & {
 		listingRepository,
 		organizationService.permissions,
 	);
-	const cabinService = new CabinService(
-		cabinRepository,
-		mailService,
-		organizationService.permissions,
-	);
 
 	const products = ProductService({
 		vippsFactory: mockDeep<typeof Client>(),
@@ -121,6 +116,13 @@ export function makeTestServices(overrides?: Partial<Services>): Services & {
 		repository: documentRepository,
 		permissions: organizationService.permissions,
 	});
+
+	const cabinService = new CabinService(
+		cabinRepository,
+		mailService,
+		organizationService.permissions,
+		fileService,
+	);
 
 	const services: Services = {
 		users: userService,

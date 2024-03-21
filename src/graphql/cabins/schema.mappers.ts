@@ -7,5 +7,7 @@ export type {
 	Cabin as CabinMapper,
 	CalendarMonth as CalendarMonthMapper,
 	CalendarDay as CalendarDayMapper,
+	BookingTerms as BookingTermsMapper,
 } from "~/domain/cabins.js";
+
 export type { BookingSemestersResponseMapper };

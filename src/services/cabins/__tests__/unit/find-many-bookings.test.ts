@@ -1,4 +1,4 @@
-import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
+import { type DeepMockProxy, mock } from "jest-mock-extended";
 import type { BookingType } from "~/domain/cabins.js";
 import {
 	InternalServerError,
@@ -7,11 +7,12 @@ import {
 } from "~/domain/errors.js";
 import { FeaturePermission } from "~/domain/organizations.js";
 import { makeMockContext } from "~/lib/context.js";
-import {
+import type {
 	CabinService,
-	type ICabinRepository,
-	type PermissionService,
+	ICabinRepository,
+	PermissionService,
 } from "../../service.js";
+import { makeDependencies } from "./dependencies.js";
 
 describe("CabinService", () => {
 	let cabinService: CabinService;
@@ -19,13 +20,11 @@ describe("CabinService", () => {
 	let mockPermissionService: DeepMockProxy<PermissionService>;
 
 	beforeAll(() => {
-		mockCabinRepository = mockDeep<ICabinRepository>();
-		mockPermissionService = mockDeep<PermissionService>();
-		cabinService = new CabinService(
-			mockCabinRepository,
-			mock(),
-			mockPermissionService,
-		);
+		({
+			cabinService,
+			cabinRepository: mockCabinRepository,
+			permissionService: mockPermissionService,
+		} = makeDependencies());
 	});
 
 	describe("#findManyBookings", () => {

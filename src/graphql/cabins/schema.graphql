@@ -10,6 +10,7 @@ type Query {
   getAvailabilityCalendar(
     data: GetAvailabilityCalendarInput!
   ): GetAvailabilityCalendarResponse!
+  bookingTerms: BookingTermsResponse!
 }
 
 type Mutation {
@@ -36,6 +37,25 @@ type Mutation {
   Create cabin, requires that the user is in an organization with the CABIN_ADMIN permission.
   """
   createCabin(data: CreateCabinInput!): CreateCabinResponse!
+  """
+  Update the bookingTerms for cabins, requires that the user is in an organization with the CABIN_ADMIN permission.
+  """
+  updateBookingTerms: UpdateBookingTermsResponse!
+}
+
+type BookingTermsResponse {
+  bookingTerms: BookingTerms
+}
+
+type BookingTerms {
+  id: ID!
+  file: RemoteFile!
+  createdAt: DateTime!
+}
+
+type UpdateBookingTermsResponse {
+  uploadUrl: String!
+  bookingTerms: BookingTerms!
 }
 
 input CreateCabinInput {

@@ -11,6 +11,7 @@ import type {
 	BookingSemester,
 	BookingSemesterEnumType,
 	BookingStatusType,
+	BookingTerms,
 	BookingType,
 	Cabin,
 	CalendarMonth,
@@ -369,6 +370,23 @@ interface ICabinService {
 		| UnauthorizedError
 		| PermissionDeniedError
 		| NotFoundError
+	>;
+	updateBookingTerms(
+		ctx: Context,
+	): ResultAsync<
+		{ bookingTerms: BookingTerms; uploadUrl: string },
+		| DownstreamServiceError
+		| InternalServerError
+		| UnauthorizedError
+		| PermissionDeniedError
+		| InvalidArgumentErrorV2
+	>;
+	getBookingTerms(
+		ctx: Context,
+		params?: { id?: string | null } | null,
+	): ResultAsync<
+		{ bookingTerms: BookingTerms },
+		NotFoundError | InternalServerError
 	>;
 }
 
@@ -772,11 +790,6 @@ async function registerServices(
 		listingRepository,
 		permissionService,
 	);
-	const cabinService = new CabinService(
-		cabinRepository,
-		mailService,
-		permissionService,
-	);
 
 	await serverInstance.register(fastifyMessageQueue, {
 		name: PaymentProcessingQueueName,
@@ -822,6 +835,14 @@ async function registerServices(
 		blobServiceClient,
 	});
 	const fileService = FileService({ fileRepository, blobStorageAdapter });
+
+	const cabinService = new CabinService(
+		cabinRepository,
+		mailService,
+		permissionService,
+		fileService,
+	);
+
 	const documentService = DocumentService({
 		files: fileService,
 		permissions: permissionService,
@@ -852,7 +873,7 @@ export type {
 	ICabinService,
 	IFileService,
 	IOrganizationService,
+	IUserService,
 	NewBookingParams,
 	Services,
-	IUserService,
 };
