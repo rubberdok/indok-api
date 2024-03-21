@@ -78,6 +78,17 @@ type MailService = {
 	send: (data: MailContent) => Promise<void>;
 };
 
+export type Attachment = {
+	name: string;
+	/**
+	 * Base64 encoded content
+	 */
+	content: string;
+	contentType: string;
+	contentId: string;
+	contentLength?: number;
+};
+
 const buildMailService = (
 	{ emailQueue, emailClient }: MailServiceDependencies,
 	options: MailServiceOptions,
@@ -96,7 +107,7 @@ const buildMailService = (
 			);
 		},
 
-		async send(data: MailContent) {
+		async send(data: MailContent, attachments?: Attachment[]) {
 			const { to, from, content, templateAlias } = data;
 			const defaultContent: LayoutContent = {
 				companyName: options.companyName,
@@ -113,6 +124,15 @@ const buildMailService = (
 				From: from ?? options.noReplyEmail,
 				TemplateAlias: templateAlias,
 				TemplateModel: contentWithDefaults,
+				Attachments: attachments?.map(
+					({ name, content, contentType, contentId, contentLength }) => ({
+						Content: content,
+						Name: name,
+						ContentType: contentType,
+						ContentID: contentId,
+						ContentLength: contentLength,
+					}),
+				),
 			});
 		},
 	};

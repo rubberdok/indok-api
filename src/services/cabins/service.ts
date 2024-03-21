@@ -1288,7 +1288,7 @@ export class CabinService implements ICabinService {
 		params: { date: DateTime; validBookingIntervals: Interval[] },
 	): boolean {
 		const { date, validBookingIntervals } = params;
-		if (date < DateTime.now().startOf("day")) return false;
+		if (date <= DateTime.now().endOf("day")) return false;
 		return validBookingIntervals.some((interval) => interval.contains(date));
 	}
 

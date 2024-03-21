@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { mock, mockDeep } from "jest-mock-extended";
+import { mock } from "jest-mock-extended";
 import {
 	DownstreamServiceError,
 	InternalServerError,
@@ -9,11 +9,7 @@ import {
 import type { FileType } from "~/domain/files.js";
 import { RemoteFile } from "~/domain/files.js";
 import { makeMockContext } from "~/lib/context.js";
-import {
-	type BlobStorageAdapter,
-	type FileRepository,
-	FileService,
-} from "../../service.js";
+import { makeDependencies } from "./dependencies.js";
 
 describe("FileService", () => {
 	describe("#createFileDownloadUrl", () => {
@@ -160,11 +156,3 @@ describe("FileService", () => {
 		});
 	});
 });
-
-function makeDependencies() {
-	const fileRepository = mockDeep<FileRepository>();
-	const blobStorageAdapter = mockDeep<BlobStorageAdapter>();
-	const files = FileService({ fileRepository, blobStorageAdapter });
-
-	return { fileRepository, blobStorageAdapter, files };
-}

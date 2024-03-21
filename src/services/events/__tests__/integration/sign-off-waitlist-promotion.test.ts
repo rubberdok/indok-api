@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { faker } from "@faker-js/faker";
 import { QueueEvents } from "bullmq";
 import { Redis } from "ioredis";
-import { type DeepMockProxy, mockDeep } from "jest-mock-extended";
+import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { range } from "lodash-es";
 import { DateTime } from "luxon";
 import type { Logger } from "pino";
@@ -101,6 +101,8 @@ describe("EventService", () => {
 			userService,
 			mailService,
 			cabinService: mockDeep<CabinService>(),
+			fileService: mock(),
+			logger: mock(),
 		});
 
 		const signUpWorkerHandler = getSignUpWorkerHandler({
