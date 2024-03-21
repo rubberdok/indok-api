@@ -223,3 +223,6 @@ dump.rdb
 src/graphql/test-clients/integration/**
 src/graphql/test-clients/unit/**
 *.generated.ts
+
+# Test reporters
+junit.xml

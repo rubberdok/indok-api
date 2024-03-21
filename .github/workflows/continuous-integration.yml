@@ -44,7 +44,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run Unit Tests
-        run: pnpm run test:ci --collect-coverage --shard ${{ matrix.shard }}/2
+        run: JEST_JUNIT_OUTPUT_NAME=unit-${{ matrix.shard }}.xml pnpm run test:ci --shard ${{ matrix.shard }}/2
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v4
@@ -54,6 +54,12 @@ jobs:
           directory: coverage/unit
           flags: unittests,node
 
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-${{ matrix.shard }}
+          path: unit-${{ matrix.shard }}.xml
+
   unit-test:
     # Summary of all test shards
     # Inspired by https://github.com/orgs/community/discussions/26822#discussioncomment-5122101
@@ -62,6 +68,19 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     steps:
+      - name: Download Test Results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: unit-*
+          path: test/
+          merge-multiple: true
+
+      - name: Action Summary
+        uses: test-summary/action@v2
+        with:
+          paths: |
+            test/unit-*.xml
+
       - name: Check unit test results
         # see https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions#needs-context
         # see https://stackoverflow.com/a/67532120/4907315
@@ -97,6 +116,12 @@ jobs:
 
       - name: Run Lint
         run: pnpm lint:ci
+
+      - name: Action Summary
+        if: failure()
+        run: |
+          SUMMARY=$'❌ Lint failed\nPlease run the following command locally and commit the changes\n```zsh\npnpm run lint:apply\n```'
+          echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
 
   typescript:
     name: Typescript
@@ -147,7 +172,7 @@ jobs:
 
       - name: Build
         run: pnpm build:production
-      
+
       - name: Sentry Release
         if: github.ref == 'refs/heads/main'
         uses: getsentry/action-release@v1
@@ -156,13 +181,13 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_PROJECT: node
         with:
-            version: ${{ github.sha }}
-            sourcemaps: './dist'
-            finalize: false
-            environment: production
-            url_prefix: "/usr/src/app/dist/"
-            ignore_empty: true
-            ignore_missing: true
+          version: ${{ github.sha }}
+          sourcemaps: "./dist"
+          finalize: false
+          environment: production
+          url_prefix: "/usr/src/app/dist/"
+          ignore_empty: true
+          ignore_missing: true
 
   integration-test-matrix:
     name: Integration Test
@@ -217,7 +242,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run Integration Tests
-        run: pnpm test:integration:ci --collect-coverage --shard ${{ matrix.shard }}/4
+        run: JEST_JUNIT_OUTPUT_NAME=integration-${{ matrix.shard }}.xml pnpm test:integration:ci  --shard ${{ matrix.shard }}/4
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v4
@@ -227,6 +252,12 @@ jobs:
           directory: coverage/integration
           flags: integrationtests,node
 
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-${{ matrix.shard }}
+          path: integration-${{ matrix.shard }}.xml
+
   integration-test:
     # Summary of all test shards
     # Inspired by https://github.com/orgs/community/discussions/26822#discussioncomment-5122101
@@ -235,6 +266,19 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     steps:
+      - name: Download Test Results
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+          pattern: integration-*
+          path: test/
+
+      - name: Action Summary
+        uses: test-summary/action@v2
+        with:
+          paths: |
+            test/integration-*.xml
+
       - name: Check integration test results
         # see https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions#needs-context
         # see https://stackoverflow.com/a/67532120/4907315
