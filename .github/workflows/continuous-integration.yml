@@ -45,6 +45,13 @@ jobs:
 
       - name: Run Unit Tests
         run: JEST_JUNIT_OUTPUT_NAME=unit-${{ matrix.shard }}.xml pnpm run test:ci --shard ${{ matrix.shard }}/2
+      
+      - name: Upload Test Results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          file: unit-${{ matrix.shard }}.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v4
@@ -54,13 +61,6 @@ jobs:
           directory: coverage/unit
           flags: unittests,node
       
-      - name: Upload test results to Codecov
-        if: ${{ !cancelled() }}
-        uses: codecov/test-results-action@v1
-        with:
-          file: unit-${{ matrix.shard }}.xml
-          token: ${{ secrets.CODECOV_TOKEN }}
-
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
         with:
@@ -251,6 +251,13 @@ jobs:
       - name: Run Integration Tests
         run: JEST_JUNIT_OUTPUT_NAME=integration-${{ matrix.shard }}.xml pnpm test:integration:ci  --shard ${{ matrix.shard }}/4
 
+      - name: Upload Test Results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          file: integration-${{ matrix.shard }}.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
+
       - name: Upload Coverage
         uses: codecov/codecov-action@v4
         if: ${{ !cancelled() }}
@@ -259,13 +266,6 @@ jobs:
           directory: coverage/integration
           flags: integrationtests,node
     
-      - name: Upload test results to Codecov
-        if: ${{ !cancelled() }}
-        uses: codecov/test-results-action@v1
-        with:
-          file: integration-${{ matrix.shard }}.xml
-          token: ${{ secrets.CODECOV_TOKEN }}
-
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
         with:
