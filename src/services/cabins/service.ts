@@ -1522,14 +1522,16 @@ export class CabinService implements ICabinService {
 
 		for (const bookingSemester of bookingSemesters) {
 			if (bookingSemester.bookingsEnabled) {
-				const now = DateTime.now().endOf("day");
+				const startOfDayTomorrow = DateTime.now()
+					.startOf("day")
+					.plus({ days: 1 });
 				/**
-				 * Take the maximum of the start date of the booking semester and now, to ensure that we don't
-				 * include dates in the past.
+				 * We require bookings to be in the future, meaning you cannot book a cabin for today, regardless
+				 * of the time of day. As such, the bookable date interval starts no earlier than tomorrow.
 				 */
 				const startAt = DateTime.max(
 					DateTime.fromJSDate(bookingSemester.startAt).startOf("day"),
-					now,
+					startOfDayTomorrow,
 				);
 				const endAt = DateTime.fromJSDate(bookingSemester.endAt).endOf("day");
 				const interval = Interval.fromDateTimes(startAt, endAt);

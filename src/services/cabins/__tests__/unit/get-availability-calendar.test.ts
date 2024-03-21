@@ -422,6 +422,48 @@ describe("Cabin Service", () => {
 			expect(calendarMonths[0]?.days[7]?.availableForCheckIn).toBe(false);
 		});
 
+		it("returns availableForCheckIn: true for tomorrow if tomorrow is contained in a booking semester", async () => {
+			mockCabinRepository.getCabinById.mockResolvedValue(makeCabin());
+			mockCabinRepository.getBookingSemester.mockResolvedValueOnce(
+				makeBookingSemester({
+					bookingsEnabled: true,
+					startAt: DateTime.fromObject({
+						year: 2024,
+						month: 1,
+						day: 1,
+					}).toJSDate(),
+					endAt: DateTime.fromObject({
+						year: 2024,
+						month: 1,
+						day: 31,
+					}).toJSDate(),
+				}),
+			);
+
+			const result = await cabinService.getAvailabilityCalendar(
+				makeMockContext({}),
+				{
+					cabins: [{ id: faker.string.uuid() }],
+					count: 12,
+					guests: {
+						external: 10,
+						internal: 10,
+					},
+					month: 1,
+					year: 2024,
+				},
+			);
+			if (!result.ok) throw result.error;
+
+			const { calendarMonths } = result.data;
+			// today should not be available for check in as bookings must be in the future
+			expect(calendarMonths[0]?.days[0]?.availableForCheckIn).toBe(false);
+			// tomorrow should be available for check in, as yesterday was not, and it is contained in a booking semester
+			expect(calendarMonths[0]?.days[1]?.availableForCheckIn).toBe(true);
+			// the day after tomorrow should not be availableForCheckIn, the day before it was.
+			expect(calendarMonths[0]?.days[2]?.availableForCheckIn).toBe(false);
+		});
+
 		it("returns availableForCheckOut: true on days where the the current and previous day are both bookable and available", async () => {
 			mockCabinRepository.getCabinById.mockResolvedValue(makeCabin());
 			mockCabinRepository.getBookingSemester.mockResolvedValueOnce(
