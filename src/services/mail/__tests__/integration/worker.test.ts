@@ -5,17 +5,23 @@ import { QueueEvents, UnrecoverableError } from "bullmq";
 import { Redis } from "ioredis";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { env } from "~/config.js";
-import type { Booking } from "~/domain/cabins.js";
-import { InternalServerError, NotFoundError } from "~/domain/errors.js";
+import { type Booking, BookingTerms } from "~/domain/cabins.js";
+import {
+	DownstreamServiceError,
+	InternalServerError,
+	NotFoundError,
+} from "~/domain/errors.js";
 import type { User } from "~/domain/users.js";
 import { Queue } from "~/lib/bullmq/queue.js";
 import { Worker } from "~/lib/bullmq/worker.js";
+import { Result } from "~/lib/result.js";
 import type { MailService } from "../../index.js";
 import {
 	type CabinService,
 	type EmailQueueType,
 	type EmailWorkerType,
 	type EventService,
+	type FileService,
 	type UserService,
 	getEmailHandler,
 } from "../../worker.js";
@@ -28,6 +34,7 @@ describe("MailService", () => {
 	let mockMailService: DeepMockProxy<MailService>;
 	let mockEventService: DeepMockProxy<EventService>;
 	let mockCabinService: DeepMockProxy<CabinService>;
+	let mockFileService: DeepMockProxy<FileService>;
 	let eventsRedis: Redis;
 	let queueEvents: QueueEvents;
 
@@ -37,6 +44,7 @@ describe("MailService", () => {
 		mockMailService = mockDeep<MailService>();
 		mockEventService = mockDeep<EventService>();
 		mockCabinService = mockDeep<CabinService>();
+		mockFileService = mockDeep<FileService>();
 		redis = new Redis(env.REDIS_CONNECTION_STRING, {
 			keepAlive: 1_000 * 60 * 3, // 3 minutes
 			maxRetriesPerRequest: 0,
@@ -52,6 +60,8 @@ describe("MailService", () => {
 			userService: mockUserService,
 			eventService: mockEventService,
 			cabinService: mockCabinService,
+			fileService: mockFileService,
+			logger: mock(),
 		});
 		mailWorker = new Worker(queueName, handler, {
 			connection: redis,
@@ -153,10 +163,89 @@ describe("MailService", () => {
 				}
 			}, 10_000);
 
-			it("should send a cabin booking receipt to the email", async () => {
+			it("should throw error if unable to fetch booking terms", async () => {
+				mockCabinService.getBooking.mockResolvedValue(
+					Result.success({
+						booking: mock<Booking>({
+							email: faker.internet.email(),
+							id: faker.string.uuid(),
+						}),
+					}),
+				);
+
+				mockCabinService.getBookingTerms.mockResolvedValue({
+					ok: false,
+					error: new InternalServerError("Internal Server Error"),
+				});
+
+				const job = await mailQueue.add("send-email", {
+					type: "cabin-booking-receipt",
+					bookingId: faker.string.uuid(),
+				});
+
+				mailWorker.on("failed", (_job, error) => {
+					expect(error).toBeInstanceOf(InternalServerError);
+				});
+
+				try {
+					await job.waitUntilFinished(queueEvents, 7_500);
+					fail("Expected job to fail");
+				} catch {
+					const state = await job.getState();
+					expect(state).toBe("failed");
+				}
+			}, 10_000);
+
+			it("should throw error if download to blob fails", async () => {
+				mockCabinService.getBooking.mockResolvedValue(
+					Result.success({
+						booking: mock<Booking>({
+							email: faker.internet.email(),
+							id: faker.string.uuid(),
+						}),
+					}),
+				);
+				mockCabinService.getBookingTerms.mockResolvedValue(
+					Result.success({
+						bookingTerms: new BookingTerms({
+							id: faker.string.uuid(),
+							fileId: faker.string.uuid(),
+							createdAt: new Date(),
+						}),
+					}),
+				);
+				mockFileService.downloadFileToBuffer.mockResolvedValue(
+					Result.error(new DownstreamServiceError("")),
+				);
+
+				const job = await mailQueue.add("send-email", {
+					type: "cabin-booking-receipt",
+					bookingId: faker.string.uuid(),
+				});
+
+				mailWorker.on("failed", (_job, error) => {
+					expect(error).toBeInstanceOf(DownstreamServiceError);
+				});
+
+				try {
+					await job.waitUntilFinished(queueEvents, 7_500);
+					fail("Expected job to fail");
+				} catch {
+					const state = await job.getState();
+					expect(state).toBe("failed");
+				}
+			}, 10_000);
+
+			it("should send a cabin booking receipt to the email with booking terms as attachment", async () => {
 				const booking = mock<Booking>({
 					email: "test@example.com",
 					id: faker.string.uuid(),
+				});
+				const fileBuffer = Buffer.from("test");
+				const bookingTerms = new BookingTerms({
+					id: faker.string.uuid(),
+					fileId: faker.string.uuid(),
+					createdAt: new Date(),
 				});
 				mockCabinService.getBooking.mockResolvedValueOnce({
 					ok: true,
@@ -164,6 +253,16 @@ describe("MailService", () => {
 						booking,
 					},
 				});
+				mockCabinService.getBookingTerms.mockResolvedValueOnce(
+					Result.success({
+						bookingTerms,
+					}),
+				);
+				mockFileService.downloadFileToBuffer.mockResolvedValueOnce(
+					Result.success({
+						buffer: fileBuffer,
+					}),
+				);
 				mockMailService.send.mockResolvedValue();
 
 				const job = await mailQueue.add("send-email", {
@@ -178,6 +277,14 @@ describe("MailService", () => {
 					expect.objectContaining({
 						to: "test@example.com",
 					}),
+					expect.arrayContaining([
+						expect.objectContaining({
+							name: "Bestillingsvilkår.pdf",
+							content: fileBuffer.toString("base64"),
+							contentType: "application/pdf",
+							contentId: bookingTerms.fileId,
+						}),
+					]),
 				);
 			});
 		});

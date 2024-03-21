@@ -1,13 +1,8 @@
 import { faker } from "@faker-js/faker";
-import { mockDeep } from "jest-mock-extended";
 import { InternalServerError } from "~/domain/errors.js";
 import { RemoteFile } from "~/domain/files.js";
 import { makeMockContext } from "~/lib/context.js";
-import {
-	type BlobStorageAdapter,
-	type FileRepository,
-	FileService,
-} from "../../service.js";
+import { makeDependencies } from "./dependencies.js";
 
 describe("FileService", () => {
 	describe("#getFile", () => {
@@ -50,11 +45,3 @@ describe("FileService", () => {
 		});
 	});
 });
-
-function makeDependencies() {
-	const fileRepository = mockDeep<FileRepository>();
-	const blobStorageAdapter = mockDeep<BlobStorageAdapter>();
-	const files = FileService({ fileRepository, blobStorageAdapter });
-
-	return { fileRepository, blobStorageAdapter, files };
-}

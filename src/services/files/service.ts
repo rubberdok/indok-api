@@ -30,6 +30,13 @@ interface BlobStorageAdapter {
 		{ url: string },
 		InternalServerError | DownstreamServiceError | InvalidArgumentError
 	>;
+	downloadToBuffer(
+		context: Context,
+		params: { fileName: string },
+	): ResultAsync<
+		{ buffer: Buffer },
+		DownstreamServiceError | InternalServerError
+	>;
 }
 
 type Dependencies = {
@@ -201,6 +208,30 @@ function FileService({
 				ok: true,
 				data: {
 					file: getFileResult.data.file,
+				},
+			};
+		},
+
+		async downloadFileToBuffer(ctx, { id }) {
+			const getFileResult = await fileRepository.getFile({ id });
+			if (!getFileResult.ok) {
+				return getFileResult;
+			}
+			const { file } = getFileResult.data;
+
+			ctx.log.info({ file }, "downloading file to buffer");
+			const downloadToBufferResult = await blobStorageAdapter.downloadToBuffer(
+				ctx,
+				{ fileName: file.name },
+			);
+			if (!downloadToBufferResult.ok) {
+				return downloadToBufferResult;
+			}
+
+			return {
+				ok: true,
+				data: {
+					buffer: downloadToBufferResult.data.buffer,
 				},
 			};
 		},

@@ -298,7 +298,14 @@ export async function initWorkers(): Promise<{
 
 		instance.use(
 			avvioWorker,
-			getEmailHandler({ mailService, userService, eventService, cabinService }),
+			getEmailHandler({
+				mailService,
+				userService,
+				eventService,
+				cabinService,
+				fileService,
+				logger: instance.log,
+			}),
 		);
 		instance.use(
 			avvioWorker,

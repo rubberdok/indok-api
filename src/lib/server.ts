@@ -673,6 +673,13 @@ interface IFileService {
 		ctx: Context,
 		params: { id: string },
 	): ResultAsync<{ file: RemoteFile }, NotFoundError | InternalServerError>;
+	downloadFileToBuffer(
+		ctx: Context,
+		params: { id: string },
+	): ResultAsync<
+		{ buffer: Buffer },
+		NotFoundError | DownstreamServiceError | InternalServerError
+	>;
 }
 
 type UserContext = {

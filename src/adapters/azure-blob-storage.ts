@@ -12,7 +12,7 @@ import {
 	InvalidArgumentError,
 } from "~/domain/errors.js";
 import type { Context } from "~/lib/context.js";
-import type { ResultAsync, TResult } from "~/lib/result.js";
+import { Result, type ResultAsync, type TResult } from "~/lib/result.js";
 import type { BlobStorageAdapter as BlobStorageAdapterType } from "~/services/files/index.js";
 
 type Dependencies = {
@@ -205,6 +205,27 @@ function BlobStorageAdapter({
 					url: sasUrl,
 				},
 			};
+		},
+
+		async downloadToBuffer(ctx, { fileName }) {
+			ctx.log.info({ fileName }, "downloading blob to buffer");
+			if (!containerName) {
+				return Result.error(
+					new InternalServerError("Azure Storage containerName not found"),
+				);
+			}
+			try {
+				const containerClient =
+					blobServiceClient.getContainerClient(containerName);
+
+				const blobClient = containerClient.getBlobClient(fileName);
+				const downloadBlockBlobResponse = await blobClient.downloadToBuffer();
+				return Result.success({ buffer: downloadBlockBlobResponse });
+			} catch (err) {
+				return Result.error(
+					new DownstreamServiceError("failed to download blob", err),
+				);
+			}
 		},
 	};
 }
