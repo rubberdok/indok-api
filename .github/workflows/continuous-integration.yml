@@ -60,13 +60,6 @@ jobs:
           name: unit-${{ matrix.shard }}.xml
           path: junit.xml
       
-      - name: Action Summary
-        if: always()
-        uses: test-summary/action@v2
-        with:
-          paths: |
-            junit.xml
-
   unit-test:
     # Summary of all test shards
     # Inspired by https://github.com/orgs/community/discussions/26822#discussioncomment-5122101
@@ -79,13 +72,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: unit-*.xml
-          path: test/results/
+          path: test/
     
       - name: Action Summary
         uses: test-summary/action@v2
         with:
           paths: |
-            test/results/*.xml
+            test/*.xml
 
       - name: Check unit test results
         # see https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions#needs-context
@@ -264,14 +257,6 @@ jobs:
           name: integration-${{ matrix.shard }}.xml
           path: junit.xml
         
-
-      - name: Action Summary
-        if: always()
-        uses: test-summary/action@v2
-        with:
-          paths: |
-            junit.xml
-
   integration-test:
     # Summary of all test shards
     # Inspired by https://github.com/orgs/community/discussions/26822#discussioncomment-5122101
@@ -284,13 +269,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: integration-*.xml
-          path: test/results/
+          path: test/
     
       - name: Action Summary
         uses: test-summary/action@v2
         with:
           paths: |
-            test/results/*.xml
+            test/*.xml
 
       - name: Check integration test results
         # see https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions#needs-context
