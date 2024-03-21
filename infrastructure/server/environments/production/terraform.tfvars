@@ -54,6 +54,10 @@ environment_variables = [
     value = "true"
   },
   {
+    name  = "SESSION_COOKIE_SAME_SITE"
+    value = "lax"
+  },
+  {
     name  = "SESSION_COOKIE_SECURE"
     value = "true"
   },
