@@ -47,7 +47,7 @@ describe("AuthPlugin", () => {
 				value: expect.any(String),
 				path: "/",
 				httpOnly: env.SESSION_COOKIE_HTTP_ONLY,
-				sameSite: "None",
+				sameSite: env.SESSION_COOKIE_SAME_SITE,
 				expires: expect.any(Date),
 			});
 		});
