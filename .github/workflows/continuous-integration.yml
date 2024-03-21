@@ -57,7 +57,7 @@ jobs:
       - name: Upload Test Results
         uses: actions/upload-artifact@v2
         with:
-          name: test/results/unit/junit${{ matrix.shard }}.xml
+          name: unit-${{ matrix.shard }}.xml
           path: junit.xml
       
       - name: Action Summary
@@ -76,16 +76,16 @@ jobs:
     if: always()
     steps:
       - name: Download Test Results
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
-          name: test/results/unit/
-          path: test/results/unit/
-      
+          pattern: unit-*.xml
+          path: test/results/
+    
       - name: Action Summary
         uses: test-summary/action@v2
         with:
           paths: |
-            test/results/unit/*.xml
+            test/results/*.xml
 
       - name: Check unit test results
         # see https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions#needs-context
@@ -259,10 +259,11 @@ jobs:
           flags: integrationtests,node
 
       - name: Upload Test Results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
-          name: test/results/integration/junit${{ matrix.shard }}.xml
+          name: integration-${{ matrix.shard }}.xml
           path: junit.xml
+        
 
       - name: Action Summary
         if: always()
@@ -280,16 +281,16 @@ jobs:
     if: always()
     steps:
       - name: Download Test Results
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
-          name: test/results/integration/
-          path: test/results/integration/
+          pattern: integration-*.xml
+          path: test/results/
     
       - name: Action Summary
         uses: test-summary/action@v2
         with:
           paths: |
-            test/results/integration/*.xml
+            test/results/*.xml
 
       - name: Check integration test results
         # see https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions#needs-context
