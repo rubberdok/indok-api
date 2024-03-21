@@ -48,11 +48,18 @@ jobs:
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v4
-        if: always()
+        if: ${{ !cancelled()}}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: coverage/unit
           flags: unittests,node
+      
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          file: integration-${{ matrix.shard }}.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
@@ -246,11 +253,18 @@ jobs:
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v4
-        if: always()
+        if: ${{ !cancelled() }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: coverage/integration
           flags: integrationtests,node
+    
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          file: integration-${{ matrix.shard }}.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
