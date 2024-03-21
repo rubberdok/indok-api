@@ -74,12 +74,14 @@ jobs:
           pattern: unit-*.xml
           path: test/
           merge-multiple: true
+      
+      - run: ls -R test
     
       - name: Action Summary
         uses: test-summary/action@v2
         with:
           paths: |
-            test/*.xml
+            test/unit-*.xml
 
       - name: Check unit test results
         # see https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions#needs-context
@@ -272,12 +274,14 @@ jobs:
           merge-multiple: true
           pattern: integration-*.xml
           path: test/
+      
+      - run: ls -R test
     
       - name: Action Summary
         uses: test-summary/action@v2
         with:
           paths: |
-            test/*.xml
+            test/integration-*.xml
 
       - name: Check integration test results
         # see https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions#needs-context
