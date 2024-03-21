@@ -1,3 +1,4 @@
+import { fail } from "assert";
 import { faker } from "@faker-js/faker";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { PermissionDeniedError } from "~/domain/errors.js";
@@ -23,6 +24,7 @@ describe("ListingService", () => {
 
 	describe("delete", () => {
 		it("Should delete the listing", async () => {
+			fail();
 			/**
 			 * Arrange
 			 *
