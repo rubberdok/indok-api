@@ -98,6 +98,11 @@ jobs:
       - name: Run Lint
         run: pnpm lint:ci
 
+      - name: Action Summary
+        if: failure()
+        run: |
+          echo "❌ Lint failed\nPlease run the following command locally and commit the changes\n```zsh\npnpm run lint:apply\n```"
+
   typescript:
     name: Typescript
     runs-on: ubuntu-latest

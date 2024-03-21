@@ -3,12 +3,7 @@ import type { FastifyRequest } from "fastify";
 import type { TokenSet, UserinfoResponse } from "openid-client";
 import { generators } from "openid-client";
 import { env } from "~/config.js";
-import {
-	AuthenticationError,
-	BadRequestError,
-	NotFoundError,
-	UnauthorizedError,
-} from "~/domain/errors.js";
+import {AuthenticationError,BadRequestError,NotFoundError,UnauthorizedError,} from "~/domain/errors.js";
 import type { StudyProgram, User } from "~/domain/users.js";
 import type { Context } from "../../lib/context.js";
 
