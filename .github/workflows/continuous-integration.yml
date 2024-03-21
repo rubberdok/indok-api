@@ -44,7 +44,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run Unit Tests
-        run: JEST_JUNIT_OUTPUT_NAME=unit-${{ matrix.shard }}.xml pnpm run test:ci --collect-coverage --shard ${{ matrix.shard }}/2 --reporters="jest-junit" --reporters="default"
+        run: JEST_JUNIT_OUTPUT_NAME=unit-${{ matrix.shard }}.xml pnpm run test:ci --shard ${{ matrix.shard }}/2"
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v4
@@ -244,7 +244,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run Integration Tests
-        run: JEST_JUNIT_OUTPUT_NAME=integration-${{ matrix.shard }}.xml pnpm test:integration:ci --collect-coverage --shard ${{ matrix.shard }}/4 --reporters="jest-junit" --reporters="default"
+        run: JEST_JUNIT_OUTPUT_NAME=integration-${{ matrix.shard }}.xml pnpm test:integration:ci  --shard ${{ matrix.shard }}/4
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v4
