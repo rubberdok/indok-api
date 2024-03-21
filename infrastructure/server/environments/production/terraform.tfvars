@@ -46,10 +46,6 @@ environment_variables = [
     value = "sessionid"
   },
   {
-    name  = "SESSION_COOKIE_DOMAIN"
-    value = "yellowflower-e949ae00.norwayeast.azurecontainerapps.io"
-  },
-  {
     name  = "SESSION_COOKIE_HTTP_ONLY"
     value = "true"
   },
