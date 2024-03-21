@@ -101,7 +101,7 @@ jobs:
       - name: Action Summary
         if: failure()
         run: |
-          echo "❌ Lint failed\nPlease run the following command locally and commit the changes\n```zsh\npnpm run lint:apply\n```"
+          echo "❌ Lint failed\nPlease run the following command locally and commit the changes\n\`\`\`zsh\npnpm run lint:apply\n\`\`\`" >> $GITHUB_SUMMARY_STEP
 
   typescript:
     name: Typescript
