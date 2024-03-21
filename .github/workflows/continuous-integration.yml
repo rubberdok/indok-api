@@ -75,8 +75,6 @@ jobs:
           path: test/
           merge-multiple: true
       
-      - run: ls -R test
-    
       - name: Action Summary
         uses: test-summary/action@v2
         with:
@@ -275,8 +273,6 @@ jobs:
           pattern: integration-*
           path: test/
       
-      - run: ls -R test
-    
       - name: Action Summary
         uses: test-summary/action@v2
         with:
