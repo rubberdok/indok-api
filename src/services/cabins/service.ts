@@ -1288,7 +1288,6 @@ export class CabinService implements ICabinService {
 		params: { date: DateTime; validBookingIntervals: Interval[] },
 	): boolean {
 		const { date, validBookingIntervals } = params;
-		if (date <= DateTime.now().endOf("day")) return false;
 		return validBookingIntervals.some((interval) => interval.contains(date));
 	}
 
@@ -1523,7 +1522,7 @@ export class CabinService implements ICabinService {
 
 		for (const bookingSemester of bookingSemesters) {
 			if (bookingSemester.bookingsEnabled) {
-				const now = DateTime.now().startOf("day");
+				const now = DateTime.now().endOf("day");
 				/**
 				 * Take the maximum of the start date of the booking semester and now, to ensure that we don't
 				 * include dates in the past.

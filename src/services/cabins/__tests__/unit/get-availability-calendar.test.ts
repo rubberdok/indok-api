@@ -343,12 +343,12 @@ describe("Cabin Service", () => {
 					bookingsEnabled: true,
 					startAt: DateTime.fromObject({
 						year: 2024,
-						month: 1,
+						month: 2,
 						day: 1,
 					}).toJSDate(),
 					endAt: DateTime.fromObject({
 						year: 2024,
-						month: 1,
+						month: 2,
 						day: 4,
 					}).toJSDate(),
 				}),
@@ -358,12 +358,12 @@ describe("Cabin Service", () => {
 					bookingsEnabled: true,
 					startAt: DateTime.fromObject({
 						year: 2024,
-						month: 1,
+						month: 2,
 						day: 7,
 					}).toJSDate(),
 					endAt: DateTime.fromObject({
 						year: 2024,
-						month: 1,
+						month: 2,
 						day: 8,
 					}).toJSDate(),
 				}),
@@ -375,12 +375,12 @@ describe("Cabin Service", () => {
 						makeBooking({
 							startDate: DateTime.fromObject({
 								year: 2024,
-								month: 1,
+								month: 2,
 								day: 3,
 							}).toJSDate(),
 							endDate: DateTime.fromObject({
 								year: 2024,
-								month: 1,
+								month: 2,
 								day: 4,
 							}).toJSDate(),
 							status: "CONFIRMED",
@@ -399,7 +399,7 @@ describe("Cabin Service", () => {
 						external: 10,
 						internal: 10,
 					},
-					month: 1,
+					month: 2,
 					year: 2024,
 				},
 			);
