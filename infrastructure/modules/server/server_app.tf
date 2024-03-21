@@ -77,6 +77,11 @@ resource "azurerm_container_app" "server" {
       }
 
       env {
+        name = "SESSION_COOKIE_DOMAIN"
+        value = data.null_data_source.app_url.outputs.app_url
+      }
+
+      env {
         name  = "AZURE_MANAGED_IDENTITY_CLIENT_ID"
         value = module.managed_identity.client_id
       }
@@ -162,6 +167,11 @@ resource "azurerm_container_app" "server" {
           secret_name = try(env.value.secret_name, null)
           value       = try(env.value.value, null)
         }
+      }
+
+      env {
+        name = "SESSION_COOKIE_DOMAIN"
+        value = data.null_data_source.app_url.outputs.app_url
       }
 
       env {
@@ -299,6 +309,11 @@ resource "azurerm_container_app" "worker" {
       }
 
       env {
+        name = "SESSION_COOKIE_DOMAIN"
+        value = data.null_data_source.app_url.outputs.app_url
+      }
+
+      env {
         name  = "AZURE_MANAGED_IDENTITY_CLIENT_ID"
         value = module.managed_identity.client_id
       }
@@ -341,4 +356,10 @@ resource "azurerm_container_app" "worker" {
   }
 
   tags = local.tags
+}
+
+data null_data_source "app_url" {
+  inputs = {
+    app_url = azurerm_container_app.server.ingress[0].fqdn
+  }
 }
