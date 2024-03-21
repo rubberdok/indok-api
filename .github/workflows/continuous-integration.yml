@@ -240,6 +240,13 @@ jobs:
           directory: coverage/integration
           flags: integrationtests,node
 
+      - name: Action Summary
+        if: always()
+        uses: test-summary/action@v2
+        with:
+          paths: |
+            junit.xml
+
   integration-test:
     # Summary of all test shards
     # Inspired by https://github.com/orgs/community/discussions/26822#discussioncomment-5122101
