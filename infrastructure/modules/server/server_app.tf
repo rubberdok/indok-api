@@ -77,7 +77,7 @@ resource "azurerm_container_app" "server" {
       }
 
       env {
-        name = "SESSION_COOKIE_DOMAIN"
+        name  = "SESSION_COOKIE_DOMAIN"
         value = data.null_data_source.app_url.outputs.app_url
       }
 
@@ -170,7 +170,7 @@ resource "azurerm_container_app" "server" {
       }
 
       env {
-        name = "SESSION_COOKIE_DOMAIN"
+        name  = "SESSION_COOKIE_DOMAIN"
         value = data.null_data_source.app_url.outputs.app_url
       }
 
@@ -309,7 +309,7 @@ resource "azurerm_container_app" "worker" {
       }
 
       env {
-        name = "SESSION_COOKIE_DOMAIN"
+        name  = "SESSION_COOKIE_DOMAIN"
         value = data.null_data_source.app_url.outputs.app_url
       }
 
@@ -358,7 +358,7 @@ resource "azurerm_container_app" "worker" {
   tags = local.tags
 }
 
-data null_data_source "app_url" {
+data "null_data_source" "app_url" {
   inputs = {
     app_url = azurerm_container_app.server.ingress[0].fqdn
   }

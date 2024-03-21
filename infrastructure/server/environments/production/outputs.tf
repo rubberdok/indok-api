@@ -1,3 +1,3 @@
 output "fqdn" {
-    value = module.server.fqdn
+  value = module.server.fqdn
 }
