@@ -53,6 +53,12 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: coverage/unit
           flags: unittests,node
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v2
+        with:
+          name: test/results/unit/junit${{ matrix.shard }}.xml
+          path: junit.xml
       
       - name: Action Summary
         if: always()
@@ -69,6 +75,18 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     steps:
+      - name: Download Test Results
+        uses: actions/download-artifact@v2
+        with:
+          name: test/results/unit/
+          path: test/results/unit/
+      
+      - name: Action Summary
+        uses: test-summary/action@v2
+        with:
+          paths: |
+            test/results/unit/*.xml
+
       - name: Check unit test results
         # see https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions#needs-context
         # see https://stackoverflow.com/a/67532120/4907315
@@ -240,6 +258,12 @@ jobs:
           directory: coverage/integration
           flags: integrationtests,node
 
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v2
+        with:
+          name: test/results/integration/junit${{ matrix.shard }}.xml
+          path: junit.xml
+
       - name: Action Summary
         if: always()
         uses: test-summary/action@v2
@@ -255,6 +279,18 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     steps:
+      - name: Download Test Results
+        uses: actions/download-artifact@v2
+        with:
+          name: test/results/integration/
+          path: test/results/integration/
+    
+      - name: Action Summary
+        uses: test-summary/action@v2
+        with:
+          paths: |
+            test/results/integration/*.xml
+
       - name: Check integration test results
         # see https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions#needs-context
         # see https://stackoverflow.com/a/67532120/4907315
