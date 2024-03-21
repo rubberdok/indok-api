@@ -2,7 +2,7 @@
 type BookingSemestersResponseMapper = {};
 
 export type {
-	BookingType as BookingMapper,
+	Booking as BookingMapper,
 	BookingSemester as BookingSemesterMapper,
 	Cabin as CabinMapper,
 	CalendarMonth as CalendarMonthMapper,

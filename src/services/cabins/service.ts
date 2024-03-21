@@ -1106,11 +1106,26 @@ export class CabinService implements ICabinService {
 		return await this.cabinRepository.getBookingContact();
 	}
 
-	async getBooking(by: { id: string }): ResultAsync<
-		{ booking: BookingType },
-		InternalServerError | NotFoundError
-	> {
+	async getBooking(
+		ctx: Context,
+		by: { id: string; email: string },
+	): ResultAsync<{ booking: Booking }, InternalServerError | NotFoundError> {
+		ctx.log.info({ bookingId: by.id }, "get booking");
 		const getBookingResult = await this.cabinRepository.getBookingById(by.id);
+		if (!getBookingResult.ok) {
+			return getBookingResult;
+		}
+		const { booking } = getBookingResult.data;
+		if (booking.email !== by.email) {
+			ctx.log.warn(
+				{ bookingId: by.id },
+				"booking does not match the email provided",
+			);
+			return {
+				ok: false,
+				error: new NotFoundError("Booking not found"),
+			};
+		}
 		return getBookingResult;
 	}
 

@@ -8,4 +8,10 @@ export const Booking: BookingResolvers = {
 		);
 		return cabinsResult;
 	},
+	guests: ({ internalParticipantsCount, externalParticipantsCount }) => {
+		return {
+			external: externalParticipantsCount,
+			internal: internalParticipantsCount,
+		};
+	},
 };

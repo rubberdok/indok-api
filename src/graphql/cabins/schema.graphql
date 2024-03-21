@@ -1,4 +1,5 @@
 type Query {
+  booking(data: BookingInput!): BookingResponse!
   cabins: CabinsResponse!
   bookingSemesters: BookingSemestersResponse!
   bookingContact: BookingContactResponse!
@@ -41,6 +42,15 @@ type Mutation {
   Update the bookingTerms for cabins, requires that the user is in an organization with the CABIN_ADMIN permission.
   """
   updateBookingTerms: UpdateBookingTermsResponse!
+}
+
+input BookingInput {
+  id: ID!
+  email: String!
+}
+
+type BookingResponse {
+  booking: Booking
 }
 
 type BookingTermsResponse {
@@ -158,6 +168,12 @@ type Booking {
   Feedback from the cabin administrators to the user, e.g. why a booking was rejected
   """
   feedback: String!
+  guests: Guests!
+}
+
+type Guests {
+  internal: Int!
+  external: Int!
 }
 
 type BookingContact {

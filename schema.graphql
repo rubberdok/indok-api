@@ -46,6 +46,7 @@ type Booking {
   """
   feedback: String!
   firstName: String!
+  guests: Guests!
   id: ID!
   lastName: String!
   phoneNumber: String!
@@ -69,6 +70,15 @@ type BookingContact {
 
 type BookingContactResponse {
   bookingContact: BookingContact!
+}
+
+input BookingInput {
+  email: String!
+  id: ID!
+}
+
+type BookingResponse {
+  booking: Booking
 }
 
 type BookingSemester {
@@ -632,6 +642,11 @@ type GetAvailabilityCalendarResponse {
   calendarMonths: [CalendarMonth!]!
 }
 
+type Guests {
+  external: Int!
+  internal: Int!
+}
+
 input GuestsInput {
   external: Int!
   internal: Int!
@@ -1127,6 +1142,7 @@ type PublicUser {
 }
 
 type Query {
+  booking(data: BookingInput!): BookingResponse!
   bookingContact: BookingContactResponse!
   bookingSemesters: BookingSemestersResponse!
   bookingTerms: BookingTermsResponse!
