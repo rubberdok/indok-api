@@ -1108,9 +1108,18 @@ export class CabinService implements ICabinService {
 
 	async getBooking(
 		ctx: Context,
-		by: { id: string; email: string },
+		by: { id: string },
 	): ResultAsync<{ booking: Booking }, InternalServerError | NotFoundError> {
 		ctx.log.info({ bookingId: by.id }, "get booking");
+		const getBookingResult = await this.cabinRepository.getBookingById(by.id);
+		return getBookingResult;
+	}
+
+	async getBookingByIdAndEmail(
+		ctx: Context,
+		by: { id: string; email: string },
+	): ResultAsync<{ booking: Booking }, InternalServerError | NotFoundError> {
+		ctx.log.info({ bookingId: by.id }, "get booking by id and email");
 		const getBookingResult = await this.cabinRepository.getBookingById(by.id);
 		if (!getBookingResult.ok) {
 			return getBookingResult;

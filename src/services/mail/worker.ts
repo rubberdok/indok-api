@@ -2,7 +2,7 @@ import { type Job, type Processor, UnrecoverableError } from "bullmq";
 import { DateTime } from "luxon";
 import type { Logger } from "pino";
 import { env } from "~/config.js";
-import type { BookingTerms, BookingType } from "~/domain/cabins.js";
+import type { Booking, BookingTerms } from "~/domain/cabins.js";
 import type {
 	DownstreamServiceError,
 	InternalServerError,
@@ -26,10 +26,10 @@ export type EventService = {
 };
 
 export type CabinService = {
-	getBooking(by: { id: string }): ResultAsync<
-		{ booking: BookingType },
-		NotFoundError | InternalServerError
-	>;
+	getBooking(
+		ctx: Context,
+		by: { id: string },
+	): ResultAsync<{ booking: Booking }, NotFoundError | InternalServerError>;
 	getBookingTerms(
 		ctx: Context,
 	): ResultAsync<
@@ -165,7 +165,7 @@ const EmailHandler = ({
 			case "cabin-booking-receipt": {
 				const { bookingId } = job.data;
 				ctx.log.info({ bookingId }, "fetching booking");
-				const getBookingResult = await cabinService.getBooking({
+				const getBookingResult = await cabinService.getBooking(ctx, {
 					id: bookingId,
 				});
 				if (!getBookingResult.ok) {

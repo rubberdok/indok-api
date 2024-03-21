@@ -389,7 +389,7 @@ interface ICabinService {
 		{ bookingTerms: BookingTerms },
 		NotFoundError | InternalServerError
 	>;
-	getBooking(
+	getBookingByIdAndEmail(
 		ctx: Context,
 		params: { id: string; email: string },
 	): ResultAsync<{ booking: Booking }, NotFoundError | InternalServerError>;

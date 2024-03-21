@@ -26,7 +26,7 @@ describe("Cabin queries", () => {
 				status: "PENDING",
 				totalCost: faker.number.int({ max: 200 }),
 			});
-			cabinService.getBooking.mockResolvedValue(
+			cabinService.getBookingByIdAndEmail.mockResolvedValue(
 				Result.success({
 					booking,
 				}),
@@ -69,7 +69,7 @@ describe("Cabin queries", () => {
 
 		it("returns null on NotFoundError", async () => {
 			const { client, cabinService } = createMockApolloServer();
-			cabinService.getBooking.mockResolvedValue(
+			cabinService.getBookingByIdAndEmail.mockResolvedValue(
 				Result.error(new NotFoundError("")),
 			);
 
@@ -104,7 +104,7 @@ describe("Cabin queries", () => {
 
 		it("throws on InternalServerError", async () => {
 			const { client, cabinService } = createMockApolloServer();
-			cabinService.getBooking.mockResolvedValue(
+			cabinService.getBookingByIdAndEmail.mockResolvedValue(
 				Result.error(new InternalServerError("")),
 			);
 

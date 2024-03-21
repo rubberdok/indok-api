@@ -7,7 +7,7 @@ import { makeDependencies } from "./dependencies.js";
 
 describe("Cabin service", () => {
 	describe("#getBooking", () => {
-		it("returns a booking if the email matches the booking", async () => {
+		it("returns a booking", async () => {
 			const { cabinService, cabinRepository } = makeDependencies();
 			const email = faker.internet.email();
 
@@ -35,44 +35,11 @@ describe("Cabin service", () => {
 
 			const result = await cabinService.getBooking(makeMockContext(), {
 				id: faker.string.uuid(),
-				email,
 			});
 
 			expect(result).toEqual(Result.success({ booking }));
 		});
 
-		it("returns NotFound if the email does not match the booking", async () => {
-			const { cabinService, cabinRepository } = makeDependencies();
-
-			const booking = new Booking({
-				id: faker.string.uuid(),
-				cabins: [],
-				createdAt: faker.date.recent(),
-				email: faker.internet.email({ firstName: "test" }),
-				endDate: faker.date.recent(),
-				externalParticipantsCount: faker.number.int({ max: 10 }),
-				feedback: faker.lorem.paragraph(),
-				firstName: faker.person.firstName(),
-				internalParticipantsCount: faker.number.int({ max: 10 }),
-				lastName: faker.person.lastName(),
-				phoneNumber: faker.phone.number(),
-				questions: faker.lorem.paragraph(),
-				startDate: faker.date.recent(),
-				status: "PENDING",
-				totalCost: faker.number.int({ max: 200 }),
-			});
-
-			cabinRepository.getBookingById.mockResolvedValue(
-				Result.success({ booking }),
-			);
-
-			const result = await cabinService.getBooking(makeMockContext(), {
-				id: faker.string.uuid(),
-				email: faker.internet.email({ firstName: "not-test" }),
-			});
-
-			expect(result).toEqual(Result.error(expect.any(NotFoundError)));
-		});
 		it("returns NotFound if the repository returns NotFound", async () => {
 			const { cabinService, cabinRepository } = makeDependencies();
 
@@ -82,7 +49,6 @@ describe("Cabin service", () => {
 
 			const result = await cabinService.getBooking(makeMockContext(), {
 				id: faker.string.uuid(),
-				email: faker.internet.email(),
 			});
 
 			expect(result).toEqual(Result.error(expect.any(NotFoundError)));

@@ -4,7 +4,7 @@ export const booking: NonNullable<QueryResolvers["booking"]> = async (
 	{ data },
 	ctx,
 ) => {
-	const getBookingResult = await ctx.cabins.getBooking(ctx, data);
+	const getBookingResult = await ctx.cabins.getBookingByIdAndEmail(ctx, data);
 	if (!getBookingResult.ok) {
 		switch (getBookingResult.error.name) {
 			case "InternalServerError":
