@@ -650,6 +650,12 @@ type IProductService = {
 			| InvalidArgumentError
 			| InternalServerError
 		>;
+		findMany(
+			ctx: Context,
+		): ResultAsync<
+			{ merchants: MerchantType[]; total: number },
+			UnauthorizedError | InternalServerError
+		>;
 	};
 };
 
@@ -888,4 +894,5 @@ export type {
 	IUserService,
 	NewBookingParams,
 	Services,
+	IProductService,
 };

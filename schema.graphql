@@ -737,6 +737,11 @@ type Merchant {
   name: String!
 }
 
+type MerchantsResponse {
+  merchants: [Merchant!]!
+  total: Int!
+}
+
 type Mutation {
   """Add a member to the organization"""
   addMember(data: AddMemberInput!): AddMemberResponse!
@@ -1161,6 +1166,7 @@ type Query {
   hasRole(data: HasRoleInput!): HasRoleResponse!
   listing(data: ListingInput!): ListingResponse!
   listings: ListingsResponse!
+  merchants: MerchantsResponse!
 
   """Get an order by its ID."""
   order(data: OrderInput!): OrderResponse!

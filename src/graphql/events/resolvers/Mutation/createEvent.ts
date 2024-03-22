@@ -4,7 +4,7 @@ import type { MutationResolvers } from "./../../../types.generated.js";
 
 export const createEvent: NonNullable<MutationResolvers["createEvent"]> =
 	async (_parent, { data }, ctx) => {
-		const { type, signUpDetails, ...event } = data.event;
+		const { type, signUpDetails, categories, ...event } = data.event;
 		const { tickets } = signUpDetails ?? {};
 
 		let createEventResult: Awaited<ReturnType<typeof ctx.events.create>>;
@@ -12,6 +12,7 @@ export const createEvent: NonNullable<MutationResolvers["createEvent"]> =
 			createEventResult = await ctx.events.create(ctx, {
 				type: "BASIC",
 				event: event,
+				categories,
 			});
 		} else if (!signUpDetails) {
 			throw new GraphQLError(
@@ -27,6 +28,7 @@ export const createEvent: NonNullable<MutationResolvers["createEvent"]> =
 					signUpsEndAt: signUpDetails.signUpsEndAt,
 					signUpsStartAt: signUpDetails.signUpsStartAt,
 				},
+				categories,
 				slots: signUpDetails.slots,
 			});
 		} else if (!tickets) {
@@ -43,6 +45,7 @@ export const createEvent: NonNullable<MutationResolvers["createEvent"]> =
 					signUpsEndAt: signUpDetails.signUpsEndAt,
 					signUpsStartAt: signUpDetails.signUpsStartAt,
 				},
+				categories,
 				slots: signUpDetails.slots,
 				tickets: tickets,
 			});

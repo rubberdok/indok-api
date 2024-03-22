@@ -1,6 +1,8 @@
 import assert, { fail } from "node:assert";
 import { faker } from "@faker-js/faker";
 import { InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
+import { makeMockContext } from "~/lib/context.js";
+import { Result } from "~/lib/result.js";
 import { makeDependencies } from "./dependencies.js";
 
 describe("productRepository", () => {
@@ -129,6 +131,23 @@ describe("productRepository", () => {
 
 				assert(!actual.ok, "Expected NotFoundError to be returned");
 				expect(actual.error).toBeInstanceOf(NotFoundError);
+			});
+		});
+
+		describe("#findManyMerchants", () => {
+			it("returns merchants and the total count", async () => {
+				const { productRepository, merchant } = await makeDependencies();
+
+				const actual = await productRepository.findManyMerchants(
+					makeMockContext(),
+				);
+
+				expect(actual).toEqual(
+					Result.success({
+						merchants: expect.arrayContaining([merchant]),
+						total: expect.any(Number),
+					}),
+				);
 			});
 		});
 	});

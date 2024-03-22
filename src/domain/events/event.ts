@@ -105,7 +105,7 @@ type NewBasicEventData = {
 	contactEmail?: string | null;
 	location?: string | null;
 	organizationId: string;
-	categories?: { id: string }[];
+	categories?: { id: string }[] | null;
 };
 
 type NewSignUpEventData = NewBasicEventData & {
@@ -212,18 +212,24 @@ function newBasicEvent(basicEvent: NewBasicEventData): NewBasicEventReturn {
 			shortDescription: z.string().max(200).default(""),
 			startAt: z.date().min(new Date()),
 			endAt: z.date().min(new Date()),
-			contactEmail: z
-				.string()
-				.email()
-				.nullish()
-				.transform((val) => val ?? ""),
+			contactEmail: z.union([
+				z.literal(""),
+				z
+					.string()
+					.email()
+					.nullish()
+					.transform((val) => val ?? ""),
+			]),
 			location: z.string().default(""),
 			organizationId: z.string().uuid(),
 			signUpsEnabled: z
 				.boolean()
 				.nullish()
 				.transform((val) => val ?? false),
-			categories: z.array(z.object({ id: z.string().uuid() })).optional(),
+			categories: z
+				.array(z.object({ id: z.string().uuid() }))
+				.nullish()
+				.transform((val) => val ?? []),
 			signUpsRetractable: z
 				.boolean()
 				.nullish()
