@@ -43,8 +43,12 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Get number of CPU cores
+        id: cpu-cores
+        uses: SimenB/github-actions-cpu-cores@v2
+
       - name: Run Unit Tests
-        run: JEST_JUNIT_OUTPUT_NAME=unit-${{ matrix.shard }}.xml pnpm run test:ci --shard ${{ matrix.shard }}/2
+        run: JEST_JUNIT_OUTPUT_NAME=unit-${{ matrix.shard }}.xml pnpm run test:ci --shard ${{ matrix.shard }}/2 --max-workers ${{ steps.cpu-cores.outputs.count }}
       
       - name: Upload Test Results to Codecov
         if: ${{ !cancelled() }}
@@ -249,8 +253,12 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Get number of CPU cores
+        id: cpu-cores
+        uses: SimenB/github-actions-cpu-cores@v2
+
       - name: Run Integration Tests
-        run: JEST_JUNIT_OUTPUT_NAME=integration-${{ matrix.shard }}.xml pnpm test:integration:ci  --shard ${{ matrix.shard }}/4
+        run: JEST_JUNIT_OUTPUT_NAME=integration-${{ matrix.shard }}.xml pnpm test:integration:ci  --shard ${{ matrix.shard }}/4 --max-workers ${{ steps.cpu-cores.outputs.count }}
 
       - name: Upload Test Results to Codecov
         if: ${{ !cancelled() }}
