@@ -7,14 +7,38 @@ import type {
 	DownstreamServiceError,
 	InternalServerError,
 	NotFoundError,
+	PermissionDeniedError,
+	UnauthorizedError,
 } from "~/domain/errors.js";
 import type { EventType } from "~/domain/events/index.js";
+import type { OrderType, ProductType } from "~/domain/products.js";
 import type { StudyProgram, User } from "~/domain/users.js";
 import type { Queue } from "~/lib/bullmq/queue.js";
 import type { Worker } from "~/lib/bullmq/worker.js";
 import type { Context } from "~/lib/context.js";
 import type { ResultAsync } from "~/lib/result.js";
 import type { Attachment, MailContent } from "./index.js";
+
+export type ProductService = {
+	orders: {
+		get(
+			ctx: Context,
+			params: { id: string },
+		): ResultAsync<
+			{ order: OrderType },
+			| NotFoundError
+			| UnauthorizedError
+			| PermissionDeniedError
+			| InternalServerError
+		>;
+	};
+	products: {
+		get(
+			_ctx: Context,
+			params: { id: string },
+		): ResultAsync<{ product: ProductType }, NotFoundError>;
+	};
+};
 
 export type UserService = {
 	get(id: string): Promise<User>;
@@ -68,7 +92,8 @@ type EmailQueueDataType =
 			recipientId: string;
 	  }
 	| { type: "user-registration"; recipientId: string }
-	| { type: "cabin-booking-receipt"; bookingId: string };
+	| { type: "cabin-booking-receipt"; bookingId: string }
+	| { type: "order-receipt"; orderId: string; userId: string };
 
 type EmailWorker = EmailWorkerHelperType<
 	EmailQueueDataType,
@@ -89,6 +114,7 @@ type Dependencies = {
 	eventService: EventService;
 	cabinService: CabinService;
 	fileService: FileService;
+	productService: ProductService;
 	logger: Logger;
 };
 
@@ -98,6 +124,7 @@ const EmailHandler = ({
 	eventService,
 	cabinService,
 	fileService,
+	productService,
 	logger,
 }: Dependencies): EmailProcessorType => {
 	return async (job: EmailJobType) => {
@@ -154,8 +181,11 @@ const EmailHandler = ({
 								{ locale: "nb" },
 							),
 							location: event.location,
-							url: new URL(`/events/${event.id}`, env.CLIENT_URL).toString(),
 						},
+						actionUrl: new URL(
+							`/events/${event.id}`,
+							env.CLIENT_URL,
+						).toString(),
 					},
 				});
 				return {
@@ -230,11 +260,84 @@ const EmailHandler = ({
 					ok: true,
 				};
 			}
+			case "order-receipt": {
+				const { orderId, userId } = job.data;
+				const user = await userService.get(userId);
+
+				const ctx: Context = {
+					user,
+					log: logger,
+				};
+
+				const getOrderResult = await productService.orders.get(ctx, {
+					id: orderId,
+				});
+				if (!getOrderResult.ok) {
+					switch (getOrderResult.error.name) {
+						case "NotFoundError":
+							throw new UnrecoverableError("Order does not exist");
+						case "InternalServerError":
+							throw getOrderResult.error;
+						case "PermissionDeniedError":
+						case "UnauthorizedError":
+							throw new UnrecoverableError("Permission denied");
+					}
+				}
+				const { order } = getOrderResult.data;
+				const getProductResult = await productService.products.get(ctx, {
+					id: order.productId,
+				});
+				if (!getProductResult.ok) {
+					switch (getProductResult.error.name) {
+						case "NotFoundError":
+							throw new UnrecoverableError("Product does not exist");
+					}
+				}
+
+				await mailService.send({
+					to: user.email,
+					templateAlias: "order-receipt",
+					content: {
+						user,
+						order: {
+							id: order.id,
+							purchasedAt: order.purchasedAt
+								? DateTime.fromJSDate(order.purchasedAt).toLocaleString(
+										{
+											...DateTime.DATETIME_HUGE,
+											timeZoneName: undefined,
+											timeZone: "Europe/Oslo",
+										},
+										{ locale: "nb" },
+								  )
+								: "",
+							totalPrice: order.totalPrice,
+						},
+						product: getProductResult.data.product,
+						actionUrl: new URL(
+							`/profile/orders/${order.id}?reference=${order.capturedPaymentAttemptReference}`,
+							env.CLIENT_URL,
+						).toString(),
+					},
+				});
+				return {
+					ok: true,
+					data: {},
+				};
+			}
 		}
 	};
 };
 
-function getEmailHandler(dependencies: Dependencies): {
+function getEmailHandler(dependencies: {
+	mailService: MailService;
+	userService: UserService;
+	eventService: EventService;
+	cabinService: CabinService;
+	fileService: FileService;
+	productService: ProductService;
+	logger: Logger;
+}): {
 	handler: EmailProcessorType;
 	name: typeof EmailQueueName;
 } {

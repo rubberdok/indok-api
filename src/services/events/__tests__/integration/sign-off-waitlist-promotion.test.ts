@@ -101,6 +101,7 @@ describe("EventService", () => {
 			userService,
 			mailService,
 			cabinService: mockDeep<CabinService>(),
+			productService: mock(),
 			fileService: mock(),
 			logger: mock(),
 		});
@@ -277,8 +278,8 @@ describe("EventService", () => {
 						event: expect.objectContaining({
 							name: event.name,
 							startAt: expect.any(String),
-							url: `${env.CLIENT_URL}/events/${event.id}`,
 						}),
+						actionUrl: `${env.CLIENT_URL}/events/${event.id}`,
 					}),
 				}),
 			);
@@ -468,8 +469,8 @@ describe("EventService", () => {
 							event: expect.objectContaining({
 								name: event.name,
 								startAt: expect.any(String),
-								url: `${env.CLIENT_URL}/events/${event.id}`,
 							}),
+							actionUrl: `${env.CLIENT_URL}/events/${event.id}`,
 						}),
 					}),
 				);

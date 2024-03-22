@@ -261,6 +261,7 @@ export async function initWorkers(): Promise<{
 			vippsFactory: Client,
 			paymentProcessingQueue: instance.queues?.[PaymentProcessingQueueName],
 			productRepository,
+			mailService,
 			config: { useTestMode: env.VIPPS_TEST_MODE, returnUrl: env.SERVER_URL },
 		});
 
@@ -304,6 +305,7 @@ export async function initWorkers(): Promise<{
 				eventService,
 				cabinService,
 				fileService,
+				productService,
 				logger: instance.log,
 			}),
 		);

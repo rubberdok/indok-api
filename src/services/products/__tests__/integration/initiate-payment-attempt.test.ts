@@ -2,10 +2,12 @@ import assert from "node:assert";
 import { faker } from "@faker-js/faker";
 import type { EPaymentGetPaymentOKResponse } from "@vippsmobilepay/sdk";
 import type { QueueEvents } from "bullmq";
-import { mock, mockDeep } from "jest-mock-extended";
+import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { User } from "~/domain/users.js";
 import { makeMockContext } from "~/lib/context.js";
+import type { EmailClient } from "~/lib/postmark.js";
 import prisma from "~/lib/prisma.js";
+import type { EmailQueueType } from "~/services/mail/worker.js";
 import type { ProductServiceType } from "../../service.js";
 import type { PaymentProcessingQueueType } from "../../worker.js";
 import type { MockVippsClientFactory } from "../mock-vipps-client.js";
@@ -17,10 +19,21 @@ describe("ProductService", () => {
 	let vippsMock: ReturnType<typeof MockVippsClientFactory>["client"];
 	let queueEvents: QueueEvents;
 	let paymentProcessingQueue: PaymentProcessingQueueType;
+	let emailClient: DeepMockProxy<EmailClient>;
+	let emailQueue: EmailQueueType;
+	let emailQueueEvents: QueueEvents;
 
 	beforeAll(async () => {
-		({ productService, close, vippsMock, queueEvents, paymentProcessingQueue } =
-			await makeDependencies());
+		({
+			productService,
+			close,
+			vippsMock,
+			queueEvents,
+			paymentProcessingQueue,
+			emailClient,
+			emailQueue,
+			emailQueueEvents,
+		} = await makeDependencies());
 	});
 
 	afterAll(async () => {
@@ -51,7 +64,7 @@ describe("ProductService", () => {
 			});
 			const ctx = makeMockContext(new User(user));
 			const merchantResult = await productService.merchants.create(ctx, {
-				name: faker.company.name(),
+				name: faker.string.uuid(),
 				serialNumber: faker.string.sample(6),
 				subscriptionKey: faker.string.uuid(),
 				clientId: faker.string.uuid(),
@@ -196,6 +209,12 @@ describe("ProductService", () => {
 			expect(updatedOrder.paymentStatus).toEqual("CAPTURED");
 			expect(updatedOrder.isFinalState()).toBe(true);
 			expect(updatedOrder.capturedPaymentAttemptReference).toEqual(reference);
+
+			const pendingEmailJobs = await emailQueue.getJobs();
+			await Promise.all(
+				pendingEmailJobs.map((job) => job.waitUntilFinished(emailQueueEvents)),
+			);
+			expect(emailClient.sendEmailWithTemplate).toHaveBeenCalled();
 		});
 	});
 });

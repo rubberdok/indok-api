@@ -30,6 +30,7 @@ function buildPayments({
 	vippsFactory,
 	config,
 	paymentProcessingQueue,
+	mailService,
 }: BuildProductsDependencies) {
 	async function newClient(
 		by: { merchantId: string } | { orderId: string } | { productId: string },
@@ -671,6 +672,14 @@ function buildPayments({
 					};
 				}
 				return updateOrder;
+			}
+
+			if (order.userId !== null) {
+				await mailService.sendAsync({
+					type: "order-receipt",
+					orderId: order.id,
+					userId: order.userId,
+				});
 			}
 
 			return {

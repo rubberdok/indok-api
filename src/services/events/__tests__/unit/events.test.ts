@@ -458,8 +458,8 @@ describe("EventsService", () => {
 					updateEventParams: {
 						event: {
 							id: faker.string.uuid(),
-							endAt: faker.date.between({ from: startAt, to: endAt }),
-							startAt: faker.date.soon({ refDate: endAt, days: 2 }),
+							endAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+							startAt: DateTime.now().plus({ days: 2 }).toJSDate(),
 						},
 					},
 				},

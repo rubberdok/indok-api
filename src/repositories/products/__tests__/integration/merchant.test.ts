@@ -67,7 +67,7 @@ describe("productRepository", () => {
 				const toUpdate = await productRepository.createMerchant({
 					clientId: faker.string.uuid(),
 					clientSecret: faker.string.uuid(),
-					name: faker.company.name(),
+					name: faker.string.uuid(),
 					serialNumber: faker.string.uuid(),
 					subscriptionKey: faker.string.uuid(),
 				});
@@ -76,7 +76,7 @@ describe("productRepository", () => {
 						id: toUpdate.merchant.id,
 						clientId: existing.clientId,
 						clientSecret: faker.string.uuid(),
-						name: faker.company.name(),
+						name: faker.string.uuid(),
 						serialNumber: faker.string.uuid(),
 						subscriptionKey: faker.string.uuid(),
 					});

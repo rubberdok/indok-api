@@ -135,5 +135,78 @@ describe("ProductService", () => {
 				expect(result).toEqual(expected);
 			},
 		);
+
+		it("should send a receipt on capture", async () => {
+			/**
+			 * Arrange
+			 */
+			const {
+				productService,
+				productRepository,
+				mockVippsClient,
+				mockMailService,
+			} = makeDependencies();
+			const order = mock<OrderType>({
+				paymentStatus: "CREATED",
+				userId: faker.string.uuid(),
+			});
+			const paymentAttempt = mock<PaymentAttemptType>({
+				state: "AUTHORIZED",
+				reference: faker.string.uuid(),
+			});
+			productRepository.getOrder.mockResolvedValue({
+				ok: true,
+				data: {
+					order,
+				},
+			});
+			productRepository.getPaymentAttempt.mockResolvedValue({
+				ok: true,
+				data: {
+					paymentAttempt,
+				},
+			});
+			productRepository.getMerchant.mockResolvedValue({
+				ok: true,
+				data: {
+					merchant: mock<MerchantType>(),
+				},
+			});
+			mockVippsClient.payment.capture.mockResolvedValue({
+				ok: true,
+				data: {
+					amount: {
+						value: 100 * 100,
+						currency: "NOK",
+					},
+					reference: paymentAttempt?.reference ?? "",
+					state: "AUTHORIZED",
+					aggregate: mock(),
+					pspReference: mock(),
+				},
+			});
+			productRepository.updateOrder.mockImplementation((_params, fn) => {
+				const updated = fn(order);
+				if (!updated.ok) throw updated.error;
+
+				return Promise.resolve({
+					ok: true,
+					data: {
+						order: updated.data.order,
+					},
+				});
+			});
+
+			const result = await productService.payments.capture(makeMockContext(), {
+				reference: faker.string.uuid(),
+			});
+			if (!result.ok) throw result.error;
+
+			expect(mockMailService.sendAsync).toHaveBeenCalledWith({
+				type: "order-receipt",
+				orderId: order.id,
+				userId: order.userId,
+			});
+		});
 	});
 });

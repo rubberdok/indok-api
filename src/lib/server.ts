@@ -819,6 +819,7 @@ async function registerServices(
 		vippsFactory: Client,
 		paymentProcessingQueue: serverInstance.queues[PaymentProcessingQueueName],
 		productRepository,
+		mailService,
 		config: {
 			useTestMode: configuration?.VIPPS_TEST_MODE,
 			returnUrl: env.SERVER_URL,

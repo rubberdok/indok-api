@@ -1,4 +1,6 @@
 import { merge } from "lodash-es";
+import type { OrderType, ProductType } from "~/domain/products.js";
+import type { User } from "~/domain/users.js";
 import type { EmailClient } from "~/lib/postmark.js";
 import type { EmailQueueDataType, EmailQueueType } from "./worker.js";
 
@@ -8,6 +10,7 @@ type LayoutContent = {
 	parentCompany: string;
 	companyName: string;
 	contactMail: string;
+	actionUrl?: string;
 };
 
 type BaseMailContent<
@@ -28,7 +31,6 @@ type EventWaitlistNotification = BaseMailContent<
 			startAt: string;
 			location?: string;
 			price?: string;
-			url: string;
 		};
 	}
 >;
@@ -53,10 +55,20 @@ type UserRegistration = BaseMailContent<
 	}
 >;
 
+type OrderReceipt = BaseMailContent<
+	"order-receipt",
+	{
+		order: Pick<OrderType, "id" | "totalPrice"> & { purchasedAt: string };
+		product: Pick<ProductType, "name">;
+		user: Pick<User, "firstName">;
+	}
+>;
+
 export type MailContent =
 	| EventWaitlistNotification
 	| CabinBookingReceipt
-	| UserRegistration;
+	| UserRegistration
+	| OrderReceipt;
 
 type MailServiceDependencies = {
 	emailQueue: EmailQueueType;
