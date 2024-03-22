@@ -4,7 +4,6 @@ import {
 	type Prisma,
 	type PrismaClient,
 } from "@prisma/client";
-import dayjs from "dayjs";
 import { DateTime } from "luxon";
 import type { OrganizationRoleType } from "~/domain/organizations.js";
 
@@ -18,7 +17,7 @@ const userData: Prisma.UserCreateInput[] = [
 		email: "example@example.org",
 		firstName: "Indok",
 		lastName: "Student",
-		graduationYear: dayjs().add(5, "year").year(),
+		graduationYear: DateTime.now().plus({ years: 5 }).year,
 	},
 	{
 		username: "rubberdok",
@@ -26,7 +25,7 @@ const userData: Prisma.UserCreateInput[] = [
 		email: "rubberdok@example.org",
 		firstName: "Rubb",
 		lastName: "Er Dok",
-		graduationYear: dayjs().add(5, "year").year(),
+		graduationYear: DateTime.now().plus({ years: 5 }).year,
 	},
 	makeUserWithMemberships(
 		{

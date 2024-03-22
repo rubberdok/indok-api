@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { jest } from "@jest/globals";
-import dayjs from "dayjs";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
+import { DateTime } from "luxon";
 import type { User } from "~/domain/users.js";
 import {
 	type MailService,
@@ -9,7 +9,11 @@ import {
 	UserService,
 } from "../../service.js";
 
-const time = new Date(`${dayjs().year() + 1}-01-01`);
+const time = DateTime.fromObject({
+	year: DateTime.now().year + 1,
+	month: 1,
+	day: 1,
+}).toJSDate();
 
 let service: UserService;
 let repo: DeepMockProxy<UserRepository>;
@@ -51,11 +55,11 @@ describe("UserService", () => {
 		{
 			name: "not set `graduationYearUpdatedAt` on first login",
 			input: {
-				graduationYear: dayjs().year() + 1,
+				graduationYear: DateTime.now().year + 1,
 			},
 			expected: {
 				firstLogin: false,
-				graduationYear: dayjs().year() + 1,
+				graduationYear: DateTime.now().year + 1,
 			},
 			existing: mock<User>({
 				firstLogin: true,
@@ -66,10 +70,10 @@ describe("UserService", () => {
 		{
 			name: "set `graduationYearUpdatedAt` on on graduation year update",
 			input: {
-				graduationYear: dayjs().year() + 1,
+				graduationYear: DateTime.now().year + 1,
 			},
 			expected: {
-				graduationYear: dayjs().year() + 1,
+				graduationYear: DateTime.now().year + 1,
 				graduationYearUpdatedAt: time,
 			},
 			existing: mock<User>({
@@ -81,27 +85,27 @@ describe("UserService", () => {
 		{
 			name: "disallow updating graduation year if canUpdateYear is false",
 			input: {
-				graduationYear: dayjs().year() + 1,
+				graduationYear: DateTime.now().year + 1,
 			},
 			expected: {},
 			existing: mock<User>({
 				firstLogin: false,
-				graduationYear: dayjs().year(),
+				graduationYear: DateTime.now().year,
 				canUpdateYear: false,
 			}),
 		},
 		{
 			name: "update `graduationYearUpdatedAt` if canUpdateYear is `true`",
 			input: {
-				graduationYear: dayjs().year() + 1,
+				graduationYear: DateTime.now().year + 1,
 			},
 			expected: {
-				graduationYear: dayjs().year() + 1,
+				graduationYear: DateTime.now().year + 1,
 				graduationYearUpdatedAt: time,
 			},
 			existing: mock<User>({
 				firstLogin: false,
-				graduationYear: dayjs().year(),
+				graduationYear: DateTime.now().year,
 				canUpdateYear: true,
 			}),
 		},
