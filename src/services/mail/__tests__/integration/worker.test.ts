@@ -132,14 +132,17 @@ describe("MailService", () => {
 					...mock<EventType>(),
 					id: faker.string.uuid(),
 					name: faker.lorem.words(3),
-					startAt: DateTime.fromObject({
-						year: 2077,
-						day: 1,
-						month: 1,
-						hour: 12,
-						minute: 0,
-						second: 0,
-					}).toJSDate(),
+					startAt: DateTime.fromObject(
+						{
+							year: 2077,
+							day: 1,
+							month: 1,
+							hour: 12,
+							minute: 0,
+							second: 0,
+						},
+						{ zone: "Europe/Oslo" },
+					).toJSDate(),
 					location: faker.location.streetAddress(),
 				};
 				mockUserService.get.mockResolvedValue(user);
@@ -177,14 +180,17 @@ describe("MailService", () => {
 					...mock<OrderType>(),
 					id: faker.string.uuid(),
 					capturedPaymentAttemptReference: faker.string.uuid(),
-					purchasedAt: DateTime.fromObject({
-						year: 2077,
-						day: 1,
-						month: 1,
-						hour: 12,
-						minute: 0,
-						second: 0,
-					}).toJSDate(),
+					purchasedAt: DateTime.fromObject(
+						{
+							year: 2077,
+							day: 1,
+							month: 1,
+							hour: 12,
+							minute: 0,
+							second: 0,
+						},
+						{ zone: "Europe/Oslo" },
+					).toJSDate(),
 					productId: faker.string.uuid(),
 					totalPrice: faker.number.int(),
 				};
