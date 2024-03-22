@@ -405,7 +405,7 @@ function buildPayments({
 				return result;
 			}
 			const { state: newState } = result.data;
-			ctx.log.fatal({ newState, reference });
+			ctx.log.info({ newState, reference }, "Fetched remote payment state");
 
 			let paymentStatus: OrderPaymentStatus = order.paymentStatus;
 			if (newState === "AUTHORIZED") {

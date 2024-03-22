@@ -6,6 +6,7 @@ import type {
 	PaymentAttemptType,
 	ProductType,
 } from "~/domain/products.js";
+import type { Context } from "~/lib/context.js";
 import type { ResultAsync, TResult } from "~/lib/result.js";
 import { buildMerchants } from "./merchants.js";
 import { buildOrders } from "./orders.js";
@@ -82,6 +83,12 @@ interface ProductRepository {
 	): ResultAsync<
 		{ merchant: MerchantType },
 		NotFoundError | InternalServerError
+	>;
+	findManyMerchants(
+		ctx: Context,
+	): ResultAsync<
+		{ merchants: MerchantType[]; total: number },
+		InternalServerError
 	>;
 }
 

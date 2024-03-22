@@ -210,6 +210,7 @@ type BaseCreateEventFields = {
 type CreateBasicEventParams = {
 	type: typeof EventTypeEnum.BASIC;
 	event: BaseCreateEventFields;
+	categories?: { id: string }[] | null;
 	slots?: never;
 	tickets?: never;
 };
@@ -221,6 +222,7 @@ type CreateSignUpEventParams = {
 		signUpsStartAt: Date;
 		signUpsEndAt: Date;
 	};
+	categories?: { id: string }[] | null;
 	slots: { capacity: number; gradeYears?: number[] | null }[];
 	tickets?: never;
 };
@@ -232,6 +234,7 @@ type CreateTicketEventParams = {
 		signUpsStartAt: Date;
 		signUpsEndAt: Date;
 	};
+	categories?: { id: string }[] | null;
 	slots: { capacity: number; gradeYears?: number[] | null }[];
 	tickets: { price: number; merchantId: string };
 };
@@ -352,6 +355,7 @@ class EventService {
 		if (!result.ok) {
 			switch (result.error.name) {
 				case "InvalidArgumentError":
+					ctx.log.error(result.error);
 					return {
 						ok: false,
 						error: new InvalidArgumentError(
@@ -366,6 +370,7 @@ class EventService {
 		const createEventResult = await this.eventRepository.create(ctx, {
 			event,
 			slots,
+			categories: params.categories ?? undefined,
 		});
 		if (!createEventResult.ok) {
 			switch (createEventResult.error.name) {

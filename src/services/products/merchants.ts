@@ -5,11 +5,14 @@ import {
 	UnauthorizedError,
 } from "~/domain/errors.js";
 import type { MerchantType } from "~/domain/products.js";
-import type { ResultAsync } from "~/lib/result.js";
+import { Result, type ResultAsync } from "~/lib/result.js";
+import type { IProductService } from "~/lib/server.js";
 import type { Context } from "../../lib/context.js";
 import type { BuildProductsDependencies } from "./service.js";
 
-function buildMerchants({ productRepository }: BuildProductsDependencies) {
+function buildMerchants({
+	productRepository,
+}: BuildProductsDependencies): IProductService["merchants"] {
 	return {
 		/**
 		 * createMerchant creates a new merchant.
@@ -63,6 +66,18 @@ function buildMerchants({ productRepository }: BuildProductsDependencies) {
 					error: new InternalServerError("Failed to create merchant"),
 				};
 			}
+		},
+
+		async findMany(ctx) {
+			if (!ctx.user) {
+				return Result.error(
+					new UnauthorizedError("You must be logged in to view merchants"),
+				);
+			}
+
+			const findManyMerchantsResult =
+				await productRepository.findManyMerchants(ctx);
+			return findManyMerchantsResult;
 		},
 	} as const;
 }

@@ -9,7 +9,7 @@ import type {
 	SlotType,
 } from "~/domain/events/index.js";
 import { makeMockContext } from "~/lib/context.js";
-import type { TResult } from "~/lib/result.js";
+import { Result, type TResult } from "~/lib/result.js";
 import type { Services } from "~/lib/server.js";
 import type { CreateEventParams } from "../../service.js";
 import {
@@ -142,6 +142,50 @@ describe("EventService", () => {
 					}),
 				},
 			},
+			{
+				name: "allows a blank email address",
+				act: {
+					createEventParams: {
+						type: "BASIC",
+						event: {
+							name: "test",
+							organizationId: "",
+							contactEmail: "",
+							startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+							endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
+						},
+					},
+				},
+				expected: {
+					ok: true,
+					data: expect.objectContaining({
+						event: expect.objectContaining({
+							contactEmail: "",
+						}),
+					}),
+				},
+			},
+			{
+				name: "allows null categories",
+				act: {
+					createEventParams: {
+						type: "BASIC",
+						event: {
+							name: "test",
+							organizationId: "",
+							startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+							endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
+						},
+						categories: null,
+					},
+				},
+				expected: {
+					ok: true,
+					data: expect.objectContaining({
+						categories: [],
+					}),
+				},
+			},
 		];
 
 		test.each(testCases)("$name", async ({ act, expected }) => {
@@ -187,6 +231,31 @@ describe("EventService", () => {
 			const actual = await events.create(ctx, createEventParams);
 
 			expect(actual).toEqual(expected);
+		});
+
+		it("creates event with categories", async () => {
+			const { user, organization } = await makeUserWithOrganizationMembership();
+			const category = await events.createCategory(
+				makeMockContext({ isSuperUser: true }),
+				{ name: faker.string.uuid() },
+			);
+
+			const ctx = makeMockContext(user);
+
+			const actual = await events.create(ctx, {
+				type: "BASIC",
+				event: {
+					name: "test",
+					organizationId: organization.id,
+					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					endAt: DateTime.now().plus({ days: 1, hours: 2 }).toJSDate(),
+				},
+				categories: [{ id: category.id }],
+			});
+
+			expect(actual).toEqual(
+				Result.success(expect.objectContaining({ categories: [category] })),
+			);
 		});
 
 		describe("type: TICKETS", () => {

@@ -1,3 +1,47 @@
+type Mutation {
+  """
+  Initiates a payment attempt for the given order.
+  """
+  initiatePaymentAttempt(
+    data: InitiatePaymentAttemptInput!
+  ): InitiatePaymentAttemptResponse!
+  """
+  Creates an order for the given product.
+  """
+  createOrder(data: CreateOrderInput!): CreateOrderResponse!
+  """
+  Create a new Vipps merchant, and return the created merchant.
+  Requires super user status.
+  """
+  createMerchant(data: CreateMerchantInput!): CreateMerchantResponse!
+}
+
+type Query {
+  """
+  Get an order by its ID.
+  """
+  order(data: OrderInput!): OrderResponse!
+
+  products: ProductResponse!
+  """
+  Get orders, filtered by the given input. Unless the user is a super user, only
+  orders for the current user will be returned.
+  """
+  orders(data: OrdersInput): OrdersResponse!
+  """
+  Get payment attempts, filtered by the given input. Unless the user is a super user, only
+  payment attempts for the current user will be returned.
+  """
+  paymentAttempts(data: PaymentAttemptsInput): PaymentAttemptsResponse!
+  merchants: MerchantsResponse!
+}
+
+
+type MerchantsResponse {
+  merchants: [Merchant!]!
+  total: Int!
+}
+
 input InitiatePaymentAttemptInput {
   """
   The ID of the order to initiate a payment attempt for.
@@ -245,39 +289,3 @@ type OrderResponse {
   order: Order!
 }
 
-type Mutation {
-  """
-  Initiates a payment attempt for the given order.
-  """
-  initiatePaymentAttempt(
-    data: InitiatePaymentAttemptInput!
-  ): InitiatePaymentAttemptResponse!
-  """
-  Creates an order for the given product.
-  """
-  createOrder(data: CreateOrderInput!): CreateOrderResponse!
-  """
-  Create a new Vipps merchant, and return the created merchant.
-  Requires super user status.
-  """
-  createMerchant(data: CreateMerchantInput!): CreateMerchantResponse!
-}
-
-type Query {
-  """
-  Get an order by its ID.
-  """
-  order(data: OrderInput!): OrderResponse!
-
-  products: ProductResponse!
-  """
-  Get orders, filtered by the given input. Unless the user is a super user, only
-  orders for the current user will be returned.
-  """
-  orders(data: OrdersInput): OrdersResponse!
-  """
-  Get payment attempts, filtered by the given input. Unless the user is a super user, only
-  payment attempts for the current user will be returned.
-  """
-  paymentAttempts(data: PaymentAttemptsInput): PaymentAttemptsResponse!
-}

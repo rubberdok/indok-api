@@ -14,11 +14,41 @@ import {
 	type PaymentAttemptType,
 	type ProductType,
 } from "~/domain/products.js";
+import type { Context } from "~/lib/context.js";
 import { prismaKnownErrorCodes } from "~/lib/prisma.js";
-import type { ResultAsync, TResult } from "~/lib/result.js";
+import { Result, type ResultAsync, type TResult } from "~/lib/result.js";
+import type { ProductRepository as IProductRepository } from "~/services/products/index.js";
 
-export class ProductRepository {
+export class ProductRepository implements IProductRepository {
 	constructor(private db: PrismaClient) {}
+
+	async findManyMerchants(
+		ctx: Context,
+	): ResultAsync<
+		{ merchants: MerchantType[]; total: number },
+		InternalServerError
+	> {
+		ctx.log.info("Finding many merchants");
+		try {
+			const findManyPromise = this.db.merchant.findMany();
+			const countPromise = this.db.merchant.count();
+			const [merchants, total] = await this.db.$transaction([
+				findManyPromise,
+				countPromise,
+			]);
+			return {
+				ok: true,
+				data: {
+					merchants,
+					total,
+				},
+			};
+		} catch (err) {
+			return Result.error(
+				new InternalServerError("Failed to find  merchants", err),
+			);
+		}
+	}
 
 	/**
 	 * createMerchant creates a merchant.
