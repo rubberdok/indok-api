@@ -1,6 +1,5 @@
 import assert from "node:assert";
 import { faker } from "@faker-js/faker";
-import dayjs from "dayjs";
 import { range } from "lodash-es";
 import { DateTime, Settings } from "luxon";
 import { makeTestServices } from "~/__tests__/dependencies-factory.js";
@@ -151,8 +150,8 @@ describe("EventService", () => {
 				event: {
 					organizationId: organization.id,
 					name: faker.person.firstName(),
-					startAt: dayjs().add(10, "day").toDate(),
-					endAt: dayjs().add(11, "day").toDate(),
+					startAt: DateTime.now().plus({ days: 10 }).toJSDate(),
+					endAt: DateTime.now().plus({ days: 11 }).toJSDate(),
 				},
 			});
 			const eventInThePast = await events.create(ctx, {
@@ -160,8 +159,8 @@ describe("EventService", () => {
 				event: {
 					organizationId: organization.id,
 					name: faker.person.firstName(),
-					startAt: dayjs().add(1, "day").toDate(),
-					endAt: dayjs().add(2, "day").toDate(),
+					startAt: DateTime.now().plus({ days: 1 }).toJSDate(),
+					endAt: DateTime.now().plus({ days: 2 }).toJSDate(),
 				},
 			});
 
