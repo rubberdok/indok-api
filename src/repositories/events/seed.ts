@@ -1,14 +1,10 @@
 import { faker } from "@faker-js/faker";
 import type { Prisma, PrismaClient } from "@prisma/client";
-import { startCase, toLower } from "lodash-es";
 import { DateTime } from "luxon";
 import { env } from "~/config.js";
+import { fakeMarkdown, toTitleCase } from "../seed.js";
 
 faker.seed(42);
-
-const toTitleCase = (str: string) => {
-	return startCase(toLower(str));
-};
 
 const fakeName = () => {
 	return toTitleCase(
@@ -372,38 +368,3 @@ export const load = async (db: PrismaClient) => {
 
 	return events;
 };
-
-function fakeMarkdown() {
-	const fakeHeader = () =>
-		`${"#".repeat(faker.number.int({ min: 1, max: 6 }))} ${toTitleCase(
-			faker.lorem.words(3),
-		)}`;
-	const fakeParagraph = () => faker.lorem.paragraph().split("\n").join("\n\n");
-	const fakeList = () => {
-		const listItems = faker.lorem.paragraphs(3).split("\n");
-		return listItems.map((item) => `* ${item}`).join("\n");
-	};
-	const fakeCode = () => {
-		const code = faker.lorem.paragraphs(3).split("\n");
-		return code.map((line) => `    ${line}`).join("\n");
-	};
-	const fakeQuote = () => {
-		const quote = faker.lorem.paragraphs(3).split("\n");
-		return quote.map((line) => `> ${line}`).join("\n");
-	};
-	const fakeLink = () => `[${faker.lorem.words(3)}](${faker.internet.url()})`;
-	return `
-${fakeHeader()}
-
-${fakeParagraph()}
-
-${fakeList()}
-
-${fakeHeader()}
-${fakeCode()}
-
-${fakeQuote()}
-
-${fakeLink()}
-  `;
-}

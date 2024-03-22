@@ -4,6 +4,7 @@ import {
 	type Prisma,
 	type PrismaClient,
 } from "@prisma/client";
+import { fakeMarkdown } from "../seed.js";
 
 faker.seed(42);
 
@@ -11,22 +12,22 @@ const organizationCreateInput: Prisma.OrganizationCreateInput[] = [
 	{
 		id: faker.string.uuid(),
 		name: faker.company.name(),
-		description: faker.lorem.paragraph(),
+		description: fakeMarkdown(),
 	},
 	{
 		id: faker.string.uuid(),
 		name: faker.company.name(),
-		description: faker.lorem.paragraph(),
+		description: fakeMarkdown(),
 	},
 	{
 		id: faker.string.uuid(),
 		name: faker.company.name(),
-		description: faker.lorem.paragraph(),
+		description: fakeMarkdown(),
 	},
 	{
 		id: faker.string.uuid(),
 		name: faker.company.name(),
-		description: faker.lorem.paragraph(),
+		description: fakeMarkdown(),
 	},
 ];
 
@@ -37,7 +38,7 @@ export const load = async (db: PrismaClient) => {
 			where: {
 				id: organization.id,
 			},
-			update: {},
+			update: organization,
 			create: organization,
 		});
 	}
@@ -49,10 +50,12 @@ export const load = async (db: PrismaClient) => {
 		},
 		update: {
 			featurePermissions: [FeaturePermission.CABIN_ADMIN],
+			description: fakeMarkdown(),
 		},
 		create: {
 			name: "Hyttestyret",
 			featurePermissions: [FeaturePermission.CABIN_ADMIN],
+			description: fakeMarkdown(),
 		},
 	});
 
@@ -62,10 +65,12 @@ export const load = async (db: PrismaClient) => {
 		},
 		update: {
 			featurePermissions: [FeaturePermission.CABIN_ADMIN],
+			description: fakeMarkdown(),
 		},
 		create: {
 			name: "Rubberdøk",
 			featurePermissions: [FeaturePermission.CABIN_ADMIN],
+			description: fakeMarkdown(),
 		},
 	});
 
