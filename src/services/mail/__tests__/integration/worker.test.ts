@@ -11,6 +11,7 @@ import {
 	DownstreamServiceError,
 	InternalServerError,
 	NotFoundError,
+	PermissionDeniedError,
 } from "~/domain/errors.js";
 import type { EventType } from "~/domain/events/event.js";
 import type { OrderType, ProductType } from "~/domain/products.js";
@@ -244,6 +245,201 @@ describe("MailService", () => {
 						}),
 					}),
 				);
+			}, 10_000);
+
+			it("throws unrecoverable error on permission denied", async () => {
+				const order: OrderType = {
+					...mock<OrderType>(),
+					id: faker.string.uuid(),
+					capturedPaymentAttemptReference: faker.string.uuid(),
+					purchasedAt: DateTime.fromObject(
+						{
+							year: 2077,
+							day: 1,
+							month: 1,
+							hour: 12,
+							minute: 0,
+							second: 0,
+						},
+						{ zone: "Europe/Oslo" },
+					).toJSDate(),
+					productId: faker.string.uuid(),
+					totalPrice: faker.number.int(),
+				};
+				const user: User = {
+					...mock<User>(),
+					id: faker.string.uuid(),
+					firstName: faker.person.firstName(),
+					email: faker.internet.exampleEmail(),
+				};
+				mockProductService.orders.get.mockResolvedValue(
+					Result.error(new PermissionDeniedError("")),
+				);
+				mockUserService.get.mockResolvedValue(user);
+				mailWorker.on("failed", (_job, error) => {
+					expect(error).toBeInstanceOf(UnrecoverableError);
+				});
+
+				const job = await mailQueue.add("send-email", {
+					type: "order-receipt",
+					userId: user.id,
+					orderId: order.id,
+				});
+
+				try {
+					await job.waitUntilFinished(queueEvents, 7_500);
+					fail("Expected job to fail");
+				} catch {
+					const state = await job.getState();
+					expect(state).toBe("failed");
+				}
+			}, 10_000);
+
+			it("throws unrecoverable error on order not found", async () => {
+				const order: OrderType = {
+					...mock<OrderType>(),
+					id: faker.string.uuid(),
+					capturedPaymentAttemptReference: faker.string.uuid(),
+					purchasedAt: DateTime.fromObject(
+						{
+							year: 2077,
+							day: 1,
+							month: 1,
+							hour: 12,
+							minute: 0,
+							second: 0,
+						},
+						{ zone: "Europe/Oslo" },
+					).toJSDate(),
+					productId: faker.string.uuid(),
+					totalPrice: faker.number.int(),
+				};
+				const user: User = {
+					...mock<User>(),
+					id: faker.string.uuid(),
+					firstName: faker.person.firstName(),
+					email: faker.internet.exampleEmail(),
+				};
+				mockProductService.orders.get.mockResolvedValue(
+					Result.error(new NotFoundError("")),
+				);
+				mockUserService.get.mockResolvedValue(user);
+				mailWorker.on("failed", (_job, error) => {
+					expect(error).toBeInstanceOf(UnrecoverableError);
+				});
+
+				const job = await mailQueue.add("send-email", {
+					type: "order-receipt",
+					userId: user.id,
+					orderId: order.id,
+				});
+
+				try {
+					await job.waitUntilFinished(queueEvents, 7_500);
+					fail("Expected job to fail");
+				} catch {
+					const state = await job.getState();
+					expect(state).toBe("failed");
+				}
+			}, 10_000);
+
+			it("throws error on internal server error from getOrder", async () => {
+				const order: OrderType = {
+					...mock<OrderType>(),
+					id: faker.string.uuid(),
+					capturedPaymentAttemptReference: faker.string.uuid(),
+					purchasedAt: DateTime.fromObject(
+						{
+							year: 2077,
+							day: 1,
+							month: 1,
+							hour: 12,
+							minute: 0,
+							second: 0,
+						},
+						{ zone: "Europe/Oslo" },
+					).toJSDate(),
+					productId: faker.string.uuid(),
+					totalPrice: faker.number.int(),
+				};
+				const user: User = {
+					...mock<User>(),
+					id: faker.string.uuid(),
+					firstName: faker.person.firstName(),
+					email: faker.internet.exampleEmail(),
+				};
+				mockProductService.orders.get.mockResolvedValue(
+					Result.error(new InternalServerError("")),
+				);
+				mockUserService.get.mockResolvedValue(user);
+				mailWorker.on("failed", (_job, error) => {
+					expect(error).toBeInstanceOf(InternalServerError);
+				});
+
+				const job = await mailQueue.add("send-email", {
+					type: "order-receipt",
+					userId: user.id,
+					orderId: order.id,
+				});
+
+				try {
+					await job.waitUntilFinished(queueEvents, 7_500);
+					fail("Expected job to fail");
+				} catch {
+					const state = await job.getState();
+					expect(state).toBe("failed");
+				}
+			}, 10_000);
+
+			it("throws unrecoverable error on product not found", async () => {
+				const order: OrderType = {
+					...mock<OrderType>(),
+					id: faker.string.uuid(),
+					capturedPaymentAttemptReference: faker.string.uuid(),
+					purchasedAt: DateTime.fromObject(
+						{
+							year: 2077,
+							day: 1,
+							month: 1,
+							hour: 12,
+							minute: 0,
+							second: 0,
+						},
+						{ zone: "Europe/Oslo" },
+					).toJSDate(),
+					productId: faker.string.uuid(),
+					totalPrice: faker.number.int(),
+				};
+				const user: User = {
+					...mock<User>(),
+					id: faker.string.uuid(),
+					firstName: faker.person.firstName(),
+					email: faker.internet.exampleEmail(),
+				};
+				mockProductService.orders.get.mockResolvedValue(
+					Result.success({ order }),
+				);
+				mockProductService.products.get.mockResolvedValue(
+					Result.error(new NotFoundError("")),
+				);
+				mockUserService.get.mockResolvedValue(user);
+				mailWorker.on("failed", (_job, error) => {
+					expect(error).toBeInstanceOf(UnrecoverableError);
+				});
+
+				const job = await mailQueue.add("send-email", {
+					type: "order-receipt",
+					userId: user.id,
+					orderId: order.id,
+				});
+
+				try {
+					await job.waitUntilFinished(queueEvents, 7_500);
+					fail("Expected job to fail");
+				} catch {
+					const state = await job.getState();
+					expect(state).toBe("failed");
+				}
 			}, 10_000);
 		});
 
