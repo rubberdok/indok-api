@@ -64,7 +64,7 @@ describe("ProductService", () => {
 			});
 			const ctx = makeMockContext(new User(user));
 			const merchantResult = await productService.merchants.create(ctx, {
-				name: faker.company.name(),
+				name: faker.string.uuid(),
 				serialNumber: faker.string.sample(6),
 				subscriptionKey: faker.string.uuid(),
 				clientId: faker.string.uuid(),
