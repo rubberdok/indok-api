@@ -38,7 +38,7 @@ const fastifyApolloServerPlugin: FastifyPluginAsync<{
 						footer: false,
 						includeCookies: true,
 						embed: true,
-				  }),
+					}),
 		],
 	});
 

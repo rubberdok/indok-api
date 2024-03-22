@@ -520,7 +520,7 @@ function buildPayments({
 								userId: params.userId ?? undefined,
 								productId: params.productId ?? undefined,
 								orderId: params.orderId ?? undefined,
-						  }
+							}
 						: undefined,
 				);
 			}
