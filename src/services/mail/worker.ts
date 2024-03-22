@@ -309,7 +309,7 @@ const EmailHandler = ({
 											timeZone: "Europe/Oslo",
 										},
 										{ locale: "nb" },
-								  )
+									)
 								: "",
 							totalPrice: order.totalPrice,
 						},
