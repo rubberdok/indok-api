@@ -377,7 +377,7 @@ input EventsInput {
   """
   Only return events that end before the given time
   """
-  endBefore: Date
+  endBefore: DateTime
 }
 
 input EventsOrganizationInput {

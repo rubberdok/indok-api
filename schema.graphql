@@ -585,7 +585,7 @@ input EventsInput {
   categories: [EventsCategoryInput!]
 
   """Only return events that end before the given time"""
-  endBefore: Date
+  endBefore: DateTime
 
   """
   If true, only return events that are currently happening, or will happen in the future
