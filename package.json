@@ -79,7 +79,7 @@
 	"dependencies": {
 		"@apollo/server": "^4.10.2",
 		"@as-integrations/fastify": "^2.1.1",
-		"@azure/identity": "^4.0.1",
+		"@azure/identity": "^4.1.0",
 		"@azure/storage-blob": "^12.17.0",
 		"@bull-board/api": "^5.15.3",
 		"@bull-board/fastify": "^5.15.3",

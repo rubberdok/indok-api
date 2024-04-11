@@ -12,8 +12,8 @@ dependencies:
     specifier: ^2.1.1
     version: 2.1.1(@apollo/server@4.10.2)(fastify@4.26.2)
   '@azure/identity':
-    specifier: ^4.0.1
-    version: 4.0.1
+    specifier: ^4.1.0
+    version: 4.1.0
   '@azure/storage-blob':
     specifier: ^12.17.0
     version: 12.17.0
@@ -558,8 +558,8 @@ packages:
       tslib: 2.6.2
     dev: false
 
-  /@azure/identity@4.0.1:
-    resolution: {integrity: sha512-yRdgF03SFLqUMZZ1gKWt0cs0fvrDIkq2bJ6Oidqcoo5uM85YMBnXWMzYKK30XqIT76lkFyAaoAAy5knXhrG4Lw==}
+  /@azure/identity@4.1.0:
+    resolution: {integrity: sha512-BhYkF8Xr2gXjyDxocm0pc9RI5J5a1jw8iW0dw6Bx95OGdYbuMyFZrrwNw4eYSqQ2BB6FZOqpJP3vjsAqRcvDhw==}
     engines: {node: '>=18.0.0'}
     dependencies:
       '@azure/abort-controller': 1.1.0
@@ -569,8 +569,8 @@ packages:
       '@azure/core-tracing': 1.0.1
       '@azure/core-util': 1.7.0
       '@azure/logger': 1.0.4
-      '@azure/msal-browser': 3.10.0
-      '@azure/msal-node': 2.6.4
+      '@azure/msal-browser': 3.11.1
+      '@azure/msal-node': 2.6.6
       events: 3.3.0
       jws: 4.0.0
       open: 8.4.2
@@ -587,23 +587,23 @@ packages:
       tslib: 2.6.2
     dev: false
 
-  /@azure/msal-browser@3.10.0:
-    resolution: {integrity: sha512-mnmi8dCXVNZI+AGRq0jKQ3YiodlIC4W9npr6FCB9WN6NQT+6rq+cIlxgUb//BjLyzKsnYo+i4LROGeMyU+6v1A==}
+  /@azure/msal-browser@3.11.1:
+    resolution: {integrity: sha512-tZFJnP5ZpgkmazSriEDW+Xl3/4WI823uhnYhWCHPkGywFWEZoPA5VkiCK8x4x8ECXp3mGr5qEI82MU43PBiaKA==}
     engines: {node: '>=0.8.0'}
     dependencies:
-      '@azure/msal-common': 14.7.1
+      '@azure/msal-common': 14.8.1
     dev: false
 
-  /@azure/msal-common@14.7.1:
-    resolution: {integrity: sha512-v96btzjM7KrAu4NSEdOkhQSTGOuNUIIsUdB8wlyB9cdgl5KqEKnTonHUZ8+khvZ6Ap542FCErbnTyDWl8lZ2rA==}
+  /@azure/msal-common@14.8.1:
+    resolution: {integrity: sha512-9HfBMDTIgtFFkils+o6gO/aGEoLLuc4z+QLLfhy/T1bTNPiVsX/9CjaBPMZGnMltN/IlMkU5SGGNggGh55p5xA==}
     engines: {node: '>=0.8.0'}
     dev: false
 
-  /@azure/msal-node@2.6.4:
-    resolution: {integrity: sha512-nNvEPx009/80UATCToF+29NZYocn01uKrB91xtFr7bSqkqO1PuQGXRyYwryWRztUrYZ1YsSbw9A+LmwOhpVvcg==}
+  /@azure/msal-node@2.6.6:
+    resolution: {integrity: sha512-j+1hW81ccglIYWukXufzRA4O71BCmpbmCO66ECDyE9FuPno6SjiR+K+mIk4tg6aQ7/UO2QA/EnRmT6YN0EF1Hw==}
     engines: {node: '>=16'}
     dependencies:
-      '@azure/msal-common': 14.7.1
+      '@azure/msal-common': 14.8.1
       jsonwebtoken: 9.0.2
       uuid: 8.3.2
     dev: false
