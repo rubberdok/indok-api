@@ -39,8 +39,8 @@ dependencies:
     specifier: ^6.1.1
     version: 6.1.1
   '@fastify/session':
-    specifier: ^10.7.0
-    version: 10.7.0
+    specifier: ^10.7.1
+    version: 10.7.1
   '@fastify/under-pressure':
     specifier: ^8.3.0
     version: 8.3.0
@@ -1509,8 +1509,8 @@ packages:
       mime: 3.0.0
     dev: false
 
-  /@fastify/session@10.7.0:
-    resolution: {integrity: sha512-ECA75gnyaxcyIukgyO2NGT3XdbLReNl/pTKrrkRfDc6pVqNtdptwwfx9KXrIMOfsO4B3m84eF3wZ9GgnebiZ4w==}
+  /@fastify/session@10.7.1:
+    resolution: {integrity: sha512-7useheNpXAMvPb5AmqjUvdkOqfABfgU+je3fvu3uqZt2uZ8ZTLZU0ogmLtSDd0QJ7vksnUzp7AutjztilEp3sQ==}
     dependencies:
       fastify-plugin: 4.5.1
       safe-stable-stringify: 2.4.3
