@@ -67,12 +67,10 @@ describe("EventService", () => {
 					signUpsEndAt: faker.date.future(),
 				}),
 			);
-			productService.orders.create.mockResolvedValueOnce(
-				mock({
-					ok: false,
-					error: new NotFoundError(""),
-				}),
-			);
+			productService.orders.create.mockResolvedValueOnce({
+				ok: false,
+				error: new NotFoundError(""),
+			});
 			eventsRepository.createSignUp.mockResolvedValue({
 				signUp: mock<EventSignUp>({ id: faker.string.uuid() }),
 				event: makeSignUpEvent(),
