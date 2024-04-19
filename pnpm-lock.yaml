@@ -87,8 +87,8 @@ dependencies:
     specifier: ^2.12.6
     version: 2.12.6(graphql@16.8.1)
   ioredis:
-    specifier: ^5.3.2
-    version: 5.3.2
+    specifier: ^5.4.1
+    version: 5.4.1
   lodash-es:
     specifier: ^4.17.21
     version: 4.17.21
@@ -1494,7 +1494,7 @@ packages:
     resolution: {integrity: sha512-NZpHK+d3uJJ+w1iHx5n1woFvrHhhG52XjM9byWvU81KSsQpO0N/OikgQvz83frLV7UD4UQtTUgPvVbLxW0X81w==}
     dependencies:
       fastify-plugin: 4.5.1
-      ioredis: 5.3.2
+      ioredis: 5.4.1
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -3214,7 +3214,7 @@ packages:
       '@types/express-session': 1.17.10
       '@types/node': 20.12.7
       '@types/redis': 2.8.32
-      ioredis: 5.3.2
+      ioredis: 5.4.1
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -3884,7 +3884,7 @@ packages:
     resolution: {integrity: sha512-5Z8cyPqno+V7l7NmQ0t15Gdkc6RYCs+SR6zSxvAg3ADofyQA+0rll60w6uJpKuUcE2ausC8EFLwW/FJDxSIP5Q==}
     dependencies:
       cron-parser: 4.9.0
-      ioredis: 5.3.2
+      ioredis: 5.4.1
       msgpackr: 1.10.1
       node-abort-controller: 3.1.1
       semver: 7.5.4
@@ -5477,8 +5477,8 @@ packages:
       loose-envify: 1.4.0
     dev: true
 
-  /ioredis@5.3.2:
-    resolution: {integrity: sha512-1DKMMzlIHM02eBBVOFQ1+AolGjs6+xEcM4PDL7NqOS6szq7H9jSaEkIUH6/a5Hl241LzW6JLSiAbNvTQjUupUA==}
+  /ioredis@5.4.1:
+    resolution: {integrity: sha512-2YZsvl7jopIa1gaePkeMtd9rAcSjOOjPtpcLlOeusyO+XH2SK5ZcT+UCrElPP+WVIInh2TzeI4XW9ENaSLVVHA==}
     engines: {node: '>=12.22.0'}
     dependencies:
       '@ioredis/commands': 1.2.0
