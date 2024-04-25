@@ -37,7 +37,7 @@ async function fastifyServer(
 		beforeSend: options?.sentry?.beforeSend,
 		integrations: [
 			Sentry.fastifyIntegration(),
-			Sentry.prismaIntegration(),
+			// Sentry.prismaIntegration(),
 			Sentry.graphqlIntegration(),
 			Sentry.anrIntegration(),
 		],
