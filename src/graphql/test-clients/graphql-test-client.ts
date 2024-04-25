@@ -12,7 +12,10 @@ import {
 	newMockOpenIdClient,
 } from "~/__tests__/mocks/openIdClient.js";
 import { env } from "~/config.js";
-import { fastifyServer } from "~/lib/fastify/fastify.js";
+import {
+	type FastifyServerOptions,
+	fastifyServer,
+} from "~/lib/fastify/fastify.js";
 import fastifyService from "~/lib/fastify/service.js";
 import type { Services } from "~/lib/server.js";
 import { AuthService } from "~/services/auth/index.js";
@@ -271,7 +274,7 @@ export class GraphQLTestClient {
  * ```
  */
 export async function newGraphQLTestClient(
-	overrides?: Partial<Services>,
+	overrides?: Partial<Services> & { options?: FastifyServerOptions },
 ): Promise<GraphQLTestClient> {
 	const mockOpenIdClient = newMockOpenIdClient();
 	const defaultServices = makeTestServices(overrides);
@@ -281,7 +284,7 @@ export async function newGraphQLTestClient(
 		auth: authService,
 	};
 
-	const { serverInstance } = await fastifyServer(env);
+	const { serverInstance } = await fastifyServer(env, overrides?.options);
 	await serverInstance.register(fastifyService, { services });
 
 	return new GraphQLTestClient({

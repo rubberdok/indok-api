@@ -1,6 +1,6 @@
 import type { ApolloServerPlugin } from "@apollo/server";
 import { unwrapResolverError } from "@apollo/server/errors";
-import type { FastifyInstance } from "fastify";
+import * as Sentry from "@sentry/node";
 import { GraphQLError } from "graphql";
 import { isErrorWithCode, isUserFacingError } from "~/domain/errors.js";
 import type { ApolloContext } from "./apollo-server.js";
@@ -22,82 +22,74 @@ import type { ApolloContext } from "./apollo-server.js";
  * @param app - The fastify app instance
  * @returns The Apollo Server plugin
  */
-export const fastifyApolloSentryPlugin = (
-	app: FastifyInstance,
-): ApolloServerPlugin<ApolloContext> => {
-	return {
-		async requestDidStart({ contextValue, request }) {
-			contextValue.log.info(
-				{
-					graphql: {
-						variables: request.variables,
-						method: request.http?.method,
-						operationName: request.operationName,
+export const fastifyApolloSentryPlugin =
+	(): ApolloServerPlugin<ApolloContext> => {
+		return {
+			async requestDidStart({ contextValue, request }) {
+				contextValue.log.info(
+					{
+						graphql: {
+							variables: request.variables,
+							method: request.http?.method,
+							operationName: request.operationName,
+						},
 					},
-				},
-				"incoming graphql request",
-			);
-			if (request.operationName) {
-				contextValue.span?.updateName(request.operationName);
-			}
-			return {
-				// biome-ignore lint/suspicious/useAwait: We need to use async/await API here.
-				async willSendResponse({ contextValue }) {
-					contextValue.span?.end();
-				},
-				async didEncounterErrors(ctx) {
-					// If we couldn't parse the operation, don't
-					// do anything here
-					if (!ctx.operation) {
-						return;
-					}
-					for (const err of ctx.errors) {
-						// Only report internal server errors,
-						// Filter out user-facing errors, we're not really interested in logging those to Sentry
-						const originalError = unwrapResolverError(err);
-						if (originalError instanceof GraphQLError) {
-							continue;
+					"incoming graphql request",
+				);
+				return {
+					async didEncounterErrors(ctx) {
+						// If we couldn't parse the operation, don't
+						// do anything here
+						if (!ctx.operation) {
+							return;
 						}
-
-						if (isUserFacingError(originalError)) {
-							continue;
-						}
-
-						if (isErrorWithCode(originalError)) {
-							err.extensions.code = originalError.code;
-						}
-
-						// Add scoped report details and send to Sentry
-						app.Sentry.withScope((scope) => {
-							// Annotate whether failing operation was query/mutation/subscription
-							scope.setTag("kind", ctx.operation?.operation);
-
-							// Annotate with user ID
-							if (ctx.contextValue.user) {
-								scope.setUser({ id: ctx.contextValue.user.id });
+						for (const err of ctx.errors) {
+							// Only report internal server errors,
+							// Filter out user-facing errors, we're not really interested in logging those to Sentry
+							const originalError = unwrapResolverError(err);
+							if (originalError instanceof GraphQLError) {
+								continue;
 							}
 
-							// Log query and variables as extras
-							// (make sure to strip out sensitive data!)
-							scope.setExtra("query", ctx.request.query);
-							scope.setExtra("variables", ctx.request.variables);
-							scope.setExtra("operationName", ctx.request.operationName);
-							if (err.path) {
-								// We can also add the path as breadcrumb
-								scope.addBreadcrumb({
-									category: "query-path",
-									message: err.path.join(" > "),
-									level: "debug",
-								});
+							if (isUserFacingError(originalError)) {
+								continue;
 							}
-							if (originalError instanceof Error) {
-								ctx.contextValue.log.error(originalError);
-								app.Sentry.captureException(originalError);
+
+							if (isErrorWithCode(originalError)) {
+								err.extensions.code = originalError.code;
 							}
-						});
-					}
-				},
-			};
-		},
+
+							// Add scoped report details and send to Sentry
+							Sentry.withScope((scope) => {
+								// Annotate whether failing operation was query/mutation/subscription
+								scope.setTag("kind", ctx.operation?.operation);
+
+								// Annotate with user ID
+								if (ctx.contextValue.user) {
+									scope.setUser({ id: ctx.contextValue.user.id });
+								}
+
+								// Log query and variables as extras
+								// (make sure to strip out sensitive data!)
+								scope.setExtra("query", ctx.request.query);
+								scope.setExtra("variables", ctx.request.variables);
+								scope.setExtra("operationName", ctx.request.operationName);
+								if (err.path) {
+									// We can also add the path as breadcrumb
+									scope.addBreadcrumb({
+										category: "query-path",
+										message: err.path.join(" > "),
+										level: "debug",
+									});
+								}
+								if (originalError instanceof Error) {
+									ctx.contextValue.log.error(originalError);
+									Sentry.captureException(originalError);
+								}
+							});
+						}
+					},
+				};
+			},
+		};
 	};
-};

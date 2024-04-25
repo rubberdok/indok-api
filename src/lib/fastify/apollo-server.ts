@@ -31,7 +31,7 @@ const fastifyApolloServerPlugin: FastifyPluginAsync<{
 		includeStacktraceInErrorResponses: configuration.NODE_ENV !== "production",
 		plugins: [
 			fastifyApolloDrainPlugin(fastify),
-			fastifyApolloSentryPlugin(fastify),
+			fastifyApolloSentryPlugin(),
 			configuration.NODE_ENV === "production"
 				? ApolloServerPluginLandingPageDisabled()
 				: ApolloServerPluginLandingPageLocalDefault({
@@ -47,11 +47,6 @@ const fastifyApolloServerPlugin: FastifyPluginAsync<{
 		req,
 	) => {
 		const { services } = fastify;
-		const name = `${req.method} ${req.url}`;
-		const span = fastify.Sentry.startInactiveSpan({
-			op: "apollo.graphql",
-			name,
-		});
 
 		req.log.info(req, "Context");
 
@@ -76,7 +71,6 @@ const fastifyApolloServerPlugin: FastifyPluginAsync<{
 		return {
 			...services,
 			user,
-			span,
 			log: req.log.child({ userId: user?.id, service: "apollo-server" }),
 		};
 	};

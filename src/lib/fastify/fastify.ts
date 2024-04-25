@@ -5,7 +5,6 @@ import fastifyRateLimit from "@fastify/rate-limit";
 import fastifyRedis from "@fastify/redis";
 import fastifySession from "@fastify/session";
 import fastifyUnderPressure from "@fastify/under-pressure";
-import fastifySentry from "@immobiliarelabs/fastify-sentry";
 import * as Sentry from "@sentry/node";
 import RedisStore from "connect-redis";
 import fastify, { type FastifyInstance } from "fastify";
@@ -17,34 +16,40 @@ import fastifyHealthCheck from "./health-check.js";
 import { helmetOptionsByEnv } from "./helmet.js";
 import { envToLogger } from "./logging.js";
 
+type FastifyServerOptions = {
+	sentry?: {
+		beforeSend?: NonNullable<Parameters<typeof Sentry.init>[0]>["beforeSend"];
+	};
+};
+
 async function fastifyServer(
-	opts: Configuration,
+	config: Configuration,
+	options?: FastifyServerOptions,
 ): Promise<{ serverInstance: FastifyInstance }> {
-	const server = fastify({
-		logger: envToLogger[opts.NODE_ENV],
-		ignoreTrailingSlash: true,
-	});
-
 	/**
-	 * Set up Sentry monitoring before anything else
-	 * so that we can monitor the server for errors and performance issues, even during
-	 * the initial setup.
+	 * Initialize Sentry prior to anything else to ensure that we monitor as much as possible.
 	 */
-	await server.register(fastifySentry, {
-		dsn: opts.SENTRY_DSN,
-		environment: opts.NODE_ENV,
-		tracesSampleRate: opts.SENTRY_TRACES_SAMPLE_RATE,
-		release: opts.SENTRY_RELEASE,
-
+	Sentry.init({
+		dsn: config.SENTRY_DSN,
+		environment: config.NODE_ENV,
+		tracesSampleRate: config.SENTRY_TRACES_SAMPLE_RATE,
+		release: config.SENTRY_RELEASE,
+		beforeSend: options?.sentry?.beforeSend,
 		integrations: [
-			new Sentry.Integrations.GraphQL(),
-			new Sentry.Integrations.Apollo(),
-			new Sentry.Integrations.Anr({ captureStackTrace: true }),
+			Sentry.fastifyIntegration(),
+			Sentry.prismaIntegration(),
+			Sentry.graphqlIntegration(),
+			Sentry.anrIntegration(),
 		],
 	});
 
+	const server = fastify({
+		logger: envToLogger[config.NODE_ENV],
+		ignoreTrailingSlash: true,
+	});
+
 	// Security headers
-	server.register(fastifyHelmet, helmetOptionsByEnv[opts.NODE_ENV]);
+	server.register(fastifyHelmet, helmetOptionsByEnv[config.NODE_ENV]);
 
 	/**
 	 * Register plugins
@@ -54,8 +59,8 @@ async function fastifyServer(
 	 *   - origin: allow requests from the specified origins
 	 */
 	await server.register(fastifyCors, {
-		credentials: opts.CORS_CREDENTIALS,
-		origin: opts.CORS_ORIGINS,
+		credentials: config.CORS_CREDENTIALS,
+		origin: config.CORS_ORIGINS,
 	});
 
 	// Cookie parser, dependency of fastifySession
@@ -63,14 +68,14 @@ async function fastifyServer(
 
 	await server.register(fastifyRedis, {
 		namespace: "main",
-		url: opts.REDIS_CONNECTION_STRING,
+		url: config.REDIS_CONNECTION_STRING,
 		keepAlive: 1_000 * 60 * 3, // 3 minutes,
 		closeClient: true,
 	});
 
 	await server.register(fastifyRedis, {
 		namespace: "message-queue",
-		url: opts.REDIS_CONNECTION_STRING,
+		url: config.REDIS_CONNECTION_STRING,
 		keepAlive: 1_000 * 60 * 3, // 3 minutes
 		maxRetriesPerRequest: 0,
 		closeClient: true,
@@ -78,24 +83,24 @@ async function fastifyServer(
 
 	// Rate limit plugin
 	await server.register(fastifyRateLimit, {
-		max: opts.RATE_LIMIT_MAX,
+		max: config.RATE_LIMIT_MAX,
 		redis: server.redis.main,
 		nameSpace: "rate-limit",
 	});
 
 	// Regsiter session plugin
 	await server.register(fastifySession, {
-		secret: opts.SESSION_SECRET,
-		cookieName: opts.SESSION_COOKIE_NAME,
+		secret: config.SESSION_SECRET,
+		cookieName: config.SESSION_COOKIE_NAME,
 		saveUninitialized: true,
 		store: new RedisStore({
 			client: server.redis.main,
 		}),
 		cookie: {
-			httpOnly: opts.SESSION_COOKIE_HTTP_ONLY,
-			secure: opts.SESSION_COOKIE_SECURE,
-			domain: opts.SESSION_COOKIE_DOMAIN,
-			sameSite: opts.SESSION_COOKIE_SAME_SITE,
+			httpOnly: config.SESSION_COOKIE_HTTP_ONLY,
+			secure: config.SESSION_COOKIE_SECURE,
+			domain: config.SESSION_COOKIE_DOMAIN,
+			sameSite: config.SESSION_COOKIE_SAME_SITE,
 			maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
 		},
 	});
@@ -139,9 +144,10 @@ async function fastifyServer(
 
 	await server.register(fastifyHealthCheck, { prefix: "/-" });
 	await server.register(fastifyAuth, { prefix: "/auth" });
-	await server.register(fastifyApolloServer, { configuration: opts });
+	await server.register(fastifyApolloServer, { configuration: config });
 
 	return { serverInstance: server };
 }
 
 export { fastifyServer };
+export type { FastifyServerOptions };

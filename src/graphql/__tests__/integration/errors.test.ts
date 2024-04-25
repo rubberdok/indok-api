@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { GraphQLError } from "graphql";
+import { jest } from "@jest/globals";
 import { type DeepMockProxy, mockDeep, mockFn } from "jest-mock-extended";
 import { InternalServerError, errorCodes } from "~/domain/errors.js";
 import {
@@ -13,22 +13,30 @@ import type { IOrganizationService } from "~/lib/server.js";
 describe("GraphQL error handling", () => {
 	let client: GraphQLTestClient;
 	let mockOrganizationService: DeepMockProxy<IOrganizationService>;
+	let beforeSend: jest.Mock;
 
-	afterAll(async () => {
+	afterEach(async () => {
+		jest.clearAllMocks();
 		await client.close();
 	});
 
-	beforeAll(async () => {
+	beforeEach(async () => {
 		mockOrganizationService = mockDeep<IOrganizationService>();
+		beforeSend = mockFn();
 		client = await newGraphQLTestClient({
 			organizations: mockOrganizationService,
+			options: {
+				sentry: {
+					beforeSend: (event, hint) => {
+						beforeSend(event, hint);
+						return null;
+					},
+				},
+			},
 		});
 	});
 
 	it("should not report bad GraphQL request errors to Sentry", async () => {
-		const mockSentryErrorHandler = mockFn();
-		client.app.Sentry.captureException = mockSentryErrorHandler;
-
 		const { errors } = await client.mutate({
 			mutation: graphql(`
         mutation ErrorMutation($data: CreateOrganizationInput!) {
@@ -43,13 +51,10 @@ describe("GraphQL error handling", () => {
 		});
 
 		expect(errors).toHaveLength(1);
-		expect(mockSentryErrorHandler).not.toHaveBeenCalled();
+		expect(beforeSend).not.toHaveBeenCalled();
 	});
 
 	it("should report not permission denied errors to Sentry", async () => {
-		const mockSentryErrorHandler = mockFn();
-		client.app.Sentry.captureException = mockSentryErrorHandler;
-
 		const { errors } = await client.query({
 			query: graphql(`
         mutation SuperQuery($id: ID!, $data: SuperUpdateUserInput!) {
@@ -69,7 +74,7 @@ describe("GraphQL error handling", () => {
 		});
 
 		expect(errors).toHaveLength(1);
-		expect(mockSentryErrorHandler).not.toHaveBeenCalled();
+		expect(beforeSend).not.toHaveBeenCalled();
 	});
 
 	it("should report unexpected errors to sentry", async () => {
@@ -84,8 +89,6 @@ describe("GraphQL error handling", () => {
 				feideId: faker.string.uuid(),
 			},
 		});
-		const mockSentryErrorHandler = mockFn();
-		client.app.Sentry.captureException = mockSentryErrorHandler;
 		mockOrganizationService.organizations.findMany.mockRejectedValue(
 			new InternalServerError("Test Internal Server Error"),
 		);
@@ -117,8 +120,11 @@ describe("GraphQL error handling", () => {
 					error.extensions.code === errorCodes.ERR_INTERNAL_SERVER_ERROR,
 			),
 		).toBe(true);
-		expect(mockSentryErrorHandler).toHaveBeenCalledWith(
-			new GraphQLError("Test Internal Server Error"),
+		expect(beforeSend).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining({
+				originalException: expect.any(InternalServerError),
+			}),
 		);
 	});
 });
