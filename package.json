@@ -91,7 +91,7 @@
 		"@fastify/session": "^10.7.2",
 		"@fastify/under-pressure": "^8.3.0",
 		"@immobiliarelabs/fastify-sentry": "^8.0.1",
-		"@prisma/client": "^5.12.1",
+		"@prisma/client": "^5.13.0",
 		"@sentry/node": "^7.110.1",
 		"@sentry/tracing": "7.110.1",
 		"@vippsmobilepay/sdk": "^1.3.1",
