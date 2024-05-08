@@ -18,11 +18,11 @@ dependencies:
     specifier: ^12.17.0
     version: 12.17.0
   '@bull-board/api':
-    specifier: ^5.16.0
-    version: 5.17.0(@bull-board/ui@5.17.0)
+    specifier: ^5.17.1
+    version: 5.17.1(@bull-board/ui@5.17.1)
   '@bull-board/fastify':
-    specifier: ^5.16.0
-    version: 5.17.0
+    specifier: ^5.17.1
+    version: 5.17.1
   '@fastify/cookie':
     specifier: ^9.3.1
     version: 9.3.1
@@ -1374,29 +1374,29 @@ packages:
     dev: true
     optional: true
 
-  /@bull-board/api@5.17.0(@bull-board/ui@5.17.0):
-    resolution: {integrity: sha512-qU+AiZIaYa//rkt1x7jDowtYa8u7/dLsDfEWgenZMkgvUszZ1kxJszdCtGapsDTVyPmnXgTRxpOWcR6sAYwSNQ==}
+  /@bull-board/api@5.17.1(@bull-board/ui@5.17.1):
+    resolution: {integrity: sha512-KQaH3z2YJxN2h+Kh4ZJ341NNEFwrsNeZAu9FtQX8h4G0nkSw3FSlgWDO6UrN0b448+co/gWTT6qZz0st2fFmPg==}
     peerDependencies:
-      '@bull-board/ui': 5.17.0
+      '@bull-board/ui': 5.17.1
     dependencies:
-      '@bull-board/ui': 5.17.0
+      '@bull-board/ui': 5.17.1
       redis-info: 3.1.0
     dev: false
 
-  /@bull-board/fastify@5.17.0:
-    resolution: {integrity: sha512-73YrPc7ERTWSOQRgBP6a7BPscWfcHd8U+Zq0auMdL/KkjPhG9GxapbfnovGZDDahJL/p/4YQb6ULu03zdtOrEA==}
+  /@bull-board/fastify@5.17.1:
+    resolution: {integrity: sha512-4Rmedd0hAbwBCYGOEGyf+PeHgQ93EjG0yawa/OGyCy/1mKY3vz0E8Rcjm0s2LpiviR8kYlK8EiqhDFsoYpVhNA==}
     dependencies:
-      '@bull-board/api': 5.17.0(@bull-board/ui@5.17.0)
-      '@bull-board/ui': 5.17.0
+      '@bull-board/api': 5.17.1(@bull-board/ui@5.17.1)
+      '@bull-board/ui': 5.17.1
       '@fastify/static': 6.12.0
       '@fastify/view': 8.2.0
       ejs: 3.1.10
     dev: false
 
-  /@bull-board/ui@5.17.0:
-    resolution: {integrity: sha512-Vj+yWPjrjx3Iqh2N/ZBDhK2d2yJD44dfvIxm+SnXQb4ne312j117TpViInceysxGtbbAOlAW6hq6JvsDoRl7KQ==}
+  /@bull-board/ui@5.17.1:
+    resolution: {integrity: sha512-/BO4C454w7ar5ZaHfcThEY2A2SYD9YkQkBizq8o9sjglVctpnnnh37YY2iOVRZCZFXMKIe7t05Kd9/9p3IPvSw==}
     dependencies:
-      '@bull-board/api': 5.17.0(@bull-board/ui@5.17.0)
+      '@bull-board/api': 5.17.1(@bull-board/ui@5.17.1)
     dev: false
 
   /@eddeee888/gcg-server-config@0.2.0(graphql@16.8.1):
@@ -4547,7 +4547,7 @@ packages:
     engines: {node: '>=0.10.0'}
     hasBin: true
     dependencies:
-      jake: 10.8.7
+      jake: 10.9.1
     dev: false
 
   /electron-to-chromium@1.4.754:
@@ -5829,8 +5829,8 @@ packages:
       istanbul-lib-report: 3.0.1
     dev: true
 
-  /jake@10.8.7:
-    resolution: {integrity: sha512-ZDi3aP+fG/LchyBzUM804VjddnwfSfsdeYkwt8NcbKRvo4rFkjhs456iLFn3k2ZUWvNe4i48WACDbza8fhq2+w==}
+  /jake@10.9.1:
+    resolution: {integrity: sha512-61btcOHNnLnsOdtLgA5efqQWjnSi/vow5HbI7HMdKKWqvrKR1bLK3BPlJn9gcSaP2ewuamUSMB5XEy76KUIS2w==}
     engines: {node: '>=10'}
     hasBin: true
     dependencies:
