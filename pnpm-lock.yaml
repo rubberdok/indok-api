@@ -15,8 +15,8 @@ dependencies:
     specifier: ^4.1.0
     version: 4.2.0
   '@azure/storage-blob':
-    specifier: ^12.17.0
-    version: 12.17.0
+    specifier: ^12.18.0
+    version: 12.18.0
   '@bull-board/api':
     specifier: ^5.17.1
     version: 5.17.1(@bull-board/ui@5.17.1)
@@ -608,8 +608,8 @@ packages:
       uuid: 8.3.2
     dev: false
 
-  /@azure/storage-blob@12.17.0:
-    resolution: {integrity: sha512-sM4vpsCpcCApagRW5UIjQNlNylo02my2opgp0Emi8x888hZUvJ3dN69Oq20cEGXkMUWnoCrBaB0zyS3yeB87sQ==}
+  /@azure/storage-blob@12.18.0:
+    resolution: {integrity: sha512-BzBZJobMoDyjJsPRMLNHvqHycTGrT8R/dtcTx9qUFcqwSRfGVK9A/cZ7Nx38UQydT9usZGbaDCN75QRNjezSAA==}
     engines: {node: '>=14.0.0'}
     dependencies:
       '@azure/abort-controller': 1.1.0
