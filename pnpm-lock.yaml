@@ -18,11 +18,11 @@ dependencies:
     specifier: ^12.18.0
     version: 12.18.0
   '@bull-board/api':
-    specifier: ^5.17.1
-    version: 5.17.1(@bull-board/ui@5.17.1)
+    specifier: ^5.18.0
+    version: 5.18.0(@bull-board/ui@5.18.0)
   '@bull-board/fastify':
-    specifier: ^5.17.1
-    version: 5.17.1
+    specifier: ^5.18.0
+    version: 5.18.0
   '@fastify/cookie':
     specifier: ^9.3.1
     version: 9.3.1
@@ -1374,29 +1374,29 @@ packages:
     dev: true
     optional: true
 
-  /@bull-board/api@5.17.1(@bull-board/ui@5.17.1):
-    resolution: {integrity: sha512-KQaH3z2YJxN2h+Kh4ZJ341NNEFwrsNeZAu9FtQX8h4G0nkSw3FSlgWDO6UrN0b448+co/gWTT6qZz0st2fFmPg==}
+  /@bull-board/api@5.18.0(@bull-board/ui@5.18.0):
+    resolution: {integrity: sha512-aaTWQEJOoWmw1j7KbbJeyZHxgTlaIp/AEo7GsgOET8slngcUt7YPBJxjH5Qt7EFW5z3BE1hqTEsjE2mFqQ7jdQ==}
     peerDependencies:
-      '@bull-board/ui': 5.17.1
+      '@bull-board/ui': 5.18.0
     dependencies:
-      '@bull-board/ui': 5.17.1
+      '@bull-board/ui': 5.18.0
       redis-info: 3.1.0
     dev: false
 
-  /@bull-board/fastify@5.17.1:
-    resolution: {integrity: sha512-4Rmedd0hAbwBCYGOEGyf+PeHgQ93EjG0yawa/OGyCy/1mKY3vz0E8Rcjm0s2LpiviR8kYlK8EiqhDFsoYpVhNA==}
+  /@bull-board/fastify@5.18.0:
+    resolution: {integrity: sha512-JGuT03jjA3biY7c3+1kLBtoyNuNQ9YlksDBPgLGAYQSCh0vcIFw3vMVLBGDmu/r1QTtb6TCOv47G9nGKKCkynQ==}
     dependencies:
-      '@bull-board/api': 5.17.1(@bull-board/ui@5.17.1)
-      '@bull-board/ui': 5.17.1
+      '@bull-board/api': 5.18.0(@bull-board/ui@5.18.0)
+      '@bull-board/ui': 5.18.0
       '@fastify/static': 6.12.0
       '@fastify/view': 8.2.0
       ejs: 3.1.10
     dev: false
 
-  /@bull-board/ui@5.17.1:
-    resolution: {integrity: sha512-/BO4C454w7ar5ZaHfcThEY2A2SYD9YkQkBizq8o9sjglVctpnnnh37YY2iOVRZCZFXMKIe7t05Kd9/9p3IPvSw==}
+  /@bull-board/ui@5.18.0:
+    resolution: {integrity: sha512-JY5ZrsKi+Q7zkjIacgaaFPyDvusIFKARKJ+Q4aV+z4ZINAepTp351B7CjrxrZvjITQjl4KFei3L3elzOeT8QmQ==}
     dependencies:
-      '@bull-board/api': 5.17.1(@bull-board/ui@5.17.1)
+      '@bull-board/api': 5.18.0(@bull-board/ui@5.18.0)
     dev: false
 
   /@eddeee888/gcg-server-config@0.2.1(graphql@16.8.1):
