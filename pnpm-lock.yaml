@@ -18,11 +18,11 @@ dependencies:
     specifier: ^12.18.0
     version: 12.18.0
   '@bull-board/api':
-    specifier: ^5.17.1
-    version: 5.17.1(@bull-board/ui@5.17.1)
+    specifier: ^5.19.0
+    version: 5.19.0(@bull-board/ui@5.19.0)
   '@bull-board/fastify':
-    specifier: ^5.17.1
-    version: 5.17.1
+    specifier: ^5.19.0
+    version: 5.19.0
   '@fastify/cookie':
     specifier: ^9.3.1
     version: 9.3.1
@@ -1374,29 +1374,29 @@ packages:
     dev: true
     optional: true
 
-  /@bull-board/api@5.17.1(@bull-board/ui@5.17.1):
-    resolution: {integrity: sha512-KQaH3z2YJxN2h+Kh4ZJ341NNEFwrsNeZAu9FtQX8h4G0nkSw3FSlgWDO6UrN0b448+co/gWTT6qZz0st2fFmPg==}
+  /@bull-board/api@5.19.0(@bull-board/ui@5.19.0):
+    resolution: {integrity: sha512-eX0L0JFyGK3E0bxWt+zDRYt89xUKUNRk/7dALiFK2jtMSHTMFguyAx86S9d4wo3jGKAdK89MFCTcTeTiQLb3EQ==}
     peerDependencies:
-      '@bull-board/ui': 5.17.1
+      '@bull-board/ui': 5.19.0
     dependencies:
-      '@bull-board/ui': 5.17.1
+      '@bull-board/ui': 5.19.0
       redis-info: 3.1.0
     dev: false
 
-  /@bull-board/fastify@5.17.1:
-    resolution: {integrity: sha512-4Rmedd0hAbwBCYGOEGyf+PeHgQ93EjG0yawa/OGyCy/1mKY3vz0E8Rcjm0s2LpiviR8kYlK8EiqhDFsoYpVhNA==}
+  /@bull-board/fastify@5.19.0:
+    resolution: {integrity: sha512-HjPX2JDoQIOS24fLgILQbYfZU3KVWCasBhIko2VAf+4KIHU+9WO/PAkk4j0P1rAtCmxDCprsuUxm0KbubHQwfw==}
     dependencies:
-      '@bull-board/api': 5.17.1(@bull-board/ui@5.17.1)
-      '@bull-board/ui': 5.17.1
+      '@bull-board/api': 5.19.0(@bull-board/ui@5.19.0)
+      '@bull-board/ui': 5.19.0
       '@fastify/static': 6.12.0
       '@fastify/view': 8.2.0
       ejs: 3.1.10
     dev: false
 
-  /@bull-board/ui@5.17.1:
-    resolution: {integrity: sha512-/BO4C454w7ar5ZaHfcThEY2A2SYD9YkQkBizq8o9sjglVctpnnnh37YY2iOVRZCZFXMKIe7t05Kd9/9p3IPvSw==}
+  /@bull-board/ui@5.19.0:
+    resolution: {integrity: sha512-OjIJTSr6L39d13sIVIjfaOd5i6xyNJxjZXZjWDUfl9ODhwZiIkhzjE/dCzxBj0BSNUm2w1KwwEeF7B7AAYseDg==}
     dependencies:
-      '@bull-board/api': 5.17.1(@bull-board/ui@5.17.1)
+      '@bull-board/api': 5.19.0(@bull-board/ui@5.19.0)
     dev: false
 
   /@eddeee888/gcg-server-config@0.2.1(graphql@16.8.1):
@@ -5154,6 +5154,7 @@ packages:
 
   /glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
+    deprecated: Glob versions prior to v9 are no longer supported
     dependencies:
       fs.realpath: 1.0.0
       inflight: 1.0.6
@@ -5166,6 +5167,7 @@ packages:
   /glob@8.1.0:
     resolution: {integrity: sha512-r8hpEjiQEYlF2QU0df3dS+nxxSIreXQS1qRhMJM0Q5NDdR386C7jb7Hwwod8Fgiuex+k0GFjgft18yvxm5XoCQ==}
     engines: {node: '>=12'}
+    deprecated: Glob versions prior to v9 are no longer supported
     dependencies:
       fs.realpath: 1.0.0
       inflight: 1.0.6
@@ -5469,6 +5471,7 @@ packages:
 
   /inflight@1.0.6:
     resolution: {integrity: sha512-k92I/b08q4wvFscXCLvqfsHCrjrF7yiXsQuIVvVE7N82W3+aqpzuUdBbfhWcy/FZR3/4IgflMgKLOsvPDrGCJA==}
+    deprecated: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
     dependencies:
       once: 1.4.0
       wrappy: 1.0.2
