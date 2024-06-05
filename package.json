@@ -80,7 +80,7 @@
 		"@apollo/server": "^4.10.4",
 		"@as-integrations/fastify": "^2.1.1",
 		"@azure/identity": "^4.1.0",
-		"@azure/storage-blob": "^12.18.0",
+		"@azure/storage-blob": "^12.23.0",
 		"@bull-board/api": "^5.19.2",
 		"@bull-board/fastify": "^5.19.2",
 		"@fastify/cookie": "^9.3.1",
