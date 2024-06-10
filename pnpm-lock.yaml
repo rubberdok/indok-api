@@ -42,8 +42,8 @@ dependencies:
     specifier: ^10.9.0
     version: 10.9.0
   '@fastify/under-pressure':
-    specifier: ^8.3.0
-    version: 8.3.0
+    specifier: ^8.5.0
+    version: 8.5.0
   '@immobiliarelabs/fastify-sentry':
     specifier: ^8.0.1
     version: 8.0.1
@@ -1525,8 +1525,8 @@ packages:
       p-limit: 3.1.0
     dev: false
 
-  /@fastify/under-pressure@8.3.0:
-    resolution: {integrity: sha512-ap1EePB9vHm8uQLM0nnaOeIMBLooNmAMTnccavBRwaXmu+acJFuSEQRVdMGRkW6viFDhdo5RGTcHzMBQyrucEA==}
+  /@fastify/under-pressure@8.5.0:
+    resolution: {integrity: sha512-c7FPBFDfeSIck4SG0AbAT+DdfNcM2Z2So2gVLeU6GtEIpcqDiEtUh47YXA1LA+3qdCg1DCDYXr42oVQPjfDATA==}
     dependencies:
       '@fastify/error': 3.4.1
       fastify-plugin: 4.5.1
