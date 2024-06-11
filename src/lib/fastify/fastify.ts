@@ -5,8 +5,6 @@ import fastifyRateLimit from "@fastify/rate-limit";
 import fastifyRedis from "@fastify/redis";
 import fastifySession from "@fastify/session";
 import fastifyUnderPressure from "@fastify/under-pressure";
-import fastifySentry from "@immobiliarelabs/fastify-sentry";
-import * as Sentry from "@sentry/node";
 import RedisStore from "connect-redis";
 import fastify, { type FastifyInstance } from "fastify";
 import type { Configuration } from "~/config.js";
@@ -23,24 +21,6 @@ async function fastifyServer(
 	const server = fastify({
 		logger: envToLogger[opts.NODE_ENV],
 		ignoreTrailingSlash: true,
-	});
-
-	/**
-	 * Set up Sentry monitoring before anything else
-	 * so that we can monitor the server for errors and performance issues, even during
-	 * the initial setup.
-	 */
-	await server.register(fastifySentry, {
-		dsn: opts.SENTRY_DSN,
-		environment: opts.NODE_ENV,
-		tracesSampleRate: opts.SENTRY_TRACES_SAMPLE_RATE,
-		release: opts.SENTRY_RELEASE,
-
-		integrations: [
-			new Sentry.Integrations.GraphQL(),
-			new Sentry.Integrations.Apollo(),
-			new Sentry.Integrations.Anr({ captureStackTrace: true }),
-		],
 	});
 
 	// Security headers

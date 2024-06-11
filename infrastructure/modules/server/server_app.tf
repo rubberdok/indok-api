@@ -123,6 +123,7 @@ resource "azurerm_container_app" "server" {
       memory = "0.5Gi"
       name   = "server"
       image  = var.image_tag
+      command = ["pnpm", "run", "start:production"]
 
       startup_probe {
         failure_count_threshold = 10

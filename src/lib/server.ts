@@ -732,7 +732,7 @@ async function startServer(
 			// Log the error
 			server.log.fatal(err, "Error starting server");
 			// Capture the error with Sentry and exit the process
-			server.Sentry.captureException(err, {
+			Sentry.captureException(err, {
 				level: "fatal",
 				tags: {
 					kind: "server",
@@ -752,12 +752,9 @@ async function registerServices(
 	serverInstance: FastifyInstance,
 	configuration?: Partial<Configuration>,
 ): Promise<Services> {
+	Sentry.setupFastifyErrorHandler(serverInstance);
 	await serverInstance.register(fastifyPrisma, { client: prisma });
 	const database = serverInstance.database;
-
-	serverInstance.Sentry.addIntegration(
-		new Sentry.Integrations.Prisma({ client: database }),
-	);
 
 	const cabinRepository = new CabinRepository(database);
 	const userRepository = new UserRepository(database);

@@ -9,8 +9,13 @@
 	"type": "module",
 	"packageManager": "pnpm@9.4.0",
 	"files": ["dist", "certs", "scripts"],
+	"engines": {
+		"node": ">=20",
+		"pnpm": ">=9"
+	},
 	"scripts": {
 		"setup": "run-p generate",
+		"start:production": "node --import ./dist/instrument.js ./dist/server.js",
 		"build:production": "run-s generate:gql swc",
 		"build": "pnpm run swc",
 		"studio": "prisma studio",
@@ -21,7 +26,7 @@
 		"db:seed": "dotenv -e .env.development -- node --import @swc-node/register/esm-register  src/repositories/seed.ts",
 		"dev": "run-s docker:up 'start-dev {@}' --",
 		"start-dev": "concurrently --restart-tries 3 --kill-signal -c cyan.bold,cyan.dim,magenta.dim,black.dim pnpm:watch-*",
-		"watch-server": "MODE=development node --enable-source-maps --import @swc-node/register/esm-register --watch ./src/server.ts | pino-pretty",
+		"watch-server": "MODE=development node --enable-source-maps --import ./src/instrument.js --import @swc-node/register/esm-register  --watch ./src/server.ts | pino-pretty",
 		"watch-worker": "MODE=worker.development node --enable-source-maps --import @swc-node/register/esm-register --watch ./src/worker.ts | pino-pretty",
 		"watch-gql": "pnpm generate:gql --watch",
 		"watch-prisma": "pnpm generate:prisma --watch",
@@ -95,10 +100,15 @@
 		"@fastify/redis": "^6.1.1",
 		"@fastify/session": "^10.9.0",
 		"@fastify/under-pressure": "^8.5.0",
-		"@immobiliarelabs/fastify-sentry": "^8.0.1",
+		"@opentelemetry/exporter-trace-otlp-http": "^0.52.0",
+		"@opentelemetry/instrumentation": "^0.52.0",
+		"@opentelemetry/resources": "^1.25.0",
+		"@opentelemetry/sdk-trace-base": "^1.25.0",
+		"@opentelemetry/sdk-trace-node": "^1.25.0",
+		"@opentelemetry/semantic-conventions": "^1.25.0",
 		"@prisma/client": "^5.15.1",
-		"@sentry/node": "^7.114.0",
-		"@sentry/tracing": "7.114.0",
+		"@prisma/instrumentation": "^5.15.0",
+		"@sentry/node": "^8.8.0",
 		"@vippsmobilepay/sdk": "^1.3.1",
 		"bullmq": "^5.8.2",
 		"connect-redis": "^7.1.1",
@@ -123,6 +133,9 @@
 			"os": ["current", "linux"],
 			"cpu": ["current", "x64"],
 			"libc": ["current", "glibc"]
+		},
+		"overrides": {
+			"import-in-the-middle": "^1.8.0"
 		}
 	}
 }
