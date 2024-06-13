@@ -131,8 +131,8 @@ devDependencies:
     specifier: ^5.0.2
     version: 5.0.2(@parcel/watcher@2.4.1)(@types/node@20.14.2)(graphql@16.8.2)(typescript@5.4.5)
   '@graphql-codegen/client-preset':
-    specifier: ^4.2.6
-    version: 4.2.6(graphql@16.8.2)
+    specifier: ^4.3.0
+    version: 4.3.0(graphql@16.8.2)
   '@graphql-codegen/schema-ast':
     specifier: ^4.0.2
     version: 4.0.2(graphql@16.8.2)
@@ -1593,7 +1593,7 @@ packages:
       '@babel/generator': 7.24.7
       '@babel/template': 7.24.7
       '@babel/types': 7.24.7
-      '@graphql-codegen/client-preset': 4.2.6(graphql@16.8.2)
+      '@graphql-codegen/client-preset': 4.3.0(graphql@16.8.2)
       '@graphql-codegen/core': 4.0.2(graphql@16.8.2)
       '@graphql-codegen/plugin-helpers': 5.0.4(graphql@16.8.2)
       '@graphql-tools/apollo-engine-loader': 8.0.1(graphql@16.8.2)
@@ -1638,8 +1638,8 @@ packages:
       - utf-8-validate
     dev: true
 
-  /@graphql-codegen/client-preset@4.2.6(graphql@16.8.2):
-    resolution: {integrity: sha512-e7SzPb+nxNJfsD0uG+NSyzIeTtCXTouX5VThmcCoqGMDLgF5Lo7932B3HtZCvzmzqcXxRjJ81CmkA2LhlqIbCw==}
+  /@graphql-codegen/client-preset@4.3.0(graphql@16.8.2):
+    resolution: {integrity: sha512-p2szj5YiyLUYnQn1h7S4dsSY2Jc1LNrm32ptkb6CGtqPo3w9vgqki2WRJwgeJN8s3bhifqWRPzhoid/smrFVgA==}
     peerDependencies:
       graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
     dependencies:
