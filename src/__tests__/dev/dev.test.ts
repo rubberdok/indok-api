@@ -5,9 +5,15 @@ const cancelSignal = controller.signal;
 const timeout = 60_000;
 
 describe("Development scripts", () => {
+	beforeAll(async () => {
+		await execa({
+			stdout: ["pipe", "inherit"],
+		})("pnpm", ["run", "docker:up"]);
+	});
+
 	afterAll(async () => {
 		controller.abort();
-		await execa("docker", ["compose", "down"]);
+		await execa("pnpm", ["run", "docker:down"]);
 	});
 
 	describe("pnpm run dev", () => {
