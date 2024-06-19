@@ -1,4 +1,4 @@
-import { execa } from "execa";
+import { type ResultPromise, execa } from "execa";
 
 const controller = new AbortController();
 const cancelSignal = controller.signal;
@@ -6,12 +6,14 @@ const timeout = 60_000;
 
 describe("Development scripts", () => {
 	let timeoutHandle: NodeJS.Timeout | undefined;
+	let proc: ResultPromise | undefined;
 
 	afterAll(() => {
 		if (timeoutHandle) {
 			clearTimeout(timeoutHandle);
 		}
 		controller.abort();
+		proc?.kill();
 	});
 
 	beforeAll(() => {
@@ -30,7 +32,7 @@ describe("Development scripts", () => {
 				let prismaGenerated = false;
 				let workerReady = false;
 				let graphqlGenerated = false;
-				const proc = execa({
+				proc = execa({
 					stdout: ["pipe", "inherit"],
 					forceKillAfterDelay: timeout + 2_000,
 					cancelSignal,
@@ -42,8 +44,8 @@ describe("Development scripts", () => {
 				})("pnpm", ["run", "dev"]);
 
 				timeoutHandle = setTimeout(() => {
-					if (!proc.killed) {
-						proc.kill("SIGINT");
+					if (!proc?.killed) {
+						proc?.kill("SIGINT");
 					}
 				}, timeout);
 
@@ -51,16 +53,16 @@ describe("Development scripts", () => {
 				 * If we haven't received a log message from the process in 5 seconds, kill the process
 				 */
 				let logStabilityTimeoutHandle = setTimeout(() => {
-					if (!proc.killed) {
-						proc.kill("SIGINT");
+					if (!proc?.killed) {
+						proc?.kill("SIGINT");
 					}
 				}, 5_000);
 
 				for await (const line of proc) {
 					clearTimeout(logStabilityTimeoutHandle);
 					logStabilityTimeoutHandle = setTimeout(() => {
-						if (!proc.killed) {
-							proc.kill("SIGINT");
+						if (!proc?.killed) {
+							proc?.kill("SIGINT");
 						}
 					}, 5_000);
 
