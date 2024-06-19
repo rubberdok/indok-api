@@ -76,7 +76,8 @@ export type FileService = {
 	>;
 };
 
-type EmailQueueNameType = "send-email";
+const EmailQueueName = "send-email" as const;
+type EmailQueueNameType = typeof EmailQueueName;
 
 type EmailWorkerHelperType<TData, TReturn, TName extends string> = {
 	QueueType: Queue<TData, TReturn, TName>;
@@ -105,8 +106,6 @@ type EmailQueueType = EmailWorker["QueueType"];
 type EmailWorkerType = EmailWorker["WorkerType"];
 type EmailProcessorType = EmailWorker["ProcessorType"];
 type EmailJobType = EmailWorker["JobType"];
-
-const EmailQueueName = "email" as const;
 
 type Dependencies = {
 	mailService: MailService;
@@ -339,7 +338,7 @@ function getEmailHandler(dependencies: {
 	logger: Logger;
 }): {
 	handler: EmailProcessorType;
-	name: typeof EmailQueueName;
+	name: EmailQueueNameType;
 } {
 	return {
 		handler: EmailHandler(dependencies),
@@ -349,4 +348,4 @@ function getEmailHandler(dependencies: {
 
 export type { EmailQueueDataType, EmailQueueType, EmailWorkerType };
 
-export { getEmailHandler };
+export { getEmailHandler, EmailQueueName };
