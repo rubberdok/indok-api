@@ -50,25 +50,20 @@ describe("Development scripts", () => {
 				}, timeout);
 
 				timeoutHandle = setTimeout(() => {
-					if (!proc?.killed) {
-						console.log("Max timeout reached, killing process");
-						proc?.kill();
-					}
+					console.log("Max timeout reached, killing process");
+					proc?.kill();
 					clearTimeout(inactivtiyHandle);
 				}, timeout);
 
 				for await (const line of proc) {
-					if (line) {
+					const message = line.toString();
+					if (message) {
 						clearTimeout(inactivtiyHandle);
 						inactivtiyHandle = setTimeout(() => {
-							if (!proc?.killed) {
-								console.log("Killing process due to inactivity");
-								proc?.kill();
-							}
-						}, 15_000);
+							console.log("Killing process due to inactivity");
+							proc?.kill();
+						}, 30_000);
 					}
-
-					const message = line.toString();
 					if (message.includes("Restarting './src/server.ts'")) {
 						serverListening = false;
 					}
