@@ -41,6 +41,7 @@ describe("Development scripts", () => {
 					reject: false,
 					timeout: 60 * 1000, // 1 minute, GH actions aren't that fast
 					stdout: ["pipe", "inherit"],
+					stdio: "inherit",
 					env: {
 						// Setting NODE_ENV to production results in regular json logs
 						// instead of pino-pretty. The latter does some weird stuff with stdout, making it tricky to parse
