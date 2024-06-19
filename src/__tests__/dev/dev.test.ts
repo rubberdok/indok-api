@@ -43,13 +43,6 @@ describe("Development scripts", () => {
 					},
 				})("pnpm", ["run", "dev"]);
 
-				timeoutHandle = setTimeout(() => {
-					if (!proc?.killed) {
-						console.log("Max timeout reached, killing process");
-						proc?.kill("SIGINT");
-					}
-				}, timeout);
-
 				/**
 				 * If we haven't received a log message from the process in 5 seconds, kill the process
 				 */
@@ -57,7 +50,15 @@ describe("Development scripts", () => {
 					if (!proc?.killed) {
 						proc?.kill("SIGINT");
 					}
-				}, 5_000);
+				}, timeout);
+
+				timeoutHandle = setTimeout(() => {
+					if (!proc?.killed) {
+						console.log("Max timeout reached, killing process");
+						proc?.kill("SIGINT");
+					}
+					clearTimeout(logStabilityTimeoutHandle);
+				}, timeout);
 
 				for await (const line of proc) {
 					clearTimeout(logStabilityTimeoutHandle);
