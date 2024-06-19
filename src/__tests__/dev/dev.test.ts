@@ -5,6 +5,15 @@ const cancelSignal = controller.signal;
 const timeout = 60_000;
 
 describe("Development scripts", () => {
+	let timeoutHandle: NodeJS.Timeout | undefined;
+
+	afterAll(() => {
+		if (timeoutHandle) {
+			clearTimeout(timeoutHandle);
+		}
+		controller.abort();
+	});
+
 	describe("pnpm run dev", () => {
 		it(
 			`starts the dev server in less than ${timeout / 1000} seconds`,
@@ -13,7 +22,8 @@ describe("Development scripts", () => {
 				let prismaGenerated = false;
 				let workerReady = false;
 				let graphqlGenerated = false;
-				const process = execa({
+				const proc = execa({
+					stdout: ["pipe", "inherit"],
 					forceKillAfterDelay: timeout + 2_000,
 					cancelSignal,
 					lines: true,
@@ -23,11 +33,26 @@ describe("Development scripts", () => {
 					},
 				})("pnpm", ["run", "dev"]);
 
-				setTimeout(() => {
-					process.kill("SIGINT");
+				timeoutHandle = setTimeout(() => {
+					if (!proc.killed) {
+						proc.kill("SIGINT");
+					}
 				}, timeout);
 
-				for await (const line of process) {
+				let logStabilityTimeoutHandle = setTimeout(() => {
+					if (!proc.killed) {
+						proc.kill("SIGINT");
+					}
+				}, 5_000);
+
+				for await (const line of proc) {
+					clearTimeout(logStabilityTimeoutHandle);
+					logStabilityTimeoutHandle = setTimeout(() => {
+						if (!proc.killed) {
+							proc.kill("SIGINT");
+						}
+					}, 5_000);
+
 					const message = line.toString();
 					if (message.includes("Restarting './src/server.ts'")) {
 						serverListening = false;
@@ -66,7 +91,7 @@ describe("Development scripts", () => {
 				expect(prismaGenerated).toBe(true);
 				expect(workerReady).toBe(true);
 				expect(graphqlGenerated).toBe(true);
-				expect(process.killed).toBe(true);
+				expect(proc.killed).toBe(true);
 			},
 			timeout + 5_000,
 		);
