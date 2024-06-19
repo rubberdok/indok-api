@@ -42,7 +42,7 @@
 		"test:integration": "run-s docker:up 'integration-test {@}' --",
 		"test": "dotenv -e .env.test -- pnpm jest",
 		"test:ci": "pnpm run setup && dotenv -e .env.test --  pnpm jest --reporters='jest-junit' --reporters='default' --collect-coverage",
-		"test:dev": "NODE_ENV=production pnpm jest --reporters='jest-junit' --reporters='default' --config jest.dev.config.cjs --detectOpenHandles",
+		"test:dev": "NODE_ENV=production node ./scripts/test.js",
 		"jest": "node --experimental-vm-modules --no-warnings=ExperimentalWarning ./node_modules/jest/bin/jest.js",
 		"tsc": "tsc",
 		"tsc:ci": "run-s setup tsc",
