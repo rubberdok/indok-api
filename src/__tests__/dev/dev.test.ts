@@ -40,6 +40,8 @@ describe("Development scripts", () => {
 					env: {
 						// pino-pretty does some tricks with stdout, so we run with NODE_ENV=production for regular log output
 						NODE_ENV: "production",
+						FEIDE_CLIENT_SECRET: "test",
+						POSTMARK_API_TOKEN: "test",
 					},
 				})("pnpm", ["run", "dev"]);
 
