@@ -12,7 +12,11 @@ describe("Development scripts", () => {
 		clearTimeout(inactivityTimeoutHandle);
 		if (processId) {
 			console.log("Killing process", processId);
-			process.kill(processId, "SIGKILL");
+			try {
+				process.kill(processId, "SIGKILL");
+			} catch (err) {
+				console.log("Failed to kill process", processId, err);
+			}
 		}
 	});
 
@@ -34,6 +38,7 @@ describe("Development scripts", () => {
 				const proc: ResultPromise = execa({
 					lines: true,
 					cancelSignal,
+					reject: false,
 					timeout: 60 * 1000, // 1 minute, GH actions aren't that fast
 					stdout: ["pipe", "inherit"],
 					env: {
@@ -45,7 +50,7 @@ describe("Development scripts", () => {
 						POSTMARK_API_TOKEN: "test",
 						FORCE_COLOR: "0",
 					},
-				})("npm", ["run", "watch-gql"]);
+				})("pnpm", ["run", "dev"]);
 				processId = proc.pid;
 
 				// If there is 10 seconds of inactivity in the logs, it is
@@ -100,7 +105,7 @@ describe("Development scripts", () => {
 					if (line.startsWith("[gql]") && graphql === undefined) {
 						if (line.includes("[SUCCESS] Generate outputs")) {
 							graphql = true;
-						} else if (line.includes("[STARTED]] ")) {
+						} else if (line.includes("[STARTED]")) {
 							graphql = false;
 						}
 					}
