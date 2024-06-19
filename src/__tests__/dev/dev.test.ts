@@ -16,8 +16,8 @@ describe("Development scripts", () => {
 		proc?.kill();
 	});
 
-	beforeAll(() => {
-		execa({
+	beforeAll(async () => {
+		await execa({
 			stdout: ["pipe", "inherit"],
 			cancelSignal,
 		})("pnpm", ["run", "setup"]);
