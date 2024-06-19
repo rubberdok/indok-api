@@ -39,6 +39,9 @@ describe("Development scripts", () => {
 					}
 				}, timeout);
 
+				/**
+				 * If we haven't received a log message from the process in 5 seconds, kill the process
+				 */
 				let logStabilityTimeoutHandle = setTimeout(() => {
 					if (!proc.killed) {
 						proc.kill("SIGINT");
