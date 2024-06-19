@@ -45,6 +45,7 @@ describe("Development scripts", () => {
 
 				timeoutHandle = setTimeout(() => {
 					if (!proc?.killed) {
+						console.log("Max timeout reached, killing process");
 						proc?.kill("SIGINT");
 					}
 				}, timeout);
@@ -62,6 +63,7 @@ describe("Development scripts", () => {
 					clearTimeout(logStabilityTimeoutHandle);
 					logStabilityTimeoutHandle = setTimeout(() => {
 						if (!proc?.killed) {
+							console.log("Killing process due to inactivity");
 							proc?.kill("SIGINT");
 						}
 					}, 5_000);
