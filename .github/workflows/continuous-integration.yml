@@ -344,6 +344,9 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build Docker Images
+        run: docker compose build postgres redis
+
       - name: Run Dev Script Tests
         run: JEST_JUNIT_OUTPUT_NAME=dev.xml pnpm run test:dev 
       
