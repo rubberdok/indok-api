@@ -1,7 +1,5 @@
 import { type ResultPromise, execa } from "execa";
 
-const controller = new AbortController();
-const cancelSignal = controller.signal;
 const timeout = 60_000;
 
 describe("Development scripts", () => {
@@ -12,14 +10,11 @@ describe("Development scripts", () => {
 		if (timeoutHandle) {
 			clearTimeout(timeoutHandle);
 		}
-		controller.abort();
 		proc?.kill();
 	});
 
 	beforeAll(async () => {
-		await execa({
-			cancelSignal,
-		})("pnpm", ["run", "setup"]);
+		await execa({})("pnpm", ["run", "setup"]);
 	}, 30_000);
 
 	describe("pnpm run dev", () => {
@@ -31,7 +26,6 @@ describe("Development scripts", () => {
 				let workerReady = false;
 				let graphqlGenerated = false;
 				proc = execa({
-					cancelSignal,
 					lines: true,
 					env: {
 						// pino-pretty does some tricks with stdout, so we run with NODE_ENV=production for regular log output
