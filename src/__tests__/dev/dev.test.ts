@@ -7,7 +7,7 @@ describe("Development scripts", () => {
 	let inactivtiyHandle: NodeJS.Timeout | undefined;
 	let proc: ResultPromise | undefined;
 
-	afterAll(() => {
+	afterAll(async () => {
 		if (timeoutHandle) {
 			clearTimeout(timeoutHandle);
 		}
@@ -15,10 +15,12 @@ describe("Development scripts", () => {
 			clearTimeout(inactivtiyHandle);
 		}
 		proc?.kill();
+		await execa("pnpm", ["run", "docker:down"]);
 	});
 
 	beforeAll(async () => {
 		await execa({})("pnpm", ["run", "setup"]);
+		await execa({})("pnpm", ["run", "docker:up", "-d"]);
 	}, 60_000);
 
 	describe("pnpm run dev", () => {
@@ -40,7 +42,7 @@ describe("Development scripts", () => {
 						POSTMARK_API_TOKEN: "test",
 						FORCE_COLOR: 0,
 					},
-				})("pnpm", ["run", "dev"], { shell: true });
+				})("pnpm", ["run", "start-dev"], { shell: true });
 
 				/**
 				 * If we haven't received a log message from the process in 5 seconds, kill the process
