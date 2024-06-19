@@ -20,7 +20,6 @@ describe("Development scripts", () => {
 		execa({
 			stdout: ["pipe", "inherit"],
 			cancelSignal,
-			forceKillAfterDelay: timeout,
 		})("pnpm", ["run", "setup"]);
 	});
 
@@ -34,7 +33,6 @@ describe("Development scripts", () => {
 				let graphqlGenerated = false;
 				proc = execa({
 					stdout: ["pipe", "inherit"],
-					forceKillAfterDelay: timeout + 2_000,
 					cancelSignal,
 					lines: true,
 					env: {
