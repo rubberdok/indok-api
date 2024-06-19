@@ -45,7 +45,7 @@ describe("Development scripts", () => {
 						POSTMARK_API_TOKEN: "test",
 						FORCE_COLOR: "0",
 					},
-				})("pnpm", ["run", "watch-gql"]);
+				})("npm", ["run", "watch-gql"]);
 				processId = proc.pid;
 
 				// If there is 10 seconds of inactivity in the logs, it is
