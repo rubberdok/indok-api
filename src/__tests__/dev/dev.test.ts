@@ -5,10 +5,15 @@ describe("Development scripts", () => {
 	const controller = new AbortController();
 	const cancelSignal = controller.signal;
 	let inactivityTimeoutHandle: NodeJS.Timeout | undefined;
+	let processId: number | undefined;
 
 	afterAll(() => {
 		controller.abort();
 		clearTimeout(inactivityTimeoutHandle);
+		if (processId) {
+			console.log("Killing process", processId);
+			process.kill(processId, "SIGKILL");
+		}
 	});
 
 	beforeAll(async () => {
@@ -41,6 +46,7 @@ describe("Development scripts", () => {
 						FORCE_COLOR: "0",
 					},
 				})("pnpm", ["run", "dev"]);
+				processId = proc.pid;
 
 				// If there is 10 seconds of inactivity in the logs, it is
 				// likely that we have reached a stable state
