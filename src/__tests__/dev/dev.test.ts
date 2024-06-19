@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { type ResultPromise, execa } from "execa";
+import { $, type ResultPromise } from "execa";
 
 describe("Development scripts", () => {
 	const controller = new AbortController();
@@ -26,7 +26,7 @@ describe("Development scripts", () => {
 		 * as this isn't fully handled in the dev command. In reality, this would be fixed by saving any changes
 		 * to a file in the repo, but for now, we have to run the setup command.
 		 */
-		await execa({
+		await $({
 			cancelSignal,
 		})("pnpm", ["run", "setup"]);
 	}, 30 * 1000);
@@ -35,13 +35,12 @@ describe("Development scripts", () => {
 		it(
 			"starts the development server, worker, graphql codegen, and prisma",
 			async () => {
-				const proc: ResultPromise = execa({
+				const proc: ResultPromise = $({
 					lines: true,
 					cancelSignal,
 					reject: false,
 					timeout: 60 * 1000, // 1 minute, GH actions aren't that fast
 					stdout: ["pipe", "inherit"],
-					stdio: "inherit",
 					env: {
 						// Setting NODE_ENV to production results in regular json logs
 						// instead of pino-pretty. The latter does some weird stuff with stdout, making it tricky to parse
