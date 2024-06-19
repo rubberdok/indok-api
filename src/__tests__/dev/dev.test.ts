@@ -32,6 +32,7 @@ describe("Development scripts", () => {
 				proc = execa({
 					lines: true,
 					timeout,
+					stdout: ["pipe", "inherit"],
 					env: {
 						// pino-pretty does some tricks with stdout, so we run with NODE_ENV=production for regular log output
 						NODE_ENV: "production",
