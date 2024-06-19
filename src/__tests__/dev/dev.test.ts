@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { $, type ResultPromise } from "execa";
+import { execa, type ResultPromise } from "execa";
 
 describe("Development scripts", () => {
 	const controller = new AbortController();
@@ -26,16 +26,16 @@ describe("Development scripts", () => {
 		 * as this isn't fully handled in the dev command. In reality, this would be fixed by saving any changes
 		 * to a file in the repo, but for now, we have to run the setup command.
 		 */
-		await $({
+		await execa({
 			cancelSignal,
-		})("pnpm", ["run", "setup"]);
+		})("pnpm run setup", { shell: true });
 	}, 30 * 1000);
 
 	describe("pnpm run dev", () => {
 		it(
 			"starts the development server, worker, graphql codegen, and prisma",
 			async () => {
-				const proc: ResultPromise = $({
+				const proc: ResultPromise = execa({
 					lines: true,
 					cancelSignal,
 					reject: false,
@@ -50,7 +50,7 @@ describe("Development scripts", () => {
 						POSTMARK_API_TOKEN: "test",
 						FORCE_COLOR: "0",
 					},
-				})("pnpm", ["run", "dev"]);
+				})("pnpm run dev", { shell: true });
 				processId = proc.pid;
 
 				// If there is 10 seconds of inactivity in the logs, it is
