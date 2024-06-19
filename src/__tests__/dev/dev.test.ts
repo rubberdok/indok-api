@@ -14,6 +14,14 @@ describe("Development scripts", () => {
 		controller.abort();
 	});
 
+	beforeAll(() => {
+		execa({
+			stdout: ["pipe", "inherit"],
+			cancelSignal,
+			forceKillAfterDelay: timeout,
+		})("pnpm", ["run", "setup"]);
+	});
+
 	describe("pnpm run dev", () => {
 		it(
 			`starts the dev server in less than ${timeout / 1000} seconds`,
