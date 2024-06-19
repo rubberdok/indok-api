@@ -1,115 +1,100 @@
+import assert from "node:assert";
 import { type ResultPromise, execa } from "execa";
 
-const timeout = 240_000;
-
 describe("Development scripts", () => {
-	let timeoutHandle: NodeJS.Timeout | undefined;
-	let inactivtiyHandle: NodeJS.Timeout | undefined;
-	let proc: ResultPromise | undefined;
+	const controller = new AbortController();
+	const cancelSignal = controller.signal;
+	let inactivityTimeoutHandle: NodeJS.Timeout | undefined;
 
-	afterAll(async () => {
-		if (timeoutHandle) {
-			clearTimeout(timeoutHandle);
-		}
-		if (inactivtiyHandle) {
-			clearTimeout(inactivtiyHandle);
-		}
-		proc?.kill();
-		await execa("pnpm", ["run", "docker:down"]);
+	afterAll(() => {
+		controller.abort();
+		clearTimeout(inactivityTimeoutHandle);
 	});
-
-	beforeAll(async () => {
-		await execa({})("pnpm", ["run", "setup"]);
-		await execa({})("pnpm", ["run", "docker:up", "-d"]);
-	}, 60_000);
 
 	describe("pnpm run dev", () => {
 		it(
-			`starts the dev server in less than ${timeout / 1000} seconds`,
+			"starts the development server, worker, graphql codegen, and prisma",
 			async () => {
-				let serverListening = false;
-				let prismaGenerated = false;
-				let workerReady = false;
-				let graphqlGenerated = false;
-				proc = execa({
+				const proc: ResultPromise = execa({
 					lines: true,
-					timeout,
+					cancelSignal,
+					timeout: 60 * 1000, // 1 minute, GH actions aren't that fast
 					stdout: ["pipe", "inherit"],
 					env: {
-						// pino-pretty does some tricks with stdout, so we run with NODE_ENV=production for regular log output
+						// Setting NODE_ENV to production results in regular json logs
+						// instead of pino-pretty. The latter does some weird stuff with stdout, making it tricky to parse
 						NODE_ENV: "production",
+						// Missing environment variables
 						FEIDE_CLIENT_SECRET: "test",
 						POSTMARK_API_TOKEN: "test",
-						FORCE_COLOR: 0,
+						FORCE_COLOR: "0",
 					},
-				})("pnpm", ["run", "start-dev"], { shell: true });
+				})("pnpm", ["run", "dev"]);
 
-				/**
-				 * If we haven't received a log message from the process in 5 seconds, kill the process
-				 */
-				inactivtiyHandle = setTimeout(() => {
-					if (!proc?.killed) {
-						proc?.kill("SIGINT");
-					}
-				}, timeout);
-
-				timeoutHandle = setTimeout(() => {
-					console.log("Max timeout reached, killing process");
-					proc?.kill();
-					clearTimeout(inactivtiyHandle);
-				}, timeout);
+				// If there is 10 seconds of inactivity in the logs, it is
+				// likely that we have reached a stable state
+				// at which point we can cancel the dev process and evaluate the end state
+				inactivityTimeoutHandle = setTimeout(() => {
+					console.log("Inactivity timeout reached, sending SIGINT");
+					proc.kill("SIGINT");
+				}, 10 * 1000);
 
 				for await (const line of proc) {
 					const message = line.toString();
 					if (message) {
-						clearTimeout(inactivtiyHandle);
-						inactivtiyHandle = setTimeout(() => {
-							console.log("Killing process due to inactivity");
-							proc?.kill("SIGINT");
-						}, 60_000);
-					}
-					if (message.includes("Restarting './src/server.ts'")) {
-						serverListening = false;
-					}
-					if (message.includes("Server listening at http://0.0.0.0:4000")) {
-						console.log("Server registered as listening");
-						serverListening = true;
-					}
-
-					if (message.includes("[prisma] Watching...")) {
-						prismaGenerated = false;
-					}
-					if (message.includes("Generated Prisma Client")) {
-						console.log("Prisma generated");
-						prismaGenerated = true;
-					}
-
-					if (message.includes("[STARTED] Parse Configuration")) {
-						graphqlGenerated = false;
-					}
-					if (message.includes("[SUCCESS] Generate outputs")) {
-						console.log("GraphQL generated");
-						graphqlGenerated = true;
-					}
-
-					if (message.includes("Starting worker")) {
-						workerReady = false;
-					}
-					if (message.includes("Worker ready")) {
-						console.log("Worker ready");
-						workerReady = true;
+						inactivityTimeoutHandle.refresh();
 					}
 				}
 
-				await proc;
+				let server: boolean | undefined;
+				let worker: boolean | undefined;
+				let graphql: boolean | undefined;
+				let prisma: boolean | undefined;
 
-				expect(serverListening).toBe(true);
-				expect(prismaGenerated).toBe(true);
-				expect(workerReady).toBe(true);
-				expect(graphqlGenerated).toBe(true);
-				expect(proc.killed).toBe(true);
+				const { stdout } = await proc;
+				// Since we have lines: true, stdout is an array of strings
+				assert(Array.isArray(stdout), "stdout is not an array");
+				for (const line of stdout.reverse()) {
+					assert(typeof line === "string", "stdout is not an array of strings");
+					if (line.startsWith("[server]") && server === undefined) {
+						if (line.includes("Server listening at http://0.0.0.0:4000")) {
+							server = true;
+						} else if (line.includes("Restarting")) {
+							server = false;
+						}
+					}
+
+					if (line.startsWith("[worker]") && worker === undefined) {
+						if (line.includes("Worker ready")) {
+							worker = true;
+						} else if (line.includes("Starting worker")) {
+							worker = false;
+						}
+					}
+
+					if (line.startsWith("[gql]") && graphql === undefined) {
+						if (line.includes("[SUCCESS] Generate outputs")) {
+							graphql = true;
+						} else if (line.includes("[STARTED]] ")) {
+							graphql = false;
+						}
+					}
+
+					if (line.startsWith("[prisma]") && prisma === undefined) {
+						if (line.includes("Generated Prisma Client")) {
+							prisma = true;
+						} else if (line.includes("Watching...")) {
+							prisma = false;
+						}
+					}
+				}
+
+				assert(server, "Server not started");
+				assert(worker, "Worker not started");
+				assert(graphql, "GraphQL codegen not started");
+				assert(prisma, "Prisma not started");
 			},
-			timeout + 30_000,
+			60 * 1000,
 		);
 	});
 });
