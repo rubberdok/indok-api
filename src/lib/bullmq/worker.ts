@@ -1,21 +1,14 @@
 import { DefaultAzureCredential } from "@azure/identity";
 import { BlobServiceClient } from "@azure/storage-blob";
-import type { PrismaClient } from "@prisma/client";
 import { Client } from "@vippsmobilepay/sdk";
-import server, { type Avvio, type Plugin } from "avvio";
-import {
-	Worker as BullMqWorker,
-	type Processor,
-	type RedisConnection,
-	type WorkerOptions,
-} from "bullmq";
+import type { Processor, RedisConnection, WorkerOptions } from "bullmq";
+import { Worker as BullMqWorker } from "bullmq";
 import { Redis } from "ioredis";
 import { type Logger, pino } from "pino";
 import { BlobStorageAdapter } from "~/adapters/azure-blob-storage.js";
 import { env } from "~/config.js";
-import { InternalServerError } from "~/domain/errors.js";
 import { CabinRepository } from "~/repositories/cabins/repository.js";
-import { EventRepository } from "~/repositories/events/index.js";
+import { EventRepository } from "~/repositories/events/repository.js";
 import { FileRepository } from "~/repositories/files/repository.js";
 import { MemberRepository } from "~/repositories/organizations/members.js";
 import { OrganizationRepository } from "~/repositories/organizations/organizations.js";
@@ -26,19 +19,19 @@ import { EventService } from "~/services/events/service.js";
 import {
 	SignUpQueueName,
 	type SignUpQueueType,
+	type SignUpWorkerType,
 	getSignUpWorkerHandler,
 } from "~/services/events/worker.js";
 import { FileService } from "~/services/files/service.js";
 import { buildMailService } from "~/services/mail/index.js";
 import {
+	EmailQueueName,
 	type EmailQueueType,
+	type EmailWorkerType,
 	getEmailHandler,
 } from "~/services/mail/worker.js";
-import { OrganizationService } from "~/services/organizations/index.js";
-import {
-	ProductService,
-	getPaymentProcessingHandler,
-} from "~/services/products/index.js";
+import { OrganizationService } from "~/services/organizations/service.js";
+import { ProductService } from "~/services/products/service.js";
 import {
 	PaymentProcessingQueueName,
 	type PaymentProcessingQueueType,
@@ -64,13 +57,13 @@ export class Worker<
 		private log?: Logger,
 	) {
 		super(name, processor, opts, Connection);
-		log?.info(`${name} worker created`);
+		log?.debug(`${name} worker created`);
 
 		this.on("ready", () => {
-			this.log?.info(`${name} worker listening`);
+			this.log?.debug(`${name} worker listening`);
 		});
 		this.on("closing", () => {
-			this.log?.info(`${name} worker closing`);
+			this.log?.debug(`${name} worker closing`);
 		});
 		this.on("error", (error) => {
 			this.log?.error({ error }, `${name} worker error`);
@@ -87,268 +80,217 @@ export class Worker<
 	}
 }
 
-type WorkerType = {
-	redis: Redis;
-	database: PrismaClient;
-	log: Logger;
-	// biome-ignore lint/suspicious/noExplicitAny: the types here can be anything
-	workers?: Record<string, Worker<any, any, any>>;
-	queues?: Partial<{
-		email: EmailQueueType;
-		"payment-processing": PaymentProcessingQueueType;
-		[SignUpQueueName]: SignUpQueueType;
-	}> &
-		// biome-ignore lint/suspicious/noExplicitAny: the types here can be anything
-		Record<string, Queue<any, any, any>>;
-};
+export async function initWorkers(): Promise<{
+	start: () => Promise<void>;
+	close: (signal?: NodeJS.Signals) => Promise<void>;
+}> {
+	const logger = pino(envToLogger[env.NODE_ENV]);
 
-const avvioRedis: Plugin<{ url: string }, WorkerType> = (instance, opts) => {
-	instance.redis = new Redis(opts.url, {
+	const redis = new Redis(env.REDIS_CONNECTION_STRING, {
 		keepAlive: 1_000 * 60 * 3, // 3 minutes
 		maxRetriesPerRequest: 0,
 	});
-
-	instance.redis.on("error", (err) => {
-		instance.log?.error(err);
+	redis.on("error", (err) => {
+		logger.error(err);
 	});
 
-	instance.redis?.on("connect", () => {
-		instance.log?.info("Redis connected");
+	redis.on("connect", () => {
+		logger.info("Redis connected");
 	});
 
-	instance.redis?.on("ready", () => {
-		instance.log?.info("Redis ready");
+	redis.on("ready", () => {
+		logger.info("Redis ready");
 	});
 
-	instance.redis?.on("close", () => {
-		instance.log?.info("Redis close");
+	redis.on("close", () => {
+		logger.info("Redis close");
 	});
 
-	instance.redis?.on("reconnecting", () => {
-		instance.log?.info("Redis reconnecting");
+	redis.on("reconnecting", () => {
+		logger.info("Redis reconnecting");
 	});
 
-	instance.onClose(async () => {
-		await instance.redis?.quit();
-	});
+	const queues: {
+		email: EmailQueueType;
+		signUp: SignUpQueueType;
+		paymentProcessing: PaymentProcessingQueueType;
+	} = {
+		signUp: new Queue(
+			SignUpQueueName,
+			{ connection: redis },
+			undefined,
+			logger.child({ queue: SignUpQueueName }),
+		),
+		email: new Queue(
+			EmailQueueName,
+			{ connection: redis },
+			undefined,
+			logger.child({ queue: EmailQueueName }),
+		),
+		paymentProcessing: new Queue(
+			PaymentProcessingQueueName,
+			{ connection: redis },
+			undefined,
+			logger.child({ queue: PaymentProcessingQueueName }),
+		),
+	} as const;
 
-	return Promise.resolve();
-};
+	const database = prisma;
 
-const avvioWorker: Plugin<
-	// biome-ignore lint/suspicious/noExplicitAny: the types here can be anything
-	{ name: string; handler: Processor<any, any, any> },
-	WorkerType
-> = async (instance, opts) => {
-	const { name, handler } = opts;
+	const userRepository = new UserRepository(database);
+	const memberRepository = new MemberRepository(database);
+	const organizationRepository = new OrganizationRepository(database);
+	const cabinRepository = new CabinRepository(database);
 
-	if (instance.workers === undefined) {
-		instance.workers = {};
-	}
-
-	if (!instance.redis) {
-		throw new InternalServerError("Redis not initialized");
-	}
-	const log = instance.log.child({ worker: name });
-	const worker = new Worker(
-		name,
-		handler,
+	const mailService = buildMailService(
 		{
-			connection: instance.redis,
+			emailClient: postmark(env.POSTMARK_API_TOKEN, {
+				useTestMode: env.NODE_ENV === "test",
+			}),
+			emailQueue: queues.email,
 		},
-		undefined,
-		log,
+		{
+			noReplyEmail: env.NO_REPLY_EMAIL,
+			contactMail: env.CONTACT_EMAIL,
+			companyName: env.COMPANY_NAME,
+			parentCompany: env.PARENT_COMPANY,
+			productName: env.PRODUCT_NAME,
+			websiteUrl: env.CLIENT_URL,
+		},
 	);
 
-	instance.workers[worker.name] = worker;
-	instance.onClose(async () => {
-		await worker.close();
+	const userService = new UserService(userRepository, mailService);
+	const { permissions: permissionService } = OrganizationService({
+		memberRepository,
+		organizationRepository,
+		userService,
 	});
-	await worker.waitUntilReady();
-	return Promise.resolve();
-};
+	const productRepository = new ProductRepository(database);
+	const productService = ProductService({
+		vippsFactory: Client,
+		paymentProcessingQueue: queues.paymentProcessing,
+		productRepository,
+		mailService,
+		config: { useTestMode: env.VIPPS_TEST_MODE, returnUrl: env.SERVER_URL },
+	});
 
-const avvioQueue: Plugin<{ name: string }, WorkerType> = async (
-	instance,
-	opts,
-) => {
-	const { name } = opts;
-	if (instance.queues === undefined) {
-		instance.queues = {};
+	const eventRepositroy = new EventRepository(database);
+
+	const eventService = new EventService(
+		eventRepositroy,
+		permissionService,
+		userService,
+		productService,
+		queues.signUp,
+	);
+
+	const blobServiceClient = new BlobServiceClient(
+		`https://${env.AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net`,
+		new DefaultAzureCredential(),
+	);
+	const blobStorageAdapter = BlobStorageAdapter({
+		accountName: env.AZURE_STORAGE_ACCOUNT_NAME,
+		containerName: env.AZURE_STORAGE_CONTAINER_NAME,
+		blobServiceClient,
+	});
+	const fileRepository = FileRepository({ db: database });
+	const fileService = FileService({ fileRepository, blobStorageAdapter });
+
+	const cabinService = new CabinService(
+		cabinRepository,
+		mailService,
+		permissionService,
+		fileService,
+	);
+
+	const emailWorkerHandler = getEmailHandler({
+		mailService,
+		userService,
+		eventService,
+		cabinService,
+		fileService,
+		productService,
+		logger,
+	});
+	const signUpWorkerHandler = getSignUpWorkerHandler({
+		events: eventService,
+		mailService,
+		log: logger,
+	});
+
+	const emailWorker: EmailWorkerType = new Worker(
+		emailWorkerHandler.name,
+		emailWorkerHandler.handler,
+		{ connection: redis },
+		undefined,
+		logger,
+	);
+
+	const signUpWorker: SignUpWorkerType = new Worker(
+		signUpWorkerHandler.name,
+		signUpWorkerHandler.handler,
+		{ connection: redis },
+		undefined,
+		logger,
+	);
+
+	const healthCheckWorker: Worker<boolean, boolean, "health-check"> =
+		new Worker(
+			"health-check",
+			() => {
+				return Promise.resolve(true);
+			},
+			{ connection: redis },
+			undefined,
+			logger,
+		);
+
+	const workers = {
+		emailWorker,
+		signUpWorker,
+		healthCheckWorker,
+	} as const;
+
+	async function start() {
+		logger.info("Starting worker");
+		for (const worker of Object.values(workers)) {
+			await worker.waitUntilReady();
+		}
+		for (const queue of Object.values(queues)) {
+			await queue.waitUntilReady();
+		}
+		logger.info("Worker ready");
 	}
 
-	const queue = new Queue(
-		name,
-		{
-			connection: instance.redis,
-		},
-		undefined,
-		instance.log.child({ queue: name }),
-	);
-
-	instance.queues[name] = queue;
-	await queue.waitUntilReady();
-
-	return Promise.resolve();
-};
-
-export async function initWorkers(): Promise<{
-	worker: Avvio<WorkerType>;
-	close: () => Promise<void>;
-}> {
-	const worker = server<WorkerType>({} as unknown as WorkerType);
-
-	worker.use((instance) => {
-		instance.log = pino(envToLogger[env.NODE_ENV]);
-		return Promise.resolve();
-	});
-
-	worker.use((instance) => {
-		instance.database = prisma;
-		instance.onClose(async () => {
-			await instance.database?.$disconnect();
-		});
-		return Promise.resolve();
-	});
-
-	worker.use(avvioRedis, { url: env.REDIS_CONNECTION_STRING });
-
-	worker.use(avvioQueue, { name: "email" });
-	worker.use(avvioQueue, { name: PaymentProcessingQueueName });
-	worker.use(avvioQueue, { name: SignUpQueueName });
-
-	worker.use((instance) => {
-		const userRepository = new UserRepository(instance.database);
-		const memberRepository = new MemberRepository(instance.database);
-		const organizationRepository = new OrganizationRepository(
-			instance.database,
-		);
-		const cabinRepository = new CabinRepository(instance.database);
-
-		if (!instance.queues?.email) {
-			throw new InternalServerError("Email queue not initialized");
+	async function close(_signal?: NodeJS.Signals, code?: 0 | 1) {
+		for (const worker of Object.values(workers)) {
+			await worker.close();
 		}
-
-		const mailService = buildMailService(
-			{
-				emailClient: postmark(env.POSTMARK_API_TOKEN, {
-					useTestMode: env.NODE_ENV === "test",
-				}),
-				emailQueue: instance.queues.email,
-			},
-			{
-				noReplyEmail: env.NO_REPLY_EMAIL,
-				contactMail: env.CONTACT_EMAIL,
-				companyName: env.COMPANY_NAME,
-				parentCompany: env.PARENT_COMPANY,
-				productName: env.PRODUCT_NAME,
-				websiteUrl: env.CLIENT_URL,
-			},
-		);
-
-		const userService = new UserService(userRepository, mailService);
-		const { permissions: permissionService } = OrganizationService({
-			memberRepository,
-			organizationRepository,
-			userService,
-		});
-
-		if (!instance.queues?.[PaymentProcessingQueueName]) {
-			throw new InternalServerError("Payment processing queue not initialized");
+		for (const queue of Object.values(queues)) {
+			await queue.close();
 		}
-		const productRepository = new ProductRepository(instance.database);
-		const productService = ProductService({
-			vippsFactory: Client,
-			paymentProcessingQueue: instance.queues?.[PaymentProcessingQueueName],
-			productRepository,
-			mailService,
-			config: { useTestMode: env.VIPPS_TEST_MODE, returnUrl: env.SERVER_URL },
-		});
-
-		const eventRepositroy = new EventRepository(instance.database);
-
-		if (!instance.queues?.[SignUpQueueName]) {
-			throw new InternalServerError("Sign up queue not initialized");
+		await database.$disconnect();
+		await redis.quit();
+		logger.flush();
+		if (code !== undefined) {
+			process.exit(code ?? 0);
 		}
-		const eventService = new EventService(
-			eventRepositroy,
-			permissionService,
-			userService,
-			productService,
-			instance.queues?.[SignUpQueueName],
-		);
-
-		const blobServiceClient = new BlobServiceClient(
-			`https://${env.AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net`,
-			new DefaultAzureCredential(),
-		);
-		const blobStorageAdapter = BlobStorageAdapter({
-			accountName: env.AZURE_STORAGE_ACCOUNT_NAME,
-			containerName: env.AZURE_STORAGE_CONTAINER_NAME,
-			blobServiceClient,
-		});
-		const fileRepository = FileRepository({ db: instance.database });
-		const fileService = FileService({ fileRepository, blobStorageAdapter });
-
-		const cabinService = new CabinService(
-			cabinRepository,
-			mailService,
-			permissionService,
-			fileService,
-		);
-
-		instance.use(
-			avvioWorker,
-			getEmailHandler({
-				mailService,
-				userService,
-				eventService,
-				cabinService,
-				fileService,
-				productService,
-				logger: instance.log,
-			}),
-		);
-		instance.use(
-			avvioWorker,
-			getPaymentProcessingHandler({ productService, log: instance.log }),
-		);
-		instance.use(
-			avvioWorker,
-			getSignUpWorkerHandler({
-				mailService,
-				events: eventService,
-				log: instance.log,
-			}),
-		);
-
 		return Promise.resolve();
-	});
+	}
 
-	worker.use(avvioWorker, {
-		name: "health-check",
-		handler: () => {
-			return Promise.resolve(true);
-		},
+	process.on("SIGINT", async (signal) => {
+		await close(signal, 0);
 	});
-
-	process.on("SIGINT", () =>
-		worker.close((err) => {
-			console.error(err);
-			process.exit(1);
-		}),
-	);
-	process.on("SIGTERM", () =>
-		worker.close((err) => {
-			console.error(err);
-			process.exit(1);
-		}),
-	);
+	process.on("SIGTERM", async (signal) => {
+		await close(signal, 0);
+	});
+	process.on("uncaughtException", async (error) => {
+		logger.error(error, "closing");
+		await close(undefined, 1);
+	});
 
 	return {
-		worker,
-		close: async () => {
-			worker.close(() => process.exit(1));
-		},
+		start,
+		close,
 	};
 }

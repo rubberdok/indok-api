@@ -7,7 +7,7 @@ import { initWorkers } from "./worker.js";
 describe("Worker initialization", () => {
 	let mqRedis: Redis;
 	let eventsRedis: Redis;
-	let worker: Awaited<ReturnType<typeof initWorkers>>["worker"];
+	let worker: Awaited<ReturnType<typeof initWorkers>>;
 	let queueEvents: QueueEvents;
 	let queue: Queue;
 
@@ -27,11 +27,11 @@ describe("Worker initialization", () => {
 		await queue.close();
 		mqRedis.disconnect();
 		eventsRedis.disconnect();
-		worker.close(() => {});
+		await worker.close();
 	});
 
 	it("should initialize a worker ready to receive messages", async () => {
-		({ worker } = await initWorkers());
+		worker = await initWorkers();
 
 		worker.start();
 		const job = await queue.add("health-check", {});
