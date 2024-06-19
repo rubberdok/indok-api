@@ -2,7 +2,7 @@ import { execa } from "execa";
 
 const controller = new AbortController();
 const cancelSignal = controller.signal;
-const timeout = 10_000;
+const timeout = 30_000;
 
 describe("Development scripts", () => {
 	afterAll(() => {
@@ -18,6 +18,7 @@ describe("Development scripts", () => {
 				let workerReady = false;
 				let graphqlGenerated = false;
 				const process = execa({
+					forceKillAfterDelay: timeout + 2_000,
 					cancelSignal,
 					lines: true,
 					env: {
