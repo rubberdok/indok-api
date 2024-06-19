@@ -4,11 +4,15 @@ const timeout = 60_000;
 
 describe("Development scripts", () => {
 	let timeoutHandle: NodeJS.Timeout | undefined;
+	let inactivtiyHandle: NodeJS.Timeout | undefined;
 	let proc: ResultPromise | undefined;
 
 	afterAll(() => {
 		if (timeoutHandle) {
 			clearTimeout(timeoutHandle);
+		}
+		if (inactivtiyHandle) {
+			clearTimeout(inactivtiyHandle);
 		}
 		proc?.kill();
 	});
@@ -38,7 +42,7 @@ describe("Development scripts", () => {
 				/**
 				 * If we haven't received a log message from the process in 5 seconds, kill the process
 				 */
-				let logStabilityTimeoutHandle = setTimeout(() => {
+				inactivtiyHandle = setTimeout(() => {
 					if (!proc?.killed) {
 						proc?.kill("SIGINT");
 					}
@@ -47,18 +51,18 @@ describe("Development scripts", () => {
 				timeoutHandle = setTimeout(() => {
 					if (!proc?.killed) {
 						console.log("Max timeout reached, killing process");
-						proc?.kill("SIGINT");
+						proc?.kill();
 					}
-					clearTimeout(logStabilityTimeoutHandle);
+					clearTimeout(inactivtiyHandle);
 				}, timeout);
 
 				for await (const line of proc) {
 					if (line) {
-						clearTimeout(logStabilityTimeoutHandle);
-						logStabilityTimeoutHandle = setTimeout(() => {
+						clearTimeout(inactivtiyHandle);
+						inactivtiyHandle = setTimeout(() => {
 							if (!proc?.killed) {
 								console.log("Killing process due to inactivity");
-								proc?.kill("SIGINT");
+								proc?.kill();
 							}
 						}, 10_000);
 					}
