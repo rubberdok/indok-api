@@ -11,6 +11,17 @@ describe("Development scripts", () => {
 		clearTimeout(inactivityTimeoutHandle);
 	});
 
+	beforeAll(async () => {
+		/**
+		 * We have to run `pnpm run setup` once for the initial generation of gql and the prisma schema
+		 * as this isn't fully handled in the dev command. In reality, this would be fixed by saving any changes
+		 * to a file in the repo, but for now, we have to run the setup command.
+		 */
+		await execa({
+			cancelSignal,
+		})("pnpm", ["run", "setup"]);
+	}, 30 * 1000);
+
 	describe("pnpm run dev", () => {
 		it(
 			"starts the development server, worker, graphql codegen, and prisma",
