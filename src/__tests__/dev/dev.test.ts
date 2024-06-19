@@ -31,7 +31,6 @@ describe("Development scripts", () => {
 				let workerReady = false;
 				let graphqlGenerated = false;
 				proc = execa({
-					stdout: ["pipe", "inherit"],
 					cancelSignal,
 					lines: true,
 					env: {
@@ -60,13 +59,15 @@ describe("Development scripts", () => {
 				}, timeout);
 
 				for await (const line of proc) {
-					clearTimeout(logStabilityTimeoutHandle);
-					logStabilityTimeoutHandle = setTimeout(() => {
-						if (!proc?.killed) {
-							console.log("Killing process due to inactivity");
-							proc?.kill("SIGINT");
-						}
-					}, 5_000);
+					if (line) {
+						clearTimeout(logStabilityTimeoutHandle);
+						logStabilityTimeoutHandle = setTimeout(() => {
+							if (!proc?.killed) {
+								console.log("Killing process due to inactivity");
+								proc?.kill("SIGINT");
+							}
+						}, 10_000);
+					}
 
 					const message = line.toString();
 					if (message.includes("Restarting './src/server.ts'")) {
@@ -101,6 +102,8 @@ describe("Development scripts", () => {
 						workerReady = true;
 					}
 				}
+
+				await proc;
 
 				expect(serverListening).toBe(true);
 				expect(prismaGenerated).toBe(true);
