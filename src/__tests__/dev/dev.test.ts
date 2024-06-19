@@ -1,6 +1,6 @@
 import { type ResultPromise, execa } from "execa";
 
-const timeout = 240_00;
+const timeout = 240_000;
 
 describe("Development scripts", () => {
 	let timeoutHandle: NodeJS.Timeout | undefined;
