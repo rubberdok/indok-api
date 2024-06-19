@@ -54,6 +54,14 @@ describe("Development scripts", () => {
 				const { stdout } = await proc;
 				// Since we have lines: true, stdout is an array of strings
 				assert(Array.isArray(stdout), "stdout is not an array");
+				/**
+				 * Iterate over stdout in reverse order to find the last log messages
+				 * for each subprocess. We only consider two types of messages: the log output for the subprocess
+				 * starting and the log output for the subprocess being ready. If the first message we encounter
+				 * is a "ready" message, we assume that the subprocess is running as expected. However, if the first message
+				 * we encounter is a "starting" message, we assume that the subprocess is not running as expected, as
+				 * it has not yet reached a "ready" state.
+				 */
 				for (const line of stdout.reverse()) {
 					assert(typeof line === "string", "stdout is not an array of strings");
 					if (line.startsWith("[server]") && server === undefined) {
