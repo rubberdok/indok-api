@@ -38,6 +38,7 @@ describe("Development scripts", () => {
 						NODE_ENV: "production",
 						FEIDE_CLIENT_SECRET: "test",
 						POSTMARK_API_TOKEN: "test",
+						FORCE_COLOR: 0,
 					},
 				})("pnpm", ["run", "dev"], { shell: true });
 
@@ -81,10 +82,10 @@ describe("Development scripts", () => {
 						prismaGenerated = true;
 					}
 
-					if (message.includes("[gql] [STARTED] Parse Configuration")) {
+					if (message.includes("[STARTED] Parse Configuration")) {
 						graphqlGenerated = false;
 					}
-					if (message.includes("[gql] [SUCCESS] Generate outputs")) {
+					if (message.includes("[SUCCESS] Generate outputs")) {
 						console.log("GraphQL generated");
 						graphqlGenerated = true;
 					}
