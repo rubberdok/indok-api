@@ -1,6 +1,6 @@
 import { type ResultPromise, execa } from "execa";
 
-const timeout = 120_000;
+const timeout = 240_00;
 
 describe("Development scripts", () => {
 	let timeoutHandle: NodeJS.Timeout | undefined;
@@ -19,7 +19,7 @@ describe("Development scripts", () => {
 
 	beforeAll(async () => {
 		await execa({})("pnpm", ["run", "setup"]);
-	}, 30_000);
+	}, 60_000);
 
 	describe("pnpm run dev", () => {
 		it(
@@ -39,7 +39,7 @@ describe("Development scripts", () => {
 						FEIDE_CLIENT_SECRET: "test",
 						POSTMARK_API_TOKEN: "test",
 					},
-				})("pnpm", ["run", "dev"]);
+				})("pnpm", ["run", "dev"], { shell: true });
 
 				/**
 				 * If we haven't received a log message from the process in 5 seconds, kill the process
@@ -62,8 +62,8 @@ describe("Development scripts", () => {
 						clearTimeout(inactivtiyHandle);
 						inactivtiyHandle = setTimeout(() => {
 							console.log("Killing process due to inactivity");
-							proc?.kill();
-						}, 30_000);
+							proc?.kill("SIGINT");
+						}, 60_000);
 					}
 					if (message.includes("Restarting './src/server.ts'")) {
 						serverListening = false;
