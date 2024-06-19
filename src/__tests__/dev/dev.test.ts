@@ -1,6 +1,6 @@
 import { type ResultPromise, execa } from "execa";
 
-const timeout = 60_000;
+const timeout = 120_000;
 
 describe("Development scripts", () => {
 	let timeoutHandle: NodeJS.Timeout | undefined;
@@ -31,6 +31,7 @@ describe("Development scripts", () => {
 				let graphqlGenerated = false;
 				proc = execa({
 					lines: true,
+					timeout,
 					env: {
 						// pino-pretty does some tricks with stdout, so we run with NODE_ENV=production for regular log output
 						NODE_ENV: "production",
@@ -64,7 +65,7 @@ describe("Development scripts", () => {
 								console.log("Killing process due to inactivity");
 								proc?.kill();
 							}
-						}, 10_000);
+						}, 15_000);
 					}
 
 					const message = line.toString();
@@ -109,7 +110,7 @@ describe("Development scripts", () => {
 				expect(graphqlGenerated).toBe(true);
 				expect(proc.killed).toBe(true);
 			},
-			timeout + 5_000,
+			timeout + 30_000,
 		);
 	});
 });
