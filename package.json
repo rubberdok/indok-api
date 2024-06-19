@@ -7,12 +7,8 @@
 	"license": "MIT",
 	"private": true,
 	"type": "module",
-	"packageManager": "pnpm@^9.0.0",
-	"files": [
-		"dist",
-		"certs",
-		"scripts"
-	],
+	"packageManager": "pnpm@9.4.0",
+	"files": ["dist", "certs", "scripts"],
 	"scripts": {
 		"setup": "run-p generate",
 		"build:production": "run-s generate:gql swc",
@@ -123,18 +119,9 @@
 	},
 	"pnpm": {
 		"supportedArchitectures": {
-			"os": [
-				"current",
-				"linux"
-			],
-			"cpu": [
-				"current",
-				"x64"
-			],
-			"libc": [
-				"current",
-				"glibc"
-			]
+			"os": ["current", "linux"],
+			"cpu": ["current", "x64"],
+			"libc": ["current", "glibc"]
 		}
 	}
 }
