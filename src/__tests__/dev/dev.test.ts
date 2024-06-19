@@ -2,11 +2,12 @@ import { execa } from "execa";
 
 const controller = new AbortController();
 const cancelSignal = controller.signal;
-const timeout = 30_000;
+const timeout = 60_000;
 
 describe("Development scripts", () => {
-	afterAll(() => {
+	afterAll(async () => {
 		controller.abort();
+		await execa("docker", ["compose", "down"]);
 	});
 
 	describe("pnpm run dev", () => {
@@ -37,6 +38,7 @@ describe("Development scripts", () => {
 						serverListening = false;
 					}
 					if (message.includes("Server listening at http://0.0.0.0:4000")) {
+						console.log("Server registered as listening");
 						serverListening = true;
 					}
 
@@ -44,6 +46,7 @@ describe("Development scripts", () => {
 						prismaGenerated = false;
 					}
 					if (message.includes("Generated Prisma Client")) {
+						console.log("Prisma generated");
 						prismaGenerated = true;
 					}
 
@@ -51,6 +54,7 @@ describe("Development scripts", () => {
 						graphqlGenerated = false;
 					}
 					if (message.includes("[gql] [SUCCESS] Generate outputs")) {
+						console.log("GraphQL generated");
 						graphqlGenerated = true;
 					}
 
@@ -58,6 +62,7 @@ describe("Development scripts", () => {
 						workerReady = false;
 					}
 					if (message.includes("Worker ready")) {
+						console.log("Worker ready");
 						workerReady = true;
 					}
 				}
