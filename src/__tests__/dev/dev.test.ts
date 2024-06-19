@@ -18,10 +18,9 @@ describe("Development scripts", () => {
 
 	beforeAll(async () => {
 		await execa({
-			stdout: ["pipe", "inherit"],
 			cancelSignal,
 		})("pnpm", ["run", "setup"]);
-	});
+	}, 30_000);
 
 	describe("pnpm run dev", () => {
 		it(
