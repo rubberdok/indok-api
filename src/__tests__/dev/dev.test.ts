@@ -12,6 +12,14 @@ describe("Development scripts", () => {
 			 * We have to run `pnpm run setup` once for the initial generation of gql and the prisma schema
 			 * as this isn't fully handled in the dev command. In reality, this would be fixed by saving any changes
 			 * to a file in the repo, but for now, we have to run the setup command.
+			 *
+			 * The reason for this is that when running the dev command for the very first time, the imports to the
+			 * generated files (i.e. prisma client and graphql) will fail, as the files don't exist. Then, as we don't
+			 * have a file watcher for the generated files, the server will not restart when the files are generated,
+			 * which is why we have to run the setup command first. This is something that would be nice to address in
+			 * the future:
+			 * - Listen to changes to the generated files and restart the server when they change
+			 * - Listen to changes to .env files and restart the server when they change
 			 */
 			await execa({
 				cancelSignal,
