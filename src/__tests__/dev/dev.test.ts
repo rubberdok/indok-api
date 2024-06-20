@@ -53,6 +53,12 @@ describe("Development scripts", () => {
 					controller.abort();
 				}, 10 * 1000);
 
+				/**
+				 * Instead of passing the signal to the process, we listen for the abort event
+				 * and send the signal to the process group. Honestly, this was found to work in GH actions after
+				 * a lot of trial and error. The process group is used because the process spawns child processes
+				 * and we want to kill all of them.
+				 */
 				cancelSignal.addEventListener("abort", () => {
 					if (proc.pid) {
 						process.kill(-proc.pid, "SIGINT");
@@ -122,6 +128,10 @@ describe("Development scripts", () => {
 				assert(worker, "Worker not started");
 				assert(graphql, "GraphQL codegen not started");
 				assert(prisma, "Prisma not started");
+				assert(
+					(await proc).exitCode === 0,
+					"Process exited with non-zero exit code",
+				);
 			},
 			timeout,
 		);
