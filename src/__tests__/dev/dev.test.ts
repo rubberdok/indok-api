@@ -99,6 +99,7 @@ describe("Development scripts", () => {
 				 */
 				for (const line of stdout.reverse()) {
 					assert(typeof line === "string", "stdout is not an array of strings");
+					console.log("parsing", line);
 					if (line.startsWith("[server]") && server === undefined) {
 						if (line.includes("Server listening at http://0.0.0.0:4000")) {
 							server = true;
