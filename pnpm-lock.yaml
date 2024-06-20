@@ -128,8 +128,8 @@ importers:
         specifier: ^9.2.0
         version: 9.2.0
       postmark:
-        specifier: ^4.0.2
-        version: 4.0.2
+        specifier: ^4.0.4
+        version: 4.0.4
       prisma:
         specifier: ^5.15.1
         version: 5.15.1
@@ -3982,8 +3982,8 @@ packages:
     resolution: {integrity: sha512-9ZhXKM/rw350N1ovuWHbGxnGh/SNJ4cnxHiM0rxE4VN41wsg8P8zWn9hv/buK00RP4WvlOyr/RBDiptyxVbkZQ==}
     engines: {node: '>=0.10.0'}
 
-  postmark@4.0.2:
-    resolution: {integrity: sha512-2zlCv+KVVQ0KoamXZHE7d+gXzLlr8tPE+PxQmtUaIZhbHzZAq4D6yH2b+ykhA8wYCc5ISodcx8U1aNLenXBs9g==}
+  postmark@4.0.4:
+    resolution: {integrity: sha512-Qme+i5nidpcySxPBaPT0Arqc15dKl9D+fk9qsHEV2s8mhTK13/213RRD2/uemp8H6/ZHjAfgKCTY9TfzThbCTQ==}
 
   pretty-format@29.7.0:
     resolution: {integrity: sha512-Pdlw/oPxN+aXdmM9R00JVC9WVFoCLTKJvDVLgmJ+qAffBMxsV85l/Lu7sNx4zSzPyoL2euImuEwHhOXdEgNFZQ==}
@@ -9462,7 +9462,7 @@ snapshots:
     dependencies:
       xtend: 4.0.2
 
-  postmark@4.0.2:
+  postmark@4.0.4:
     dependencies:
       axios: 1.7.2
     transitivePeerDependencies:
