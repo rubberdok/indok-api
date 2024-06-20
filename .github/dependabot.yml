@@ -21,10 +21,7 @@ updates:
     open-pull-requests-limit: 10
 
     groups:
-      # All sentry packages should be updated together
-      sentry:
-        patterns:
-          - "@sentry/*"
+      # All prisma packages should be updated together
       prisma:
         patterns:
           - "@prisma/client*"
