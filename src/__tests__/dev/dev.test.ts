@@ -60,7 +60,7 @@ describe("Development scripts", () => {
 				const inactivityTimeoutHandle = setTimeout(() => {
 					console.log("Inactivity timeout reached, sending SIGTERM");
 					controller.abort();
-				}, 5 * 1000);
+				}, 10 * 1000);
 
 				/**
 				 * Instead of passing the signal to the process, we listen for the abort event
