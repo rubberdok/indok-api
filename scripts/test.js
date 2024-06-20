@@ -31,12 +31,6 @@ const proc = execa({
 	},
 })("pnpm", ["run", "dev"], { shell: false });
 
-cancelSignal.addEventListener("abort", () => {
-	if (proc.pid) {
-		process.kill(-proc.pid, "SIGTERM");
-	}
-});
-
 proc.on("exit", () => {
 	console.log("Process exited");
 });
@@ -48,6 +42,13 @@ const inactivityTimeoutHandle = setTimeout(() => {
 	console.log("Inactivity timeout reached, sending SIGTERM");
 	controller.abort();
 }, 10 * 1000);
+
+cancelSignal.addEventListener("abort", () => {
+	if (proc.pid) {
+		process.kill(-proc.pid, "SIGINT");
+	}
+	clearTimeout(inactivityTimeoutHandle);
+});
 
 for await (const line of proc) {
 	const message = line.toString();
