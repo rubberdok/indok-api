@@ -6,10 +6,7 @@ const base = require("./jest.config.cjs");
 
 module.exports = {
 	...base,
-	testMatch: [
-		"**/__tests__/dev/**/*.test.ts",
-		"**/*.dev.test.ts",
-	],
+	testMatch: ["**/__tests__/dev/**/*.test.ts", "**/*.dev.test.ts"],
 	collectCoverage: false,
 	slowTestThreshold: 15,
 };
