@@ -15,7 +15,7 @@ describe("Development scripts", () => {
 			 */
 			await execa({
 				cancelSignal,
-			})("pnpm", ["run", "setup"], { shell: false });
+			})("pnpm", ["run", "setup"]);
 		}, timeout);
 
 		afterAll(() => {
@@ -35,15 +35,11 @@ describe("Development scripts", () => {
 					stdout: ["pipe", "inherit"],
 					detached: true,
 					env: {
-						// Setting NODE_ENV to production results in regular json logs
-						// instead of pino-pretty. The latter does some weird stuff with stdout, making it tricky to parse
-						NODE_ENV: "production",
 						// Missing environment variables
 						FEIDE_CLIENT_SECRET: "test",
 						POSTMARK_API_TOKEN: "test",
-						FORCE_COLOR: "0",
 					},
-				})("pnpm", ["run", "dev"], { shell: false });
+				})("pnpm", ["run", "dev"]);
 
 				proc.on("exit", () => {
 					console.log("Process exited");
