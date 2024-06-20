@@ -99,7 +99,7 @@ importers:
         specifier: ^5.6.5
         version: 5.6.5
       pino:
-        specifier: ^9.1.0
+        specifier: ^9.2.0
         version: 9.2.0
       postmark:
         specifier: ^4.0.2
@@ -196,7 +196,7 @@ importers:
         specifier: ^6.2.0
         version: 6.2.0
       pino-pretty:
-        specifier: ^11.2.0
+        specifier: ^11.2.1
         version: 11.2.1
       typescript:
         specifier: ^5.4.5
@@ -4074,8 +4074,8 @@ packages:
     resolution: {integrity: sha512-cAGWPIyOHU6zlmg88jwm7VRyXnMN7iV68OGAbYDk/Mh/xC/pzVPlQtY6ngoIH/5/tciuhGfvESU8GrHrcxD56w==}
     engines: {node: '>=8'}
 
-  thread-stream@3.0.2:
-    resolution: {integrity: sha512-cBL4xF2A3lSINV4rD5tyqnKH4z/TgWPvT+NaVhJDSwK962oo/Ye7cHSMbDzwcu7tAE1SfU6Q4XtV6Hucmi6Hlw==}
+  thread-stream@3.1.0:
+    resolution: {integrity: sha512-OqyPZ9u96VohAyMfJykzmivOrY2wfMSf3C5TtFJVgN+Hm6aj+voFhlK+kZEIv2FBh1X6Xp3DlnCOfEQ3B2J86A==}
 
   through@2.3.8:
     resolution: {integrity: sha512-w89qg7PI8wAdvX60bMDP+bFoD5Dvhm9oLheFp5O4a2QF0cSBGsBX4qZmadPMvVqlLJBBci+WqGGOAPvcDeNSVg==}
@@ -8617,7 +8617,7 @@ snapshots:
       real-require: 0.2.0
       safe-stable-stringify: 2.4.3
       sonic-boom: 4.0.1
-      thread-stream: 3.0.2
+      thread-stream: 3.1.0
 
   pirates@4.0.6: {}
 
@@ -9052,7 +9052,7 @@ snapshots:
       glob: 7.2.3
       minimatch: 3.1.2
 
-  thread-stream@3.0.2:
+  thread-stream@3.1.0:
     dependencies:
       real-require: 0.2.0
 
