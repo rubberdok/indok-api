@@ -26,7 +26,7 @@
 		"db:seed": "dotenv -e .env.development -- node --import @swc-node/register/esm-register  src/repositories/seed.ts",
 		"dev": "run-s docker:up 'start-dev {@}' --",
 		"start-dev": "concurrently --restart-tries 3 --kill-signal -c cyan.bold,cyan.dim,magenta.dim,black.dim pnpm:watch-*",
-		"watch-server": "MODE=development node --enable-source-maps --import ./src/instrument.js --import @swc-node/register/esm-register  --watch ./src/server.ts | pino-pretty",
+		"watch-server": "MODE=development node --enable-source-maps --import @swc-node/register/esm-register --watch ./src/server.ts | pino-pretty",
 		"watch-worker": "MODE=worker.development node --enable-source-maps --import @swc-node/register/esm-register --watch ./src/worker.ts | pino-pretty",
 		"watch-gql": "pnpm generate:gql --watch",
 		"watch-prisma": "pnpm generate:prisma --watch",
@@ -118,6 +118,7 @@
 		"graphql": "^16.8.2",
 		"graphql-scalars": "^1.23.0",
 		"graphql-tag": "^2.12.6",
+		"import-in-the-middle": "1.8.1",
 		"ioredis": "^5.4.1",
 		"lodash-es": "^4.17.21",
 		"luxon": "^3.4.4",
@@ -135,7 +136,10 @@
 			"libc": ["current", "glibc"]
 		},
 		"overrides": {
-			"import-in-the-middle": "^1.8.0"
+			"import-in-the-middle": "1.8.1"
+		},
+		"patchedDependencies": {
+			"import-in-the-middle@1.8.1": "patches/import-in-the-middle@1.8.1.patch"
 		}
 	}
 }

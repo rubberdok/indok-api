@@ -5,7 +5,12 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  import-in-the-middle: ^1.8.0
+  import-in-the-middle: 1.8.1
+
+patchedDependencies:
+  import-in-the-middle@1.8.1:
+    hash: azilor6ktvpep7g7cl6q2iaqdm
+    path: patches/import-in-the-middle@1.8.1.patch
 
 importers:
 
@@ -104,6 +109,9 @@ importers:
       graphql-tag:
         specifier: ^2.12.6
         version: 2.12.6(graphql@16.8.2)
+      import-in-the-middle:
+        specifier: 1.8.1
+        version: 1.8.1(patch_hash=azilor6ktvpep7g7cl6q2iaqdm)
       ioredis:
         specifier: ^5.4.1
         version: 5.4.1
@@ -3046,8 +3054,8 @@ packages:
     resolution: {integrity: sha512-P9J71vT5nLlDeV8FHs5nNxaLbrpfAV5cF5srvbZfpwpcJoM/xZR3hiv+q+SAnuSmuGbXMWud063iIMx/V/EWZQ==}
     engines: {node: '>=12.2'}
 
-  import-in-the-middle@1.8.0:
-    resolution: {integrity: sha512-/xQjze8szLNnJ5rvHSzn+dcVXqCAU6Plbk4P24U/jwPmg1wy7IIp9OjKIO5tYue8GSPhDpPDiApQjvBUmWwhsQ==}
+  import-in-the-middle@1.8.1:
+    resolution: {integrity: sha512-yhRwoHtiLGvmSozNOALgjRPFI6uYsds60EoMqqnXyyv+JOIW/BrrLejuTGBt+bq0T5tLzOHrN0T7xYTm4Qt/ng==}
 
   import-local@3.1.0:
     resolution: {integrity: sha512-ASB07uLtnDs1o6EHjKpX34BKYDSqnFerfTOJL2HvMqF70LnxpjkzDB8J44oT9pu4AMPkQwf8jl6szgvNd2tRIg==}
@@ -6536,7 +6544,7 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.9.0
       '@types/shimmer': 1.0.5
-      import-in-the-middle: 1.8.0
+      import-in-the-middle: 1.8.1(patch_hash=azilor6ktvpep7g7cl6q2iaqdm)
       require-in-the-middle: 7.3.0
       semver: 7.6.0
       shimmer: 1.2.1
@@ -6549,7 +6557,7 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/api-logs': 0.51.1
       '@types/shimmer': 1.0.5
-      import-in-the-middle: 1.8.0
+      import-in-the-middle: 1.8.1(patch_hash=azilor6ktvpep7g7cl6q2iaqdm)
       require-in-the-middle: 7.3.0
       semver: 7.6.0
       shimmer: 1.2.1
@@ -6561,7 +6569,7 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/api-logs': 0.52.0
       '@types/shimmer': 1.0.5
-      import-in-the-middle: 1.8.0
+      import-in-the-middle: 1.8.1(patch_hash=azilor6ktvpep7g7cl6q2iaqdm)
       require-in-the-middle: 7.3.0
       semver: 7.6.0
       shimmer: 1.2.1
@@ -8389,7 +8397,7 @@ snapshots:
 
   import-from@4.0.0: {}
 
-  import-in-the-middle@1.8.0:
+  import-in-the-middle@1.8.1(patch_hash=azilor6ktvpep7g7cl6q2iaqdm):
     dependencies:
       acorn: 8.11.3
       acorn-import-attributes: 1.9.5(acorn@8.11.3)
