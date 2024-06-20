@@ -54,6 +54,7 @@ describe("GraphQL error handling", () => {
 		});
 
 		expect(errors).toHaveLength(1);
+		await Sentry.flush();
 		expect(mockErrorHandler).not.toHaveBeenCalled();
 	});
 
@@ -85,6 +86,7 @@ describe("GraphQL error handling", () => {
 		});
 
 		expect(errors).toHaveLength(1);
+		await Sentry.flush();
 		expect(mockErrorHandler).not.toHaveBeenCalled();
 	});
 
@@ -139,6 +141,7 @@ describe("GraphQL error handling", () => {
 					error.extensions.code === errorCodes.ERR_INTERNAL_SERVER_ERROR,
 			),
 		).toBe(true);
+		await Sentry.flush();
 		expect(mockErrorHandler).toHaveBeenCalledWith(
 			new GraphQLError("Test Internal Server Error"),
 		);
