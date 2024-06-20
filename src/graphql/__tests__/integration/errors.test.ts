@@ -17,7 +17,7 @@ describe("GraphQL error handling", () => {
 	let mockOrganizationService: DeepMockProxy<IOrganizationService>;
 
 	afterEach(async () => {
-		await Sentry.close(1);
+		await Sentry.close(0);
 	});
 
 	afterAll(async () => {
