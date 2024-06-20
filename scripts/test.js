@@ -34,9 +34,15 @@ const proc = execa({
 // If there is 10 seconds of inactivity in the logs, it is
 // likely that we have reached a stable state
 // at which point we can cancel the dev process and evaluate the end state
+cancelSignal.addEventListener("abort", () => {
+	if (proc.pid) {
+		process.kill(-proc.pid);
+	}
+});
+
 const inactivityTimeoutHandle = setTimeout(() => {
 	console.log("Inactivity timeout reached, sending SIGTERM");
-	proc.kill("SIGTERM");
+	controller.abort();
 }, 10 * 1000);
 
 for await (const line of proc) {
