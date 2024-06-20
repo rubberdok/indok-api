@@ -20,6 +20,7 @@ const proc = execa({
 	timeout: 60 * 1000, // 1 minute, GH actions aren't that fast
 	stdin: "ignore",
 	stdout: ["pipe", "inherit"],
+	detached: true,
 	env: {
 		// Setting NODE_ENV to production results in regular json logs
 		// instead of pino-pretty. The latter does some weird stuff with stdout, making it tricky to parse
