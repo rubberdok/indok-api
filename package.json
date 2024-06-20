@@ -68,7 +68,7 @@
 		"@types/jest": "^29.5.12",
 		"@types/lodash-es": "^4.17.12",
 		"@types/luxon": "^3.4.2",
-		"@types/node": "^20.14.2",
+		"@types/node": "^20.14.6",
 		"concurrently": "^8.2.2",
 		"dotenv-cli": "^7.4.2",
 		"execa": "^9.2.0",
