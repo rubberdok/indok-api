@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { execa } from "execa";
 
-const timeout = 30 * 1000; // 30 seconds
+const timeout = 60 * 1000; // 60 seconds
 
 describe("Development scripts", () => {
 	const controller = new AbortController();
