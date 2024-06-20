@@ -15,7 +15,6 @@ await execa({
 
 const proc = execa({
 	lines: true,
-	cancelSignal,
 	reject: false,
 	timeout: 60 * 1000, // 1 minute, GH actions aren't that fast
 	stdin: "ignore",
@@ -31,6 +30,12 @@ const proc = execa({
 		FORCE_COLOR: "0",
 	},
 })("pnpm", ["run", "dev"], { shell: false });
+
+cancelSignal.addEventListener("abort", () => {
+	if (proc.pid) {
+		process.kill(-proc.pid, "SIGTERM");
+	}
+});
 
 proc.on("exit", () => {
 	console.log("Process exited");
