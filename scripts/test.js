@@ -11,7 +11,7 @@ const cancelSignal = controller.signal;
  */
 await execa({
 	cancelSignal,
-})("pnpm run setup", { shell: true });
+})("pnpm", ["run", "setup"], { shell: false });
 
 const proc = execa({
 	lines: true,
@@ -29,7 +29,7 @@ const proc = execa({
 		POSTMARK_API_TOKEN: "test",
 		FORCE_COLOR: "0",
 	},
-})("pnpm run dev", { shell: true });
+})("pnpm", ["run", "dev"], { shell: false });
 
 // If there is 10 seconds of inactivity in the logs, it is
 // likely that we have reached a stable state
