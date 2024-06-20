@@ -20,14 +20,6 @@ export const envToLogger: Record<
 > = {
 	development: {
 		enabled: env.LOG_ENABLED,
-		transport: {
-			target: "pino-pretty",
-			options: {
-				colorize: true,
-				translateTime: "HH:MM:ss Z",
-				ignore: "pid,hostname",
-			},
-		},
 		redact,
 	},
 	production: {
@@ -36,13 +28,5 @@ export const envToLogger: Record<
 	},
 	test: {
 		enabled: env.LOG_ENABLED,
-		transport: {
-			target: "pino-pretty",
-			options: {
-				colorize: true,
-				translateTime: "HH:MM:ss Z",
-				ignore: "pid,hostname",
-			},
-		},
 	},
 };
