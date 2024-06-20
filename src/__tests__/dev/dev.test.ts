@@ -43,6 +43,7 @@ describe("Development scripts", () => {
 					stdout: ["pipe", "inherit"],
 					detached: true,
 					env: {
+						FORCE_COLOR: "0",
 						// Missing environment variables
 						FEIDE_CLIENT_SECRET: "test",
 						POSTMARK_API_TOKEN: "test",
