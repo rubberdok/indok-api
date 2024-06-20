@@ -1,6 +1,8 @@
 import { faker } from "@faker-js/faker";
+import { jest } from "@jest/globals";
+import * as Sentry from "@sentry/node";
 import { GraphQLError } from "graphql";
-import { type DeepMockProxy, mockDeep, mockFn } from "jest-mock-extended";
+import { type DeepMockProxy, mockDeep } from "jest-mock-extended";
 import { InternalServerError, errorCodes } from "~/domain/errors.js";
 import {
 	type GraphQLTestClient,
@@ -14,6 +16,10 @@ describe("GraphQL error handling", () => {
 	let client: GraphQLTestClient;
 	let mockOrganizationService: DeepMockProxy<IOrganizationService>;
 
+	afterEach(async () => {
+		await Sentry.close(0);
+	});
+
 	afterAll(async () => {
 		await client.close();
 	});
@@ -26,8 +32,13 @@ describe("GraphQL error handling", () => {
 	});
 
 	it("should not report bad GraphQL request errors to Sentry", async () => {
-		const mockSentryErrorHandler = mockFn();
-		client.app.Sentry.captureException = mockSentryErrorHandler;
+		const mockErrorHandler = jest.fn();
+		Sentry.init({
+			beforeSend(event, hint) {
+				mockErrorHandler(hint.originalException);
+				return event;
+			},
+		});
 
 		const { errors } = await client.mutate({
 			mutation: graphql(`
@@ -43,12 +54,18 @@ describe("GraphQL error handling", () => {
 		});
 
 		expect(errors).toHaveLength(1);
-		expect(mockSentryErrorHandler).not.toHaveBeenCalled();
+		await Sentry.flush();
+		expect(mockErrorHandler).not.toHaveBeenCalled();
 	});
 
 	it("should report not permission denied errors to Sentry", async () => {
-		const mockSentryErrorHandler = mockFn();
-		client.app.Sentry.captureException = mockSentryErrorHandler;
+		const mockErrorHandler = jest.fn();
+		Sentry.init({
+			beforeSend(event, hint) {
+				mockErrorHandler(hint.originalException);
+				return event;
+			},
+		});
 
 		const { errors } = await client.query({
 			query: graphql(`
@@ -69,10 +86,19 @@ describe("GraphQL error handling", () => {
 		});
 
 		expect(errors).toHaveLength(1);
-		expect(mockSentryErrorHandler).not.toHaveBeenCalled();
+		await Sentry.flush();
+		expect(mockErrorHandler).not.toHaveBeenCalled();
 	});
 
 	it("should report unexpected errors to sentry", async () => {
+		const mockErrorHandler = jest.fn();
+		Sentry.init({
+			beforeSend(event, hint) {
+				mockErrorHandler(hint.originalException);
+				return event;
+			},
+		});
+
 		const userId = faker.string.uuid();
 		await prisma.user.create({
 			data: {
@@ -84,8 +110,6 @@ describe("GraphQL error handling", () => {
 				feideId: faker.string.uuid(),
 			},
 		});
-		const mockSentryErrorHandler = mockFn();
-		client.app.Sentry.captureException = mockSentryErrorHandler;
 		mockOrganizationService.organizations.findMany.mockRejectedValue(
 			new InternalServerError("Test Internal Server Error"),
 		);
@@ -117,7 +141,8 @@ describe("GraphQL error handling", () => {
 					error.extensions.code === errorCodes.ERR_INTERNAL_SERVER_ERROR,
 			),
 		).toBe(true);
-		expect(mockSentryErrorHandler).toHaveBeenCalledWith(
+		await Sentry.flush();
+		expect(mockErrorHandler).toHaveBeenCalledWith(
 			new GraphQLError("Test Internal Server Error"),
 		);
 	});
