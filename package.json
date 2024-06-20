@@ -83,7 +83,7 @@
 		"jest-mock-extended": "^3.0.6",
 		"npm-run-all2": "^6.2.0",
 		"pino-pretty": "^11.2.1",
-		"typescript": "^5.4.5",
+		"typescript": "^5.5.2",
 		"wait-on": "^7.2.0"
 	},
 	"dependencies": {
