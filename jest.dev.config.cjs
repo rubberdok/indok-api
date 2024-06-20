@@ -8,5 +8,5 @@ module.exports = {
 	...base,
 	testMatch: ["**/__tests__/dev/**/*.test.ts", "**/*.dev.test.ts"],
 	collectCoverage: false,
-	slowTestThreshold: 15,
+	slowTestThreshold: 60,
 };
