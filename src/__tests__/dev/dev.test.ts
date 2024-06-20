@@ -1,6 +1,8 @@
 import assert from "node:assert";
 import { execa } from "execa";
 
+const timeout = 30 * 1000; // 30 seconds
+
 describe("Development scripts", () => {
 	const controller = new AbortController();
 	const cancelSignal = controller.signal;
@@ -14,7 +16,7 @@ describe("Development scripts", () => {
 			await execa({
 				cancelSignal,
 			})("pnpm", ["run", "setup"], { shell: false });
-		}, 60 * 1000);
+		}, timeout);
 
 		afterAll(() => {
 			if (!cancelSignal.aborted) {
@@ -23,12 +25,12 @@ describe("Development scripts", () => {
 		});
 
 		it(
-			"starts the development server, worker, graphql codegen, and prisma",
+			`starts the development server, worker, graphql codegen, and prisma in less than ${timeout / 1000} seconds`,
 			async () => {
 				const proc = execa({
 					lines: true,
 					reject: false,
-					timeout: 60 * 1000, // 1 minute, GH actions aren't that fast
+					timeout,
 					stdin: "ignore",
 					stdout: ["pipe", "inherit"],
 					detached: true,
@@ -125,7 +127,7 @@ describe("Development scripts", () => {
 				assert(graphql, "GraphQL codegen not started");
 				assert(prisma, "Prisma not started");
 			},
-			60 * 1000,
+			timeout,
 		);
 	});
 });
