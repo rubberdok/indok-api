@@ -115,7 +115,7 @@
 		"dotenv": "^16.4.5",
 		"fastify": "^4.28.0",
 		"fastify-plugin": "^4.5.1",
-		"graphql": "^16.8.2",
+		"graphql": "^16.9.0",
 		"graphql-scalars": "^1.23.0",
 		"graphql-tag": "^2.12.6",
 		"import-in-the-middle": "1.8.1",
