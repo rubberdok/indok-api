@@ -226,3 +226,6 @@ src/graphql/test-clients/unit/**
 
 # Test reporters
 junit.xml
+
+# Prisma generated client
+src/prisma/

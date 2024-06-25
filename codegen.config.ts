@@ -114,6 +114,7 @@ const config: CodegenConfig = {
 			{
 				mode: "modules",
 				emitLegacyCommonJSImports: false,
+
 				typeDefsFilePath: "./type-defs.generated.ts",
 				add: {
 					"./types.generated.ts": { content: generatedPrefix },

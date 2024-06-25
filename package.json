@@ -16,7 +16,7 @@
 	"scripts": {
 		"setup": "run-p generate",
 		"start:production": "node --import ./dist/instrument.js ./dist/server.js",
-		"build:production": "run-s generate:gql swc",
+		"build:production": "pnpm run swc",
 		"build": "pnpm run swc",
 		"studio": "prisma studio",
 		"db:migrate:dev": "dotenv -e .env.development -- prisma migrate dev",
@@ -33,6 +33,7 @@
 		"docker:up": "docker compose up postgres redis -d && wait-on tcp:5433 -t 20000",
 		"docker:down": "docker compose down",
 		"generate:gql": "NODE_OPTIONS='-r @swc-node/register' graphql-codegen-esm -c codegen.config.ts",
+		"generate-gql-production": "NODE_OPTIONS='-r @swc-node/register' graphql-codegen-esm -c codegen.production.config.ts",
 		"generate:prisma": "prisma generate",
 		"generate": "run-p generate:*",
 		"integration-test": "dotenv -e .env.test -- pnpm db:push && dotenv -e .env.test -- pnpm jest --config jest.integration.config.cjs",
@@ -143,6 +144,6 @@
 		}
 	},
 	"prisma": {
-		"schema": "./src/repositories/"
+		"schema": "./prisma/schema"
 	}
 }

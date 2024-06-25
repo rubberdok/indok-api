@@ -1,9 +1,9 @@
 FROM public.ecr.aws/docker/library/node:lts-slim AS base
 WORKDIR /usr/src/app
 
-LABEL org.opencontainers.image.source https://github.com/rubberdok/indok-api
-LABEL org.opencontainers.image.description Container image for the Indøk API.
-LABEL org.opencontainers.image.licenses MIT
+LABEL org.opencontainers.image.source="https://github.com/rubberdok/indok-api" \
+    org.opencontainers.image.description="Container image for the Indøk API." \
+    org.opencontainers.image.licenses="MIT"
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
@@ -21,19 +21,28 @@ COPY package.json pnpm-lock.yaml ./
 COPY patches/ ./patches
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --frozen-lockfile
 
+FROM prod-deps AS prisma
 COPY prisma/ ./prisma
-RUN pnpm run generate:prisma
+RUN pnpm generate:prisma
 
-FROM base AS build
-
+FROM base AS dev-deps
 COPY package.json pnpm-lock.yaml ./
 COPY patches/ ./patches
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
-COPY .swcrc codegen.config.ts biome.json tsconfig.json ./
+FROM dev-deps AS graphql
+COPY src/graphql ./src/graphql
+COPY codegen.production.config.ts tsconfig.json ./
+
+RUN pnpm generate-gql-production
+
+FROM dev-deps AS build
+
+COPY .swcrc tsconfig.json ./
 COPY certs/ ./certs
 COPY scripts/ ./scripts
 COPY src/ ./src
+COPY --from=graphql /usr/src/app/src/graphql/resolvers.generated.ts ./src/graphql/resolvers.generated.ts
 RUN pnpm build:production
 
 FROM base AS runner
@@ -42,9 +51,9 @@ ENV NODE_ENV production
 
 COPY --chown=node:node --from=build /usr/src/app/certs /etc/ssl/certs
 COPY --chown=node:node --from=build /usr/src/app/scripts ./scripts
-COPY --chown=node:node --from=prod-deps /usr/src/app/node_modules ./node_modules
+COPY --chown=node:node --from=prisma /usr/src/app/prisma ./prisma
 COPY --chown=node:node --from=build /usr/src/app/package.json ./package.json
-COPY --chown=node:node --from=prod-deps /usr/src/app/prisma ./prisma
+COPY --chown=node:node --from=prisma /usr/src/app/node_modules ./node_modules
 COPY --chown=node:node --from=build /usr/src/app/dist ./dist
 
 USER node
