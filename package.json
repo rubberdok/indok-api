@@ -141,5 +141,8 @@
 		"patchedDependencies": {
 			"import-in-the-middle@1.8.1": "patches/import-in-the-middle@1.8.1.patch"
 		}
+	},
+	"prisma": {
+		"schema": "./src/repositories/"
 	}
 }

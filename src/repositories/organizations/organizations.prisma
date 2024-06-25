@@ -1,0 +1,40 @@
+// Organizations, memberships, and permissions
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+model Member {
+  id             String       @id @default(uuid()) @db.Uuid
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String       @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String       @db.Uuid
+  role           Role         @default(MEMBER)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([userId, organizationId])
+}
+
+enum FeaturePermission {
+  ARCHIVE_VIEW_DOCUMENTS
+  ARCHIVE_WRITE_DOCUMENTS
+  EVENT_WRITE_SIGN_UPS
+  CABIN_ADMIN
+}
+
+model Organization {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique
+  description String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  events             Event[]
+  members            Member[]
+  listings           Listing[]
+  featurePermissions FeaturePermission[] @default([])
+  logoFileId         String?             @db.Uuid
+  logoFile           File?               @relation(fields: [logoFileId], references: [id], onDelete: SetNull)
+}

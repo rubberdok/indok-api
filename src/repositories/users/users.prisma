@@ -1,0 +1,34 @@
+// User
+model User {
+  id                      String        @id @default(uuid()) @db.Uuid
+  feideId                 String        @unique
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+  lastLogin               DateTime      @default(now())
+  firstLogin              Boolean       @default(true)
+  firstName               String
+  lastName                String
+  email                   String        @unique
+  username                String        @unique
+  graduationYear          Int?
+  graduationYearUpdatedAt DateTime?
+  allergies               String        @default("")
+  phoneNumber             String        @default("")
+  isSuperUser             Boolean       @default(false)
+  memberships             Member[]
+  eventSignUps            EventSignUp[]
+  orders                  Order[]
+  studyProgram            StudyProgram? @relation(fields: [studyProgramId], references: [id], onDelete: SetNull)
+  studyProgramId          String?       @db.Uuid
+  files                   File[]
+}
+
+model StudyProgram {
+  id                 String              @id @default(uuid()) @db.Uuid
+  name               String              @unique
+  externalId         String              @unique
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  users              User[]
+  featurePermissions FeaturePermission[] @default([])
+}

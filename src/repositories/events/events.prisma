@@ -1,0 +1,103 @@
+enum EventType {
+  /// A regular event without sign ups
+  BASIC
+  /// A regular event with sign ups
+  SIGN_UPS
+  /// An event with ticket sales
+  TICKETS
+}
+
+// Events
+model Event {
+  id               String        @id @default(uuid()) @db.Uuid
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  name             String
+  description      String        @default("")
+  shortDescription String        @default("")
+  startAt          DateTime
+  endAt            DateTime
+  location         String        @default("")
+  type             EventType     @default(BASIC)
+  // If an organization is deleted, we keep the event and set the organizationId to null
+  // as it could be related to payments and other stuff.
+  organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  organizationId   String?       @db.Uuid
+  contactEmail     String        @default("")
+
+  signUpsEnabled                        Boolean   @default(false)
+  signUpsStartAt                        DateTime?
+  signUpsEndAt                          DateTime?
+  signUpsRetractable                    Boolean   @default(false)
+  signUpsRequireUserProvidedInformation Boolean   @default(false)
+
+  // Versioning for optimistic concurrency control
+  version           Int             @default(0)
+  capacity          Int?
+  // Current remaining capacity for the event
+  remainingCapacity Int?
+  categories        EventCategory[]
+
+  slots   EventSlot[]
+  signUps EventSignUp[]
+
+  product   Product? @relation(fields: [productId], references: [id])
+  productId String?  @unique @db.Uuid
+}
+
+model EventSlot {
+  id                String        @id @default(uuid()) @db.Uuid
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  version           Int           @default(0)
+  capacity          Int           @default(0)
+  remainingCapacity Int
+  eventId           String        @db.Uuid
+  event             Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  signUps           EventSignUp[]
+  gradeYears        Int[]         @default([1, 2, 3, 4, 5])
+}
+
+enum ParticipationStatus {
+  // The user is attending the event
+  CONFIRMED
+  // The user is on the waitlist
+  ON_WAITLIST
+  // The user has retracted their sign up and is no longer attending
+  RETRACTED
+  // The user has been removed from the event by an admin or by some other external force
+  REMOVED
+}
+
+model EventSignUp {
+  id                      String   @id @default(uuid()) @db.Uuid
+  version                 Int      @default(0)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  userProvidedInformation String   @default("")
+
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  slot   EventSlot? @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  slotId String?    @db.Uuid
+
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String @db.Uuid
+
+  participationStatus ParticipationStatus @default(CONFIRMED)
+  active              Boolean             @default(true)
+
+  orderId String? @unique @db.Uuid
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, eventId, active])
+}
+
+model EventCategory {
+  id        String   @id @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name      String   @unique
+  events    Event[]
+}

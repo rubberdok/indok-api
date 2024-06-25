@@ -1,0 +1,71 @@
+// Cabins
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  REJECTED
+}
+
+model Cabin {
+  id                   String    @id @default(uuid()) @db.Uuid
+  name                 String
+  internalPrice        Int
+  internalPriceWeekend Int
+  externalPrice        Int
+  externalPriceWeekend Int
+  capacity             Int
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  bookings             Booking[]
+}
+
+model Booking {
+  id                        String        @id @default(uuid()) @db.Uuid
+  email                     String
+  phoneNumber               String
+  firstName                 String
+  lastName                  String
+  startDate                 DateTime
+  endDate                   DateTime
+  createdAt                 DateTime      @default(now())
+  updatedAt                 DateTime      @updatedAt
+  status                    BookingStatus @default(PENDING)
+  cabins                    Cabin[]
+  totalCost                 Int
+  internalParticipantsCount Int
+  externalParticipantsCount Int
+  questions                 String        @default("")
+  feedback                  String        @default("")
+}
+
+model BookingTerms {
+  id        String   @id @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  file      File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  fileId    String   @db.Uuid
+}
+
+enum Semester {
+  SPRING
+  FALL
+}
+
+model BookingSemester {
+  id              String   @id @default(uuid()) @db.Uuid
+  startAt         DateTime
+  endAt           DateTime
+  bookingsEnabled Boolean  @default(false)
+  semester        Semester @unique
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model BookingContact {
+  id          String   @id @default("booking-contact")
+  name        String   @default("")
+  email       String   @default("")
+  phoneNumber String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
