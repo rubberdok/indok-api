@@ -1,4 +1,4 @@
-FROM public.ecr.aws/docker/library/node:lts
+FROM node:lts
 WORKDIR /usr/src/app
 
 ENV PNPM_HOME="/pnpm"

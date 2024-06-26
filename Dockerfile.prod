@@ -1,4 +1,4 @@
-FROM public.ecr.aws/docker/library/node:lts-slim AS base
+FROM node:lts-slim AS base
 WORKDIR /usr/src/app
 
 LABEL org.opencontainers.image.source https://github.com/rubberdok/indok-api

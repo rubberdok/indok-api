@@ -4,9 +4,10 @@ import {
 	type OrganizationMember,
 	OrganizationRole,
 } from "~/domain/organizations.js";
+import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import { Result } from "~/lib/result.js";
-import { MemberRepository } from "../../members.js";
+import { MemberRepository } from "./members.js";
 
 let repo: MemberRepository;
 
@@ -467,6 +468,65 @@ describe("MembersRepository", () => {
 			await expect(repo.get({ id: faker.string.uuid() })).rejects.toThrow(
 				NotFoundError,
 			);
+		});
+	});
+
+	describe("#updateRole", () => {
+		it("updates the role of the member", async () => {
+			/**
+			 * Arrange.
+			 *
+			 * 1. Create a user with userId {userId}
+			 * 2. Create an organization with organizationId {organizationId}
+			 * 3. Create a membership with id {id} for the user {userId} in the organization {organizationId}
+			 */
+			// 1.
+			const user = await prisma.user.create({
+				data: {
+					email: faker.internet.email(),
+					feideId: faker.string.uuid(),
+					firstName: faker.person.firstName(),
+					lastName: faker.person.lastName(),
+					username: faker.internet.userName(),
+				},
+			});
+			// 2.
+			const organization = await prisma.organization.create({
+				data: {
+					name: faker.string.sample(),
+				},
+			});
+			// 3.
+			const member = await prisma.member.create({
+				data: {
+					userId: user.id,
+					organizationId: organization.id,
+					role: OrganizationRole.MEMBER,
+				},
+			});
+
+			// Act
+			const result = await repo.updateRole(makeMockContext(), {
+				memberId: member.id,
+				role: OrganizationRole.ADMIN,
+			});
+
+			expect(result).toEqual({
+				ok: true,
+				data: {
+					member: expect.objectContaining({ role: OrganizationRole.ADMIN }),
+				},
+			});
+		});
+
+		it("returns NotFoundError if the member does not exist", async () => {
+			// Act
+			const result = await repo.updateRole(makeMockContext(), {
+				memberId: faker.string.uuid(),
+				role: OrganizationRole.ADMIN,
+			});
+
+			expect(result).toEqual(Result.error(expect.any(NotFoundError)));
 		});
 	});
 });

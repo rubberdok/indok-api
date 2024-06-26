@@ -59,6 +59,7 @@ describe("OrganizationService", () => {
 					organizationId: string;
 					name?: string;
 					description?: string;
+					colorScheme?: string;
 				};
 				expectedError: unknown;
 			}[] = [
@@ -98,6 +99,18 @@ describe("OrganizationService", () => {
 					},
 					expectedError: expect.any(InvalidArgumentError),
 				},
+				{
+					name: "colorScheme is not a valid hex code",
+					state: {
+						user: mock<User>({ id: "1", isSuperUser: false }),
+						role: OrganizationRole.MEMBER,
+					},
+					input: {
+						organizationId: "o1",
+						colorScheme: "#gg0000",
+					},
+					expectedError: expect.any(InvalidArgumentError),
+				},
 			];
 
 			test.each(testCases)(
@@ -117,15 +130,12 @@ describe("OrganizationService", () => {
 					 * We call the update method with the user ID, organization ID, and the
 					 * new organization name.
 					 */
-					const { organizationId, name, description } = input;
+					const { organizationId, ...data } = input;
 					try {
 						await organizationService.organizations.update(
 							makeMockContext(state.user),
 							organizationId,
-							{
-								name,
-								description,
-							},
+							data,
 						);
 						fail("Expected to throw");
 					} catch (err) {
@@ -145,6 +155,7 @@ describe("OrganizationService", () => {
 					organizationId: string;
 					name?: string;
 					description?: string;
+					colorScheme?: string;
 				};
 			}[] = [
 				{
@@ -180,6 +191,16 @@ describe("OrganizationService", () => {
 						description: faker.company.catchPhrase(),
 					},
 				},
+				{
+					state: {
+						user: mock<User>({ id: "1", isSuperUser: true }),
+						role: null,
+					},
+					input: {
+						organizationId: "o1",
+						colorScheme: "#000",
+					},
+				},
 			];
 
 			test.each(testCases)(
@@ -199,11 +220,11 @@ describe("OrganizationService", () => {
 					 * We call the update method with the user ID, organization ID, and the
 					 * new organization name.
 					 */
-					const { organizationId, name, description } = input;
+					const { organizationId, ...data } = input;
 					const actual = organizationService.organizations.update(
 						makeMockContext(state.user),
 						organizationId,
-						{ name, description },
+						data,
 					);
 
 					/**
@@ -219,10 +240,7 @@ describe("OrganizationService", () => {
 					await expect(actual).resolves.not.toThrow();
 					expect(organizationRepository.update).toHaveBeenCalledWith(
 						input.organizationId,
-						{
-							name: input.name,
-							description: input.description,
-						},
+						data,
 					);
 				},
 			);
@@ -240,6 +258,7 @@ describe("OrganizationService", () => {
 					userId: string;
 					name: string;
 					description?: string;
+					colorScheme?: string;
 				};
 				expectedError: typeof KnownDomainError.name;
 			}[] = [
@@ -274,6 +293,18 @@ describe("OrganizationService", () => {
 					input: {
 						userId: "1",
 						name: "",
+					},
+					expectedError: InvalidArgumentError.name,
+				},
+				{
+					name: "colorScheme is not a valid color hex",
+					state: {
+						user: mock<User>({ id: "1", isSuperUser: false }),
+					},
+					input: {
+						userId: "1",
+						name: faker.company.name(),
+						colorScheme: "#fg0000",
 					},
 					expectedError: InvalidArgumentError.name,
 				},
@@ -320,6 +351,7 @@ describe("OrganizationService", () => {
 					userId: string;
 					name: string;
 					description?: string;
+					colorScheme?: string;
 				};
 			}[] = [
 				{
@@ -341,6 +373,17 @@ describe("OrganizationService", () => {
 						userId: "1",
 						name: faker.company.name(),
 						description: faker.company.catchPhrase(),
+					},
+				},
+				{
+					name: "with a valid color hex",
+					state: {
+						user: mock<User>({ id: "1", isSuperUser: false }),
+					},
+					input: {
+						userId: "1",
+						name: faker.company.name(),
+						colorScheme: "#000",
 					},
 				},
 			];

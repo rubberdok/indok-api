@@ -7,6 +7,7 @@ import {
 	UnauthorizedError,
 } from "~/domain/errors.js";
 import {
+	OrganizationMember,
 	OrganizationRole,
 	type OrganizationRoleType,
 } from "~/domain/organizations.js";
@@ -220,6 +221,57 @@ function buildMembers(
 			}
 			const { member: addedMember } = addMemberResult.data;
 			return { ok: true, data: { member: addedMember } };
+		},
+
+		async updateRole(ctx, params) {
+			if (!ctx.user) {
+				return Result.error(
+					new UnauthorizedError("You must be logged in to update a role."),
+				);
+			}
+
+			const { memberId, newRole } = params;
+			try {
+				const memberToUpdate = await memberRepository.get({ id: memberId });
+				if (memberToUpdate.userId === ctx.user.id) {
+					return Result.error(
+						new InvalidArgumentErrorV2("You cannot change your own role."),
+					);
+				}
+
+				const { organizationId } = memberToUpdate;
+
+				const isAdmin = await permissions.hasRole(ctx, {
+					organizationId,
+					role: OrganizationRole.ADMIN,
+				});
+				if (isAdmin !== true) {
+					return Result.error(
+						new PermissionDeniedError(
+							"You must be an admin of the organization to update a role.",
+						),
+					);
+				}
+
+				const result = await memberRepository.updateRole(ctx, {
+					memberId,
+					role: newRole,
+				});
+
+				if (!result.ok) {
+					return Result.error(result.error);
+				}
+				return Result.success({
+					member: new OrganizationMember(result.data.member),
+				});
+			} catch (err) {
+				if (err instanceof NotFoundError) {
+					return Result.error(new NotFoundError("Member not found.", err));
+				}
+				return Result.error(
+					new InternalServerError("Failed to update role.", err),
+				);
+			}
 		},
 	};
 }

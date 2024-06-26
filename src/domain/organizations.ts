@@ -19,6 +19,7 @@ class Organization {
 	id: string;
 	name: string;
 	description: string;
+	colorScheme?: string | null;
 	logoFileId?: string | null;
 	featurePermissions: FeaturePermissionType[];
 
@@ -28,6 +29,7 @@ class Organization {
 		this.description = params.description;
 		this.logoFileId = params.logoFileId;
 		this.featurePermissions = params.featurePermissions;
+		this.colorScheme = params.colorScheme;
 	}
 }
 

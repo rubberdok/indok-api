@@ -7,7 +7,7 @@ import {
 	OrganizationRole,
 } from "~/domain/organizations.js";
 import prisma from "~/lib/prisma.js";
-import { OrganizationRepository } from "../../organizations.js";
+import { OrganizationRepository } from "./organizations.js";
 
 let organizationRepository: OrganizationRepository;
 

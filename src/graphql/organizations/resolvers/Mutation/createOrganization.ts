@@ -2,7 +2,7 @@ import type { MutationResolvers } from "./../../../types.generated.js";
 export const createOrganization: NonNullable<
 	MutationResolvers["createOrganization"]
 > = async (_parent, { data }, ctx) => {
-	const { name, description, featurePermissions } = data;
+	const { name, description, featurePermissions, colorScheme } = data;
 	ctx.log.info(
 		{ name, description, featurePermissions },
 		"Creating organization",
@@ -11,6 +11,7 @@ export const createOrganization: NonNullable<
 		name,
 		description,
 		featurePermissions,
+		colorScheme,
 	});
 	return {
 		organization,
