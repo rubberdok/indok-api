@@ -29,11 +29,11 @@ importers:
         specifier: ^12.23.0
         version: 12.23.0
       '@bull-board/api':
-        specifier: ^5.20.4
-        version: 5.20.4(@bull-board/ui@5.20.4)
+        specifier: ^5.20.5
+        version: 5.20.5(@bull-board/ui@5.20.5)
       '@bull-board/fastify':
-        specifier: ^5.20.4
-        version: 5.20.4
+        specifier: ^5.20.5
+        version: 5.20.5
       '@fastify/cookie':
         specifier: ^9.3.1
         version: 9.3.1
@@ -828,16 +828,16 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@bull-board/api@5.20.4':
-    resolution: {integrity: sha512-kcXxURXKgX9rkzQtKtHnLUXu9wXUgrUMXLOSI84QI0jElVRes3TO9/FV0bINAB5v0ATuldsBlAMvL8lyuScY1A==}
+  '@bull-board/api@5.20.5':
+    resolution: {integrity: sha512-YI95JK5A4/K4KB5VWbQn/CYNB+AO5cZ/BnZ77LxAhsaJ3ssHBN3Au0n3Z4wD7O+78+W3ON9uqGjKnHV6rXBGcQ==}
     peerDependencies:
-      '@bull-board/ui': 5.20.4
+      '@bull-board/ui': 5.20.5
 
-  '@bull-board/fastify@5.20.4':
-    resolution: {integrity: sha512-rvOF6iZbv4HD8nOV+mhkChnHGFL4PGIkET8d92bOOZhxoF2UwrqgwNnej8wEPqit/8DwLt3cn+oLGLe6BRq8Ag==}
+  '@bull-board/fastify@5.20.5':
+    resolution: {integrity: sha512-tdMR97xbzEzBbMJiJQreJHGdhfOocQn61K/WqM9I038Dk1dBHM5phQJxRJhspvwEJV4jwAayNOZbzuETI7QKwA==}
 
-  '@bull-board/ui@5.20.4':
-    resolution: {integrity: sha512-SaSwJ2Y7X30iRBTVTvr5zDs6xIYJizDdZCxeHXpyYcgQTbUBy/NMkynbjUn1pj02CNhJafqFieW9IGMFeFP2JQ==}
+  '@bull-board/ui@5.20.5':
+    resolution: {integrity: sha512-RV9VlW4qVL1A0Dewpsor4z7ZL9D56OW9LcRYjvXrIU5FSzvTvYKofmrUYoVrNQDs6jGMwJic+dMiW9K8GUU15A==}
 
   '@eddeee888/gcg-server-config@0.2.1':
     resolution: {integrity: sha512-mrx0/Um1FNLjmvqAUg1+pitDtaAoGE8FS59Msc0YnKbhPNgm9bl3CJG6AQRmCvr5Ks8PE5RLMlXytx1ns7VM5Q==}
@@ -5500,22 +5500,22 @@ snapshots:
   '@biomejs/cli-win32-x64@1.8.2':
     optional: true
 
-  '@bull-board/api@5.20.4(@bull-board/ui@5.20.4)':
+  '@bull-board/api@5.20.5(@bull-board/ui@5.20.5)':
     dependencies:
-      '@bull-board/ui': 5.20.4
+      '@bull-board/ui': 5.20.5
       redis-info: 3.1.0
 
-  '@bull-board/fastify@5.20.4':
+  '@bull-board/fastify@5.20.5':
     dependencies:
-      '@bull-board/api': 5.20.4(@bull-board/ui@5.20.4)
-      '@bull-board/ui': 5.20.4
+      '@bull-board/api': 5.20.5(@bull-board/ui@5.20.5)
+      '@bull-board/ui': 5.20.5
       '@fastify/static': 6.12.0
       '@fastify/view': 8.2.0
       ejs: 3.1.10
 
-  '@bull-board/ui@5.20.4':
+  '@bull-board/ui@5.20.5':
     dependencies:
-      '@bull-board/api': 5.20.4(@bull-board/ui@5.20.4)
+      '@bull-board/api': 5.20.5(@bull-board/ui@5.20.5)
 
   '@eddeee888/gcg-server-config@0.2.1(graphql@16.9.0)':
     dependencies:
