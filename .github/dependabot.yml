@@ -24,7 +24,7 @@ updates:
       # All prisma packages should be updated together
       prisma:
         patterns:
-          - "@prisma/client*"
+          - "@prisma/*"
           - "prisma*"
       bull-board:
         patterns:
