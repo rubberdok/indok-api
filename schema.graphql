@@ -298,6 +298,10 @@ scalar Date
 
 scalar DateTime
 
+type DeleteDocumentCategoryResponse {
+  category: DocumentCategory!
+}
+
 input DeleteDocumentInput {
   id: ID!
 }
@@ -357,6 +361,19 @@ type DocumentCategory {
 
 input DocumentCategoryInput {
   name: String!
+}
+
+type DocumentCategoryResponse {
+  categories: [DocumentCategory!]!
+  total: Int!
+}
+
+input DocumentInput {
+  id: ID!
+}
+
+type DocumentResponse {
+  document: Document
 }
 
 input DocumentsCategoryInput {
@@ -1158,6 +1175,8 @@ type Query {
   bookings(data: BookingsInput): BookingsResponse!
   cabins: CabinsResponse!
   categories: EventCategoriesResponse!
+  document(data: DocumentInput!): DocumentResponse!
+  documentCategories: DocumentCategoryResponse!
   documents(data: DocumentsInput): DocumentsResponse!
   event(data: EventInput!): EventResponse!
   events(data: EventsInput): EventsResponse!

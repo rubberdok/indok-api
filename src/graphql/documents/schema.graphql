@@ -1,11 +1,30 @@
 type Query {
     documents(data: DocumentsInput): DocumentsResponse!
+    document(data: DocumentInput!): DocumentResponse!
+    documentCategories: DocumentCategoryResponse!
 }
 
 type Mutation {
     createDocument(data: CreateDocumentInput!): CreateDocumentResponse!
     updateDocument(data: UpdateDocumentInput!): UpdateDocumentResponse!
     deleteDocument(data: DeleteDocumentInput!): DeleteDocumentResponse!
+}
+
+type DeleteDocumentCategoryResponse {
+    category: DocumentCategory!
+}
+
+type DocumentCategoryResponse {
+    categories: [DocumentCategory!]!
+    total: Int!
+}
+
+input DocumentInput {
+    id: ID!
+}
+
+type DocumentResponse {
+    document: Document
 }
 
 input DocumentsInput {
