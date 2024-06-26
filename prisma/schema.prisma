@@ -25,6 +25,8 @@ model Document {
   categories DocumentCategory[]
   createdAt  DateTime           @default(now())
   updatedAt  DateTime           @updatedAt
+
+  @@index([fileId])
 }
 
 model DocumentCategory {
@@ -58,6 +60,8 @@ model User {
   studyProgram            StudyProgram? @relation(fields: [studyProgramId], references: [id], onDelete: SetNull)
   studyProgramId          String?       @db.Uuid
   files                   File[]
+
+  @@index([studyProgramId])
 }
 
 model StudyProgram {
@@ -68,6 +72,8 @@ model StudyProgram {
   updatedAt          DateTime            @updatedAt
   users              User[]
   featurePermissions FeaturePermission[] @default([])
+
+  @@index([externalId])
 }
 
 enum EventType {
@@ -115,6 +121,9 @@ model Event {
 
   product   Product? @relation(fields: [productId], references: [id])
   productId String?  @unique @db.Uuid
+
+  @@index([organizationId])
+  @@index([productId])
 }
 
 model EventSlot {
@@ -128,6 +137,8 @@ model EventSlot {
   event             Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
   signUps           EventSignUp[]
   gradeYears        Int[]         @default([1, 2, 3, 4, 5])
+
+  @@index([eventId])
 }
 
 enum ParticipationStatus {
@@ -164,6 +175,10 @@ model EventSignUp {
   order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
 
   @@unique([userId, eventId, active])
+  @@index([orderId])
+  @@index([userId])
+  @@index([slotId])
+  @@index([eventId])
 }
 
 model EventCategory {
@@ -254,6 +269,8 @@ model Member {
   updatedAt      DateTime     @updatedAt
 
   @@unique([userId, organizationId])
+  @@index([userId])
+  @@index([organizationId])
 }
 
 enum FeaturePermission {
@@ -277,6 +294,8 @@ model Organization {
   featurePermissions FeaturePermission[] @default([])
   logoFileId         String?             @db.Uuid
   logoFile           File?               @relation(fields: [logoFileId], references: [id], onDelete: SetNull)
+
+  @@index([logoFileId])
 }
 
 model BookingContact {
@@ -304,6 +323,8 @@ model Product {
   remainingQuantity Int?
   version           Int      @default(0)
   event             Event[]
+
+  @@index([merchantId])
 }
 
 model Merchant {
@@ -335,6 +356,10 @@ model Order {
   purchasedAt                     DateTime?
   capturedPaymentAttemptReference String?            @unique
   capturedPaymentAttempt          PaymentAttempt?    @relation(name: "OrderCapturedPaymentAttempt", fields: [capturedPaymentAttemptReference], references: [reference], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([productId])
+  @@index([capturedPaymentAttemptReference])
 }
 
 enum OrderPaymentStatus {
@@ -378,6 +403,8 @@ model Listing {
   organizationId String       @db.Uuid
   closesAt       DateTime
   applicationUrl String       @default("")
+
+  @@index([organizationId])
 }
 
 // File storage
@@ -391,4 +418,6 @@ model File {
   organizations Organization[]
   documents     Document[]
   bookingTerms  BookingTerms[]
+
+  @@index([userId])
 }
