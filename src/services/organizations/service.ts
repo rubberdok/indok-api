@@ -23,6 +23,7 @@ interface OrganizationRepository {
 		description?: string;
 		userId: string;
 		featurePermissions?: FeaturePermissionType[];
+		colorScheme?: string;
 	}): Promise<Organization>;
 	update(
 		id: string,
@@ -31,6 +32,7 @@ interface OrganizationRepository {
 			description: string;
 			featurePermissions: FeaturePermissionType[];
 			logoFileId: string;
+			colorScheme: string;
 		}>,
 	): Promise<Organization>;
 	get(id: string): Promise<Organization>;
@@ -70,6 +72,16 @@ interface MemberRepository {
 		organizationId: string;
 		role: OrganizationRoleType;
 	}): Promise<boolean>;
+	updateRole(
+		ctx: Context,
+		data: {
+			memberId: string;
+			role: OrganizationRoleType;
+		},
+	): ResultAsync<
+		{ member: OrganizationMember },
+		InternalServerError | NotFoundError
+	>;
 }
 
 interface PermissionService {

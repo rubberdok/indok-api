@@ -270,6 +270,11 @@ type CreateOrderResponse {
 }
 
 input CreateOrganizationInput {
+  """
+  The primary color (hex) for the organization, for example: #FF0000 for red.
+  """
+  colorScheme: String
+
   """The description of the organization, cannot exceed 10 000 characters"""
   description: String
 
@@ -858,6 +863,9 @@ type Mutation {
   Passing null or omitting a value will leave the value unchanged.
   """
   updateOrganization(data: UpdateOrganizationInput!): UpdateOrganizationResponse!
+
+  """Change the role of a member in the organization"""
+  updateRole(data: UpdateRoleInput!): UpdateRoleResponse!
   updateUser(data: UpdateUserInput!): UpdateUserResponse!
   uploadFile(data: UploadFileInput!): UploadFileResponse!
 }
@@ -969,6 +977,10 @@ type OrdersResponse {
 }
 
 type Organization {
+  """
+  The primary color (hex) for the organization, for example: #FF0000 for red.
+  """
+  colorScheme: String
   description: String!
   events: [Event!]!
 
@@ -1572,6 +1584,11 @@ type UpdateListingResponse {
 
 input UpdateOrganizationInput {
   """
+  The primary color (hex) for the organization, for example: #FF0000 for red.
+  """
+  colorScheme: String
+
+  """
   The new description of the organization, cannot exceed 10 000 characters
   Omitting the value or passing null will leave the description unchanged
   """
@@ -1596,6 +1613,18 @@ input UpdateOrganizationInput {
 
 type UpdateOrganizationResponse {
   organization: Organization!
+}
+
+input UpdateRoleInput {
+  """The ID of the member to change the role of"""
+  memberId: ID!
+
+  """The new role of the member"""
+  role: Role!
+}
+
+type UpdateRoleResponse {
+  member: Member!
 }
 
 input UpdateSlotInput {

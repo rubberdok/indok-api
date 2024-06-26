@@ -3,11 +3,17 @@ import { faker } from "@faker-js/faker";
 import { makeTestServices } from "~/__tests__/dependencies-factory.js";
 import {
 	InvalidArgumentError,
+	InvalidArgumentErrorV2,
+	NotFoundError,
 	PermissionDeniedError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
-import { OrganizationMember } from "~/domain/organizations.js";
+import {
+	OrganizationMember,
+	OrganizationRole,
+} from "~/domain/organizations.js";
 import { makeMockContext } from "~/lib/context.js";
+import { Result } from "~/lib/result.js";
 
 describe("OrganizationService", () => {
 	describe("#removeMember", () => {
@@ -159,6 +165,88 @@ describe("OrganizationService", () => {
 					member: adminUserMembership,
 				},
 			});
+		});
+	});
+
+	describe("#updateRole", () => {
+		it("returns UnauthorizedError if not logged in", async () => {
+			const { organizationService } = await makeDeps();
+
+			const result = await organizationService.members.updateRole(
+				makeMockContext(null),
+				{
+					memberId: faker.string.uuid(),
+					newRole: OrganizationRole.ADMIN,
+				},
+			);
+
+			expect(result).toEqual(Result.error(expect.any(UnauthorizedError)));
+		});
+
+		it("returns PermissionDeniedError if the user is not an admin in the organization", async () => {
+			const { memberUser, organizationService, adminUserMembership } =
+				await makeDeps();
+
+			const result = await organizationService.members.updateRole(
+				makeMockContext(memberUser),
+				{
+					memberId: adminUserMembership.id,
+					newRole: OrganizationRole.ADMIN,
+				},
+			);
+
+			expect(result).toEqual(Result.error(expect.any(PermissionDeniedError)));
+		});
+
+		it("returns InvalidArgumentError if the user tries to change their own role", async () => {
+			const { adminUser, organizationService, adminUserMembership } =
+				await makeDeps();
+
+			const result = await organizationService.members.updateRole(
+				makeMockContext(adminUser),
+				{
+					memberId: adminUserMembership.id,
+					newRole: OrganizationRole.ADMIN,
+				},
+			);
+
+			expect(result).toEqual(Result.error(expect.any(InvalidArgumentErrorV2)));
+		});
+
+		it("returns NotFoundError if the member does not exist", async () => {
+			const { adminUser, organizationService } = await makeDeps();
+
+			const result = await organizationService.members.updateRole(
+				makeMockContext(adminUser),
+				{
+					memberId: faker.string.uuid(),
+					newRole: OrganizationRole.ADMIN,
+				},
+			);
+
+			expect(result).toEqual(Result.error(expect.any(NotFoundError)));
+		});
+
+		it("changes the role of the member", async () => {
+			const { adminUser, organizationService, memberUserMembership } =
+				await makeDeps();
+
+			const result = await organizationService.members.updateRole(
+				makeMockContext(adminUser),
+				{
+					memberId: memberUserMembership.id,
+					newRole: OrganizationRole.ADMIN,
+				},
+			);
+
+			expect(result).toEqual(
+				Result.success({
+					member: {
+						...memberUserMembership,
+						role: OrganizationRole.ADMIN,
+					},
+				}),
+			);
 		});
 	});
 });

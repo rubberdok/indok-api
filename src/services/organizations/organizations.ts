@@ -6,7 +6,6 @@ import {
 } from "~/domain/errors.js";
 import {
 	FeaturePermission,
-	type FeaturePermissionType,
 	type Organization,
 	OrganizationRole,
 	type OrganizationRoleType,
@@ -85,6 +84,14 @@ function buildOrganizations(
 					.uuid()
 					.nullish()
 					.transform((val) => val ?? undefined),
+				colorScheme: z
+					.string()
+					.regex(
+						/^#?([a-f0-9]{6}|[a-f0-9]{3})$/,
+						"Color scheme must be a valid color hex",
+					)
+					.nullish()
+					.transform((val) => val ?? undefined),
 			});
 
 			const { isSuperUser } = ctx.user;
@@ -98,13 +105,19 @@ function buildOrganizations(
 							.transform((val) => val ?? undefined),
 					});
 
-					const { name, description, featurePermissions, logoFileId } =
-						superUserSchema.parse(data);
+					const {
+						name,
+						description,
+						featurePermissions,
+						logoFileId,
+						colorScheme,
+					} = superUserSchema.parse(data);
 					return await organizationRepository.update(organizationId, {
 						name,
 						description,
 						featurePermissions,
 						logoFileId,
+						colorScheme,
 					});
 				}
 				const isMember = await permissions.hasRole(ctx, {
@@ -118,12 +131,14 @@ function buildOrganizations(
 				}
 
 				const schema = baseSchema;
-				const { name, description, logoFileId } = schema.parse(data);
+				const { name, description, logoFileId, colorScheme } =
+					schema.parse(data);
 
 				return await organizationRepository.update(organizationId, {
 					name,
 					description,
 					logoFileId,
+					colorScheme,
 				});
 			} catch (err) {
 				if (err instanceof z.ZodError)
@@ -144,14 +159,7 @@ function buildOrganizations(
 		 * @param data.featurePermissions - The feature permissions to grant to the user (optional)
 		 * @returns The created organization
 		 */
-		async create(
-			ctx: Context,
-			data: {
-				name: string;
-				description?: string | null;
-				featurePermissions?: FeaturePermissionType[] | null;
-			},
-		): Promise<Organization> {
+		async create(ctx, data) {
 			if (!ctx.user) {
 				throw new UnauthorizedError(
 					"You must be logged in to create an organization.",
@@ -166,6 +174,14 @@ function buildOrganizations(
 					.max(10000)
 					.nullish()
 					.transform((val) => val ?? undefined),
+				colorScheme: z
+					.string()
+					.regex(
+						/^#?([a-f0-9]{6}|[a-f0-9]{3})$/,
+						"Color scheme must be a valid color hex",
+					)
+					.nullish()
+					.transform((val) => val ?? undefined),
 			});
 			try {
 				if (isSuperUser === true) {
@@ -175,21 +191,24 @@ function buildOrganizations(
 							.nullish()
 							.transform((val) => val ?? undefined),
 					});
-					const { name, description, featurePermissions } = schema.parse(data);
+					const { name, description, featurePermissions, colorScheme } =
+						schema.parse(data);
 					const organization = await organizationRepository.create({
 						name,
 						description,
 						userId,
 						featurePermissions,
+						colorScheme,
 					});
 					return organization;
 				}
 				const schema = baseSchema;
-				const { name, description } = schema.parse(data);
+				const { name, description, colorScheme } = schema.parse(data);
 				const organization = await organizationRepository.create({
 					name,
 					description,
 					userId,
+					colorScheme,
 				});
 				return organization;
 			} catch (err) {

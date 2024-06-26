@@ -9,12 +9,47 @@ import {
 	OrganizationMember,
 	type OrganizationRoleType,
 } from "~/domain/organizations.js";
+import type { Context } from "~/lib/context.js";
 import { prismaKnownErrorCodes } from "~/lib/prisma.js";
 import { Result, type ResultAsync } from "~/lib/result.js";
 import type { MemberRepository as IMemberRepository } from "~/services/organizations/service.js";
 
 export class MemberRepository implements IMemberRepository {
 	constructor(private db: PrismaClient) {}
+
+	async updateRole(
+		ctx: Context,
+		data: { memberId: string; role: OrganizationRoleType },
+	): ResultAsync<
+		{ member: OrganizationMember },
+		InternalServerError | NotFoundError
+	> {
+		ctx.log.info({ data }, "updating member role");
+		const { memberId, role } = data;
+		try {
+			const updatedMember = await this.db.member.update({
+				where: {
+					id: memberId,
+				},
+				data: {
+					role,
+				},
+			});
+
+			return Result.success({ member: updatedMember });
+		} catch (err) {
+			if (err instanceof PrismaClientKnownRequestError) {
+				if (err.code === prismaKnownErrorCodes.ERR_NOT_FOUND) {
+					return Result.error(
+						new NotFoundError("The membership does not exist."),
+					);
+				}
+			}
+			return Result.error(
+				new InternalServerError("failed to update member role", err),
+			);
+		}
+	}
 
 	findMany(where?: { organizationId?: string; userId?: string }): Promise<
 		OrganizationMember[]

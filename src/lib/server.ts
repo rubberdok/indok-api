@@ -98,6 +98,7 @@ interface IOrganizationService {
 				name: string;
 				description?: string | null;
 				featurePermissions?: FeaturePermissionType[] | null;
+				colorScheme?: string | null;
 			},
 		): Promise<Organization>;
 		update(
@@ -108,6 +109,7 @@ interface IOrganizationService {
 				description: string | null;
 				featurePermissions: FeaturePermissionType[] | null;
 				logoFileId: string | null;
+				colorScheme: string | null;
 			}>,
 		): Promise<Organization>;
 		get(id: string): Promise<Organization>;
@@ -148,6 +150,17 @@ interface IOrganizationService {
 		): ResultAsync<
 			{ members: OrganizationMember[] },
 			PermissionDeniedError | UnauthorizedError
+		>;
+		updateRole(
+			ctx: Context,
+			params: { memberId: string; newRole: OrganizationRoleType },
+		): ResultAsync<
+			{ member: OrganizationMember },
+			| PermissionDeniedError
+			| UnauthorizedError
+			| InternalServerError
+			| InvalidArgumentErrorV2
+			| NotFoundError
 		>;
 	};
 	permissions: {

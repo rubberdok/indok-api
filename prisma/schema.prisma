@@ -269,6 +269,7 @@ model Organization {
   description String   @default("")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  colorScheme String?
 
   events             Event[]
   members            Member[]

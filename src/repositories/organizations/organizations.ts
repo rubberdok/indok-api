@@ -35,6 +35,7 @@ export class OrganizationRepository {
 		description?: string;
 		userId: string;
 		featurePermissions?: FeaturePermission[];
+		colorScheme?: string;
 	}): Promise<Organization> {
 		const { userId, ...rest } = data;
 		return this.db.organization
@@ -74,14 +75,16 @@ export class OrganizationRepository {
 	 */
 	update(
 		id: string,
-		data: {
-			name?: string;
-			description?: string;
-			featurePermissions?: FeaturePermission[];
-			logoFileId?: string;
-		},
+		data: Partial<{
+			name: string;
+			description: string;
+			featurePermissions: FeaturePermission[];
+			logoFileId: string;
+			colorScheme: string;
+		}>,
 	): Promise<Organization> {
-		const { name, description, featurePermissions, logoFileId } = data;
+		const { name, description, featurePermissions, logoFileId, colorScheme } =
+			data;
 		return this.db.organization.update({
 			where: { id },
 			data: {
@@ -89,6 +92,7 @@ export class OrganizationRepository {
 				description,
 				featurePermissions,
 				logoFileId,
+				colorScheme,
 			},
 		});
 	}

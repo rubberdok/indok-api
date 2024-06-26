@@ -34,6 +34,11 @@ type Mutation {
   Remove a member from the organization by the ID of the membership.
   """
   removeMember(data: RemoveMemberInput!): RemoveMemberResponse!
+
+  """
+  Change the role of a member in the organization
+  """
+  updateRole(data: UpdateRoleInput!): UpdateRoleResponse!
 }
 
 type Organization {
@@ -52,6 +57,10 @@ type Organization {
   events: [Event!]!
   listings: [Listing!]!
   logo: RemoteFile
+  """
+  The primary color (hex) for the organization, for example: #FF0000 for red.
+  """
+  colorScheme: String
 }
 
 type Member {
@@ -86,6 +95,21 @@ enum Role {
   MEMBER
 }
 
+input UpdateRoleInput {
+    """
+    The ID of the member to change the role of
+    """
+    memberId: ID!
+    """
+    The new role of the member
+    """
+    role: Role!
+}
+
+type UpdateRoleResponse {
+    member: Member!
+}
+
 input UpdateOrganizationInput {
   """
   The ID of the organization to update
@@ -107,6 +131,10 @@ input UpdateOrganizationInput {
   """
   featurePermissions: [FeaturePermission!]
   logoFileId: ID
+  """
+  The primary color (hex) for the organization, for example: #FF0000 for red.
+  """
+  colorScheme: String
 }
 
 type UpdateOrganizationResponse {
@@ -127,6 +155,10 @@ input CreateOrganizationInput {
   Requires that the current user is a super user, otherwise, this field is ignored.
   """
   featurePermissions: [FeaturePermission!]
+  """
+  The primary color (hex) for the organization, for example: #FF0000 for red.
+  """
+  colorScheme: String
 }
 
 type CreateOrganizationResponse {
