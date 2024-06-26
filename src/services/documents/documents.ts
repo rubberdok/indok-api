@@ -105,6 +105,14 @@ function buildDocuments({
 
 			const schema = z.object({
 				name: z.string().min(1),
+				description: z
+					.string()
+					.nullish()
+					.transform((val) => val ?? undefined),
+				categories: z
+					.array(z.object({ name: z.string().min(1) }))
+					.nullish()
+					.transform((val) => val ?? undefined),
 			});
 			const validationResult = schema.safeParse(data);
 			if (!validationResult.success)
@@ -154,7 +162,7 @@ function buildDocuments({
 
 			const createDocumentResult = await repository.documents.create(ctx, {
 				fileId: file.id,
-				name: data.name,
+				...validationResult.data,
 			});
 
 			if (!createDocumentResult.ok)

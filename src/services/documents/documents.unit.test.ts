@@ -189,13 +189,26 @@ describe("Documents service", () => {
 					document: makeDocument(),
 				},
 			});
+			const input = {
+				name: faker.word.adjective(),
+				description: faker.lorem.sentence(),
+				categories: [
+					{
+						name: faker.lorem.word(),
+					},
+				],
+			};
 
 			const result = await service.create(
 				makeMockContext({ id: faker.string.uuid() }),
 				{
-					name: faker.word.adjective(),
 					fileExtension: faker.string.uuid(),
+					...input,
 				},
+			);
+			expect(repository.documents.create).toHaveBeenCalledWith(
+				expect.anything(),
+				expect.objectContaining(input),
 			);
 			expect(result).toEqual(
 				Result.success({
