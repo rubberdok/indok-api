@@ -47,6 +47,10 @@ type DocumentRepositoryType = {
 			{ documents: Document[]; total: number },
 			InternalServerError
 		>;
+		find(
+			ctx: Context,
+			params: { id: string },
+		): ResultAsync<{ document: Document }, NotFoundError | InternalServerError>;
 	};
 };
 
@@ -285,6 +289,28 @@ function buildDocuments({
 			return await repository.documents.findMany(ctx, {
 				categories: by?.categories ?? undefined,
 			});
+		},
+
+		async find(ctx, params) {
+			if (!ctx.user) {
+				return Result.error(
+					new UnauthorizedError(
+						"You must be logged in to perform this action.",
+					),
+				);
+			}
+
+			const hasPermission = await permissions.hasFeaturePermission(ctx, {
+				featurePermission: "ARCHIVE_VIEW_DOCUMENTS",
+			});
+			if (!hasPermission) {
+				return Result.error(
+					new PermissionDeniedError(
+						"You do not have the permission required to perform this action.",
+					),
+				);
+			}
+			return repository.documents.find(ctx, params);
 		},
 	};
 }

@@ -96,6 +96,34 @@ type DocumentService = {
 			{ documents: Document[]; total: number },
 			InternalServerError | PermissionDeniedError | UnauthorizedError
 		>;
+		find(
+			ctx: Context,
+			params: { id: string },
+		): ResultAsync<
+			{ document: Document },
+			| NotFoundError
+			| InternalServerError
+			| PermissionDeniedError
+			| UnauthorizedError
+		>;
+	};
+	categories: {
+		findMany(
+			ctx: Context,
+		): ResultAsync<
+			{ categories: DocumentCategory[]; total: number },
+			InternalServerError | PermissionDeniedError | UnauthorizedError
+		>;
+		delete(
+			ctx: Context,
+			params: { id: string },
+		): ResultAsync<
+			{ category: DocumentCategory },
+			| NotFoundError
+			| InternalServerError
+			| PermissionDeniedError
+			| UnauthorizedError
+		>;
 	};
 };
 

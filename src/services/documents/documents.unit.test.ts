@@ -11,6 +11,7 @@ import {
 	PermissionDeniedError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
+import { FeaturePermission } from "~/domain/organizations.js";
 import { makeMockContext } from "~/lib/context.js";
 import { Result } from "~/lib/result.js";
 import {
@@ -502,6 +503,61 @@ describe("Documents service", () => {
 					total: expect.any(Number),
 				}),
 			);
+		});
+	});
+
+	describe("#find", () => {
+		it("returns the matching document if the user has permission", async () => {
+			const { service, repository, permissions } = makeDependencies();
+			permissions.hasFeaturePermission.mockResolvedValueOnce(true);
+			repository.documents.find.mockResolvedValueOnce(
+				Result.success({ document: makeDocument() }),
+			);
+
+			const result = await service.find(
+				makeMockContext({ id: faker.string.uuid() }),
+				{ id: faker.string.uuid() },
+			);
+
+			expect(result).toEqual(
+				Result.success({ document: expect.any(Document) }),
+			);
+		});
+
+		it("returns permission denied if the user does not have the appropriate permission", async () => {
+			const { service, repository, permissions } = makeDependencies();
+			permissions.hasFeaturePermission.mockResolvedValueOnce(false);
+			repository.documents.find.mockResolvedValueOnce(
+				Result.success({ document: makeDocument() }),
+			);
+
+			const result = await service.find(
+				makeMockContext({ id: faker.string.uuid() }),
+				{ id: faker.string.uuid() },
+			);
+
+			expect(result).toEqual(Result.error(expect.any(PermissionDeniedError)));
+		});
+
+		it("requires the ARCHIVE_VIEW_DOCUMENT permission", async () => {
+			const { service, permissions } = makeDependencies();
+			const ctx = makeMockContext({ id: faker.string.uuid() });
+
+			await service.find(ctx, { id: faker.string.uuid() });
+
+			expect(permissions.hasFeaturePermission).toHaveBeenCalledWith(ctx, {
+				featurePermission: FeaturePermission.ARCHIVE_VIEW_DOCUMENTS,
+			});
+		});
+
+		it("returns UnauthorizedError if the user is not logged in", async () => {
+			const { service } = makeDependencies();
+
+			const result = await service.find(makeMockContext(null), {
+				id: faker.string.uuid(),
+			});
+
+			expect(result).toEqual(Result.error(expect.any(UnauthorizedError)));
 		});
 	});
 });

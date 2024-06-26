@@ -236,10 +236,30 @@ describe("Documents repository", () => {
 		});
 	});
 
+	describe("#find", () => {
+		it("returns the matching document", async () => {
+			const expected = await makeDocument();
+
+			const result = await documents.find(makeMockContext(), {
+				id: expected.id,
+			});
+
+			expect(result).toEqual(Result.success({ document: expected }));
+		});
+
+		it("returns NotFoundError if no matching document exists", async () => {
+			const result = await documents.find(makeMockContext(), {
+				id: faker.string.uuid(),
+			});
+
+			expect(result).toEqual(Result.error(expect.any(NotFoundError)));
+		});
+	});
+
 	async function makeDocument(params?: { categories?: { name: string }[] }) {
 		const { user, file } = await makeDependencies();
 		const result = await documents.create(makeMockContext(user), {
-			name: faker.word.adjective(),
+			name: faker.string.uuid(),
 			fileId: file.id,
 			categories: params?.categories ?? [
 				{

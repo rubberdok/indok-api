@@ -173,6 +173,23 @@ function buildDocuments({
 				);
 			}
 		},
+
+		async find(ctx, params) {
+			ctx.log.info({ params }, "finding document");
+			try {
+				const document = await db.document.findUnique({
+					where: { id: params.id },
+					include: { categories: true },
+				});
+				if (document === null)
+					return Result.error(new NotFoundError("Document does not exist"));
+				return Result.success({ document: new Document(document) });
+			} catch (err) {
+				return Result.error(
+					new InternalServerError("failed to find document", err),
+				);
+			}
+		},
 	};
 }
 

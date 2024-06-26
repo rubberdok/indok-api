@@ -1,13 +1,15 @@
-import type { DocumentRepositoryType } from "~/services/documents/documents.js";
+import type { DocumentServiceDependencies } from "~/services/documents/service.js";
+import { type CategoryDependencies, buildCategories } from "./categories.js";
 import { type DocumentDependencies, buildDocuments } from "./documents.js";
 
-type Dependencies = DocumentDependencies;
+type Dependencies = DocumentDependencies & CategoryDependencies;
 
 function DocumentRepository(
 	dependencies: Dependencies,
-): DocumentRepositoryType {
+): DocumentServiceDependencies["repository"] {
 	return {
 		documents: buildDocuments(dependencies),
+		categories: buildCategories(dependencies),
 	};
 }
 
