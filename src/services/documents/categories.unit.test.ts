@@ -1,7 +1,12 @@
 import { faker } from "@faker-js/faker";
 import { mockDeep } from "jest-mock-extended";
 import { DocumentCategory } from "~/domain/documents.js";
-import { PermissionDeniedError, UnauthorizedError } from "~/domain/errors.js";
+import {
+	InternalServerError,
+	NotFoundError,
+	PermissionDeniedError,
+	UnauthorizedError,
+} from "~/domain/errors.js";
 import { makeMockContext } from "~/lib/context.js";
 import { Result } from "~/lib/result.js";
 import {
@@ -98,6 +103,33 @@ describe("Document service", () => {
 				const result = await service.delete(ctx, { id: faker.string.uuid() });
 
 				expect(result).toEqual(Result.error(expect.any(PermissionDeniedError)));
+			});
+
+			it("returns NotFoundError if the category is not found", async () => {
+				const { service, permissions, repository } = makeDependencies();
+				const ctx = makeMockContext({ id: faker.string.uuid() });
+
+				permissions.hasFeaturePermission.mockResolvedValue(true);
+				repository.categories.delete.mockResolvedValue(
+					Result.error(new NotFoundError("")),
+				);
+				const result = await service.delete(ctx, { id: faker.string.uuid() });
+
+				expect(result).toEqual(Result.error(expect.any(NotFoundError)));
+			});
+
+			it("returns InternalServerError for unexpected errors", async () => {
+				const { service, permissions, repository } = makeDependencies();
+				const ctx = makeMockContext({ id: faker.string.uuid() });
+
+				permissions.hasFeaturePermission.mockResolvedValue(true);
+				repository.categories.delete.mockResolvedValue(
+					Result.error(new InternalServerError("")),
+				);
+
+				const result = await service.delete(ctx, { id: faker.string.uuid() });
+
+				expect(result).toEqual(Result.error(expect.any(InternalServerError)));
 			});
 
 			it("deletes a category", async () => {
