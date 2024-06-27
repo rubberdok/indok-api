@@ -768,6 +768,18 @@ async function registerServices(
 	Sentry.setupFastifyErrorHandler(serverInstance);
 	await serverInstance.register(fastifyPrisma, { client: prisma });
 	const database = serverInstance.database;
+	database.$on("error", (e) => {
+		serverInstance.log.child({ service: "prisma" }).error(e);
+	});
+	database.$on("warn", (e) => {
+		serverInstance.log.child({ service: "prisma" }).warn(e);
+	});
+	database.$on("info", (e) => {
+		serverInstance.log.child({ service: "prisma" }).info(e);
+	});
+	database.$on("query", (e) => {
+		serverInstance.log.child({ service: "prisma" }).debug(e);
+	});
 
 	const cabinRepository = new CabinRepository(database);
 	const userRepository = new UserRepository(database);

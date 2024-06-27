@@ -8,7 +8,26 @@ type FastifyPrismaPluginOptions = {
 
 declare module "fastify" {
 	interface FastifyInstance {
-		database: PrismaClient;
+		database: PrismaClient<{
+			log: (
+				| {
+						emit: "event";
+						level: "error";
+				  }
+				| {
+						emit: "event";
+						level: "warn";
+				  }
+				| {
+						emit: "event";
+						level: "info";
+				  }
+				| {
+						emit: "event";
+						level: "query";
+				  }
+			)[];
+		}>;
 	}
 }
 
