@@ -1,9 +1,9 @@
 FROM node:lts-slim AS base
 WORKDIR /usr/src/app
 
-LABEL org.opencontainers.image.source https://github.com/rubberdok/indok-api
-LABEL org.opencontainers.image.description Container image for the Indøk API.
-LABEL org.opencontainers.image.licenses MIT
+LABEL org.opencontainers.image.source="https://github.com/rubberdok/indok-api"
+LABEL org.opencontainers.image.description="Container image for the Indøk API."
+LABEL org.opencontainers.image.licenses="MIT"
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
@@ -11,11 +11,16 @@ RUN corepack enable
 
 # Required for Prisma
 RUN apt-get update -y \
-    && apt-get install -y openssl \
+    && apt-get install -y --no-install-recommends openssl \
     && apt-get clean
 
+
+FROM base AS certs
+RUN apt-get install -y --no-install-recommends curl ca-certificates
+RUN curl https://cacerts.digicert.com/DigiCertGlobalRootCA.crt.pem -o /etc/ssl/certs/DigiCertGlobalRootCA.crt.pem
+
 FROM base AS prod-deps
-ENV NODE_ENV production
+ENV NODE_ENV=production
 
 COPY package.json pnpm-lock.yaml ./
 COPY patches/ ./patches
@@ -31,16 +36,15 @@ COPY patches/ ./patches
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 COPY .swcrc codegen.config.ts biome.json tsconfig.json ./
-COPY certs/ ./certs
 COPY scripts/ ./scripts
 COPY src/ ./src
 RUN pnpm build:production
 
 FROM base AS runner
 
-ENV NODE_ENV production
+ENV NODE_ENV=production
 
-COPY --chown=node:node --from=build /usr/src/app/certs /etc/ssl/certs
+COPY --chown=node:node --from=certs /etc/ssl/certs /etc/ssl/certs
 COPY --chown=node:node --from=build /usr/src/app/scripts ./scripts
 COPY --chown=node:node --from=prod-deps /usr/src/app/node_modules ./node_modules
 COPY --chown=node:node --from=build /usr/src/app/package.json ./package.json
