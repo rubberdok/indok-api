@@ -23,7 +23,6 @@ FROM base AS prod-deps
 ENV NODE_ENV=production
 
 COPY package.json pnpm-lock.yaml ./
-COPY patches/ ./patches
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --frozen-lockfile
 
 COPY prisma/ ./prisma
@@ -32,7 +31,6 @@ RUN pnpm run generate:prisma
 FROM base AS build
 
 COPY package.json pnpm-lock.yaml ./
-COPY patches/ ./patches
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 COPY .swcrc codegen.config.ts biome.json tsconfig.json ./
