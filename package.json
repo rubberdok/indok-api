@@ -8,11 +8,7 @@
 	"private": true,
 	"type": "module",
 	"packageManager": "pnpm@9.4.0",
-	"files": [
-		"dist",
-		"certs",
-		"scripts"
-	],
+	"files": ["dist", "certs", "scripts"],
 	"engines": {
 		"node": ">=20",
 		"pnpm": ">=9"
@@ -136,18 +132,9 @@
 	},
 	"pnpm": {
 		"supportedArchitectures": {
-			"os": [
-				"current",
-				"linux"
-			],
-			"cpu": [
-				"current",
-				"x64"
-			],
-			"libc": [
-				"current",
-				"glibc"
-			]
+			"os": ["current", "linux"],
+			"cpu": ["current", "x64"],
+			"libc": ["current", "glibc"]
 		}
 	}
 }
