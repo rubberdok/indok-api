@@ -122,7 +122,7 @@
 		"graphql-tag": "^2.12.6",
 		"ioredis": "^5.4.1",
 		"lodash-es": "^4.17.21",
-		"luxon": "^3.4.4",
+		"luxon": "^3.5.0",
 		"openid-client": "^5.6.5",
 		"pino": "^9.3.2",
 		"postmark": "^4.0.4",
