@@ -133,8 +133,8 @@ importers:
         specifier: 1.8.3
         version: 1.8.3
       '@eddeee888/gcg-typescript-resolver-files':
-        specifier: ^0.10.3
-        version: 0.10.3(graphql@16.9.0)
+        specifier: ^0.10.4
+        version: 0.10.4(graphql@16.9.0)
       '@faker-js/faker':
         specifier: ^8.4.1
         version: 8.4.1
@@ -831,8 +831,8 @@ packages:
   '@eddeee888/gcg-server-config@0.2.2':
     resolution: {integrity: sha512-/yOw8sZMObfZ5Esu8QD5RkcbBApD+QRP1r/syS2nAiUoZr5Nj05tNi8mQnR90suY4UIjEIO3KfkkN/vXpZ/1fA==}
 
-  '@eddeee888/gcg-typescript-resolver-files@0.10.3':
-    resolution: {integrity: sha512-qs8II/MYtD0O+20NLerem0oNQj4evJnYeJlOAeezblpkXXWuRdQqXNrN5JGkuC9A0/KTX43XsoSM7LHwl0GPXA==}
+  '@eddeee888/gcg-typescript-resolver-files@0.10.4':
+    resolution: {integrity: sha512-y3dBaQq/nb4EQMZ5NpAuwwTwui2rmjig1JTM2zZZn0xLnIBd9XWVCXVF44TTTJDKlrwYl3nIrwrNkQ+RffTM9g==}
     peerDependencies:
       graphql: ^15.0.0 || ^16.0.0
 
@@ -5538,7 +5538,7 @@ snapshots:
       - graphql
       - supports-color
 
-  '@eddeee888/gcg-typescript-resolver-files@0.10.3(graphql@16.9.0)':
+  '@eddeee888/gcg-typescript-resolver-files@0.10.4(graphql@16.9.0)':
     dependencies:
       '@eddeee888/gcg-server-config': 0.2.2(graphql@16.9.0)
       '@graphql-codegen/add': 5.0.3(graphql@16.9.0)
