@@ -9,11 +9,11 @@ importers:
   .:
     dependencies:
       '@apollo/server':
-        specifier: ^4.10.5
-        version: 4.10.5(graphql@16.9.0)
+        specifier: ^4.11.0
+        version: 4.11.0(graphql@16.9.0)
       '@as-integrations/fastify':
         specifier: ^2.1.1
-        version: 2.1.1(@apollo/server@4.10.5(graphql@16.9.0))(fastify@4.28.1)
+        version: 2.1.1(@apollo/server@4.11.0(graphql@16.9.0))(fastify@4.28.1)
       '@azure/identity':
         specifier: ^4.4.1
         version: 4.4.1
@@ -240,8 +240,8 @@ packages:
     peerDependencies:
       graphql: 14.x || 15.x || 16.x
 
-  '@apollo/server@4.10.5':
-    resolution: {integrity: sha512-I+Oi1CnphXExSAAsZbclgRDN4k4CEMxyKRzYg3bir5N8OmydEhzXDlIGAOETP/TKblxR7HPXGvwn2cJKzbl46w==}
+  '@apollo/server@4.11.0':
+    resolution: {integrity: sha512-SWDvbbs0wl2zYhKG6aGLxwTJ72xpqp0awb2lotNpfezd9VcAvzaUizzKQqocephin2uMoaA8MguoyBmgtPzNWw==}
     engines: {node: '>=14.16.0'}
     peerDependencies:
       graphql: ^16.6.0
@@ -4783,7 +4783,7 @@ snapshots:
       '@apollo/utils.logger': 2.0.1
       graphql: 16.9.0
 
-  '@apollo/server@4.10.5(graphql@16.9.0)':
+  '@apollo/server@4.11.0(graphql@16.9.0)':
     dependencies:
       '@apollo/cache-control-types': 1.0.3(graphql@16.9.0)
       '@apollo/server-gateway-interface': 1.1.1(graphql@16.9.0)
@@ -4897,9 +4897,9 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@as-integrations/fastify@2.1.1(@apollo/server@4.10.5(graphql@16.9.0))(fastify@4.28.1)':
+  '@as-integrations/fastify@2.1.1(@apollo/server@4.11.0(graphql@16.9.0))(fastify@4.28.1)':
     dependencies:
-      '@apollo/server': 4.10.5(graphql@16.9.0)
+      '@apollo/server': 4.11.0(graphql@16.9.0)
       fastify: 4.28.1
       fastify-plugin: 4.5.1
 
