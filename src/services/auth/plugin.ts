@@ -36,7 +36,7 @@ const fastifyAuthPlugin: FastifyPluginAsync = (fastify) => {
 				kind,
 			);
 
-			return reply.redirect(303, url);
+			return reply.redirect(url, 303);
 		},
 	});
 

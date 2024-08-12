@@ -1,16 +1,15 @@
 import type { IncomingMessage } from "node:http";
 import type { FastifyRequest } from "fastify";
 import type { TokenSet, UserinfoResponse } from "openid-client";
-import { generators } from "openid-client";
 import { env } from "~/config.js";
 import {
 	AuthenticationError,
 	BadRequestError,
-	NotFoundError,
-	UnauthorizedError,
+	DownstreamServiceError,
+	InternalServerError,
 } from "~/domain/errors.js";
 import type { StudyProgram, User } from "~/domain/users.js";
-import type { Context } from "../../lib/context.js";
+import { Result, type ResultAsync, type TResult } from "~/lib/result.js";
 
 export interface OpenIDClient {
 	authorizationUrl(options: {
@@ -94,6 +93,200 @@ export class AuthService {
 		},
 		private feideGroupsApi: URL = new URL(env.FEIDE_GROUPS_API),
 	) {}
+
+	/**
+	 * authorizationUrl returns the url to redirect the user to in order to authenticate with the OpenID Provider
+	 * which in our case (for now) is Feide. For Feide, we use the Authorization Code Flow with proof key for code exchange (PKCE).
+	 * This means that we generate a code verifier, and a code challenge based on the code verifier. The challenge is
+	 * sent to the OpenID Provider, and the verifier is stored in the session. When the user is redirected back to us, we
+	 * send the verifier along with the code, and the OpenID Provider will verify that the verifier matches the challenge.
+	 */
+	generateAuthorizationUrl(
+		req: FastifyRequest,
+		params: {
+			redirectUri: "/auth/login/callback" | "/auth/study-program/callback";
+		},
+	): TResult<{ authorizationUrl: string }, InternalServerError> {
+		const { codeVerifier, codeChallenge } = this.pkce();
+		req.session.set("codeVerifier", codeVerifier);
+
+		try {
+			const url = this.openIDClient.authorizationUrl({
+				scope: this.scope,
+				code_challenge_method: "S256",
+				code_challenge: codeChallenge,
+				redirect_uri: `${env.SERVER_URL}${params.redirectUri}`,
+			});
+			return Result.success({ authorizationUrl: url });
+		} catch (err) {
+			return Result.error(
+				new InternalServerError("Failed to generate authorization url", err),
+			);
+		}
+	}
+
+	async getAuthorizationToken(
+		req: FastifyRequest,
+		params: {
+			code: string;
+			redirectUri: "/auth/login/callback" | "/auth/study-program/callback";
+		},
+	): ResultAsync<
+		{ token: TokenSet },
+		DownstreamServiceError | BadRequestError
+	> {
+		const codeVerifier = req.session.get("codeVerifier");
+		if (!codeVerifier) {
+			return Result.error(
+				new BadRequestError("No code verifier found in session"),
+			);
+		}
+
+		try {
+			const tokenset = await this.openIDClient.callback(
+				`${env.SERVER_URL}${params.redirectUri}`,
+				{ code: params.code },
+				{ code_verifier: codeVerifier },
+			);
+			return Result.success({ token: tokenset });
+		} catch (err) {
+			return Result.error(
+				new DownstreamServiceError(
+					"Failed to get token from OpenID Provider",
+					err,
+				),
+			);
+		}
+	}
+
+	async getUserInfo(
+		req: FastifyRequest,
+		params: { token: TokenSet },
+	): ResultAsync<
+		{ userInfo: UserinfoResponse<FeideUserInfo> },
+		DownstreamServiceError
+	> {
+		req.log.info("Fetching userinfo from OIDC provider");
+		try {
+			const userinfo = await this.openIDClient.userinfo(params.token);
+			return Result.success({ userInfo: userinfo });
+		} catch (err) {
+			return Result.error(
+				new DownstreamServiceError("Failed to fetch userinfo", err),
+			);
+		}
+	}
+
+	async getOrCreateUser(
+		req: FastifyRequest,
+		{
+			userInfo,
+			token,
+		}: { userInfo: UserinfoResponse<FeideUserInfo>; token: TokenSet },
+	): ResultAsync<{ user: User }, InternalServerError | AuthenticationError> {
+		const {
+			sub,
+			name,
+			email,
+			"https://n.feide.no/claims/userid_sec": userid_sec,
+			"https://n.feide.no/claims/eduPersonPrincipalName": ntnuId,
+		} = userInfo;
+		const existingUser = await this.userService.getByFeideID(sub);
+		if (existingUser) {
+			req.log?.info(
+				{
+					userId: existingUser.id,
+				},
+				"User already exists",
+			);
+			return Result.success({ user: existingUser });
+		}
+
+		req.log?.info({ sub: userInfo.sub }, "Creating new user");
+
+		let eduUsername: string;
+		if (ntnuId) {
+			eduUsername = ntnuId.slice(0, ntnuId.indexOf("@"));
+		} else {
+			const feideUserIdSec = userid_sec.find((id) => id.startsWith("feide:"));
+			if (!feideUserIdSec)
+				return Result.error(
+					new AuthenticationError(
+						`No username found for user with feideId ${sub}`,
+					),
+				);
+			eduUsername = feideUserIdSec.slice(
+				feideUserIdSec.indexOf(":") + 1,
+				feideUserIdSec.indexOf("@"),
+			);
+		}
+
+		const [firstName, lastName] = name.split(" ");
+		let user = await this.userService.create({
+			email,
+			firstName: firstName ?? "",
+			lastName: lastName ?? "",
+			feideId: sub,
+			username: eduUsername,
+		});
+
+		req.log.info("fetching study program");
+		const studyProgram = await this.getStudyProgramForUser(
+			{ user, log: req.log },
+			token,
+		);
+
+		if (studyProgram) {
+			user = await this.userService.update(user.id, {
+				studyProgramId: studyProgram.id,
+			});
+		}
+		return Result.success({ user });
+	}
+
+	async updateStudyProgramForUser(
+		req: FastifyRequest,
+		params: { token: TokenSet },
+	): ResultAsync<
+		{ studyProgram: StudyProgram | null },
+		DownstreamServiceError
+	> {
+		req.log.info({ userId: req.session.userId }, "fetching study programs");
+		const groupsApiResponse = await this.openIDClient.requestResource(
+			this.feideGroupsApi,
+			params.token,
+		);
+
+		if (!groupsApiResponse.body) return Result.success({ studyProgram: null });
+
+		const groups: FeideGroup[] = JSON.parse(groupsApiResponse.body.toString());
+		const studyPrograms = groups.filter((group) => {
+			const isAtNtnu = group.parent === "fc:org:ntnu.no";
+			const isStudyProgram = group.type === "fc:fs:prg";
+			const isActive = group.membership.active;
+
+			return isAtNtnu && isStudyProgram && isActive;
+		});
+
+		req.log.info({ studyPrograms: studyPrograms.length }, "study programs");
+		const bestGuessStudyProgram = studyPrograms[0];
+		if (!bestGuessStudyProgram) return null;
+
+		const studyProgram = await this.userService.getStudyProgram({
+			externalId: bestGuessStudyProgram.id,
+		});
+		if (studyProgram) return studyProgram;
+
+		ctx.log.info(
+			{ studyProgram: bestGuessStudyProgram },
+			"found new study program",
+		);
+		const newStudyProgram = await this.userService.createStudyProgram({
+			name: bestGuessStudyProgram.displayName,
+			externalId: bestGuessStudyProgram.id,
+		});
+		return newStudyProgram;
+	}
 
 	/**
 	 * authorizationUrl returns the url to redirect the user to in order to authenticate with the OpenID Provider
@@ -351,9 +544,8 @@ export class AuthService {
 	 * @returns
 	 */
 	async login(req: FastifyRequest, user: User): Promise<User> {
-		req.session.set("authenticated", true);
+		await req.session.regenerate([]);
 		req.session.set("userId", user.id);
-		await req.session.regenerate(["authenticated", "userId"]);
 		const updatedUser = await this.userService.login(user.id);
 		return updatedUser;
 	}
@@ -366,7 +558,7 @@ export class AuthService {
 	 * @returns
 	 */
 	async logout(req: FastifyRequest): Promise<void> {
-		if (req.session.get("authenticated")) {
+		if (req.session.get("userId")) {
 			await req.session.destroy();
 			return;
 		}
