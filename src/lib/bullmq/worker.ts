@@ -35,6 +35,8 @@ import { ProductService } from "~/services/products/service.js";
 import {
 	PaymentProcessingQueueName,
 	type PaymentProcessingQueueType,
+	type PaymentProcessingWorkerType,
+	getPaymentProcessingHandler,
 } from "~/services/products/worker.js";
 import { UserService } from "~/services/users/service.js";
 import { envToLogger } from "../fastify/logging.js";
@@ -217,6 +219,10 @@ export async function initWorkers(): Promise<{
 		mailService,
 		log: logger,
 	});
+	const paymentProcessingWorkerHandler = getPaymentProcessingHandler({
+		log: logger,
+		productService,
+	});
 
 	const emailWorker: EmailWorkerType = new Worker(
 		emailWorkerHandler.name,
@@ -229,6 +235,14 @@ export async function initWorkers(): Promise<{
 	const signUpWorker: SignUpWorkerType = new Worker(
 		signUpWorkerHandler.name,
 		signUpWorkerHandler.handler,
+		{ connection: redis },
+		undefined,
+		logger,
+	);
+
+	const paymentProcessingWorker: PaymentProcessingWorkerType = new Worker(
+		paymentProcessingWorkerHandler.name,
+		paymentProcessingWorkerHandler.handler,
 		{ connection: redis },
 		undefined,
 		logger,
@@ -249,6 +263,7 @@ export async function initWorkers(): Promise<{
 		emailWorker,
 		signUpWorker,
 		healthCheckWorker,
+		paymentProcessingWorker,
 	} as const;
 
 	async function start() {
