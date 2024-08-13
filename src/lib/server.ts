@@ -802,7 +802,7 @@ async function registerServices(
 
 	const mailService = buildMailService(
 		{
-			emailQueue: serverInstance.queues.email,
+			emailQueue: serverInstance.queues[EmailQueueName],
 			emailClient: postmark(env.POSTMARK_API_TOKEN, {
 				useTestMode: env.NODE_ENV === "test",
 			}),

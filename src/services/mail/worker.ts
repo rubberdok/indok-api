@@ -76,14 +76,14 @@ export type FileService = {
 	>;
 };
 
-const EmailQueueName = "send-email" as const;
+const EmailQueueName = "email" as const;
 type EmailQueueNameType = typeof EmailQueueName;
 
-type EmailWorkerHelperType<TData, TReturn, TName extends string> = {
-	QueueType: Queue<TData, TReturn, TName>;
-	WorkerType: Worker<TData, TReturn, TName>;
-	ProcessorType: Processor<TData, TReturn, TName>;
-	JobType: Job<TData, TReturn, TName>;
+type EmailWorkerHelperType<TData, TReturn, TJobName extends string> = {
+	QueueType: Queue<TData, TReturn, TJobName>;
+	WorkerType: Worker<TData, TReturn, TJobName>;
+	ProcessorType: Processor<TData, TReturn, TJobName>;
+	JobType: Job<TData, TReturn, TJobName>;
 };
 
 type EmailQueueDataType =
@@ -96,10 +96,12 @@ type EmailQueueDataType =
 	| { type: "cabin-booking-receipt"; bookingId: string }
 	| { type: "order-receipt"; orderId: string; userId: string };
 
+type EmailJobNameType = "send-email";
+
 type EmailWorker = EmailWorkerHelperType<
 	EmailQueueDataType,
 	{ ok: boolean },
-	EmailQueueNameType
+	EmailJobNameType
 >;
 
 type EmailQueueType = EmailWorker["QueueType"];

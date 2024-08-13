@@ -6,7 +6,7 @@ import {
 	SignUpQueueName,
 	type SignUpQueueType,
 } from "~/services/events/worker.js";
-import type { EmailQueueType } from "~/services/mail/worker.js";
+import type { EmailQueueName, EmailQueueType } from "~/services/mail/worker.js";
 import type { PaymentProcessingQueueType } from "~/services/products/worker.js";
 import { PaymentProcessingQueueName } from "~/services/products/worker.js";
 import { Queue } from "../bullmq/queue.js";
@@ -17,7 +17,7 @@ type FastifyMessageQueuePluginOptions = {
 };
 
 type KnownQueues = {
-	email: EmailQueueType;
+	[EmailQueueName]: EmailQueueType;
 	[PaymentProcessingQueueName]: PaymentProcessingQueueType;
 	[SignUpQueueName]: SignUpQueueType;
 };
