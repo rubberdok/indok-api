@@ -322,21 +322,6 @@ resource "azurerm_container_app" "worker" {
       }
 
       env {
-        name  = "AZURE_MANAGED_IDENTITY_CLIENT_ID"
-        value = module.managed_identity.client_id
-      }
-
-      env {
-        name  = "AZURE_STORAGE_CONTAINER_NAME"
-        value = module.blob_storage.storage_container_name
-      }
-
-      env {
-        name  = "AZURE_STORAGE_ACCOUNT_NAME"
-        value = module.blob_storage.storage_account_name
-      }
-
-      env {
         name        = "REDIS_CONNECTION_STRING"
         secret_name = "redis-connection-string"
       }
