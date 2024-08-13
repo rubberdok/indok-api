@@ -251,6 +251,7 @@ resource "azurerm_container_app" "worker" {
     }
   }
 
+
   secret {
     name  = "feide-client-secret"
     value = data.azurerm_key_vault_secret.feide_client_secret.value
@@ -303,6 +304,21 @@ resource "azurerm_container_app" "worker" {
           secret_name = try(env.value.secret_name, null)
           value       = try(env.value.value, null)
         }
+      }
+
+      env {
+        name  = "AZURE_MANAGED_IDENTITY_CLIENT_ID"
+        value = module.managed_identity.client_id
+      }
+
+      env {
+        name  = "AZURE_STORAGE_CONTAINER_NAME"
+        value = module.blob_storage.storage_container_name
+      }
+
+      env {
+        name  = "AZURE_STORAGE_ACCOUNT_NAME"
+        value = module.blob_storage.storage_account_name
       }
 
       env {
