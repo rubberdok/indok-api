@@ -888,7 +888,7 @@ class EventService {
 	private async demoteConfirmedSignUp(
 		ctx: Context,
 		data: {
-			user: User;
+			userId: string;
 			event: TicketEvent | SignUpEvent;
 			signUp: EventSignUp;
 			newParticipationStatus: Extract<
@@ -900,7 +900,7 @@ class EventService {
 		{ signUp: EventSignUp },
 		InvalidArgumentError | InternalServerError
 	> {
-		const { user, event, signUp, newParticipationStatus } = data;
+		const { userId, event, signUp, newParticipationStatus } = data;
 
 		if (signUp.participationStatus !== EventParticipationStatus.CONFIRMED) {
 			return {
@@ -924,7 +924,7 @@ class EventService {
 		const { signUp: demotedSignUp } = await this.eventRepository.updateSignUp({
 			newParticipationStatus,
 			eventId: event.id,
-			userId: user.id,
+			userId,
 		});
 		await this.eventCapacityChanged(event.id);
 		return {
@@ -936,7 +936,7 @@ class EventService {
 	private async demoteOnWaitlistSignUp(
 		ctx: Context,
 		data: {
-			user: User;
+			userId: string;
 			event: TicketEvent | SignUpEvent;
 			signUp: EventSignUp;
 			newParticipationStatus: Exclude<
@@ -945,7 +945,7 @@ class EventService {
 			>;
 		},
 	): ResultAsync<{ signUp: EventSignUp }, InvalidArgumentError> {
-		const { user, event, signUp } = data;
+		const { userId, event, signUp } = data;
 		if (signUp.participationStatus !== EventParticipationStatus.ON_WAITLIST) {
 			return {
 				ok: false,
@@ -957,7 +957,7 @@ class EventService {
 
 		ctx.log.info({ signUp }, "Demoting sign up");
 		const { signUp: updatedSignUp } = await this.eventRepository.updateSignUp({
-			userId: user.id,
+			userId,
 			eventId: event.id,
 			newParticipationStatus: data.newParticipationStatus,
 		});
@@ -1052,7 +1052,7 @@ class EventService {
 				}
 
 				return await this.demoteConfirmedSignUp(ctx, {
-					user: ctx.user,
+					userId: ctx.user.id,
 					event,
 					signUp,
 					newParticipationStatus: EventParticipationStatus.RETRACTED,
@@ -1060,7 +1060,7 @@ class EventService {
 			}
 			case EventParticipationStatus.ON_WAITLIST:
 				return await this.demoteOnWaitlistSignUp(ctx, {
-					user: ctx.user,
+					userId: ctx.user.id,
 					event,
 					signUp,
 					newParticipationStatus: EventParticipationStatus.RETRACTED,
@@ -1166,7 +1166,7 @@ class EventService {
 		switch (signUp.participationStatus) {
 			case EventParticipationStatus.CONFIRMED: {
 				return await this.demoteConfirmedSignUp(ctx, {
-					user: ctx.user,
+					userId: signUp.userId,
 					event: event,
 					signUp,
 					newParticipationStatus: EventParticipationStatus.REMOVED,
@@ -1174,7 +1174,7 @@ class EventService {
 			}
 			case EventParticipationStatus.ON_WAITLIST: {
 				return await this.demoteOnWaitlistSignUp(ctx, {
-					user: ctx.user,
+					userId: signUp.userId,
 					event: event,
 					signUp,
 					newParticipationStatus: EventParticipationStatus.REMOVED,

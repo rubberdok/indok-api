@@ -10,6 +10,7 @@ import {
 import { EventParticipationStatus } from "~/domain/events/sign-ups.js";
 import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
+import { Result } from "~/lib/result.js";
 import type { Services } from "~/lib/server.js";
 import {
 	makeDependencies,
@@ -379,6 +380,64 @@ describe("EventService", () => {
 				ok: false,
 				error: expect.any(InvalidArgumentError),
 			});
+		});
+
+		it("removes the confirmed sign up for the user whose sign up matches the id, and not the ctx user", async () => {
+			const { ctx, event } = await makeDependencies({
+				capacity: 2,
+				retractable: false,
+			});
+			const { ctx: otherCtx } = await makeDependencies({
+				capacity: 1,
+			});
+
+			const signUp = await makeSignUp(otherCtx, { eventId: event.id });
+			const ctxUserSignUp = await makeSignUp(ctx, { eventId: event.id });
+
+			const actual = await events.removeSignUp(ctx, { signUpId: signUp.id });
+			expect(actual).toEqual(
+				Result.success({ signUp: expect.objectContaining({ id: signUp.id }) }),
+			);
+			const actualCtxUserSignUpResult = await events.getSignUp(ctx, {
+				eventId: event.id,
+				userId: ctxUserSignUp.id,
+			});
+			expect(actualCtxUserSignUpResult).toEqual(
+				Result.success({
+					signUp: expect.objectContaining({
+						participationStatus: EventParticipationStatus.CONFIRMED,
+					}),
+				}),
+			);
+		});
+
+		it("removes the wait list sign up for the user whose sign up matches the id, and not the ctx user", async () => {
+			const { ctx, event } = await makeDependencies({
+				capacity: 0,
+				retractable: false,
+			});
+			const { ctx: otherCtx } = await makeDependencies({
+				capacity: 1,
+			});
+
+			const signUp = await makeSignUp(otherCtx, { eventId: event.id });
+			const ctxUserSignUp = await makeSignUp(ctx, { eventId: event.id });
+
+			const actual = await events.removeSignUp(ctx, { signUpId: signUp.id });
+			expect(actual).toEqual(
+				Result.success({ signUp: expect.objectContaining({ id: signUp.id }) }),
+			);
+			const actualCtxUserSignUpResult = await events.getSignUp(ctx, {
+				eventId: event.id,
+				userId: ctxUserSignUp.id,
+			});
+			expect(actualCtxUserSignUpResult).toEqual(
+				Result.success({
+					signUp: expect.objectContaining({
+						participationStatus: EventParticipationStatus.ON_WAITLIST,
+					}),
+				}),
+			);
 		});
 	});
 });
