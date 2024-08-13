@@ -11,7 +11,7 @@ on how to do this.
 environment_variables = [
   {
     name  = "CORS_ORIGINS"
-    value = "https://indokntnu.no"
+    value = "https://client.canary.indokntnu.no"
   },
   {
     name  = "CORS_CREDENTIALS"
@@ -31,7 +31,7 @@ environment_variables = [
   },
   {
     name  = "SERVER_URL"
-    value = "https://server-7o8xwaka.yellowflower-e949ae00.norwayeast.azurecontainerapps.io"
+    value = "https://canary.indokntnu.no"
   },
   {
     name  = "FEIDE_CLIENT_ID"
@@ -47,7 +47,7 @@ environment_variables = [
   },
   {
     name  = "SESSION_COOKIE_DOMAIN"
-    value = "yellowflower-e949ae00.norwayeast.azurecontainerapps.io"
+    value = "canary.indokntnu.no"
   },
   {
     name  = "SESSION_COOKIE_HTTP_ONLY"
@@ -71,7 +71,7 @@ environment_variables = [
   },
   {
     name  = "REDIRECT_ORIGINS",
-    value = "https://server-7o8xwaka.yellowflower-e949ae00.norwayeast.azurecontainerapps.io,https://indokntnu.no,https://indøkntnu.no"
+    value = "https://client.canary.indokntnu.no,https://canary.indokntnu.no,https://indokntnu.no,https://indøkntnu.no"
   },
   {
     name  = "FEIDE_GROUPS_API",
