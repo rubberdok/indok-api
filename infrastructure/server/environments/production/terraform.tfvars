@@ -47,7 +47,7 @@ environment_variables = [
   },
   {
     name  = "SESSION_COOKIE_DOMAIN"
-    value = "canary.indokntnu.no"
+    value = "indokntnu.no"
   },
   {
     name  = "SESSION_COOKIE_HTTP_ONLY"
