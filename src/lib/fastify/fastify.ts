@@ -21,6 +21,7 @@ async function fastifyServer(
 	const server = fastify({
 		logger: envToLogger[opts.NODE_ENV],
 		ignoreTrailingSlash: true,
+		trustProxy: opts.TRUST_PROXY,
 	});
 
 	// Security headers

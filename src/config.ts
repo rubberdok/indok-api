@@ -61,6 +61,7 @@ const envVarsSchema = z.object({
 	SESSION_COOKIE_SECURE: z.string().transform((val) => val === "true"),
 	SESSION_COOKIE_SAME_SITE: z.enum(["strict", "lax", "none"]).default("lax"),
 	SESSION_SECRET: z.string(),
+	TRUST_PROXY: z.string().transform((val) => val === "true"),
 	VIPPS_TEST_MODE: z.string().transform((val) => val === "true"),
 	VIPPS_DEFAULT_CLIENT_ID: z.string().optional(),
 	VIPPS_DEFAULT_CLIENT_SECRET: z.string().optional(),
