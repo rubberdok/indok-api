@@ -34,3 +34,9 @@ variable "image_tag" {
   type    = string
   default = "ghcr.io/rubberdok/server:latest"
 }
+
+variable "blob_storage" {
+  type = object({
+    allowed_origins = list(string)
+  })
+}

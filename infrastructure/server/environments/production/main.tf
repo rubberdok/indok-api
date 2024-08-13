@@ -56,6 +56,7 @@ module "server" {
   docker_registry_password = var.docker_registry_password
   environment              = var.environment
   image_tag                = var.image_tag
+  blob_storage             = var.blob_storage
 
   postgres = {
     sku_name   = "B_Standard_B1ms"

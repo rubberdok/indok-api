@@ -91,5 +91,9 @@ environment_variables = [
   }
 ]
 
+blob_storage = {
+  allowed_origins = ["https://client.canary.indokntnu.no", "https://canary.indokntnu.no", "https://*.indokntnu.no", "canary.indokntnu.no", "client.canary.indokntnu.no"]
+}
+
 
 environment = "production"
