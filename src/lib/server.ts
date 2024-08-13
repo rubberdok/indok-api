@@ -73,6 +73,7 @@ import { SignUpQueueName } from "~/services/events/worker.js";
 import { FileService } from "~/services/files/index.js";
 import { ListingService } from "~/services/listings/index.js";
 import { buildMailService } from "~/services/mail/index.js";
+import { EmailQueueName } from "~/services/mail/worker.js";
 import { OrganizationService } from "~/services/organizations/index.js";
 import { ProductService } from "~/services/products/index.js";
 import {
@@ -792,7 +793,7 @@ async function registerServices(
 	const documentRepository = DocumentRepository({ db: database });
 
 	await serverInstance.register(fastifyMessageQueue, {
-		name: "email",
+		name: EmailQueueName,
 	});
 
 	if (!serverInstance.queues.email) {
