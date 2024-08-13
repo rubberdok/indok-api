@@ -217,11 +217,13 @@ function BlobStorageAdapter({
 			try {
 				const containerClient =
 					blobServiceClient.getContainerClient(containerName);
-
+				ctx.log.info("getting blob client");
 				const blobClient = containerClient.getBlobClient(fileName);
+				ctx.log.info("executing blob download");
 				const downloadBlockBlobResponse = await blobClient.downloadToBuffer();
 				return Result.success({ buffer: downloadBlockBlobResponse });
 			} catch (err) {
+				ctx.log.error({ err }, "failed to download blob");
 				return Result.error(
 					new DownstreamServiceError("failed to download blob", err),
 				);
