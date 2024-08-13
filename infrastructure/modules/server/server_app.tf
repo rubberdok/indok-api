@@ -218,6 +218,12 @@ resource "azurerm_container_app" "server" {
 
 
   tags = local.tags
+
+  lifecycle {
+    ignore_changes = [
+      ingress[0].custom_domain
+    ]
+  }
 }
 
 
