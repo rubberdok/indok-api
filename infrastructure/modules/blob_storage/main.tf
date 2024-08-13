@@ -9,7 +9,7 @@ resource "azurerm_storage_account" "main" {
     cors_rule {
       allowed_headers    = ["*"]
       allowed_methods    = ["GET", "DELETE", "PUT", "HEAD", "MERGE", "POST", "OPTIONS", "PUT", "PATCH"]
-      allowed_origins    = ["http://localhost:3000", "localhost:3000"]
+      allowed_origins    = var.allowed_origins
       exposed_headers    = ["x-ms-meta-*"]
       max_age_in_seconds = 3600
     }

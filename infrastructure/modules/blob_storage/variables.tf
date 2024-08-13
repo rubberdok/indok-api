@@ -33,3 +33,8 @@ variable "identity_id" {
   description = "The ID of the user-assigned identity to assign to the storage account."
 
 }
+
+variable "allowed_origins" {
+  type        = list(string)
+  description = "The allowed origins for CORS requests."
+}

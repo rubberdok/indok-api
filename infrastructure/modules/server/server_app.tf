@@ -119,10 +119,10 @@ resource "azurerm_container_app" "server" {
 
     min_replicas = 1
     container {
-      cpu    = 0.25
-      memory = "0.5Gi"
-      name   = "server"
-      image  = var.image_tag
+      cpu     = 0.25
+      memory  = "0.5Gi"
+      name    = "server"
+      image   = var.image_tag
       command = ["pnpm", "run", "start:production"]
 
       startup_probe {
