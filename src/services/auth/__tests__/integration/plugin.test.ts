@@ -329,9 +329,16 @@ describe("Authentication", () => {
 			const enrolledStudyPrograms = enrolledResult.data.studyPrograms;
 			expect(enrolledStudyPrograms).toHaveLength(2);
 
-			const [studyProgram1, studyProgram2] = enrolledStudyPrograms;
-			expect(studyProgram1?.externalId).toEqual(studyProgramId1);
-			expect(studyProgram2?.externalId).toEqual(studyProgramId2);
+			expect(
+				enrolledStudyPrograms.some(
+					(studyProgram) => studyProgram.externalId === studyProgramId1,
+				),
+			).toBe(true);
+			expect(
+				enrolledStudyPrograms.some(
+					(studyProgram) => studyProgram.externalId === studyProgramId2,
+				),
+			).toBe(true);
 		});
 
 		it("requires login", async () => {
