@@ -241,6 +241,7 @@ interface IUserService {
 			phoneNumber?: string | null;
 			graduationYear?: number | null;
 			allergies?: string | null;
+			enrolledStudyPrograms?: StudyProgram[] | null;
 		},
 	): Promise<User>;
 	superUpdateUser(
@@ -279,6 +280,12 @@ interface IUserService {
 		name: string;
 		externalId: string;
 	}): Promise<StudyProgram>;
+	findManyStudyPrograms(
+		ctx: Context,
+	): ResultAsync<
+		{ studyPrograms: StudyProgram[] },
+		InternalServerError | UnauthorizedError
+	>;
 }
 
 type NewBookingParams = {

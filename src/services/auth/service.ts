@@ -58,6 +58,7 @@ export interface UserService {
 			allergies: string | null;
 			phoneNumber: string | null;
 			confirmedStudyProgramId: string | null;
+			enrolledStudyPrograms: StudyProgram[] | null;
 		}>,
 	): Promise<User>;
 	get(id: string): Promise<User>;
@@ -272,40 +273,39 @@ export class AuthService {
 		if (!groupsApiResponse.body) return Result.success({ studyProgram: null });
 
 		const groups: FeideGroup[] = JSON.parse(groupsApiResponse.body.toString());
-		const studyPrograms = groups.filter((group) => {
+		const feideGroups = groups.filter((group) => {
 			const isAtNtnu = group.parent === "fc:org:ntnu.no";
 			const isStudyProgram = group.type === "fc:fs:prg";
 			const isActive = group.membership.active;
 
 			return isAtNtnu && isStudyProgram && isActive;
 		});
+		req.log.info({ studyPrograms: feideGroups.length }, "study programs");
 
-		req.log.info({ studyPrograms: studyPrograms.length }, "study programs");
+		const studyPrograms: StudyProgram[] = [];
+		for (const group of feideGroups) {
+			let studyProgram = await this.userService.getStudyProgram({
+				externalId: group.id,
+			});
+			if (!studyProgram) {
+				req.log.info({ studyProgram: group }, "found new study program");
+				studyProgram = await this.userService.createStudyProgram({
+					name: group.displayName,
+					externalId: group.id,
+				});
+			}
+			studyPrograms.push(studyProgram);
+		}
+
 		const bestGuessStudyProgram = studyPrograms[0];
 		if (!bestGuessStudyProgram) return Result.success({ studyProgram: null });
 
-		let studyProgram = await this.userService.getStudyProgram({
-			externalId: bestGuessStudyProgram.id,
+		await this.userService.update(userId, {
+			confirmedStudyProgramId: bestGuessStudyProgram.id,
+			enrolledStudyPrograms: studyPrograms,
 		});
 
-		if (!studyProgram) {
-			req.log.info(
-				{ studyProgram: bestGuessStudyProgram },
-				"found new study program",
-			);
-			studyProgram = await this.userService.createStudyProgram({
-				name: bestGuessStudyProgram.displayName,
-				externalId: bestGuessStudyProgram.id,
-			});
-		}
-
-		if (studyProgram) {
-			await this.userService.update(userId, {
-				confirmedStudyProgramId: studyProgram.id,
-			});
-		}
-
-		return Result.success({ studyProgram });
+		return Result.success({ studyProgram: bestGuessStudyProgram });
 	}
 
 	/**

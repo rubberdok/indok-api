@@ -2,11 +2,13 @@ import type { Prisma } from "@prisma/client";
 import { DateTime } from "luxon";
 import { z } from "zod";
 import {
+	type InternalServerError,
 	InvalidArgumentError,
 	PermissionDeniedError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
 import type { StudyProgram, User } from "~/domain/users.js";
+import { Result, type ResultAsync } from "~/lib/result.js";
 import type { IUserService } from "~/lib/server.js";
 import type { Context } from "../../lib/context.js";
 import type { EmailQueueDataType } from "../mail/worker.js";
@@ -25,6 +27,10 @@ export interface UserRepository {
 	getStudyProgram(
 		by: { id: string } | { externalId: string },
 	): Promise<StudyProgram | null>;
+	findManyStudyPrograms(
+		ctx: Context,
+		by: { userId: string },
+	): ResultAsync<{ studyPrograms: StudyProgram[] }, InternalServerError>;
 }
 
 export type MailService = {
@@ -133,6 +139,7 @@ export class UserService implements IUserService {
 			allergies: string | null;
 			phoneNumber: string | null;
 			confirmedStudyProgramId: string | null;
+			enrolledStudyPrograms: StudyProgram[] | null;
 		}>,
 	): Promise<User> {
 		const schema = z.object({
@@ -285,5 +292,25 @@ export class UserService implements IUserService {
 		by: { id: string } | { externalId: string },
 	): Promise<StudyProgram | null> {
 		return this.usersRepository.getStudyProgram(by);
+	}
+
+	async findManyStudyPrograms(
+		ctx: Context,
+	): ResultAsync<
+		{ studyPrograms: StudyProgram[] },
+		InternalServerError | UnauthorizedError
+	> {
+		if (!ctx.user) {
+			return Result.error(
+				new UnauthorizedError("You must be logged in to perform this action"),
+			);
+		}
+		const result = await this.usersRepository.findManyStudyPrograms(ctx, {
+			userId: ctx.user.id,
+		});
+		if (!result.ok) {
+			return Result.error(result.error);
+		}
+		return result;
 	}
 }

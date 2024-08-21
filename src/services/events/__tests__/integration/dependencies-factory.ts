@@ -5,7 +5,7 @@ import { DateTime } from "luxon";
 import type { ServerClient } from "postmark";
 import { env } from "~/config.js";
 import type { Organization } from "~/domain/organizations.js";
-import type { User } from "~/domain/users.js";
+import type { IUser, User } from "~/domain/users.js";
 import { type Context, makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import { EventRepository } from "~/repositories/events/index.js";
@@ -75,7 +75,7 @@ export function makeServices() {
 }
 
 export async function makeUserWithOrganizationMembership(
-	userData: Partial<User> = {},
+	userData: Partial<Omit<IUser, "enrolledStudyPrograms">> = {},
 ): Promise<{ user: User; organization: Organization }> {
 	const { userService, organizationService } = makeServices();
 	const user = await userService.create({

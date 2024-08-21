@@ -4,7 +4,7 @@ import { DateTime } from "luxon";
 import { InvalidArgumentError } from "~/domain/errors.js";
 import { EventParticipationStatus } from "~/domain/events/sign-ups.js";
 import type { Organization } from "~/domain/organizations.js";
-import { User } from "~/domain/users.js";
+import { type IUser, User } from "~/domain/users.js";
 import { makeMockContext } from "~/lib/context.js";
 import prisma from "~/lib/prisma.js";
 import type { EventService } from "../../service.js";
@@ -771,7 +771,7 @@ function getCreateUserData() {
 }
 
 async function makeUserWithOrganizationMembership(
-	userData: Partial<User> = {},
+	userData: Partial<Omit<IUser, "enrolledStudyPrograms">> = {},
 ): Promise<{ user: User; organization: Organization }> {
 	const user = new User(
 		await prisma.user.create({

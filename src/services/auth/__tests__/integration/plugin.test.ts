@@ -6,6 +6,7 @@ import { Issuer } from "openid-client";
 import { makeTestServices } from "~/__tests__/dependencies-factory.js";
 import { env } from "~/config.js";
 import { User } from "~/domain/users.js";
+import { makeMockContext } from "~/lib/context.js";
 import { fastifyServer } from "~/lib/fastify/fastify.js";
 import fastifyService from "~/lib/fastify/service.js";
 import type { FeideUserInfo } from "../../service.js";
@@ -292,6 +293,42 @@ describe("Authentication", () => {
 			});
 			expect(studyProgram).not.toBeNull();
 			expect(studyProgram?.externalId).toEqual(studyProgramId);
+		});
+
+		it("stores all enrolled study programs for the user", async () => {
+			const { serverInstance, makeStudyProgram, performLogin } = dependencies;
+			const studyProgramId1 = faker.string.uuid();
+			const studyProgramId2 = faker.string.uuid();
+			makeStudyProgram({ id: studyProgramId1 });
+			makeStudyProgram({ id: studyProgramId2 });
+
+			const userFeideId = faker.string.uuid();
+			const { cookies } = await performLogin({ userFeideId });
+
+			await serverInstance.inject({
+				method: "GET",
+				url: "/auth/study-program",
+				cookies,
+			});
+
+			await serverInstance.inject({
+				method: "GET",
+				url: "/auth/study-program/callback?code=code",
+				cookies,
+			});
+
+			const user = await dependencies.services.users.getByFeideID(userFeideId);
+			assert(user, "User not found");
+			const enrolledResult =
+				await serverInstance.services.users.findManyStudyPrograms(
+					makeMockContext(user),
+				);
+			assert(enrolledResult.ok, "Failed to fetch enrolled study programs");
+			const enrolledStudyPrograms = enrolledResult.data.studyPrograms;
+			expect(enrolledStudyPrograms).toHaveLength(2);
+			const [studyProgram1, studyProgram2] = enrolledStudyPrograms;
+			expect(studyProgram1?.externalId).toEqual(studyProgramId1);
+			expect(studyProgram2?.externalId).toEqual(studyProgramId2);
 		});
 
 		it("requires login", async () => {
