@@ -1,3 +1,4 @@
+import fastifyCompress from "@fastify/compress";
 import fastifyCookie from "@fastify/cookie";
 import fastifyCors from "@fastify/cors";
 import fastifyHelmet from "@fastify/helmet";
@@ -85,6 +86,8 @@ async function fastifyServer(
 	await server.register(fastifyUnderPressure, {
 		exposeStatusRoute: true,
 	});
+
+	await server.register(fastifyCompress);
 
 	/**
 	 * Set custom error handler to handle user-facing errors
