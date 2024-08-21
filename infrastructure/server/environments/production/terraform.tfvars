@@ -88,6 +88,10 @@ environment_variables = [
   {
     name  = "CONTACT_EMAIL",
     value = "kontakt@rubberdok.no"
+  },
+  {
+    name  = "CLIENT_URL",
+    value = "https://client.canary.indokntnu.no"
   }
 ]
 

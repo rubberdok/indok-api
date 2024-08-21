@@ -35,7 +35,7 @@
 		"generate:gql": "NODE_OPTIONS='-r @swc-node/register' graphql-codegen-esm -c codegen.config.ts",
 		"generate:prisma": "prisma generate --no-hints",
 		"generate": "run-p generate:*",
-		"integration-test": "dotenv -e .env.test -- pnpm db:push && dotenv -e .env.test -- pnpm jest --config jest.integration.config.cjs",
+		"integration-test": "dotenv -e .env.test -- pnpm db:push --skip-generate && dotenv -e .env.test -- pnpm jest --config jest.integration.config.cjs",
 		"format": "biome format .",
 		"format:write": "biome format --write .",
 		"lint": "biome check .",
