@@ -21,6 +21,7 @@ import { OrganizationRepository } from "~/repositories/organizations/organizatio
 import { ProductRepository } from "~/repositories/products/repository.js";
 import { UserRepository } from "~/repositories/users/index.js";
 import { AuthService } from "~/services/auth/index.js";
+import type { OpenIDClient } from "~/services/auth/service.js";
 import { CabinService } from "~/services/cabins/index.js";
 import { DocumentService } from "~/services/documents/service.js";
 import { EventService } from "~/services/events/service.js";
@@ -34,11 +35,12 @@ import { ProductService } from "~/services/products/service.js";
 import type { PaymentProcessingQueueType } from "~/services/products/worker.js";
 import { UserService } from "~/services/users/service.js";
 
-export function makeTestServices(overrides?: Partial<Services>): Services & {
-	openIdClient: ReturnType<typeof newMockOpenIdClient>;
+export function makeTestServices(
+	overrides?: Partial<Services & { openIdClient: OpenIDClient }>,
+): Services & {
 	mockBlobServiceClient: DeepMockProxy<BlobServiceClient>;
 } {
-	const openIdClient = newMockOpenIdClient();
+	const openIdClient = overrides?.openIdClient ?? newMockOpenIdClient();
 	const database = prisma;
 
 	const cabinRepository = new CabinRepository(database);
@@ -138,7 +140,6 @@ export function makeTestServices(overrides?: Partial<Services>): Services & {
 	};
 
 	return {
-		openIdClient,
 		mockBlobServiceClient,
 		...services,
 		...overrides,
@@ -181,7 +182,7 @@ function makeUser(userData: Partial<User> = {}): Promise<User> {
 				isSuperUser: false,
 				lastLogin: new Date(),
 				phoneNumber: faker.phone.number(),
-				studyProgramId: null,
+				confirmedStudyProgramId: null,
 				updatedAt: new Date(),
 				username: faker.string.uuid(),
 			},

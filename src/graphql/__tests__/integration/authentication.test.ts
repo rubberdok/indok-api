@@ -79,7 +79,7 @@ describe("Apollo Context Authentication", () => {
 		expect(mockUserService.get).toHaveBeenCalledTimes(1);
 		expect(client.services.auth.logout).toHaveBeenCalledWith(
 			expect.objectContaining({
-				session: expect.objectContaining({ authenticated: true, userId }),
+				session: expect.objectContaining({ userId }),
 			}),
 		);
 	});

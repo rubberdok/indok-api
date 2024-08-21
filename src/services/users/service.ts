@@ -2,11 +2,13 @@ import type { Prisma } from "@prisma/client";
 import { DateTime } from "luxon";
 import { z } from "zod";
 import {
+	type InternalServerError,
 	InvalidArgumentError,
 	PermissionDeniedError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
-import type { StudyProgram, User } from "~/domain/users.js";
+import { StudyProgram, type User } from "~/domain/users.js";
+import { Result, type ResultAsync } from "~/lib/result.js";
 import type { IUserService } from "~/lib/server.js";
 import type { Context } from "../../lib/context.js";
 import type { EmailQueueDataType } from "../mail/worker.js";
@@ -25,6 +27,10 @@ export interface UserRepository {
 	getStudyProgram(
 		by: { id: string } | { externalId: string },
 	): Promise<StudyProgram | null>;
+	findManyStudyPrograms(
+		ctx: Context,
+		by: { userId: string },
+	): ResultAsync<{ studyPrograms: StudyProgram[] }, InternalServerError>;
 }
 
 export type MailService = {
@@ -103,7 +109,7 @@ export class UserService implements IUserService {
 				.boolean()
 				.nullish()
 				.transform((val) => val ?? undefined),
-			studyProgramId: z
+			confirmedStudyProgramId: z
 				.string()
 				.uuid()
 				.nullish()
@@ -132,7 +138,8 @@ export class UserService implements IUserService {
 			graduationYear: number | null;
 			allergies: string | null;
 			phoneNumber: string | null;
-			studyProgramId: string | null;
+			confirmedStudyProgramId: string | null;
+			enrolledStudyPrograms: StudyProgram[] | null;
 		}>,
 	): Promise<User> {
 		const schema = z.object({
@@ -160,7 +167,7 @@ export class UserService implements IUserService {
 				.string()
 				.nullish()
 				.transform((val) => val ?? undefined),
-			studyProgramId: z
+			confirmedStudyProgramId: z
 				.string()
 				.nullish()
 				.transform((val) => val ?? undefined),
@@ -175,6 +182,10 @@ export class UserService implements IUserService {
 						.nullish()
 						.transform((val) => val ?? undefined),
 				),
+			enrolledStudyPrograms: z
+				.array(z.instanceof(StudyProgram))
+				.nullish()
+				.transform((val) => val ?? undefined),
 		});
 		try {
 			const user = await this.usersRepository.get(id);
@@ -186,7 +197,7 @@ export class UserService implements IUserService {
 				phoneNumber,
 				allergies,
 				graduationYear,
-				studyProgramId,
+				confirmedStudyProgramId,
 			} = schema.parse(data);
 			let firstLogin: boolean | undefined;
 			let newGraduationYear: number | undefined = graduationYear;
@@ -206,7 +217,8 @@ export class UserService implements IUserService {
 				graduationYear: newGraduationYear,
 				graduationYearUpdatedAt,
 				firstLogin,
-				studyProgramId,
+				confirmedStudyProgramId,
+				enrolledStudyPrograms: data.enrolledStudyPrograms,
 			});
 
 			return updatedUser;
@@ -285,5 +297,25 @@ export class UserService implements IUserService {
 		by: { id: string } | { externalId: string },
 	): Promise<StudyProgram | null> {
 		return this.usersRepository.getStudyProgram(by);
+	}
+
+	async findManyStudyPrograms(
+		ctx: Context,
+	): ResultAsync<
+		{ studyPrograms: StudyProgram[] },
+		InternalServerError | UnauthorizedError
+	> {
+		if (!ctx.user) {
+			return Result.error(
+				new UnauthorizedError("You must be logged in to perform this action"),
+			);
+		}
+		const result = await this.usersRepository.findManyStudyPrograms(ctx, {
+			userId: ctx.user.id,
+		});
+		if (!result.ok) {
+			return Result.error(result.error);
+		}
+		return result;
 	}
 }

@@ -16,7 +16,7 @@ class StudyProgram {
 	}
 }
 
-class User {
+interface IUser {
 	id: string;
 	feideId: string;
 	createdAt: Date;
@@ -32,9 +32,33 @@ class User {
 	allergies: string;
 	phoneNumber: string;
 	isSuperUser: boolean;
-	studyProgramId: string | null;
+	confirmedStudyProgramId: string | null;
+	enrolledStudyPrograms?: StudyProgram[] | null;
+	fullName: string;
+	canUpdateYear: boolean;
+	gradeYear: number | undefined;
+}
 
-	constructor(params: Omit<User, "fullName" | "canUpdateYear" | "gradeYear">) {
+class User implements IUser {
+	id: string;
+	feideId: string;
+	createdAt: Date;
+	updatedAt: Date;
+	lastLogin: Date;
+	firstLogin: boolean;
+	firstName: string;
+	lastName: string;
+	email: string;
+	username: string;
+	graduationYear: number | null;
+	graduationYearUpdatedAt: Date | null;
+	allergies: string;
+	phoneNumber: string;
+	isSuperUser: boolean;
+	confirmedStudyProgramId: string | null;
+	enrolledStudyPrograms?: StudyProgram[] | null;
+
+	constructor(params: Omit<IUser, "fullName" | "canUpdateYear" | "gradeYear">) {
 		this.id = params.id;
 		this.feideId = params.feideId;
 		this.createdAt = params.createdAt;
@@ -50,7 +74,33 @@ class User {
 		this.allergies = params.allergies;
 		this.phoneNumber = params.phoneNumber;
 		this.isSuperUser = params.isSuperUser;
-		this.studyProgramId = params.studyProgramId;
+		this.confirmedStudyProgramId = params.confirmedStudyProgramId;
+		this.enrolledStudyPrograms = params.enrolledStudyPrograms;
+	}
+
+	public toJSON(): IUser {
+		return {
+			id: this.id,
+			feideId: this.feideId,
+			createdAt: this.createdAt,
+			updatedAt: this.updatedAt,
+			lastLogin: this.lastLogin,
+			firstLogin: this.firstLogin,
+			firstName: this.firstName,
+			lastName: this.lastName,
+			email: this.email,
+			username: this.username,
+			graduationYear: this.graduationYear,
+			graduationYearUpdatedAt: this.graduationYearUpdatedAt,
+			allergies: this.allergies,
+			phoneNumber: this.phoneNumber,
+			isSuperUser: this.isSuperUser,
+			confirmedStudyProgramId: this.confirmedStudyProgramId,
+			enrolledStudyPrograms: this.enrolledStudyPrograms,
+			canUpdateYear: this.canUpdateYear,
+			gradeYear: this.gradeYear,
+			fullName: this.fullName,
+		};
 	}
 
 	get fullName(): string {
@@ -92,4 +142,5 @@ class User {
 	}
 }
 
-export { User, StudyProgram };
+export { StudyProgram, User };
+export type { IUser };

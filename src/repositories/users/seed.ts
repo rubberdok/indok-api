@@ -62,7 +62,7 @@ function makeUserWithMemberships(
 	return {
 		...data,
 		id: userId,
-		studyProgram: {
+		confirmedStodyProgram: {
 			connectOrCreate: {
 				where: {
 					externalId: "fc:fs:fs:prg:ntnu.no:MTIØT",

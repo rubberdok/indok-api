@@ -461,7 +461,7 @@ describe("OrganizationsService", () => {
 					externalId: faker.string.uuid(),
 					name: faker.string.sample(20),
 					featurePermissions: [FeaturePermission.EVENT_WRITE_SIGN_UPS],
-					users: {
+					usersConfirmedInProgram: {
 						connect: {
 							id: user.id,
 						},

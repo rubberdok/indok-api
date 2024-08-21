@@ -1,19 +1,33 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library.js";
-import { InvalidArgumentError, NotFoundError } from "~/domain/errors.js";
+import {
+	InternalServerError,
+	InvalidArgumentError,
+	NotFoundError,
+} from "~/domain/errors.js";
 import { StudyProgram, User } from "~/domain/users.js";
+import type { Context } from "~/lib/context.js";
 import { prismaKnownErrorCodes } from "~/lib/prisma.js";
+import { Result, type ResultAsync } from "~/lib/result.js";
 import type { UserRepository as IUserRepository } from "~/services/users/index.js";
 
 export class UserRepository implements IUserRepository {
 	constructor(private db: PrismaClient) {}
 
 	async update(id: string, data: Partial<User>): Promise<User> {
+		const { enrolledStudyPrograms, ...rest } = data;
 		const user = await this.db.user.update({
 			where: {
 				id,
 			},
-			data,
+			data: {
+				...rest,
+				enrolledStudyPrograms: {
+					set: enrolledStudyPrograms?.map((studyProgram) => ({
+						id: studyProgram.id,
+					})),
+				},
+			},
 		});
 		return new User(user);
 	}
@@ -105,5 +119,33 @@ export class UserRepository implements IUserRepository {
 			return null;
 		}
 		return new StudyProgram(studyProgram);
+	}
+
+	async findManyStudyPrograms(
+		ctx: Context,
+		by: { userId: string },
+	): ResultAsync<{ studyPrograms: StudyProgram[] }, InternalServerError> {
+		ctx.log.info({ userId: by.userId }, "Finding study programs for user");
+		try {
+			const studyPrograms = await this.db.studyProgram.findMany({
+				where: {
+					usersEnrolledInProgram: {
+						some: {
+							id: by.userId,
+						},
+					},
+				},
+			});
+
+			return Result.success({
+				studyPrograms: studyPrograms.map(
+					(studyProgram) => new StudyProgram(studyProgram),
+				),
+			});
+		} catch (err) {
+			return Result.error(
+				new InternalServerError("Failed to find study programs", err),
+			);
+		}
 	}
 }

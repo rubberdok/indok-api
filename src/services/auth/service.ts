@@ -1,16 +1,20 @@
-import type { IncomingMessage } from "node:http";
 import type { FastifyRequest } from "fastify";
-import type { TokenSet, UserinfoResponse } from "openid-client";
-import { generators } from "openid-client";
+import {
+	type TokenSet,
+	type UserinfoResponse,
+	generators,
+} from "openid-client";
 import { env } from "~/config.js";
 import {
 	AuthenticationError,
 	BadRequestError,
-	NotFoundError,
+	DownstreamServiceError,
+	InternalServerError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
 import type { StudyProgram, User } from "~/domain/users.js";
-import type { Context } from "../../lib/context.js";
+import { Result, type ResultAsync, type TResult } from "~/lib/result.js";
+import { isValidRedirectUrl } from "~/utils/validate-redirect-url.js";
 
 export interface OpenIDClient {
 	authorizationUrl(options: {
@@ -28,7 +32,7 @@ export interface OpenIDClient {
 	requestResource(
 		resourceUrl: URL,
 		accessToken: TokenSet,
-	): Promise<{ body?: Buffer } & IncomingMessage>;
+	): Promise<{ body?: Buffer }>;
 	userinfo(
 		tokenSet: TokenSet,
 	): Promise<UserinfoResponse<FeideUserInfo, Record<string, never>>>;
@@ -41,6 +45,7 @@ export interface UserService {
 		lastName: string;
 		feideId: string;
 		username: string;
+		phoneNumber?: string;
 	}): Promise<User>;
 	login(id: string): Promise<User>;
 	getByFeideID(feideId: string): Promise<User | null>;
@@ -52,7 +57,8 @@ export interface UserService {
 			graduationYear: number | null;
 			allergies: string | null;
 			phoneNumber: string | null;
-			studyProgramId: string | null;
+			confirmedStudyProgramId: string | null;
+			enrolledStudyPrograms: StudyProgram[] | null;
 		}>,
 	): Promise<User>;
 	get(id: string): Promise<User>;
@@ -85,13 +91,6 @@ export class AuthService {
 	constructor(
 		private userService: UserService,
 		private openIDClient: OpenIDClient,
-		private callbackUrlMapping: Record<
-			"login" | "studyProgram",
-			string | URL
-		> = {
-			login: new URL("/auth/authenticate", env.SERVER_URL),
-			studyProgram: new URL("/auth/study-program", env.SERVER_URL),
-		},
 		private feideGroupsApi: URL = new URL(env.FEIDE_GROUPS_API),
 	) {}
 
@@ -101,184 +100,112 @@ export class AuthService {
 	 * This means that we generate a code verifier, and a code challenge based on the code verifier. The challenge is
 	 * sent to the OpenID Provider, and the verifier is stored in the session. When the user is redirected back to us, we
 	 * send the verifier along with the code, and the OpenID Provider will verify that the verifier matches the challenge.
-	 *
-	 * @param req - the fastify request
-	 * @param postAuthorizationRedirectUrl - the url to redirect the user to after authentication is complete
-	 * @returns the url to redirect the user to
 	 */
-	authorizationUrl(
+	generateAuthorizationUrl(
 		req: FastifyRequest,
-		postAuthorizationRedirectUrl?: string | null,
-		kind: "login" | "studyProgram" = "login",
-	): string {
+		params: {
+			redirectUri: "/auth/login/callback" | "/auth/study-program/callback";
+			returnTo?: string;
+		},
+	): TResult<
+		{ authorizationUrl: string },
+		InternalServerError | BadRequestError
+	> {
 		const { codeVerifier, codeChallenge } = this.pkce();
 		req.session.set("codeVerifier", codeVerifier);
-
-		const url = this.openIDClient.authorizationUrl({
-			scope: this.scope,
-			code_challenge_method: "S256",
-			code_challenge: codeChallenge,
-			state: postAuthorizationRedirectUrl ?? undefined,
-			redirect_uri: this.callbackUrlMapping[kind].toString(),
-		});
-
-		return url;
-	}
-
-	/**
-	 * authorizationCallback is the callback handler for the OpenID Provider. Using the code, we will fetch
-	 * an access token and an id token from the OpenID Provider. The id token contains information about the user,
-	 * and we use this to create a new user in our database if it does not already exist.
-	 *
-	 * The openid-client library handles JWT verification of the ID token for us. The access token is used to fetch
-	 * additional information about the user from the OpenID Provider.
-	 *
-	 * When making the access token request, we send the code verifier along with the code. The OpenID Provider will
-	 * verify that the verifier matches the challenge.
-	 *
-	 * If the user already exists, we return the user without changes.
-	 *
-	 * @throws {BadRequestError} - if no code verifier is found in the session
-	 * @throws {AuthenticationError} - if no username is found for the user.
-	 * @param req - the fastify request
-	 * @param params.code - the authorization code from the OpenID Provider as a result of the user authenticating
-	 * @returns the user
-	 */
-	async studyProgramCallback(
-		req: FastifyRequest,
-		params: { code: string },
-	): Promise<User> {
-		const codeVerifier = req.session.get("codeVerifier");
-		if (!codeVerifier) throw new BadRequestError("No code verifier found");
-
-		const { code } = params;
-
-		const tokenSet = await this.openIDClient.callback(
-			this.callbackUrlMapping.studyProgram.toString(),
-			{
-				code,
-			},
-			{
-				code_verifier: codeVerifier,
-			},
-		);
-
-		const userInfo = await this.openIDClient.userinfo(tokenSet);
-
-		const user = await this.userService.getByFeideID(userInfo.sub);
-		if (user === null) {
-			throw new NotFoundError("User not found, use /login?kind=login instead");
+		let returnToUrl: URL | undefined = undefined;
+		if (params.returnTo) {
+			const validationResult = isValidRedirectUrl(params.returnTo);
+			if (validationResult.ok) {
+				returnToUrl = validationResult.data.url;
+			} else {
+				return Result.error(new BadRequestError("Invalid returnTo url"));
+			}
 		}
 
-		const ctx = {
-			user,
-			log: req.log,
-		};
-
-		const studyProgram = await this.getStudyProgramForUser(ctx, tokenSet);
-
-		if (ctx.user.studyProgramId === studyProgram?.id) return ctx.user;
-
-		const updatedUser = await this.userService.update(ctx.user.id, {
-			studyProgramId: studyProgram?.id,
-		});
-
-		return updatedUser;
+		try {
+			const url = this.openIDClient.authorizationUrl({
+				scope: this.scope,
+				code_challenge_method: "S256",
+				code_challenge: codeChallenge,
+				redirect_uri: `${env.SERVER_URL}${params.redirectUri}`,
+				state: returnToUrl?.toString(),
+			});
+			return Result.success({ authorizationUrl: url });
+		} catch (err) {
+			return Result.error(
+				new InternalServerError("Failed to generate authorization url", err),
+			);
+		}
 	}
 
-	private async getStudyProgramForUser(
-		ctx: Context,
-		accessToken: TokenSet,
-	): Promise<StudyProgram | null> {
-		if (!ctx.user) throw new UnauthorizedError("Not logged in");
-
-		ctx.log.info({ userId: ctx.user.id }, "fetching study programs");
-		const groupsApiResponse = await this.openIDClient.requestResource(
-			this.feideGroupsApi,
-			accessToken,
-		);
-
-		if (!groupsApiResponse.body) return null;
-
-		const groups: FeideGroup[] = JSON.parse(groupsApiResponse.body.toString());
-		const studyPrograms = groups.filter((group) => {
-			const isAtNtnu = group.parent === "fc:org:ntnu.no";
-			const isStudyProgram = group.type === "fc:fs:prg";
-			const isActive = group.membership.active;
-
-			return isAtNtnu && isStudyProgram && isActive;
-		});
-
-		ctx.log.info({ studyPrograms: studyPrograms.length }, "study programs");
-		const bestGuessStudyProgram = studyPrograms[0];
-		if (!bestGuessStudyProgram) return null;
-
-		const studyProgram = await this.userService.getStudyProgram({
-			externalId: bestGuessStudyProgram.id,
-		});
-		if (studyProgram) return studyProgram;
-
-		ctx.log.info(
-			{ studyProgram: bestGuessStudyProgram },
-			"found new study program",
-		);
-		const newStudyProgram = await this.userService.createStudyProgram({
-			name: bestGuessStudyProgram.displayName,
-			externalId: bestGuessStudyProgram.id,
-		});
-		return newStudyProgram;
-	}
-
-	/**
-	 * userLoginCallback is the callback handler for the OpenID Provider. Using the code, we will fetch
-	 * an access token and an id token from the OpenID Provider. The id token contains information about the user,
-	 * and we use this to create a new user in our database if it does not already exist.
-	 *
-	 * The openid-client library handles JWT verification of the ID token for us. The access token is used to fetch
-	 * additional information about the user from the OpenID Provider.
-	 *
-	 * When making the access token request, we send the code verifier along with the code. The OpenID Provider will
-	 * verify that the verifier matches the challenge.
-	 *
-	 * If the user already exists, we return the user without changes.
-	 *
-	 * @throws {BadRequestError} - if no code verifier is found in the session
-	 * @throws {AuthenticationError} - if no username is found for the user.
-	 * @param req - the fastify request
-	 * @param params.code - the authorization code from the OpenID Provider as a result of the user authenticating
-	 * @returns the user
-	 */
-	async userLoginCallback(
+	async getAuthorizationToken(
 		req: FastifyRequest,
-		params: { code: string },
-	): Promise<User> {
+		params: {
+			code: string;
+			redirectUri: "/auth/login/callback" | "/auth/study-program/callback";
+		},
+	): ResultAsync<
+		{ token: TokenSet },
+		DownstreamServiceError | BadRequestError
+	> {
 		const codeVerifier = req.session.get("codeVerifier");
-		if (!codeVerifier)
-			throw new BadRequestError("No code verifier found in session");
+		if (!codeVerifier) {
+			return Result.error(
+				new BadRequestError("No code verifier found in session"),
+			);
+		}
 
-		const { code } = params;
+		try {
+			const tokenset = await this.openIDClient.callback(
+				`${env.SERVER_URL}${params.redirectUri}`,
+				{ code: params.code },
+				{ code_verifier: codeVerifier },
+			);
+			return Result.success({ token: tokenset });
+		} catch (err) {
+			return Result.error(
+				new DownstreamServiceError(
+					"Failed to get token from OpenID Provider",
+					err,
+				),
+			);
+		}
+	}
 
-		req.log?.info("Fetching access token");
-		const tokenSet = await this.openIDClient.callback(
-			this.callbackUrlMapping.login.toString(),
-			{
-				code,
-			},
-			{
-				code_verifier: codeVerifier,
-			},
-		);
+	async getUserInfo(
+		req: FastifyRequest,
+		params: { token: TokenSet },
+	): ResultAsync<
+		{ userInfo: UserinfoResponse<FeideUserInfo> },
+		DownstreamServiceError
+	> {
+		req.log.info("Fetching userinfo from OIDC provider");
+		try {
+			const userinfo = await this.openIDClient.userinfo(params.token);
+			return Result.success({ userInfo: userinfo });
+		} catch (err) {
+			return Result.error(
+				new DownstreamServiceError("Failed to fetch userinfo", err),
+			);
+		}
+	}
 
-		req.log?.info("Fetching user info");
+	async getOrCreateUser(
+		req: FastifyRequest,
+		{ userInfo }: { userInfo: UserinfoResponse<FeideUserInfo> },
+	): ResultAsync<
+		{ user: User },
+		InternalServerError | AuthenticationError | DownstreamServiceError
+	> {
 		const {
 			sub,
 			name,
 			email,
 			"https://n.feide.no/claims/userid_sec": userid_sec,
 			"https://n.feide.no/claims/eduPersonPrincipalName": ntnuId,
-		} = await this.openIDClient.userinfo(tokenSet);
-		req.log?.info({ sub }, "Fetched user info");
-
+			phone_number: phoneNumber,
+		} = userInfo;
 		const existingUser = await this.userService.getByFeideID(sub);
 		if (existingUser) {
 			req.log?.info(
@@ -287,10 +214,10 @@ export class AuthService {
 				},
 				"User already exists",
 			);
-			return existingUser;
+			return Result.success({ user: existingUser });
 		}
 
-		req.log?.info({ sub }, "Creating new user");
+		req.log?.info({ sub: userInfo.sub }, "Creating new user");
 
 		let eduUsername: string;
 		if (ntnuId) {
@@ -298,8 +225,10 @@ export class AuthService {
 		} else {
 			const feideUserIdSec = userid_sec.find((id) => id.startsWith("feide:"));
 			if (!feideUserIdSec)
-				throw new AuthenticationError(
-					`No username found for user with feideId ${sub}`,
+				return Result.error(
+					new AuthenticationError(
+						`No username found for user with feideId ${sub}`,
+					),
 				);
 			eduUsername = feideUserIdSec.slice(
 				feideUserIdSec.indexOf(":") + 1,
@@ -308,26 +237,75 @@ export class AuthService {
 		}
 
 		const [firstName, lastName] = name.split(" ");
-		let user = await this.userService.create({
+		const user = await this.userService.create({
 			email,
 			firstName: firstName ?? "",
 			lastName: lastName ?? "",
 			feideId: sub,
 			username: eduUsername,
+			phoneNumber,
 		});
 
-		req.log.info("fetching study program");
-		const studyProgram = await this.getStudyProgramForUser(
-			{ user, log: req.log },
-			tokenSet,
+		return Result.success({ user });
+	}
+
+	async updateStudyProgramForUser(
+		req: FastifyRequest,
+		params: { token: TokenSet },
+	): ResultAsync<
+		{ studyProgram: StudyProgram | null },
+		DownstreamServiceError | UnauthorizedError
+	> {
+		const userId = req.session.get("userId");
+		if (!userId) {
+			return Result.error(
+				new UnauthorizedError(
+					"You need to be logged in to perform this action",
+				),
+			);
+		}
+		req.log.info("fetching study programs");
+		const groupsApiResponse = await this.openIDClient.requestResource(
+			this.feideGroupsApi,
+			params.token,
 		);
 
-		if (studyProgram) {
-			user = await this.userService.update(user.id, {
-				studyProgramId: studyProgram.id,
+		if (!groupsApiResponse.body) return Result.success({ studyProgram: null });
+
+		const groups: FeideGroup[] = JSON.parse(groupsApiResponse.body.toString());
+		const feideGroups = groups.filter((group) => {
+			const isAtNtnu = group.parent === "fc:org:ntnu.no";
+			const isStudyProgram = group.type === "fc:fs:prg";
+			const isActive = group.membership.active;
+
+			return isAtNtnu && isStudyProgram && isActive;
+		});
+		req.log.info({ studyPrograms: feideGroups.length }, "study programs");
+
+		const studyPrograms: StudyProgram[] = [];
+		for (const group of feideGroups) {
+			let studyProgram = await this.userService.getStudyProgram({
+				externalId: group.id,
 			});
+			if (!studyProgram) {
+				req.log.info({ studyProgram: group }, "found new study program");
+				studyProgram = await this.userService.createStudyProgram({
+					name: group.displayName,
+					externalId: group.id,
+				});
+			}
+			studyPrograms.push(studyProgram);
 		}
-		return user;
+
+		const bestGuessStudyProgram = studyPrograms[0];
+		if (!bestGuessStudyProgram) return Result.success({ studyProgram: null });
+
+		await this.userService.update(userId, {
+			confirmedStudyProgramId: bestGuessStudyProgram.id,
+			enrolledStudyPrograms: studyPrograms,
+		});
+
+		return Result.success({ studyProgram: bestGuessStudyProgram });
 	}
 
 	/**
@@ -351,10 +329,10 @@ export class AuthService {
 	 * @returns
 	 */
 	async login(req: FastifyRequest, user: User): Promise<User> {
-		req.session.set("authenticated", true);
+		await req.session.regenerate([]);
 		req.session.set("userId", user.id);
-		await req.session.regenerate(["authenticated", "userId"]);
 		const updatedUser = await this.userService.login(user.id);
+		req.log.info({ userId: user.id }, "User logged in");
 		return updatedUser;
 	}
 
@@ -366,11 +344,11 @@ export class AuthService {
 	 * @returns
 	 */
 	async logout(req: FastifyRequest): Promise<void> {
-		if (req.session.get("authenticated")) {
+		if (req.session.get("userId")) {
 			await req.session.destroy();
 			return;
 		}
-		throw new AuthenticationError(
+		throw new UnauthorizedError(
 			"You need to be logged in to perform this action.",
 		);
 	}

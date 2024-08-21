@@ -50,9 +50,9 @@ const fastifyApolloServerPlugin: FastifyPluginAsync<{
 
 		req.log.info(req, "Context");
 
-		const { userId, authenticated } = req.session;
+		const { userId } = req.session;
 		let user: User | null = null;
-		if (userId !== undefined && authenticated) {
+		if (userId !== undefined) {
 			try {
 				req.log.debug({ userId }, "Fetching user");
 				user = await services.users.get(userId);

@@ -4,6 +4,7 @@ import * as Sentry from "@sentry/node";
 import { Client } from "@vippsmobilepay/sdk";
 import type { Job } from "bullmq";
 import type { FastifyInstance, FastifyRequest } from "fastify";
+import type { TokenSet, UserinfoResponse } from "openid-client";
 import { BlobStorageAdapter } from "~/adapters/azure-blob-storage.js";
 import { type Configuration, env } from "~/config.js";
 import type {
@@ -19,6 +20,8 @@ import type {
 } from "~/domain/cabins.js";
 import type { DocumentService as DocumentServiceType } from "~/domain/documents.js";
 import {
+	type AuthenticationError,
+	type BadRequestError,
 	type DownstreamServiceError,
 	InternalServerError,
 	type InvalidArgumentError,
@@ -62,6 +65,7 @@ import { ProductRepository } from "~/repositories/products/repository.js";
 import { UserRepository } from "~/repositories/users/index.js";
 import { feideClient } from "~/services/auth/clients.js";
 import { AuthService } from "~/services/auth/index.js";
+import type { FeideUserInfo } from "~/services/auth/service.js";
 import { CabinService } from "~/services/cabins/index.js";
 import { DocumentService } from "~/services/documents/index.js";
 import {
@@ -89,7 +93,7 @@ import fastifyPrisma from "./fastify/prisma.js";
 import fastifyService from "./fastify/service.js";
 import { postmark } from "./postmark.js";
 import prisma from "./prisma.js";
-import type { ResultAsync } from "./result.js";
+import type { ResultAsync, TResult } from "./result.js";
 
 interface IOrganizationService {
 	organizations: {
@@ -183,18 +187,46 @@ interface IOrganizationService {
 }
 
 interface IAuthService {
-	userLoginCallback(req: FastifyRequest, data: { code: string }): Promise<User>;
-	studyProgramCallback(
-		req: FastifyRequest,
-		data: { code: string },
-	): Promise<User>;
-	authorizationUrl(
-		req: FastifyRequest,
-		postAuthorizationRedirectUrl?: string | null,
-		kind?: "login" | "studyProgram",
-	): string;
 	logout(req: FastifyRequest): Promise<void>;
 	login(req: FastifyRequest, user: User): Promise<User>;
+	generateAuthorizationUrl(
+		req: FastifyRequest,
+		params: {
+			redirectUri: "/auth/login/callback" | "/auth/study-program/callback";
+			returnTo?: string;
+		},
+	): TResult<
+		{ authorizationUrl: string },
+		InternalServerError | BadRequestError
+	>;
+	getAuthorizationToken(
+		req: FastifyRequest,
+		params: {
+			code: string;
+			redirectUri: "/auth/login/callback" | "/auth/study-program/callback";
+		},
+	): ResultAsync<{ token: TokenSet }, DownstreamServiceError | BadRequestError>;
+	getUserInfo(
+		req: FastifyRequest,
+		params: { token: TokenSet },
+	): ResultAsync<
+		{ userInfo: UserinfoResponse<FeideUserInfo> },
+		DownstreamServiceError
+	>;
+	getOrCreateUser(
+		req: FastifyRequest,
+		{ userInfo }: { userInfo: UserinfoResponse<FeideUserInfo> },
+	): ResultAsync<
+		{ user: User },
+		InternalServerError | AuthenticationError | DownstreamServiceError
+	>;
+	updateStudyProgramForUser(
+		req: FastifyRequest,
+		params: { token: TokenSet },
+	): ResultAsync<
+		{ studyProgram: StudyProgram | null },
+		DownstreamServiceError | UnauthorizedError
+	>;
 }
 
 interface IUserService {
@@ -209,6 +241,7 @@ interface IUserService {
 			phoneNumber?: string | null;
 			graduationYear?: number | null;
 			allergies?: string | null;
+			enrolledStudyPrograms?: StudyProgram[] | null;
 		},
 	): Promise<User>;
 	superUpdateUser(
@@ -235,8 +268,8 @@ interface IUserService {
 					| "allergies"
 					| "graduationYear"
 					| "isSuperUser"
-					| "studyProgramId"
 					| "phoneNumber"
+					| "confirmedStudyProgramId"
 				>
 			>,
 	): Promise<User>;
@@ -247,6 +280,12 @@ interface IUserService {
 		name: string;
 		externalId: string;
 	}): Promise<StudyProgram>;
+	findManyStudyPrograms(
+		ctx: Context,
+	): ResultAsync<
+		{ studyPrograms: StudyProgram[] },
+		InternalServerError | UnauthorizedError
+	>;
 }
 
 type NewBookingParams = {

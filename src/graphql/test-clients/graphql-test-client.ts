@@ -1,3 +1,4 @@
+import assert from "node:assert";
 import { faker } from "@faker-js/faker";
 import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
 import type {
@@ -191,15 +192,18 @@ export class GraphQLTestClient {
 		cookies: Record<string, string>;
 		userId: string;
 	}> {
-		const redirectUrl = await this.app.inject({
+		const loginResponse = await this.app.inject({
 			method: "GET",
 			url: "/auth/login",
 		});
-		const sessionCookie = redirectUrl.cookies[0]?.value ?? "";
+		const sessionCookie = loginResponse.cookies.find(
+			(cookie) => cookie.name === env.SESSION_COOKIE_NAME,
+		)?.value;
+		assert(sessionCookie, "Session cookie not found");
 
-		const authenticateResponse = await this.app.inject({
+		const callbackResponse = await this.app.inject({
 			method: "GET",
-			url: "/auth/authenticate",
+			url: "/auth/login/callback",
 			query: {
 				code: "code",
 			},
@@ -207,7 +211,10 @@ export class GraphQLTestClient {
 				[env.SESSION_COOKIE_NAME]: sessionCookie,
 			},
 		});
-		const authenticatedCookie = authenticateResponse.cookies[0]?.value ?? "";
+		const authenticatedCookie = callbackResponse.cookies.find(
+			(cookie) => cookie.name === env.SESSION_COOKIE_NAME,
+		)?.value;
+		assert(authenticatedCookie, "Authenticated cookie not found");
 
 		const userInfo = await this.app.inject({
 			method: "GET",
