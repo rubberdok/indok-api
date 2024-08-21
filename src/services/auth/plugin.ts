@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from "fastify";
 import { env } from "~/config.js";
-import { UnauthorizedError } from "~/domain/errors.js";
+import { BadRequestError, UnauthorizedError } from "~/domain/errors.js";
+import { isValidRedirectUrl } from "~/utils/validate-redirect-url.js";
 
 const fastifyAuthPlugin: FastifyPluginAsync = (fastify) => {
 	fastify.route<{
@@ -11,7 +12,7 @@ const fastifyAuthPlugin: FastifyPluginAsync = (fastify) => {
 		config: {
 			rateLimit: {
 				max: 100,
-				timeWindow: "1 minute",
+				timeWindow: 60 * 1_000,
 			},
 		},
 		schema: {
@@ -42,12 +43,13 @@ const fastifyAuthPlugin: FastifyPluginAsync = (fastify) => {
 	fastify.route<{
 		Querystring: {
 			code: string;
+			state?: string;
 		};
 	}>({
 		config: {
 			rateLimit: {
 				max: 100,
-				timeWindow: "1 minute",
+				timeWindow: 60 * 1_000,
 			},
 		},
 		url: "/login/callback",
@@ -56,13 +58,27 @@ const fastifyAuthPlugin: FastifyPluginAsync = (fastify) => {
 			querystring: {
 				type: "object",
 				properties: {
+					state: { type: "string" },
 					code: { type: "string" },
 				},
 				required: ["code"],
 			},
 		},
 		handler: async (req, reply) => {
-			const { code } = req.query;
+			const { code, state } = req.query;
+			let returnTo = env.CLIENT_URL;
+			if (state) {
+				const validationResult = isValidRedirectUrl(state);
+				if (validationResult.ok) {
+					returnTo = validationResult.data.urlAsString;
+				} else {
+					throw new BadRequestError(
+						"Invalid returnTo url",
+						validationResult.error,
+					);
+				}
+			}
+
 			const tokenResult = await fastify.services.auth.getAuthorizationToken(
 				req,
 				{
@@ -72,7 +88,19 @@ const fastifyAuthPlugin: FastifyPluginAsync = (fastify) => {
 			);
 
 			if (!tokenResult.ok) {
-				throw tokenResult.error;
+				req.log.error(
+					{
+						error: tokenResult.error,
+					},
+					"Failed to get authorization token",
+				);
+				switch (tokenResult.error.name) {
+					case "BadRequestError": {
+						throw new BadRequestError("Bad request", tokenResult.error);
+					}
+					default:
+						throw tokenResult.error;
+				}
 			}
 
 			const userInfoResult = await fastify.services.auth.getUserInfo(req, {
@@ -107,19 +135,20 @@ const fastifyAuthPlugin: FastifyPluginAsync = (fastify) => {
 				});
 				throw updateStudyProgramResult.error;
 			}
-			return reply.redirect(env.CLIENT_URL, 303);
+			return reply.redirect(returnTo, 303);
 		},
 	});
 
 	fastify.route<{
 		Querystring: {
 			code: string;
+			state?: string;
 		};
 	}>({
 		config: {
 			rateLimit: {
 				max: 100,
-				timeWindow: "1 minute",
+				timeWindow: 60 * 1_000,
 			},
 		},
 		url: "/study-program/callback",
@@ -129,12 +158,26 @@ const fastifyAuthPlugin: FastifyPluginAsync = (fastify) => {
 				type: "object",
 				properties: {
 					code: { type: "string" },
+					state: { type: "string" },
 				},
 				required: ["code"],
 			},
 		},
 		handler: async (req, reply) => {
-			const { code } = req.query;
+			const { code, state } = req.query;
+			let returnTo = env.CLIENT_URL;
+			if (state) {
+				const validationResult = isValidRedirectUrl(state);
+				if (validationResult.ok) {
+					returnTo = validationResult.data.urlAsString;
+				} else {
+					throw new BadRequestError(
+						"Invalid returnTo url",
+						validationResult.error,
+					);
+				}
+			}
+
 			const tokenResult = await fastify.services.auth.getAuthorizationToken(
 				req,
 				{
@@ -155,22 +198,36 @@ const fastifyAuthPlugin: FastifyPluginAsync = (fastify) => {
 			if (!updateStudyProgramResult.ok) {
 				throw updateStudyProgramResult.error;
 			}
-			return reply.redirect(env.CLIENT_URL, 303);
+			return reply.redirect(returnTo, 303);
 		},
 	});
 
-	fastify.route({
+	fastify.route<{
+		Querystring: {
+			"return-to"?: string;
+		};
+	}>({
 		config: {
 			rateLimit: {
 				max: 100,
-				timeWindow: "1 minute",
+				timeWindow: 60 * 1_000,
+			},
+		},
+		schema: {
+			querystring: {
+				type: "object",
+				properties: {
+					"return-to": { type: "string" },
+				},
 			},
 		},
 		url: "/study-program",
 		method: "GET",
 		handler: (req, reply) => {
+			const { "return-to": returnTo } = req.query;
 			const urlResult = fastify.services.auth.generateAuthorizationUrl(req, {
 				redirectUri: "/auth/study-program/callback",
+				returnTo,
 			});
 
 			if (!urlResult.ok) {
@@ -195,7 +252,7 @@ const fastifyAuthPlugin: FastifyPluginAsync = (fastify) => {
 		method: "GET",
 		url: "/me",
 		handler: (req, reply) => {
-			if (req.session.authenticated) {
+			if (req.session.userId) {
 				return reply.status(200).send({ user: req.session.userId });
 			}
 			return reply.send(new UnauthorizedError("Unauthorized"));

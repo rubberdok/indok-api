@@ -141,9 +141,9 @@ const EmailHandler = ({
 				const { recipientId } = job.data;
 				const user = await userService.get(recipientId);
 				let studyProgram: string | undefined;
-				if (user.studyProgramId) {
+				if (user.confirmedStudyProgramId) {
 					const program = await userService.getStudyProgram({
-						id: user.studyProgramId,
+						id: user.confirmedStudyProgramId,
 					});
 					studyProgram = program?.name;
 				}

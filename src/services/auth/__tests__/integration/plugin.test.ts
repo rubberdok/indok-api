@@ -1,5 +1,4 @@
 import assert from "node:assert";
-import type { IncomingMessage } from "node:http";
 import { faker } from "@faker-js/faker";
 import type {} from "fastify";
 import { TokenSet, type UserinfoResponse } from "openid-client";
@@ -197,21 +196,24 @@ describe("Authentication", () => {
 			);
 		});
 
-		it("redirects to ?returnTo if provided, and is an approved origin", async () => {
+		it("redirects to ?return-to if provided, and is an approved origin", async () => {
 			const { serverInstance, makeUserinfo, makeStudyProgram } = dependencies;
 			const studyProgramId = faker.string.uuid();
 			const userFeideId = faker.string.uuid();
 			makeUserinfo({ sub: userFeideId });
 			makeStudyProgram({ id: studyProgramId });
+			env.REDIRECT_ORIGINS = ["https://indokntnu.no"];
 
 			const loginResponse = await serverInstance.inject({
 				method: "GET",
-				url: "/auth/login?returnTo=https://indokntnu.no/profile",
+				url: "/auth/login?return-to=https://indokntnu.no/profile",
 			});
 
 			expect(loginResponse.statusCode).toEqual(303);
-			expect(loginResponse.headers.location).toEqual(
-				expect.stringContaining("state=https://indokntnu.no/profile"),
+			assert(loginResponse.headers.location, "Location header not found");
+			const authUrl = new URL(loginResponse.headers.location);
+			expect(authUrl.searchParams.get("state")).toEqual(
+				"https://indokntnu.no/profile",
 			);
 
 			const sessionCookie = loginResponse.cookies.find(
@@ -221,7 +223,7 @@ describe("Authentication", () => {
 
 			const callbackResponse = await serverInstance.inject({
 				method: "GET",
-				url: "/auth/login/callback?code=code",
+				url: `/auth/login/callback?code=code&state=${authUrl.searchParams.get("state")}`,
 				cookies: { [env.SESSION_COOKIE_NAME]: sessionCookie?.value },
 			});
 
@@ -230,52 +232,41 @@ describe("Authentication", () => {
 				"https://indokntnu.no/profile",
 			);
 		});
+
+		it("returns 400 if return-to is not an approved origin", async () => {
+			const { serverInstance, makeUserinfo, makeStudyProgram } = dependencies;
+			const studyProgramId = faker.string.uuid();
+			const userFeideId = faker.string.uuid();
+			makeUserinfo({ sub: userFeideId });
+			makeStudyProgram({ id: studyProgramId });
+			env.REDIRECT_ORIGINS = [];
+
+			const loginResponse = await serverInstance.inject({
+				method: "GET",
+				url: "/auth/login?return-to=https://indokntnu.no/profile",
+			});
+
+			expect(loginResponse.statusCode).toEqual(400);
+			assert(!loginResponse.headers.location, "Location header found");
+		});
 	});
 
 	describe("GET /auth/study-program", () => {
 		it("updates study programs for the user", async () => {
-			const { serverInstance, makeUserinfo, makeStudyProgram, makeUser } =
-				dependencies;
+			const { serverInstance, makeStudyProgram, performLogin } = dependencies;
 			const studyProgramId = faker.string.uuid();
-			const userFeideId = faker.string.uuid();
-			await makeUser({
-				feideId: userFeideId,
-			});
-			makeUserinfo({ sub: userFeideId });
 			makeStudyProgram({ id: studyProgramId });
-			// login
-			const loginResponse = await serverInstance.inject({
-				method: "GET",
-				url: "/auth/login",
-			});
-			const loginSessionCookie = loginResponse.cookies.find(
-				(cookie) => cookie.name === env.SESSION_COOKIE_NAME,
-			);
-			assert(loginSessionCookie, "Session cookie not found");
-			// callback
-			const loginCallbackResponse = await serverInstance.inject({
-				method: "GET",
-				url: "/auth/login/callback?code=code",
-				cookies: { [env.SESSION_COOKIE_NAME]: loginSessionCookie.value },
-			});
-			const authenticatedSessionCookie = loginCallbackResponse.cookies.find(
-				(cookie) => cookie.name === env.SESSION_COOKIE_NAME,
-			);
-			assert(
-				authenticatedSessionCookie,
-				"Authenticated session cookie not found",
-			);
+			const userFeideId = faker.string.uuid();
+			const { cookies } = await performLogin({ userFeideId });
 
 			const studyProgramResponse = await serverInstance.inject({
 				method: "GET",
 				url: "/auth/study-program",
-				cookies: {
-					[env.SESSION_COOKIE_NAME]: authenticatedSessionCookie.value,
-				},
+				cookies,
 			});
 			expect(studyProgramResponse.statusCode).toEqual(303);
 			expect(studyProgramResponse.headers.location).toEqual(
-				expect.stringContaining("https://example.com"),
+				expect.stringContaining("https://auth.dataporten.no"),
 			);
 			expect(studyProgramResponse.headers.location).toEqual(
 				expect.stringContaining("code_challenge_method=S256"),
@@ -284,9 +275,7 @@ describe("Authentication", () => {
 			const callbackResponse = await serverInstance.inject({
 				method: "GET",
 				url: "/auth/study-program/callback?code=code",
-				cookies: {
-					[env.SESSION_COOKIE_NAME]: authenticatedSessionCookie.value,
-				},
+				cookies,
 			});
 			expect(callbackResponse.statusCode).toEqual(303);
 			expect(callbackResponse.headers.location).toEqual("https://indokntnu.no");
@@ -340,45 +329,68 @@ describe("Authentication", () => {
 			});
 			expect(callbackResponse.statusCode).toEqual(401);
 		});
+
+		it("redirects to ?return-to if provided, and is an approved origin", async () => {
+			const { serverInstance, makeStudyProgram, performLogin } = dependencies;
+			const studyProgramId = faker.string.uuid();
+			makeStudyProgram({ id: studyProgramId });
+			const userFeideId = faker.string.uuid();
+			const { cookies } = await performLogin({ userFeideId });
+			env.REDIRECT_ORIGINS = ["https://indokntnu.no"];
+
+			const studyProgramResponse = await serverInstance.inject({
+				method: "GET",
+				url: "/auth/study-program?return-to=https://indokntnu.no/profile",
+				cookies,
+			});
+			expect(studyProgramResponse.statusCode).toEqual(303);
+			assert(
+				studyProgramResponse.headers.location,
+				"Location header not found",
+			);
+			const authUrl = new URL(studyProgramResponse.headers.location);
+
+			const callbackResponse = await serverInstance.inject({
+				method: "GET",
+				url: `/auth/study-program/callback?code=code&state=${authUrl.searchParams.get("state")}`,
+				cookies,
+			});
+			expect(callbackResponse.statusCode).toEqual(303);
+			expect(callbackResponse.headers.location).toEqual(
+				"https://indokntnu.no/profile",
+			);
+		});
+
+		it("returns 400 if return-to is not an approved origin", async () => {
+			const { serverInstance, makeStudyProgram, performLogin } = dependencies;
+			const studyProgramId = faker.string.uuid();
+			makeStudyProgram({ id: studyProgramId });
+			const userFeideId = faker.string.uuid();
+			const { cookies } = await performLogin({ userFeideId });
+			env.REDIRECT_ORIGINS = [];
+
+			const studyProgramResponse = await serverInstance.inject({
+				method: "GET",
+				url: "/auth/study-program?return-to=https://indokntnu.no/profile",
+				cookies,
+			});
+			expect(studyProgramResponse.statusCode).toEqual(400);
+			assert(!studyProgramResponse.headers.location, "Location header found");
+		});
 	});
 
 	describe("GET /auth/logout", () => {
 		it("logs out the user", async () => {
-			const { serverInstance, makeUserinfo, makeUser } = dependencies;
+			const { serverInstance, performLogin } = dependencies;
 			const userFeideId = faker.string.uuid();
-			await makeUser({
-				feideId: userFeideId,
+			const { cookies, authenticatedSessionCookie } = await performLogin({
+				userFeideId,
 			});
-			makeUserinfo({ sub: userFeideId });
-			// login
-			const loginResponse = await serverInstance.inject({
-				method: "GET",
-				url: "/auth/login",
-			});
-			const loginSessionCookie = loginResponse.cookies.find(
-				(cookie) => cookie.name === env.SESSION_COOKIE_NAME,
-			);
-			assert(loginSessionCookie, "Session cookie not found");
-			// callback
-			const loginCallbackResponse = await serverInstance.inject({
-				method: "GET",
-				url: "/auth/login/callback?code=code",
-				cookies: { [env.SESSION_COOKIE_NAME]: loginSessionCookie.value },
-			});
-			const authenticatedSessionCookie = loginCallbackResponse.cookies.find(
-				(cookie) => cookie.name === env.SESSION_COOKIE_NAME,
-			);
-			assert(
-				authenticatedSessionCookie,
-				"Authenticated session cookie not found",
-			);
 
 			const logoutResponse = await serverInstance.inject({
 				method: "GET",
 				url: "/auth/logout",
-				cookies: {
-					[env.SESSION_COOKIE_NAME]: authenticatedSessionCookie.value,
-				},
+				cookies,
 			});
 			expect(logoutResponse.statusCode).toEqual(303);
 			expect(logoutResponse.headers.location).toEqual("https://indokntnu.no");
@@ -526,37 +538,76 @@ async function makeDependencies() {
 		return userinfo;
 	}
 
-	const issuer = new Issuer({ issuer: "https://example.com" });
+	/**
+	 * From https://auth.dataporten.no/.well-known/openid-configuration
+	 *
+	 * Details here can change, but for the purpose of this this, this fixture will suffice.
+	 */
+	const issuer = new Issuer({
+		issuer: "https://auth.dataporten.no",
+		authorization_endpoint: "https://auth.dataporten.no/oauth/authorization",
+		token_endpoint: "https://auth.dataporten.no/oauth/token",
+		token_endpoint_auth_methods_supported: [
+			"client_secret_basic",
+			"client_secret_post",
+		],
+		token_endpoint_auth_signing_alg_values_supported: ["RS256"],
+		userinfo_endpoint: "https://auth.dataporten.no/openid/userinfo",
+		ui_locales_supported: ["en", "no", "nb", "nn"],
+		service_documentation: "https://docs.feide.no",
+		jwks_uri: "https://auth.dataporten.no/openid/jwks",
+		response_modes_supported: ["query", "fragment", "form_post"],
+		response_types_supported: ["code", "code id_token", "id_token token"],
+		grant_types_supported: [
+			"authorization_code",
+			"client_credentials",
+			"implicit",
+			"urn:ietf:params:oauth:grant-type:token-exchange",
+		],
+		subject_types_supported: ["public"],
+		id_token_signing_alg_values_supported: ["RS256"],
+		code_challenge_methods_supported: ["S256"],
+		claims_supported: [
+			"aud",
+			"dataporten-userid_sec",
+			"email",
+			"email_verified",
+			"exp",
+			"https://n.feide.no/claims/eduPersonPrincipalName",
+			"https://n.feide.no/claims/nin",
+			"https://n.feide.no/claims/userid_sec",
+			"iat",
+			"iss",
+			"name",
+			"picture",
+			"sub",
+		],
+		claims_parameter_supported: false,
+		request_parameter_supported: false,
+		request_uri_parameter_supported: false,
+		scopes_supported: ["openid", "profile", "email"],
+		end_session_endpoint: "https://auth.dataporten.no/openid/endsession",
+	});
 	const client = new issuer.Client({
 		client_id: "client_id",
 	});
-	client.userInfo = () => Promise.resolve(userinfo);
-	client.callback = () => Promise.resolve(new TokenSet());
-	client.requestResource = () => {
-		const body = Buffer.from(JSON.stringify(studyPrograms), "utf8");
-		return Promise.resolve({ body } as { body?: Buffer } & IncomingMessage);
-	};
 
 	const services = makeTestServices({
+		/**
+		 * Most of these methods will send requests to the OpenID Provider,
+		 * which we do not want to do in our tests. Instead, we will mock most
+		 * of these methods to return a static response.
+		 */
 		openIdClient: {
 			userinfo() {
 				return Promise.resolve(userinfo);
 			},
-			authorizationUrl({
-				scope,
-				code_challenge_method,
-				code_challenge,
-				state,
-			}) {
-				const urlSearchParams = new URLSearchParams();
-				urlSearchParams.append("scope", scope);
-				urlSearchParams.append("code_challenge_method", code_challenge_method);
-				urlSearchParams.append("code_challenge", code_challenge);
-				urlSearchParams.append("state", state);
-				const url = new URL("https://example.com");
-				url.search = urlSearchParams.toString();
-				return url.toString();
-			},
+			/**
+			 * We will keep the authorizationUrl method as is, as it is used to
+			 * generate the authorization URL for the user to authenticate with
+			 * the OpenID Provider. By keeping this, we can validate search parameters.
+			 */
+			authorizationUrl: (options) => client.authorizationUrl(options),
 			callback() {
 				return Promise.resolve(new TokenSet());
 			},
@@ -580,5 +631,46 @@ async function makeDependencies() {
 		});
 		return user;
 	}
-	return { serverInstance, services, makeUser, makeUserinfo, makeStudyProgram };
+
+	async function performLogin({ userFeideId }: { userFeideId: string }) {
+		await makeUser({
+			feideId: userFeideId,
+		});
+		makeUserinfo({ sub: userFeideId });
+		// login
+		const loginResponse = await serverInstance.inject({
+			method: "GET",
+			url: "/auth/login",
+		});
+		const loginSessionCookie = loginResponse.cookies.find(
+			(cookie) => cookie.name === env.SESSION_COOKIE_NAME,
+		);
+		assert(loginSessionCookie, "Session cookie not found");
+		// callback
+		const loginCallbackResponse = await serverInstance.inject({
+			method: "GET",
+			url: "/auth/login/callback?code=code",
+			cookies: { [env.SESSION_COOKIE_NAME]: loginSessionCookie.value },
+		});
+		const authenticatedSessionCookie = loginCallbackResponse.cookies.find(
+			(cookie) => cookie.name === env.SESSION_COOKIE_NAME,
+		);
+		assert(
+			authenticatedSessionCookie,
+			"Authenticated session cookie not found",
+		);
+
+		return {
+			cookies: { [env.SESSION_COOKIE_NAME]: authenticatedSessionCookie.value },
+			authenticatedSessionCookie,
+		};
+	}
+	return {
+		serverInstance,
+		services,
+		makeUser,
+		makeUserinfo,
+		makeStudyProgram,
+		performLogin,
+	};
 }

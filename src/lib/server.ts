@@ -195,7 +195,10 @@ interface IAuthService {
 			redirectUri: "/auth/login/callback" | "/auth/study-program/callback";
 			returnTo?: string;
 		},
-	): TResult<{ authorizationUrl: string }, InternalServerError>;
+	): TResult<
+		{ authorizationUrl: string },
+		InternalServerError | BadRequestError
+	>;
 	getAuthorizationToken(
 		req: FastifyRequest,
 		params: {

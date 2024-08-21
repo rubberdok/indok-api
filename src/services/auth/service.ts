@@ -332,6 +332,7 @@ export class AuthService {
 		await req.session.regenerate([]);
 		req.session.set("userId", user.id);
 		const updatedUser = await this.userService.login(user.id);
+		req.log.info({ userId: user.id }, "User logged in");
 		return updatedUser;
 	}
 

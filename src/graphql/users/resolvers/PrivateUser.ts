@@ -5,8 +5,8 @@ export const PrivateUser: PrivateUserResolvers = {
 		return ctx.organizations.organizations.findMany({ userId: user.id });
 	},
 	studyProgram: (user, _args, ctx) => {
-		if (!user.studyProgramId) return null;
-		return ctx.users.getStudyProgram({ id: user.studyProgramId });
+		if (!user.confirmedStudyProgramId) return null;
+		return ctx.users.getStudyProgram({ id: user.confirmedStudyProgramId });
 	},
 	signUps: async (user, { data }, ctx) => {
 		let orderBy: "asc" | "desc" | undefined = undefined;

@@ -146,9 +146,9 @@ function buildPermissions({
 			if (hasFeaturePermission) return true;
 
 			const user = await userService.get(ctx.user.id);
-			if (!user.studyProgramId) return false;
+			if (!user.confirmedStudyProgramId) return false;
 			const studyProgram = await userService.getStudyProgram({
-				id: user.studyProgramId,
+				id: user.confirmedStudyProgramId,
 			});
 			if (studyProgram?.featurePermissions.includes(featurePermission)) {
 				return true;
