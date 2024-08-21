@@ -1,135 +1,193 @@
 import type { FastifyPluginAsync } from "fastify";
 import { env } from "~/config.js";
 import { UnauthorizedError } from "~/domain/errors.js";
-import { assertValidRedirectUrl } from "~/utils/validate-redirect-url.js";
 
 const fastifyAuthPlugin: FastifyPluginAsync = (fastify) => {
 	fastify.route<{
 		Querystring: {
-			redirect?: string;
-			kind?: "login" | "studyProgram";
+			"return-to"?: string;
 		};
 	}>({
+		config: {
+			rateLimit: {
+				max: 100,
+				timeWindow: "1 minute",
+			},
+		},
+		schema: {
+			querystring: {
+				type: "object",
+				properties: {
+					"return-to": { type: "string" },
+				},
+			},
+		},
 		url: "/login",
 		method: "GET",
+		handler: (req, reply) => {
+			const { "return-to": returnTo } = req.query;
+			const urlResult = fastify.services.auth.generateAuthorizationUrl(req, {
+				redirectUri: "/auth/login/callback",
+				returnTo,
+			});
+
+			if (!urlResult.ok) {
+				throw urlResult.error;
+			}
+
+			return reply.redirect(urlResult.data.authorizationUrl, 303);
+		},
+	});
+
+	fastify.route<{
+		Querystring: {
+			code: string;
+		};
+	}>({
+		config: {
+			rateLimit: {
+				max: 100,
+				timeWindow: "1 minute",
+			},
+		},
+		url: "/login/callback",
+		method: "GET",
 		schema: {
 			querystring: {
 				type: "object",
 				properties: {
-					kind: { type: "string" },
-					redirect: { type: "string" },
+					code: { type: "string" },
 				},
+				required: ["code"],
 			},
 		},
-		handler: (req, reply) => {
-			const { redirect, kind = "login" } = req.query;
-			let redirectUrl = new URL("/auth/me", env.SERVER_URL);
-
-			if (redirect) {
-				assertValidRedirectUrl(redirect);
-				redirectUrl = new URL(redirect);
-			}
-
-			const url = fastify.services.auth.authorizationUrl(
+		handler: async (req, reply) => {
+			const { code } = req.query;
+			const tokenResult = await fastify.services.auth.getAuthorizationToken(
 				req,
-				redirectUrl.toString(),
-				kind,
+				{
+					code,
+					redirectUri: "/auth/login/callback",
+				},
 			);
 
-			return reply.redirect(url, 303);
+			if (!tokenResult.ok) {
+				throw tokenResult.error;
+			}
+
+			const userInfoResult = await fastify.services.auth.getUserInfo(req, {
+				token: tokenResult.data.token,
+			});
+
+			if (!userInfoResult.ok) {
+				throw userInfoResult.error;
+			}
+
+			const getOrCreateUserResult = await fastify.services.auth.getOrCreateUser(
+				req,
+				{
+					userInfo: userInfoResult.data.userInfo,
+				},
+			);
+
+			if (!getOrCreateUserResult.ok) {
+				throw getOrCreateUserResult.error;
+			}
+
+			await fastify.services.auth.login(req, getOrCreateUserResult.data.user);
+
+			const updateStudyProgramResult =
+				await fastify.services.auth.updateStudyProgramForUser(req, {
+					token: tokenResult.data.token,
+				});
+			if (!updateStudyProgramResult.ok) {
+				await fastify.services.auth.logout(req);
+				req.log.error("Failed to update study program for user", {
+					error: updateStudyProgramResult.error,
+				});
+				throw updateStudyProgramResult.error;
+			}
+			return reply.redirect(env.CLIENT_URL, 303);
 		},
 	});
 
 	fastify.route<{
 		Querystring: {
 			code: string;
-			state?: string;
 		};
 	}>({
-		url: "/authenticate",
+		config: {
+			rateLimit: {
+				max: 100,
+				timeWindow: "1 minute",
+			},
+		},
+		url: "/study-program/callback",
 		method: "GET",
 		schema: {
 			querystring: {
 				type: "object",
 				properties: {
 					code: { type: "string" },
-					state: { type: "string" },
 				},
 				required: ["code"],
 			},
 		},
 		handler: async (req, reply) => {
-			const { code, state } = req.query;
-			let redirectUrl = new URL("/auth/me", env.SERVER_URL);
+			const { code } = req.query;
+			const tokenResult = await fastify.services.auth.getAuthorizationToken(
+				req,
+				{
+					code,
+					redirectUri: "/auth/study-program/callback",
+				},
+			);
 
-			if (state) {
-				assertValidRedirectUrl(state);
-				redirectUrl = new URL(state);
+			if (!tokenResult.ok) {
+				throw tokenResult.error;
 			}
 
-			try {
-				const user = await fastify.services.auth.userLoginCallback(req, {
-					code,
+			const updateStudyProgramResult =
+				await fastify.services.auth.updateStudyProgramForUser(req, {
+					token: tokenResult.data.token,
 				});
 
-				await fastify.services.auth.login(req, user);
-
-				return reply.redirect(303, redirectUrl.toString());
-			} catch (err) {
-				if (err instanceof Error) {
-					req.log.error(err, "Authentication failed");
-				}
-				throw err;
+			if (!updateStudyProgramResult.ok) {
+				throw updateStudyProgramResult.error;
 			}
-		},
-	});
-
-	fastify.route<{
-		Querystring: {
-			code: string;
-			state?: string;
-		};
-	}>({
-		url: "/study-program",
-		method: "GET",
-		schema: {
-			querystring: {
-				type: "object",
-				properties: {
-					code: { type: "string" },
-					state: { type: "string" },
-				},
-				required: ["code"],
-			},
-		},
-		handler: async (req, reply) => {
-			const { code, state } = req.query;
-			let redirectUrl = new URL("/auth/me", env.SERVER_URL);
-
-			if (state) {
-				assertValidRedirectUrl(state);
-				redirectUrl = new URL(state);
-			}
-
-			try {
-				await fastify.services.auth.studyProgramCallback(req, { code });
-				return reply.redirect(303, redirectUrl.toString());
-			} catch (err) {
-				if (err instanceof Error) {
-					req.log.error(err, "Failed to fetch study programs for user");
-				}
-				throw err;
-			}
+			return reply.redirect(env.CLIENT_URL, 303);
 		},
 	});
 
 	fastify.route({
-		method: "POST",
+		config: {
+			rateLimit: {
+				max: 100,
+				timeWindow: "1 minute",
+			},
+		},
+		url: "/study-program",
+		method: "GET",
+		handler: (req, reply) => {
+			const urlResult = fastify.services.auth.generateAuthorizationUrl(req, {
+				redirectUri: "/auth/study-program/callback",
+			});
+
+			if (!urlResult.ok) {
+				throw urlResult.error;
+			}
+
+			return reply.redirect(urlResult.data.authorizationUrl, 303);
+		},
+	});
+
+	fastify.route({
+		method: "get",
 		url: "/logout",
 		handler: async (req, reply) => {
 			await fastify.services.auth.logout(req);
 			req.log.info("User logged out");
-			return reply.redirect(303, "/");
+			return reply.redirect(env.CLIENT_URL, 303);
 		},
 	});
 

@@ -31,7 +31,7 @@ export function makeMockContext(
 		phoneNumber: "40000000",
 		updatedAt: new Date(),
 		username: randomUUID(),
-		studyProgramId: null,
+		confirmedStudyProgramId: null,
 	});
 	let defaultLogger: FastifyBaseLogger = {
 		child() {

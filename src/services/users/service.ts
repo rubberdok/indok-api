@@ -103,7 +103,7 @@ export class UserService implements IUserService {
 				.boolean()
 				.nullish()
 				.transform((val) => val ?? undefined),
-			studyProgramId: z
+			confirmedStudyProgramId: z
 				.string()
 				.uuid()
 				.nullish()
@@ -132,7 +132,7 @@ export class UserService implements IUserService {
 			graduationYear: number | null;
 			allergies: string | null;
 			phoneNumber: string | null;
-			studyProgramId: string | null;
+			confirmedStudyProgramId: string | null;
 		}>,
 	): Promise<User> {
 		const schema = z.object({
@@ -160,7 +160,7 @@ export class UserService implements IUserService {
 				.string()
 				.nullish()
 				.transform((val) => val ?? undefined),
-			studyProgramId: z
+			confirmedStudyProgramId: z
 				.string()
 				.nullish()
 				.transform((val) => val ?? undefined),
@@ -186,7 +186,7 @@ export class UserService implements IUserService {
 				phoneNumber,
 				allergies,
 				graduationYear,
-				studyProgramId,
+				confirmedStudyProgramId,
 			} = schema.parse(data);
 			let firstLogin: boolean | undefined;
 			let newGraduationYear: number | undefined = graduationYear;
@@ -206,7 +206,7 @@ export class UserService implements IUserService {
 				graduationYear: newGraduationYear,
 				graduationYearUpdatedAt,
 				firstLogin,
-				studyProgramId,
+				confirmedStudyProgramId,
 			});
 
 			return updatedUser;

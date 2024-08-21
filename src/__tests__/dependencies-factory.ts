@@ -21,6 +21,7 @@ import { OrganizationRepository } from "~/repositories/organizations/organizatio
 import { ProductRepository } from "~/repositories/products/repository.js";
 import { UserRepository } from "~/repositories/users/index.js";
 import { AuthService } from "~/services/auth/index.js";
+import type { OpenIDClient } from "~/services/auth/service.js";
 import { CabinService } from "~/services/cabins/index.js";
 import { DocumentService } from "~/services/documents/service.js";
 import { EventService } from "~/services/events/service.js";
@@ -34,171 +35,169 @@ import { ProductService } from "~/services/products/service.js";
 import type { PaymentProcessingQueueType } from "~/services/products/worker.js";
 import { UserService } from "~/services/users/service.js";
 
-export function makeTestServices(overrides?: Partial<Services>): Services & {
-	openIdClient: ReturnType<typeof newMockOpenIdClient>;
-	mockBlobServiceClient: DeepMockProxy<BlobServiceClient>;
+export function makeTestServices(overrides?: Partial<Services & { openIdClient: OpenIDClient }>): Services & {
+  mockBlobServiceClient: DeepMockProxy<BlobServiceClient>;
 } {
-	const openIdClient = newMockOpenIdClient();
-	const database = prisma;
+  const openIdClient = overrides?.openIdClient ?? newMockOpenIdClient();
+  const database = prisma;
 
-	const cabinRepository = new CabinRepository(database);
-	const userRepository = new UserRepository(database);
-	const memberRepository = new MemberRepository(database);
-	const organizationRepository = new OrganizationRepository(database);
-	const eventRepository = new EventRepository(database);
-	const listingRepository = new ListingRepository(database);
-	const productRepository = new ProductRepository(database);
-	const fileRepository = FileRepository({ db: database });
-	const documentRepository = DocumentRepository({ db: database });
+  const cabinRepository = new CabinRepository(database);
+  const userRepository = new UserRepository(database);
+  const memberRepository = new MemberRepository(database);
+  const organizationRepository = new OrganizationRepository(database);
+  const eventRepository = new EventRepository(database);
+  const listingRepository = new ListingRepository(database);
+  const productRepository = new ProductRepository(database);
+  const fileRepository = FileRepository({ db: database });
+  const documentRepository = DocumentRepository({ db: database });
 
-	const mailService = buildMailService(
-		{
-			emailClient: mockDeep<ServerClient>(),
-			emailQueue: mockDeep<EmailQueueType>(),
-		},
-		{
-			noReplyEmail: env.NO_REPLY_EMAIL,
-			contactMail: env.CONTACT_EMAIL,
-			companyName: env.COMPANY_NAME,
-			parentCompany: env.PARENT_COMPANY,
-			productName: env.PRODUCT_NAME,
-			websiteUrl: env.CLIENT_URL,
-		},
-	);
-	const userService = new UserService(userRepository, mailService);
-	const organizationService = OrganizationService({
-		memberRepository,
-		organizationRepository,
-		userService,
-	});
-	const listingService = new ListingService(
-		listingRepository,
-		organizationService.permissions,
-	);
+  const mailService = buildMailService(
+    {
+      emailClient: mockDeep<ServerClient>(),
+      emailQueue: mockDeep<EmailQueueType>(),
+    },
+    {
+      noReplyEmail: env.NO_REPLY_EMAIL,
+      contactMail: env.CONTACT_EMAIL,
+      companyName: env.COMPANY_NAME,
+      parentCompany: env.PARENT_COMPANY,
+      productName: env.PRODUCT_NAME,
+      websiteUrl: env.CLIENT_URL,
+    },
+  );
+  const userService = new UserService(userRepository, mailService);
+  const organizationService = OrganizationService({
+    memberRepository,
+    organizationRepository,
+    userService,
+  });
+  const listingService = new ListingService(
+    listingRepository,
+    organizationService.permissions,
+  );
 
-	const products = ProductService({
-		vippsFactory: mockDeep<typeof Client>(),
-		paymentProcessingQueue: mockDeep<PaymentProcessingQueueType>(),
-		productRepository,
-		mailService,
-		config: {
-			useTestMode: true,
-			returnUrl: env.SERVER_URL,
-		},
-	});
-	const eventService = new EventService(
-		eventRepository,
-		organizationService.permissions,
-		userService,
-		products,
-		mockDeep<SignUpQueueType>(),
-	);
-	const authService = new AuthService(userService, openIdClient);
-	const mockBlobServiceClient = mockDeep<BlobServiceClient>();
+  const products = ProductService({
+    vippsFactory: mockDeep<typeof Client>(),
+    paymentProcessingQueue: mockDeep<PaymentProcessingQueueType>(),
+    productRepository,
+    mailService,
+    config: {
+      useTestMode: true,
+      returnUrl: env.SERVER_URL,
+    },
+  });
+  const eventService = new EventService(
+    eventRepository,
+    organizationService.permissions,
+    userService,
+    products,
+    mockDeep<SignUpQueueType>(),
+  );
+  const authService = new AuthService(userService, openIdClient);
+  const mockBlobServiceClient = mockDeep<BlobServiceClient>();
 
-	mockBlobServiceClient.getUserDelegationKey.mockResolvedValue({
-		value: faker.string.uuid(),
-		signedExpiresOn: new Date(),
-		signedObjectId: faker.string.uuid(),
-		signedStartsOn: new Date(),
-		signedService: faker.internet.url(),
-		signedTenantId: faker.string.uuid(),
-		signedVersion: faker.string.uuid(),
-		_response: mock(),
-	});
-	const blobStorageAdapter = BlobStorageAdapter({
-		accountName: "testaccount",
-		containerName: "testcontainer",
-		blobServiceClient: mockBlobServiceClient,
-	});
-	const fileService = FileService({ fileRepository, blobStorageAdapter });
-	const documents = DocumentService({
-		files: fileService,
-		repository: documentRepository,
-		permissions: organizationService.permissions,
-	});
+  mockBlobServiceClient.getUserDelegationKey.mockResolvedValue({
+    value: faker.string.uuid(),
+    signedExpiresOn: new Date(),
+    signedObjectId: faker.string.uuid(),
+    signedStartsOn: new Date(),
+    signedService: faker.internet.url(),
+    signedTenantId: faker.string.uuid(),
+    signedVersion: faker.string.uuid(),
+    _response: mock(),
+  });
+  const blobStorageAdapter = BlobStorageAdapter({
+    accountName: "testaccount",
+    containerName: "testcontainer",
+    blobServiceClient: mockBlobServiceClient,
+  });
+  const fileService = FileService({ fileRepository, blobStorageAdapter });
+  const documents = DocumentService({
+    files: fileService,
+    repository: documentRepository,
+    permissions: organizationService.permissions,
+  });
 
-	const cabinService = new CabinService(
-		cabinRepository,
-		mailService,
-		organizationService.permissions,
-		fileService,
-	);
+  const cabinService = new CabinService(
+    cabinRepository,
+    mailService,
+    organizationService.permissions,
+    fileService,
+  );
 
-	const services: Services = {
-		users: userService,
-		auth: authService,
-		organizations: organizationService,
-		events: eventService,
-		listings: listingService,
-		cabins: cabinService,
-		products,
-		files: fileService,
-		documents: documents,
-	};
+  const services: Services = {
+    users: userService,
+    auth: authService,
+    organizations: organizationService,
+    events: eventService,
+    listings: listingService,
+    cabins: cabinService,
+    products,
+    files: fileService,
+    documents: documents,
+  };
 
-	return {
-		openIdClient,
-		mockBlobServiceClient,
-		...services,
-		...overrides,
-	};
+  return {
+    mockBlobServiceClient,
+    ...services,
+    ...overrides,
+  };
 }
 
 function makeUser(userData: Partial<User> = {}): Promise<User> {
-	const database = prisma;
-	const userRepository = new UserRepository(database);
-	const mailService = buildMailService(
-		{
-			emailClient: mockDeep<ServerClient>(),
-			emailQueue: mockDeep<EmailQueueType>(),
-		},
-		{
-			noReplyEmail: env.NO_REPLY_EMAIL,
-			contactMail: env.CONTACT_EMAIL,
-			companyName: env.COMPANY_NAME,
-			parentCompany: env.PARENT_COMPANY,
-			productName: env.PRODUCT_NAME,
-			websiteUrl: env.CLIENT_URL,
-		},
-	);
-	const userService = new UserService(userRepository, mailService);
+  const database = prisma;
+  const userRepository = new UserRepository(database);
+  const mailService = buildMailService(
+    {
+      emailClient: mockDeep<ServerClient>(),
+      emailQueue: mockDeep<EmailQueueType>(),
+    },
+    {
+      noReplyEmail: env.NO_REPLY_EMAIL,
+      contactMail: env.CONTACT_EMAIL,
+      companyName: env.COMPANY_NAME,
+      parentCompany: env.PARENT_COMPANY,
+      productName: env.PRODUCT_NAME,
+      websiteUrl: env.CLIENT_URL,
+    },
+  );
+  const userService = new UserService(userRepository, mailService);
 
-	const user = new User(
-		merge(
-			{
-				allergies: faker.word.adjective(),
-				canUpdateYear: true,
-				createdAt: new Date(),
-				email: faker.internet.email({ firstName: faker.string.uuid() }),
-				feideId: faker.string.uuid(),
-				firstLogin: false,
-				firstName: faker.person.firstName(),
-				lastName: faker.person.lastName(),
-				graduationYear: DateTime.now().plus({ years: 1 }).year,
-				graduationYearUpdatedAt: null,
-				id: faker.string.uuid(),
-				isSuperUser: false,
-				lastLogin: new Date(),
-				phoneNumber: faker.phone.number(),
-				studyProgramId: null,
-				updatedAt: new Date(),
-				username: faker.string.uuid(),
-			},
-			userData,
-		),
-	);
-	const userCreateInput = pick(user, [
-		"allergies",
-		"email",
-		"feideId",
-		"firstName",
-		"lastName",
-		"graduationYear",
-		"phoneNumber",
-		"username",
-	]);
-	return userService.create(userCreateInput);
+  const user = new User(
+    merge(
+      {
+        allergies: faker.word.adjective(),
+        canUpdateYear: true,
+        createdAt: new Date(),
+        email: faker.internet.email({ firstName: faker.string.uuid() }),
+        feideId: faker.string.uuid(),
+        firstLogin: false,
+        firstName: faker.person.firstName(),
+        lastName: faker.person.lastName(),
+        graduationYear: DateTime.now().plus({ years: 1 }).year,
+        graduationYearUpdatedAt: null,
+        id: faker.string.uuid(),
+        isSuperUser: false,
+        lastLogin: new Date(),
+        phoneNumber: faker.phone.number(),
+        confirmedStudyProgramId: null,
+        updatedAt: new Date(),
+        username: faker.string.uuid(),
+      },
+      userData,
+    ),
+  );
+  const userCreateInput = pick(user, [
+    "allergies",
+    "email",
+    "feideId",
+    "firstName",
+    "lastName",
+    "graduationYear",
+    "phoneNumber",
+    "username",
+  ]);
+  return userService.create(userCreateInput);
 }
 
 export { makeUser };

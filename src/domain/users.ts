@@ -32,7 +32,7 @@ class User {
 	allergies: string;
 	phoneNumber: string;
 	isSuperUser: boolean;
-	studyProgramId: string | null;
+	confirmedStudyProgramId: string | null;
 
 	constructor(params: Omit<User, "fullName" | "canUpdateYear" | "gradeYear">) {
 		this.id = params.id;
@@ -50,7 +50,7 @@ class User {
 		this.allergies = params.allergies;
 		this.phoneNumber = params.phoneNumber;
 		this.isSuperUser = params.isSuperUser;
-		this.studyProgramId = params.studyProgramId;
+		this.confirmedStudyProgramId = params.confirmedStudyProgramId;
 	}
 
 	get fullName(): string {
