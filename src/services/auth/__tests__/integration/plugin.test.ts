@@ -319,13 +319,16 @@ describe("Authentication", () => {
 
 			const user = await dependencies.services.users.getByFeideID(userFeideId);
 			assert(user, "User not found");
+
 			const enrolledResult =
 				await serverInstance.services.users.findManyStudyPrograms(
 					makeMockContext(user),
 				);
 			assert(enrolledResult.ok, "Failed to fetch enrolled study programs");
+
 			const enrolledStudyPrograms = enrolledResult.data.studyPrograms;
 			expect(enrolledStudyPrograms).toHaveLength(2);
+
 			const [studyProgram1, studyProgram2] = enrolledStudyPrograms;
 			expect(studyProgram1?.externalId).toEqual(studyProgramId1);
 			expect(studyProgram2?.externalId).toEqual(studyProgramId2);

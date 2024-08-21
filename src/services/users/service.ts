@@ -7,7 +7,7 @@ import {
 	PermissionDeniedError,
 	UnauthorizedError,
 } from "~/domain/errors.js";
-import type { StudyProgram, User } from "~/domain/users.js";
+import { StudyProgram, type User } from "~/domain/users.js";
 import { Result, type ResultAsync } from "~/lib/result.js";
 import type { IUserService } from "~/lib/server.js";
 import type { Context } from "../../lib/context.js";
@@ -182,6 +182,10 @@ export class UserService implements IUserService {
 						.nullish()
 						.transform((val) => val ?? undefined),
 				),
+			enrolledStudyPrograms: z
+				.array(z.instanceof(StudyProgram))
+				.nullish()
+				.transform((val) => val ?? undefined),
 		});
 		try {
 			const user = await this.usersRepository.get(id);
@@ -214,6 +218,7 @@ export class UserService implements IUserService {
 				graduationYearUpdatedAt,
 				firstLogin,
 				confirmedStudyProgramId,
+				enrolledStudyPrograms: data.enrolledStudyPrograms,
 			});
 
 			return updatedUser;
