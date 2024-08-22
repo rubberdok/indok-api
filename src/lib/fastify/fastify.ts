@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import fastifyCompress from "@fastify/compress";
 import fastifyCookie from "@fastify/cookie";
 import fastifyCors from "@fastify/cors";
@@ -6,10 +7,12 @@ import fastifyRateLimit from "@fastify/rate-limit";
 import fastifyRedis from "@fastify/redis";
 import fastifySession from "@fastify/session";
 import fastifyUnderPressure from "@fastify/under-pressure";
+import { getCurrentScope } from "@sentry/node";
 import RedisStore from "connect-redis";
 import fastify, { type FastifyInstance } from "fastify";
 import type { Configuration } from "~/config.js";
-import { isUserFacingError } from "~/domain/errors.js";
+import { NotFoundError, isUserFacingError } from "~/domain/errors.js";
+import type { User } from "~/domain/users.js";
 import fastifyAuth from "~/services/auth/plugin.js";
 import fastifyApolloServer from "./apollo-server.js";
 import fastifyHealthCheck from "./health-check.js";
@@ -125,7 +128,49 @@ async function fastifyServer(
 	await server.register(fastifyAuth, { prefix: "/auth" });
 	await server.register(fastifyApolloServer, { configuration: opts });
 
+	server.addHook("preHandler", async (request) => {
+		const userId = request.session.get("userId");
+		request.log.info({ userId }, "User ID from session");
+		if (userId) {
+			try {
+				const user = await request.server.services.users.get(userId);
+				request.user = user;
+				return;
+			} catch (err) {
+				if (err instanceof NotFoundError) {
+					await request.server.services.auth.logout(request);
+				} else {
+					throw err;
+				}
+			}
+		}
+		request.user = null;
+	});
+
+	// biome-ignore lint/suspicious/useAwait: Using async hooks, no need to await
+	server.addHook("preHandler", async (request) => {
+		const sentry = getCurrentScope();
+		const transactionIdHeader = request.headers["x-transaction-id"];
+		let transactionId: string;
+		if (Array.isArray(transactionIdHeader)) {
+			transactionId = transactionIdHeader[0] ?? randomUUID();
+		} else {
+			transactionId = transactionIdHeader ?? randomUUID();
+		}
+		request.transactionId = transactionId;
+		request.log = request.log.child({ transactionId });
+		sentry.setUser({ id: request.user?.id, ip_address: request.ip });
+		sentry.setTag("transaction_id", transactionId);
+	});
+
 	return { serverInstance: server };
 }
 
 export { fastifyServer };
+
+declare module "fastify" {
+	interface FastifyRequest {
+		user: User | null;
+		transactionId?: string;
+	}
+}
