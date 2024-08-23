@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import fastifyCompress from "@fastify/compress";
 import fastifyCookie from "@fastify/cookie";
 import fastifyCors from "@fastify/cors";
@@ -6,6 +7,7 @@ import fastifyRateLimit from "@fastify/rate-limit";
 import fastifyRedis from "@fastify/redis";
 import fastifySession from "@fastify/session";
 import fastifyUnderPressure from "@fastify/under-pressure";
+import { getCurrentScope } from "@sentry/node";
 import RedisStore from "connect-redis";
 import fastify, { type FastifyInstance } from "fastify";
 import type { Configuration } from "~/config.js";
@@ -125,7 +127,34 @@ async function fastifyServer(
 	await server.register(fastifyAuth, { prefix: "/auth" });
 	await server.register(fastifyApolloServer, { configuration: opts });
 
+	// biome-ignore lint/suspicious/useAwait: Using async hooks, no need to await
+	server.addHook("preHandler", async (request) => {
+		const sentry = getCurrentScope();
+		const transactionIdHeader = request.headers["x-transaction-id"];
+		let transactionId: string;
+		if (Array.isArray(transactionIdHeader)) {
+			transactionId = transactionIdHeader[0] ?? randomUUID();
+		} else {
+			transactionId = transactionIdHeader ?? randomUUID();
+		}
+		request.transactionId = transactionId;
+		request.log = request.log.child({ transactionId });
+		sentry.setUser({ id: request.user?.id, ip_address: request.ip });
+		sentry.setTag("transaction_id", transactionId);
+	});
+
+	// biome-ignore lint/suspicious/useAwait: Using async hooks, no need to await
+	server.addHook("onSend", async (request, reply) => {
+		reply.header("X-Transaction-Id", request.transactionId);
+	});
+
 	return { serverInstance: server };
+}
+
+declare module "fastify" {
+	interface FastifyRequest {
+		transactionId: string;
+	}
 }
 
 export { fastifyServer };

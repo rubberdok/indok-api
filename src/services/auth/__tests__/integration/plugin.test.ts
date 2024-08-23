@@ -9,6 +9,7 @@ import { User } from "~/domain/users.js";
 import { makeMockContext } from "~/lib/context.js";
 import { fastifyServer } from "~/lib/fastify/fastify.js";
 import fastifyService from "~/lib/fastify/service.js";
+import prisma from "~/lib/prisma.js";
 import type { FeideUserInfo } from "../../service.js";
 
 describe("Authentication", () => {
@@ -452,7 +453,7 @@ describe("Authentication", () => {
 			);
 		});
 
-		it("requires login", async () => {
+		it("regenerates the session", async () => {
 			const { serverInstance } = dependencies;
 
 			const logoutResponse = await serverInstance.inject({
@@ -462,7 +463,65 @@ describe("Authentication", () => {
 					[env.SESSION_COOKIE_NAME]: "invalid",
 				},
 			});
-			expect(logoutResponse.statusCode).toEqual(401);
+			expect(logoutResponse.statusCode).toEqual(303);
+			expect(
+				logoutResponse.cookies.find(
+					(cookie) => cookie.name === env.SESSION_COOKIE_NAME,
+				),
+			).not.toEqual("invalid");
+		});
+	});
+
+	describe("GET /auth/me", () => {
+		it("logs out the session if the user no longer exists", async () => {
+			const { serverInstance, makeStudyProgram, performLogin } = dependencies;
+			const studyProgramId = faker.string.uuid();
+			makeStudyProgram({ id: studyProgramId });
+			const userFeideId = faker.string.uuid();
+			const { cookies } = await performLogin({ userFeideId });
+
+			await prisma.user.delete({
+				where: {
+					feideId: userFeideId,
+				},
+			});
+
+			const meResponse = await serverInstance.inject({
+				method: "GET",
+				url: "/auth/me",
+				cookies,
+			});
+
+			expect(meResponse.statusCode).toEqual(401);
+			const unauthenticatedSessionCookie = meResponse.cookies.find(
+				(cookie) => cookie.name === env.SESSION_COOKIE_NAME,
+			);
+			assert(unauthenticatedSessionCookie, "Session cookie not found");
+			assert(
+				cookies[env.SESSION_COOKIE_NAME] !== unauthenticatedSessionCookie.value,
+				"Session cookie should be different after logout",
+			);
+		});
+
+		it("user has been set from session", async () => {
+			const { serverInstance, makeStudyProgram, performLogin } = dependencies;
+			const studyProgramId = faker.string.uuid();
+			makeStudyProgram({ id: studyProgramId });
+			const userFeideId = faker.string.uuid();
+			const { cookies } = await performLogin({ userFeideId });
+
+			const meResponse = await serverInstance.inject({
+				method: "GET",
+				url: "/auth/me",
+				cookies,
+			});
+
+			expect(meResponse.statusCode).toEqual(200);
+			expect(meResponse.json()).toEqual({
+				user: expect.objectContaining({
+					feideId: userFeideId,
+				}),
+			});
 		});
 	});
 

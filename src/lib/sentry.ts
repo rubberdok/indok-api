@@ -63,11 +63,6 @@ export const fastifyApolloSentryPlugin =
 								// Annotate whether failing operation was query/mutation/subscription
 								scope.setTag("kind", ctx.operation?.operation);
 
-								// Annotate with user ID
-								if (ctx.contextValue.user) {
-									scope.setUser({ id: ctx.contextValue.user.id });
-								}
-
 								// Log query and variables as extras
 								// (make sure to strip out sensitive data!)
 								scope.setExtra("query", ctx.request.query);

@@ -8,8 +8,6 @@ import fastifyApollo, {
 import type { FastifyPluginAsync } from "fastify";
 import fp from "fastify-plugin";
 import type { Configuration } from "~/config.js";
-import { NotFoundError } from "~/domain/errors.js";
-import type { User } from "~/domain/users.js";
 import { resolvers } from "~/graphql/resolvers.generated.js";
 import { typeDefs } from "~/graphql/type-defs.generated.js";
 import { type ApolloContext, getFormatErrorHandler } from "../apollo-server.js";
@@ -43,36 +41,15 @@ const fastifyApolloServerPlugin: FastifyPluginAsync<{
 	});
 
 	// Custom context function to inject dependencies into the Apollo Context
-	const contextFunction: ApolloFastifyContextFunction<ApolloContext> = async (
+	const contextFunction: ApolloFastifyContextFunction<ApolloContext> = (
 		req,
 	) => {
 		const { services } = fastify;
-
-		req.log.info(req, "Context");
-
-		const { userId } = req.session;
-		let user: User | null = null;
-		if (userId !== undefined) {
-			try {
-				req.log.debug({ userId }, "Fetching user");
-				user = await services.users.get(userId);
-				req.log.debug({ userId }, "Found user");
-			} catch (err) {
-				req.log.info({ userId }, "Error fetching user");
-				if (err instanceof NotFoundError) {
-					req.log.info({ userId }, "User not found, logging out");
-					await services.auth.logout(req);
-				} else {
-					throw err;
-				}
-			}
-		}
-
-		return {
+		return Promise.resolve({
 			...services,
-			user,
-			log: req.log.child({ userId: user?.id, service: "apollo-server" }),
-		};
+			user: req.user,
+			log: req.log.child({ userId: req.user?.id, service: "apollo-server" }),
+		});
 	};
 	await apollo.start();
 	await fastify.register(fastifyApollo(apollo), {
