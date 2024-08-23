@@ -453,6 +453,36 @@ describe("Authentication", () => {
 			);
 		});
 
+		it("prevents session fixation attacks", async () => {
+			const { serverInstance, performLogin } = dependencies;
+			const userFeideId = faker.string.uuid();
+			const { cookies, authenticatedSessionCookie } = await performLogin({
+				userFeideId,
+			});
+
+			const logoutResponse = await serverInstance.inject({
+				method: "GET",
+				url: "/auth/logout",
+				cookies,
+			});
+			const unauthenticatedSessionCookie = logoutResponse.cookies.find(
+				(cookie) => cookie.name === env.SESSION_COOKIE_NAME,
+			);
+			assert(
+				unauthenticatedSessionCookie?.value !==
+					authenticatedSessionCookie.value,
+				"Session cookie should be different after logout",
+			);
+
+			const meResponse = await serverInstance.inject({
+				method: "GET",
+				url: "/auth/me",
+				cookies,
+			});
+
+			expect(meResponse.statusCode).toEqual(401);
+		});
+
 		it("regenerates the session", async () => {
 			const { serverInstance } = dependencies;
 
@@ -496,11 +526,7 @@ describe("Authentication", () => {
 			const unauthenticatedSessionCookie = meResponse.cookies.find(
 				(cookie) => cookie.name === env.SESSION_COOKIE_NAME,
 			);
-			assert(unauthenticatedSessionCookie, "Session cookie not found");
-			assert(
-				cookies[env.SESSION_COOKIE_NAME] !== unauthenticatedSessionCookie.value,
-				"Session cookie should be different after logout",
-			);
+			expect(unauthenticatedSessionCookie).toBeUndefined();
 		});
 
 		it("user has been set from session", async () => {

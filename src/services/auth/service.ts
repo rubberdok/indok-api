@@ -344,8 +344,8 @@ export class AuthService {
 	 * @returns
 	 */
 	async logout(req: FastifyRequest): Promise<void> {
-		await req.session.regenerate();
-		req.log.info({ userId: req.session.get("userId") }, "User logged out");
+		req.log.info({ userId: req.session.get("userId") }, "User logging out");
+		await req.session.destroy();
 	}
 }
 
