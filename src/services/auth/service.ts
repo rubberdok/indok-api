@@ -329,7 +329,7 @@ export class AuthService {
 	 * @returns
 	 */
 	async login(req: FastifyRequest, user: User): Promise<User> {
-		await req.session.regenerate([]);
+		await req.session.regenerate();
 		req.session.set("userId", user.id);
 		const updatedUser = await this.userService.login(user.id);
 		req.log.info({ userId: user.id }, "User logged in");
@@ -344,13 +344,8 @@ export class AuthService {
 	 * @returns
 	 */
 	async logout(req: FastifyRequest): Promise<void> {
-		if (req.session.get("userId")) {
-			await req.session.destroy();
-			return;
-		}
-		throw new UnauthorizedError(
-			"You need to be logged in to perform this action.",
-		);
+		await req.session.regenerate();
+		req.log.info({ userId: req.session.get("userId") }, "User logged out");
 	}
 }
 

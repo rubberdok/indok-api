@@ -18,8 +18,8 @@ describe("Server", () => {
 			expect(res?.statusCode).toBe(200);
 		});
 
-		afterAll(() => {
-			server?.close();
+		afterAll(async () => {
+			await server?.close();
 		});
 	});
 
@@ -38,8 +38,8 @@ describe("Server", () => {
 			expect(res.status).toBe(200);
 		});
 
-		afterAll(() => {
-			server?.close();
+		afterAll(async () => {
+			await server?.close();
 		});
 	});
 });

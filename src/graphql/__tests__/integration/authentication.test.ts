@@ -1,6 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { type DeepMockProxy, mock, mockDeep, mockFn } from "jest-mock-extended";
-import { NotFoundError } from "~/domain/errors.js";
+import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import type { User } from "~/domain/users.js";
 import {
 	type GraphQLTestClient,
@@ -24,40 +23,11 @@ describe("Apollo Context Authentication", () => {
 		});
 	});
 
-	it("should set ctx.user if a user with the userId in session exists", async () => {
+	it("ctx.user should be set", async () => {
 		const userId = faker.string.uuid();
 		// The query will log the user in, and in doing so, it will call mockUserService.create to create the user.
 		mockUserService.get.mockResolvedValue(mock<User>({ id: userId }));
 		mockUserService.create.mockResolvedValue(mock<User>({ id: userId }));
-
-		const { errors } = await client.query(
-			{
-				query: graphql(`
-          query AuthContext {
-            user {
-              user {
-                id
-              }
-            }
-          }
-        `),
-			},
-			{ user: { feideId: userId } },
-		);
-
-		expect(errors).toBeUndefined();
-		expect(mockUserService.get).toHaveBeenCalledTimes(1);
-	});
-
-	it("should call log out on the request if the user in the session does not exist", async () => {
-		const userId = faker.string.uuid();
-		// The query will log the user in, and in doing so, it will call mockUserService.create to create the user.
-		mockUserService.get.mockImplementationOnce(() => {
-			throw new NotFoundError("User not found");
-		});
-		mockUserService.create.mockResolvedValue(mock<User>({ id: userId }));
-		// We mock the logout function so we can montior that it is called
-		client.services.auth.logout = mockFn();
 
 		const { errors, data } = await client.query(
 			{
@@ -75,12 +45,7 @@ describe("Apollo Context Authentication", () => {
 		);
 
 		expect(errors).toBeUndefined();
-		expect(data?.user.user).toBeNull();
-		expect(mockUserService.get).toHaveBeenCalledTimes(1);
-		expect(client.services.auth.logout).toHaveBeenCalledWith(
-			expect.objectContaining({
-				session: expect.objectContaining({ userId }),
-			}),
-		);
+		expect(mockUserService.get).toHaveBeenCalledTimes(2);
+		expect(data?.user.user?.id).toBe(userId);
 	});
 });

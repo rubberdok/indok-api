@@ -11,8 +11,7 @@ import { getCurrentScope } from "@sentry/node";
 import RedisStore from "connect-redis";
 import fastify, { type FastifyInstance } from "fastify";
 import type { Configuration } from "~/config.js";
-import { NotFoundError, isUserFacingError } from "~/domain/errors.js";
-import type { User } from "~/domain/users.js";
+import { isUserFacingError } from "~/domain/errors.js";
 import fastifyAuth from "~/services/auth/plugin.js";
 import fastifyApolloServer from "./apollo-server.js";
 import fastifyHealthCheck from "./health-check.js";
@@ -128,25 +127,6 @@ async function fastifyServer(
 	await server.register(fastifyAuth, { prefix: "/auth" });
 	await server.register(fastifyApolloServer, { configuration: opts });
 
-	server.addHook("preHandler", async (request) => {
-		const userId = request.session.get("userId");
-		request.log.info({ userId }, "User ID from session");
-		if (userId) {
-			try {
-				const user = await request.server.services.users.get(userId);
-				request.user = user;
-				return;
-			} catch (err) {
-				if (err instanceof NotFoundError) {
-					await request.server.services.auth.logout(request);
-				} else {
-					throw err;
-				}
-			}
-		}
-		request.user = null;
-	});
-
 	// biome-ignore lint/suspicious/useAwait: Using async hooks, no need to await
 	server.addHook("preHandler", async (request) => {
 		const sentry = getCurrentScope();
@@ -163,14 +143,18 @@ async function fastifyServer(
 		sentry.setTag("transaction_id", transactionId);
 	});
 
+	// biome-ignore lint/suspicious/useAwait: Using async hooks, no need to await
+	server.addHook("onSend", async (request, reply) => {
+		reply.header("X-Transaction-Id", request.transactionId);
+	});
+
 	return { serverInstance: server };
 }
 
-export { fastifyServer };
-
 declare module "fastify" {
 	interface FastifyRequest {
-		user: User | null;
-		transactionId?: string;
+		transactionId: string;
 	}
 }
+
+export { fastifyServer };
