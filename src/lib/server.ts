@@ -946,6 +946,11 @@ async function registerServices(
 	await serverInstance.register(fastifyBullBoardPlugin, {
 		prefix: "/admin/queues",
 	});
+
+	// biome-ignore lint/suspicious/useAwait: async hooks
+	serverInstance.addHook("onReady", async () => {
+		Sentry.addIntegration(Sentry.anrIntegration({ captureStackTrace: true }));
+	});
 	return services;
 }
 
