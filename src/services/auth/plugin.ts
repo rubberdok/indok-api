@@ -1,4 +1,4 @@
-import type { FastifyPluginAsync } from "fastify";
+import type { FastifyPluginAsync, RouteShorthandOptions } from "fastify";
 import fp from "fastify-plugin";
 import { env } from "~/config.js";
 import {
@@ -9,6 +9,13 @@ import {
 import type { User } from "~/domain/users.js";
 import { isValidRedirectUrl } from "~/utils/validate-redirect-url.js";
 
+const rateLimitConfig: RouteShorthandOptions["config"] = {
+	rateLimit: {
+		max: 100,
+		timeWindow: 60 * 1_000,
+	},
+};
+
 const fastifyAuthPlugin: FastifyPluginAsync = (fastify) => {
 	fastify.register(
 		async (instance) => {
@@ -17,12 +24,7 @@ const fastifyAuthPlugin: FastifyPluginAsync = (fastify) => {
 					"return-to"?: string;
 				};
 			}>({
-				config: {
-					rateLimit: {
-						max: 100,
-						timeWindow: 60 * 1_000,
-					},
-				},
+				config: rateLimitConfig,
 				schema: {
 					querystring: {
 						type: "object",
@@ -57,12 +59,7 @@ const fastifyAuthPlugin: FastifyPluginAsync = (fastify) => {
 					state?: string;
 				};
 			}>({
-				config: {
-					rateLimit: {
-						max: 100,
-						timeWindow: 60 * 1_000,
-					},
-				},
+				config: rateLimitConfig,
 				url: "/login/callback",
 				method: "GET",
 				schema: {
@@ -155,12 +152,7 @@ const fastifyAuthPlugin: FastifyPluginAsync = (fastify) => {
 					state?: string;
 				};
 			}>({
-				config: {
-					rateLimit: {
-						max: 100,
-						timeWindow: 60 * 1_000,
-					},
-				},
+				config: rateLimitConfig,
 				url: "/study-program/callback",
 				method: "GET",
 				schema: {
@@ -215,12 +207,7 @@ const fastifyAuthPlugin: FastifyPluginAsync = (fastify) => {
 					"return-to"?: string;
 				};
 			}>({
-				config: {
-					rateLimit: {
-						max: 100,
-						timeWindow: 60 * 1_000,
-					},
-				},
+				config: rateLimitConfig,
 				schema: {
 					querystring: {
 						type: "object",
