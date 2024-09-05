@@ -16,6 +16,7 @@
 	"scripts": {
 		"setup": "run-p generate",
 		"start:production": "node --import ./dist/instrument.js ./dist/server.js",
+		"start:worker:production": "node --import ./dist/instrument.js ./dist/worker.js",
 		"build:production": "run-s generate:gql swc",
 		"build": "pnpm run swc",
 		"studio": "prisma studio",
