@@ -291,7 +291,7 @@ resource "azurerm_container_app" "worker" {
   template {
     min_replicas = 1
     container {
-      command = ["node", "./dist/worker.js"]
+      command = ["pnpm", "start:worker:production"]
       cpu     = 0.25
       memory  = "0.5Gi"
       name    = "worker"

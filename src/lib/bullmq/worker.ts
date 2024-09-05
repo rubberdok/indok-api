@@ -1,5 +1,6 @@
 import { DefaultAzureCredential } from "@azure/identity";
 import { BlobServiceClient } from "@azure/storage-blob";
+import * as Sentry from "@sentry/node";
 import { Client } from "@vippsmobilepay/sdk";
 import type { Processor, RedisConnection, WorkerOptions } from "bullmq";
 import { Worker as BullMqWorker } from "bullmq";
@@ -69,9 +70,15 @@ export class Worker<
 		});
 		this.on("error", (error) => {
 			this.log?.error({ error }, `${name} worker error`);
+			Sentry.captureException(error);
 		});
 		this.on("failed", (job, error) => {
 			this.log?.error({ error, job }, `${name} job failed`);
+			Sentry.captureException(error, {
+				extra: {
+					job,
+				},
+			});
 		});
 		this.on("active", (job) => {
 			this.log?.info({ job }, `${name} job started`);
@@ -87,6 +94,7 @@ export async function initWorkers(): Promise<{
 	close: (signal?: NodeJS.Signals) => Promise<void>;
 }> {
 	const logger = pino(envToLogger[env.NODE_ENV]);
+	Sentry.setTag("server", "worker");
 
 	const redis = new Redis(env.REDIS_CONNECTION_STRING, {
 		keepAlive: 1_000 * 60 * 3, // 3 minutes
@@ -276,6 +284,7 @@ export async function initWorkers(): Promise<{
 		for (const queue of Object.values(queues)) {
 			await queue.waitUntilReady();
 		}
+		Sentry.addIntegration(Sentry.anrIntegration({ captureStackTrace: true }));
 		logger.info("Worker ready");
 	}
 
@@ -302,7 +311,10 @@ export async function initWorkers(): Promise<{
 		await close(signal, 0);
 	});
 	process.on("uncaughtException", async (error) => {
-		logger.error(error, "closing");
+		logger.fatal(error, "closing");
+		Sentry.captureException(error, {
+			level: "fatal",
+		});
 		await close(undefined, 1);
 	});
 
