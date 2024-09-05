@@ -29,6 +29,9 @@ updates:
       bull-board:
         patterns:
           - "@bull-board/*"
+      \@swc/core:
+        patterns:
+          - "@swc/core*"
 
   - package-ecosystem: github-actions
     directory: "/.github/workflows"
