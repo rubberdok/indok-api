@@ -56,6 +56,11 @@
 		"check": "run-s setup tsc lint test",
 		"clean-dist": "rm -rf dist"
 	},
+	"optionalDependencies": {
+		"@swc/core-linux-arm64-musl": "^1.7.23",
+		"@swc/core-linux-arm64-gnu": "^1.7.23",
+		"@swc/core-darwin-x64": "^1.7.23"
+	},
 	"devDependencies": {
 		"@biomejs/biome": "1.8.3",
 		"@eddeee888/gcg-typescript-resolver-files": "^0.10.4",
@@ -69,7 +74,7 @@
 		"@parcel/watcher": "^2.4.1",
 		"@swc-node/register": "1.10.9",
 		"@swc/cli": "^0.4.0",
-		"@swc/core": "1.7.23",
+		"@swc/core": "^1.7.23",
 		"@swc/helpers": "^0.5.13",
 		"@swc/jest": "^0.2.36",
 		"@types/connect-redis": "^0.0.23",
@@ -130,12 +135,5 @@
 		"prisma": "^5.19.1",
 		"yargs": "^17.7.2",
 		"zod": "^3.23.8"
-	},
-	"pnpm": {
-		"supportedArchitectures": {
-			"os": ["current", "linux"],
-			"cpu": ["current", "x64"],
-			"libc": ["current", "glibc"]
-		}
 	}
 }

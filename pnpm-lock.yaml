@@ -131,6 +131,16 @@ importers:
       zod:
         specifier: ^3.23.8
         version: 3.23.8
+    optionalDependencies:
+      '@swc/core-darwin-x64':
+        specifier: ^1.7.23
+        version: 1.7.23
+      '@swc/core-linux-arm64-gnu':
+        specifier: ^1.7.23
+        version: 1.7.23
+      '@swc/core-linux-arm64-musl':
+        specifier: ^1.7.23
+        version: 1.7.23
     devDependencies:
       '@biomejs/biome':
         specifier: 1.8.3
@@ -169,7 +179,7 @@ importers:
         specifier: ^0.4.0
         version: 0.4.0(@swc/core@1.7.23(@swc/helpers@0.5.13))
       '@swc/core':
-        specifier: 1.7.23
+        specifier: ^1.7.23
         version: 1.7.23(@swc/helpers@0.5.13)
       '@swc/helpers':
         specifier: ^0.5.13
