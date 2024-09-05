@@ -806,6 +806,7 @@ async function registerServices(
 	configuration?: Partial<Configuration>,
 ): Promise<Services> {
 	Sentry.setupFastifyErrorHandler(serverInstance);
+	Sentry.setTag("server", "service");
 	await serverInstance.register(fastifyPrisma, { client: prisma });
 	const database = serverInstance.database;
 	database.$on("error", (e) => {
