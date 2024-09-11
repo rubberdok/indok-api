@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { faker } from "@faker-js/faker";
-import type { EPaymentGetPaymentOKResponse } from "@vippsmobilepay/sdk";
+import type { GetPaymentResponse } from "@vippsmobilepay/sdk";
 import type { QueueEvents } from "bullmq";
 import { type DeepMockProxy, mock, mockDeep } from "jest-mock-extended";
 import { User } from "~/domain/users.js";
@@ -93,7 +93,7 @@ describe("ProductService", () => {
 			});
 			vippsMock.payment.info.mockResolvedValue({
 				ok: true,
-				data: mockDeep<EPaymentGetPaymentOKResponse>({
+				data: mockDeep<GetPaymentResponse>({
 					amount: {
 						value: 100 * 100,
 						currency: "NOK",
@@ -138,7 +138,7 @@ describe("ProductService", () => {
 			 */
 			vippsMock.payment.info.mockResolvedValue({
 				ok: true,
-				data: mockDeep<EPaymentGetPaymentOKResponse>({
+				data: mockDeep<GetPaymentResponse>({
 					amount: {
 						value: 100 * 100,
 						currency: "NOK",
