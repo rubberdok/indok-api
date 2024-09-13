@@ -1,120 +1,118 @@
 type Query {
-    documents(data: DocumentsInput): DocumentsResponse!
-    document(data: DocumentInput!): DocumentResponse!
-    documentCategories: DocumentCategoryResponse!
+	documents(data: DocumentsInput): DocumentsResponse!
+	document(data: DocumentInput!): DocumentResponse!
+	documentCategories: DocumentCategoryResponse!
 }
 
 type Mutation {
-    createDocument(data: CreateDocumentInput!): CreateDocumentResponse!
-    updateDocument(data: UpdateDocumentInput!): UpdateDocumentResponse!
-    deleteDocument(data: DeleteDocumentInput!): DeleteDocumentResponse!
+	createDocument(data: CreateDocumentInput!): CreateDocumentResponse!
+	updateDocument(data: UpdateDocumentInput!): UpdateDocumentResponse!
+	deleteDocument(data: DeleteDocumentInput!): DeleteDocumentResponse!
 }
 
 type DeleteDocumentCategoryResponse {
-    category: DocumentCategory!
+	category: DocumentCategory!
 }
 
 type DocumentCategoryResponse {
-    categories: [DocumentCategory!]!
-    total: Int!
+	categories: [DocumentCategory!]!
+	total: Int!
 }
 
 input DocumentInput {
-    id: ID!
+	id: ID!
 }
 
 type DocumentResponse {
-    document: Document
+	document: Document
 }
 
 input DocumentsInput {
-    categories: [DocumentsCategoryInput!]
+	categories: [DocumentsCategoryInput!]
 }
 
 input DocumentsCategoryInput {
-    id: ID!
+	id: ID!
 }
 
 input CreateDocumentInput {
-    name: String!
-    fileExtension: String!
-    description: String
-    categories: [DocumentCategoryInput!]
+	name: String!
+	fileExtension: String!
+	description: String
+	categories: [DocumentCategoryInput!]
 }
 
 input DocumentCategoryInput {
-    name: String!
+	name: String!
 }
 
 input UpdateDocumentInput {
-    id: ID!
-    name: String
-    description: String
-    categories: [DocumentCategoryInput!]
+	id: ID!
+	name: String
+	description: String
+	categories: [DocumentCategoryInput!]
 }
 
 input DeleteDocumentInput {
-    id: ID!
+	id: ID!
 }
 
 type CreateDocumentResponse {
-    document: Document!
-    """
-    The URL to upload the file to, valid for 10 minutes
-    """
-    uploadUrl: String!
+	document: Document!
+	"""
+	The URL to upload the file to, valid for 10 minutes
+	"""
+	uploadUrl: String!
 }
 
 type UpdateDocumentResponse {
-    document: Document!
+	document: Document!
 }
 
 type DeleteDocumentResponse {
-    document: Document!
+	document: Document!
 }
 
 type DocumentsResponse {
-    documents: [Document!]!
-    total: Int!
+	documents: [Document!]!
+	total: Int!
 }
 
-
-
 type Document {
-    id: ID!
-    """
-    The display name of the document
-    """
-    name: String!
-    """
-    The remote file of the document
-    """
-    file: RemoteFile!
-    """
-    When the document was created
-    """
-    createdAt: DateTime!
-    """
-    When the document was last updated
-    """
-    updatedAt: DateTime!
-    """
-    The description of the document
-    """
-    description: String!
-    """
-    The categories the document is in
-    """
-    categories: [DocumentCategory!]!
+	id: ID!
+	"""
+	The display name of the document
+	"""
+	name: String!
+	"""
+	The remote file of the document
+	"""
+	file: RemoteFile!
+	"""
+	When the document was created
+	"""
+	createdAt: DateTime!
+	"""
+	When the document was last updated
+	"""
+	updatedAt: DateTime!
+	"""
+	The description of the document
+	"""
+	description: String!
+	"""
+	The categories the document is in
+	"""
+	categories: [DocumentCategory!]!
 }
 
 type DocumentCategory {
-    """
-    The ID of the category
-    """
-    id: ID!
-    """
-    The name of the category
-    """
-    name: String!
+	"""
+	The ID of the category
+	"""
+	id: ID!
+	"""
+	The name of the category
+	"""
+	name: String!
 }

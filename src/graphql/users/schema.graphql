@@ -1,53 +1,53 @@
 input UpdateUserInput {
-  firstName: String
-  lastName: String
-  phoneNumber: String
-  allergies: String
-  graduationYear: Int
+	firstName: String
+	lastName: String
+	phoneNumber: String
+	allergies: String
+	graduationYear: Int
 }
 
 input SuperUpdateUserInput {
-  firstName: String
-  lastName: String
-  phoneNumber: String
-  allergies: String
-  graduationYear: Int
-  isSuperUser: Boolean
+	firstName: String
+	lastName: String
+	phoneNumber: String
+	allergies: String
+	graduationYear: Int
+	isSuperUser: Boolean
 }
 
 type SuperUpdateUserResponse {
-  user: PrivateUser!
+	user: PrivateUser!
 }
 
 type UpdateUserResponse {
-  user: PrivateUser!
+	user: PrivateUser!
 }
 
 type UsersResponse {
-  users: [PublicUser!]!
-  super: [PrivateUser!]!
-  total: Int!
+	users: [PublicUser!]!
+	super: [PrivateUser!]!
+	total: Int!
 }
 
 type UserResponse {
-  user: PrivateUser
+	user: PrivateUser
 }
 
 type Query {
-  user: UserResponse!
-  users: UsersResponse!
+	user: UserResponse!
+	users: UsersResponse!
 }
 
 type Mutation {
-  """
-  Update the user with the given ID with super user privileges, requires that
-  the caller is an authenticated super user. Otherwise, use updateUser.
-  """
-  superUpdateUser(
-    id: ID!
-    data: SuperUpdateUserInput!
-  ): SuperUpdateUserResponse!
-  updateUser(data: UpdateUserInput!): UpdateUserResponse!
+	"""
+	Update the user with the given ID with super user privileges, requires that
+	the caller is an authenticated super user. Otherwise, use updateUser.
+	"""
+	superUpdateUser(
+		id: ID!
+		data: SuperUpdateUserInput!
+	): SuperUpdateUserResponse!
+	updateUser(data: UpdateUserInput!): UpdateUserResponse!
 }
 
 """
@@ -56,23 +56,23 @@ This type is is available to other users, and should therefore not contain sensi
 unless the information is restricted by access control.
 """
 type PublicUser {
-  id: ID!
-  """
-  The users' given/first name
-  """
-  firstName: String!
-  """
-  The users' family/last name
-  """
-  lastName: String!
-  """
-  The users' username
-  """
-  username: String!
-  """
-  The users' grade year
-  """
-  gradeYear: Int
+	id: ID!
+	"""
+	The users' given/first name
+	"""
+	firstName: String!
+	"""
+	The users' family/last name
+	"""
+	lastName: String!
+	"""
+	The users' username
+	"""
+	username: String!
+	"""
+	The users' grade year
+	"""
+	gradeYear: Int
 }
 
 """
@@ -80,64 +80,64 @@ PrivateUser should only be used when accessed by the authenticated user themselv
 as it contains sensitive information.
 """
 type PrivateUser {
-  id: ID!
-  lastName: String!
-  firstName: String!
-  username: String!
-  createdAt: DateTime!
-  firstLogin: Boolean!
-  """
-  If the user is permitted to update their graduation year
-  """
-  canUpdateYear: Boolean!
-  """
-  Expected graduation year for the user
-  """
-  graduationYear: Int
-  phoneNumber: String
-  allergies: String
-  """
-  The last time the users graduation year was updated
-  """
-  graduationYearUpdatedAt: DateTime
-  """
-  Student email
-  """
-  email: String!
-  """
-  The users grade year, from 1 - 6(+)
-  """
-  gradeYear: Int
-  """
-  All organizations the user is a member of
-  """
-  organizations: [Organization!]!
-  """
-  true if the user is a super user, false otherwise
-  """
-  isSuperUser: Boolean!
-  """
-  The users' study program
-  """
-  studyProgram: StudyProgram
-  """
-  The users' sign ups
-  """
-  signUps(data: UserSignUpsInput): UserSignUps!
+	id: ID!
+	lastName: String!
+	firstName: String!
+	username: String!
+	createdAt: DateTime!
+	firstLogin: Boolean!
+	"""
+	If the user is permitted to update their graduation year
+	"""
+	canUpdateYear: Boolean!
+	"""
+	Expected graduation year for the user
+	"""
+	graduationYear: Int
+	phoneNumber: String
+	allergies: String
+	"""
+	The last time the users graduation year was updated
+	"""
+	graduationYearUpdatedAt: DateTime
+	"""
+	Student email
+	"""
+	email: String!
+	"""
+	The users grade year, from 1 - 6(+)
+	"""
+	gradeYear: Int
+	"""
+	All organizations the user is a member of
+	"""
+	organizations: [Organization!]!
+	"""
+	true if the user is a super user, false otherwise
+	"""
+	isSuperUser: Boolean!
+	"""
+	The users' study program
+	"""
+	studyProgram: StudyProgram
+	"""
+	The users' sign ups
+	"""
+	signUps(data: UserSignUpsInput): UserSignUps!
 }
 
 input UserSignUpsInput {
-  orderBy: OrderBy
-  participationStatus: ParticipationStatus
+	orderBy: OrderBy
+	participationStatus: ParticipationStatus
 }
 
 type UserSignUps {
-  signUps: [SignUp!]!
-  total: Int!
+	signUps: [SignUp!]!
+	total: Int!
 }
 
 type StudyProgram {
-  id: ID!
-  name: String!
-  externalId: String!
+	id: ID!
+	name: String!
+	externalId: String!
 }

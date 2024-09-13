@@ -1,325 +1,325 @@
 type Query {
-  booking(data: BookingInput!): BookingResponse!
-  cabins: CabinsResponse!
-  bookingSemesters: BookingSemestersResponse!
-  bookingContact: BookingContactResponse!
-  totalCost(data: TotalCostInput!): TotalCostResponse!
-  """
-  Find all bookings, requires that the user is in an organization with the CABIN_ADMIN permission.
-  """
-  bookings(data: BookingsInput): BookingsResponse!
-  getAvailabilityCalendar(
-    data: GetAvailabilityCalendarInput!
-  ): GetAvailabilityCalendarResponse!
-  bookingTerms: BookingTermsResponse!
+	booking(data: BookingInput!): BookingResponse!
+	cabins: CabinsResponse!
+	bookingSemesters: BookingSemestersResponse!
+	bookingContact: BookingContactResponse!
+	totalCost(data: TotalCostInput!): TotalCostResponse!
+	"""
+	Find all bookings, requires that the user is in an organization with the CABIN_ADMIN permission.
+	"""
+	bookings(data: BookingsInput): BookingsResponse!
+	getAvailabilityCalendar(
+		data: GetAvailabilityCalendarInput!
+	): GetAvailabilityCalendarResponse!
+	bookingTerms: BookingTermsResponse!
 }
 
 type Mutation {
-  newBooking(data: NewBookingInput!): NewBookingResponse!
-  updateBookingStatus(data: UpdateBookingStatusInput!): UpdateBookingResponse!
-  """
-  Updates the booking semester for the given semester, requires that the user is in an organization with
-  the CABIN_ADMIN permission.
-  """
-  updateBookingSemester(
-    data: UpdateBookingSemesterInput!
-  ): UpdateBookingSemesterResponse!
-  """
-  Updates the booking contact, requires that the user is in an organization with the CABIN_ADMIN permission.
-  """
-  updateBookingContact(
-    data: UpdateBookingContactInput!
-  ): UpdateBookingContactResponse!
-  """
-  Updates the cabin with the given ID, requires that the user is in an organization with the CABIN_ADMIN permission.
-  """
-  updateCabin(data: UpdateCabinInput!): UpdateCabinResponse!
-  """
-  Create cabin, requires that the user is in an organization with the CABIN_ADMIN permission.
-  """
-  createCabin(data: CreateCabinInput!): CreateCabinResponse!
-  """
-  Update the bookingTerms for cabins, requires that the user is in an organization with the CABIN_ADMIN permission.
-  """
-  updateBookingTerms: UpdateBookingTermsResponse!
+	newBooking(data: NewBookingInput!): NewBookingResponse!
+	updateBookingStatus(data: UpdateBookingStatusInput!): UpdateBookingResponse!
+	"""
+	Updates the booking semester for the given semester, requires that the user is in an organization with
+	the CABIN_ADMIN permission.
+	"""
+	updateBookingSemester(
+		data: UpdateBookingSemesterInput!
+	): UpdateBookingSemesterResponse!
+	"""
+	Updates the booking contact, requires that the user is in an organization with the CABIN_ADMIN permission.
+	"""
+	updateBookingContact(
+		data: UpdateBookingContactInput!
+	): UpdateBookingContactResponse!
+	"""
+	Updates the cabin with the given ID, requires that the user is in an organization with the CABIN_ADMIN permission.
+	"""
+	updateCabin(data: UpdateCabinInput!): UpdateCabinResponse!
+	"""
+	Create cabin, requires that the user is in an organization with the CABIN_ADMIN permission.
+	"""
+	createCabin(data: CreateCabinInput!): CreateCabinResponse!
+	"""
+	Update the bookingTerms for cabins, requires that the user is in an organization with the CABIN_ADMIN permission.
+	"""
+	updateBookingTerms: UpdateBookingTermsResponse!
 }
 
 input BookingInput {
-  id: ID!
-  email: String!
+	id: ID!
+	email: String!
 }
 
 type BookingResponse {
-  booking: Booking
+	booking: Booking
 }
 
 type BookingTermsResponse {
-  bookingTerms: BookingTerms
+	bookingTerms: BookingTerms
 }
 
 type BookingTerms {
-  id: ID!
-  file: RemoteFile!
-  createdAt: DateTime!
+	id: ID!
+	file: RemoteFile!
+	createdAt: DateTime!
 }
 
 type UpdateBookingTermsResponse {
-  uploadUrl: String!
-  bookingTerms: BookingTerms!
+	uploadUrl: String!
+	bookingTerms: BookingTerms!
 }
 
 input CreateCabinInput {
-  name: String!
-  internalPrice: Int!
-  externalPrice: Int!
-  internalPriceWeekend: Int!
-  externalPriceWeekend: Int!
-  capacity: Int!
+	name: String!
+	internalPrice: Int!
+	externalPrice: Int!
+	internalPriceWeekend: Int!
+	externalPriceWeekend: Int!
+	capacity: Int!
 }
 
 type CreateCabinResponse {
-  cabin: Cabin!
+	cabin: Cabin!
 }
 
 input UpdateCabinInput {
-  id: ID!
-  name: String
-  internalPrice: Int
-  externalPrice: Int
-  internalPriceWeekend: Int
-  externalPriceWeekend: Int
-  capacity: Int
+	id: ID!
+	name: String
+	internalPrice: Int
+	externalPrice: Int
+	internalPriceWeekend: Int
+	externalPriceWeekend: Int
+	capacity: Int
 }
 
 type UpdateCabinResponse {
-  cabin: Cabin!
+	cabin: Cabin!
 }
 
 input GetAvailabilityCalendarInput {
-  month: Int!
-  year: Int!
-  cabins: [CabinInput!]!
-  count: Int!
-  guests: GuestsInput!
+	month: Int!
+	year: Int!
+	cabins: [CabinInput!]!
+	count: Int!
+	guests: GuestsInput!
 }
 
 input GuestsInput {
-  internal: Int!
-  external: Int!
+	internal: Int!
+	external: Int!
 }
 
 type GetAvailabilityCalendarResponse {
-  calendarMonths: [CalendarMonth!]!
+	calendarMonths: [CalendarMonth!]!
 }
 
 type CalendarMonth {
-  month: Int!
-  year: Int!
-  days: [CalendarDay!]!
+	month: Int!
+	year: Int!
+	days: [CalendarDay!]!
 }
 
 type CalendarDay {
-  calendarDate: DateTime!
-  available: Boolean!
-  bookable: Boolean!
-  price: Int!
-  availableForCheckIn: Boolean!
-  availableForCheckOut: Boolean!
+	calendarDate: DateTime!
+	available: Boolean!
+	bookable: Boolean!
+	price: Int!
+	availableForCheckIn: Boolean!
+	availableForCheckOut: Boolean!
 }
 
 type BookingsResponse {
-  bookings: [Booking!]!
-  total: Int!
+	bookings: [Booking!]!
+	total: Int!
 }
 
 input BookingsInput {
-  status: BookingStatus
+	status: BookingStatus
 }
 
 type Cabin {
-  id: ID!
-  name: String!
-  internalPrice: Int!
-  externalPrice: Int!
-  capacity: Int!
-  price: CabinPriceGroup!
+	id: ID!
+	name: String!
+	internalPrice: Int!
+	externalPrice: Int!
+	capacity: Int!
+	price: CabinPriceGroup!
 }
 
 type Booking {
-  id: ID!
-  endDate: DateTime!
-  startDate: DateTime!
-  firstName: String!
-  lastName: String!
-  email: String!
-  phoneNumber: String!
-  cabins: [Cabin!]!
-  status: BookingStatus!
-  """
-  Total cost of the booking, in NOK
-  """
-  totalCost: Int!
-  createdAt: DateTime!
-  """
-  Questions/comments from the user to the cabin administrators
-  """
-  questions: String!
-  """
-  Feedback from the cabin administrators to the user, e.g. why a booking was rejected
-  """
-  feedback: String!
-  guests: Guests!
+	id: ID!
+	endDate: DateTime!
+	startDate: DateTime!
+	firstName: String!
+	lastName: String!
+	email: String!
+	phoneNumber: String!
+	cabins: [Cabin!]!
+	status: BookingStatus!
+	"""
+	Total cost of the booking, in NOK
+	"""
+	totalCost: Int!
+	createdAt: DateTime!
+	"""
+	Questions/comments from the user to the cabin administrators
+	"""
+	questions: String!
+	"""
+	Feedback from the cabin administrators to the user, e.g. why a booking was rejected
+	"""
+	feedback: String!
+	guests: Guests!
 }
 
 type Guests {
-  internal: Int!
-  external: Int!
+	internal: Int!
+	external: Int!
 }
 
 type BookingContact {
-  id: ID!
-  name: String!
-  email: String!
-  phoneNumber: String!
-  updatedAt: DateTime!
+	id: ID!
+	name: String!
+	email: String!
+	phoneNumber: String!
+	updatedAt: DateTime!
 }
 
 enum Semester {
-  SPRING
-  FALL
+	SPRING
+	FALL
 }
 
 type BookingSemester {
-  id: ID!
-  startAt: DateTime!
-  endAt: DateTime!
-  bookingsEnabled: Boolean!
-  semester: Semester!
-  updatedAt: DateTime!
+	id: ID!
+	startAt: DateTime!
+	endAt: DateTime!
+	bookingsEnabled: Boolean!
+	semester: Semester!
+	updatedAt: DateTime!
 }
 
 input UpdateBookingSemesterInput {
-  """
-  There are only ever two semesters, so this is the ID of the semester to update.
-  """
-  semester: Semester!
-  """
-  The start date for the booking period
-  """
-  startAt: DateTime
-  """
-  The end date for the booking period
-  """
-  endAt: DateTime
-  """
-  Whether or not bookings are enabled for this semester
-  """
-  bookingsEnabled: Boolean
+	"""
+	There are only ever two semesters, so this is the ID of the semester to update.
+	"""
+	semester: Semester!
+	"""
+	The start date for the booking period
+	"""
+	startAt: DateTime
+	"""
+	The end date for the booking period
+	"""
+	endAt: DateTime
+	"""
+	Whether or not bookings are enabled for this semester
+	"""
+	bookingsEnabled: Boolean
 }
 
 type UpdateBookingSemesterResponse {
-  bookingSemester: BookingSemester!
+	bookingSemester: BookingSemester!
 }
 
 type BookingSemestersResponse {
-  spring: BookingSemester
-  fall: BookingSemester
+	spring: BookingSemester
+	fall: BookingSemester
 }
 
 input NewBookingCabinInput {
-  id: ID!
+	id: ID!
 }
 
 input NewBookingInput {
-  cabins: [NewBookingCabinInput!]!
-  startDate: DateTime!
-  endDate: DateTime!
-  firstName: String!
-  lastName: String!
-  email: String!
-  phoneNumber: String!
-  internalParticipantsCount: Int!
-  externalParticipantsCount: Int!
-  """
-  Questions/comments from the user to the cabin administrators
-  """
-  questions: String
+	cabins: [NewBookingCabinInput!]!
+	startDate: DateTime!
+	endDate: DateTime!
+	firstName: String!
+	lastName: String!
+	email: String!
+	phoneNumber: String!
+	internalParticipantsCount: Int!
+	externalParticipantsCount: Int!
+	"""
+	Questions/comments from the user to the cabin administrators
+	"""
+	questions: String
 }
 
 type NewBookingResponse {
-  booking: Booking!
+	booking: Booking!
 }
 
 input UpdateBookingStatusInput {
-  id: ID!
-  status: BookingStatus!
-  feedback: String
+	id: ID!
+	status: BookingStatus!
+	feedback: String
 }
 
 type UpdateBookingResponse {
-  booking: Booking!
+	booking: Booking!
 }
 
 enum BookingStatus {
-  PENDING
-  CONFIRMED
-  CANCELLED
-  REJECTED
+	PENDING
+	CONFIRMED
+	CANCELLED
+	REJECTED
 }
 
 type CabinsResponse {
-  cabins: [Cabin!]!
+	cabins: [Cabin!]!
 }
 
 type BookingContactResponse {
-  bookingContact: BookingContact!
+	bookingContact: BookingContact!
 }
 
 input UpdateBookingContactInput {
-  """
-  The full name of the booking contact, will be publicly available, pass the empty string to remove the name
-  """
-  name: String
-  """
-  The email address of the booking contact, will be publicly available, pass the empty string to remove the email address
-  """
-  email: String
-  """
-  The phone number of the booking contact, will be publicly available, pass the empty string to remove the phone number
-  """
-  phoneNumber: String
+	"""
+	The full name of the booking contact, will be publicly available, pass the empty string to remove the name
+	"""
+	name: String
+	"""
+	The email address of the booking contact, will be publicly available, pass the empty string to remove the email address
+	"""
+	email: String
+	"""
+	The phone number of the booking contact, will be publicly available, pass the empty string to remove the phone number
+	"""
+	phoneNumber: String
 }
 
 type UpdateBookingContactResponse {
-  bookingContact: BookingContact!
+	bookingContact: BookingContact!
 }
 
 input GuestsInput {
-  internal: Int!
-  external: Int!
+	internal: Int!
+	external: Int!
 }
 
 input CabinInput {
-  id: ID!
+	id: ID!
 }
 
 input TotalCostInput {
-  startDate: DateTime!
-  endDate: DateTime!
-  guests: GuestsInput!
-  cabins: [CabinInput!]!
+	startDate: DateTime!
+	endDate: DateTime!
+	guests: GuestsInput!
+	cabins: [CabinInput!]!
 }
 
 type TotalCostResponse {
-  totalCost: Int!
+	totalCost: Int!
 }
 
 type CabinPrice {
-  weekend: Int!
-  weekday: Int!
+	weekend: Int!
+	weekday: Int!
 }
 
 type CabinPriceGroup {
-  internal: CabinPrice!
-  external: CabinPrice!
+	internal: CabinPrice!
+	external: CabinPrice!
 }

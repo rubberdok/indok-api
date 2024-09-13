@@ -1,34 +1,34 @@
 type Mutation {
-  uploadFile(data: UploadFileInput!): UploadFileResponse!
+	uploadFile(data: UploadFileInput!): UploadFileResponse!
 }
 
 input UploadFileInput {
-  extension: String!
+	extension: String!
 }
 
 type UploadFileResponse {
-  """
-  Shared access signature URL for the file upload. For details,
-  see https://learn.microsoft.com/en-us/azure/storage/common/storage-sas-overview
-  """
-  sasUrl: String!
-  """
-  The file that was uploaded.
-  """
-  file: RemoteFile!
+	"""
+	Shared access signature URL for the file upload. For details,
+	see https://learn.microsoft.com/en-us/azure/storage/common/storage-sas-overview
+	"""
+	sasUrl: String!
+	"""
+	The file that was uploaded.
+	"""
+	file: RemoteFile!
 }
 
 type RemoteFile {
-  """
-  The ID of the file
-  """
-  id: ID!
-  """
-  The URL of the file
-  """
-  url: String
-  """
-  The name of the file
-  """
-  name: String!
+	"""
+	The ID of the file
+	"""
+	id: ID!
+	"""
+	The URL of the file
+	"""
+	url: String
+	"""
+	The name of the file
+	"""
+	name: String!
 }

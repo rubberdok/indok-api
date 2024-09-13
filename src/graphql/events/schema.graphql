@@ -1,577 +1,576 @@
 type Mutation {
-  """
-  """
-  updateEvent(id: ID!, data: UpdateEventInput!): UpdateEventResponse!
-  """
-  Retract an active sign up for an event, requires that the user is logged in
-  """
-  retractSignUp(data: RetractSignUpInput!): RetractSignUpResponse!
-  """
-  Remove an active sign up for an event, requires that the user is logged in and a member of the organization that is hosting the event
-  """
-  removeSignUp(data: RemoveSignUpInput!): RemoveSignUpResponse!
-  """
-  Sign up for an event, requires that the user is logged in
-  """
-  signUp(data: SignUpInput!): SignUpResponse!
-  """
-  Create an event, requires that the user is logged in, and is a member of the organization that is hosting the event
-  """
-  createEvent(data: CreateEventInput!): CreateEventResponse!
-  """
-  Create a new event category, requires super user status
-  """
-  createEventCategory(
-    data: CreateEventCategoryInput!
-  ): CreateEventCategoryResponse!
-  """
-  Update an event category, requires super user status
-  """
-  updateEventCategory(
-    data: UpdateEventCategoryInput!
-  ): UpdateEventCategoryResponse!
-  """
-  Delete an event category, requires super user status
-  """
-  deleteEventCategory(
-    data: DeleteEventCategoryInput!
-  ): DeleteEventCategoryResponse!
+	"""
+	"""
+	updateEvent(id: ID!, data: UpdateEventInput!): UpdateEventResponse!
+	"""
+	Retract an active sign up for an event, requires that the user is logged in
+	"""
+	retractSignUp(data: RetractSignUpInput!): RetractSignUpResponse!
+	"""
+	Remove an active sign up for an event, requires that the user is logged in and a member of the organization that is hosting the event
+	"""
+	removeSignUp(data: RemoveSignUpInput!): RemoveSignUpResponse!
+	"""
+	Sign up for an event, requires that the user is logged in
+	"""
+	signUp(data: SignUpInput!): SignUpResponse!
+	"""
+	Create an event, requires that the user is logged in, and is a member of the organization that is hosting the event
+	"""
+	createEvent(data: CreateEventInput!): CreateEventResponse!
+	"""
+	Create a new event category, requires super user status
+	"""
+	createEventCategory(
+		data: CreateEventCategoryInput!
+	): CreateEventCategoryResponse!
+	"""
+	Update an event category, requires super user status
+	"""
+	updateEventCategory(
+		data: UpdateEventCategoryInput!
+	): UpdateEventCategoryResponse!
+	"""
+	Delete an event category, requires super user status
+	"""
+	deleteEventCategory(
+		data: DeleteEventCategoryInput!
+	): DeleteEventCategoryResponse!
 }
 
 type Query {
-  event(data: EventInput!): EventResponse!
-  events(data: EventsInput): EventsResponse!
-  categories: EventCategoriesResponse!
+	event(data: EventInput!): EventResponse!
+	events(data: EventsInput): EventsResponse!
+	categories: EventCategoriesResponse!
 }
 
 type Event {
-  id: ID!
-  """
-  The name of the event.
-  """
-  name: String!
-  """
-  The description of the event. We support markdown on the client, so this can be markdown.
-  """
-  description: String!
-  """
-  A short description of the event, intended to be a short summary/teaser of the event.
-  """
-  shortDescription: String!
-  """
-  The start time of the event.
-  """
-  startAt: DateTime!
-  """
-  The end time of the event.
-  """
-  endAt: DateTime!
-  """
-  canSignUp is true if the current user can sign up for the event, false otherwise.
-  If the user is not logged in, this will be always be false.
-  """
-  canSignUp: Boolean!
-  """
-  The contact email for the event organizer.
-  """
-  contactEmail: String!
-  """
-  The location of the event
-  """
-  location: String!
-  """
-  The organization that is hosting the event.
-  """
-  organization: Organization
-  """
-  signUpAvailability describes the availability of sign ups for the event for the current user.
-  """
-  signUpAvailability: SignUpAvailability!
-  signUpDetails: EventSignUpDetails
-  signUpsEnabled: Boolean!
-  """
-  If true, sign ups can be retracted for the event. Otherwise, sign ups are final.
-  """
-  signUpsRetractable: Boolean!
-  """
-  If true, signing up for the event requires that the user submits additional information.
-  """
-  signUpsRequireUserProvidedInformation: Boolean!
-  """
-  categories describes the categories that the event belongs to.
-  """
-  categories: [EventCategory!]
-  type: EventType!
-  user: EventUser
-  """
-  The ticket information for the event, if the event is a TICKETS event.
-  """
-  ticketInformation: EventTicketInformation
-  signUps: SignUps
-  """
-  The current user's sign up for the event, if the user is signed up for the event.
-  """
-  signUp: SignUp
+	id: ID!
+	"""
+	The name of the event.
+	"""
+	name: String!
+	"""
+	The description of the event. We support markdown on the client, so this can be markdown.
+	"""
+	description: String!
+	"""
+	A short description of the event, intended to be a short summary/teaser of the event.
+	"""
+	shortDescription: String!
+	"""
+	The start time of the event.
+	"""
+	startAt: DateTime!
+	"""
+	The end time of the event.
+	"""
+	endAt: DateTime!
+	"""
+	canSignUp is true if the current user can sign up for the event, false otherwise.
+	If the user is not logged in, this will be always be false.
+	"""
+	canSignUp: Boolean!
+	"""
+	The contact email for the event organizer.
+	"""
+	contactEmail: String!
+	"""
+	The location of the event
+	"""
+	location: String!
+	"""
+	The organization that is hosting the event.
+	"""
+	organization: Organization
+	"""
+	signUpAvailability describes the availability of sign ups for the event for the current user.
+	"""
+	signUpAvailability: SignUpAvailability!
+	signUpDetails: EventSignUpDetails
+	signUpsEnabled: Boolean!
+	"""
+	If true, sign ups can be retracted for the event. Otherwise, sign ups are final.
+	"""
+	signUpsRetractable: Boolean!
+	"""
+	If true, signing up for the event requires that the user submits additional information.
+	"""
+	signUpsRequireUserProvidedInformation: Boolean!
+	"""
+	categories describes the categories that the event belongs to.
+	"""
+	categories: [EventCategory!]
+	type: EventType!
+	user: EventUser
+	"""
+	The ticket information for the event, if the event is a TICKETS event.
+	"""
+	ticketInformation: EventTicketInformation
+	signUps: SignUps
+	"""
+	The current user's sign up for the event, if the user is signed up for the event.
+	"""
+	signUp: SignUp
 }
 
 type SignUpsWithTotalCount {
-  signUps: [SignUp!]!
-  total: Int!
+	signUps: [SignUp!]!
+	total: Int!
 }
 
 type SignUps {
-  confirmed: SignUpsWithTotalCount!
-  waitList: SignUpsWithTotalCount!
-  retracted: SignUpsWithTotalCount!
-  removed: SignUpsWithTotalCount!
+	confirmed: SignUpsWithTotalCount!
+	waitList: SignUpsWithTotalCount!
+	retracted: SignUpsWithTotalCount!
+	removed: SignUpsWithTotalCount!
 }
 
 type EventTicketInformation {
-  product: Product
+	product: Product
 }
 
 enum EventTicketStatus {
-  BOUGHT
-  NOT_BOUGHT
+	BOUGHT
+	NOT_BOUGHT
 }
 
 type EventUser {
-  """
-  The ID of the user
-  """
-  id: ID!
-  """
-  The ticket status for the user on the event, null if it's not a ticket event
-  """
-  ticketStatus: EventTicketStatus
-  ticket: Order
-  signUp: SignUp
+	"""
+	The ID of the user
+	"""
+	id: ID!
+	"""
+	The ticket status for the user on the event, null if it's not a ticket event
+	"""
+	ticketStatus: EventTicketStatus
+	ticket: Order
+	signUp: SignUp
 }
 
 enum EventType {
-  """
-  Basic event has no sign ups, and no tickets
-  """
-  BASIC
-  """
-  Sign up event has sign ups, but no tickets
-  """
-  SIGN_UPS
-  """
-  Ticketed event has tickets and sign ups
-  """
-  TICKETS
+	"""
+	Basic event has no sign ups, and no tickets
+	"""
+	BASIC
+	"""
+	Sign up event has sign ups, but no tickets
+	"""
+	SIGN_UPS
+	"""
+	Ticketed event has tickets and sign ups
+	"""
+	TICKETS
 }
 
 type EventCategory {
-  id: ID!
-  name: String!
+	id: ID!
+	name: String!
 }
 
 type EventSignUpDetails {
-  signUpsStartAt: DateTime!
-  signUpsEndAt: DateTime!
-  capacity: Int!
+	signUpsStartAt: DateTime!
+	signUpsEndAt: DateTime!
+	capacity: Int!
 }
 
 enum SignUpAvailability {
-  """
-  There are no slots for the event for the user to sign up for, regardless of their current capacity.
-  If the user is not logged in, the status will always be UNAVAILABLE.
-  """
-  UNAVAILABLE
-  """
-  Sign ups are open, enabled, and there is at least one slot available for the user to sign up for.
-  """
-  AVAILABLE
+	"""
+	There are no slots for the event for the user to sign up for, regardless of their current capacity.
+	If the user is not logged in, the status will always be UNAVAILABLE.
+	"""
+	UNAVAILABLE
+	"""
+	Sign ups are open, enabled, and there is at least one slot available for the user to sign up for.
+	"""
+	AVAILABLE
 
-  """
-  Sign ups have not opened yet
-  """
-  NOT_OPEN
-  """
-  The user is not signed up for the event, and sign ups are closed
-  """
-  CLOSED
-  """
-  All slots are full, and the user is not signed up for the event. The user can sign up for the wait list.
-  """
-  WAITLIST_AVAILABLE
-  """
-  Sign ups are not enabled for the event
-  """
-  DISABLED
-  CONFIRMED
-  ON_WAITLIST
+	"""
+	Sign ups have not opened yet
+	"""
+	NOT_OPEN
+	"""
+	The user is not signed up for the event, and sign ups are closed
+	"""
+	CLOSED
+	"""
+	All slots are full, and the user is not signed up for the event. The user can sign up for the wait list.
+	"""
+	WAITLIST_AVAILABLE
+	"""
+	Sign ups are not enabled for the event
+	"""
+	DISABLED
+	CONFIRMED
+	ON_WAITLIST
 }
 
-
 type CreateEventResponse {
-  event: Event!
+	event: Event!
 }
 
 input CreateEventInput {
-  event: EventData!
+	event: EventData!
 }
 
 input SignUpData {
-  """
-  The time that sign ups open for the event. This must be before the start time of the event.
-  """
-  signUpsStartAt: DateTime!
-  """
-  The time that sign ups close for the event. This must be after signUpsOpenAt.
-  """
-  signUpsEndAt: DateTime!
-  """
-  Total capacity for the event, regardless of the capacity in each slot.
-  This number takes precedence over the capacity in each slot, so if the remaining capacity on the event is 0
-  no more users can be registered as attending.
-  """
-  capacity: Int!
-  """
-  The slots for the event. If this is not provided, but capacity is, then all users can attend the event.
-  """
-  slots: [CreateEventSlot!]!
-  """
-  Ticket purchase details for the event. If this is not provided, then the event is free.
-  """
-  tickets: EventTicketData
+	"""
+	The time that sign ups open for the event. This must be before the start time of the event.
+	"""
+	signUpsStartAt: DateTime!
+	"""
+	The time that sign ups close for the event. This must be after signUpsOpenAt.
+	"""
+	signUpsEndAt: DateTime!
+	"""
+	Total capacity for the event, regardless of the capacity in each slot.
+	This number takes precedence over the capacity in each slot, so if the remaining capacity on the event is 0
+	no more users can be registered as attending.
+	"""
+	capacity: Int!
+	"""
+	The slots for the event. If this is not provided, but capacity is, then all users can attend the event.
+	"""
+	slots: [CreateEventSlot!]!
+	"""
+	Ticket purchase details for the event. If this is not provided, then the event is free.
+	"""
+	tickets: EventTicketData
 }
 
 input EventTicketData {
-  """
-  Price in øre, i.e. 100 = 1 NOK
-  """
-  price: Int!
-  """
-  MerchantID is the ID for the merchant, this will be the recipient of the payments.
-  """
-  merchantId: ID!
+	"""
+	Price in øre, i.e. 100 = 1 NOK
+	"""
+	price: Int!
+	"""
+	MerchantID is the ID for the merchant, this will be the recipient of the payments.
+	"""
+	merchantId: ID!
 }
 
 input EventData {
-  """
-  The name of the event, this will be displayed to users
-  """
-  name: String!
-  """
-  The description of the event, defaults to "". We support markdown on the client, so this can be markdown.
-  This will be displayed to users.
-  """
-  description: String
-  """
-  A short description of the event, intended to be a short summary/teaser of the event.
-  """
-  shortDescription: String
-  """
-  Location of the event
-  """
-  location: String
-  """
-  Contact email for the event organizer
-  """
-  contactEmail: String
-  """
-  The start time of the event. Events must have a start time.
-  """
-  startAt: DateTime!
-  """
-  The end time of the event. If this is not provided, the event will be assumed to be two hours long.
-  This will be displayed to users.
-  """
-  endAt: DateTime
-  """
-  categories is a list of cateogry IDs to which the event belongs
-  """
-  categories: [EventCategoryInput!]
-  """
-  The event type
-  - BASIC has no sign ups, and no tickets
-  - SIGN_UPS has sign ups, but no tickets (free event)
-  - TICKETS has tickets and sign ups (paid event)
-  """
-  type: EventType!
-  """
-  The ID of the organization that is hosting the event. Events must be hosted by an organization, and the user
-  creating the event must be a member of the organization.
-  """
-  organizationId: ID!
-  """
-  If the event is a sign up event, this will be the sign up details.
-  """
-  signUpDetails: SignUpData
-  """
-  If sign ups are currently enabled for the event. If this is false, users cannot sign up for the event. Defaults to
-  false
-  """
-  signUpsEnabled: Boolean
-  """
-  If true, users can retract their sign up for the event. Defaults to false
-  """
-  signUpsRetractable: Boolean
-  """
-  If true, signing up requires that the user submits additional information. Defaults to false
-  """
-  signUpsRequireUserProvidedInformation: Boolean
+	"""
+	The name of the event, this will be displayed to users
+	"""
+	name: String!
+	"""
+	The description of the event, defaults to "". We support markdown on the client, so this can be markdown.
+	This will be displayed to users.
+	"""
+	description: String
+	"""
+	A short description of the event, intended to be a short summary/teaser of the event.
+	"""
+	shortDescription: String
+	"""
+	Location of the event
+	"""
+	location: String
+	"""
+	Contact email for the event organizer
+	"""
+	contactEmail: String
+	"""
+	The start time of the event. Events must have a start time.
+	"""
+	startAt: DateTime!
+	"""
+	The end time of the event. If this is not provided, the event will be assumed to be two hours long.
+	This will be displayed to users.
+	"""
+	endAt: DateTime
+	"""
+	categories is a list of cateogry IDs to which the event belongs
+	"""
+	categories: [EventCategoryInput!]
+	"""
+	The event type
+	- BASIC has no sign ups, and no tickets
+	- SIGN_UPS has sign ups, but no tickets (free event)
+	- TICKETS has tickets and sign ups (paid event)
+	"""
+	type: EventType!
+	"""
+	The ID of the organization that is hosting the event. Events must be hosted by an organization, and the user
+	creating the event must be a member of the organization.
+	"""
+	organizationId: ID!
+	"""
+	If the event is a sign up event, this will be the sign up details.
+	"""
+	signUpDetails: SignUpData
+	"""
+	If sign ups are currently enabled for the event. If this is false, users cannot sign up for the event. Defaults to
+	false
+	"""
+	signUpsEnabled: Boolean
+	"""
+	If true, users can retract their sign up for the event. Defaults to false
+	"""
+	signUpsRetractable: Boolean
+	"""
+	If true, signing up requires that the user submits additional information. Defaults to false
+	"""
+	signUpsRequireUserProvidedInformation: Boolean
 }
 
 input EventCategoryInput {
-  id: ID!
+	id: ID!
 }
 
 input CreateEventSlot {
-  capacity: Int!
-  gradeYears: [Int!]
+	capacity: Int!
+	gradeYears: [Int!]
 }
 
 type EventResponse {
-  event: Event!
+	event: Event!
 }
 
 input EventInput {
-  id: ID!
+	id: ID!
 }
 
 type EventsResponse {
-  """
-  All events, if futureEventsOnly is false, otherwise only future events
-  """
-  events: [Event!]!
-  """
-  The events that start next week, by week number
-  """
-  nextWeek: [Event!]!
-  """
-  The events that start this week, by week number
-  """
-  thisWeek: [Event!]!
-  """
-  The events that start in two weeks or later, by week number
-  """
-  twoWeeksOrLater: [Event!]!
-  """
-  The total number of events returned by this query (for now)
-  """
-  total: Int!
+	"""
+	All events, if futureEventsOnly is false, otherwise only future events
+	"""
+	events: [Event!]!
+	"""
+	The events that start next week, by week number
+	"""
+	nextWeek: [Event!]!
+	"""
+	The events that start this week, by week number
+	"""
+	thisWeek: [Event!]!
+	"""
+	The events that start in two weeks or later, by week number
+	"""
+	twoWeeksOrLater: [Event!]!
+	"""
+	The total number of events returned by this query (for now)
+	"""
+	total: Int!
 }
 
 input EventsInput {
-  """
-  If true, only return events that are currently happening, or will happen in the future
-  i.e. events where endAt is in the future.
-  """
-  futureEventsOnly: Boolean
-  """
-  Only return events that are hosted by the organizations with the given IDs
-  """
-  organizations: [EventsOrganizationInput!]
-  """
-  Only return events that belong to the given categories
-  """
-  categories: [EventsCategoryInput!]
-  """
-  Only return events that start after the given time
-  """
-  startAfter: DateTime
-  """
-  Only return events that end before the given time
-  """
-  endBefore: DateTime
+	"""
+	If true, only return events that are currently happening, or will happen in the future
+	i.e. events where endAt is in the future.
+	"""
+	futureEventsOnly: Boolean
+	"""
+	Only return events that are hosted by the organizations with the given IDs
+	"""
+	organizations: [EventsOrganizationInput!]
+	"""
+	Only return events that belong to the given categories
+	"""
+	categories: [EventsCategoryInput!]
+	"""
+	Only return events that start after the given time
+	"""
+	startAfter: DateTime
+	"""
+	Only return events that end before the given time
+	"""
+	endBefore: DateTime
 }
 
 input EventsOrganizationInput {
-  id: ID!
+	id: ID!
 }
 
 input EventsCategoryInput {
-  id: ID!
+	id: ID!
 }
 
 input SignUpInput {
-  """
-  The event to sign up for
-  """
-  eventId: ID!
-  """
-  If the event requires user provided information, this field must be set
-  """
-  userProvidedInformation: String
+	"""
+	The event to sign up for
+	"""
+	eventId: ID!
+	"""
+	If the event requires user provided information, this field must be set
+	"""
+	userProvidedInformation: String
 }
 
 enum ParticipationStatus {
-  """
-  The user is confirmed to be attending the event
-  """
-  CONFIRMED
-  """
-  The user has signed up for the event, and then retracted their sign up
-  """
-  RETRACTED
-  """
-  The user is on the wait list for the event
-  """
-  ON_WAITLIST
-  """
-  The user has signed up for the event, and had their sign up removed by an admin
-  """
-  REMOVED
+	"""
+	The user is confirmed to be attending the event
+	"""
+	CONFIRMED
+	"""
+	The user has signed up for the event, and then retracted their sign up
+	"""
+	RETRACTED
+	"""
+	The user is on the wait list for the event
+	"""
+	ON_WAITLIST
+	"""
+	The user has signed up for the event, and had their sign up removed by an admin
+	"""
+	REMOVED
 }
 
 type SignUp {
-  id: ID!
-  """
-  The status of the user's participation in the event
-  """
-  participationStatus: ParticipationStatus!
-  """
-  The event the user signed up for
-  """
-  event: Event!
-  """
-  The user that signed up for the event
-  """
-  user: PublicUser!
-  order: Order
-  userProvidedInformation: String
-  """
-  If the user is on the wait list, this field will be set to the approximate position on the wait list.
-  Since the actual position on the wait list depends on which slots the user can attend, and various other
-  factors, this is a naive approximation and should not be relied upon for anything other than a rough estimate.
-  """
-  approximatePositionOnWaitList: Int
-  """
-  The time the user signed up for the event
-  """
-  createdAt: DateTime!
+	id: ID!
+	"""
+	The status of the user's participation in the event
+	"""
+	participationStatus: ParticipationStatus!
+	"""
+	The event the user signed up for
+	"""
+	event: Event!
+	"""
+	The user that signed up for the event
+	"""
+	user: PublicUser!
+	order: Order
+	userProvidedInformation: String
+	"""
+	If the user is on the wait list, this field will be set to the approximate position on the wait list.
+	Since the actual position on the wait list depends on which slots the user can attend, and various other
+	factors, this is a naive approximation and should not be relied upon for anything other than a rough estimate.
+	"""
+	approximatePositionOnWaitList: Int
+	"""
+	The time the user signed up for the event
+	"""
+	createdAt: DateTime!
 }
 
 type SignUpResponse {
-  signUp: SignUp!
+	signUp: SignUp!
 }
 
 input RetractSignUpInput {
-  """
-  The event to retract the sign up for
-  """
-  eventId: ID!
+	"""
+	The event to retract the sign up for
+	"""
+	eventId: ID!
 }
 
 type RetractSignUpResponse {
-  signUp: SignUp!
+	signUp: SignUp!
 }
 
 type UpdateEventResponse {
-  event: Event!
+	event: Event!
 }
 
 input UpdateEventInput {
-  """
-  The name of the event, this will be displayed to users
-  """
-  name: String
-  """
-  The description of the event, defaults to "". We support markdown on the client, so this can be markdown.
-  This will be displayed to users.
-  """
-  description: String
-  """
-  The start time of the event. Must be before endAt and after the current time.
-  """
-  startAt: DateTime
-  """
-  The end time of the event, must be after startAt.
-  """
-  endAt: DateTime
-  """
-  Total capacity for the event, regardless of the capacity in each slot.
-  This number takes precedence over the capacity in each slot, so if the remaining capacity on the event is 0
-  no more users can be registered as attending. Cannot be less than the number of users currently signed up for the event.
-  """
-  capacity: Int
-  """
-  location of the event
-  """
-  location: String
-  """
-  categories is a list of cateogry IDs to which the event belongs
-  """
-  categories: [UpdateCategoriesInput!]
-  """
-  If true, sign ups are retractable for the event
-  """
-  signUpsRetractable: Boolean
-  """
-  If true, sign ups require user provided information
-  """
-  signUpsRequireUserProvidedInformation: Boolean
-  slots: UpdateSlotsInput
+	"""
+	The name of the event, this will be displayed to users
+	"""
+	name: String
+	"""
+	The description of the event, defaults to "". We support markdown on the client, so this can be markdown.
+	This will be displayed to users.
+	"""
+	description: String
+	"""
+	The start time of the event. Must be before endAt and after the current time.
+	"""
+	startAt: DateTime
+	"""
+	The end time of the event, must be after startAt.
+	"""
+	endAt: DateTime
+	"""
+	Total capacity for the event, regardless of the capacity in each slot.
+	This number takes precedence over the capacity in each slot, so if the remaining capacity on the event is 0
+	no more users can be registered as attending. Cannot be less than the number of users currently signed up for the event.
+	"""
+	capacity: Int
+	"""
+	location of the event
+	"""
+	location: String
+	"""
+	categories is a list of cateogry IDs to which the event belongs
+	"""
+	categories: [UpdateCategoriesInput!]
+	"""
+	If true, sign ups are retractable for the event
+	"""
+	signUpsRetractable: Boolean
+	"""
+	If true, sign ups require user provided information
+	"""
+	signUpsRequireUserProvidedInformation: Boolean
+	slots: UpdateSlotsInput
 }
 
 input UpdateSlotsInput {
-  create: [CreateSlotInput!]
-  update: [UpdateSlotInput!]
-  delete: [DeleteSlotInput!]
+	create: [CreateSlotInput!]
+	update: [UpdateSlotInput!]
+	delete: [DeleteSlotInput!]
 }
 
 input CreateSlotInput {
-  capacity: Int!
-  gradeYears: [Int!]
+	capacity: Int!
+	gradeYears: [Int!]
 }
 
 input UpdateSlotInput {
-  id: ID!
-  capacity: Int
-  gradeYears: [Int!]
+	id: ID!
+	capacity: Int
+	gradeYears: [Int!]
 }
 
 input DeleteSlotInput {
-  id: ID!
+	id: ID!
 }
 
 input UpdateCategoriesInput {
-  id: ID!
+	id: ID!
 }
 
 input CreateEventCategoryInput {
-  name: String!
+	name: String!
 }
 
 type CreateEventCategoryResponse {
-  category: EventCategory!
+	category: EventCategory!
 }
 
 input UpdateEventCategoryInput {
-  id: ID!
-  name: String!
+	id: ID!
+	name: String!
 }
 
 type UpdateEventCategoryResponse {
-  category: EventCategory!
+	category: EventCategory!
 }
 
 input DeleteEventCategoryInput {
-  id: ID!
+	id: ID!
 }
 
 type DeleteEventCategoryResponse {
-  category: EventCategory!
+	category: EventCategory!
 }
 
 type EventCategoriesResponse {
-  categories: [EventCategory!]!
+	categories: [EventCategory!]!
 }
 
 input RemoveSignUpInput {
-  """
-  The id of the sign up to remove
-  """
-  signUpId: ID!
+	"""
+	The id of the sign up to remove
+	"""
+	signUpId: ID!
 }
 
 type RemoveSignUpResponse {
-  """
-  The sign up that was removed
-  """
-  signUp: SignUp!
+	"""
+	The sign up that was removed
+	"""
+	signUp: SignUp!
 }

@@ -1,31 +1,31 @@
 enum FeaturePermission {
-  ARCHIVE_VIEW_DOCUMENTS
-  ARCHIVE_WRITE_DOCUMENTS
-  EVENT_WRITE_SIGN_UPS
-  CABIN_ADMIN
+	ARCHIVE_VIEW_DOCUMENTS
+	ARCHIVE_WRITE_DOCUMENTS
+	EVENT_WRITE_SIGN_UPS
+	CABIN_ADMIN
 }
 
 type HasFeaturePermissionResponse {
-  id: FeaturePermission!
-  hasFeaturePermission: Boolean!
+	id: FeaturePermission!
+	hasFeaturePermission: Boolean!
 }
 
 input HasFeaturePermissionInput {
-  featurePermission: FeaturePermission!
+	featurePermission: FeaturePermission!
 }
 
 input HasRoleInput {
-  role: Role!
-  organizationId: ID!
+	role: Role!
+	organizationId: ID!
 }
 
 type HasRoleResponse {
-  hasRole: Boolean!
+	hasRole: Boolean!
 }
 
 type Query {
-  hasRole(data: HasRoleInput!): HasRoleResponse!
-  hasFeaturePermission(
-    data: HasFeaturePermissionInput!
-  ): HasFeaturePermissionResponse!
+	hasRole(data: HasRoleInput!): HasRoleResponse!
+	hasFeaturePermission(
+		data: HasFeaturePermissionInput!
+	): HasFeaturePermissionResponse!
 }
