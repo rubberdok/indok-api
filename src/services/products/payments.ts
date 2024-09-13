@@ -308,6 +308,15 @@ function buildPayments({
 				};
 			}
 
+			if (!vippsPayment.data.redirectUrl) {
+				return {
+					ok: false,
+					error: new DownstreamServiceError(
+						"Failed to create vipps payment, received no redirect url",
+					),
+				};
+			}
+
 			const { paymentAttempt } = await productRepository.createPaymentAttempt({
 				order: {
 					id: order.id,

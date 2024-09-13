@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import type { EPaymentErrorResponse } from "@vippsmobilepay/sdk";
+import type { Problem } from "@vippsmobilepay/sdk";
 import { mock } from "jest-mock-extended";
 import {
 	DownstreamServiceError,
@@ -383,7 +383,7 @@ describe("ProductService", () => {
 
 			mockVippsClient.payment.create.mockResolvedValueOnce({
 				ok: false,
-				error: mock<EPaymentErrorResponse>({}),
+				error: mock<Problem>({}),
 			});
 
 			const result = await productService.payments.initiatePaymentAttempt(
