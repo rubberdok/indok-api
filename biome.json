@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/1.6.1/schema.json",
+	"$schema": "https://biomejs.dev/schemas/1.9.0/schema.json",
 	"vcs": {
 		"enabled": true,
 		"useIgnoreFile": true,
@@ -13,7 +13,8 @@
 		"rules": {
 			"recommended": true,
 			"suspicious": {
-				"useAwait": "warn"
+				"useAwait": "warn",
+				"noRedundantUseStrict": "off"
 			},
 			"correctness": {
 				"noUnusedImports": "warn",
@@ -21,7 +22,11 @@
 				"noUnusedPrivateClassMembers": "warn"
 			},
 			"nursery": {
-				"recommended": true
+				"recommended": true,
+				"useStrictMode": "off",
+				"useConsistentMemberAccessibility": {
+					"level": "off"
+				}
 			}
 		}
 	},

@@ -7,14 +7,14 @@ scalar DateTime
 scalar Date
 
 type ServerTimeResponse {
-  serverTime: DateTime!
+	serverTime: DateTime!
 }
 
 type Query {
-  serverTime: ServerTimeResponse!
+	serverTime: ServerTimeResponse!
 }
 
 enum OrderBy {
-  ASC
-  DESC
+	ASC
+	DESC
 }
