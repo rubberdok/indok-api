@@ -27,8 +27,8 @@ importers:
         specifier: ^5.22.0
         version: 5.22.0
       '@fastify/compress':
-        specifier: ^7.0.3
-        version: 7.0.3
+        specifier: ^8.0.0
+        version: 8.0.0
       '@fastify/cookie':
         specifier: ^9.4.0
         version: 9.4.0
@@ -866,11 +866,14 @@ packages:
     resolution: {integrity: sha512-OIHZrb2ImZ7XG85HXOONLcJWGosv7sIvM2ifAPQVhg9Lv7qdmMBNVaai4QTdyuaqbKM5eO6sLSQOYI7wEQeCJQ==}
     engines: {node: '>=14'}
 
+  '@fastify/accept-negotiator@2.0.0':
+    resolution: {integrity: sha512-/Sce/kBzuTxIq5tJh85nVNOq9wKD8s+viIgX0fFMDBdw95gnpf53qmF1oBgJym3cPFliWUuSloVg/1w/rH0FcQ==}
+
   '@fastify/ajv-compiler@3.5.0':
     resolution: {integrity: sha512-ebbEtlI7dxXF5ziNdr05mOY8NnDiPB1XvAlLHctRt/Rc+C3LCOVW5imUVX+mhvUhnNzmPBHewUkOFgGlCxgdAA==}
 
-  '@fastify/compress@7.0.3':
-    resolution: {integrity: sha512-xa9fo5/DgK1s0bkS6xrYgNn8HmofO5tJvbCDk8QuXshSgLd2cFZANv1ox/Qv7zswS7JroHwTlCVv/XGTVO98tg==}
+  '@fastify/compress@8.0.0':
+    resolution: {integrity: sha512-HZrmgqXPKEK9yHCzM4cPPhRq8N5EvuAJC/kwPUlPwxIUKXe/pbzodyiff9XmzUHXRX5v7szXpKSQbEA2Oy7BwA==}
 
   '@fastify/cookie@9.4.0':
     resolution: {integrity: sha512-Th+pt3kEkh4MQD/Q2q1bMuJIB5NX/D5SwSpOKu3G/tjoGbwfpurIMJsWSPS0SJJ4eyjtmQ8OipDQspf8RbUOlg==}
@@ -2820,6 +2823,9 @@ packages:
 
   fastify-plugin@4.5.1:
     resolution: {integrity: sha512-stRHYGeuqpEZTL1Ef0Ovr2ltazUT9g844X5z/zEBFLG8RYlpDiOCIG+ATvYEp+/zmc7sN29mcIMp8gvYplYPIQ==}
+
+  fastify-plugin@5.0.0:
+    resolution: {integrity: sha512-0725fmH/yYi8ugsjszLci+lLnGBK6cG+WSxM7edY2OXJEU7gr2JiGBoieL2h9mhTych1vFsEfXsAsGGDJ/Rd5w==}
 
   fastify@4.28.1:
     resolution: {integrity: sha512-kFWUtpNr4i7t5vY2EJPCN2KgMVpuqfU4NjnJNCgiNB900oiDeYqaNDRcAfeBbOF5hGixixxcKnOU4KN9z6QncQ==}
@@ -5643,16 +5649,18 @@ snapshots:
 
   '@fastify/accept-negotiator@1.1.0': {}
 
+  '@fastify/accept-negotiator@2.0.0': {}
+
   '@fastify/ajv-compiler@3.5.0':
     dependencies:
       ajv: 8.16.0
       ajv-formats: 2.1.1(ajv@8.16.0)
       fast-uri: 2.4.0
 
-  '@fastify/compress@7.0.3':
+  '@fastify/compress@8.0.0':
     dependencies:
-      '@fastify/accept-negotiator': 1.1.0
-      fastify-plugin: 4.5.1
+      '@fastify/accept-negotiator': 2.0.0
+      fastify-plugin: 5.0.0
       mime-db: 1.52.0
       minipass: 7.1.2
       peek-stream: 1.1.3
@@ -8203,6 +8211,8 @@ snapshots:
       strnum: 1.0.5
 
   fastify-plugin@4.5.1: {}
+
+  fastify-plugin@5.0.0: {}
 
   fastify@4.28.1:
     dependencies:
