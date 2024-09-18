@@ -42,8 +42,8 @@ importers:
         specifier: ^9.1.0
         version: 9.1.0
       '@fastify/redis':
-        specifier: ^6.2.0
-        version: 6.2.0
+        specifier: ^7.0.0
+        version: 7.0.0
       '@fastify/session':
         specifier: ^10.9.0
         version: 10.9.0
@@ -893,8 +893,8 @@ packages:
   '@fastify/rate-limit@9.1.0':
     resolution: {integrity: sha512-h5dZWCkuZXN0PxwqaFQLxeln8/LNwQwH9popywmDCFdKfgpi4b/HoMH1lluy6P+30CG9yzzpSpwTCIPNB9T1JA==}
 
-  '@fastify/redis@6.2.0':
-    resolution: {integrity: sha512-0M4oTYRJz/ETPdfXvs/ToFI0ZNFjrz1jYFxEr+wHgnW6hswDsLDs+gxLMff2cb5Fegg3siG4hJzhmvvpvqqqbA==}
+  '@fastify/redis@7.0.0':
+    resolution: {integrity: sha512-0C0NhyaXQ82tQA9QUUGVENrZvPR9nZvWanyCZvyW72d0aADlivWXcWN6m1A03CReHFFWaJ2qPOgFlCc3hwEhBQ==}
 
   '@fastify/send@2.1.0':
     resolution: {integrity: sha512-yNYiY6sDkexoJR0D8IDy3aRP3+L4wdqCpvx5WP+VtEU58sn7USmKynBzDQex5X42Zzvw2gNzzYgP90UfWShLFA==}
@@ -2820,6 +2820,9 @@ packages:
 
   fastify-plugin@4.5.1:
     resolution: {integrity: sha512-stRHYGeuqpEZTL1Ef0Ovr2ltazUT9g844X5z/zEBFLG8RYlpDiOCIG+ATvYEp+/zmc7sN29mcIMp8gvYplYPIQ==}
+
+  fastify-plugin@5.0.0:
+    resolution: {integrity: sha512-0725fmH/yYi8ugsjszLci+lLnGBK6cG+WSxM7edY2OXJEU7gr2JiGBoieL2h9mhTych1vFsEfXsAsGGDJ/Rd5w==}
 
   fastify@4.28.1:
     resolution: {integrity: sha512-kFWUtpNr4i7t5vY2EJPCN2KgMVpuqfU4NjnJNCgiNB900oiDeYqaNDRcAfeBbOF5hGixixxcKnOU4KN9z6QncQ==}
@@ -5691,9 +5694,9 @@ snapshots:
       fastify-plugin: 4.5.1
       toad-cache: 3.7.0
 
-  '@fastify/redis@6.2.0':
+  '@fastify/redis@7.0.0':
     dependencies:
-      fastify-plugin: 4.5.1
+      fastify-plugin: 5.0.0
       ioredis: 5.4.1
     transitivePeerDependencies:
       - supports-color
@@ -8203,6 +8206,8 @@ snapshots:
       strnum: 1.0.5
 
   fastify-plugin@4.5.1: {}
+
+  fastify-plugin@5.0.0: {}
 
   fastify@4.28.1:
     dependencies:
