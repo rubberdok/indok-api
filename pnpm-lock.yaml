@@ -18,8 +18,8 @@ importers:
         specifier: ^4.4.1
         version: 4.4.1
       '@azure/storage-blob':
-        specifier: ^12.24.0
-        version: 12.24.0
+        specifier: ^12.25.0
+        version: 12.25.0
       '@bull-board/api':
         specifier: ^5.23.0
         version: 5.23.0(@bull-board/ui@5.23.0)
@@ -379,8 +379,8 @@ packages:
     resolution: {integrity: sha512-AfalUQ1ZppaKuxPPMsFEUdX6GZPB3d9paR9d/TTL7Ow2De8cJaC7ibi7kWVlFAVPCYo31OcnGymc0R89DX8Oaw==}
     engines: {node: '>=18.0.0'}
 
-  '@azure/core-xml@1.4.2':
-    resolution: {integrity: sha512-CW3MZhApe/S4iikbYKE7s83fjDBPIr2kpidX+hlGRwh7N4o1nIpQ/PfJTeioqhfqdMvRtheEl+ft64fyTaLNaA==}
+  '@azure/core-xml@1.4.3':
+    resolution: {integrity: sha512-D6G7FEmDiTctPKuWegX2WTrS1enKZwqYwdKTO6ZN6JMigcCehlT0/CYl+zWpI9vQ9frwwp7GQT3/owaEXgnOsA==}
     engines: {node: '>=18.0.0'}
 
   '@azure/identity@4.4.1':
@@ -403,8 +403,8 @@ packages:
     resolution: {integrity: sha512-8tvi6Cos3m+0KmRbPjgkySXi+UQU/QiuVRFnrxIwt5xZlEEFa69O04RTaNESGgImyBBlYbo2mfE8/U8Bbdk1WQ==}
     engines: {node: '>=16'}
 
-  '@azure/storage-blob@12.24.0':
-    resolution: {integrity: sha512-l8cmWM4C7RoNCBOImoFMxhTXe1Lr+8uQ/IgnhRNMpfoA9bAFWoLG4XrWm6O5rKXortreVQuD+fc1hbzWklOZbw==}
+  '@azure/storage-blob@12.25.0':
+    resolution: {integrity: sha512-oodouhA3nCCIh843tMMbxty3WqfNT+Vgzj3Xo5jqR9UPnzq3d7mzLjlHAYz7lW+b4km3SIgz+NAgztvhm7Z6kQ==}
     engines: {node: '>=18.0.0'}
 
   '@babel/code-frame@7.24.2':
@@ -5046,7 +5046,7 @@ snapshots:
       '@azure/abort-controller': 2.1.2
       tslib: 2.6.3
 
-  '@azure/core-xml@1.4.2':
+  '@azure/core-xml@1.4.3':
     dependencies:
       fast-xml-parser: 4.4.0
       tslib: 2.6.3
@@ -5086,9 +5086,9 @@ snapshots:
       jsonwebtoken: 9.0.2
       uuid: 8.3.2
 
-  '@azure/storage-blob@12.24.0':
+  '@azure/storage-blob@12.25.0':
     dependencies:
-      '@azure/abort-controller': 1.1.0
+      '@azure/abort-controller': 2.1.2
       '@azure/core-auth': 1.7.2
       '@azure/core-client': 1.9.2
       '@azure/core-http-compat': 2.1.2
@@ -5097,7 +5097,7 @@ snapshots:
       '@azure/core-rest-pipeline': 1.16.0
       '@azure/core-tracing': 1.1.2
       '@azure/core-util': 1.9.0
-      '@azure/core-xml': 1.4.2
+      '@azure/core-xml': 1.4.3
       '@azure/logger': 1.1.2
       events: 3.3.0
       tslib: 2.6.3
