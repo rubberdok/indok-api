@@ -2,15 +2,15 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 3.54.0"
+      version = "~> 4.4.0"
     }
     github = {
       source  = "integrations/github"
-      version = "~> 5.24.0"
+      version = "~> 6.3.0"
     }
     time = {
       source  = "hashicorp/time"
-      version = "~> 0.9.0"
+      version = "~> 0.12.1"
     }
   }
   backend "azurerm" {
@@ -48,9 +48,15 @@ module "server" {
   source = "../../../modules/server"
   suffix = random_string.resource_code.result
 
-  environment_variables    = var.environment_variables
+  environment_variables = concat(var.environment_variables, [{
+    name  = "SENTRY_RELEASE",
+    value = var.git_sha
+  }])
+
   docker_registry_password = var.docker_registry_password
   environment              = var.environment
+  image_tag                = var.image_tag
+  blob_storage             = var.blob_storage
 
   postgres = {
     sku_name   = "B_Standard_B1ms"
