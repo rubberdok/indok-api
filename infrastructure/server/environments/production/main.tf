@@ -2,15 +2,15 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 3.85.0"
+      version = "~> 4.4.0"
     }
     github = {
       source  = "integrations/github"
-      version = "~> 5.24.0"
+      version = "~> 6.3.0"
     }
     time = {
       source  = "hashicorp/time"
-      version = "~> 0.9.0"
+      version = "~> 0.12.1"
     }
   }
   backend "azurerm" {
