@@ -45,6 +45,7 @@ resource "azurerm_postgresql_flexible_server" "this" {
   sku_name   = var.postgres.sku_name
   version    = "14"
   storage_mb = var.postgres.storage_mb
+  public_network_access_enabled = false
 
   tags = var.tags
 
