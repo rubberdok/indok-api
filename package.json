@@ -119,7 +119,7 @@
 		"@prisma/instrumentation": "^5.20.0",
 		"@sentry/node": "^8.34.0",
 		"@vippsmobilepay/sdk": "^2.4.0",
-		"bullmq": "^5.13.1",
+		"bullmq": "^5.20.0",
 		"connect-redis": "^7.1.1",
 		"dotenv": "^16.4.5",
 		"fastify": "^4.28.1",
