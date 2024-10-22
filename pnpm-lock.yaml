@@ -15,8 +15,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1(@apollo/server@4.11.0(graphql@16.9.0))(fastify@4.28.1)
       '@azure/identity':
-        specifier: ^4.4.1
-        version: 4.4.1
+        specifier: ^4.5.0
+        version: 4.5.0
       '@azure/storage-blob':
         specifier: ^12.25.0
         version: 12.25.0
@@ -339,16 +339,16 @@ packages:
       '@apollo/server': ^4.0.0
       fastify: ^4.4.0
 
-  '@azure/abort-controller@1.1.0':
-    resolution: {integrity: sha512-TrRLIoSQVzfAJX9H1JeFjzAoDGcoK1IYX1UImfceTZpsyYfWr09Ss1aHW1y5TrrR3iq6RZLBwJ3E24uwPhwahw==}
-    engines: {node: '>=12.0.0'}
-
   '@azure/abort-controller@2.1.2':
     resolution: {integrity: sha512-nBrLsEWm4J2u5LpAPjxADTlq3trDgVZZXHNKabeXZtpq3d3AbN/KGO82R87rdDz5/lYB024rtEf10/q0urNgsA==}
     engines: {node: '>=18.0.0'}
 
   '@azure/core-auth@1.7.2':
     resolution: {integrity: sha512-Igm/S3fDYmnMq1uKS38Ae1/m37B3zigdlZw+kocwEhh5GjyKjPrXKO2J6rzpC1wAxrNil/jX9BJRqBshyjnF3g==}
+    engines: {node: '>=18.0.0'}
+
+  '@azure/core-auth@1.9.0':
+    resolution: {integrity: sha512-FPwHpZywuyasDSLMqJ6fhbOK3TqUdviZNF8OqRGA4W5Ewib2lEEZ+pBsYcBa88B2NGO/SEnYPGhyBqNlE8ilSw==}
     engines: {node: '>=18.0.0'}
 
   '@azure/core-client@1.9.2':
@@ -371,8 +371,16 @@ packages:
     resolution: {integrity: sha512-CeuTvsXxCUmEuxH5g/aceuSl6w2EugvNHKAtKKVdiX915EjJJxAwfzNNWZreNnbxHZ2fi0zaM6wwS23x2JVqSQ==}
     engines: {node: '>=18.0.0'}
 
+  '@azure/core-rest-pipeline@1.17.0':
+    resolution: {integrity: sha512-62Vv8nC+uPId3j86XJ0WI+sBf0jlqTqPUFCBNrGtlaUeQUIXWV/D8GE5A1d+Qx8H7OQojn2WguC8kChD6v0shA==}
+    engines: {node: '>=18.0.0'}
+
   '@azure/core-tracing@1.1.2':
     resolution: {integrity: sha512-dawW9ifvWAWmUm9/h+/UQ2jrdvjCJ7VJEuCJ6XVNudzcOwm53BFZH4Q845vjfgoUAM8ZxokvVNxNxAITc502YA==}
+    engines: {node: '>=18.0.0'}
+
+  '@azure/core-util@1.11.0':
+    resolution: {integrity: sha512-DxOSLua+NdpWoSqULhjDyAZTXFdP/LKkqtYuxxz1SCN289zk3OG8UOpnCQAz/tygyACBtWp/BoO72ptK7msY8g==}
     engines: {node: '>=18.0.0'}
 
   '@azure/core-util@1.9.0':
@@ -383,24 +391,24 @@ packages:
     resolution: {integrity: sha512-D6G7FEmDiTctPKuWegX2WTrS1enKZwqYwdKTO6ZN6JMigcCehlT0/CYl+zWpI9vQ9frwwp7GQT3/owaEXgnOsA==}
     engines: {node: '>=18.0.0'}
 
-  '@azure/identity@4.4.1':
-    resolution: {integrity: sha512-DwnG4cKFEM7S3T+9u05NstXU/HN0dk45kPOinUyNKsn5VWwpXd9sbPKEg6kgJzGbm1lMuhx9o31PVbCtM5sfBA==}
+  '@azure/identity@4.5.0':
+    resolution: {integrity: sha512-EknvVmtBuSIic47xkOqyNabAme0RYTw52BTMz8eBgU1ysTyMrD1uOoM+JdS0J/4Yfp98IBT3osqq3BfwSaNaGQ==}
     engines: {node: '>=18.0.0'}
 
   '@azure/logger@1.1.2':
     resolution: {integrity: sha512-l170uE7bsKpIU6B/giRc9i4NI0Mj+tANMMMxf7Zi/5cKzEqPayP7+X1WPrG7e+91JgY8N+7K7nF2WOi7iVhXvg==}
     engines: {node: '>=18.0.0'}
 
-  '@azure/msal-browser@3.17.0':
-    resolution: {integrity: sha512-csccKXmW2z7EkZ0I3yAoW/offQt+JECdTIV/KrnRoZyM7wCSsQWODpwod8ZhYy7iOyamcHApR9uCh0oD1M+0/A==}
+  '@azure/msal-browser@3.26.1':
+    resolution: {integrity: sha512-y78sr9g61aCAH9fcLO1um+oHFXc1/5Ap88RIsUSuzkm0BHzFnN+PXGaQeuM1h5Qf5dTnWNOd6JqkskkMPAhh7Q==}
     engines: {node: '>=0.8.0'}
 
-  '@azure/msal-common@14.12.0':
-    resolution: {integrity: sha512-IDDXmzfdwmDkv4SSmMEyAniJf6fDu3FJ7ncOjlxkDuT85uSnLEhZi3fGZpoR7T4XZpOMx9teM9GXBgrfJgyeBw==}
+  '@azure/msal-common@14.15.0':
+    resolution: {integrity: sha512-ImAQHxmpMneJ/4S8BRFhjt1MZ3bppmpRPYYNyzeQPeFN288YKbb8TmmISQEbtfkQ1BPASvYZU5doIZOPBAqENQ==}
     engines: {node: '>=0.8.0'}
 
-  '@azure/msal-node@2.9.2':
-    resolution: {integrity: sha512-8tvi6Cos3m+0KmRbPjgkySXi+UQU/QiuVRFnrxIwt5xZlEEFa69O04RTaNESGgImyBBlYbo2mfE8/U8Bbdk1WQ==}
+  '@azure/msal-node@2.15.0':
+    resolution: {integrity: sha512-gVPW8YLz92ZeCibQH2QUw96odJoiM3k/ZPH3f2HxptozmH6+OnyyvKXo/Egg39HAM230akarQKHf0W74UHlh0Q==}
     engines: {node: '>=16'}
 
   '@azure/storage-blob@12.25.0':
@@ -4943,10 +4951,6 @@ snapshots:
       fastify: 4.28.1
       fastify-plugin: 4.5.1
 
-  '@azure/abort-controller@1.1.0':
-    dependencies:
-      tslib: 2.6.3
-
   '@azure/abort-controller@2.1.2':
     dependencies:
       tslib: 2.6.3
@@ -4957,13 +4961,19 @@ snapshots:
       '@azure/core-util': 1.9.0
       tslib: 2.6.3
 
+  '@azure/core-auth@1.9.0':
+    dependencies:
+      '@azure/abort-controller': 2.1.2
+      '@azure/core-util': 1.11.0
+      tslib: 2.6.3
+
   '@azure/core-client@1.9.2':
     dependencies:
       '@azure/abort-controller': 2.1.2
-      '@azure/core-auth': 1.7.2
-      '@azure/core-rest-pipeline': 1.16.0
+      '@azure/core-auth': 1.9.0
+      '@azure/core-rest-pipeline': 1.17.0
       '@azure/core-tracing': 1.1.2
-      '@azure/core-util': 1.9.0
+      '@azure/core-util': 1.11.0
       '@azure/logger': 1.1.2
       tslib: 2.6.3
     transitivePeerDependencies:
@@ -5001,8 +5011,26 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@azure/core-rest-pipeline@1.17.0':
+    dependencies:
+      '@azure/abort-controller': 2.1.2
+      '@azure/core-auth': 1.9.0
+      '@azure/core-tracing': 1.1.2
+      '@azure/core-util': 1.11.0
+      '@azure/logger': 1.1.2
+      http-proxy-agent: 7.0.2
+      https-proxy-agent: 7.0.4
+      tslib: 2.6.3
+    transitivePeerDependencies:
+      - supports-color
+
   '@azure/core-tracing@1.1.2':
     dependencies:
+      tslib: 2.6.3
+
+  '@azure/core-util@1.11.0':
+    dependencies:
+      '@azure/abort-controller': 2.1.2
       tslib: 2.6.3
 
   '@azure/core-util@1.9.0':
@@ -5015,17 +5043,17 @@ snapshots:
       fast-xml-parser: 4.5.0
       tslib: 2.6.3
 
-  '@azure/identity@4.4.1':
+  '@azure/identity@4.5.0':
     dependencies:
-      '@azure/abort-controller': 1.1.0
-      '@azure/core-auth': 1.7.2
+      '@azure/abort-controller': 2.1.2
+      '@azure/core-auth': 1.9.0
       '@azure/core-client': 1.9.2
-      '@azure/core-rest-pipeline': 1.16.0
+      '@azure/core-rest-pipeline': 1.17.0
       '@azure/core-tracing': 1.1.2
-      '@azure/core-util': 1.9.0
+      '@azure/core-util': 1.11.0
       '@azure/logger': 1.1.2
-      '@azure/msal-browser': 3.17.0
-      '@azure/msal-node': 2.9.2
+      '@azure/msal-browser': 3.26.1
+      '@azure/msal-node': 2.15.0
       events: 3.3.0
       jws: 4.0.0
       open: 8.4.2
@@ -5038,15 +5066,15 @@ snapshots:
     dependencies:
       tslib: 2.6.3
 
-  '@azure/msal-browser@3.17.0':
+  '@azure/msal-browser@3.26.1':
     dependencies:
-      '@azure/msal-common': 14.12.0
+      '@azure/msal-common': 14.15.0
 
-  '@azure/msal-common@14.12.0': {}
+  '@azure/msal-common@14.15.0': {}
 
-  '@azure/msal-node@2.9.2':
+  '@azure/msal-node@2.15.0':
     dependencies:
-      '@azure/msal-common': 14.12.0
+      '@azure/msal-common': 14.15.0
       jsonwebtoken: 9.0.2
       uuid: 8.3.2
 
