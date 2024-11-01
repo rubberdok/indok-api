@@ -149,8 +149,8 @@ importers:
         specifier: ^0.10.4
         version: 0.10.4(graphql@16.9.0)
       '@faker-js/faker':
-        specifier: ^9.0.1
-        version: 9.0.1
+        specifier: ^9.1.0
+        version: 9.1.0
       '@graphql-codegen/add':
         specifier: ^5.0.3
         version: 5.0.3(graphql@16.9.0)
@@ -841,8 +841,8 @@ packages:
   '@emnapi/wasi-threads@1.0.1':
     resolution: {integrity: sha512-iIBu7mwkq4UQGeMEM8bLwNK962nXdhodeScX4slfQnRhEMMzvYivHhutCIk8uojvmASXXPC2WNEjwxFWk72Oqw==}
 
-  '@faker-js/faker@9.0.1':
-    resolution: {integrity: sha512-4mDeYIgM3By7X6t5E6eYwLAa+2h4DeZDF7thhzIg6XB76jeEvMwadYAMCFJL/R4AnEBcAUO9+gL0vhy3s+qvZA==}
+  '@faker-js/faker@9.1.0':
+    resolution: {integrity: sha512-GJvX9iM9PBtKScJVlXQ0tWpihK3i0pha/XAhzQa1hPK/ILLa1Wq3I63Ij7lRtqTwmdTxRCyrUhLC5Sly9SLbug==}
     engines: {node: '>=18.0.0', npm: '>=9.0.0'}
 
   '@fastify/accept-negotiator@1.1.0':
@@ -5623,7 +5623,7 @@ snapshots:
       tslib: 2.6.3
     optional: true
 
-  '@faker-js/faker@9.0.1': {}
+  '@faker-js/faker@9.1.0': {}
 
   '@fastify/accept-negotiator@1.1.0': {}
 
