@@ -95,7 +95,7 @@
 		"wait-on": "^8.0.1"
 	},
 	"dependencies": {
-		"@apollo/server": "^4.11.0",
+		"@apollo/server": "^4.11.2",
 		"@as-integrations/fastify": "^2.1.1",
 		"@azure/identity": "^4.5.0",
 		"@azure/storage-blob": "^12.25.0",
