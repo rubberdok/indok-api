@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { execa } from "execa";
 
-const timeout = 60 * 1000; // 60 seconds, GH actions are quite slow, so we need to give it some time to start up
+const timeout = 120 * 1000; // 120 seconds, GH actions are quite slow, so we need to give it some time to start up
 
 describe("Development scripts", () => {
 	const controller = new AbortController();
