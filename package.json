@@ -90,7 +90,7 @@
 		"jest-junit": "^16.0.0",
 		"jest-mock-extended": "^3.0.7",
 		"npm-run-all2": "^6.2.3",
-		"pino-pretty": "^11.2.2",
+		"pino-pretty": "^13.0.0",
 		"typescript": "^5.6.3",
 		"wait-on": "^8.0.1"
 	},
