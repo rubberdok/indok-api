@@ -78,8 +78,8 @@ importers:
         specifier: ^8.41.0
         version: 8.41.0
       '@vippsmobilepay/sdk':
-        specifier: ^2.4.0
-        version: 2.4.0
+        specifier: ^2.4.2
+        version: 2.4.2
       bullmq:
         specifier: ^5.25.6
         version: 5.25.6
@@ -2075,8 +2075,8 @@ packages:
   '@types/yargs@17.0.32':
     resolution: {integrity: sha512-xQ67Yc/laOG5uMfX/093MRlGGCIBzZMarVa+gfNKJxWAIgykYpVGkBdbqEzGDDfCrVUj6Hiff4mTZ5BA6TmAog==}
 
-  '@vippsmobilepay/sdk@2.4.0':
-    resolution: {integrity: sha512-0Fx6afr087GsdK16HstlEzfed2SRLABOzRShSZMSFqhEkUptlJGcBIScmk4fGuSMqMXti0tbVgtCdRd4QMjS4Q==}
+  '@vippsmobilepay/sdk@2.4.2':
+    resolution: {integrity: sha512-yYjJpAHTqzznt65zreZ3ztAnZCUCT+bH0jhnmc/ZgfCLCHO2p0cUIMKFqe0SXRb6gzHgp5OB1RX1l9LhC9grGQ==}
 
   '@whatwg-node/fetch@0.9.21':
     resolution: {integrity: sha512-Wt0jPb+04JjobK0pAAN7mEHxVHcGA9HoP3OyCsZtyAecNQeADXCZ1MihFwVwjsgaRYuGVmNlsCmLxlG6mor8Gw==}
@@ -7338,7 +7338,7 @@ snapshots:
 
   '@types/tedious@4.0.14':
     dependencies:
-      '@types/node': 20.16.5
+      '@types/node': 20.17.9
 
   '@types/ws@8.5.10':
     dependencies:
@@ -7350,7 +7350,7 @@ snapshots:
     dependencies:
       '@types/yargs-parser': 21.0.3
 
-  '@vippsmobilepay/sdk@2.4.0': {}
+  '@vippsmobilepay/sdk@2.4.2': {}
 
   '@whatwg-node/fetch@0.9.21':
     dependencies:
