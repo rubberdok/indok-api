@@ -87,8 +87,8 @@ importers:
         specifier: ^7.1.1
         version: 7.1.1(express-session@1.18.0)
       dotenv:
-        specifier: ^16.4.5
-        version: 16.4.5
+        specifier: ^16.4.6
+        version: 16.4.6
       fastify:
         specifier: ^4.28.1
         version: 4.28.1
@@ -2700,8 +2700,8 @@ packages:
     resolution: {integrity: sha512-GopVGCpVS1UKH75VKHGuQFqS1Gusej0z4FyQkPdwjil2gNIv+LNsqBlboOzpJFZKVT95GkCyWJbBSdFEFUWI2A==}
     engines: {node: '>=12'}
 
-  dotenv@16.4.5:
-    resolution: {integrity: sha512-ZmdL2rui+eB2YwhsWzjInR8LldtZHGDoQ1ugH85ppHKwpUHL7j7rN0Ti9NCnGiQbhaZ11FpR+7ao1dNsmduNUg==}
+  dotenv@16.4.6:
+    resolution: {integrity: sha512-JhcR/+KIjkkjiU8yEpaB/USlzVi3i5whwOjpIRNGi9svKEXZSe+Qp6IWAjFjv+2GViAoDRCUv/QLNziQxsLqDg==}
     engines: {node: '>=12'}
 
   dset@3.1.4:
@@ -6127,7 +6127,7 @@ snapshots:
       '@whatwg-node/fetch': 0.9.21
       chalk: 4.1.2
       debug: 4.3.5
-      dotenv: 16.4.5
+      dotenv: 16.4.6
       graphql: 16.9.0
       graphql-request: 6.1.0(graphql@16.9.0)
       http-proxy-agent: 7.0.2
@@ -8048,13 +8048,13 @@ snapshots:
   dotenv-cli@7.4.4:
     dependencies:
       cross-spawn: 7.0.6
-      dotenv: 16.4.5
+      dotenv: 16.4.6
       dotenv-expand: 10.0.0
       minimist: 1.2.8
 
   dotenv-expand@10.0.0: {}
 
-  dotenv@16.4.5: {}
+  dotenv@16.4.6: {}
 
   dset@3.1.4: {}
 
