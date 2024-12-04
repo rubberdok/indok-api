@@ -84,8 +84,8 @@ importers:
         specifier: ^5.31.1
         version: 5.31.1
       connect-redis:
-        specifier: ^7.1.1
-        version: 7.1.1(express-session@1.18.0)
+        specifier: ^8.0.0
+        version: 8.0.0(express-session@1.18.0)
       dotenv:
         specifier: ^16.4.7
         version: 16.4.7
@@ -2489,9 +2489,9 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  connect-redis@7.1.1:
-    resolution: {integrity: sha512-M+z7alnCJiuzKa8/1qAYdGUXHYfDnLolOGAUjOioB07pP39qxjG+X9ibsud7qUBc4jMV5Mcy3ugGv8eFcgamJQ==}
-    engines: {node: '>=16'}
+  connect-redis@8.0.0:
+    resolution: {integrity: sha512-co5fbIPLslji7aCLvXb2RuZiqx+7DpPhf9Co7j/c+RmPYi82zDDKnEdEQCiK/stY2gJ7R+nfsgqq95iFZjK5RQ==}
+    engines: {node: '>=18'}
     peerDependencies:
       express-session: '>=1'
 
@@ -7854,7 +7854,7 @@ snapshots:
       tree-kill: 1.2.2
       yargs: 17.7.2
 
-  connect-redis@7.1.1(express-session@1.18.0):
+  connect-redis@8.0.0(express-session@1.18.0):
     dependencies:
       express-session: 1.18.0
 
