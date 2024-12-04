@@ -81,8 +81,8 @@ importers:
         specifier: ^2.4.2
         version: 2.4.2
       bullmq:
-        specifier: ^5.31.0
-        version: 5.31.0
+        specifier: ^5.31.1
+        version: 5.31.1
       connect-redis:
         specifier: ^7.1.1
         version: 7.1.1(express-session@1.18.0)
@@ -2332,8 +2332,8 @@ packages:
   buffer@6.0.3:
     resolution: {integrity: sha512-FTiCpNxtwiZZHEZbcbTIcZjERVICn9yq/pDFkTl95/AxzD1naBctN7YO68riM/gLSDY7sdrMby8hofADYuuqOA==}
 
-  bullmq@5.31.0:
-    resolution: {integrity: sha512-wAOHE78Hmx60bFXqQ8FmptG4tHnYutBbu1vGY9HXPIwFQMGLrvKkhn3Jc2BPZQZVWMTGXbl0W55FAjucJcA+uw==}
+  bullmq@5.31.1:
+    resolution: {integrity: sha512-otkHjMd0pscUgqDBTjGchdBCavB0ZQRNN/YLsJ4kKw0rf1NpXJOyORjOQVkypLffu/06IuXII3ZN+kJqD+Wo8g==}
 
   busboy@1.6.0:
     resolution: {integrity: sha512-8SFQbg/0hQ9xy3UNTB0YEnsNBbWfhf7RtnzpL7TkBiTBRfrQ9Fxcnz7VJsleJpyp6rVLvXiuORqjlHi5q+PYuA==}
@@ -7677,7 +7677,7 @@ snapshots:
       base64-js: 1.5.1
       ieee754: 1.2.1
 
-  bullmq@5.31.0:
+  bullmq@5.31.1:
     dependencies:
       cron-parser: 4.9.0
       ioredis: 5.4.1
