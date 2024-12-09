@@ -109,7 +109,7 @@
 		"@fastify/redis": "^6.2.0",
 		"@fastify/session": "^10.9.0",
 		"@fastify/under-pressure": "^8.5.1",
-		"@opentelemetry/exporter-trace-otlp-http": "^0.55.0",
+		"@opentelemetry/exporter-trace-otlp-http": "^0.56.0",
 		"@opentelemetry/instrumentation": "^0.55.0",
 		"@opentelemetry/resources": "^1.28.0",
 		"@opentelemetry/sdk-trace-base": "^1.29.0",
