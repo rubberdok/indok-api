@@ -115,8 +115,8 @@
 		"@opentelemetry/sdk-trace-base": "^1.29.0",
 		"@opentelemetry/sdk-trace-node": "^1.30.0",
 		"@opentelemetry/semantic-conventions": "^1.28.0",
-		"@prisma/client": "^5.22.0",
-		"@prisma/instrumentation": "^5.22.0",
+		"@prisma/client": "^6.3.0",
+		"@prisma/instrumentation": "^6.3.0",
 		"@sentry/node": "^8.50.0",
 		"@vippsmobilepay/sdk": "^2.4.2",
 		"bullmq": "^5.31.1",
@@ -133,7 +133,7 @@
 		"openid-client": "^5.7.0",
 		"pino": "^9.5.0",
 		"postmark": "^4.0.5",
-		"prisma": "^5.22.0",
+		"prisma": "^6.3.0",
 		"yargs": "^17.7.2",
 		"zod": "^3.24.1"
 	}
