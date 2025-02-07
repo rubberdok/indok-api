@@ -94,7 +94,7 @@ jobs:
         run: terraform apply -auto-approve -input=false -var docker_registry_password="${{ env.GITHUB_TOKEN }}" -var image_tag="${{ needs.build.outputs.image-tag }}" -var git_sha="${{ github.sha }}"
 
       - name: Sentry Release
-        uses: getsentry/action-release@v1
+        uses: getsentry/action-release@v2
         env:
           SENTRY_ORG: rbberdk
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}

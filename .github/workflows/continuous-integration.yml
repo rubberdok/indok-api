@@ -175,7 +175,7 @@ jobs:
 
       - name: Sentry Release
         if: github.ref == 'refs/heads/main'
-        uses: getsentry/action-release@v1
+        uses: getsentry/action-release@v2
         env:
           SENTRY_ORG: rbberdk
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
