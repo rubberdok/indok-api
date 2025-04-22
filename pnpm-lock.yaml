@@ -84,8 +84,8 @@ importers:
         specifier: ^5.31.1
         version: 5.31.1
       connect-redis:
-        specifier: ^7.1.1
-        version: 7.1.1(express-session@1.18.0)
+        specifier: ^8.0.3
+        version: 8.0.3(express-session@1.18.0)
       dotenv:
         specifier: ^16.4.7
         version: 16.4.7
@@ -832,6 +832,7 @@ packages:
   '@faker-js/faker@9.3.0':
     resolution: {integrity: sha512-r0tJ3ZOkMd9xsu3VRfqlFR6cz0V/jFYRswAIpC+m/DIfAUXq7g8N7wTAlhSANySXYGKzGryfDXwtwsY8TxEIDw==}
     engines: {node: '>=18.0.0', npm: '>=9.0.0'}
+    deprecated: Please update to a newer version
 
   '@fastify/accept-negotiator@1.1.0':
     resolution: {integrity: sha512-OIHZrb2ImZ7XG85HXOONLcJWGosv7sIvM2ifAPQVhg9Lv7qdmMBNVaai4QTdyuaqbKM5eO6sLSQOYI7wEQeCJQ==}
@@ -2522,9 +2523,9 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  connect-redis@7.1.1:
-    resolution: {integrity: sha512-M+z7alnCJiuzKa8/1qAYdGUXHYfDnLolOGAUjOioB07pP39qxjG+X9ibsud7qUBc4jMV5Mcy3ugGv8eFcgamJQ==}
-    engines: {node: '>=16'}
+  connect-redis@8.0.3:
+    resolution: {integrity: sha512-wLIaRv5csDWZsODD/X1vzfF9YKAYVfjJfzxsR6er0jqikM+i4GuBv06kgB8/O3QJWj5ANhYRoym/j1rL459v7g==}
+    engines: {node: '>=18'}
     peerDependencies:
       express-session: '>=1'
 
@@ -7910,7 +7911,7 @@ snapshots:
       tree-kill: 1.2.2
       yargs: 17.7.2
 
-  connect-redis@7.1.1(express-session@1.18.0):
+  connect-redis@8.0.3(express-session@1.18.0):
     dependencies:
       express-session: 1.18.0
 
